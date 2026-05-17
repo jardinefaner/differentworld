@@ -12,22 +12,22 @@ final appDatabaseProvider = FutureProvider<AppDatabase>((ref) async {
   return db;
 });
 
-/// Reactive view of the signed-in user's own profile row. Emits null
-/// while the row hasn't been pulled from Supabase yet; emits a `Profile`
-/// once it arrives. Resets to null on sign-out.
-final currentProfileProvider = StreamProvider<Profile?>((ref) {
+/// Reactive view of the signed-in user's own Member row. Emits null
+/// while the row hasn't synced from Supabase yet; emits a `Member` once
+/// it arrives. Resets to null on sign-out.
+final currentMemberProvider = StreamProvider<Member?>((ref) {
   final session = ref.watch(sessionProvider);
-  if (session == null) return Stream<Profile?>.value(null);
+  if (session == null) return Stream<Member?>.value(null);
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
-  if (db == null) return Stream<Profile?>.value(null);
-  return db.watchProfile(session.user.id);
+  if (db == null) return Stream<Member?>.value(null);
+  return db.watchMember(session.user.id);
 });
 
-/// Convenience: has the user finished onboarding (created or joined a
-/// program)? Used by the router/Home to decide which screen to show.
-final hasProgramProvider = Provider<bool>((ref) {
-  final profileAsync = ref.watch(currentProfileProvider);
-  final profile = profileAsync.value;
-  return profile != null && profile.programId != null;
+/// Convenience: has the signed-in user joined a Space (i.e., finished
+/// onboarding)? Drives the router gate.
+final hasSpaceProvider = Provider<bool>((ref) {
+  final memberAsync = ref.watch(currentMemberProvider);
+  final m = memberAsync.value;
+  return m != null && m.spaceId != null;
 });

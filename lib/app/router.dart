@@ -4,15 +4,14 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
-import 'package:differentworld/features/classrooms/classroom_detail_screen.dart';
-import 'package:differentworld/features/classrooms/classrooms_list_screen.dart';
-import 'package:differentworld/features/onboarding/create_program_screen.dart';
+import 'package:differentworld/features/groups/group_detail_screen.dart';
+import 'package:differentworld/features/groups/groups_list_screen.dart';
+import 'package:differentworld/features/onboarding/create_space_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // Refresh router whenever the auth state changes so the redirect runs again.
   final supabase = ref.watch(supabaseProvider);
   final refresh = _RouterAuthRefresh(supabase.auth.onAuthStateChange);
   ref.onDispose(refresh.dispose);
@@ -33,15 +32,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const _Home(),
         routes: [
           GoRoute(
-            path: 'classrooms/:id',
-            builder: (_, state) => ClassroomDetailScreen(
-              classroomId: state.pathParameters['id']!,
+            path: 'groups/:id',
+            builder: (_, state) => GroupDetailScreen(
+              groupId: state.pathParameters['id']!,
             ),
             routes: [
               GoRoute(
                 path: 'attendance',
                 builder: (_, state) => AttendanceScreen(
-                  classroomId: state.pathParameters['id']!,
+                  groupId: state.pathParameters['id']!,
                 ),
               ),
             ],
@@ -75,19 +74,28 @@ class _Home extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(currentProfileProvider);
+    final memberAsync = ref.watch(currentMemberProvider);
 
-    return profileAsync.when(
-      // The first sync after sign-in: profile row hasn't arrived yet.
+    return memberAsync.when(
+      // The first sync after sign-in: Member row hasn't arrived yet.
       // Show a spinner instead of flashing the onboarding screen.
       loading: _SyncingScaffold.new,
       error: (err, _) => _ErrorScaffold(error: err),
-      data: (profile) {
-        if (profile == null) return const _SyncingScaffold();
-        if (profile.programId == null) return const CreateProgramScreen();
-        return const ClassroomsListScreen();
+      data: (member) {
+        if (member == null) return const _SyncingScaffold();
+        if (member.spaceId == null) return const CreateSpaceScreen();
+        return const _SignedInHome();
       },
     );
+  }
+}
+
+class _SignedInHome extends ConsumerWidget {
+  const _SignedInHome();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const GroupsListScreen();
   }
 }
 

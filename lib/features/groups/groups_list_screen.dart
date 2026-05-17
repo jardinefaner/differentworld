@@ -1,20 +1,20 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
-import 'package:differentworld/features/classrooms/classrooms_providers.dart';
-import 'package:differentworld/features/classrooms/widgets/classroom_form_sheet.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class ClassroomsListScreen extends ConsumerWidget {
-  const ClassroomsListScreen({super.key});
+class GroupsListScreen extends ConsumerWidget {
+  const GroupsListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final classroomsAsync = ref.watch(classroomsProvider);
+    final groupsAsync = ref.watch(groupsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,36 +31,35 @@ class ClassroomsListScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: classroomsAsync.when(
+        child: groupsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => EmptyState(
+          error: (err, _) => const EmptyState(
             icon: Icons.error_outline,
             title: 'Could not load classrooms',
-            message: err.toString(),
           ),
-          data: (classrooms) {
-            if (classrooms.isEmpty) {
+          data: (groups) {
+            if (groups.isEmpty) {
               return EmptyState(
                 icon: Icons.meeting_room_outlined,
                 title: 'No classrooms yet',
                 message: 'Add your first classroom to start organizing '
                     'students, plans, and attendance.',
                 action: FilledButton.icon(
-                  onPressed: () => ClassroomFormSheet.show(context),
+                  onPressed: () => GroupFormSheet.show(context),
                   icon: const Icon(Icons.add),
                   label: const Text('Add classroom'),
                 ),
               );
             }
-            return _ClassroomsList(classrooms: classrooms);
+            return _GroupsList(groups: groups);
           },
         ),
       ),
-      floatingActionButton: classroomsAsync.maybeWhen(
-        data: (rooms) => rooms.isEmpty
+      floatingActionButton: groupsAsync.maybeWhen(
+        data: (groups) => groups.isEmpty
             ? null
             : FloatingActionButton.extended(
-                onPressed: () => ClassroomFormSheet.show(context),
+                onPressed: () => GroupFormSheet.show(context),
                 icon: const Icon(Icons.add),
                 label: const Text('Classroom'),
               ),
@@ -70,10 +69,10 @@ class ClassroomsListScreen extends ConsumerWidget {
   }
 }
 
-class _ClassroomsList extends StatelessWidget {
-  const _ClassroomsList({required this.classrooms});
+class _GroupsList extends StatelessWidget {
+  const _GroupsList({required this.groups});
 
-  final List<Classroom> classrooms;
+  final List<Group> groups;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +81,6 @@ class _ClassroomsList extends StatelessWidget {
         final formFactor = FormFactor.fromWidth(constraints.maxWidth);
         final useGrid = formFactor != FormFactor.phone;
         if (useGrid) {
-          // Tablet+: tile grid, easier to scan more rooms at a glance.
           final crossAxisCount = formFactor == FormFactor.desktop ? 4 : 2;
           return GridView.builder(
             padding: const EdgeInsets.all(16),
@@ -92,45 +90,42 @@ class _ClassroomsList extends StatelessWidget {
               mainAxisSpacing: 12,
               childAspectRatio: 2.5,
             ),
-            itemCount: classrooms.length,
-            itemBuilder: (_, i) => _ClassroomCard(classroom: classrooms[i]),
+            itemCount: groups.length,
+            itemBuilder: (_, i) => _GroupCard(group: groups[i]),
           );
         }
-        // Phone: simple list.
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          itemCount: classrooms.length,
+          itemCount: groups.length,
           separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (_, i) => _ClassroomTile(classroom: classrooms[i]),
+          itemBuilder: (_, i) => _GroupTile(group: groups[i]),
         );
       },
     );
   }
 }
 
-class _ClassroomTile extends StatelessWidget {
-  const _ClassroomTile({required this.classroom});
+class _GroupTile extends StatelessWidget {
+  const _GroupTile({required this.group});
 
-  final Classroom classroom;
+  final Group group;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: const CircleAvatar(child: Icon(Icons.meeting_room_outlined)),
-      title: Text(classroom.name),
-      subtitle: classroom.ageRange == null
-          ? null
-          : Text(classroom.ageRange!),
+      title: Text(group.name),
+      subtitle: group.ageRange == null ? null : Text(group.ageRange!),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.go('/classrooms/${classroom.id}'),
+      onTap: () => context.go('/groups/${group.id}'),
     );
   }
 }
 
-class _ClassroomCard extends StatelessWidget {
-  const _ClassroomCard({required this.classroom});
+class _GroupCard extends StatelessWidget {
+  const _GroupCard({required this.group});
 
-  final Classroom classroom;
+  final Group group;
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +133,7 @@ class _ClassroomCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.go('/classrooms/${classroom.id}'),
+        onTap: () => context.go('/groups/${group.id}'),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -157,14 +152,14 @@ class _ClassroomCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      classroom.name,
+                      group.name,
                       style: theme.textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (classroom.ageRange != null)
+                    if (group.ageRange != null)
                       Text(
-                        classroom.ageRange!,
+                        group.ageRange!,
                         style: theme.textTheme.bodySmall,
                       ),
                   ],

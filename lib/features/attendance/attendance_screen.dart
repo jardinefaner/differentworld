@@ -4,22 +4,22 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/status_picker_sheet.dart';
-import 'package:differentworld/features/roster/students_providers.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Daily attendance for a single classroom. Per-student status, optimistic
+/// Daily attendance for a single Group. Per-Subject status, optimistic
 /// writes, date scrubber, "Mark all present" shortcut.
 class AttendanceScreen extends ConsumerStatefulWidget {
   const AttendanceScreen({
-    required this.classroomId,
+    required this.groupId,
     this.initialDate,
     super.key,
   });
 
-  final String classroomId;
+  final String groupId;
   final DateTime? initialDate;
 
   @override
@@ -73,13 +73,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final classroomAsync = ref.watch(_classroomDetailProvider(widget.classroomId));
-    final studentsAsync = ref.watch(
-      classroomStudentsProvider(widget.classroomId),
-    );
+    final groupAsync = ref.watch(_groupDetailProvider(widget.groupId));
+    final subjectsAsync = ref.watch(subjectsInGroupProvider(widget.groupId));
     final recordsAsync = ref.watch(
       attendanceForDayProvider(
-        (classroomId: widget.classroomId, date: _isoDate),
+        (groupId: widget.groupId, date: _isoDate),
       ),
     );
 
@@ -103,7 +101,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           children: [
             const Text('Attendance'),
             Text(
-              classroomAsync.value?.name ?? '',
+              groupAsync.value?.name ?? '',
               style: theme.textTheme.bodySmall,
             ),
           ],
@@ -121,15 +119,15 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             ),
             const Divider(height: 1),
             Expanded(
-              child: studentsAsync.when(
+              child: subjectsAsync.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => const EmptyState(
                   icon: Icons.error_outline,
                   title: 'Could not load students',
                 ),
-                data: (students) {
-                  if (students.isEmpty) {
+                data: (subjects) {
+                  if (subjects.isEmpty) {
                     return const EmptyState(
                       icon: Icons.child_care_outlined,
                       title: 'No students in this classroom',
@@ -145,9 +143,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                       title: 'Could not load attendance',
                     ),
                     data: (records) => _AttendanceList(
-                      classroomId: widget.classroomId,
+                      groupId: widget.groupId,
                       date: _isoDate,
-                      students: students,
+                      subjects: subjects,
                       records: records,
                     ),
                   );
@@ -155,25 +153,25 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               ),
             ),
             _SummaryBar(
-              students: studentsAsync.value,
+              subjects: subjectsAsync.value,
               records: recordsAsync.value,
             ),
           ],
         ),
       ),
-      floatingActionButton: studentsAsync.maybeWhen(
-        data: (students) => students.isEmpty
+      floatingActionButton: subjectsAsync.maybeWhen(
+        data: (subjects) => subjects.isEmpty
             ? null
             : FloatingActionButton.extended(
                 onPressed: () async {
                   final actions = ref.read(attendanceActionsProvider);
                   final records = recordsAsync.value ?? const [];
                   await actions.markAllPresent(
-                    classroomId: widget.classroomId,
+                    groupId: widget.groupId,
                     date: _isoDate,
-                    studentIds: students.map((s) => s.id).toList(),
-                    alreadyRecordedStudentIds:
-                        records.map((r) => r.studentId).toList(),
+                    subjectIds: subjects.map((s) => s.id).toList(),
+                    alreadyRecordedSubjectIds:
+                        records.map((r) => r.subjectId).toList(),
                   );
                 },
                 icon: const Icon(Icons.check_circle_outline),
@@ -187,10 +185,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final _classroomDetailProvider = StreamProvider.family<Classroom?, String>(
-  (ref, classroomId) async* {
+final _groupDetailProvider = StreamProvider.family<Group?, String>(
+  (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchClassroom(classroomId);
+    yield* db.watchGroup(groupId);
   },
 );
 
@@ -221,7 +219,8 @@ class _DateScrubber extends StatelessWidget {
           Expanded(
             child: TextButton(
               onPressed: onTapLabel,
-              child: Text(label, style: Theme.of(context).textTheme.titleMedium),
+              child:
+                  Text(label, style: Theme.of(context).textTheme.titleMedium),
             ),
           ),
           IconButton(
@@ -237,39 +236,39 @@ class _DateScrubber extends StatelessWidget {
 
 class _AttendanceList extends ConsumerWidget {
   const _AttendanceList({
-    required this.classroomId,
+    required this.groupId,
     required this.date,
-    required this.students,
+    required this.subjects,
     required this.records,
   });
 
-  final String classroomId;
+  final String groupId;
   final String date;
-  final List<Student> students;
+  final List<Subject> subjects;
   final List<AttendanceRecord> records;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Map student id → current status for fast row lookup.
-    final byStudent = <String, AttendanceStatus>{};
+    // Map subject id → current status for fast row lookup.
+    final bySubject = <String, AttendanceStatus>{};
     for (final r in records) {
       final s = AttendanceStatus.fromDb(r.status);
-      if (s != null) byStudent[r.studentId] = s;
+      if (s != null) bySubject[r.subjectId] = s;
     }
 
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: students.length,
+      itemCount: subjects.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
-        final student = students[i];
+        final subject = subjects[i];
         return _AttendanceRow(
-          student: student,
-          status: byStudent[student.id],
+          subject: subject,
+          status: bySubject[subject.id],
           onChangeStatus: (next) async {
             await ref.read(attendanceActionsProvider).setStatus(
-                  classroomId: classroomId,
-                  studentId: student.id,
+                  groupId: groupId,
+                  subjectId: subject.id,
                   date: date,
                   status: next,
                 );
@@ -282,12 +281,12 @@ class _AttendanceList extends ConsumerWidget {
 
 class _AttendanceRow extends StatelessWidget {
   const _AttendanceRow({
-    required this.student,
+    required this.subject,
     required this.status,
     required this.onChangeStatus,
   });
 
-  final Student student;
+  final Subject subject;
   final AttendanceStatus? status;
   final Future<void> Function(AttendanceStatus) onChangeStatus;
 
@@ -295,7 +294,7 @@ class _AttendanceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final initials = _initials(student.firstName, student.lastName);
+    final initials = _initials(subject.firstName, subject.lastName);
 
     return ListTile(
       leading: CircleAvatar(
@@ -303,12 +302,12 @@ class _AttendanceRow extends StatelessWidget {
         foregroundColor: scheme.onPrimaryContainer,
         child: Text(initials),
       ),
-      title: Text('${student.firstName} ${student.lastName}'),
+      title: Text('${subject.firstName} ${subject.lastName}'),
       trailing: _StatusChip(status: status),
       onTap: () async {
         final picked = await StatusPickerSheet.show(
           context,
-          studentName: '${student.firstName} ${student.lastName}',
+          studentName: '${subject.firstName} ${subject.lastName}',
           currentStatus: status,
         );
         if (picked != null) {
@@ -357,14 +356,14 @@ class _StatusChip extends StatelessWidget {
 }
 
 class _SummaryBar extends StatelessWidget {
-  const _SummaryBar({required this.students, required this.records});
+  const _SummaryBar({required this.subjects, required this.records});
 
-  final List<Student>? students;
+  final List<Subject>? subjects;
   final List<AttendanceRecord>? records;
 
   @override
   Widget build(BuildContext context) {
-    if (students == null || records == null) return const SizedBox.shrink();
+    if (subjects == null || records == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
 
     final counts = <AttendanceStatus, int>{};
@@ -373,7 +372,7 @@ class _SummaryBar extends StatelessWidget {
       if (s != null) counts[s] = (counts[s] ?? 0) + 1;
     }
     final marked = counts.values.fold<int>(0, (a, b) => a + b);
-    final unmarked = students!.length - marked;
+    final unmarked = subjects!.length - marked;
 
     return Material(
       color: theme.colorScheme.surfaceContainer,

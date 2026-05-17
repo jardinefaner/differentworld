@@ -1,39 +1,40 @@
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/features/roster/students_providers.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Modal bottom sheet for creating or editing a student. Pass an
-/// existing `student` to edit, or null with a `classroomId` to create.
-class StudentFormSheet extends ConsumerStatefulWidget {
-  const StudentFormSheet({
-    required this.classroomId,
-    this.student,
+/// Modal bottom sheet for creating or editing a Subject ("Student" in
+/// v1 UI). Pass an existing `subject` to edit, or null with a
+/// `groupId` to create.
+class SubjectFormSheet extends ConsumerStatefulWidget {
+  const SubjectFormSheet({
+    required this.groupId,
+    this.subject,
     super.key,
   });
 
-  final String classroomId;
-  final Student? student;
+  final String groupId;
+  final Subject? subject;
 
   static Future<void> show(
     BuildContext context, {
-    required String classroomId,
-    Student? student,
+    required String groupId,
+    Subject? subject,
   }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) =>
-          StudentFormSheet(classroomId: classroomId, student: student),
+          SubjectFormSheet(groupId: groupId, subject: subject),
     );
   }
 
   @override
-  ConsumerState<StudentFormSheet> createState() => _StudentFormSheetState();
+  ConsumerState<SubjectFormSheet> createState() => _SubjectFormSheetState();
 }
 
-class _StudentFormSheetState extends ConsumerState<StudentFormSheet> {
+class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
@@ -44,16 +45,16 @@ class _StudentFormSheetState extends ConsumerState<StudentFormSheet> {
   bool _saving = false;
   String? _error;
 
-  bool get _isEdit => widget.student != null;
+  bool get _isEdit => widget.subject != null;
 
   @override
   void initState() {
     super.initState();
-    _firstName = TextEditingController(text: widget.student?.firstName ?? '');
-    _lastName = TextEditingController(text: widget.student?.lastName ?? '');
-    _allergies = TextEditingController(text: widget.student?.allergies ?? '');
-    _notes = TextEditingController(text: widget.student?.notes ?? '');
-    final dobIso = widget.student?.dob;
+    _firstName = TextEditingController(text: widget.subject?.firstName ?? '');
+    _lastName = TextEditingController(text: widget.subject?.lastName ?? '');
+    _allergies = TextEditingController(text: widget.subject?.allergies ?? '');
+    _notes = TextEditingController(text: widget.subject?.notes ?? '');
+    final dobIso = widget.subject?.dob;
     _dob = dobIso == null ? null : DateTime.tryParse(dobIso);
   }
 
@@ -90,19 +91,16 @@ class _StudentFormSheetState extends ConsumerState<StudentFormSheet> {
     });
 
     try {
-      final actions = ref.read(studentActionsProvider);
-      final dob = _dob?.toIso8601String().substring(0, 10); // YYYY-MM-DD
+      final actions = ref.read(subjectActionsProvider);
+      final dob = _dob?.toIso8601String().substring(0, 10);
       final allergiesText = _allergies.text.trim();
       final notesText = _notes.text.trim();
-      // Pass null (= Value.absent in updateStudent) when a field wasn't
-      // changed. This matches the "no change" semantics; explicit-clear
-      // would need its own UI affordance.
       final allergies = allergiesText.isEmpty ? null : allergiesText;
       final notes = notesText.isEmpty ? null : notesText;
 
       if (_isEdit) {
         await actions.update(
-          id: widget.student!.id,
+          id: widget.subject!.id,
           firstName: _firstName.text.trim(),
           lastName: _lastName.text.trim(),
           dob: dob,
@@ -111,7 +109,7 @@ class _StudentFormSheetState extends ConsumerState<StudentFormSheet> {
         );
       } else {
         await actions.create(
-          classroomId: widget.classroomId,
+          groupId: widget.groupId,
           firstName: _firstName.text.trim(),
           lastName: _lastName.text.trim(),
           dob: dob,
@@ -122,10 +120,8 @@ class _StudentFormSheetState extends ConsumerState<StudentFormSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } on Exception catch (e, st) {
-      // Log details for developers but never render `e.toString()` to the
-      // user — RLS/constraint exceptions may include student PII.
       FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'roster'),
+        FlutterErrorDetails(exception: e, stack: st, library: 'subjects'),
       );
       if (!mounted) return;
       setState(() => _error = 'Could not save. Please try again.');
@@ -216,9 +212,7 @@ class _StudentFormSheetState extends ConsumerState<StudentFormSheet> {
                         suffixIcon: Icon(Icons.calendar_today_outlined),
                       ),
                       child: Text(
-                        _dob == null
-                            ? 'Tap to choose'
-                            : _formatDob(_dob!),
+                        _dob == null ? 'Tap to choose' : _formatDob(_dob!),
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),

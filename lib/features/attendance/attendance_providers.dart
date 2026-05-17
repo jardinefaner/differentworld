@@ -4,17 +4,17 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-/// (classroomId, isoDate) pair so a single provider can be keyed by both.
-typedef AttendanceKey = ({String classroomId, String date});
+/// (groupId, isoDate) pair so a single provider can be keyed by both.
+typedef AttendanceKey = ({String groupId, String date});
 
-/// Live stream of all attendance records in a classroom on a given day.
+/// Live stream of all attendance records in a Group on a given day.
 /// Stays in loading until the DB is open.
 // ignore: specify_nonobvious_property_types
 final attendanceForDayProvider =
     StreamProvider.family<List<AttendanceRecord>, AttendanceKey>(
   (ref, key) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchAttendanceForClassroomOnDate(key.classroomId, key.date);
+    yield* db.watchAttendanceForGroupOnDate(key.groupId, key.date);
   },
 );
 
@@ -25,43 +25,43 @@ class AttendanceActions {
   static const _uuid = Uuid();
 
   Future<void> setStatus({
-    required String classroomId,
-    required String studentId,
+    required String groupId,
+    required String subjectId,
     required String date,
     required AttendanceStatus status,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final profile = _ref.read(currentProfileProvider).value;
-    final programId = profile?.programId;
-    final recordedBy = profile?.id;
-    if (programId == null || recordedBy == null) {
-      throw StateError('No program / signed-in user.');
+    final member = _ref.read(currentMemberProvider).value;
+    final spaceId = member?.spaceId;
+    final recordedBy = member?.id;
+    if (spaceId == null || recordedBy == null) {
+      throw StateError('No Space / signed-in Member.');
     }
     await db.upsertAttendance(
       id: _uuid.v4(),
-      programId: programId,
-      classroomId: classroomId,
-      studentId: studentId,
+      spaceId: spaceId,
+      groupId: groupId,
+      subjectId: subjectId,
       date: date,
       status: status.dbValue,
       recordedBy: recordedBy,
     );
   }
 
-  /// Bulk-mark every student in a classroom as `present` for a date —
-  /// only writes for students who don't yet have a record (skips ones
-  /// already marked anything else so we don't overwrite an "absent").
+  /// Bulk-mark every Subject in a Group as `present` for a date — only
+  /// writes for Subjects that don't yet have a record (skips already-
+  /// recorded so an existing "absent" isn't overwritten).
   Future<void> markAllPresent({
-    required String classroomId,
+    required String groupId,
     required String date,
-    required List<String> studentIds,
-    required List<String> alreadyRecordedStudentIds,
+    required List<String> subjectIds,
+    required List<String> alreadyRecordedSubjectIds,
   }) async {
-    for (final studentId in studentIds) {
-      if (alreadyRecordedStudentIds.contains(studentId)) continue;
+    for (final subjectId in subjectIds) {
+      if (alreadyRecordedSubjectIds.contains(subjectId)) continue;
       await setStatus(
-        classroomId: classroomId,
-        studentId: studentId,
+        groupId: groupId,
+        subjectId: subjectId,
         date: date,
         status: AttendanceStatus.present,
       );

@@ -1,37 +1,31 @@
-# PowerSync sync rules for Different World.
+# PowerSync sync rules for Different World — universal-naming version.
 # https://docs.powersync.com/sync/streams/overview
 #
-# Edition 3 (streams). Each stream is a named set of queries that PowerSync
-# runs against the source database; rows it returns get synced to the
-# subscribed client. `auto_subscribe: true` means every signed-in client
-# automatically subscribes.
+# Edition 3 (streams). The engine-level table names are:
+#   spaces / members / groups / subjects / guardians / subject_guardians
+#   / attendance_records / invites
 #
-# Strategy: one stream for the user's own profile (always synced so the
-# client can read its own row before any program assignment), and one
-# stream for everything scoped to the user's program.
-#
-# Every synced table carries `program_id`, so we use a subquery against
-# `profiles` to scope each table without joins inside PowerSync's engine.
-# If the user has no `program_id` yet, the subquery returns null and no
-# program rows are synced — graceful no-op until they create or join a
-# program.
+# Strategy: one stream for the signed-in member's own row (always synced,
+# so the client can read its own member record before any space
+# assignment), and one stream for everything scoped to the member's space.
 
 config:
   edition: 3
 
 streams:
-  user_profile:
+  current_member:
     auto_subscribe: true
-    query: SELECT * FROM profiles WHERE id = auth.user_id()
+    query: SELECT * FROM members WHERE id = auth.user_id()
 
-  by_program:
+  by_space:
     auto_subscribe: true
     queries:
-      - SELECT * FROM programs           WHERE id         IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
-      - SELECT * FROM profiles           WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
-      - SELECT * FROM classrooms         WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
-      - SELECT * FROM enrollments        WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
-      - SELECT * FROM students           WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
-      - SELECT * FROM guardians          WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
-      - SELECT * FROM student_guardians  WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
-      - SELECT * FROM attendance_records WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM spaces             WHERE id        IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM members            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM groups             WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM enrollments        WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM subjects           WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM guardians          WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM subject_guardians  WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM attendance_records WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM invites            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())

@@ -4,15 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-class CreateProgramScreen extends ConsumerStatefulWidget {
-  const CreateProgramScreen({super.key});
+/// First-time onboarding for a Member with no Space — creates one and
+/// promotes them to director. UI labels "Program" because that's the
+/// domain-specific term in the classroom-app instance; the engine just
+/// sees Space + Member.
+class CreateSpaceScreen extends ConsumerStatefulWidget {
+  const CreateSpaceScreen({super.key});
 
   @override
-  ConsumerState<CreateProgramScreen> createState() =>
-      _CreateProgramScreenState();
+  ConsumerState<CreateSpaceScreen> createState() =>
+      _CreateSpaceScreenState();
 }
 
-class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
+class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
   final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _submitting = false;
@@ -41,13 +45,11 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
       if (db == null || session == null) {
         throw StateError('Database or session not ready.');
       }
-      await db.createProgramForUser(
-        programId: const Uuid().v4(),
-        programName: name,
-        userId: session.user.id,
+      await db.createSpaceForMember(
+        spaceId: const Uuid().v4(),
+        spaceName: name,
+        memberId: session.user.id,
       );
-      // currentProfileProvider's watch picks up the new program_id; the
-      // Home gate re-renders into the signed-in view.
     } on Exception catch (e) {
       if (!mounted) return;
       setState(() => _error = e.toString());

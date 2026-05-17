@@ -3,28 +3,26 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-/// Stream of students in a specific classroom. Family provider keyed by
-/// classroom id so each classroom detail screen has its own live query.
-/// Stream of students in a specific classroom. Family provider keyed by
-/// classroom id. Uses `async*` so the provider stays in `loading` state
-/// until the DB is ready, preventing a false "No students yet" flash.
+/// Stream of Subjects in a specific Group. Family provider keyed by
+/// group id. Uses `async*` so the provider stays in `loading` until the
+/// DB is ready.
 // ignore: specify_nonobvious_property_types
-final classroomStudentsProvider =
-    StreamProvider.family<List<Student>, String>(
-  (ref, classroomId) async* {
+final subjectsInGroupProvider =
+    StreamProvider.family<List<Subject>, String>(
+  (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchStudentsForClassroom(classroomId);
+    yield* db.watchSubjectsInGroup(groupId);
   },
 );
 
-class StudentActions {
-  StudentActions(this._ref);
+class SubjectActions {
+  SubjectActions(this._ref);
 
   final Ref _ref;
   static const _uuid = Uuid();
 
   Future<void> create({
-    required String classroomId,
+    required String groupId,
     required String firstName,
     required String lastName,
     String? dob,
@@ -32,15 +30,15 @@ class StudentActions {
     String? notes,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final profile = _ref.read(currentProfileProvider).value;
-    final programId = profile?.programId;
-    if (programId == null) {
-      throw StateError('No program selected for the current user.');
+    final member = _ref.read(currentMemberProvider).value;
+    final spaceId = member?.spaceId;
+    if (spaceId == null) {
+      throw StateError('No Space selected for the current Member.');
     }
-    await db.createStudent(
+    await db.createSubject(
       id: _uuid.v4(),
-      programId: programId,
-      classroomId: classroomId,
+      spaceId: spaceId,
+      groupId: groupId,
       firstName: firstName,
       lastName: lastName,
       dob: dob,
@@ -56,19 +54,19 @@ class StudentActions {
     String? dob,
     String? allergies,
     String? notes,
-    String? classroomId,
+    String? groupId,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateStudent(
+    await db.updateSubject(
       id: id,
       firstName: firstName,
       lastName: lastName,
       dob: dob,
       allergies: allergies,
       notes: notes,
-      classroomId: classroomId,
+      groupId: groupId,
     );
   }
 }
 
-final studentActionsProvider = Provider<StudentActions>(StudentActions.new);
+final subjectActionsProvider = Provider<SubjectActions>(SubjectActions.new);

@@ -1,29 +1,29 @@
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/features/classrooms/classrooms_providers.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Modal bottom sheet for creating or editing a classroom. Pass an
-/// existing `classroom` to edit, or null to create.
-class ClassroomFormSheet extends ConsumerStatefulWidget {
-  const ClassroomFormSheet({this.classroom, super.key});
+/// Modal bottom sheet for creating or editing a Group ("Classroom" in v1
+/// UI). Pass an existing `group` to edit, or null to create.
+class GroupFormSheet extends ConsumerStatefulWidget {
+  const GroupFormSheet({this.group, super.key});
 
-  final Classroom? classroom;
+  final Group? group;
 
-  static Future<void> show(BuildContext context, {Classroom? classroom}) {
+  static Future<void> show(BuildContext context, {Group? group}) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => ClassroomFormSheet(classroom: classroom),
+      builder: (_) => GroupFormSheet(group: group),
     );
   }
 
   @override
-  ConsumerState<ClassroomFormSheet> createState() => _ClassroomFormSheetState();
+  ConsumerState<GroupFormSheet> createState() => _GroupFormSheetState();
 }
 
-class _ClassroomFormSheetState extends ConsumerState<ClassroomFormSheet> {
+class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _ageRangeController;
@@ -31,14 +31,14 @@ class _ClassroomFormSheetState extends ConsumerState<ClassroomFormSheet> {
   bool _saving = false;
   String? _error;
 
-  bool get _isEdit => widget.classroom != null;
+  bool get _isEdit => widget.group != null;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.classroom?.name ?? '');
+    _nameController = TextEditingController(text: widget.group?.name ?? '');
     _ageRangeController = TextEditingController(
-      text: widget.classroom?.ageRange ?? '',
+      text: widget.group?.ageRange ?? '',
     );
   }
 
@@ -63,10 +63,10 @@ class _ClassroomFormSheetState extends ConsumerState<ClassroomFormSheet> {
     });
 
     try {
-      final actions = ref.read(classroomActionsProvider);
+      final actions = ref.read(groupActionsProvider);
       if (_isEdit) {
         await actions.update(
-          id: widget.classroom!.id,
+          id: widget.group!.id,
           name: name,
           ageRange: ageRange.isEmpty ? null : ageRange,
         );
@@ -79,10 +79,8 @@ class _ClassroomFormSheetState extends ConsumerState<ClassroomFormSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } on Exception catch (e, st) {
-      // Log details for developers but never render `e.toString()` to the
-      // user — RLS/constraint exceptions may include field values.
       FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'classrooms'),
+        FlutterErrorDetails(exception: e, stack: st, library: 'groups'),
       );
       if (!mounted) return;
       setState(

@@ -3,479 +3,11 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
+class $SpacesTable extends Spaces with TableInfo<$SpacesTable, Space> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ProfilesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _programIdMeta = const VerificationMeta(
-    'programId',
-  );
-  @override
-  late final GeneratedColumn<String> programId = GeneratedColumn<String>(
-    'program_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _displayNameMeta = const VerificationMeta(
-    'displayName',
-  );
-  @override
-  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
-    'display_name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _roleMeta = const VerificationMeta('role');
-  @override
-  late final GeneratedColumn<String> role = GeneratedColumn<String>(
-    'role',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
-    'avatarUrl',
-  );
-  @override
-  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
-    'avatar_url',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    programId,
-    displayName,
-    role,
-    avatarUrl,
-    createdAt,
-    updatedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'profiles';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Profile> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('program_id')) {
-      context.handle(
-        _programIdMeta,
-        programId.isAcceptableOrUnknown(data['program_id']!, _programIdMeta),
-      );
-    }
-    if (data.containsKey('display_name')) {
-      context.handle(
-        _displayNameMeta,
-        displayName.isAcceptableOrUnknown(
-          data['display_name']!,
-          _displayNameMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_displayNameMeta);
-    }
-    if (data.containsKey('role')) {
-      context.handle(
-        _roleMeta,
-        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_roleMeta);
-    }
-    if (data.containsKey('avatar_url')) {
-      context.handle(
-        _avatarUrlMeta,
-        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Profile map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Profile(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      programId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}program_id'],
-      ),
-      displayName: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}display_name'],
-      )!,
-      role: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}role'],
-      )!,
-      avatarUrl: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}avatar_url'],
-      ),
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}created_at'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_at'],
-      )!,
-    );
-  }
-
-  @override
-  $ProfilesTable createAlias(String alias) {
-    return $ProfilesTable(attachedDatabase, alias);
-  }
-}
-
-class Profile extends DataClass implements Insertable<Profile> {
-  final String id;
-  final String? programId;
-  final String displayName;
-  final String role;
-  final String? avatarUrl;
-  final String createdAt;
-  final String updatedAt;
-  const Profile({
-    required this.id,
-    this.programId,
-    required this.displayName,
-    required this.role,
-    this.avatarUrl,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    if (!nullToAbsent || programId != null) {
-      map['program_id'] = Variable<String>(programId);
-    }
-    map['display_name'] = Variable<String>(displayName);
-    map['role'] = Variable<String>(role);
-    if (!nullToAbsent || avatarUrl != null) {
-      map['avatar_url'] = Variable<String>(avatarUrl);
-    }
-    map['created_at'] = Variable<String>(createdAt);
-    map['updated_at'] = Variable<String>(updatedAt);
-    return map;
-  }
-
-  ProfilesCompanion toCompanion(bool nullToAbsent) {
-    return ProfilesCompanion(
-      id: Value(id),
-      programId: programId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(programId),
-      displayName: Value(displayName),
-      role: Value(role),
-      avatarUrl: avatarUrl == null && nullToAbsent
-          ? const Value.absent()
-          : Value(avatarUrl),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-    );
-  }
-
-  factory Profile.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Profile(
-      id: serializer.fromJson<String>(json['id']),
-      programId: serializer.fromJson<String?>(json['programId']),
-      displayName: serializer.fromJson<String>(json['displayName']),
-      role: serializer.fromJson<String>(json['role']),
-      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
-      createdAt: serializer.fromJson<String>(json['createdAt']),
-      updatedAt: serializer.fromJson<String>(json['updatedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'programId': serializer.toJson<String?>(programId),
-      'displayName': serializer.toJson<String>(displayName),
-      'role': serializer.toJson<String>(role),
-      'avatarUrl': serializer.toJson<String?>(avatarUrl),
-      'createdAt': serializer.toJson<String>(createdAt),
-      'updatedAt': serializer.toJson<String>(updatedAt),
-    };
-  }
-
-  Profile copyWith({
-    String? id,
-    Value<String?> programId = const Value.absent(),
-    String? displayName,
-    String? role,
-    Value<String?> avatarUrl = const Value.absent(),
-    String? createdAt,
-    String? updatedAt,
-  }) => Profile(
-    id: id ?? this.id,
-    programId: programId.present ? programId.value : this.programId,
-    displayName: displayName ?? this.displayName,
-    role: role ?? this.role,
-    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
-    createdAt: createdAt ?? this.createdAt,
-    updatedAt: updatedAt ?? this.updatedAt,
-  );
-  Profile copyWithCompanion(ProfilesCompanion data) {
-    return Profile(
-      id: data.id.present ? data.id.value : this.id,
-      programId: data.programId.present ? data.programId.value : this.programId,
-      displayName: data.displayName.present
-          ? data.displayName.value
-          : this.displayName,
-      role: data.role.present ? data.role.value : this.role,
-      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Profile(')
-          ..write('id: $id, ')
-          ..write('programId: $programId, ')
-          ..write('displayName: $displayName, ')
-          ..write('role: $role, ')
-          ..write('avatarUrl: $avatarUrl, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    programId,
-    displayName,
-    role,
-    avatarUrl,
-    createdAt,
-    updatedAt,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Profile &&
-          other.id == this.id &&
-          other.programId == this.programId &&
-          other.displayName == this.displayName &&
-          other.role == this.role &&
-          other.avatarUrl == this.avatarUrl &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
-}
-
-class ProfilesCompanion extends UpdateCompanion<Profile> {
-  final Value<String> id;
-  final Value<String?> programId;
-  final Value<String> displayName;
-  final Value<String> role;
-  final Value<String?> avatarUrl;
-  final Value<String> createdAt;
-  final Value<String> updatedAt;
-  final Value<int> rowid;
-  const ProfilesCompanion({
-    this.id = const Value.absent(),
-    this.programId = const Value.absent(),
-    this.displayName = const Value.absent(),
-    this.role = const Value.absent(),
-    this.avatarUrl = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  ProfilesCompanion.insert({
-    required String id,
-    this.programId = const Value.absent(),
-    required String displayName,
-    required String role,
-    this.avatarUrl = const Value.absent(),
-    required String createdAt,
-    required String updatedAt,
-    this.rowid = const Value.absent(),
-  }) : id = Value(id),
-       displayName = Value(displayName),
-       role = Value(role),
-       createdAt = Value(createdAt),
-       updatedAt = Value(updatedAt);
-  static Insertable<Profile> custom({
-    Expression<String>? id,
-    Expression<String>? programId,
-    Expression<String>? displayName,
-    Expression<String>? role,
-    Expression<String>? avatarUrl,
-    Expression<String>? createdAt,
-    Expression<String>? updatedAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (programId != null) 'program_id': programId,
-      if (displayName != null) 'display_name': displayName,
-      if (role != null) 'role': role,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  ProfilesCompanion copyWith({
-    Value<String>? id,
-    Value<String?>? programId,
-    Value<String>? displayName,
-    Value<String>? role,
-    Value<String?>? avatarUrl,
-    Value<String>? createdAt,
-    Value<String>? updatedAt,
-    Value<int>? rowid,
-  }) {
-    return ProfilesCompanion(
-      id: id ?? this.id,
-      programId: programId ?? this.programId,
-      displayName: displayName ?? this.displayName,
-      role: role ?? this.role,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (programId.present) {
-      map['program_id'] = Variable<String>(programId.value);
-    }
-    if (displayName.present) {
-      map['display_name'] = Variable<String>(displayName.value);
-    }
-    if (role.present) {
-      map['role'] = Variable<String>(role.value);
-    }
-    if (avatarUrl.present) {
-      map['avatar_url'] = Variable<String>(avatarUrl.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<String>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<String>(updatedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ProfilesCompanion(')
-          ..write('id: $id, ')
-          ..write('programId: $programId, ')
-          ..write('displayName: $displayName, ')
-          ..write('role: $role, ')
-          ..write('avatarUrl: $avatarUrl, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ProgramsTable(this.attachedDatabase, [this._alias]);
+  $SpacesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -514,6 +46,17 @@ class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
+    'capabilities',
+  );
+  @override
+  late final GeneratedColumn<String> capabilities = GeneratedColumn<String>(
+    'capabilities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -542,6 +85,7 @@ class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
     name,
     slug,
     settings,
+    capabilities,
     createdAt,
     updatedAt,
   ];
@@ -549,10 +93,10 @@ class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'programs';
+  static const String $name = 'spaces';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Program> instance, {
+    Insertable<Space> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -584,6 +128,17 @@ class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
     } else if (isInserting) {
       context.missing(_settingsMeta);
     }
+    if (data.containsKey('capabilities')) {
+      context.handle(
+        _capabilitiesMeta,
+        capabilities.isAcceptableOrUnknown(
+          data['capabilities']!,
+          _capabilitiesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capabilitiesMeta);
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -606,9 +161,9 @@ class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Program map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Space map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Program(
+    return Space(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -625,6 +180,10 @@ class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
         DriftSqlType.string,
         data['${effectivePrefix}settings'],
       )!,
+      capabilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capabilities'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -637,23 +196,25 @@ class $ProgramsTable extends Programs with TableInfo<$ProgramsTable, Program> {
   }
 
   @override
-  $ProgramsTable createAlias(String alias) {
-    return $ProgramsTable(attachedDatabase, alias);
+  $SpacesTable createAlias(String alias) {
+    return $SpacesTable(attachedDatabase, alias);
   }
 }
 
-class Program extends DataClass implements Insertable<Program> {
+class Space extends DataClass implements Insertable<Space> {
   final String id;
   final String name;
   final String? slug;
   final String settings;
+  final String capabilities;
   final String createdAt;
   final String updatedAt;
-  const Program({
+  const Space({
     required this.id,
     required this.name,
     this.slug,
     required this.settings,
+    required this.capabilities,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -666,32 +227,35 @@ class Program extends DataClass implements Insertable<Program> {
       map['slug'] = Variable<String>(slug);
     }
     map['settings'] = Variable<String>(settings);
+    map['capabilities'] = Variable<String>(capabilities);
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
   }
 
-  ProgramsCompanion toCompanion(bool nullToAbsent) {
-    return ProgramsCompanion(
+  SpacesCompanion toCompanion(bool nullToAbsent) {
+    return SpacesCompanion(
       id: Value(id),
       name: Value(name),
       slug: slug == null && nullToAbsent ? const Value.absent() : Value(slug),
       settings: Value(settings),
+      capabilities: Value(capabilities),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
   }
 
-  factory Program.fromJson(
+  factory Space.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Program(
+    return Space(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       slug: serializer.fromJson<String?>(json['slug']),
       settings: serializer.fromJson<String>(json['settings']),
+      capabilities: serializer.fromJson<String>(json['capabilities']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -704,32 +268,38 @@ class Program extends DataClass implements Insertable<Program> {
       'name': serializer.toJson<String>(name),
       'slug': serializer.toJson<String?>(slug),
       'settings': serializer.toJson<String>(settings),
+      'capabilities': serializer.toJson<String>(capabilities),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
   }
 
-  Program copyWith({
+  Space copyWith({
     String? id,
     String? name,
     Value<String?> slug = const Value.absent(),
     String? settings,
+    String? capabilities,
     String? createdAt,
     String? updatedAt,
-  }) => Program(
+  }) => Space(
     id: id ?? this.id,
     name: name ?? this.name,
     slug: slug.present ? slug.value : this.slug,
     settings: settings ?? this.settings,
+    capabilities: capabilities ?? this.capabilities,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-  Program copyWithCompanion(ProgramsCompanion data) {
-    return Program(
+  Space copyWithCompanion(SpacesCompanion data) {
+    return Space(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       slug: data.slug.present ? data.slug.value : this.slug,
       settings: data.settings.present ? data.settings.value : this.settings,
+      capabilities: data.capabilities.present
+          ? data.capabilities.value
+          : this.capabilities,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -737,11 +307,12 @@ class Program extends DataClass implements Insertable<Program> {
 
   @override
   String toString() {
-    return (StringBuffer('Program(')
+    return (StringBuffer('Space(')
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('slug: $slug, ')
           ..write('settings: $settings, ')
+          ..write('capabilities: $capabilities, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -750,54 +321,60 @@ class Program extends DataClass implements Insertable<Program> {
 
   @override
   int get hashCode =>
-      Object.hash(id, name, slug, settings, createdAt, updatedAt);
+      Object.hash(id, name, slug, settings, capabilities, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Program &&
+      (other is Space &&
           other.id == this.id &&
           other.name == this.name &&
           other.slug == this.slug &&
           other.settings == this.settings &&
+          other.capabilities == this.capabilities &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
 
-class ProgramsCompanion extends UpdateCompanion<Program> {
+class SpacesCompanion extends UpdateCompanion<Space> {
   final Value<String> id;
   final Value<String> name;
   final Value<String?> slug;
   final Value<String> settings;
+  final Value<String> capabilities;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
-  const ProgramsCompanion({
+  const SpacesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.slug = const Value.absent(),
     this.settings = const Value.absent(),
+    this.capabilities = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  ProgramsCompanion.insert({
+  SpacesCompanion.insert({
     required String id,
     required String name,
     this.slug = const Value.absent(),
     required String settings,
+    required String capabilities,
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
        settings = Value(settings),
+       capabilities = Value(capabilities),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
-  static Insertable<Program> custom({
+  static Insertable<Space> custom({
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? slug,
     Expression<String>? settings,
+    Expression<String>? capabilities,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -807,26 +384,29 @@ class ProgramsCompanion extends UpdateCompanion<Program> {
       if (name != null) 'name': name,
       if (slug != null) 'slug': slug,
       if (settings != null) 'settings': settings,
+      if (capabilities != null) 'capabilities': capabilities,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  ProgramsCompanion copyWith({
+  SpacesCompanion copyWith({
     Value<String>? id,
     Value<String>? name,
     Value<String?>? slug,
     Value<String>? settings,
+    Value<String>? capabilities,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
   }) {
-    return ProgramsCompanion(
+    return SpacesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       slug: slug ?? this.slug,
       settings: settings ?? this.settings,
+      capabilities: capabilities ?? this.capabilities,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -848,6 +428,9 @@ class ProgramsCompanion extends UpdateCompanion<Program> {
     if (settings.present) {
       map['settings'] = Variable<String>(settings.value);
     }
+    if (capabilities.present) {
+      map['capabilities'] = Variable<String>(capabilities.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -862,11 +445,12 @@ class ProgramsCompanion extends UpdateCompanion<Program> {
 
   @override
   String toString() {
-    return (StringBuffer('ProgramsCompanion(')
+    return (StringBuffer('SpacesCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('slug: $slug, ')
           ..write('settings: $settings, ')
+          ..write('capabilities: $capabilities, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -875,12 +459,11 @@ class ProgramsCompanion extends UpdateCompanion<Program> {
   }
 }
 
-class $ClassroomsTable extends Classrooms
-    with TableInfo<$ClassroomsTable, Classroom> {
+class $MembersTable extends Members with TableInfo<$MembersTable, Member> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ClassroomsTable(this.attachedDatabase, [this._alias]);
+  $MembersTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -890,12 +473,533 @@ class $ClassroomsTable extends Classrooms
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _programIdMeta = const VerificationMeta(
-    'programId',
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
   );
   @override
-  late final GeneratedColumn<String> programId = GeneratedColumn<String>(
-    'program_id',
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
+    'capabilities',
+  );
+  @override
+  late final GeneratedColumn<String> capabilities = GeneratedColumn<String>(
+    'capabilities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    displayName,
+    role,
+    avatarUrl,
+    capabilities,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Member> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_roleMeta);
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
+    }
+    if (data.containsKey('capabilities')) {
+      context.handle(
+        _capabilitiesMeta,
+        capabilities.isAcceptableOrUnknown(
+          data['capabilities']!,
+          _capabilitiesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capabilitiesMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Member map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Member(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      ),
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
+      capabilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capabilities'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MembersTable createAlias(String alias) {
+    return $MembersTable(attachedDatabase, alias);
+  }
+}
+
+class Member extends DataClass implements Insertable<Member> {
+  final String id;
+  final String? spaceId;
+  final String displayName;
+  final String role;
+  final String? avatarUrl;
+  final String capabilities;
+  final String createdAt;
+  final String updatedAt;
+  const Member({
+    required this.id,
+    this.spaceId,
+    required this.displayName,
+    required this.role,
+    this.avatarUrl,
+    required this.capabilities,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || spaceId != null) {
+      map['space_id'] = Variable<String>(spaceId);
+    }
+    map['display_name'] = Variable<String>(displayName);
+    map['role'] = Variable<String>(role);
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
+    map['capabilities'] = Variable<String>(capabilities);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  MembersCompanion toCompanion(bool nullToAbsent) {
+    return MembersCompanion(
+      id: Value(id),
+      spaceId: spaceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(spaceId),
+      displayName: Value(displayName),
+      role: Value(role),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
+      capabilities: Value(capabilities),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Member.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Member(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String?>(json['spaceId']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      role: serializer.fromJson<String>(json['role']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      capabilities: serializer.fromJson<String>(json['capabilities']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String?>(spaceId),
+      'displayName': serializer.toJson<String>(displayName),
+      'role': serializer.toJson<String>(role),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'capabilities': serializer.toJson<String>(capabilities),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Member copyWith({
+    String? id,
+    Value<String?> spaceId = const Value.absent(),
+    String? displayName,
+    String? role,
+    Value<String?> avatarUrl = const Value.absent(),
+    String? capabilities,
+    String? createdAt,
+    String? updatedAt,
+  }) => Member(
+    id: id ?? this.id,
+    spaceId: spaceId.present ? spaceId.value : this.spaceId,
+    displayName: displayName ?? this.displayName,
+    role: role ?? this.role,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    capabilities: capabilities ?? this.capabilities,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Member copyWithCompanion(MembersCompanion data) {
+    return Member(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      role: data.role.present ? data.role.value : this.role,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      capabilities: data.capabilities.present
+          ? data.capabilities.value
+          : this.capabilities,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Member(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('displayName: $displayName, ')
+          ..write('role: $role, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    displayName,
+    role,
+    avatarUrl,
+    capabilities,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Member &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.displayName == this.displayName &&
+          other.role == this.role &&
+          other.avatarUrl == this.avatarUrl &&
+          other.capabilities == this.capabilities &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class MembersCompanion extends UpdateCompanion<Member> {
+  final Value<String> id;
+  final Value<String?> spaceId;
+  final Value<String> displayName;
+  final Value<String> role;
+  final Value<String?> avatarUrl;
+  final Value<String> capabilities;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const MembersCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.role = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.capabilities = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MembersCompanion.insert({
+    required String id,
+    this.spaceId = const Value.absent(),
+    required String displayName,
+    required String role,
+    this.avatarUrl = const Value.absent(),
+    required String capabilities,
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       displayName = Value(displayName),
+       role = Value(role),
+       capabilities = Value(capabilities),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Member> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? displayName,
+    Expression<String>? role,
+    Expression<String>? avatarUrl,
+    Expression<String>? capabilities,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (displayName != null) 'display_name': displayName,
+      if (role != null) 'role': role,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (capabilities != null) 'capabilities': capabilities,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MembersCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? spaceId,
+    Value<String>? displayName,
+    Value<String>? role,
+    Value<String?>? avatarUrl,
+    Value<String>? capabilities,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return MembersCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      displayName: displayName ?? this.displayName,
+      role: role ?? this.role,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      capabilities: capabilities ?? this.capabilities,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (capabilities.present) {
+      map['capabilities'] = Variable<String>(capabilities.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MembersCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('displayName: $displayName, ')
+          ..write('role: $role, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
@@ -930,6 +1034,17 @@ class $ClassroomsTable extends Classrooms
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
+    'capabilities',
+  );
+  @override
+  late final GeneratedColumn<String> capabilities = GeneratedColumn<String>(
+    'capabilities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -955,10 +1070,11 @@ class $ClassroomsTable extends Classrooms
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    programId,
+    spaceId,
     name,
     ageRange,
     color,
+    capabilities,
     createdAt,
     updatedAt,
   ];
@@ -966,10 +1082,10 @@ class $ClassroomsTable extends Classrooms
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'classrooms';
+  static const String $name = 'groups';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Classroom> instance, {
+    Insertable<Group> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -979,13 +1095,13 @@ class $ClassroomsTable extends Classrooms
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('program_id')) {
+    if (data.containsKey('space_id')) {
       context.handle(
-        _programIdMeta,
-        programId.isAcceptableOrUnknown(data['program_id']!, _programIdMeta),
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_programIdMeta);
+      context.missing(_spaceIdMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -1006,6 +1122,17 @@ class $ClassroomsTable extends Classrooms
         _colorMeta,
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
       );
+    }
+    if (data.containsKey('capabilities')) {
+      context.handle(
+        _capabilitiesMeta,
+        capabilities.isAcceptableOrUnknown(
+          data['capabilities']!,
+          _capabilitiesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capabilitiesMeta);
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -1029,16 +1156,16 @@ class $ClassroomsTable extends Classrooms
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Classroom map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Group map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Classroom(
+    return Group(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
-      programId: attachedDatabase.typeMapping.read(
+      spaceId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}program_id'],
+        data['${effectivePrefix}space_id'],
       )!,
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -1052,6 +1179,10 @@ class $ClassroomsTable extends Classrooms
         DriftSqlType.string,
         data['${effectivePrefix}color'],
       ),
+      capabilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capabilities'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -1064,25 +1195,27 @@ class $ClassroomsTable extends Classrooms
   }
 
   @override
-  $ClassroomsTable createAlias(String alias) {
-    return $ClassroomsTable(attachedDatabase, alias);
+  $GroupsTable createAlias(String alias) {
+    return $GroupsTable(attachedDatabase, alias);
   }
 }
 
-class Classroom extends DataClass implements Insertable<Classroom> {
+class Group extends DataClass implements Insertable<Group> {
   final String id;
-  final String programId;
+  final String spaceId;
   final String name;
   final String? ageRange;
   final String? color;
+  final String capabilities;
   final String createdAt;
   final String updatedAt;
-  const Classroom({
+  const Group({
     required this.id,
-    required this.programId,
+    required this.spaceId,
     required this.name,
     this.ageRange,
     this.color,
+    required this.capabilities,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1090,7 +1223,7 @@ class Classroom extends DataClass implements Insertable<Classroom> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    map['program_id'] = Variable<String>(programId);
+    map['space_id'] = Variable<String>(spaceId);
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || ageRange != null) {
       map['age_range'] = Variable<String>(ageRange);
@@ -1098,15 +1231,16 @@ class Classroom extends DataClass implements Insertable<Classroom> {
     if (!nullToAbsent || color != null) {
       map['color'] = Variable<String>(color);
     }
+    map['capabilities'] = Variable<String>(capabilities);
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
   }
 
-  ClassroomsCompanion toCompanion(bool nullToAbsent) {
-    return ClassroomsCompanion(
+  GroupsCompanion toCompanion(bool nullToAbsent) {
+    return GroupsCompanion(
       id: Value(id),
-      programId: Value(programId),
+      spaceId: Value(spaceId),
       name: Value(name),
       ageRange: ageRange == null && nullToAbsent
           ? const Value.absent()
@@ -1114,22 +1248,24 @@ class Classroom extends DataClass implements Insertable<Classroom> {
       color: color == null && nullToAbsent
           ? const Value.absent()
           : Value(color),
+      capabilities: Value(capabilities),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
   }
 
-  factory Classroom.fromJson(
+  factory Group.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Classroom(
+    return Group(
       id: serializer.fromJson<String>(json['id']),
-      programId: serializer.fromJson<String>(json['programId']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
       name: serializer.fromJson<String>(json['name']),
       ageRange: serializer.fromJson<String?>(json['ageRange']),
       color: serializer.fromJson<String?>(json['color']),
+      capabilities: serializer.fromJson<String>(json['capabilities']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -1139,39 +1275,45 @@ class Classroom extends DataClass implements Insertable<Classroom> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'programId': serializer.toJson<String>(programId),
+      'spaceId': serializer.toJson<String>(spaceId),
       'name': serializer.toJson<String>(name),
       'ageRange': serializer.toJson<String?>(ageRange),
       'color': serializer.toJson<String?>(color),
+      'capabilities': serializer.toJson<String>(capabilities),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
   }
 
-  Classroom copyWith({
+  Group copyWith({
     String? id,
-    String? programId,
+    String? spaceId,
     String? name,
     Value<String?> ageRange = const Value.absent(),
     Value<String?> color = const Value.absent(),
+    String? capabilities,
     String? createdAt,
     String? updatedAt,
-  }) => Classroom(
+  }) => Group(
     id: id ?? this.id,
-    programId: programId ?? this.programId,
+    spaceId: spaceId ?? this.spaceId,
     name: name ?? this.name,
     ageRange: ageRange.present ? ageRange.value : this.ageRange,
     color: color.present ? color.value : this.color,
+    capabilities: capabilities ?? this.capabilities,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-  Classroom copyWithCompanion(ClassroomsCompanion data) {
-    return Classroom(
+  Group copyWithCompanion(GroupsCompanion data) {
+    return Group(
       id: data.id.present ? data.id.value : this.id,
-      programId: data.programId.present ? data.programId.value : this.programId,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
       name: data.name.present ? data.name.value : this.name,
       ageRange: data.ageRange.present ? data.ageRange.value : this.ageRange,
       color: data.color.present ? data.color.value : this.color,
+      capabilities: data.capabilities.present
+          ? data.capabilities.value
+          : this.capabilities,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1179,12 +1321,13 @@ class Classroom extends DataClass implements Insertable<Classroom> {
 
   @override
   String toString() {
-    return (StringBuffer('Classroom(')
+    return (StringBuffer('Group(')
           ..write('id: $id, ')
-          ..write('programId: $programId, ')
+          ..write('spaceId: $spaceId, ')
           ..write('name: $name, ')
           ..write('ageRange: $ageRange, ')
           ..write('color: $color, ')
+          ..write('capabilities: $capabilities, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1192,92 +1335,109 @@ class Classroom extends DataClass implements Insertable<Classroom> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, programId, name, ageRange, color, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    name,
+    ageRange,
+    color,
+    capabilities,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Classroom &&
+      (other is Group &&
           other.id == this.id &&
-          other.programId == this.programId &&
+          other.spaceId == this.spaceId &&
           other.name == this.name &&
           other.ageRange == this.ageRange &&
           other.color == this.color &&
+          other.capabilities == this.capabilities &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
 
-class ClassroomsCompanion extends UpdateCompanion<Classroom> {
+class GroupsCompanion extends UpdateCompanion<Group> {
   final Value<String> id;
-  final Value<String> programId;
+  final Value<String> spaceId;
   final Value<String> name;
   final Value<String?> ageRange;
   final Value<String?> color;
+  final Value<String> capabilities;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
-  const ClassroomsCompanion({
+  const GroupsCompanion({
     this.id = const Value.absent(),
-    this.programId = const Value.absent(),
+    this.spaceId = const Value.absent(),
     this.name = const Value.absent(),
     this.ageRange = const Value.absent(),
     this.color = const Value.absent(),
+    this.capabilities = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  ClassroomsCompanion.insert({
+  GroupsCompanion.insert({
     required String id,
-    required String programId,
+    required String spaceId,
     required String name,
     this.ageRange = const Value.absent(),
     this.color = const Value.absent(),
+    required String capabilities,
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
-       programId = Value(programId),
+       spaceId = Value(spaceId),
        name = Value(name),
+       capabilities = Value(capabilities),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
-  static Insertable<Classroom> custom({
+  static Insertable<Group> custom({
     Expression<String>? id,
-    Expression<String>? programId,
+    Expression<String>? spaceId,
     Expression<String>? name,
     Expression<String>? ageRange,
     Expression<String>? color,
+    Expression<String>? capabilities,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (programId != null) 'program_id': programId,
+      if (spaceId != null) 'space_id': spaceId,
       if (name != null) 'name': name,
       if (ageRange != null) 'age_range': ageRange,
       if (color != null) 'color': color,
+      if (capabilities != null) 'capabilities': capabilities,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  ClassroomsCompanion copyWith({
+  GroupsCompanion copyWith({
     Value<String>? id,
-    Value<String>? programId,
+    Value<String>? spaceId,
     Value<String>? name,
     Value<String?>? ageRange,
     Value<String?>? color,
+    Value<String>? capabilities,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
   }) {
-    return ClassroomsCompanion(
+    return GroupsCompanion(
       id: id ?? this.id,
-      programId: programId ?? this.programId,
+      spaceId: spaceId ?? this.spaceId,
       name: name ?? this.name,
       ageRange: ageRange ?? this.ageRange,
       color: color ?? this.color,
+      capabilities: capabilities ?? this.capabilities,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1290,8 +1450,8 @@ class ClassroomsCompanion extends UpdateCompanion<Classroom> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (programId.present) {
-      map['program_id'] = Variable<String>(programId.value);
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -1301,6 +1461,9 @@ class ClassroomsCompanion extends UpdateCompanion<Classroom> {
     }
     if (color.present) {
       map['color'] = Variable<String>(color.value);
+    }
+    if (capabilities.present) {
+      map['capabilities'] = Variable<String>(capabilities.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
@@ -1316,12 +1479,13 @@ class ClassroomsCompanion extends UpdateCompanion<Classroom> {
 
   @override
   String toString() {
-    return (StringBuffer('ClassroomsCompanion(')
+    return (StringBuffer('GroupsCompanion(')
           ..write('id: $id, ')
-          ..write('programId: $programId, ')
+          ..write('spaceId: $spaceId, ')
           ..write('name: $name, ')
           ..write('ageRange: $ageRange, ')
           ..write('color: $color, ')
+          ..write('capabilities: $capabilities, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -1330,11 +1494,11 @@ class ClassroomsCompanion extends UpdateCompanion<Classroom> {
   }
 }
 
-class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
+class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $StudentsTable(this.attachedDatabase, [this._alias]);
+  $SubjectsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -1344,23 +1508,23 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _programIdMeta = const VerificationMeta(
-    'programId',
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
   );
   @override
-  late final GeneratedColumn<String> programId = GeneratedColumn<String>(
-    'program_id',
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _classroomIdMeta = const VerificationMeta(
-    'classroomId',
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
   );
   @override
-  late final GeneratedColumn<String> classroomId = GeneratedColumn<String>(
-    'classroom_id',
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -1428,6 +1592,17 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
+    'capabilities',
+  );
+  @override
+  late final GeneratedColumn<String> capabilities = GeneratedColumn<String>(
+    'capabilities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1453,14 +1628,15 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    programId,
-    classroomId,
+    spaceId,
+    groupId,
     firstName,
     lastName,
     dob,
     photoUrl,
     allergies,
     notes,
+    capabilities,
     createdAt,
     updatedAt,
   ];
@@ -1468,10 +1644,10 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'students';
+  static const String $name = 'subjects';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Student> instance, {
+    Insertable<Subject> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1481,21 +1657,18 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('program_id')) {
+    if (data.containsKey('space_id')) {
       context.handle(
-        _programIdMeta,
-        programId.isAcceptableOrUnknown(data['program_id']!, _programIdMeta),
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_programIdMeta);
+      context.missing(_spaceIdMeta);
     }
-    if (data.containsKey('classroom_id')) {
+    if (data.containsKey('group_id')) {
       context.handle(
-        _classroomIdMeta,
-        classroomId.isAcceptableOrUnknown(
-          data['classroom_id']!,
-          _classroomIdMeta,
-        ),
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
       );
     }
     if (data.containsKey('first_name')) {
@@ -1538,6 +1711,17 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('capabilities')) {
+      context.handle(
+        _capabilitiesMeta,
+        capabilities.isAcceptableOrUnknown(
+          data['capabilities']!,
+          _capabilitiesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capabilitiesMeta);
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1560,20 +1744,20 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Student map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Subject map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Student(
+    return Subject(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
-      programId: attachedDatabase.typeMapping.read(
+      spaceId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}program_id'],
+        data['${effectivePrefix}space_id'],
       )!,
-      classroomId: attachedDatabase.typeMapping.read(
+      groupId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}classroom_id'],
+        data['${effectivePrefix}group_id'],
       ),
       firstName: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -1599,6 +1783,10 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      capabilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capabilities'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -1611,33 +1799,35 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
   }
 
   @override
-  $StudentsTable createAlias(String alias) {
-    return $StudentsTable(attachedDatabase, alias);
+  $SubjectsTable createAlias(String alias) {
+    return $SubjectsTable(attachedDatabase, alias);
   }
 }
 
-class Student extends DataClass implements Insertable<Student> {
+class Subject extends DataClass implements Insertable<Subject> {
   final String id;
-  final String programId;
-  final String? classroomId;
+  final String spaceId;
+  final String? groupId;
   final String firstName;
   final String lastName;
   final String? dob;
   final String? photoUrl;
   final String? allergies;
   final String? notes;
+  final String capabilities;
   final String createdAt;
   final String updatedAt;
-  const Student({
+  const Subject({
     required this.id,
-    required this.programId,
-    this.classroomId,
+    required this.spaceId,
+    this.groupId,
     required this.firstName,
     required this.lastName,
     this.dob,
     this.photoUrl,
     this.allergies,
     this.notes,
+    required this.capabilities,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1645,9 +1835,9 @@ class Student extends DataClass implements Insertable<Student> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    map['program_id'] = Variable<String>(programId);
-    if (!nullToAbsent || classroomId != null) {
-      map['classroom_id'] = Variable<String>(classroomId);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
     }
     map['first_name'] = Variable<String>(firstName);
     map['last_name'] = Variable<String>(lastName);
@@ -1663,18 +1853,19 @@ class Student extends DataClass implements Insertable<Student> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    map['capabilities'] = Variable<String>(capabilities);
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
   }
 
-  StudentsCompanion toCompanion(bool nullToAbsent) {
-    return StudentsCompanion(
+  SubjectsCompanion toCompanion(bool nullToAbsent) {
+    return SubjectsCompanion(
       id: Value(id),
-      programId: Value(programId),
-      classroomId: classroomId == null && nullToAbsent
+      spaceId: Value(spaceId),
+      groupId: groupId == null && nullToAbsent
           ? const Value.absent()
-          : Value(classroomId),
+          : Value(groupId),
       firstName: Value(firstName),
       lastName: Value(lastName),
       dob: dob == null && nullToAbsent ? const Value.absent() : Value(dob),
@@ -1687,26 +1878,28 @@ class Student extends DataClass implements Insertable<Student> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      capabilities: Value(capabilities),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
   }
 
-  factory Student.fromJson(
+  factory Subject.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Student(
+    return Subject(
       id: serializer.fromJson<String>(json['id']),
-      programId: serializer.fromJson<String>(json['programId']),
-      classroomId: serializer.fromJson<String?>(json['classroomId']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
       firstName: serializer.fromJson<String>(json['firstName']),
       lastName: serializer.fromJson<String>(json['lastName']),
       dob: serializer.fromJson<String?>(json['dob']),
       photoUrl: serializer.fromJson<String?>(json['photoUrl']),
       allergies: serializer.fromJson<String?>(json['allergies']),
       notes: serializer.fromJson<String?>(json['notes']),
+      capabilities: serializer.fromJson<String>(json['capabilities']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -1716,57 +1909,61 @@ class Student extends DataClass implements Insertable<Student> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'programId': serializer.toJson<String>(programId),
-      'classroomId': serializer.toJson<String?>(classroomId),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'groupId': serializer.toJson<String?>(groupId),
       'firstName': serializer.toJson<String>(firstName),
       'lastName': serializer.toJson<String>(lastName),
       'dob': serializer.toJson<String?>(dob),
       'photoUrl': serializer.toJson<String?>(photoUrl),
       'allergies': serializer.toJson<String?>(allergies),
       'notes': serializer.toJson<String?>(notes),
+      'capabilities': serializer.toJson<String>(capabilities),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
   }
 
-  Student copyWith({
+  Subject copyWith({
     String? id,
-    String? programId,
-    Value<String?> classroomId = const Value.absent(),
+    String? spaceId,
+    Value<String?> groupId = const Value.absent(),
     String? firstName,
     String? lastName,
     Value<String?> dob = const Value.absent(),
     Value<String?> photoUrl = const Value.absent(),
     Value<String?> allergies = const Value.absent(),
     Value<String?> notes = const Value.absent(),
+    String? capabilities,
     String? createdAt,
     String? updatedAt,
-  }) => Student(
+  }) => Subject(
     id: id ?? this.id,
-    programId: programId ?? this.programId,
-    classroomId: classroomId.present ? classroomId.value : this.classroomId,
+    spaceId: spaceId ?? this.spaceId,
+    groupId: groupId.present ? groupId.value : this.groupId,
     firstName: firstName ?? this.firstName,
     lastName: lastName ?? this.lastName,
     dob: dob.present ? dob.value : this.dob,
     photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
     allergies: allergies.present ? allergies.value : this.allergies,
     notes: notes.present ? notes.value : this.notes,
+    capabilities: capabilities ?? this.capabilities,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
-  Student copyWithCompanion(StudentsCompanion data) {
-    return Student(
+  Subject copyWithCompanion(SubjectsCompanion data) {
+    return Subject(
       id: data.id.present ? data.id.value : this.id,
-      programId: data.programId.present ? data.programId.value : this.programId,
-      classroomId: data.classroomId.present
-          ? data.classroomId.value
-          : this.classroomId,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
       firstName: data.firstName.present ? data.firstName.value : this.firstName,
       lastName: data.lastName.present ? data.lastName.value : this.lastName,
       dob: data.dob.present ? data.dob.value : this.dob,
       photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
       allergies: data.allergies.present ? data.allergies.value : this.allergies,
       notes: data.notes.present ? data.notes.value : this.notes,
+      capabilities: data.capabilities.present
+          ? data.capabilities.value
+          : this.capabilities,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1774,16 +1971,17 @@ class Student extends DataClass implements Insertable<Student> {
 
   @override
   String toString() {
-    return (StringBuffer('Student(')
+    return (StringBuffer('Subject(')
           ..write('id: $id, ')
-          ..write('programId: $programId, ')
-          ..write('classroomId: $classroomId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
           ..write('dob: $dob, ')
           ..write('photoUrl: $photoUrl, ')
           ..write('allergies: $allergies, ')
           ..write('notes: $notes, ')
+          ..write('capabilities: $capabilities, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1793,134 +1991,144 @@ class Student extends DataClass implements Insertable<Student> {
   @override
   int get hashCode => Object.hash(
     id,
-    programId,
-    classroomId,
+    spaceId,
+    groupId,
     firstName,
     lastName,
     dob,
     photoUrl,
     allergies,
     notes,
+    capabilities,
     createdAt,
     updatedAt,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Student &&
+      (other is Subject &&
           other.id == this.id &&
-          other.programId == this.programId &&
-          other.classroomId == this.classroomId &&
+          other.spaceId == this.spaceId &&
+          other.groupId == this.groupId &&
           other.firstName == this.firstName &&
           other.lastName == this.lastName &&
           other.dob == this.dob &&
           other.photoUrl == this.photoUrl &&
           other.allergies == this.allergies &&
           other.notes == this.notes &&
+          other.capabilities == this.capabilities &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
 
-class StudentsCompanion extends UpdateCompanion<Student> {
+class SubjectsCompanion extends UpdateCompanion<Subject> {
   final Value<String> id;
-  final Value<String> programId;
-  final Value<String?> classroomId;
+  final Value<String> spaceId;
+  final Value<String?> groupId;
   final Value<String> firstName;
   final Value<String> lastName;
   final Value<String?> dob;
   final Value<String?> photoUrl;
   final Value<String?> allergies;
   final Value<String?> notes;
+  final Value<String> capabilities;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
-  const StudentsCompanion({
+  const SubjectsCompanion({
     this.id = const Value.absent(),
-    this.programId = const Value.absent(),
-    this.classroomId = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.groupId = const Value.absent(),
     this.firstName = const Value.absent(),
     this.lastName = const Value.absent(),
     this.dob = const Value.absent(),
     this.photoUrl = const Value.absent(),
     this.allergies = const Value.absent(),
     this.notes = const Value.absent(),
+    this.capabilities = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  StudentsCompanion.insert({
+  SubjectsCompanion.insert({
     required String id,
-    required String programId,
-    this.classroomId = const Value.absent(),
+    required String spaceId,
+    this.groupId = const Value.absent(),
     required String firstName,
     required String lastName,
     this.dob = const Value.absent(),
     this.photoUrl = const Value.absent(),
     this.allergies = const Value.absent(),
     this.notes = const Value.absent(),
+    required String capabilities,
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
-       programId = Value(programId),
+       spaceId = Value(spaceId),
        firstName = Value(firstName),
        lastName = Value(lastName),
+       capabilities = Value(capabilities),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
-  static Insertable<Student> custom({
+  static Insertable<Subject> custom({
     Expression<String>? id,
-    Expression<String>? programId,
-    Expression<String>? classroomId,
+    Expression<String>? spaceId,
+    Expression<String>? groupId,
     Expression<String>? firstName,
     Expression<String>? lastName,
     Expression<String>? dob,
     Expression<String>? photoUrl,
     Expression<String>? allergies,
     Expression<String>? notes,
+    Expression<String>? capabilities,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (programId != null) 'program_id': programId,
-      if (classroomId != null) 'classroom_id': classroomId,
+      if (spaceId != null) 'space_id': spaceId,
+      if (groupId != null) 'group_id': groupId,
       if (firstName != null) 'first_name': firstName,
       if (lastName != null) 'last_name': lastName,
       if (dob != null) 'dob': dob,
       if (photoUrl != null) 'photo_url': photoUrl,
       if (allergies != null) 'allergies': allergies,
       if (notes != null) 'notes': notes,
+      if (capabilities != null) 'capabilities': capabilities,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  StudentsCompanion copyWith({
+  SubjectsCompanion copyWith({
     Value<String>? id,
-    Value<String>? programId,
-    Value<String?>? classroomId,
+    Value<String>? spaceId,
+    Value<String?>? groupId,
     Value<String>? firstName,
     Value<String>? lastName,
     Value<String?>? dob,
     Value<String?>? photoUrl,
     Value<String?>? allergies,
     Value<String?>? notes,
+    Value<String>? capabilities,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
   }) {
-    return StudentsCompanion(
+    return SubjectsCompanion(
       id: id ?? this.id,
-      programId: programId ?? this.programId,
-      classroomId: classroomId ?? this.classroomId,
+      spaceId: spaceId ?? this.spaceId,
+      groupId: groupId ?? this.groupId,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       dob: dob ?? this.dob,
       photoUrl: photoUrl ?? this.photoUrl,
       allergies: allergies ?? this.allergies,
       notes: notes ?? this.notes,
+      capabilities: capabilities ?? this.capabilities,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1933,11 +2141,11 @@ class StudentsCompanion extends UpdateCompanion<Student> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (programId.present) {
-      map['program_id'] = Variable<String>(programId.value);
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
     }
-    if (classroomId.present) {
-      map['classroom_id'] = Variable<String>(classroomId.value);
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
     }
     if (firstName.present) {
       map['first_name'] = Variable<String>(firstName.value);
@@ -1957,6 +2165,9 @@ class StudentsCompanion extends UpdateCompanion<Student> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (capabilities.present) {
+      map['capabilities'] = Variable<String>(capabilities.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -1971,16 +2182,17 @@ class StudentsCompanion extends UpdateCompanion<Student> {
 
   @override
   String toString() {
-    return (StringBuffer('StudentsCompanion(')
+    return (StringBuffer('SubjectsCompanion(')
           ..write('id: $id, ')
-          ..write('programId: $programId, ')
-          ..write('classroomId: $classroomId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
           ..write('firstName: $firstName, ')
           ..write('lastName: $lastName, ')
           ..write('dob: $dob, ')
           ..write('photoUrl: $photoUrl, ')
           ..write('allergies: $allergies, ')
           ..write('notes: $notes, ')
+          ..write('capabilities: $capabilities, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -2004,34 +2216,34 @@ class $AttendanceRecordsTable extends AttendanceRecords
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _programIdMeta = const VerificationMeta(
-    'programId',
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
   );
   @override
-  late final GeneratedColumn<String> programId = GeneratedColumn<String>(
-    'program_id',
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _classroomIdMeta = const VerificationMeta(
-    'classroomId',
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
   );
   @override
-  late final GeneratedColumn<String> classroomId = GeneratedColumn<String>(
-    'classroom_id',
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _studentIdMeta = const VerificationMeta(
-    'studentId',
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
   );
   @override
-  late final GeneratedColumn<String> studentId = GeneratedColumn<String>(
-    'student_id',
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
@@ -2100,9 +2312,9 @@ class $AttendanceRecordsTable extends AttendanceRecords
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    programId,
-    classroomId,
-    studentId,
+    spaceId,
+    groupId,
+    subjectId,
     date,
     status,
     notes,
@@ -2127,30 +2339,27 @@ class $AttendanceRecordsTable extends AttendanceRecords
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('program_id')) {
+    if (data.containsKey('space_id')) {
       context.handle(
-        _programIdMeta,
-        programId.isAcceptableOrUnknown(data['program_id']!, _programIdMeta),
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_programIdMeta);
+      context.missing(_spaceIdMeta);
     }
-    if (data.containsKey('classroom_id')) {
+    if (data.containsKey('group_id')) {
       context.handle(
-        _classroomIdMeta,
-        classroomId.isAcceptableOrUnknown(
-          data['classroom_id']!,
-          _classroomIdMeta,
-        ),
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
       );
     }
-    if (data.containsKey('student_id')) {
+    if (data.containsKey('subject_id')) {
       context.handle(
-        _studentIdMeta,
-        studentId.isAcceptableOrUnknown(data['student_id']!, _studentIdMeta),
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_studentIdMeta);
+      context.missing(_subjectIdMeta);
     }
     if (data.containsKey('date')) {
       context.handle(
@@ -2211,17 +2420,17 @@ class $AttendanceRecordsTable extends AttendanceRecords
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
-      programId: attachedDatabase.typeMapping.read(
+      spaceId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}program_id'],
+        data['${effectivePrefix}space_id'],
       )!,
-      classroomId: attachedDatabase.typeMapping.read(
+      groupId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}classroom_id'],
+        data['${effectivePrefix}group_id'],
       ),
-      studentId: attachedDatabase.typeMapping.read(
+      subjectId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}student_id'],
+        data['${effectivePrefix}subject_id'],
       )!,
       date: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2259,9 +2468,9 @@ class $AttendanceRecordsTable extends AttendanceRecords
 class AttendanceRecord extends DataClass
     implements Insertable<AttendanceRecord> {
   final String id;
-  final String programId;
-  final String? classroomId;
-  final String studentId;
+  final String spaceId;
+  final String? groupId;
+  final String subjectId;
   final String date;
   final String status;
   final String? notes;
@@ -2270,9 +2479,9 @@ class AttendanceRecord extends DataClass
   final String updatedAt;
   const AttendanceRecord({
     required this.id,
-    required this.programId,
-    this.classroomId,
-    required this.studentId,
+    required this.spaceId,
+    this.groupId,
+    required this.subjectId,
     required this.date,
     required this.status,
     this.notes,
@@ -2284,11 +2493,11 @@ class AttendanceRecord extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    map['program_id'] = Variable<String>(programId);
-    if (!nullToAbsent || classroomId != null) {
-      map['classroom_id'] = Variable<String>(classroomId);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
     }
-    map['student_id'] = Variable<String>(studentId);
+    map['subject_id'] = Variable<String>(subjectId);
     map['date'] = Variable<String>(date);
     map['status'] = Variable<String>(status);
     if (!nullToAbsent || notes != null) {
@@ -2303,11 +2512,11 @@ class AttendanceRecord extends DataClass
   AttendanceRecordsCompanion toCompanion(bool nullToAbsent) {
     return AttendanceRecordsCompanion(
       id: Value(id),
-      programId: Value(programId),
-      classroomId: classroomId == null && nullToAbsent
+      spaceId: Value(spaceId),
+      groupId: groupId == null && nullToAbsent
           ? const Value.absent()
-          : Value(classroomId),
-      studentId: Value(studentId),
+          : Value(groupId),
+      subjectId: Value(subjectId),
       date: Value(date),
       status: Value(status),
       notes: notes == null && nullToAbsent
@@ -2326,9 +2535,9 @@ class AttendanceRecord extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AttendanceRecord(
       id: serializer.fromJson<String>(json['id']),
-      programId: serializer.fromJson<String>(json['programId']),
-      classroomId: serializer.fromJson<String?>(json['classroomId']),
-      studentId: serializer.fromJson<String>(json['studentId']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      subjectId: serializer.fromJson<String>(json['subjectId']),
       date: serializer.fromJson<String>(json['date']),
       status: serializer.fromJson<String>(json['status']),
       notes: serializer.fromJson<String?>(json['notes']),
@@ -2342,9 +2551,9 @@ class AttendanceRecord extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'programId': serializer.toJson<String>(programId),
-      'classroomId': serializer.toJson<String?>(classroomId),
-      'studentId': serializer.toJson<String>(studentId),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'groupId': serializer.toJson<String?>(groupId),
+      'subjectId': serializer.toJson<String>(subjectId),
       'date': serializer.toJson<String>(date),
       'status': serializer.toJson<String>(status),
       'notes': serializer.toJson<String?>(notes),
@@ -2356,9 +2565,9 @@ class AttendanceRecord extends DataClass
 
   AttendanceRecord copyWith({
     String? id,
-    String? programId,
-    Value<String?> classroomId = const Value.absent(),
-    String? studentId,
+    String? spaceId,
+    Value<String?> groupId = const Value.absent(),
+    String? subjectId,
     String? date,
     String? status,
     Value<String?> notes = const Value.absent(),
@@ -2367,9 +2576,9 @@ class AttendanceRecord extends DataClass
     String? updatedAt,
   }) => AttendanceRecord(
     id: id ?? this.id,
-    programId: programId ?? this.programId,
-    classroomId: classroomId.present ? classroomId.value : this.classroomId,
-    studentId: studentId ?? this.studentId,
+    spaceId: spaceId ?? this.spaceId,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    subjectId: subjectId ?? this.subjectId,
     date: date ?? this.date,
     status: status ?? this.status,
     notes: notes.present ? notes.value : this.notes,
@@ -2380,11 +2589,9 @@ class AttendanceRecord extends DataClass
   AttendanceRecord copyWithCompanion(AttendanceRecordsCompanion data) {
     return AttendanceRecord(
       id: data.id.present ? data.id.value : this.id,
-      programId: data.programId.present ? data.programId.value : this.programId,
-      classroomId: data.classroomId.present
-          ? data.classroomId.value
-          : this.classroomId,
-      studentId: data.studentId.present ? data.studentId.value : this.studentId,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
       date: data.date.present ? data.date.value : this.date,
       status: data.status.present ? data.status.value : this.status,
       notes: data.notes.present ? data.notes.value : this.notes,
@@ -2402,9 +2609,9 @@ class AttendanceRecord extends DataClass
   String toString() {
     return (StringBuffer('AttendanceRecord(')
           ..write('id: $id, ')
-          ..write('programId: $programId, ')
-          ..write('classroomId: $classroomId, ')
-          ..write('studentId: $studentId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('subjectId: $subjectId, ')
           ..write('date: $date, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
@@ -2418,9 +2625,9 @@ class AttendanceRecord extends DataClass
   @override
   int get hashCode => Object.hash(
     id,
-    programId,
-    classroomId,
-    studentId,
+    spaceId,
+    groupId,
+    subjectId,
     date,
     status,
     notes,
@@ -2433,9 +2640,9 @@ class AttendanceRecord extends DataClass
       identical(this, other) ||
       (other is AttendanceRecord &&
           other.id == this.id &&
-          other.programId == this.programId &&
-          other.classroomId == this.classroomId &&
-          other.studentId == this.studentId &&
+          other.spaceId == this.spaceId &&
+          other.groupId == this.groupId &&
+          other.subjectId == this.subjectId &&
           other.date == this.date &&
           other.status == this.status &&
           other.notes == this.notes &&
@@ -2446,9 +2653,9 @@ class AttendanceRecord extends DataClass
 
 class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   final Value<String> id;
-  final Value<String> programId;
-  final Value<String?> classroomId;
-  final Value<String> studentId;
+  final Value<String> spaceId;
+  final Value<String?> groupId;
+  final Value<String> subjectId;
   final Value<String> date;
   final Value<String> status;
   final Value<String?> notes;
@@ -2458,9 +2665,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   final Value<int> rowid;
   const AttendanceRecordsCompanion({
     this.id = const Value.absent(),
-    this.programId = const Value.absent(),
-    this.classroomId = const Value.absent(),
-    this.studentId = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.subjectId = const Value.absent(),
     this.date = const Value.absent(),
     this.status = const Value.absent(),
     this.notes = const Value.absent(),
@@ -2471,9 +2678,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   });
   AttendanceRecordsCompanion.insert({
     required String id,
-    required String programId,
-    this.classroomId = const Value.absent(),
-    required String studentId,
+    required String spaceId,
+    this.groupId = const Value.absent(),
+    required String subjectId,
     required String date,
     required String status,
     this.notes = const Value.absent(),
@@ -2482,8 +2689,8 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
     required String updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
-       programId = Value(programId),
-       studentId = Value(studentId),
+       spaceId = Value(spaceId),
+       subjectId = Value(subjectId),
        date = Value(date),
        status = Value(status),
        recordedBy = Value(recordedBy),
@@ -2491,9 +2698,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
        updatedAt = Value(updatedAt);
   static Insertable<AttendanceRecord> custom({
     Expression<String>? id,
-    Expression<String>? programId,
-    Expression<String>? classroomId,
-    Expression<String>? studentId,
+    Expression<String>? spaceId,
+    Expression<String>? groupId,
+    Expression<String>? subjectId,
     Expression<String>? date,
     Expression<String>? status,
     Expression<String>? notes,
@@ -2504,9 +2711,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (programId != null) 'program_id': programId,
-      if (classroomId != null) 'classroom_id': classroomId,
-      if (studentId != null) 'student_id': studentId,
+      if (spaceId != null) 'space_id': spaceId,
+      if (groupId != null) 'group_id': groupId,
+      if (subjectId != null) 'subject_id': subjectId,
       if (date != null) 'date': date,
       if (status != null) 'status': status,
       if (notes != null) 'notes': notes,
@@ -2519,9 +2726,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
 
   AttendanceRecordsCompanion copyWith({
     Value<String>? id,
-    Value<String>? programId,
-    Value<String?>? classroomId,
-    Value<String>? studentId,
+    Value<String>? spaceId,
+    Value<String?>? groupId,
+    Value<String>? subjectId,
     Value<String>? date,
     Value<String>? status,
     Value<String?>? notes,
@@ -2532,9 +2739,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   }) {
     return AttendanceRecordsCompanion(
       id: id ?? this.id,
-      programId: programId ?? this.programId,
-      classroomId: classroomId ?? this.classroomId,
-      studentId: studentId ?? this.studentId,
+      spaceId: spaceId ?? this.spaceId,
+      groupId: groupId ?? this.groupId,
+      subjectId: subjectId ?? this.subjectId,
       date: date ?? this.date,
       status: status ?? this.status,
       notes: notes ?? this.notes,
@@ -2551,14 +2758,14 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (programId.present) {
-      map['program_id'] = Variable<String>(programId.value);
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
     }
-    if (classroomId.present) {
-      map['classroom_id'] = Variable<String>(classroomId.value);
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
     }
-    if (studentId.present) {
-      map['student_id'] = Variable<String>(studentId.value);
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
     }
     if (date.present) {
       map['date'] = Variable<String>(date.value);
@@ -2588,9 +2795,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   String toString() {
     return (StringBuffer('AttendanceRecordsCompanion(')
           ..write('id: $id, ')
-          ..write('programId: $programId, ')
-          ..write('classroomId: $classroomId, ')
-          ..write('studentId: $studentId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('subjectId: $subjectId, ')
           ..write('date: $date, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
@@ -2606,10 +2813,10 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $ProfilesTable profiles = $ProfilesTable(this);
-  late final $ProgramsTable programs = $ProgramsTable(this);
-  late final $ClassroomsTable classrooms = $ClassroomsTable(this);
-  late final $StudentsTable students = $StudentsTable(this);
+  late final $SpacesTable spaces = $SpacesTable(this);
+  late final $MembersTable members = $MembersTable(this);
+  late final $GroupsTable groups = $GroupsTable(this);
+  late final $SubjectsTable subjects = $SubjectsTable(this);
   late final $AttendanceRecordsTable attendanceRecords =
       $AttendanceRecordsTable(this);
   @override
@@ -2617,272 +2824,40 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-    profiles,
-    programs,
-    classrooms,
-    students,
+    spaces,
+    members,
+    groups,
+    subjects,
     attendanceRecords,
   ];
 }
 
-typedef $$ProfilesTableCreateCompanionBuilder =
-    ProfilesCompanion Function({
-      required String id,
-      Value<String?> programId,
-      required String displayName,
-      required String role,
-      Value<String?> avatarUrl,
-      required String createdAt,
-      required String updatedAt,
-      Value<int> rowid,
-    });
-typedef $$ProfilesTableUpdateCompanionBuilder =
-    ProfilesCompanion Function({
-      Value<String> id,
-      Value<String?> programId,
-      Value<String> displayName,
-      Value<String> role,
-      Value<String?> avatarUrl,
-      Value<String> createdAt,
-      Value<String> updatedAt,
-      Value<int> rowid,
-    });
-
-class $$ProfilesTableFilterComposer
-    extends Composer<_$AppDatabase, $ProfilesTable> {
-  $$ProfilesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get programId => $composableBuilder(
-    column: $table.programId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get role => $composableBuilder(
-    column: $table.role,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get avatarUrl => $composableBuilder(
-    column: $table.avatarUrl,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$ProfilesTableOrderingComposer
-    extends Composer<_$AppDatabase, $ProfilesTable> {
-  $$ProfilesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get programId => $composableBuilder(
-    column: $table.programId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get role => $composableBuilder(
-    column: $table.role,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get avatarUrl => $composableBuilder(
-    column: $table.avatarUrl,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$ProfilesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ProfilesTable> {
-  $$ProfilesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get programId =>
-      $composableBuilder(column: $table.programId, builder: (column) => column);
-
-  GeneratedColumn<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get role =>
-      $composableBuilder(column: $table.role, builder: (column) => column);
-
-  GeneratedColumn<String> get avatarUrl =>
-      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
-
-  GeneratedColumn<String> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-}
-
-class $$ProfilesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $ProfilesTable,
-          Profile,
-          $$ProfilesTableFilterComposer,
-          $$ProfilesTableOrderingComposer,
-          $$ProfilesTableAnnotationComposer,
-          $$ProfilesTableCreateCompanionBuilder,
-          $$ProfilesTableUpdateCompanionBuilder,
-          (Profile, BaseReferences<_$AppDatabase, $ProfilesTable, Profile>),
-          Profile,
-          PrefetchHooks Function()
-        > {
-  $$ProfilesTableTableManager(_$AppDatabase db, $ProfilesTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$ProfilesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ProfilesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$ProfilesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> id = const Value.absent(),
-                Value<String?> programId = const Value.absent(),
-                Value<String> displayName = const Value.absent(),
-                Value<String> role = const Value.absent(),
-                Value<String?> avatarUrl = const Value.absent(),
-                Value<String> createdAt = const Value.absent(),
-                Value<String> updatedAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => ProfilesCompanion(
-                id: id,
-                programId: programId,
-                displayName: displayName,
-                role: role,
-                avatarUrl: avatarUrl,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String id,
-                Value<String?> programId = const Value.absent(),
-                required String displayName,
-                required String role,
-                Value<String?> avatarUrl = const Value.absent(),
-                required String createdAt,
-                required String updatedAt,
-                Value<int> rowid = const Value.absent(),
-              }) => ProfilesCompanion.insert(
-                id: id,
-                programId: programId,
-                displayName: displayName,
-                role: role,
-                avatarUrl: avatarUrl,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$ProfilesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $ProfilesTable,
-      Profile,
-      $$ProfilesTableFilterComposer,
-      $$ProfilesTableOrderingComposer,
-      $$ProfilesTableAnnotationComposer,
-      $$ProfilesTableCreateCompanionBuilder,
-      $$ProfilesTableUpdateCompanionBuilder,
-      (Profile, BaseReferences<_$AppDatabase, $ProfilesTable, Profile>),
-      Profile,
-      PrefetchHooks Function()
-    >;
-typedef $$ProgramsTableCreateCompanionBuilder =
-    ProgramsCompanion Function({
+typedef $$SpacesTableCreateCompanionBuilder =
+    SpacesCompanion Function({
       required String id,
       required String name,
       Value<String?> slug,
       required String settings,
+      required String capabilities,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
     });
-typedef $$ProgramsTableUpdateCompanionBuilder =
-    ProgramsCompanion Function({
+typedef $$SpacesTableUpdateCompanionBuilder =
+    SpacesCompanion Function({
       Value<String> id,
       Value<String> name,
       Value<String?> slug,
       Value<String> settings,
+      Value<String> capabilities,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
     });
 
-class $$ProgramsTableFilterComposer
-    extends Composer<_$AppDatabase, $ProgramsTable> {
-  $$ProgramsTableFilterComposer({
+class $$SpacesTableFilterComposer
+    extends Composer<_$AppDatabase, $SpacesTable> {
+  $$SpacesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2909,6 +2884,11 @@ class $$ProgramsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -2920,9 +2900,9 @@ class $$ProgramsTableFilterComposer
   );
 }
 
-class $$ProgramsTableOrderingComposer
-    extends Composer<_$AppDatabase, $ProgramsTable> {
-  $$ProgramsTableOrderingComposer({
+class $$SpacesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SpacesTable> {
+  $$SpacesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2949,6 +2929,11 @@ class $$ProgramsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -2960,9 +2945,9 @@ class $$ProgramsTableOrderingComposer
   );
 }
 
-class $$ProgramsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ProgramsTable> {
-  $$ProgramsTableAnnotationComposer({
+class $$SpacesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SpacesTable> {
+  $$SpacesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -2981,6 +2966,11 @@ class $$ProgramsTableAnnotationComposer
   GeneratedColumn<String> get settings =>
       $composableBuilder(column: $table.settings, builder: (column) => column);
 
+  GeneratedColumn<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -2988,46 +2978,48 @@ class $$ProgramsTableAnnotationComposer
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
-class $$ProgramsTableTableManager
+class $$SpacesTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $ProgramsTable,
-          Program,
-          $$ProgramsTableFilterComposer,
-          $$ProgramsTableOrderingComposer,
-          $$ProgramsTableAnnotationComposer,
-          $$ProgramsTableCreateCompanionBuilder,
-          $$ProgramsTableUpdateCompanionBuilder,
-          (Program, BaseReferences<_$AppDatabase, $ProgramsTable, Program>),
-          Program,
+          $SpacesTable,
+          Space,
+          $$SpacesTableFilterComposer,
+          $$SpacesTableOrderingComposer,
+          $$SpacesTableAnnotationComposer,
+          $$SpacesTableCreateCompanionBuilder,
+          $$SpacesTableUpdateCompanionBuilder,
+          (Space, BaseReferences<_$AppDatabase, $SpacesTable, Space>),
+          Space,
           PrefetchHooks Function()
         > {
-  $$ProgramsTableTableManager(_$AppDatabase db, $ProgramsTable table)
+  $$SpacesTableTableManager(_$AppDatabase db, $SpacesTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ProgramsTableFilterComposer($db: db, $table: table),
+              $$SpacesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ProgramsTableOrderingComposer($db: db, $table: table),
+              $$SpacesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ProgramsTableAnnotationComposer($db: db, $table: table),
+              $$SpacesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> slug = const Value.absent(),
                 Value<String> settings = const Value.absent(),
+                Value<String> capabilities = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ProgramsCompanion(
+              }) => SpacesCompanion(
                 id: id,
                 name: name,
                 slug: slug,
                 settings: settings,
+                capabilities: capabilities,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -3038,14 +3030,16 @@ class $$ProgramsTableTableManager
                 required String name,
                 Value<String?> slug = const Value.absent(),
                 required String settings,
+                required String capabilities,
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
-              }) => ProgramsCompanion.insert(
+              }) => SpacesCompanion.insert(
                 id: id,
                 name: name,
                 slug: slug,
                 settings: settings,
+                capabilities: capabilities,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -3058,46 +3052,48 @@ class $$ProgramsTableTableManager
       );
 }
 
-typedef $$ProgramsTableProcessedTableManager =
+typedef $$SpacesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ProgramsTable,
-      Program,
-      $$ProgramsTableFilterComposer,
-      $$ProgramsTableOrderingComposer,
-      $$ProgramsTableAnnotationComposer,
-      $$ProgramsTableCreateCompanionBuilder,
-      $$ProgramsTableUpdateCompanionBuilder,
-      (Program, BaseReferences<_$AppDatabase, $ProgramsTable, Program>),
-      Program,
+      $SpacesTable,
+      Space,
+      $$SpacesTableFilterComposer,
+      $$SpacesTableOrderingComposer,
+      $$SpacesTableAnnotationComposer,
+      $$SpacesTableCreateCompanionBuilder,
+      $$SpacesTableUpdateCompanionBuilder,
+      (Space, BaseReferences<_$AppDatabase, $SpacesTable, Space>),
+      Space,
       PrefetchHooks Function()
     >;
-typedef $$ClassroomsTableCreateCompanionBuilder =
-    ClassroomsCompanion Function({
+typedef $$MembersTableCreateCompanionBuilder =
+    MembersCompanion Function({
       required String id,
-      required String programId,
-      required String name,
-      Value<String?> ageRange,
-      Value<String?> color,
+      Value<String?> spaceId,
+      required String displayName,
+      required String role,
+      Value<String?> avatarUrl,
+      required String capabilities,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
     });
-typedef $$ClassroomsTableUpdateCompanionBuilder =
-    ClassroomsCompanion Function({
+typedef $$MembersTableUpdateCompanionBuilder =
+    MembersCompanion Function({
       Value<String> id,
-      Value<String> programId,
-      Value<String> name,
-      Value<String?> ageRange,
-      Value<String?> color,
+      Value<String?> spaceId,
+      Value<String> displayName,
+      Value<String> role,
+      Value<String?> avatarUrl,
+      Value<String> capabilities,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
     });
 
-class $$ClassroomsTableFilterComposer
-    extends Composer<_$AppDatabase, $ClassroomsTable> {
-  $$ClassroomsTableFilterComposer({
+class $$MembersTableFilterComposer
+    extends Composer<_$AppDatabase, $MembersTable> {
+  $$MembersTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3109,8 +3105,263 @@ class $$ClassroomsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get programId => $composableBuilder(
-    column: $table.programId,
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MembersTableOrderingComposer
+    extends Composer<_$AppDatabase, $MembersTable> {
+  $$MembersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MembersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MembersTable> {
+  $$MembersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$MembersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MembersTable,
+          Member,
+          $$MembersTableFilterComposer,
+          $$MembersTableOrderingComposer,
+          $$MembersTableAnnotationComposer,
+          $$MembersTableCreateCompanionBuilder,
+          $$MembersTableUpdateCompanionBuilder,
+          (Member, BaseReferences<_$AppDatabase, $MembersTable, Member>),
+          Member,
+          PrefetchHooks Function()
+        > {
+  $$MembersTableTableManager(_$AppDatabase db, $MembersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MembersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MembersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MembersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> spaceId = const Value.absent(),
+                Value<String> displayName = const Value.absent(),
+                Value<String> role = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<String> capabilities = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MembersCompanion(
+                id: id,
+                spaceId: spaceId,
+                displayName: displayName,
+                role: role,
+                avatarUrl: avatarUrl,
+                capabilities: capabilities,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> spaceId = const Value.absent(),
+                required String displayName,
+                required String role,
+                Value<String?> avatarUrl = const Value.absent(),
+                required String capabilities,
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MembersCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                displayName: displayName,
+                role: role,
+                avatarUrl: avatarUrl,
+                capabilities: capabilities,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MembersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MembersTable,
+      Member,
+      $$MembersTableFilterComposer,
+      $$MembersTableOrderingComposer,
+      $$MembersTableAnnotationComposer,
+      $$MembersTableCreateCompanionBuilder,
+      $$MembersTableUpdateCompanionBuilder,
+      (Member, BaseReferences<_$AppDatabase, $MembersTable, Member>),
+      Member,
+      PrefetchHooks Function()
+    >;
+typedef $$GroupsTableCreateCompanionBuilder =
+    GroupsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String name,
+      Value<String?> ageRange,
+      Value<String?> color,
+      required String capabilities,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$GroupsTableUpdateCompanionBuilder =
+    GroupsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> name,
+      Value<String?> ageRange,
+      Value<String?> color,
+      Value<String> capabilities,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$GroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3129,6 +3380,11 @@ class $$ClassroomsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -3140,9 +3396,9 @@ class $$ClassroomsTableFilterComposer
   );
 }
 
-class $$ClassroomsTableOrderingComposer
-    extends Composer<_$AppDatabase, $ClassroomsTable> {
-  $$ClassroomsTableOrderingComposer({
+class $$GroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3154,8 +3410,8 @@ class $$ClassroomsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get programId => $composableBuilder(
-    column: $table.programId,
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3174,6 +3430,11 @@ class $$ClassroomsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3185,9 +3446,9 @@ class $$ClassroomsTableOrderingComposer
   );
 }
 
-class $$ClassroomsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ClassroomsTable> {
-  $$ClassroomsTableAnnotationComposer({
+class $$GroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3197,8 +3458,8 @@ class $$ClassroomsTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get programId =>
-      $composableBuilder(column: $table.programId, builder: (column) => column);
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -3209,6 +3470,11 @@ class $$ClassroomsTableAnnotationComposer
   GeneratedColumn<String> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
 
+  GeneratedColumn<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -3216,51 +3482,50 @@ class $$ClassroomsTableAnnotationComposer
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
-class $$ClassroomsTableTableManager
+class $$GroupsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $ClassroomsTable,
-          Classroom,
-          $$ClassroomsTableFilterComposer,
-          $$ClassroomsTableOrderingComposer,
-          $$ClassroomsTableAnnotationComposer,
-          $$ClassroomsTableCreateCompanionBuilder,
-          $$ClassroomsTableUpdateCompanionBuilder,
-          (
-            Classroom,
-            BaseReferences<_$AppDatabase, $ClassroomsTable, Classroom>,
-          ),
-          Classroom,
+          $GroupsTable,
+          Group,
+          $$GroupsTableFilterComposer,
+          $$GroupsTableOrderingComposer,
+          $$GroupsTableAnnotationComposer,
+          $$GroupsTableCreateCompanionBuilder,
+          $$GroupsTableUpdateCompanionBuilder,
+          (Group, BaseReferences<_$AppDatabase, $GroupsTable, Group>),
+          Group,
           PrefetchHooks Function()
         > {
-  $$ClassroomsTableTableManager(_$AppDatabase db, $ClassroomsTable table)
+  $$GroupsTableTableManager(_$AppDatabase db, $GroupsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ClassroomsTableFilterComposer($db: db, $table: table),
+              $$GroupsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ClassroomsTableOrderingComposer($db: db, $table: table),
+              $$GroupsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ClassroomsTableAnnotationComposer($db: db, $table: table),
+              $$GroupsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
-                Value<String> programId = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> ageRange = const Value.absent(),
                 Value<String?> color = const Value.absent(),
+                Value<String> capabilities = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => ClassroomsCompanion(
+              }) => GroupsCompanion(
                 id: id,
-                programId: programId,
+                spaceId: spaceId,
                 name: name,
                 ageRange: ageRange,
                 color: color,
+                capabilities: capabilities,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -3268,19 +3533,21 @@ class $$ClassroomsTableTableManager
           createCompanionCallback:
               ({
                 required String id,
-                required String programId,
+                required String spaceId,
                 required String name,
                 Value<String?> ageRange = const Value.absent(),
                 Value<String?> color = const Value.absent(),
+                required String capabilities,
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
-              }) => ClassroomsCompanion.insert(
+              }) => GroupsCompanion.insert(
                 id: id,
-                programId: programId,
+                spaceId: spaceId,
                 name: name,
                 ageRange: ageRange,
                 color: color,
+                capabilities: capabilities,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -3293,54 +3560,56 @@ class $$ClassroomsTableTableManager
       );
 }
 
-typedef $$ClassroomsTableProcessedTableManager =
+typedef $$GroupsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ClassroomsTable,
-      Classroom,
-      $$ClassroomsTableFilterComposer,
-      $$ClassroomsTableOrderingComposer,
-      $$ClassroomsTableAnnotationComposer,
-      $$ClassroomsTableCreateCompanionBuilder,
-      $$ClassroomsTableUpdateCompanionBuilder,
-      (Classroom, BaseReferences<_$AppDatabase, $ClassroomsTable, Classroom>),
-      Classroom,
+      $GroupsTable,
+      Group,
+      $$GroupsTableFilterComposer,
+      $$GroupsTableOrderingComposer,
+      $$GroupsTableAnnotationComposer,
+      $$GroupsTableCreateCompanionBuilder,
+      $$GroupsTableUpdateCompanionBuilder,
+      (Group, BaseReferences<_$AppDatabase, $GroupsTable, Group>),
+      Group,
       PrefetchHooks Function()
     >;
-typedef $$StudentsTableCreateCompanionBuilder =
-    StudentsCompanion Function({
+typedef $$SubjectsTableCreateCompanionBuilder =
+    SubjectsCompanion Function({
       required String id,
-      required String programId,
-      Value<String?> classroomId,
+      required String spaceId,
+      Value<String?> groupId,
       required String firstName,
       required String lastName,
       Value<String?> dob,
       Value<String?> photoUrl,
       Value<String?> allergies,
       Value<String?> notes,
+      required String capabilities,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
     });
-typedef $$StudentsTableUpdateCompanionBuilder =
-    StudentsCompanion Function({
+typedef $$SubjectsTableUpdateCompanionBuilder =
+    SubjectsCompanion Function({
       Value<String> id,
-      Value<String> programId,
-      Value<String?> classroomId,
+      Value<String> spaceId,
+      Value<String?> groupId,
       Value<String> firstName,
       Value<String> lastName,
       Value<String?> dob,
       Value<String?> photoUrl,
       Value<String?> allergies,
       Value<String?> notes,
+      Value<String> capabilities,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
     });
 
-class $$StudentsTableFilterComposer
-    extends Composer<_$AppDatabase, $StudentsTable> {
-  $$StudentsTableFilterComposer({
+class $$SubjectsTableFilterComposer
+    extends Composer<_$AppDatabase, $SubjectsTable> {
+  $$SubjectsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3352,13 +3621,13 @@ class $$StudentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get programId => $composableBuilder(
-    column: $table.programId,
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get classroomId => $composableBuilder(
-    column: $table.classroomId,
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3392,6 +3661,11 @@ class $$StudentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -3403,9 +3677,9 @@ class $$StudentsTableFilterComposer
   );
 }
 
-class $$StudentsTableOrderingComposer
-    extends Composer<_$AppDatabase, $StudentsTable> {
-  $$StudentsTableOrderingComposer({
+class $$SubjectsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SubjectsTable> {
+  $$SubjectsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3417,13 +3691,13 @@ class $$StudentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get programId => $composableBuilder(
-    column: $table.programId,
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get classroomId => $composableBuilder(
-    column: $table.classroomId,
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3457,6 +3731,11 @@ class $$StudentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3468,9 +3747,9 @@ class $$StudentsTableOrderingComposer
   );
 }
 
-class $$StudentsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $StudentsTable> {
-  $$StudentsTableAnnotationComposer({
+class $$SubjectsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SubjectsTable> {
+  $$SubjectsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -3480,13 +3759,11 @@ class $$StudentsTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get programId =>
-      $composableBuilder(column: $table.programId, builder: (column) => column);
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
 
-  GeneratedColumn<String> get classroomId => $composableBuilder(
-    column: $table.classroomId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
 
   GeneratedColumn<String> get firstName =>
       $composableBuilder(column: $table.firstName, builder: (column) => column);
@@ -3506,6 +3783,11 @@ class $$StudentsTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -3513,56 +3795,58 @@ class $$StudentsTableAnnotationComposer
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
-class $$StudentsTableTableManager
+class $$SubjectsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $StudentsTable,
-          Student,
-          $$StudentsTableFilterComposer,
-          $$StudentsTableOrderingComposer,
-          $$StudentsTableAnnotationComposer,
-          $$StudentsTableCreateCompanionBuilder,
-          $$StudentsTableUpdateCompanionBuilder,
-          (Student, BaseReferences<_$AppDatabase, $StudentsTable, Student>),
-          Student,
+          $SubjectsTable,
+          Subject,
+          $$SubjectsTableFilterComposer,
+          $$SubjectsTableOrderingComposer,
+          $$SubjectsTableAnnotationComposer,
+          $$SubjectsTableCreateCompanionBuilder,
+          $$SubjectsTableUpdateCompanionBuilder,
+          (Subject, BaseReferences<_$AppDatabase, $SubjectsTable, Subject>),
+          Subject,
           PrefetchHooks Function()
         > {
-  $$StudentsTableTableManager(_$AppDatabase db, $StudentsTable table)
+  $$SubjectsTableTableManager(_$AppDatabase db, $SubjectsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$StudentsTableFilterComposer($db: db, $table: table),
+              $$SubjectsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$StudentsTableOrderingComposer($db: db, $table: table),
+              $$SubjectsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$StudentsTableAnnotationComposer($db: db, $table: table),
+              $$SubjectsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
-                Value<String> programId = const Value.absent(),
-                Value<String?> classroomId = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
                 Value<String> firstName = const Value.absent(),
                 Value<String> lastName = const Value.absent(),
                 Value<String?> dob = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
                 Value<String?> allergies = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String> capabilities = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => StudentsCompanion(
+              }) => SubjectsCompanion(
                 id: id,
-                programId: programId,
-                classroomId: classroomId,
+                spaceId: spaceId,
+                groupId: groupId,
                 firstName: firstName,
                 lastName: lastName,
                 dob: dob,
                 photoUrl: photoUrl,
                 allergies: allergies,
                 notes: notes,
+                capabilities: capabilities,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -3570,27 +3854,29 @@ class $$StudentsTableTableManager
           createCompanionCallback:
               ({
                 required String id,
-                required String programId,
-                Value<String?> classroomId = const Value.absent(),
+                required String spaceId,
+                Value<String?> groupId = const Value.absent(),
                 required String firstName,
                 required String lastName,
                 Value<String?> dob = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
                 Value<String?> allergies = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                required String capabilities,
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
-              }) => StudentsCompanion.insert(
+              }) => SubjectsCompanion.insert(
                 id: id,
-                programId: programId,
-                classroomId: classroomId,
+                spaceId: spaceId,
+                groupId: groupId,
                 firstName: firstName,
                 lastName: lastName,
                 dob: dob,
                 photoUrl: photoUrl,
                 allergies: allergies,
                 notes: notes,
+                capabilities: capabilities,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -3603,26 +3889,26 @@ class $$StudentsTableTableManager
       );
 }
 
-typedef $$StudentsTableProcessedTableManager =
+typedef $$SubjectsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $StudentsTable,
-      Student,
-      $$StudentsTableFilterComposer,
-      $$StudentsTableOrderingComposer,
-      $$StudentsTableAnnotationComposer,
-      $$StudentsTableCreateCompanionBuilder,
-      $$StudentsTableUpdateCompanionBuilder,
-      (Student, BaseReferences<_$AppDatabase, $StudentsTable, Student>),
-      Student,
+      $SubjectsTable,
+      Subject,
+      $$SubjectsTableFilterComposer,
+      $$SubjectsTableOrderingComposer,
+      $$SubjectsTableAnnotationComposer,
+      $$SubjectsTableCreateCompanionBuilder,
+      $$SubjectsTableUpdateCompanionBuilder,
+      (Subject, BaseReferences<_$AppDatabase, $SubjectsTable, Subject>),
+      Subject,
       PrefetchHooks Function()
     >;
 typedef $$AttendanceRecordsTableCreateCompanionBuilder =
     AttendanceRecordsCompanion Function({
       required String id,
-      required String programId,
-      Value<String?> classroomId,
-      required String studentId,
+      required String spaceId,
+      Value<String?> groupId,
+      required String subjectId,
       required String date,
       required String status,
       Value<String?> notes,
@@ -3634,9 +3920,9 @@ typedef $$AttendanceRecordsTableCreateCompanionBuilder =
 typedef $$AttendanceRecordsTableUpdateCompanionBuilder =
     AttendanceRecordsCompanion Function({
       Value<String> id,
-      Value<String> programId,
-      Value<String?> classroomId,
-      Value<String> studentId,
+      Value<String> spaceId,
+      Value<String?> groupId,
+      Value<String> subjectId,
       Value<String> date,
       Value<String> status,
       Value<String?> notes,
@@ -3660,18 +3946,18 @@ class $$AttendanceRecordsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get programId => $composableBuilder(
-    column: $table.programId,
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get classroomId => $composableBuilder(
-    column: $table.classroomId,
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get studentId => $composableBuilder(
-    column: $table.studentId,
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3720,18 +4006,18 @@ class $$AttendanceRecordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get programId => $composableBuilder(
-    column: $table.programId,
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get classroomId => $composableBuilder(
-    column: $table.classroomId,
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get studentId => $composableBuilder(
-    column: $table.studentId,
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3778,16 +4064,14 @@ class $$AttendanceRecordsTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get programId =>
-      $composableBuilder(column: $table.programId, builder: (column) => column);
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
 
-  GeneratedColumn<String> get classroomId => $composableBuilder(
-    column: $table.classroomId,
-    builder: (column) => column,
-  );
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
 
-  GeneratedColumn<String> get studentId =>
-      $composableBuilder(column: $table.studentId, builder: (column) => column);
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
 
   GeneratedColumn<String> get date =>
       $composableBuilder(column: $table.date, builder: (column) => column);
@@ -3853,9 +4137,9 @@ class $$AttendanceRecordsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
-                Value<String> programId = const Value.absent(),
-                Value<String?> classroomId = const Value.absent(),
-                Value<String> studentId = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String> subjectId = const Value.absent(),
                 Value<String> date = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -3865,9 +4149,9 @@ class $$AttendanceRecordsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => AttendanceRecordsCompanion(
                 id: id,
-                programId: programId,
-                classroomId: classroomId,
-                studentId: studentId,
+                spaceId: spaceId,
+                groupId: groupId,
+                subjectId: subjectId,
                 date: date,
                 status: status,
                 notes: notes,
@@ -3879,9 +4163,9 @@ class $$AttendanceRecordsTableTableManager
           createCompanionCallback:
               ({
                 required String id,
-                required String programId,
-                Value<String?> classroomId = const Value.absent(),
-                required String studentId,
+                required String spaceId,
+                Value<String?> groupId = const Value.absent(),
+                required String subjectId,
                 required String date,
                 required String status,
                 Value<String?> notes = const Value.absent(),
@@ -3891,9 +4175,9 @@ class $$AttendanceRecordsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => AttendanceRecordsCompanion.insert(
                 id: id,
-                programId: programId,
-                classroomId: classroomId,
-                studentId: studentId,
+                spaceId: spaceId,
+                groupId: groupId,
+                subjectId: subjectId,
                 date: date,
                 status: status,
                 notes: notes,
@@ -3935,14 +4219,14 @@ typedef $$AttendanceRecordsTableProcessedTableManager =
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$ProfilesTableTableManager get profiles =>
-      $$ProfilesTableTableManager(_db, _db.profiles);
-  $$ProgramsTableTableManager get programs =>
-      $$ProgramsTableTableManager(_db, _db.programs);
-  $$ClassroomsTableTableManager get classrooms =>
-      $$ClassroomsTableTableManager(_db, _db.classrooms);
-  $$StudentsTableTableManager get students =>
-      $$StudentsTableTableManager(_db, _db.students);
+  $$SpacesTableTableManager get spaces =>
+      $$SpacesTableTableManager(_db, _db.spaces);
+  $$MembersTableTableManager get members =>
+      $$MembersTableTableManager(_db, _db.members);
+  $$GroupsTableTableManager get groups =>
+      $$GroupsTableTableManager(_db, _db.groups);
+  $$SubjectsTableTableManager get subjects =>
+      $$SubjectsTableTableManager(_db, _db.subjects);
   $$AttendanceRecordsTableTableManager get attendanceRecords =>
       $$AttendanceRecordsTableTableManager(_db, _db.attendanceRecords);
 }

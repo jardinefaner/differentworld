@@ -1,23 +1,23 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
-import 'package:differentworld/features/classrooms/widgets/classroom_form_sheet.dart';
-import 'package:differentworld/features/roster/students_providers.dart';
-import 'package:differentworld/features/roster/widgets/student_form_sheet.dart';
+import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/subjects/widgets/subject_form_sheet.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class ClassroomDetailScreen extends ConsumerWidget {
-  const ClassroomDetailScreen({required this.classroomId, super.key});
+class GroupDetailScreen extends ConsumerWidget {
+  const GroupDetailScreen({required this.groupId, super.key});
 
-  final String classroomId;
+  final String groupId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final classroomAsync = ref.watch(_classroomProvider(classroomId));
-    final studentsAsync = ref.watch(classroomStudentsProvider(classroomId));
+    final groupAsync = ref.watch(_groupProvider(groupId));
+    final subjectsAsync = ref.watch(subjectsInGroupProvider(groupId));
 
     return Scaffold(
       appBar: AppBar(
@@ -31,17 +31,17 @@ class ClassroomDetailScreen extends ConsumerWidget {
             }
           },
         ),
-        title: classroomAsync.when(
+        title: groupAsync.when(
           loading: () => const Text('Classroom'),
           error: (_, _) => const Text('Classroom'),
-          data: (c) => Column(
+          data: (g) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(c?.name ?? 'Classroom'),
-              if (c?.ageRange != null)
+              Text(g?.name ?? 'Classroom'),
+              if (g?.ageRange != null)
                 Text(
-                  c!.ageRange!,
+                  g!.ageRange!,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
             ],
@@ -51,40 +51,38 @@ class ClassroomDetailScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Take attendance',
             icon: const Icon(Icons.fact_check_outlined),
-            onPressed: () =>
-                context.go('/classrooms/$classroomId/attendance'),
+            onPressed: () => context.go('/groups/$groupId/attendance'),
           ),
-          if (classroomAsync.value != null)
+          if (groupAsync.value != null)
             IconButton(
               tooltip: 'Edit classroom',
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => ClassroomFormSheet.show(
+              onPressed: () => GroupFormSheet.show(
                 context,
-                classroom: classroomAsync.value,
+                group: groupAsync.value,
               ),
             ),
           const SyncStatusIndicator(),
         ],
       ),
       body: SafeArea(
-        child: studentsAsync.when(
+        child: subjectsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => EmptyState(
+          error: (err, _) => const EmptyState(
             icon: Icons.error_outline,
             title: 'Could not load students',
-            message: err.toString(),
           ),
-          data: (students) {
-            if (students.isEmpty) {
+          data: (subjects) {
+            if (subjects.isEmpty) {
               return EmptyState(
                 icon: Icons.child_care_outlined,
                 title: 'No students yet',
                 message: 'Add your first student to start taking attendance '
                     'and logging observations.',
                 action: FilledButton.icon(
-                  onPressed: () => StudentFormSheet.show(
+                  onPressed: () => SubjectFormSheet.show(
                     context,
-                    classroomId: classroomId,
+                    groupId: groupId,
                   ),
                   icon: const Icon(Icons.add),
                   label: const Text('Add student'),
@@ -93,20 +91,20 @@ class ClassroomDetailScreen extends ConsumerWidget {
             }
             return ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: students.length,
+              itemCount: subjects.length,
               separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (_, i) => _StudentTile(student: students[i]),
+              itemBuilder: (_, i) => _SubjectTile(subject: subjects[i]),
             );
           },
         ),
       ),
-      floatingActionButton: studentsAsync.maybeWhen(
+      floatingActionButton: subjectsAsync.maybeWhen(
         data: (s) => s.isEmpty
             ? null
             : FloatingActionButton.extended(
-                onPressed: () => StudentFormSheet.show(
+                onPressed: () => SubjectFormSheet.show(
                   context,
-                  classroomId: classroomId,
+                  groupId: groupId,
                 ),
                 icon: const Icon(Icons.add),
                 label: const Text('Student'),
@@ -117,26 +115,25 @@ class ClassroomDetailScreen extends ConsumerWidget {
   }
 }
 
-/// Live single-classroom stream. Re-fetched whenever the classroom row
-/// changes (e.g. user edits the name).
+// Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final _classroomProvider = StreamProvider.family<Classroom?, String>(
-  (ref, classroomId) async* {
+final _groupProvider = StreamProvider.family<Group?, String>(
+  (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchClassroom(classroomId);
+    yield* db.watchGroup(groupId);
   },
 );
 
-class _StudentTile extends StatelessWidget {
-  const _StudentTile({required this.student});
+class _SubjectTile extends StatelessWidget {
+  const _SubjectTile({required this.subject});
 
-  final Student student;
+  final Subject subject;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final initials = _initials(student.firstName, student.lastName);
-    final ageLine = _ageLine(student.dob);
+    final initials = _initials(subject.firstName, subject.lastName);
+    final ageLine = _ageLine(subject.dob);
 
     return ListTile(
       leading: CircleAvatar(
@@ -144,13 +141,13 @@ class _StudentTile extends StatelessWidget {
         foregroundColor: theme.colorScheme.onPrimaryContainer,
         child: Text(initials),
       ),
-      title: Text('${student.firstName} ${student.lastName}'),
+      title: Text('${subject.firstName} ${subject.lastName}'),
       subtitle: ageLine == null ? null : Text(ageLine),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => StudentFormSheet.show(
+      onTap: () => SubjectFormSheet.show(
         context,
-        classroomId: student.classroomId ?? '',
-        student: student,
+        groupId: subject.groupId ?? '',
+        subject: subject,
       ),
     );
   }
@@ -161,9 +158,7 @@ class _StudentTile extends StatelessWidget {
       return t.isEmpty ? '' : t.substring(0, 1).toUpperCase();
     }
 
-    final f = firstChar(first);
-    final l = firstChar(last);
-    final joined = '$f$l';
+    final joined = '${firstChar(first)}${firstChar(last)}';
     return joined.isEmpty ? '?' : joined;
   }
 

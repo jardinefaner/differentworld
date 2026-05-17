@@ -1,59 +1,60 @@
 import 'package:powersync/powersync.dart';
 
-/// PowerSync local SQLite schema. Must mirror the synced columns in the
-/// Supabase tables — see supabase/sync_rules.yaml + supabase/migrations/*.
+/// PowerSync local SQLite schema — engine-level (universal) table names.
+/// See docs/NAMING.md for the contract.
 ///
-/// PowerSync auto-adds the `id` column as TEXT PRIMARY KEY on every table;
-/// don't declare it explicitly. Booleans and dates serialize to TEXT/INTEGER
-/// per Postgres → SQLite conventions:
-///   - timestamps & dates → TEXT (ISO 8601)
-///   - booleans           → INTEGER (0/1)
-///   - jsonb              → TEXT (raw JSON string)
+/// PowerSync auto-adds the `id` column as TEXT PRIMARY KEY on every
+/// table; don't declare it explicitly. Booleans serialize to INTEGER
+/// (0/1); dates/timestamps to TEXT (ISO 8601); jsonb to TEXT (raw JSON).
 const appSchema = Schema([
-  Table('programs', [
+  Table('spaces', [
     Column.text('name'),
     Column.text('slug'),
     Column.text('settings'),
+    Column.text('capabilities'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
-  Table('profiles', [
-    Column.text('program_id'),
+  Table('members', [
+    Column.text('space_id'),
     Column.text('display_name'),
     Column.text('role'),
     Column.text('avatar_url'),
+    Column.text('capabilities'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
-  Table('classrooms', [
-    Column.text('program_id'),
+  Table('groups', [
+    Column.text('space_id'),
     Column.text('name'),
     Column.text('age_range'),
     Column.text('color'),
+    Column.text('capabilities'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
   Table('enrollments', [
-    Column.text('profile_id'),
-    Column.text('classroom_id'),
-    Column.text('program_id'),
+    Column.text('member_id'),
+    Column.text('group_id'),
+    Column.text('space_id'),
     Column.text('role'),
     Column.text('created_at'),
   ]),
-  Table('students', [
-    Column.text('program_id'),
-    Column.text('classroom_id'),
+  Table('subjects', [
+    Column.text('space_id'),
+    Column.text('group_id'),
     Column.text('first_name'),
     Column.text('last_name'),
     Column.text('dob'),
     Column.text('photo_url'),
     Column.text('allergies'),
     Column.text('notes'),
+    Column.text('capabilities'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
   Table('guardians', [
-    Column.text('program_id'),
+    Column.text('space_id'),
     Column.text('name'),
     Column.text('relationship'),
     Column.text('phone'),
@@ -63,22 +64,34 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
-  Table('student_guardians', [
-    Column.text('student_id'),
+  Table('subject_guardians', [
+    Column.text('subject_id'),
     Column.text('guardian_id'),
-    Column.text('program_id'),
+    Column.text('space_id'),
     Column.integer('is_primary'),
     Column.text('created_at'),
   ]),
   Table('attendance_records', [
-    Column.text('program_id'),
-    Column.text('classroom_id'),
-    Column.text('student_id'),
+    Column.text('space_id'),
+    Column.text('group_id'),
+    Column.text('subject_id'),
     Column.text('date'),
     Column.text('status'),
     Column.text('notes'),
     Column.text('recorded_by'),
     Column.text('recorded_at'),
     Column.text('updated_at'),
+  ]),
+  Table('invites', [
+    Column.text('space_id'),
+    Column.text('email'),
+    Column.text('code'),
+    Column.text('role'),
+    Column.text('capabilities'),
+    Column.text('created_by'),
+    Column.text('created_at'),
+    Column.text('expires_at'),
+    Column.text('accepted_at'),
+    Column.text('accepted_by'),
   ]),
 ]);
