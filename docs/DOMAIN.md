@@ -1,5 +1,14 @@
 # Different World — domain model
 
+> **Note on naming**: this document uses domain-specific terms (Child,
+> Classroom, Staff) because those are what the v1 classroom-app UI
+> shows. The underlying engine uses generic structural names —
+> **Space, Member, Subject, Group, Entry** — defined in
+> [NAMING.md](NAMING.md). When you read "Child" here, that's a
+> **Subject** at the engine level; "Classroom" is a **Group**;
+> "Staff" is a **Member**; "Program" is a **Space**. New code should
+> use the generic names; UI strings stay domain-specific.
+
 Every noun in our world has **properties** (data state) and **methods**
 (what can be done with/to it). Each method has a tier — `v1`, `next`,
 or `later` — that drives the roadmap. Each method also has an

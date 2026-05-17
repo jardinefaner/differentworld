@@ -23,6 +23,17 @@ that touches it should reflect that.
 Targets: **mobile-first** (iOS/iPad/Android), plus web + macOS/Windows/Linux.
 A single codebase serves all six.
 
+## Universal naming convention
+
+**The engine is domain-agnostic; the UI is domain-specific.** Core
+structural names are **Space / Member / Subject / Group / Entry**
+(see [docs/NAMING.md](docs/NAMING.md) for the contract). Classroom-
+specific labels — Program, Staff, Child, Classroom, Attendance —
+live only in UI strings (i18n). New code uses generic names; new UI
+labels use domain-specific copy. Schema-level rename of the existing
+domain-named tables (`students`, `classrooms`, `programs`) is
+planned but not yet done.
+
 ---
 
 ## Stack
