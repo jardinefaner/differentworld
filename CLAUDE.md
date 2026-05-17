@@ -3,6 +3,13 @@
 Context for any AI assistant working on this codebase. Optimized for the
 non-obvious — things that'd take a turn to rediscover.
 
+**This is a living doc.** Any time we burn a turn on a non-obvious gotcha
+or settle a convention, append it here so the next session inherits the
+lesson. Better to bloat slightly than to re-discover. New gotchas go in
+the "Known gotchas" section; new conventions go in "Cross-cutting
+standards"; permission/workflow grants go in "Tooling permissions
+granted".
+
 ---
 
 ## What the app is
@@ -423,6 +430,51 @@ The custom scheme `com.jardine.differentworld://login-callback` must be
 in Supabase's **Redirect URLs allowlist** (no wildcards for custom
 schemes — exact match). Native config changes (Info.plist,
 AndroidManifest.xml) require a full rebuild, not hot reload.
+
+### Web dev: port collisions silently break OAuth
+Android Studio's Flutter Run button calls `flutter run` **without
+`--web-port`**, so Flutter picks a random port (e.g. 56847). Chrome
+opens there, but Supabase's OAuth callback redirects to the Site URL
+(`localhost:3000`) where nothing is running → blank page after sign-in.
+
+Two fixes, both committed:
+- `.idea/runConfigurations/main_dart.xml` passes `--web-port=3000` to
+  AS-launched runs. Keep it un-gitignored (see `.gitignore`).
+- When starting from a terminal, always include `-d chrome --web-port=3000`.
+
+If `flutter run` reports an unexpected port, check for orphaned instances:
+```sh
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+pgrep -fl "flutter_tools.snapshot.*run"
+```
+Kill stragglers before re-running. Multiple concurrent `flutter run`
+processes against the same project will fight for port 3000 and one
+silently falls back.
+
+### Stale browser IndexedDB after Drift schema changes
+When new Drift tables are added (and `dart run build_runner build` runs),
+the local PowerSync SQLite schema also evolves. Browser IndexedDB
+persists across reloads, so the old schema may linger. Symptom: app
+boots blank or stuck in loading after a fresh codegen run.
+
+Fix: in DevTools → Application → Storage → "Clear site data" with the
+IndexedDB box ticked, then hard-refresh. One-time per major schema bump.
+
+### `42501 permission denied` on PowerSync uploads
+PostgreSQL's privilege check fires **before** RLS evaluation. If
+`authenticated` doesn't hold table-level SELECT/INSERT/UPDATE/DELETE
+grants, even a perfectly-correct RLS policy can't save the upload —
+you get 42501 in PowerSync's `Caught exception when uploading` loop.
+
+Symptoms: reads work fine (PowerSync replication uses a different role
+and bypasses PostgREST), but every CRUD upload fails forever and the
+sync queue piles up locally.
+
+Fix: ensure `authenticated` has `select, insert, update, delete on all
+tables in schema public` plus matching `alter default privileges`. See
+migration `20260517000001_restore_role_grants.sql`. Any time you `drop
+schema public cascade` for any reason in dev, re-run that GRANT block
+or all subsequent CRUD breaks silently.
 
 ---
 

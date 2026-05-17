@@ -12,11 +12,14 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# IntelliJ related (user-local state)
 *.iml
 *.ipr
 *.iws
 .idea/
+# Shared run configs live in `.run/` instead — that path is not ignored,
+# so JetBrains IDEs (Android Studio, IntelliJ) pick up project-wide
+# run configurations on every clone.
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
