@@ -29,10 +29,37 @@ A single codebase serves all six.
 structural names are **Space / Member / Subject / Group / Entry**
 (see [docs/NAMING.md](docs/NAMING.md) for the contract). Classroom-
 specific labels — Program, Staff, Child, Classroom, Attendance —
-live only in UI strings (i18n). New code uses generic names; new UI
-labels use domain-specific copy. Schema-level rename of the existing
-domain-named tables (`students`, `classrooms`, `programs`) is
-planned but not yet done.
+live only in UI strings.
+
+Schema and Dart-side rename done in migration
+`20260518000001_universal_rename.sql`:
+
+| Generic engine | Was (domain) |
+|---|---|
+| `spaces` | `programs` |
+| `members` | `profiles` |
+| `groups` | `classrooms` |
+| `subjects` | `students` |
+| `subject_guardians` | `student_guardians` |
+| `space_id` | `program_id` (everywhere) |
+| `group_id` | `classroom_id` |
+| `subject_id` | `student_id` |
+| `member_id` | `profile_id` |
+| `member_role` (enum) | `staff_role` |
+| `app.current_space_id()` | `app.current_program_id()` |
+
+Drift classes: `Space`, `Member`, `Group`, `Subject`,
+`AttendanceRecord`. Feature folders: `lib/features/groups/`,
+`subjects/`, `attendance/`. Routes: `/groups/:id`,
+`/groups/:id/attendance`.
+
+`attendance_records` table kept (only columns renamed) — it's the
+fast path for attendance; new Entry kinds will use the unified
+`entries` table when we add it.
+
+Capabilities (`jsonb` column on spaces / members / groups /
+subjects) and invites (`public.invites` + `app.accept_invite()`)
+were also added in that migration. UI for editing them is deferred.
 
 ---
 
