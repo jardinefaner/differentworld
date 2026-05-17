@@ -60,9 +60,23 @@ class SupabaseConnector extends PowerSyncBackendConnector {
     if (initial == null) {
       // Don't complete; PowerSync will retry on the next cycle (after
       // sign-in restores the session).
+      debugPrint('[connector] uploadData: NO SESSION; throwing.');
       throw const _NoSessionException();
     }
     var session = initial;
+
+    // Aggressive diagnostic — once uploads land in production we can
+    // remove these. For now they're the only way to see what state the
+    // upload path is in from the device logs.
+    final tokenPrefix = session.accessToken.length >= 16
+        ? '${session.accessToken.substring(0, 16)}…'
+        : session.accessToken;
+    debugPrint(
+      '[connector] uploadData: session.user=${session.user.id} '
+      'token=$tokenPrefix '
+      'expiresAtEpoch=${session.expiresAt} '
+      'ops=${transaction.crud.length}',
+    );
     if (_isExpiringSoon(session)) {
       try {
         final refreshed = await auth.refreshSession();
