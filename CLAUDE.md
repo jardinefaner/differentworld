@@ -460,6 +460,34 @@ boots blank or stuck in loading after a fresh codegen run.
 Fix: in DevTools → Application → Storage → "Clear site data" with the
 IndexedDB box ticked, then hard-refresh. One-time per major schema bump.
 
+### PowerSync `uploadData` must guard against null Supabase session
+`PowerSyncBackendConnector.uploadData` runs **independently** of
+`fetchCredentials`. PowerSync drains the local CRUD queue whenever
+there's anything pending, even if there's no active Supabase session.
+
+The trap: `_supabase.from('programs').upsert(...)` does not require a
+session — when none is set, supabase_flutter silently sends the **anon
+key** as the Authorization header. PostgREST runs the query as the
+`anon` role, `auth.uid()` is null, every RLS policy gated on
+`auth.uid() is not null` rejects with `42501 / new row violates
+row-level security policy`. Logs show an infinite retry loop and no
+data ever lands.
+
+The connector ([lib/core/sync/supabase_connector.dart](lib/core/sync/supabase_connector.dart))
+guards by:
+- Checking `currentSession` at the top of `uploadData` and throwing
+  (so PowerSync re-queues for retry) when it's null.
+- Proactively refreshing the access token when it's within 60s of
+  expiry, in both `fetchCredentials` and `uploadData`.
+
+Distinguishing the two RLS-related errors:
+- **`permission denied for table X`** → GRANT-level missing on the role
+  (the table itself isn't accessible at all). Fix: see migration 6.
+- **`new row violates row-level security policy for table X`** → GRANT
+  fine, RLS policy rejected the row. With our policies that means
+  `auth.uid()` was null at evaluation time — almost always because the
+  upload ran without a valid session.
+
 ### `42501 permission denied` on PowerSync uploads
 PostgreSQL's privilege check fires **before** RLS evaluation. If
 `authenticated` doesn't hold table-level SELECT/INSERT/UPDATE/DELETE
