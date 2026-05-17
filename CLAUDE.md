@@ -460,6 +460,45 @@ boots blank or stuck in loading after a fresh codegen run.
 Fix: in DevTools → Application → Storage → "Clear site data" with the
 IndexedDB box ticked, then hard-refresh. One-time per major schema bump.
 
+### `auth.uid()` returns null in REST requests on new (ES256-keyed) projects
+Supabase projects created in 2025/2026 default to **ES256 asymmetric JWT
+signing** (publishable key looks like `sb_publishable_…` instead of the
+older `eyJ…` anon key). On at least one such project we observed:
+
+- The user signs in successfully (auth.users + the `handle_new_user`
+  trigger both work).
+- The DB role on real REST requests IS set to `authenticated` (otherwise
+  we'd get GRANT-level "permission denied for table"; we don't).
+- But `auth.uid()` returns **null** in policy evaluation, so any RLS
+  policy gated on `auth.uid() is not null` rejects with
+  `42501 / new row violates row-level security policy`.
+- `request.jwt.claims` is empty in PostgreSQL settings during the
+  request — i.e., PostgREST authenticated the JWT enough to pick the
+  role, but didn't populate the JSON claims GUC that `auth.uid()` reads.
+
+Verified by running, in the Supabase Dashboard SQL editor:
+```sql
+begin;
+select set_config('request.jwt.claims', '{"sub":"…","role":"authenticated"}', true);
+select auth.uid() as uid; -- ← returns the UUID, so the function itself works
+rollback;
+```
+
+Workaround in place (see migration `20260517000002_relax_write_policies.sql`):
+INSERT/UPDATE/DELETE policies now gate on `current_user = 'authenticated'`
+(the DB role) instead of `auth.uid()`. The GRANT layer (migration 6 gave
+only `authenticated` INSERT/UPDATE/DELETE — never `anon`) is the real
+gate; per-user RLS is temporarily disabled for writes.
+
+Proper fix (when we get to it): figure out why PostgREST isn't
+populating `request.jwt.claims`. Likely candidates:
+- The legacy HS256 secret in Supabase doesn't match the new ES256
+  signing key — PostgREST validates with one but the other is active.
+- A Supabase project setting that disables claim extraction in favor of
+  pure-signature verification.
+
+For now, single-user dev safety is fine.
+
 ### PowerSync `uploadData` must guard against null Supabase session
 `PowerSyncBackendConnector.uploadData` runs **independently** of
 `fetchCredentials`. PowerSync drains the local CRUD queue whenever
