@@ -1,0 +1,55 @@
+name: differentworld
+description: "Different World — offline-first classroom planning & logging for early-childhood program staff."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State
+  flutter_riverpod: ^3.3.1
+
+  # Backend & sync
+  supabase_flutter: ^2.12.4
+  powersync: ^2.1.0
+
+  # Local DB
+  drift: ^2.33.0
+  drift_sqlite_async: ^0.3.0
+  sqlite_async: ^0.14.1
+
+  # Routing
+  go_router: ^17.2.3
+
+  # Models / serialization
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.11.0
+
+  # Utilities
+  flutter_dotenv: ^6.0.1
+  uuid: ^4.5.3
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  build_runner: ^2.15.0
+  drift_dev: ^2.33.0
+  freezed: ^3.2.5
+  json_serializable: ^6.13.2
+  shared_preferences: ^2.5.3
+  very_good_analysis: ^10.2.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env

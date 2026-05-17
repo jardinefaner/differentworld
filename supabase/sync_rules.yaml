@@ -1,0 +1,37 @@
+# PowerSync sync rules for Different World.
+# https://docs.powersync.com/sync/streams/overview
+#
+# Edition 3 (streams). Each stream is a named set of queries that PowerSync
+# runs against the source database; rows it returns get synced to the
+# subscribed client. `auto_subscribe: true` means every signed-in client
+# automatically subscribes.
+#
+# Strategy: one stream for the user's own profile (always synced so the
+# client can read its own row before any program assignment), and one
+# stream for everything scoped to the user's program.
+#
+# Every synced table carries `program_id`, so we use a subquery against
+# `profiles` to scope each table without joins inside PowerSync's engine.
+# If the user has no `program_id` yet, the subquery returns null and no
+# program rows are synced — graceful no-op until they create or join a
+# program.
+
+config:
+  edition: 3
+
+streams:
+  user_profile:
+    auto_subscribe: true
+    query: SELECT * FROM profiles WHERE id = auth.user_id()
+
+  by_program:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM programs           WHERE id         IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM profiles           WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM classrooms         WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM enrollments        WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM students           WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM guardians          WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM student_guardians  WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())
+      - SELECT * FROM attendance_records WHERE program_id IN (SELECT program_id FROM profiles WHERE id = auth.user_id())

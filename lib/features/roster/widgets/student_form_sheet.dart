@@ -1,0 +1,295 @@
+import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/roster/students_providers.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Modal bottom sheet for creating or editing a student. Pass an
+/// existing `student` to edit, or null with a `classroomId` to create.
+class StudentFormSheet extends ConsumerStatefulWidget {
+  const StudentFormSheet({
+    required this.classroomId,
+    this.student,
+    super.key,
+  });
+
+  final String classroomId;
+  final Student? student;
+
+  static Future<void> show(
+    BuildContext context, {
+    required String classroomId,
+    Student? student,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) =>
+          StudentFormSheet(classroomId: classroomId, student: student),
+    );
+  }
+
+  @override
+  ConsumerState<StudentFormSheet> createState() => _StudentFormSheetState();
+}
+
+class _StudentFormSheetState extends ConsumerState<StudentFormSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _firstName;
+  late final TextEditingController _lastName;
+  late final TextEditingController _allergies;
+  late final TextEditingController _notes;
+  DateTime? _dob;
+
+  bool _saving = false;
+  String? _error;
+
+  bool get _isEdit => widget.student != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _firstName = TextEditingController(text: widget.student?.firstName ?? '');
+    _lastName = TextEditingController(text: widget.student?.lastName ?? '');
+    _allergies = TextEditingController(text: widget.student?.allergies ?? '');
+    _notes = TextEditingController(text: widget.student?.notes ?? '');
+    final dobIso = widget.student?.dob;
+    _dob = dobIso == null ? null : DateTime.tryParse(dobIso);
+  }
+
+  @override
+  void dispose() {
+    _firstName.dispose();
+    _lastName.dispose();
+    _allergies.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDob() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dob ?? DateTime(now.year - 3, now.month, now.day),
+      firstDate: DateTime(now.year - 12),
+      lastDate: now,
+    );
+    if (picked != null && mounted) {
+      setState(() => _dob = picked);
+    }
+  }
+
+  Future<void> _save() async {
+    if (_saving) return;
+    final form = _formKey.currentState;
+    if (form == null || !form.validate()) return;
+
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+
+    try {
+      final actions = ref.read(studentActionsProvider);
+      final dob = _dob?.toIso8601String().substring(0, 10); // YYYY-MM-DD
+      final allergiesText = _allergies.text.trim();
+      final notesText = _notes.text.trim();
+      // Pass null (= Value.absent in updateStudent) when a field wasn't
+      // changed. This matches the "no change" semantics; explicit-clear
+      // would need its own UI affordance.
+      final allergies = allergiesText.isEmpty ? null : allergiesText;
+      final notes = notesText.isEmpty ? null : notesText;
+
+      if (_isEdit) {
+        await actions.update(
+          id: widget.student!.id,
+          firstName: _firstName.text.trim(),
+          lastName: _lastName.text.trim(),
+          dob: dob,
+          allergies: allergies,
+          notes: notes,
+        );
+      } else {
+        await actions.create(
+          classroomId: widget.classroomId,
+          firstName: _firstName.text.trim(),
+          lastName: _lastName.text.trim(),
+          dob: dob,
+          allergies: allergies,
+          notes: notes,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } on Exception catch (e, st) {
+      // Log details for developers but never render `e.toString()` to the
+      // user — RLS/constraint exceptions may include student PII.
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'roster'),
+      );
+      if (!mounted) return;
+      setState(() => _error = 'Could not save. Please try again.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    _isEdit ? 'Edit student' : 'New student',
+                    style: theme.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _firstName,
+                          autofocus: true,
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'First name',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) =>
+                              (v == null || v.trim().isEmpty)
+                                  ? 'Required'
+                                  : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lastName,
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Last name',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) =>
+                              (v == null || v.trim().isEmpty)
+                                  ? 'Required'
+                                  : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: _pickDob,
+                    borderRadius: BorderRadius.circular(4),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Date of birth (optional)',
+                        border: OutlineInputBorder(),
+                        suffixIcon: Icon(Icons.calendar_today_outlined),
+                      ),
+                      child: Text(
+                        _dob == null
+                            ? 'Tap to choose'
+                            : _formatDob(_dob!),
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _allergies,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Allergies (optional)',
+                      hintText: 'e.g. Peanuts, dairy',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _notes,
+                    minLines: 2,
+                    maxLines: 4,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Notes (optional)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed:
+                            _saving ? null : () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: _saving ? null : _save,
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.check),
+                        label: Text(_isEdit ? 'Save' : 'Add student'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _formatDob(DateTime dt) {
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+}

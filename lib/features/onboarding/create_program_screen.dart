@@ -1,0 +1,161 @@
+import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+
+class CreateProgramScreen extends ConsumerStatefulWidget {
+  const CreateProgramScreen({super.key});
+
+  @override
+  ConsumerState<CreateProgramScreen> createState() =>
+      _CreateProgramScreenState();
+}
+
+class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
+  final _nameController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    final form = _formKey.currentState;
+    if (form == null || !form.validate()) return;
+    final name = _nameController.text.trim();
+
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+
+    try {
+      final db = ref.read(appDatabaseProvider).value;
+      final session = ref.read(sessionProvider);
+      if (db == null || session == null) {
+        throw StateError('Database or session not ready.');
+      }
+      await db.createProgramForUser(
+        programId: const Uuid().v4(),
+        programName: name,
+        userId: session.user.id,
+      );
+      // currentProfileProvider's watch picks up the new program_id; the
+      // Home gate re-renders into the signed-in view.
+    } on Exception catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    await ref.read(authActionsProvider).signOut();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Set up your program'),
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout),
+            onPressed: _signOut,
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Icon(
+                      Icons.cottage_outlined,
+                      size: 64,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "What's your program called?",
+                      style: theme.textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This is the program your classrooms, students, and '
+                      'team will live under. You can edit it later in Settings.',
+                      style: theme.textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    TextFormField(
+                      controller: _nameController,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _submit(),
+                      decoration: const InputDecoration(
+                        labelText: 'Program name',
+                        hintText: 'e.g. Sunshine Preschool',
+                        prefixIcon: Icon(Icons.school_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        final v = value?.trim() ?? '';
+                        if (v.isEmpty) return 'Required';
+                        if (v.length < 2) return 'Too short';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: _submitting ? null : _submit,
+                      icon: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check),
+                      label: const Text('Create program'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

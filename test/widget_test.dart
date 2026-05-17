@@ -1,0 +1,40 @@
+import 'package:differentworld/app/app.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+
+    // Stub url_launcher so Supabase's auth setup doesn't crash trying to
+    // resolve the launch URL channel during tests.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/url_launcher'),
+      (call) async => null,
+    );
+
+    await Supabase.initialize(
+      url: 'https://example.supabase.co',
+      anonKey: 'test-anon-key',
+      authOptions: const FlutterAuthClientOptions(
+        // detectSessionInUri parses the test runner's URL on boot, which
+        // doesn't contain auth tokens — turn it off so initialize() returns
+        // cleanly.
+        detectSessionInUri: false,
+      ),
+    );
+  });
+
+  testWidgets('unauthenticated boot lands on the login screen',
+      (tester) async {
+    await tester.pumpWidget(const ProviderScope(child: DifferentWorldApp()));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.text('Different World'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
+  });
+}
