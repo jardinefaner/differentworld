@@ -5,8 +5,8 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
-import 'package:differentworld/features/groups/groups_list_screen.dart';
 import 'package:differentworld/features/onboarding/create_space_screen.dart';
+import 'package:differentworld/features/today/today_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -95,7 +95,7 @@ class _SignedInHome extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const GroupsListScreen();
+    return const TodayScreen();
   }
 }
 
