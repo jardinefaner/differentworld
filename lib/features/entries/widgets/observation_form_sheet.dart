@@ -3,7 +3,9 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/entries/entry_photos.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -73,9 +75,10 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   /// just the existing entry id.
   late final String _entryId;
 
-  /// Photo URL — already in Storage. Persisted to the entry's row at
-  /// save time. Null = no photo (or none yet).
-  String? _photoUrl;
+  /// Photo URLs — each already uploaded to Storage. Persisted to the
+  /// entry's row at save time (first → photo_url column, rest →
+  /// details.photos). Empty = no photos.
+  List<String> _photos = const [];
 
   bool get _isEdit => widget.existing != null;
 
@@ -88,7 +91,7 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     _textCtrl = TextEditingController(text: widget.existing?.body ?? '');
     _subjectId = widget.existing?.subjectId ?? widget.initialSubjectId;
     _entryId = widget.existing?.id ?? const Uuid().v4();
-    _photoUrl = widget.existing?.photoUrl;
+    _photos = widget.existing?.photos ?? const <String>[];
   }
 
   @override
@@ -102,14 +105,18 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     if (original == null) {
       return _textCtrl.text.trim().isNotEmpty ||
           _subjectId != null ||
-          _photoUrl != null;
+          _photos.isNotEmpty;
     }
+    final originalPhotos = original.photos;
+    final samePhotos = _photos.length == originalPhotos.length &&
+        List.generate(_photos.length, (i) => _photos[i] == originalPhotos[i])
+            .every((b) => b);
     return _textCtrl.text.trim() != (original.body ?? '') ||
         _subjectId != original.subjectId ||
-        _photoUrl != original.photoUrl;
+        !samePhotos;
   }
 
-  Future<void> _pickPhoto(ImageSource source) async {
+  Future<void> _addPhoto(ImageSource source) async {
     if (_photoUploading) return;
     final picker = ref.read(photoServiceProvider);
     XFile? picked;
@@ -135,7 +142,7 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
         picked: picked,
       );
       if (!mounted) return;
-      setState(() => _photoUrl = url);
+      setState(() => _photos = [..._photos, url]);
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'observations'),
@@ -147,8 +154,37 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     }
   }
 
-  void _clearPhoto() {
-    setState(() => _photoUrl = null);
+  void _removePhotoAt(int index) {
+    if (index < 0 || index >= _photos.length) return;
+    setState(() {
+      final next = [..._photos]..removeAt(index);
+      _photos = next;
+    });
+  }
+
+  Future<void> _showAddPhotoSheet() async {
+    if (_photoUploading) return;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Camera'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Library'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    await _addPhoto(source);
   }
 
   Future<void> _save() async {
@@ -172,14 +208,14 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
         await actions.updateText(
           id: widget.existing!.id,
           text: text,
-          photoUrl: _photoUrl,
+          photoUrls: _photos,
         );
       } else {
         await actions.createObservation(
           subjectId: _subjectId!,
           groupId: _effectiveGroupId,
           text: text,
-          photoUrl: _photoUrl,
+          photoUrls: _photos,
           id: _entryId,
         );
       }
@@ -319,12 +355,16 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _PhotoRow(
-                    photoUrl: _photoUrl,
+                  _PhotosGrid(
+                    photos: _photos,
                     uploading: _photoUploading,
-                    onCamera: () => _pickPhoto(ImageSource.camera),
-                    onGallery: () => _pickPhoto(ImageSource.gallery),
-                    onClear: _clearPhoto,
+                    onAdd: _showAddPhotoSheet,
+                    onView: (i) => PhotoViewer.open(
+                      context,
+                      urls: _photos,
+                      initialIndex: i,
+                    ),
+                    onRemove: _removePhotoAt,
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
@@ -458,103 +498,189 @@ class _SelectedSubjectChip extends ConsumerWidget {
   }
 }
 
-/// Photo affordance for the observation form. Two states:
-/// - No photo yet: row of `Camera` / `Library` buttons.
-/// - Photo set: thumbnail with an X to clear + a "Replace" button.
-/// Upload state shows a small linear progress beneath.
-class _PhotoRow extends StatelessWidget {
-  const _PhotoRow({
-    required this.photoUrl,
+/// Multi-photo grid for the observation form. Horizontal scroll of
+/// 72dp thumbs followed by a "+" tile. Each thumb has an X in the
+/// corner; tap the thumb itself to open the fullscreen [PhotoViewer]
+/// for pinch-zoom. Upload state shows as a 72dp shimmer tile inline.
+class _PhotosGrid extends StatelessWidget {
+  const _PhotosGrid({
+    required this.photos,
     required this.uploading,
-    required this.onCamera,
-    required this.onGallery,
-    required this.onClear,
+    required this.onAdd,
+    required this.onView,
+    required this.onRemove,
   });
 
-  final String? photoUrl;
+  final List<String> photos;
   final bool uploading;
-  final VoidCallback onCamera;
-  final VoidCallback onGallery;
-  final VoidCallback onClear;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onView;
+  final ValueChanged<int> onRemove;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasPhoto = photoUrl != null && !uploading;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (uploading)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+        Text(
+          'Photos',
+          style: theme.textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 80,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (var i = 0; i < photos.length; i++) ...[
+                _PhotoTile(
+                  url: photos[i],
+                  onTap: () => onView(i),
+                  onRemove: () => onRemove(i),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Uploading photo…',
-                  style: theme.textTheme.bodySmall,
-                ),
               ],
-            ),
-          )
-        else if (hasPhoto)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: CachedNetworkImage(
-                    imageUrl: photoUrl!,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => Container(
-                      width: 56,
-                      height: 56,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.broken_image_outlined),
-                    ),
+              if (uploading) ...[
+                _UploadingTile(),
+                const SizedBox(width: 8),
+              ],
+              _AddTile(onTap: uploading ? null : onAdd),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PhotoTile extends StatelessWidget {
+  const _PhotoTile({
+    required this.url,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  final String url;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: onTap,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => Container(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                  ),
+                  errorWidget: (_, _, _) => Container(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image_outlined, size: 20),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Photo attached',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Remove photo',
-                  icon: Icon(Icons.close, color: theme.colorScheme.error),
-                  onPressed: onClear,
-                ),
-              ],
+              ),
             ),
           ),
-        Row(
-          children: [
-            OutlinedButton.icon(
-              onPressed: uploading ? null : onCamera,
-              icon: const Icon(Icons.photo_camera_outlined, size: 18),
-              label: Text(hasPhoto ? 'Replace · Camera' : 'Camera'),
+          Positioned(
+            top: -6,
+            right: -6,
+            child: Material(
+              color: theme.colorScheme.errorContainer,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onRemove,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: theme.colorScheme.onErrorContainer,
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: uploading ? null : onGallery,
-              icon: const Icon(Icons.photo_library_outlined, size: 18),
-              label: Text(hasPhoto ? 'Replace · Library' : 'Library'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UploadingTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddTile extends StatelessWidget {
+  const _AddTile({required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_a_photo_outlined,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Add',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -6,7 +6,9 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/entries/entry_photos.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
+import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -139,7 +141,7 @@ class _ObservationRow extends ConsumerWidget {
         ? 'Unknown student'
         : '${subject.firstName} ${subject.lastName}';
 
-    final photoUrl = entry.photoUrl;
+    final photos = entry.photos;
     return ListTile(
       leading: PersonAvatar(
         name: fullName,
@@ -163,23 +165,77 @@ class _ObservationRow extends ConsumerWidget {
           ),
         ],
       ),
-      trailing: photoUrl == null
+      trailing: photos.isEmpty
           ? null
-          : ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: CachedNetworkImage(
-                imageUrl: photoUrl,
-                width: 44,
-                height: 44,
-                fit: BoxFit.cover,
-                errorWidget: (_, _, _) =>
-                    const Icon(Icons.broken_image_outlined),
-              ),
+          : _PhotoThumb(
+              photos: photos,
+              onTap: () => PhotoViewer.open(context, urls: photos),
             ),
       isThreeLine: true,
       onTap: () => ObservationFormSheet.show(
         context,
         existing: entry,
+      ),
+    );
+  }
+}
+
+/// Trailing photo thumbnail. Renders the first attached photo; if the
+/// entry has more than one photo, a small "+N" pill overlays the
+/// bottom-right so the viewer knows there's more to see.
+class _PhotoThumb extends StatelessWidget {
+  const _PhotoThumb({required this.photos, required this.onTap});
+
+  final List<String> photos;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final extras = photos.length - 1;
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: CachedNetworkImage(
+                  imageUrl: photos.first,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, _, _) =>
+                      const Icon(Icons.broken_image_outlined),
+                ),
+              ),
+            ),
+            if (extras > 0)
+              Positioned(
+                bottom: -4,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '+$extras',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

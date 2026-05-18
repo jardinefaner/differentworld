@@ -856,23 +856,36 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// Update an entry's text and / or photo. The other fields are
-  /// effectively immutable — kind / subject / group don't move once
-  /// the row is created.
+  /// Update an entry's text. The other fields are effectively
+  /// immutable here — kind / subject / group don't move once the row
+  /// is created. Use [updateEntryPhotos] to change attached photos.
   Future<void> updateEntry({
     required String id,
     String? body,
-    String? photoUrl,
-    String? detailsJson,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await (update(entries)..where((e) => e.id.equals(id))).write(
       EntriesCompanion(
         body: body == null ? const Value.absent() : Value(body),
-        photoUrl:
-            photoUrl == null ? const Value.absent() : Value(photoUrl),
-        details:
-            detailsJson == null ? const Value.absent() : Value(detailsJson),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Replace an entry's attached photos. Pass `photoUrl: null` and the
+  /// serialized `detailsJson` that has no `photos` key to clear them.
+  /// Both fields are always written (Value(...)), not Value.absent(),
+  /// because callers explicitly stage the full new state.
+  Future<void> updateEntryPhotos({
+    required String id,
+    required String? photoUrl,
+    required String detailsJson,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(entries)..where((e) => e.id.equals(id))).write(
+      EntriesCompanion(
+        photoUrl: Value(photoUrl),
+        details: Value(detailsJson),
         updatedAt: Value(now),
       ),
     );

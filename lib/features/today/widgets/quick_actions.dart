@@ -6,6 +6,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+/// "New observation" entry point shared by [QuickActions] and the
+/// omnibox search. Resolves the classroom context automatically:
+///   - 0 visible classrooms → "you're not assigned" snackbar
+///   - 1 visible classroom → opens the form for that group directly
+///   - 2+ → shows a transient classroom picker, then the form
+///
+/// Kept as a top-level function so any new launchpad surface (search,
+/// QuickActions, etc.) routes through the same flow — no divergence.
+Future<void> startNewObservation(BuildContext context, WidgetRef ref) async {
+  final groupsAsync = ref.read(groupsProvider);
+  final groups = groupsAsync.value ?? const <Group>[];
+  if (groups.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("You're not assigned to a classroom yet."),
+      ),
+    );
+    return;
+  }
+  if (groups.length == 1) {
+    await ObservationFormSheet.show(context, groupId: groups.first.id);
+    return;
+  }
+  final picked = await _ClassroomPickerSheet.show(context, groups: groups);
+  if (picked == null || !context.mounted) return;
+  await ObservationFormSheet.show(context, groupId: picked.id);
+}
+
 /// Capability-aware row of one-tap action tiles on the Today screen.
 ///
 /// Each tile renders only when the signed-in viewer has the matching
@@ -25,7 +53,7 @@ class QuickActions extends ConsumerWidget {
         _Tile(
           icon: Icons.edit_note_outlined,
           label: 'New observation',
-          onTap: () => _newObservation(context, ref),
+          onTap: () => startNewObservation(context, ref),
         ),
       if (viewer.canDrive || viewer.canManageProgram)
         _Tile(
@@ -67,29 +95,6 @@ class QuickActions extends ConsumerWidget {
     );
   }
 
-  /// "New observation" entry point:
-  ///   - 0 visible classrooms → show a quick "no rooms yet" snackbar
-  ///   - 1 visible classroom → open the form for that group directly
-  ///   - 2+ → show a transient classroom picker, then open the form
-  Future<void> _newObservation(BuildContext context, WidgetRef ref) async {
-    final groupsAsync = ref.read(groupsProvider);
-    final groups = groupsAsync.value ?? const <Group>[];
-    if (groups.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("You're not assigned to a classroom yet."),
-        ),
-      );
-      return;
-    }
-    if (groups.length == 1) {
-      await ObservationFormSheet.show(context, groupId: groups.first.id);
-      return;
-    }
-    final picked = await _ClassroomPickerSheet.show(context, groups: groups);
-    if (picked == null || !context.mounted) return;
-    await ObservationFormSheet.show(context, groupId: picked.id);
-  }
 }
 
 class _Tile extends StatelessWidget {

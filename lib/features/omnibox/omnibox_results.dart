@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,8 +22,9 @@ class OmniboxResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final viewer = ref.watch(viewerProvider);
     final groups = ref.watch(groupsProvider).value ?? const <Group>[];
-    final suggestions = _computeSuggestions(query, groups);
+    final suggestions = _computeSuggestions(query, groups, viewer);
 
     if (suggestions.isEmpty) {
       return Center(
@@ -51,7 +54,12 @@ class OmniboxResults extends ConsumerWidget {
   static List<_Suggestion> _computeSuggestions(
     String query,
     List<Group> groups,
+    Viewer viewer,
   ) {
+    // UX_DECISIONS §7 — every new feature must register a search entry
+    // here so the omnibox stays the single discoverable index of what
+    // the app can do. Capability-gate the entry the same way the UI
+    // gates the destination.
     final all = <_Suggestion>[
       _Suggestion(
         label: 'Today',
@@ -88,15 +96,46 @@ class OmniboxResults extends ConsumerWidget {
         keywords: const ['program', 'space', 'features'],
         onSelect: (ctx, ref) => ctx.push('/settings/program'),
       ),
+      // -- Vehicles (added with the fleet feature) ------------------------
       _Suggestion(
-        label: 'Add a classroom',
-        kindLabel: 'Action',
-        icon: Icons.add_circle_outline,
-        keywords: const ['new group', 'create room', 'classroom'],
-        onSelect: (ctx, ref) {
-          unawaited(ctx.push('/groups/new'));
-        },
+        label: 'Vehicles',
+        kindLabel: 'Page',
+        icon: Icons.directions_bus_outlined,
+        keywords: const ['fleet', 'van', 'bus', 'car', 'transport'],
+        onSelect: (ctx, ref) => ctx.push('/settings/vehicles'),
       ),
+      if (viewer.canManageProgram)
+        _Suggestion(
+          label: 'Add a vehicle',
+          kindLabel: 'Action',
+          icon: Icons.add_circle_outline,
+          keywords: const ['new vehicle', 'fleet', 'van', 'bus', 'car'],
+          onSelect: (ctx, ref) {
+            unawaited(ctx.push('/settings/vehicles/new'));
+          },
+        ),
+      // -- Observations (cap-gated) --------------------------------------
+      if (viewer.canObserve)
+        _Suggestion(
+          label: 'New observation',
+          kindLabel: 'Action',
+          icon: Icons.edit_note_outlined,
+          keywords: const ['note', 'log', 'observe', 'observation'],
+          onSelect: (ctx, ref) {
+            unawaited(startNewObservation(ctx, ref));
+          },
+        ),
+      // -- Add a classroom (director-only) -------------------------------
+      if (viewer.canManageProgram)
+        _Suggestion(
+          label: 'Add a classroom',
+          kindLabel: 'Action',
+          icon: Icons.add_circle_outline,
+          keywords: const ['new group', 'create room', 'classroom'],
+          onSelect: (ctx, ref) {
+            unawaited(ctx.push('/groups/new'));
+          },
+        ),
       _Suggestion(
         label: 'Sign out',
         kindLabel: 'Action',
@@ -122,6 +161,15 @@ class OmniboxResults extends ConsumerWidget {
           keywords: const ['attendance', 'mark', 'present'],
           onSelect: (ctx, ref) => ctx.push('/groups/${g.id}/attendance'),
         ),
+        if (viewer.canObserve)
+          _Suggestion(
+            label: 'Observations · ${g.name}',
+            kindLabel: 'Page',
+            icon: Icons.menu_book_outlined,
+            keywords: const ['notes', 'log', 'observation'],
+            onSelect: (ctx, ref) =>
+                ctx.push('/groups/${g.id}/observations'),
+          ),
       ],
     ];
 

@@ -186,6 +186,43 @@ up commit once that pattern is needed in more than one place.
 
 ---
 
+## 7. Search is the index of everything the app does
+
+**Rule.** Every new feature MUST register at least one entry in
+`lib/features/omnibox/omnibox_results.dart` at the time it ships.
+Pages get one entry per page. Actions get one entry per action.
+Capability-gated destinations gate their entry on the matching
+`viewer.canXxx` getter so users don't see options they can't act on.
+
+**Why.** "I don't know where the thing is" is a real complaint.
+A teacher who can't remember whether vehicle check-in lives under
+Settings, Today, or a classroom should be able to pull down the
+search bar, type "check in," and find it. If the omnibox doesn't
+index it, it doesn't exist as far as discovery is concerned.
+
+**How.**
+- Add a `_Suggestion(label, icon, keywords, onSelect)` entry inside
+  the `_computeSuggestions` list.
+- Pages → `kindLabel: 'Page'`. Actions → `kindLabel: 'Action'`.
+- `keywords` covers what the user might type — synonyms, the
+  feature's domain terms, the action verb. Keep them lowercase.
+- For destinations a user can reach but not act on, the search entry
+  is fine (it still surfaces them); for actions the user can't run,
+  capability-gate the *entry itself* with `if (viewer.canXxx)` so it
+  doesn't show up at all.
+- Re-route through the canonical destination — `ctx.push(...)`,
+  `Skill(...)`, or a shared helper like `startNewObservation`. Never
+  duplicate the action's inner flow inside the suggestion handler.
+
+**Adding a new feature checklist.** When you wire a new screen or
+action:
+1. Add the route (if any) per §2.
+2. Add a QuickActions tile (if appropriate) per §6.
+3. Add an omnibox suggestion per §7. **This is mandatory** — not
+   doing this means the feature is invisible to search.
+
+---
+
 ## Changelog
 
 - **2026-05-18** — §1 capability-toggle auto-save adopted after the
@@ -201,3 +238,11 @@ up commit once that pattern is needed in more than one place.
 - **2026-05-18** — §6 Today becomes a capability-aware launchpad.
   First tiles: New observation (canObserve), Vehicles (canDrive or
   canManageProgram), Team (canInviteStaff or canManageProgram).
+- **2026-05-18** — §7 omnibox must index every feature; mandatory
+  step in the new-feature checklist. Backfilled Vehicles + New
+  observation + per-classroom Observations entries.
+- **2026-05-18** — Observations now support multiple photos with
+  pinch-zoom via a fullscreen `PhotoViewer`. Primary photo stays in
+  `entries.photo_url` for back-compat; extras serialize to
+  `details.photos`. The split is encapsulated in `SerializedPhotos`
+  + `EntryPhotosX.photos` so callers see one merged list.
