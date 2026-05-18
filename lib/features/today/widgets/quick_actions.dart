@@ -55,6 +55,12 @@ class QuickActions extends ConsumerWidget {
           label: 'New observation',
           onTap: () => startNewObservation(context, ref),
         ),
+      if (viewer.canObserve)
+        _Tile(
+          icon: Icons.menu_book_outlined,
+          label: 'Observations',
+          onTap: () => context.push('/observations'),
+        ),
       if (viewer.canDrive || viewer.canManageProgram)
         _Tile(
           icon: Icons.directions_bus_outlined,

@@ -1,7 +1,9 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entry_photos.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
 
 /// Kind discriminators for the unified `entries` table.
@@ -27,6 +29,46 @@ final entriesForGroupProvider =
     yield* db.watchEntriesForGroup(groupId: key.groupId, kind: key.kind);
   },
 );
+
+/// Every observation in the signed-in user's program, scoped to what
+/// the viewer can see (director: all; teacher: only entries in
+/// classrooms they're assigned to). Newest first.
+///
+/// The non-director path joins two Drift streams (entries + my
+/// assignments) directly via `Rx.combineLatest2` rather than going
+/// through `groupsProvider` — Riverpod 3 removed `.stream` so
+/// composing provider streams is no longer the easy path. Raw Drift
+/// streams stay reactive the same way.
+final observationsInSpaceProvider =
+    StreamProvider<List<Entry>>((ref) async* {
+  final viewer = ref.watch(viewerProvider);
+  final spaceId = viewer.spaceId;
+  final memberId = viewer.memberId;
+  if (spaceId == null) {
+    yield const [];
+    return;
+  }
+  final db = await ref.watch(appDatabaseProvider.future);
+  final entries = db.watchEntriesInSpace(
+    spaceId: spaceId,
+    kind: EntryKind.observation,
+  );
+  if (viewer.seesAllClassrooms || memberId == null) {
+    yield* entries;
+    return;
+  }
+  final assignments = db.watchAssignmentsForMember(memberId);
+  yield* Rx.combineLatest2<List<Entry>, List<GroupMember>, List<Entry>>(
+    entries,
+    assignments,
+    (entryList, assigns) {
+      final ids = assigns.map((a) => a.groupId).toSet();
+      return entryList
+          .where((e) => e.groupId == null || ids.contains(e.groupId))
+          .toList(growable: false);
+    },
+  );
+});
 
 typedef SubjectEntriesKey = ({String subjectId, String? kind});
 

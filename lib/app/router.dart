@@ -6,6 +6,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
+import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
@@ -103,6 +104,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ],
               ),
             ],
+          ),
+          // Top-level observations index — every observation the
+          // viewer can see, newest first. See UX_DECISIONS §8.
+          GoRoute(
+            path: 'observations',
+            builder: (_, _) => const ObservationsIndexScreen(),
           ),
           // Family-side direct route: a guardian navigates to a child
           // without going through a classroom they don't see.

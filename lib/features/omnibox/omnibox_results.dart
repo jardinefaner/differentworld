@@ -117,6 +117,14 @@ class OmniboxResults extends ConsumerWidget {
       // -- Observations (cap-gated) --------------------------------------
       if (viewer.canObserve)
         _Suggestion(
+          label: 'Observations',
+          kindLabel: 'Page',
+          icon: Icons.menu_book_outlined,
+          keywords: const ['notes', 'feed', 'all observations'],
+          onSelect: (ctx, ref) => ctx.push('/observations'),
+        ),
+      if (viewer.canObserve)
+        _Suggestion(
           label: 'New observation',
           kindLabel: 'Action',
           icon: Icons.edit_note_outlined,

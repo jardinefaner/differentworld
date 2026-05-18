@@ -826,6 +826,23 @@ class AppDatabase extends _$AppDatabase {
     return query.watch();
   }
 
+  /// Every entry of a kind across the whole space, newest first.
+  /// Powers the top-level `/observations` index. Teachers see only
+  /// what's visible to them — the viewer-side filtering happens in
+  /// the provider that wraps this stream, since the DB doesn't know
+  /// about classroom assignments.
+  Stream<List<Entry>> watchEntriesInSpace({
+    required String spaceId,
+    required String kind,
+    int limit = 200,
+  }) {
+    return (select(entries)
+          ..where((e) => e.spaceId.equals(spaceId) & e.kind.equals(kind))
+          ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
+          ..limit(limit))
+        .watch();
+  }
+
   Future<void> createEntry({
     required String id,
     required String spaceId,
