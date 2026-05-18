@@ -13,6 +13,12 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+DateTime get _todayDate {
+  final n = DateTime.now();
+  return DateTime(n.year, n.month, n.day);
+}
 
 /// Per-member detail screen: shows role + capability checkboxes. Editing
 /// is gated on the signed-in member being a director.
@@ -67,11 +73,22 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           }
           final currentRole = _draftRole ?? member.role;
           final caps = _draft ?? member.caps;
-          final activeCerts =
-              caps.getStringList(MemberCaps.certifications);
-          final hasMatCert = activeCerts.contains(Certifications.mat.key);
-          final hasDriverCert =
-              activeCerts.contains(Certifications.driver.key);
+          final activeCerts = caps.getStringList(MemberCaps.certifications);
+          final expiryMap =
+              caps.getStringMap(MemberCaps.certificationExpirations);
+
+          // A cert "counts" only if it's on file AND not expired.
+          bool isValid(String key) {
+            if (!activeCerts.contains(key)) return false;
+            final iso = expiryMap[key];
+            if (iso == null) return true; // no expiry = valid indefinitely
+            final dt = DateTime.tryParse(iso);
+            if (dt == null) return true;
+            return !dt.isBefore(_todayDate);
+          }
+
+          final hasMatCert = isValid(Certifications.mat.key);
+          final hasDriverCert = isValid(Certifications.driver.key);
 
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
@@ -164,7 +181,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   label: 'Administer medication',
                   subtitle: hasMatCert
                       ? 'MAT certification on file'
-                      : 'Add the MAT certification below to enable',
+                      : (activeCerts.contains(Certifications.mat.key)
+                          ? 'MAT certification has expired'
+                          : 'Add the MAT certification below to enable'),
                   enabled: canManage && hasMatCert,
                   value: caps.getBool(MemberCaps.canAdministerMedication),
                   onChanged: (v) => _set(MemberCaps.canAdministerMedication, v),
@@ -173,7 +192,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   label: 'Drive (field trips)',
                   subtitle: hasDriverCert
                       ? 'Driver record on file'
-                      : 'Add the Driver certification below to enable',
+                      : (activeCerts.contains(Certifications.driver.key)
+                          ? 'Driver certification has expired'
+                          : 'Add the Driver certification below to enable'),
                   enabled: canManage && hasDriverCert,
                   value: caps.getBool(MemberCaps.canDrive),
                   onChanged: (v) => _set(MemberCaps.canDrive, v),
@@ -228,12 +249,15 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   ),
 
                 // Certifications — list of credentials on file. Some
-                // (MAT, Driver) gate specific capabilities above.
+                // (MAT, Driver) gate specific capabilities above; an
+                // expired cert auto-disables its gated capability.
                 const SizedBox(height: 24),
                 const _SectionLabel(label: 'Certifications'),
                 _CertificationsSection(
                   active: activeCerts,
+                  expiries: expiryMap,
                   onToggle: canManage ? _toggleCert : null,
+                  onSetExpiry: canManage ? _setCertExpiry : null,
                 ),
 
                 // Classroom assignments — director assigns this member
@@ -315,7 +339,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   /// Add / remove a certification from the member's caps list. When
   /// removing a cert that gates a capability, also clears the gated
   /// cap to avoid the silent-mismatch where a switch was on but the
-  /// cert was revoked.
+  /// cert was revoked. Removing also clears the cert's expiry entry.
   void _toggleCert(String certKey, bool add) {
     setState(() {
       final base =
@@ -330,8 +354,51 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         next.remove(certKey);
       }
       var updated = base.setting(MemberCaps.certifications, next.toList());
-      // Cascade off any caps the removed cert was gating.
       if (!add) {
+        // Cascade off gated caps + drop the expiry entry.
+        for (final cert in Certifications.all) {
+          if (cert.key != certKey) continue;
+          for (final gated in cert.gatesCaps) {
+            updated = updated.setting(gated, false);
+          }
+        }
+        final expiries = Map<String, String>.from(
+          base.getStringMap(MemberCaps.certificationExpirations),
+        )..remove(certKey);
+        updated = updated.setting(
+          MemberCaps.certificationExpirations,
+          expiries,
+        );
+      }
+      _draft = updated;
+    });
+  }
+
+  /// Set or clear the expiry date for a specific cert. Pass null to
+  /// remove the expiry (cert becomes "valid indefinitely").
+  void _setCertExpiry(String certKey, DateTime? date) {
+    setState(() {
+      final base =
+          _draft ??
+          ref.read(_memberProvider(widget.memberId)).value?.caps ??
+          const Capabilities.empty();
+      final expiries = Map<String, String>.from(
+        base.getStringMap(MemberCaps.certificationExpirations),
+      );
+      if (date == null) {
+        expiries.remove(certKey);
+      } else {
+        expiries[certKey] = '${date.year.toString().padLeft(4, '0')}-'
+            '${date.month.toString().padLeft(2, '0')}-'
+            '${date.day.toString().padLeft(2, '0')}';
+      }
+      var updated = base.setting(
+        MemberCaps.certificationExpirations,
+        expiries,
+      );
+      // If we just set an expiry in the past, the cert effectively
+      // expired — cascade off any caps it gates.
+      if (date != null && date.isBefore(_todayDate)) {
         for (final cert in Certifications.all) {
           if (cert.key != certKey) continue;
           for (final gated in cert.gatesCaps) {
@@ -569,43 +636,198 @@ class _AssignmentsList extends ConsumerWidget {
   }
 }
 
-/// Row of toggle-chips for each known [Certification]. Director (or
-/// the member themselves when we eventually allow self-editing) flips
-/// chips on/off; tap-to-add for an inactive chip, tap-to-remove for
-/// an active one. [onToggle] is null for read-only viewers.
+/// Certifications section. Active certs render as full rows with
+/// their expiry date (tap to edit, or "Set expiry" if none); inactive
+/// certs render as add-chips. Expired certs render with an error tint
+/// and an "Expired" badge.
 class _CertificationsSection extends StatelessWidget {
   const _CertificationsSection({
     required this.active,
+    required this.expiries,
     required this.onToggle,
+    required this.onSetExpiry,
   });
 
-  /// List of cert keys currently on file for this member.
   final List<String> active;
+  final Map<String, String> expiries;
 
-  /// (certKey, add) → caller does the actual mutation. Null = read-only.
-  /// Positional bool: the callback is tiny and `add` reads naturally as
-  /// the second arg.
+  /// Positional bool: the callback is tiny and `add` reads naturally
+  /// as the second arg.
   // ignore: avoid_positional_boolean_parameters
   final void Function(String certKey, bool add)? onToggle;
+  final void Function(String certKey, DateTime? date)? onSetExpiry;
+
+  bool _expired(String certKey) {
+    final iso = expiries[certKey];
+    if (iso == null) return false;
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return false;
+    return dt.isBefore(_todayDate);
+  }
+
+  Future<void> _editExpiry(BuildContext context, Certification cert) async {
+    if (onSetExpiry == null) return;
+    final current = expiries[cert.key];
+    final currentDt = current == null ? null : DateTime.tryParse(current);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: currentDt ?? DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime(DateTime.now().year - 2),
+      lastDate: DateTime(DateTime.now().year + 10),
+      helpText: '${cert.label} valid until',
+    );
+    if (picked != null) {
+      onSetExpiry!(cert.key, picked);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final activeCerts = Certifications.all.where(
+      (c) => active.contains(c.key),
+    );
+    final inactiveCerts = Certifications.all.where(
+      (c) => !active.contains(c.key),
+    );
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 4,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final cert in Certifications.all)
-            FilterChip(
-              label: Text(cert.label),
-              tooltip: cert.description,
-              selected: active.contains(cert.key),
-              showCheckmark: true,
-              onSelected: onToggle == null
+          // Active certs.
+          for (final cert in activeCerts) ...[
+            _ActiveCertRow(
+              cert: cert,
+              expiryIso: expiries[cert.key],
+              expired: _expired(cert.key),
+              onEditExpiry: onSetExpiry == null
                   ? null
-                  : (next) => onToggle!(cert.key, next),
+                  : () => _editExpiry(context, cert),
+              onRemove: onToggle == null
+                  ? null
+                  : () => onToggle!(cert.key, false),
             ),
+            const SizedBox(height: 4),
+          ],
+          if (activeCerts.isNotEmpty && inactiveCerts.isNotEmpty)
+            const SizedBox(height: 8),
+
+          // Inactive — add chips.
+          if (inactiveCerts.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final cert in inactiveCerts)
+                  ActionChip(
+                    avatar: Icon(Icons.add, size: 16, color: scheme.primary),
+                    label: Text(cert.label),
+                    tooltip: cert.description,
+                    onPressed: onToggle == null
+                        ? null
+                        : () => onToggle!(cert.key, true),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActiveCertRow extends StatelessWidget {
+  const _ActiveCertRow({
+    required this.cert,
+    required this.expiryIso,
+    required this.expired,
+    required this.onEditExpiry,
+    required this.onRemove,
+  });
+
+  final Certification cert;
+  final String? expiryIso;
+  final bool expired;
+  final VoidCallback? onEditExpiry;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final expiryDt = expiryIso == null ? null : DateTime.tryParse(expiryIso!);
+    final expirySubtitle = expiryDt == null
+        ? 'No expiry set · tap to add'
+        : 'Valid until ${DateFormat.yMMMd().format(expiryDt)}';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: expired
+            ? scheme.errorContainer.withValues(alpha: 0.5)
+            : scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            expired ? Icons.error_outline : Icons.verified_outlined,
+            color: expired ? scheme.error : scheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(cert.label, style: theme.textTheme.titleMedium),
+                    if (expired) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: scheme.error,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Expired',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: scheme.onError,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                InkWell(
+                  onTap: onEditExpiry,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                      expirySubtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: expired
+                            ? scheme.error
+                            : scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Remove',
+            icon: const Icon(Icons.close, size: 18),
+            onPressed: onRemove,
+          ),
         ],
       ),
     );

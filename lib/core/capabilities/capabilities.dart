@@ -53,6 +53,14 @@ class Capabilities {
     return const [];
   }
 
+  Map<String, String> getStringMap(String key) {
+    final v = _raw[key];
+    if (v is Map) {
+      return v.map((k, val) => MapEntry(k.toString(), val.toString()));
+    }
+    return const {};
+  }
+
   /// Returns a new Capabilities with `key` set to `value`.
   Capabilities setting(String key, Object? value) {
     final next = Map<String, dynamic>.from(_raw);

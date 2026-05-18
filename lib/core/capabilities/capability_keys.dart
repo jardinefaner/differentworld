@@ -36,6 +36,12 @@ abstract class MemberCaps {
   static const canViewAuditLog = 'can_view_audit_log';
   static const canActAsDirector = 'can_act_as_director';
   static const certifications = 'certifications';
+
+  /// Parallel map: { cert_key → ISO date string } recording when each
+  /// certification expires. Absent key = expiry not tracked (treated
+  /// as valid). Past date = expired (treated as invalid; gated caps
+  /// auto-disable).
+  static const certificationExpirations = 'certification_expirations';
 }
 
 abstract class GroupCaps {

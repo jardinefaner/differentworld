@@ -102,6 +102,26 @@ class Viewer {
   /// are scoped to their assignments.
   bool get seesAllClassrooms => isDirector;
 
+  /// Parsed "valid until" date for a certification, or null if the
+  /// cert isn't on file or has no expiry recorded. A cert with no
+  /// expiry is treated as valid indefinitely.
+  DateTime? certExpiry(String certKey) {
+    final map =
+        memberCaps.getStringMap(MemberCaps.certificationExpirations);
+    final iso = map[certKey];
+    return iso == null ? null : DateTime.tryParse(iso);
+  }
+
+  /// True if the cert is on file AND its expiry (if set) is in the
+  /// past. Used by cert-gated caps to auto-disable when expired.
+  bool isCertExpired(String certKey) {
+    final exp = certExpiry(certKey);
+    if (exp == null) return false;
+    final n = DateTime.now();
+    final today = DateTime(n.year, n.month, n.day);
+    return exp.isBefore(today);
+  }
+
   /// Can edit a specific member (themselves OR a director can edit
   /// anyone). Used to gate the photo-change tap + role editor in
   /// MemberDetailScreen.
