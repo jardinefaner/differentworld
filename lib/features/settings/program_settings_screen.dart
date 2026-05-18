@@ -3,6 +3,7 @@ import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/settings/settings_actions.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
@@ -10,6 +11,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Director-only screen: edit Space-level feature toggles & defaults.
+///
+/// Per `docs/UX_DECISIONS.md §1`, toggles **auto-save** — no Save
+/// button, no draft state. Each `onChanged` fires
+/// [SpaceCapActions.setCap] which reads the latest Space row, merges
+/// the single change, and writes the blob back.
 class ProgramSettingsScreen extends ConsumerStatefulWidget {
   const ProgramSettingsScreen({super.key});
 
@@ -19,20 +25,20 @@ class ProgramSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
-  Capabilities? _draft;
-  bool _saving = false;
-  String? _error;
-
-  // What we last wrote to the DB. Keep `_draft` set after save so the
-  // UI keeps showing the saved values until the Drift stream re-emits
-  // the row — otherwise there's a visible race where toggles snap back
-  // to their pre-save state for the frame between the write returning
-  // and the stream catching up. See member_detail_screen for the same
-  // pattern.
-  String? _pendingSavedCapsJson;
-
-  bool get _isDirty =>
-      _draft != null && _pendingSavedCapsJson == null;
+  Future<void> _setCap(String spaceId, String key, bool value) async {
+    try {
+      await ref.read(spaceCapActionsProvider).setCap(spaceId, key, value);
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'settings'),
+      );
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
+        const SnackBar(content: Text("Couldn't save that change. Try again.")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,44 +61,16 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
     }
     final spaceAsync = ref.watch(_spaceProvider(spaceId));
 
-    // Clear `_draft` once the Drift stream confirms the saved row has
-    // landed. Without this, clearing `_draft` synchronously after the
-    // write returned would race the stream and briefly show stale data.
-    ref.listen<AsyncValue<Space?>>(_spaceProvider(spaceId), (prev, next) {
-      final s = next.value;
-      if (s == null) return;
-      if (_pendingSavedCapsJson != null &&
-          s.capabilities == _pendingSavedCapsJson) {
-        setState(() {
-          _draft = null;
-          _pendingSavedCapsJson = null;
-        });
-      }
-    });
-
+    // No save action — toggles auto-save (UX_DECISIONS §1).
     return EdgeScaffold(
       backFallbackRoute: '/settings',
-      actions: [
-        if (_isDirty && spaceAsync.value != null)
-          IconButton(
-            tooltip: 'Save',
-            onPressed: _saving ? null : () => _save(spaceAsync.value!),
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check),
-          ),
-      ],
       body: spaceAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) =>
             const Center(child: Text('Could not load program settings.')),
         data: (space) {
           if (space == null) return const Center(child: Text('No space.'));
-          final caps = _draft ?? space.caps;
+          final caps = space.caps;
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
             children: [
@@ -112,7 +90,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                     SpaceCaps.featureObservations,
                     fallback: true,
                   ),
-                  onChanged: (v) => _set(SpaceCaps.featureObservations, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureObservations, v),
                 ),
                 _CapSwitch(
                   label: 'Meal logging',
@@ -121,7 +99,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                     SpaceCaps.featureMealLogging,
                     fallback: true,
                   ),
-                  onChanged: (v) => _set(SpaceCaps.featureMealLogging, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureMealLogging, v),
                 ),
                 _CapSwitch(
                   label: 'Nap logging',
@@ -130,13 +108,13 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                     SpaceCaps.featureNapLogging,
                     fallback: true,
                   ),
-                  onChanged: (v) => _set(SpaceCaps.featureNapLogging, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureNapLogging, v),
                 ),
                 _CapSwitch(
                   label: 'Diaper logging',
                   subtitle: 'Default off — enable for infant/toddler programs',
                   value: caps.getBool(SpaceCaps.featureDiaperLogging),
-                  onChanged: (v) => _set(SpaceCaps.featureDiaperLogging, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureDiaperLogging, v),
                 ),
                 _CapSwitch(
                   label: 'Incident reports',
@@ -145,32 +123,32 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                     SpaceCaps.featureIncidentReports,
                     fallback: true,
                   ),
-                  onChanged: (v) => _set(SpaceCaps.featureIncidentReports, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureIncidentReports, v),
                 ),
                 _CapSwitch(
                   label: 'Medication log',
                   subtitle:
                       'Track doses given (requires certified staff member)',
                   value: caps.getBool(SpaceCaps.featureMedicationLog),
-                  onChanged: (v) => _set(SpaceCaps.featureMedicationLog, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureMedicationLog, v),
                 ),
                 _CapSwitch(
                   label: 'Field trips',
                   subtitle: 'Trips + permission slips',
                   value: caps.getBool(SpaceCaps.featureFieldTrips),
-                  onChanged: (v) => _set(SpaceCaps.featureFieldTrips, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureFieldTrips, v),
                 ),
                 _CapSwitch(
                   label: 'Family login',
                   subtitle: 'Family-facing app access (coming soon)',
                   value: caps.getBool(SpaceCaps.featureFamilyLogin),
-                  onChanged: (v) => _set(SpaceCaps.featureFamilyLogin, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureFamilyLogin, v),
                 ),
                 _CapSwitch(
                   label: 'Billing',
                   subtitle: 'Attendance-based invoicing (coming soon)',
                   value: caps.getBool(SpaceCaps.featureBilling),
-                  onChanged: (v) => _set(SpaceCaps.featureBilling, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureBilling, v),
                 ),
                 const _SectionLabel(label: 'Defaults'),
                 _CapSwitch(
@@ -179,18 +157,8 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                       'New enrollments start with photo consent enabled. '
                       'Turn off if you require explicit per-family opt-in.',
                   value: caps.getBool(SpaceCaps.photoDefaultConsent),
-                  onChanged: (v) => _set(SpaceCaps.photoDefaultConsent, v),
+                  onChanged: (v) => _setCap(spaceId,SpaceCaps.photoDefaultConsent, v),
                 ),
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Text(
-                      _error!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
                 const SizedBox(height: 32),
               ],
             );
@@ -199,52 +167,6 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
     );
   }
 
-  void _set(String key, bool value) {
-    if (_saving) return; // Don't accept edits mid-write.
-    // Null-safe baseline: don't risk a bang-crash if the current
-    // member or space stream hasn't resolved yet.
-    Capabilities baseline() {
-      if (_draft != null) return _draft!;
-      final spaceId = ref.read(currentMemberProvider).value?.spaceId;
-      if (spaceId == null) return const Capabilities.empty();
-      return ref.read(_spaceProvider(spaceId)).value?.caps ??
-          const Capabilities.empty();
-    }
-
-    setState(() {
-      _draft = baseline().setting(key, value);
-      // New edits invalidate any pending "wait for stream" — the
-      // listener should not clear our draft for a save we no longer
-      // agree with.
-      _pendingSavedCapsJson = null;
-    });
-  }
-
-  Future<void> _save(Space space) async {
-    final draft = _draft;
-    if (draft == null) return;
-    final draftJson = draft.toJson();
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      final db = await ref.read(appDatabaseProvider.future);
-      await db.updateSpaceCapabilities(space.id, draftJson);
-      if (!mounted) return;
-      // Don't clear `_draft` here — the listener in build() clears it
-      // once the Drift stream emits a row matching `draftJson`.
-      setState(() => _pendingSavedCapsJson = draftJson);
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'settings'),
-      );
-      if (!mounted) return;
-      setState(() => _error = 'Could not save. Please try again.');
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
 }
 
 // Riverpod 3 family providers don't have a stable public-typed name.

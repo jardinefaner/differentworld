@@ -223,6 +223,20 @@ class AppDatabase extends _$AppDatabase {
         .watchSingleOrNull();
   }
 
+  /// One-shot read by ID. Use this — not a captured widget prop — when
+  /// a write needs the latest `capabilities` to avoid clobbering
+  /// concurrent edits to other cap keys.
+  Future<Member?> findMemberById(String id) {
+    return (select(members)..where((m) => m.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  /// Same pattern as findMemberById, for Space-level capability writes.
+  Future<Space?> findSpaceById(String id) {
+    return (select(spaces)..where((s) => s.id.equals(id)))
+        .getSingleOrNull();
+  }
+
   /// Two writes in one transaction:
   ///   1. INSERT the new space row.
   ///   2. UPDATE the current user's member row to point at it AND promote

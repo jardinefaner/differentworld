@@ -8,6 +8,7 @@ import 'package:differentworld/features/groups/group_assignments_providers.dart'
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/settings/settings_actions.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -20,8 +21,12 @@ DateTime get _todayDate {
   return DateTime(n.year, n.month, n.day);
 }
 
-/// Per-member detail screen: shows role + capability checkboxes. Editing
-/// is gated on the signed-in member being a director.
+/// Per-member detail screen: role + capability toggles + certs.
+///
+/// Per `docs/UX_DECISIONS.md §1`, capability toggles **auto-save** —
+/// no draft state, no Save button. Each `onChanged` writes through
+/// [MemberCapActions]. The Switch's `value:` reads from the live
+/// Drift stream, so the displayed state always matches the DB.
 class MemberDetailScreen extends ConsumerStatefulWidget {
   const MemberDetailScreen({required this.memberId, super.key});
 
@@ -32,26 +37,60 @@ class MemberDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
-  Capabilities? _draft;
-  String? _draftRole;
-  bool _saving = false;
+  /// Only used by the destructive "Remove from team" action — disables
+  /// it while the delete is in flight.
+  bool _removing = false;
   String? _error;
 
-  // What we last wrote to the DB. We keep `_draft` set after a save so
-  // the UI keeps showing the saved values until the Drift stream re-
-  // emits the row — otherwise there's a visible race where the toggle
-  // snaps back to the pre-save value for the frame between the write
-  // returning and the stream catching up. The listener in build()
-  // clears `_draft` once `member.capabilities == _pendingSavedCapsJson`.
-  String? _pendingSavedCapsJson;
-  String? _pendingSavedRole;
+  Future<void> _setCap(String key, bool value) async {
+    try {
+      await ref
+          .read(memberCapActionsProvider)
+          .setCap(widget.memberId, key, value);
+    } on Exception catch (e, st) {
+      _onSaveError(e, st);
+    }
+  }
 
-  bool get _isDirty {
-    final hasCapsEdit =
-        _draft != null && _pendingSavedCapsJson == null;
-    final hasRoleEdit =
-        _draftRole != null && _pendingSavedRole == null;
-    return hasCapsEdit || hasRoleEdit;
+  Future<void> _setRole(String role) async {
+    try {
+      await ref
+          .read(memberCapActionsProvider)
+          .setRole(widget.memberId, role);
+    } on Exception catch (e, st) {
+      _onSaveError(e, st);
+    }
+  }
+
+  Future<void> _toggleCert(String certKey, bool add) async {
+    try {
+      await ref
+          .read(memberCapActionsProvider)
+          .toggleCert(widget.memberId, certKey, add);
+    } on Exception catch (e, st) {
+      _onSaveError(e, st);
+    }
+  }
+
+  Future<void> _setCertExpiry(String certKey, DateTime? date) async {
+    try {
+      await ref
+          .read(memberCapActionsProvider)
+          .setCertExpiry(widget.memberId, certKey, date);
+    } on Exception catch (e, st) {
+      _onSaveError(e, st);
+    }
+  }
+
+  void _onSaveError(Exception e, StackTrace st) {
+    FlutterError.reportError(
+      FlutterErrorDetails(exception: e, stack: st, library: 'members'),
+    );
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      const SnackBar(content: Text("Couldn't save that change. Try again.")),
+    );
   }
 
   @override
@@ -64,45 +103,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final canManage = viewer.canManageProgram;
     final memberAsync = ref.watch(_memberProvider(widget.memberId));
 
-    // Clear pending draft state once the Drift stream confirms the row
-    // matches what we just saved. Without this, `_draft = null` set
-    // synchronously after the write returns can race the stream and
-    // briefly render stale (pre-save) capability values.
-    ref.listen<AsyncValue<Member?>>(_memberProvider(widget.memberId),
-        (prev, next) {
-      final m = next.value;
-      if (m == null) return;
-      if (_pendingSavedCapsJson != null &&
-          m.capabilities == _pendingSavedCapsJson) {
-        setState(() {
-          _draft = null;
-          _pendingSavedCapsJson = null;
-        });
-      }
-      if (_pendingSavedRole != null && m.role == _pendingSavedRole) {
-        setState(() {
-          _draftRole = null;
-          _pendingSavedRole = null;
-        });
-      }
-    });
-
+    // No save action — toggles auto-save (UX_DECISIONS §1).
     return EdgeScaffold(
       backFallbackRoute: '/settings/team',
-      actions: [
-        if (_isDirty && memberAsync.value != null)
-          IconButton(
-            tooltip: 'Save',
-            onPressed: _saving ? null : () => _save(memberAsync.value!),
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check),
-          ),
-      ],
       body: memberAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => const Center(child: Text('Could not load member.')),
@@ -110,8 +113,8 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           if (member == null) {
             return const Center(child: Text('Member not found.'));
           }
-          final currentRole = _draftRole ?? member.role;
-          final caps = _draft ?? member.caps;
+          final currentRole = member.role;
+          final caps = member.caps;
           final activeCerts = caps.getStringList(MemberCaps.certifications);
           final expiryMap =
               caps.getStringMap(MemberCaps.certificationExpirations);
@@ -163,22 +166,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 if (canManage)
                   _RoleSelector(
                     selected: currentRole,
-                    onChanged: (next) {
-                      if (_saving) return;
-                      setState(() {
-                        _draftRole = next;
-                        // Apply role defaults to caps draft so the toggles
-                        // visually reflect the new bundle. Director can
-                        // still override individual toggles after.
-                        _draft = caps.mergedWith(
-                          RoleBundles.defaultsFor(next),
-                        );
-                        // New edits invalidate any pending "wait for
-                        // stream catch-up" trackers.
-                        _pendingSavedRole = null;
-                        _pendingSavedCapsJson = null;
-                      });
-                    },
+                    onChanged: _setRole,
                   )
                 else
                   ListTile(
@@ -195,31 +183,31 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   subtitle: 'Record developmental observations',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canObserve),
-                  onChanged: (v) => _set(MemberCaps.canObserve, v),
+                  onChanged: (v) => _setCap(MemberCaps.canObserve, v),
                 ),
                 _CapSwitch(
                   label: 'Take attendance',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canTakeAttendance),
-                  onChanged: (v) => _set(MemberCaps.canTakeAttendance, v),
+                  onChanged: (v) => _setCap(MemberCaps.canTakeAttendance, v),
                 ),
                 _CapSwitch(
                   label: 'Record meals',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordMeal),
-                  onChanged: (v) => _set(MemberCaps.canRecordMeal, v),
+                  onChanged: (v) => _setCap(MemberCaps.canRecordMeal, v),
                 ),
                 _CapSwitch(
                   label: 'Record naps',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordNap),
-                  onChanged: (v) => _set(MemberCaps.canRecordNap, v),
+                  onChanged: (v) => _setCap(MemberCaps.canRecordNap, v),
                 ),
                 _CapSwitch(
                   label: 'Record diaper changes',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordDiaper),
-                  onChanged: (v) => _set(MemberCaps.canRecordDiaper, v),
+                  onChanged: (v) => _setCap(MemberCaps.canRecordDiaper, v),
                 ),
                 _CapSwitch(
                   label: 'Administer medication',
@@ -230,7 +218,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                           : 'Add the MAT certification below to enable'),
                   enabled: canManage && hasMatCert,
                   value: caps.getBool(MemberCaps.canAdministerMedication),
-                  onChanged: (v) => _set(MemberCaps.canAdministerMedication, v),
+                  onChanged: (v) => _setCap(MemberCaps.canAdministerMedication, v),
                 ),
                 _CapSwitch(
                   label: 'Drive (field trips)',
@@ -241,45 +229,45 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                           : 'Add the Driver certification below to enable'),
                   enabled: canManage && hasDriverCert,
                   value: caps.getBool(MemberCaps.canDrive),
-                  onChanged: (v) => _set(MemberCaps.canDrive, v),
+                  onChanged: (v) => _setCap(MemberCaps.canDrive, v),
                 ),
                 _CapSwitch(
                   label: 'Open the building',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canOpenBuilding),
-                  onChanged: (v) => _set(MemberCaps.canOpenBuilding, v),
+                  onChanged: (v) => _setCap(MemberCaps.canOpenBuilding, v),
                 ),
                 _CapSwitch(
                   label: 'Close the building',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canCloseBuilding),
-                  onChanged: (v) => _set(MemberCaps.canCloseBuilding, v),
+                  onChanged: (v) => _setCap(MemberCaps.canCloseBuilding, v),
                 ),
                 _CapSwitch(
                   label: 'Authorize pickup changes',
                   subtitle: 'Add or remove guardians for a child',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canAuthorizePickup),
-                  onChanged: (v) => _set(MemberCaps.canAuthorizePickup, v),
+                  onChanged: (v) => _setCap(MemberCaps.canAuthorizePickup, v),
                 ),
                 _CapSwitch(
                   label: 'Invite staff',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canInviteStaff),
-                  onChanged: (v) => _set(MemberCaps.canInviteStaff, v),
+                  onChanged: (v) => _setCap(MemberCaps.canInviteStaff, v),
                 ),
                 _CapSwitch(
                   label: 'View billing',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canViewBilling),
-                  onChanged: (v) => _set(MemberCaps.canViewBilling, v),
+                  onChanged: (v) => _setCap(MemberCaps.canViewBilling, v),
                 ),
                 _CapSwitch(
                   label: 'Act as director',
                   subtitle: 'Full admin when the director is offsite',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canActAsDirector),
-                  onChanged: (v) => _set(MemberCaps.canActAsDirector, v),
+                  onChanged: (v) => _setCap(MemberCaps.canActAsDirector, v),
                 ),
                 if (_error != null)
                   Padding(
@@ -326,7 +314,8 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                     child: DestructiveButton(
                       label: 'Remove from team',
                       icon: Icons.person_remove_alt_1_outlined,
-                      onPressed: _saving ? null : () => _removeFromTeam(member),
+                      onPressed:
+                          _removing ? null : () => _removeFromTeam(member),
                     ),
                   ),
                 ],
@@ -350,7 +339,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     );
     if (!confirmed || !mounted) return;
     setState(() {
-      _saving = true;
+      _removing = true;
       _error = null;
     });
     try {
@@ -364,150 +353,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _saving = false;
+        _removing = false;
         _error = 'Could not remove. Please try again.';
       });
-    }
-  }
-
-  void _set(String key, bool value) {
-    if (_saving) return; // Don't accept edits mid-write.
-    setState(() {
-      final base =
-          _draft ??
-          ref.read(_memberProvider(widget.memberId)).value?.caps ??
-          const Capabilities.empty();
-      _draft = base.setting(key, value);
-      // New local edits invalidate any in-flight "wait for stream" —
-      // the listener should not clear our draft just because the stream
-      // catches up to a previous save we no longer agree with.
-      _pendingSavedCapsJson = null;
-    });
-  }
-
-  /// Add / remove a certification from the member's caps list. When
-  /// removing a cert that gates a capability, also clears the gated
-  /// cap to avoid the silent-mismatch where a switch was on but the
-  /// cert was revoked. Removing also clears the cert's expiry entry.
-  void _toggleCert(String certKey, bool add) {
-    if (_saving) return;
-    setState(() {
-      final base =
-          _draft ??
-          ref.read(_memberProvider(widget.memberId)).value?.caps ??
-          const Capabilities.empty();
-      final existing = base.getStringList(MemberCaps.certifications);
-      final next = {...existing};
-      if (add) {
-        next.add(certKey);
-      } else {
-        next.remove(certKey);
-      }
-      var updated = base.setting(MemberCaps.certifications, next.toList());
-      if (!add) {
-        // Cascade off gated caps + drop the expiry entry.
-        for (final cert in Certifications.all) {
-          if (cert.key != certKey) continue;
-          for (final gated in cert.gatesCaps) {
-            updated = updated.setting(gated, false);
-          }
-        }
-        final expiries = Map<String, String>.from(
-          base.getStringMap(MemberCaps.certificationExpirations),
-        )..remove(certKey);
-        updated = updated.setting(
-          MemberCaps.certificationExpirations,
-          expiries,
-        );
-      }
-      _draft = updated;
-      _pendingSavedCapsJson = null;
-    });
-  }
-
-  /// Set or clear the expiry date for a specific cert. Pass null to
-  /// remove the expiry (cert becomes "valid indefinitely").
-  void _setCertExpiry(String certKey, DateTime? date) {
-    if (_saving) return;
-    setState(() {
-      final base =
-          _draft ??
-          ref.read(_memberProvider(widget.memberId)).value?.caps ??
-          const Capabilities.empty();
-      final expiries = Map<String, String>.from(
-        base.getStringMap(MemberCaps.certificationExpirations),
-      );
-      if (date == null) {
-        expiries.remove(certKey);
-      } else {
-        expiries[certKey] = '${date.year.toString().padLeft(4, '0')}-'
-            '${date.month.toString().padLeft(2, '0')}-'
-            '${date.day.toString().padLeft(2, '0')}';
-      }
-      var updated = base.setting(
-        MemberCaps.certificationExpirations,
-        expiries,
-      );
-      // If we just set an expiry in the past, the cert effectively
-      // expired — cascade off any caps it gates.
-      if (date != null && date.isBefore(_todayDate)) {
-        for (final cert in Certifications.all) {
-          if (cert.key != certKey) continue;
-          for (final gated in cert.gatesCaps) {
-            updated = updated.setting(gated, false);
-          }
-        }
-      }
-      _draft = updated;
-      _pendingSavedCapsJson = null;
-    });
-  }
-
-  Future<void> _save(Member member) async {
-    // Runtime guard — the UI gates editing on canManage, but defence-
-    // in-depth: refuse to write if the caller can't manage the program
-    // regardless of how this method gets reached.
-    final viewer = ref.read(viewerProvider);
-    if (!viewer.canManageProgram) return;
-
-    // Snapshot what we're about to save so the listener in build()
-    // knows what stream emission to wait for before clearing `_draft`.
-    // Keep `_draft` itself populated — it's the source of truth the UI
-    // reads until the stream confirms the saved row.
-    final draftCapsJson = _draft?.toJson();
-    final draftRole = _draftRole;
-
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      final db = await ref.read(appDatabaseProvider.future);
-      if (draftCapsJson != null) {
-        await db.updateMemberCapabilities(member.id, draftCapsJson);
-      }
-      if (draftRole != null && draftRole != member.role) {
-        await db.updateMemberRole(member.id, draftRole);
-      }
-      if (!mounted) return;
-      setState(() {
-        // Record what we wrote; the listener will clear `_draft` /
-        // `_draftRole` once the Drift stream emits a row that matches.
-        if (draftCapsJson != null) {
-          _pendingSavedCapsJson = draftCapsJson;
-        }
-        if (draftRole != null) {
-          _pendingSavedRole = draftRole;
-        }
-      });
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'members'),
-      );
-      if (!mounted) return;
-      setState(() => _error = 'Could not save. Please try again.');
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
