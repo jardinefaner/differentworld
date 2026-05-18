@@ -186,6 +186,7 @@ up commit once that pattern is needed in more than one place.
 
 ---
 
+
 ## 7. Search is the index of everything the app does
 
 **Rule.** Every new feature MUST register at least one entry in
@@ -223,6 +224,131 @@ action:
 
 ---
 
+## 8. Every noun is a first-class entity
+
+**Rule.** If a concept in the domain has its own identity, lifecycle,
+or audit trail — i.e., a *noun* the user can talk about independently —
+it gets its own table, providers, screens, routes, and search entry.
+JSONB blobs are for **attributes** of an entity (capability flags,
+kind-specific structured payloads). They are not a place to hide
+entities you didn't feel like modelling.
+
+**The test.** Ask: *would I ever query, list, or audit this
+independently of its parent?* If yes — promote. If no — it can stay
+as an attribute.
+
+Two failure modes the rule prevents:
+
+1. **Buried entities.** A noun stuck inside JSONB on another row has
+   no list view, no detail screen, no search index, and no foreign
+   keys pointing at it. Users reach it only through one ancestor path,
+   and a director can't ask "show me everything of this kind." The
+   feature feels unfindable because, mechanically, it is.
+2. **Silent denormalization.** A repeating shape inside JSONB ends up
+   duplicated across rows. When the same human (a guardian, a
+   pickup person, a vehicle) shows up in five places, edits in one
+   place don't propagate. Eventually we either build a "sync this
+   blob" cron or we accept stale data.
+
+**How.**
+- New noun → migration adds `<noun>s` table with `space_id`, RLS,
+  publication entry, sync rule line. Per `CLAUDE.md`'s five-places
+  checklist.
+- Add Drift class + mutators.
+- Build feature dir under `lib/features/<noun>/` with providers,
+  list / detail / edit screens, and (if relevant) inspection /
+  log / action sub-screens.
+- Register the screen as a route in `lib/app/router.dart`.
+- Add an omnibox suggestion per §7.
+- Add a QuickActions tile per §6 if the noun has a daily-use
+  action.
+
+**Capability flags stay JSONB.** Boolean flags that describe what an
+entity can do or what it tracks (`canObserve`, `tracksDiapers`,
+`pickupStrict`) are attributes, not entities. They live in the
+`capabilities` JSONB columns by design. The rule applies to entities
+that have *identity* — a row you'd want to fetch by id, list by some
+criterion, or attach foreign keys to.
+
+**Audit (current state, 2026-05-18).**
+
+| Concept | Current shape | Decision | Notes |
+|---|---|---|---|
+| Space / Member / Group / Subject / Guardian | First-class ✓ | Keep | Core entities. |
+| Entry (observation / meal / nap / …) | First-class ✓ | Keep | One row per logged event; `kind` discriminator. |
+| Vehicle / VehicleLog | First-class ✓ | Keep | Fleet feature, just landed. |
+| Invite | First-class ✓ | Keep | Has lifecycle + redemption. |
+| Attendance record | First-class ✓ | Keep | One row per (subject, date). |
+| Group assignment (`group_members`) | First-class ✓ | Keep | Join table with id. |
+| **Certification** | JSONB on `members.capabilities` | **Promote** | Each cert has an expiry, an issuing org, a document, a renewal workflow. The director needs "show me certs expiring in 30 days." Today it's two parallel JSONB shapes that can desync (cert listed but no expiry, expiry for cert not on file). |
+| **Pickup person** | JSONB on `subjects.capabilities` | **Promote** | A grandparent who picks up three siblings is currently stored 3× (and edits don't propagate). Should be a person row + join. |
+| **Attachment** (photo/PDF/audio) | `photo_url` columns + `entries.details.photos` | **Promote** | Photos live on subjects, members, vehicles, entries via four different storage schemes. Cert documents are coming. A single `attachments` table unifies upload, GC, viewer, "all photos this week" search. |
+| Inspection item result | JSONB on `vehicle_logs.items` | **Keep JSONB** | Tightly coupled to one log event. No independent identity. |
+| Capability boolean flag | JSONB on each entity | **Keep JSONB** | Attribute, not entity. |
+| Subject medical text (allergies, IEP notes) | Text columns on subjects | **Keep text (for now)** | Free-form. Promote to structured rows later if we need to expire/audit them. |
+| Member role | Text column on `members` | **Keep text** | Fixed enum, small. |
+
+**Prioritized refactor.**
+
+1. **Certifications → first-class.** Highest leverage. Unlocks
+   expiring-soon dashboards, document storage (photo of the
+   license), renewal reminders, audit trails. Migration touches
+   `members.capabilities` (drop `certifications` / `certification_expirations`
+   keys) and adds `member_certifications` with `space_id`, `member_id`,
+   `cert_key`, `issued_at`, `expires_at`, `document_url`.
+
+2. **Attachments → first-class.** Unifies every photo path in the
+   app. `attachments` table with `space_id`, `entity_kind`,
+   `entity_id`, `url`, `thumb_url`, `taken_at`, `taken_by`,
+   `mime_type`. Drops `subjects.photo_url`, `members.avatar_url`,
+   `vehicles.photo_url`, `entries.photo_url` + `details.photos`.
+   Enables cert documents from #1.
+
+3. **Pickup people → first-class.** `pickup_people` (per-space
+   directory) + `subject_pickup_people` join. Same grandparent
+   appearing on multiple kids stays a single row, with one phone
+   number, one photo, edits propagate.
+
+4. **Inspection items → first-class (low priority, defer).** JSONB
+   is fine until we want "show me every brake-light failure across
+   the fleet last quarter" as a real query.
+
+---
+
+## 9. One canonical destination per action
+
+**Rule.** For any single action (edit a student, add a vehicle, fire
+the morning checklist), there is exactly **one** screen / route that
+performs it. Multiple *entry points* (Today launchpad tile, omnibox
+suggestion, contextual button on a detail screen) are fine and
+encouraged — they all `context.push(...)` to the same destination.
+
+**Why.** Divergent flows is how features quietly bifurcate. A "create
+student" sheet at the FAB and a "create student" screen from search
+become two different things — one gets a polish pass, the other rots.
+
+**How.**
+- Edit destinations are routes, never `static show()` sheets.
+- Shortcuts → `context.push('/the/canonical/path')`. Never inline a
+  copy of the form.
+- Quick-action sheets (PhotoSourceSheet, ObservationFormSheet,
+  AttendanceRow inline statuses, InviteShareSheet) survive because
+  they're the *only* implementation of their action — they have one
+  canonical form, just reached from many places.
+
+**Refactor work outstanding.**
+- The `_CapSwitch` widget is private-duplicated in `member_detail`,
+  `program_settings`, `group_edit_screen`. Functionally identical.
+  Promote to `lib/shared/widgets/cap_switch.dart` so styling/behavior
+  evolve in one place.
+- The "edit screen" scaffold pattern (EdgeScaffold + ContentHeader +
+  DismissGuard + save IconButton + DestructiveButton) is repeated in
+  ~5 files. Acceptable for now (the pattern is small) but if a sixth
+  edit screen lands, factor into a shared `EditScaffold`.
+
+
+---
+
 ## Changelog
 
 - **2026-05-18** — §1 capability-toggle auto-save adopted after the
@@ -246,3 +372,12 @@ action:
   `entries.photo_url` for back-compat; extras serialize to
   `details.photos`. The split is encapsulated in `SerializedPhotos`
   + `EntryPhotosX.photos` so callers see one merged list.
+- **2026-05-18** — Attendance status picker promoted from a
+  bottom-modal sheet to an inline row of five icon buttons. New
+  shared `AttendanceRow` widget used by both morning_checklist and
+  attendance_screen; `status_picker_sheet.dart` deleted.
+- **2026-05-18** — §8 "Every noun is a first-class entity" + §9
+  "One canonical destination per action" adopted. Audit identified
+  three concepts currently mis-modelled as JSONB on a parent:
+  certifications, pickup people, and attachments. Refactor backlog
+  recorded in §8.
