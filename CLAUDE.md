@@ -606,6 +606,20 @@ should be stale until the next sync round-trip (it usually shouldn't).
 - `Bash(supabase db push:*)` — run migrations directly after writing
   them. The CLI's own y/N prompt is the user's checkpoint.
 
+## Default run target — the Pixel 6 (wireless)
+
+When testing changes, run on the user's Pixel 6 over wireless ADB:
+
+```sh
+flutter run -d adb-1A291FDF6002RQ-JYcM2v._adb-tls-connect._tcp
+```
+
+Background it via `tee /tmp/dw-pixel.log` so you can tail logs later.
+Don't switch to Chrome / macOS as the default — phone is the primary
+testing surface (the app is phone-first). Web is a secondary
+verification, not the default. If the Pixel is disconnected, tell the
+user; don't silently fall back to a different device.
+
 ---
 
 ## Commands
