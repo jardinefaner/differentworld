@@ -52,17 +52,26 @@ class PickupActions {
 
   final Ref _ref;
 
+  /// Replace the subject's pickup-people list.
+  ///
+  /// Reads the subject row fresh from the DB before merging, so a stale
+  /// `subject` reference held by a long-open sheet can't clobber edits
+  /// to *other* capability keys (allergies, dietary, etc.) that landed
+  /// while the sheet was open. The race window now shrinks to the gap
+  /// between the read and the write, which is one transaction.
   Future<void> setPickupPeople({
-    required Subject subject,
+    required String subjectId,
     required List<PickupPerson> people,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final caps = Capabilities.fromJson(subject.capabilities);
+    final fresh = await db.findSubjectById(subjectId);
+    if (fresh == null) return; // Subject was removed concurrently.
+    final caps = Capabilities.fromJson(fresh.capabilities);
     final updated = caps.setting(
       SubjectCaps.pickupPeople,
       people.map((p) => p.toJson()).toList(),
     );
-    await db.updateSubjectCapabilities(subject.id, updated.toJson());
+    await db.updateSubjectCapabilities(subjectId, updated.toJson());
   }
 }
 

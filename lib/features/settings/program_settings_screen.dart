@@ -23,6 +23,17 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
   bool _saving = false;
   String? _error;
 
+  // What we last wrote to the DB. Keep `_draft` set after save so the
+  // UI keeps showing the saved values until the Drift stream re-emits
+  // the row — otherwise there's a visible race where toggles snap back
+  // to their pre-save state for the frame between the write returning
+  // and the stream catching up. See member_detail_screen for the same
+  // pattern.
+  String? _pendingSavedCapsJson;
+
+  bool get _isDirty =>
+      _draft != null && _pendingSavedCapsJson == null;
+
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
@@ -44,10 +55,25 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
     }
     final spaceAsync = ref.watch(_spaceProvider(spaceId));
 
+    // Clear `_draft` once the Drift stream confirms the saved row has
+    // landed. Without this, clearing `_draft` synchronously after the
+    // write returned would race the stream and briefly show stale data.
+    ref.listen<AsyncValue<Space?>>(_spaceProvider(spaceId), (prev, next) {
+      final s = next.value;
+      if (s == null) return;
+      if (_pendingSavedCapsJson != null &&
+          s.capabilities == _pendingSavedCapsJson) {
+        setState(() {
+          _draft = null;
+          _pendingSavedCapsJson = null;
+        });
+      }
+    });
+
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       actions: [
-        if (_draft != null && spaceAsync.value != null)
+        if (_isDirty && spaceAsync.value != null)
           IconButton(
             tooltip: 'Save',
             onPressed: _saving ? null : () => _save(spaceAsync.value!),
@@ -174,6 +200,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
   }
 
   void _set(String key, bool value) {
+    if (_saving) return; // Don't accept edits mid-write.
     // Null-safe baseline: don't risk a bang-crash if the current
     // member or space stream hasn't resolved yet.
     Capabilities baseline() {
@@ -186,21 +213,28 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
 
     setState(() {
       _draft = baseline().setting(key, value);
+      // New edits invalidate any pending "wait for stream" — the
+      // listener should not clear our draft for a save we no longer
+      // agree with.
+      _pendingSavedCapsJson = null;
     });
   }
 
   Future<void> _save(Space space) async {
     final draft = _draft;
     if (draft == null) return;
+    final draftJson = draft.toJson();
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
       final db = await ref.read(appDatabaseProvider.future);
-      await db.updateSpaceCapabilities(space.id, draft.toJson());
+      await db.updateSpaceCapabilities(space.id, draftJson);
       if (!mounted) return;
-      setState(() => _draft = null);
+      // Don't clear `_draft` here — the listener in build() clears it
+      // once the Drift stream emits a row matching `draftJson`.
+      setState(() => _pendingSavedCapsJson = draftJson);
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'settings'),

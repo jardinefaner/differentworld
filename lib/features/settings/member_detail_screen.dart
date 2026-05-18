@@ -37,6 +37,23 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   bool _saving = false;
   String? _error;
 
+  // What we last wrote to the DB. We keep `_draft` set after a save so
+  // the UI keeps showing the saved values until the Drift stream re-
+  // emits the row — otherwise there's a visible race where the toggle
+  // snaps back to the pre-save value for the frame between the write
+  // returning and the stream catching up. The listener in build()
+  // clears `_draft` once `member.capabilities == _pendingSavedCapsJson`.
+  String? _pendingSavedCapsJson;
+  String? _pendingSavedRole;
+
+  bool get _isDirty {
+    final hasCapsEdit =
+        _draft != null && _pendingSavedCapsJson == null;
+    final hasRoleEdit =
+        _draftRole != null && _pendingSavedRole == null;
+    return hasCapsEdit || hasRoleEdit;
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
@@ -47,11 +64,33 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final canManage = viewer.canManageProgram;
     final memberAsync = ref.watch(_memberProvider(widget.memberId));
 
+    // Clear pending draft state once the Drift stream confirms the row
+    // matches what we just saved. Without this, `_draft = null` set
+    // synchronously after the write returns can race the stream and
+    // briefly render stale (pre-save) capability values.
+    ref.listen<AsyncValue<Member?>>(_memberProvider(widget.memberId),
+        (prev, next) {
+      final m = next.value;
+      if (m == null) return;
+      if (_pendingSavedCapsJson != null &&
+          m.capabilities == _pendingSavedCapsJson) {
+        setState(() {
+          _draft = null;
+          _pendingSavedCapsJson = null;
+        });
+      }
+      if (_pendingSavedRole != null && m.role == _pendingSavedRole) {
+        setState(() {
+          _draftRole = null;
+          _pendingSavedRole = null;
+        });
+      }
+    });
+
     return EdgeScaffold(
       backFallbackRoute: '/settings/team',
       actions: [
-        if ((_draft != null || _draftRole != null) &&
-            memberAsync.value != null)
+        if (_isDirty && memberAsync.value != null)
           IconButton(
             tooltip: 'Save',
             onPressed: _saving ? null : () => _save(memberAsync.value!),
@@ -125,6 +164,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   _RoleSelector(
                     selected: currentRole,
                     onChanged: (next) {
+                      if (_saving) return;
                       setState(() {
                         _draftRole = next;
                         // Apply role defaults to caps draft so the toggles
@@ -133,6 +173,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                         _draft = caps.mergedWith(
                           RoleBundles.defaultsFor(next),
                         );
+                        // New edits invalidate any pending "wait for
+                        // stream catch-up" trackers.
+                        _pendingSavedRole = null;
+                        _pendingSavedCapsJson = null;
                       });
                     },
                   )
@@ -327,12 +371,17 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   }
 
   void _set(String key, bool value) {
+    if (_saving) return; // Don't accept edits mid-write.
     setState(() {
       final base =
           _draft ??
           ref.read(_memberProvider(widget.memberId)).value?.caps ??
           const Capabilities.empty();
       _draft = base.setting(key, value);
+      // New local edits invalidate any in-flight "wait for stream" —
+      // the listener should not clear our draft just because the stream
+      // catches up to a previous save we no longer agree with.
+      _pendingSavedCapsJson = null;
     });
   }
 
@@ -341,6 +390,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   /// cap to avoid the silent-mismatch where a switch was on but the
   /// cert was revoked. Removing also clears the cert's expiry entry.
   void _toggleCert(String certKey, bool add) {
+    if (_saving) return;
     setState(() {
       final base =
           _draft ??
@@ -371,12 +421,14 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         );
       }
       _draft = updated;
+      _pendingSavedCapsJson = null;
     });
   }
 
   /// Set or clear the expiry date for a specific cert. Pass null to
   /// remove the expiry (cert becomes "valid indefinitely").
   void _setCertExpiry(String certKey, DateTime? date) {
+    if (_saving) return;
     setState(() {
       final base =
           _draft ??
@@ -407,6 +459,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         }
       }
       _draft = updated;
+      _pendingSavedCapsJson = null;
     });
   }
 
@@ -417,25 +470,35 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final viewer = ref.read(viewerProvider);
     if (!viewer.canManageProgram) return;
 
+    // Snapshot what we're about to save so the listener in build()
+    // knows what stream emission to wait for before clearing `_draft`.
+    // Keep `_draft` itself populated — it's the source of truth the UI
+    // reads until the stream confirms the saved row.
+    final draftCapsJson = _draft?.toJson();
+    final draftRole = _draftRole;
+
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
       final db = await ref.read(appDatabaseProvider.future);
-      if (_draft != null) {
-        await db.updateMemberCapabilities(
-          member.id,
-          _draft!.toJson(),
-        );
+      if (draftCapsJson != null) {
+        await db.updateMemberCapabilities(member.id, draftCapsJson);
       }
-      if (_draftRole != null && _draftRole != member.role) {
-        await db.updateMemberRole(member.id, _draftRole!);
+      if (draftRole != null && draftRole != member.role) {
+        await db.updateMemberRole(member.id, draftRole);
       }
       if (!mounted) return;
       setState(() {
-        _draft = null;
-        _draftRole = null;
+        // Record what we wrote; the listener will clear `_draft` /
+        // `_draftRole` once the Drift stream emits a row that matches.
+        if (draftCapsJson != null) {
+          _pendingSavedCapsJson = draftCapsJson;
+        }
+        if (draftRole != null) {
+          _pendingSavedRole = draftRole;
+        }
       });
     } on Exception catch (e, st) {
       FlutterError.reportError(

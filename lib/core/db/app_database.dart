@@ -416,6 +416,14 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
+  /// One-shot fetch of a subject row by ID. Use this — not a cached
+  /// widget prop — when a write needs the latest `capabilities` to
+  /// avoid clobbering concurrent edits to other cap keys.
+  Future<Subject?> findSubjectById(String id) {
+    return (select(subjects)..where((s) => s.id.equals(id)))
+        .getSingleOrNull();
+  }
+
   Future<void> createSubject({
     required String id,
     required String spaceId,

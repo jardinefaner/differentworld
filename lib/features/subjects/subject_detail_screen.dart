@@ -716,7 +716,7 @@ class _PickupList extends ConsumerWidget {
     }
     await ref
         .read(pickupActionsProvider)
-        .setPickupPeople(subject: subject, people: next);
+        .setPickupPeople(subjectId: subject.id, people: next);
   }
 
   Future<void> _remove(WidgetRef ref, int idx) async {
@@ -724,7 +724,7 @@ class _PickupList extends ConsumerWidget {
     final next = [...all]..removeAt(idx);
     await ref
         .read(pickupActionsProvider)
-        .setPickupPeople(subject: subject, people: next);
+        .setPickupPeople(subjectId: subject.id, people: next);
   }
 
   @override
