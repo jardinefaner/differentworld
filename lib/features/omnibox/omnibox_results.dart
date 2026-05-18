@@ -89,6 +89,16 @@ class OmniboxResults extends ConsumerWidget {
         keywords: const ['staff', 'teachers', 'members'],
         onSelect: (ctx, ref) => ctx.push('/settings/team'),
       ),
+      // Certifications are now first-class — searchable on their own.
+      // For now the editing surface is the per-member detail screen;
+      // when the expiring-soon dashboard lands it gets its own entry.
+      _Suggestion(
+        label: 'Certifications',
+        kindLabel: 'Page',
+        icon: Icons.workspace_premium_outlined,
+        keywords: const ['cert', 'mat', 'cpr', 'license', 'expiring'],
+        onSelect: (ctx, ref) => ctx.push('/settings/team'),
+      ),
       _Suggestion(
         label: 'Program settings',
         kindLabel: 'Page',

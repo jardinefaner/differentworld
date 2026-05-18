@@ -1,8 +1,9 @@
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 
-/// Known staff certifications. Stored as a `List<String>` under
-/// [MemberCaps.certifications] in the member's JSONB capabilities
-/// blob.
+/// Known staff certifications. Each held cert lives in the
+/// `member_certifications` table (first-class entity per
+/// UX_DECISIONS §8); this file holds the type catalog — label, key,
+/// description, and the capability keys the cert gates.
 ///
 /// Each cert may gate specific capability flags. The UI uses
 /// [gatesCaps] to disable a switch + show "Requires X cert" when the

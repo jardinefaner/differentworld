@@ -141,4 +141,15 @@ const appSchema = Schema([
     Column.text('body_damage_notes'),
     Column.text('created_at'),
   ]),
+  Table('member_certifications', [
+    Column.text('space_id'),
+    Column.text('member_id'),
+    Column.text('cert_key'),
+    Column.text('issued_at'),
+    Column.text('expires_at'),
+    Column.text('notes'),
+    Column.text('document_url'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 ]);

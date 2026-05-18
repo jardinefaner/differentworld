@@ -237,10 +237,30 @@ class VehicleLogs extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// A staff member's hold of a single certification (MAT / CPR / Driver
+/// / etc). Promoted from JSONB-on-`members.capabilities` per
+/// UX_DECISIONS §8 so we get proper lifecycle (issued, expires) and
+/// can query "expiring soon" without scanning JSON blobs.
+class MemberCertifications extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get memberId => text()();
+  TextColumn get certKey => text()();
+  TextColumn get issuedAt => text().nullable()(); // ISO date
+  TextColumn get expiresAt => text().nullable()(); // ISO date
+  TextColumn get notes => text().nullable()();
+  TextColumn get documentUrl => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
-          Vehicles, VehicleLogs],
+          Vehicles, VehicleLogs, MemberCertifications],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -1039,6 +1059,107 @@ class AppDatabase extends _$AppDatabase {
           ])
           ..limit(1))
         .watchSingleOrNull();
+  }
+
+  // -- Member certifications ----------------------------------------------
+
+  Stream<List<MemberCertification>> watchCertsForMember(String memberId) {
+    return (select(memberCertifications)
+          ..where((c) => c.memberId.equals(memberId))
+          ..orderBy([(c) => OrderingTerm(expression: c.certKey)]))
+        .watch();
+  }
+
+  /// Every cert in the space, optionally filtered to "expires within N
+  /// days from today." Used by the director-facing expiring-soon
+  /// dashboard (future commit).
+  Stream<List<MemberCertification>> watchCertsInSpace({
+    required String spaceId,
+  }) {
+    return (select(memberCertifications)
+          ..where((c) => c.spaceId.equals(spaceId))
+          ..orderBy([
+            (c) => OrderingTerm(expression: c.expiresAt),
+            (c) => OrderingTerm(expression: c.certKey),
+          ]))
+        .watch();
+  }
+
+  Future<MemberCertification?> findCertForMember({
+    required String memberId,
+    required String certKey,
+  }) {
+    return (select(memberCertifications)
+          ..where(
+            (c) => c.memberId.equals(memberId) & c.certKey.equals(certKey),
+          ))
+        .getSingleOrNull();
+  }
+
+  /// Upsert a cert by (member_id, cert_key). Insert if absent; update
+  /// expiresAt / issuedAt / notes / documentUrl otherwise. ID is
+  /// generated client-side for new rows so the path-stability rule
+  /// holds for any future document attachment.
+  Future<String> upsertCert({
+    required String id,
+    required String spaceId,
+    required String memberId,
+    required String certKey,
+    String? issuedAt,
+    String? expiresAt,
+    String? notes,
+    String? documentUrl,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final existing = await findCertForMember(
+      memberId: memberId,
+      certKey: certKey,
+    );
+    if (existing == null) {
+      await into(memberCertifications).insert(
+        MemberCertificationsCompanion.insert(
+          id: id,
+          spaceId: spaceId,
+          memberId: memberId,
+          certKey: certKey,
+          issuedAt: Value(issuedAt),
+          expiresAt: Value(expiresAt),
+          notes: Value(notes),
+          documentUrl: Value(documentUrl),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      return id;
+    }
+    await (update(memberCertifications)
+          ..where((c) => c.id.equals(existing.id)))
+        .write(
+      MemberCertificationsCompanion(
+        issuedAt: Value(issuedAt),
+        expiresAt: Value(expiresAt),
+        notes: Value(notes),
+        documentUrl: Value(documentUrl),
+        updatedAt: Value(now),
+      ),
+    );
+    return existing.id;
+  }
+
+  Future<void> deleteCert(String id) async {
+    await (delete(memberCertifications)..where((c) => c.id.equals(id)))
+        .go();
+  }
+
+  Future<void> deleteCertByMemberKey({
+    required String memberId,
+    required String certKey,
+  }) async {
+    await (delete(memberCertifications)
+          ..where(
+            (c) => c.memberId.equals(memberId) & c.certKey.equals(certKey),
+          ))
+        .go();
   }
 
   Future<void> createVehicleLog({

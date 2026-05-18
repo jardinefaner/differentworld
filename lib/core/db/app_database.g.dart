@@ -7100,6 +7100,623 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
   }
 }
 
+class $MemberCertificationsTable extends MemberCertifications
+    with TableInfo<$MemberCertificationsTable, MemberCertification> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MemberCertificationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _certKeyMeta = const VerificationMeta(
+    'certKey',
+  );
+  @override
+  late final GeneratedColumn<String> certKey = GeneratedColumn<String>(
+    'cert_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _issuedAtMeta = const VerificationMeta(
+    'issuedAt',
+  );
+  @override
+  late final GeneratedColumn<String> issuedAt = GeneratedColumn<String>(
+    'issued_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _expiresAtMeta = const VerificationMeta(
+    'expiresAt',
+  );
+  @override
+  late final GeneratedColumn<String> expiresAt = GeneratedColumn<String>(
+    'expires_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _documentUrlMeta = const VerificationMeta(
+    'documentUrl',
+  );
+  @override
+  late final GeneratedColumn<String> documentUrl = GeneratedColumn<String>(
+    'document_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    memberId,
+    certKey,
+    issuedAt,
+    expiresAt,
+    notes,
+    documentUrl,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'member_certifications';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MemberCertification> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('cert_key')) {
+      context.handle(
+        _certKeyMeta,
+        certKey.isAcceptableOrUnknown(data['cert_key']!, _certKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_certKeyMeta);
+    }
+    if (data.containsKey('issued_at')) {
+      context.handle(
+        _issuedAtMeta,
+        issuedAt.isAcceptableOrUnknown(data['issued_at']!, _issuedAtMeta),
+      );
+    }
+    if (data.containsKey('expires_at')) {
+      context.handle(
+        _expiresAtMeta,
+        expiresAt.isAcceptableOrUnknown(data['expires_at']!, _expiresAtMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('document_url')) {
+      context.handle(
+        _documentUrlMeta,
+        documentUrl.isAcceptableOrUnknown(
+          data['document_url']!,
+          _documentUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MemberCertification map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MemberCertification(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      certKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cert_key'],
+      )!,
+      issuedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}issued_at'],
+      ),
+      expiresAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expires_at'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      documentUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_url'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MemberCertificationsTable createAlias(String alias) {
+    return $MemberCertificationsTable(attachedDatabase, alias);
+  }
+}
+
+class MemberCertification extends DataClass
+    implements Insertable<MemberCertification> {
+  final String id;
+  final String spaceId;
+  final String memberId;
+  final String certKey;
+  final String? issuedAt;
+  final String? expiresAt;
+  final String? notes;
+  final String? documentUrl;
+  final String createdAt;
+  final String updatedAt;
+  const MemberCertification({
+    required this.id,
+    required this.spaceId,
+    required this.memberId,
+    required this.certKey,
+    this.issuedAt,
+    this.expiresAt,
+    this.notes,
+    this.documentUrl,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['member_id'] = Variable<String>(memberId);
+    map['cert_key'] = Variable<String>(certKey);
+    if (!nullToAbsent || issuedAt != null) {
+      map['issued_at'] = Variable<String>(issuedAt);
+    }
+    if (!nullToAbsent || expiresAt != null) {
+      map['expires_at'] = Variable<String>(expiresAt);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || documentUrl != null) {
+      map['document_url'] = Variable<String>(documentUrl);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  MemberCertificationsCompanion toCompanion(bool nullToAbsent) {
+    return MemberCertificationsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      memberId: Value(memberId),
+      certKey: Value(certKey),
+      issuedAt: issuedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(issuedAt),
+      expiresAt: expiresAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expiresAt),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      documentUrl: documentUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(documentUrl),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory MemberCertification.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MemberCertification(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      memberId: serializer.fromJson<String>(json['memberId']),
+      certKey: serializer.fromJson<String>(json['certKey']),
+      issuedAt: serializer.fromJson<String?>(json['issuedAt']),
+      expiresAt: serializer.fromJson<String?>(json['expiresAt']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      documentUrl: serializer.fromJson<String?>(json['documentUrl']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'memberId': serializer.toJson<String>(memberId),
+      'certKey': serializer.toJson<String>(certKey),
+      'issuedAt': serializer.toJson<String?>(issuedAt),
+      'expiresAt': serializer.toJson<String?>(expiresAt),
+      'notes': serializer.toJson<String?>(notes),
+      'documentUrl': serializer.toJson<String?>(documentUrl),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  MemberCertification copyWith({
+    String? id,
+    String? spaceId,
+    String? memberId,
+    String? certKey,
+    Value<String?> issuedAt = const Value.absent(),
+    Value<String?> expiresAt = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    Value<String?> documentUrl = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => MemberCertification(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    memberId: memberId ?? this.memberId,
+    certKey: certKey ?? this.certKey,
+    issuedAt: issuedAt.present ? issuedAt.value : this.issuedAt,
+    expiresAt: expiresAt.present ? expiresAt.value : this.expiresAt,
+    notes: notes.present ? notes.value : this.notes,
+    documentUrl: documentUrl.present ? documentUrl.value : this.documentUrl,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  MemberCertification copyWithCompanion(MemberCertificationsCompanion data) {
+    return MemberCertification(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      certKey: data.certKey.present ? data.certKey.value : this.certKey,
+      issuedAt: data.issuedAt.present ? data.issuedAt.value : this.issuedAt,
+      expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      documentUrl: data.documentUrl.present
+          ? data.documentUrl.value
+          : this.documentUrl,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MemberCertification(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('memberId: $memberId, ')
+          ..write('certKey: $certKey, ')
+          ..write('issuedAt: $issuedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('notes: $notes, ')
+          ..write('documentUrl: $documentUrl, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    memberId,
+    certKey,
+    issuedAt,
+    expiresAt,
+    notes,
+    documentUrl,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MemberCertification &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.memberId == this.memberId &&
+          other.certKey == this.certKey &&
+          other.issuedAt == this.issuedAt &&
+          other.expiresAt == this.expiresAt &&
+          other.notes == this.notes &&
+          other.documentUrl == this.documentUrl &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class MemberCertificationsCompanion
+    extends UpdateCompanion<MemberCertification> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> memberId;
+  final Value<String> certKey;
+  final Value<String?> issuedAt;
+  final Value<String?> expiresAt;
+  final Value<String?> notes;
+  final Value<String?> documentUrl;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const MemberCertificationsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.certKey = const Value.absent(),
+    this.issuedAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.documentUrl = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MemberCertificationsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String memberId,
+    required String certKey,
+    this.issuedAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.documentUrl = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       memberId = Value(memberId),
+       certKey = Value(certKey),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<MemberCertification> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? memberId,
+    Expression<String>? certKey,
+    Expression<String>? issuedAt,
+    Expression<String>? expiresAt,
+    Expression<String>? notes,
+    Expression<String>? documentUrl,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (memberId != null) 'member_id': memberId,
+      if (certKey != null) 'cert_key': certKey,
+      if (issuedAt != null) 'issued_at': issuedAt,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (notes != null) 'notes': notes,
+      if (documentUrl != null) 'document_url': documentUrl,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MemberCertificationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? memberId,
+    Value<String>? certKey,
+    Value<String?>? issuedAt,
+    Value<String?>? expiresAt,
+    Value<String?>? notes,
+    Value<String?>? documentUrl,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return MemberCertificationsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      memberId: memberId ?? this.memberId,
+      certKey: certKey ?? this.certKey,
+      issuedAt: issuedAt ?? this.issuedAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      notes: notes ?? this.notes,
+      documentUrl: documentUrl ?? this.documentUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (certKey.present) {
+      map['cert_key'] = Variable<String>(certKey.value);
+    }
+    if (issuedAt.present) {
+      map['issued_at'] = Variable<String>(issuedAt.value);
+    }
+    if (expiresAt.present) {
+      map['expires_at'] = Variable<String>(expiresAt.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (documentUrl.present) {
+      map['document_url'] = Variable<String>(documentUrl.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MemberCertificationsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('memberId: $memberId, ')
+          ..write('certKey: $certKey, ')
+          ..write('issuedAt: $issuedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('notes: $notes, ')
+          ..write('documentUrl: $documentUrl, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7118,6 +7735,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $VehiclesTable vehicles = $VehiclesTable(this);
   late final $VehicleLogsTable vehicleLogs = $VehicleLogsTable(this);
+  late final $MemberCertificationsTable memberCertifications =
+      $MemberCertificationsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7135,6 +7754,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     subjectGuardians,
     vehicles,
     vehicleLogs,
+    memberCertifications,
   ];
 }
 
@@ -10596,6 +11216,319 @@ typedef $$VehicleLogsTableProcessedTableManager =
       VehicleLog,
       PrefetchHooks Function()
     >;
+typedef $$MemberCertificationsTableCreateCompanionBuilder =
+    MemberCertificationsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String memberId,
+      required String certKey,
+      Value<String?> issuedAt,
+      Value<String?> expiresAt,
+      Value<String?> notes,
+      Value<String?> documentUrl,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$MemberCertificationsTableUpdateCompanionBuilder =
+    MemberCertificationsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> memberId,
+      Value<String> certKey,
+      Value<String?> issuedAt,
+      Value<String?> expiresAt,
+      Value<String?> notes,
+      Value<String?> documentUrl,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$MemberCertificationsTableFilterComposer
+    extends Composer<_$AppDatabase, $MemberCertificationsTable> {
+  $$MemberCertificationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get certKey => $composableBuilder(
+    column: $table.certKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get issuedAt => $composableBuilder(
+    column: $table.issuedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get documentUrl => $composableBuilder(
+    column: $table.documentUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MemberCertificationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MemberCertificationsTable> {
+  $$MemberCertificationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get certKey => $composableBuilder(
+    column: $table.certKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get issuedAt => $composableBuilder(
+    column: $table.issuedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get documentUrl => $composableBuilder(
+    column: $table.documentUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MemberCertificationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MemberCertificationsTable> {
+  $$MemberCertificationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get certKey =>
+      $composableBuilder(column: $table.certKey, builder: (column) => column);
+
+  GeneratedColumn<String> get issuedAt =>
+      $composableBuilder(column: $table.issuedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get expiresAt =>
+      $composableBuilder(column: $table.expiresAt, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get documentUrl => $composableBuilder(
+    column: $table.documentUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$MemberCertificationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MemberCertificationsTable,
+          MemberCertification,
+          $$MemberCertificationsTableFilterComposer,
+          $$MemberCertificationsTableOrderingComposer,
+          $$MemberCertificationsTableAnnotationComposer,
+          $$MemberCertificationsTableCreateCompanionBuilder,
+          $$MemberCertificationsTableUpdateCompanionBuilder,
+          (
+            MemberCertification,
+            BaseReferences<
+              _$AppDatabase,
+              $MemberCertificationsTable,
+              MemberCertification
+            >,
+          ),
+          MemberCertification,
+          PrefetchHooks Function()
+        > {
+  $$MemberCertificationsTableTableManager(
+    _$AppDatabase db,
+    $MemberCertificationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MemberCertificationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MemberCertificationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MemberCertificationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> certKey = const Value.absent(),
+                Value<String?> issuedAt = const Value.absent(),
+                Value<String?> expiresAt = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> documentUrl = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MemberCertificationsCompanion(
+                id: id,
+                spaceId: spaceId,
+                memberId: memberId,
+                certKey: certKey,
+                issuedAt: issuedAt,
+                expiresAt: expiresAt,
+                notes: notes,
+                documentUrl: documentUrl,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String memberId,
+                required String certKey,
+                Value<String?> issuedAt = const Value.absent(),
+                Value<String?> expiresAt = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> documentUrl = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MemberCertificationsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                memberId: memberId,
+                certKey: certKey,
+                issuedAt: issuedAt,
+                expiresAt: expiresAt,
+                notes: notes,
+                documentUrl: documentUrl,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MemberCertificationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MemberCertificationsTable,
+      MemberCertification,
+      $$MemberCertificationsTableFilterComposer,
+      $$MemberCertificationsTableOrderingComposer,
+      $$MemberCertificationsTableAnnotationComposer,
+      $$MemberCertificationsTableCreateCompanionBuilder,
+      $$MemberCertificationsTableUpdateCompanionBuilder,
+      (
+        MemberCertification,
+        BaseReferences<
+          _$AppDatabase,
+          $MemberCertificationsTable,
+          MemberCertification
+        >,
+      ),
+      MemberCertification,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10624,4 +11557,6 @@ class $AppDatabaseManager {
       $$VehiclesTableTableManager(_db, _db.vehicles);
   $$VehicleLogsTableTableManager get vehicleLogs =>
       $$VehicleLogsTableTableManager(_db, _db.vehicleLogs);
+  $$MemberCertificationsTableTableManager get memberCertifications =>
+      $$MemberCertificationsTableTableManager(_db, _db.memberCertifications);
 }

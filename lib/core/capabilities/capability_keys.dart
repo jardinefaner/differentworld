@@ -35,13 +35,12 @@ abstract class MemberCaps {
   static const canInviteStaff = 'can_invite_staff';
   static const canViewAuditLog = 'can_view_audit_log';
   static const canActAsDirector = 'can_act_as_director';
-  static const certifications = 'certifications';
-
-  /// Parallel map: { cert_key → ISO date string } recording when each
-  /// certification expires. Absent key = expiry not tracked (treated
-  /// as valid). Past date = expired (treated as invalid; gated caps
-  /// auto-disable).
-  static const certificationExpirations = 'certification_expirations';
+  // Certifications were previously stored as JSONB on this same caps
+  // blob (keys `certifications` + `certification_expirations`). They
+  // are now a first-class entity (`member_certifications` table /
+  // CertActions). See UX_DECISIONS §8 and migration
+  // 20260518000010_member_certifications.sql which backfilled the
+  // existing rows + dropped both keys.
 }
 
 abstract class GroupCaps {

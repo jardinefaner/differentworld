@@ -4,6 +4,7 @@ import 'package:differentworld/core/capabilities/certifications.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/groups/group_assignments_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
@@ -65,9 +66,15 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
 
   Future<void> _toggleCert(String certKey, bool add) async {
     try {
-      await ref
-          .read(memberCapActionsProvider)
-          .toggleCert(widget.memberId, certKey, add);
+      final actions = ref.read(certActionsProvider);
+      if (add) {
+        await actions.add(memberId: widget.memberId, certKey: certKey);
+      } else {
+        await actions.remove(
+          memberId: widget.memberId,
+          certKey: certKey,
+        );
+      }
     } on Exception catch (e, st) {
       _onSaveError(e, st);
     }
@@ -75,9 +82,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
 
   Future<void> _setCertExpiry(String certKey, DateTime? date) async {
     try {
-      await ref
-          .read(memberCapActionsProvider)
-          .setCertExpiry(widget.memberId, certKey, date);
+      await ref.read(certActionsProvider).setExpiry(
+            memberId: widget.memberId,
+            certKey: certKey,
+            expiresAt: date,
+          );
     } on Exception catch (e, st) {
       _onSaveError(e, st);
     }
@@ -116,22 +125,15 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           }
           final currentRole = member.role;
           final caps = member.caps;
-          final activeCerts = caps.getStringList(MemberCaps.certifications);
-          final expiryMap =
-              caps.getStringMap(MemberCaps.certificationExpirations);
-
-          // A cert "counts" only if it's on file AND not expired.
-          bool isValid(String key) {
-            if (!activeCerts.contains(key)) return false;
-            final iso = expiryMap[key];
-            if (iso == null) return true; // no expiry = valid indefinitely
-            final dt = DateTime.tryParse(iso);
-            if (dt == null) return true;
-            return !dt.isBefore(_todayDate);
-          }
-
-          final hasMatCert = isValid(Certifications.mat.key);
-          final hasDriverCert = isValid(Certifications.driver.key);
+          // Certs are now their own table; the cap-gating UI reads
+          // from that stream so an expired MAT immediately disables
+          // "Administer medication" without manual refresh.
+          final certsAsync =
+              ref.watch(certsForMemberProvider(widget.memberId));
+          final activeCerts =
+              certsAsync.value ?? const <MemberCertification>[];
+          final hasMatCert = activeCerts.isValid(Certifications.mat.key);
+          final hasDriverCert = activeCerts.isValid(Certifications.driver.key);
 
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
@@ -214,7 +216,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   label: 'Administer medication',
                   subtitle: hasMatCert
                       ? 'MAT certification on file'
-                      : (activeCerts.contains(Certifications.mat.key)
+                      : (activeCerts.holds(Certifications.mat.key)
                           ? 'MAT certification has expired'
                           : 'Add the MAT certification below to enable'),
                   enabled: canManage && hasMatCert,
@@ -225,7 +227,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   label: 'Drive (field trips)',
                   subtitle: hasDriverCert
                       ? 'Driver record on file'
-                      : (activeCerts.contains(Certifications.driver.key)
+                      : (activeCerts.holds(Certifications.driver.key)
                           ? 'Driver certification has expired'
                           : 'Add the Driver certification below to enable'),
                   enabled: canManage && hasDriverCert,
@@ -288,7 +290,6 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 const _SectionLabel(label: 'Certifications'),
                 _CertificationsSection(
                   active: activeCerts,
-                  expiries: expiryMap,
                   onToggle: canManage ? _toggleCert : null,
                   onSetExpiry: canManage ? _setCertExpiry : null,
                 ),
@@ -530,13 +531,12 @@ class _AssignmentsList extends ConsumerWidget {
 class _CertificationsSection extends StatelessWidget {
   const _CertificationsSection({
     required this.active,
-    required this.expiries,
     required this.onToggle,
     required this.onSetExpiry,
   });
 
-  final List<String> active;
-  final Map<String, String> expiries;
+  /// Live list of certs the member holds, from `certsForMemberProvider`.
+  final List<MemberCertification> active;
 
   /// Positional bool: the callback is tiny and `add` reads naturally
   /// as the second arg.
@@ -544,17 +544,21 @@ class _CertificationsSection extends StatelessWidget {
   final void Function(String certKey, bool add)? onToggle;
   final void Function(String certKey, DateTime? date)? onSetExpiry;
 
-  bool _expired(String certKey) {
-    final iso = expiries[certKey];
-    if (iso == null) return false;
+  bool _expired(MemberCertification row) {
+    final iso = row.expiresAt;
+    if (iso == null || iso.isEmpty) return false;
     final dt = DateTime.tryParse(iso);
     if (dt == null) return false;
     return dt.isBefore(_todayDate);
   }
 
-  Future<void> _editExpiry(BuildContext context, Certification cert) async {
+  Future<void> _editExpiry(
+    BuildContext context,
+    Certification cert,
+    MemberCertification? row,
+  ) async {
     if (onSetExpiry == null) return;
-    final current = expiries[cert.key];
+    final current = row?.expiresAt;
     final currentDt = current == null ? null : DateTime.tryParse(current);
     final picked = await showDatePicker(
       context: context,
@@ -572,11 +576,12 @@ class _CertificationsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final heldKeys = active.map((c) => c.certKey).toSet();
     final activeCerts = Certifications.all.where(
-      (c) => active.contains(c.key),
+      (c) => heldKeys.contains(c.key),
     );
     final inactiveCerts = Certifications.all.where(
-      (c) => !active.contains(c.key),
+      (c) => !heldKeys.contains(c.key),
     );
 
     return Padding(
@@ -586,17 +591,20 @@ class _CertificationsSection extends StatelessWidget {
         children: [
           // Active certs.
           for (final cert in activeCerts) ...[
-            _ActiveCertRow(
-              cert: cert,
-              expiryIso: expiries[cert.key],
-              expired: _expired(cert.key),
-              onEditExpiry: onSetExpiry == null
-                  ? null
-                  : () => _editExpiry(context, cert),
-              onRemove: onToggle == null
-                  ? null
-                  : () => onToggle!(cert.key, false),
-            ),
+            Builder(builder: (rowContext) {
+              final row = active.firstWhere((c) => c.certKey == cert.key);
+              return _ActiveCertRow(
+                cert: cert,
+                expiryIso: row.expiresAt,
+                expired: _expired(row),
+                onEditExpiry: onSetExpiry == null
+                    ? null
+                    : () => _editExpiry(rowContext, cert, row),
+                onRemove: onToggle == null
+                    ? null
+                    : () => onToggle!(cert.key, false),
+              );
+            }),
             const SizedBox(height: 4),
           ],
           if (activeCerts.isNotEmpty && inactiveCerts.isNotEmpty)

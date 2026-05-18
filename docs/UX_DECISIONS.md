@@ -381,3 +381,15 @@ become two different things — one gets a polish pass, the other rots.
   three concepts currently mis-modelled as JSONB on a parent:
   certifications, pickup people, and attachments. Refactor backlog
   recorded in §8.
+- **2026-05-18** — §9 quick-win: `_CapSwitch` private duplicate in
+  three screens consolidated into `lib/shared/widgets/cap_switch.dart`.
+- **2026-05-18** — §8: certifications promoted to first-class
+  (`member_certifications` table, `CertActions`,
+  `certsForMemberProvider`). Migration backfilled existing JSONB
+  data and dropped the `certifications` + `certification_expirations`
+  keys from `members.capabilities`. Cert-gate cascade logic moved
+  to `CertActions._cascadeOffGatedCaps`. Old `Viewer.certExpiry` /
+  `Viewer.isCertExpired` helpers removed (no callers).
+- **2026-05-18** — Observations index landed at `/observations` —
+  first top-level entry surface for an existing first-class entity
+  that was buried under classroom / child paths.

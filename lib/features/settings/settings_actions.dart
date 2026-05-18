@@ -1,6 +1,5 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
-import 'package:differentworld/core/capabilities/certifications.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,89 +41,9 @@ class MemberCapActions {
     });
   }
 
-  /// Add or remove a certification. When removing, cascade-off any
-  /// caps that the cert gates (e.g. MAT gates `canAdministerMedication`)
-  /// and drop the matching expiry entry.
-  // `add` is positional to mirror the chip-style switch onChanged signature
-  // — named would just add ceremony at every call site.
-  Future<void> toggleCert(
-    String memberId,
-    String certKey,
-    // Positional to mirror the chip onChanged signature.
-    // ignore: avoid_positional_boolean_parameters
-    bool add,
-  ) async {
-    final db = await _ref.read(appDatabaseProvider.future);
-    final m = await db.findMemberById(memberId);
-    if (m == null) return;
-    final base = m.caps;
-    final existing = base.getStringList(MemberCaps.certifications);
-    final next = {...existing};
-    if (add) {
-      next.add(certKey);
-    } else {
-      next.remove(certKey);
-    }
-    var updated = base.setting(MemberCaps.certifications, next.toList());
-    if (!add) {
-      for (final cert in Certifications.all) {
-        if (cert.key != certKey) continue;
-        for (final gated in cert.gatesCaps) {
-          updated = updated.setting(gated, false);
-        }
-      }
-      final expiries = Map<String, String>.from(
-        base.getStringMap(MemberCaps.certificationExpirations),
-      )..remove(certKey);
-      updated = updated.setting(
-        MemberCaps.certificationExpirations,
-        expiries,
-      );
-    }
-    await db.updateMemberCapabilities(memberId, updated.toJson());
-  }
-
-  /// Set or clear the expiry date for a specific cert. If the new
-  /// expiry is in the past, cascade-off the caps it gates.
-  Future<void> setCertExpiry(
-    String memberId,
-    String certKey,
-    DateTime? date,
-  ) async {
-    final db = await _ref.read(appDatabaseProvider.future);
-    final m = await db.findMemberById(memberId);
-    if (m == null) return;
-    final base = m.caps;
-    final expiries = Map<String, String>.from(
-      base.getStringMap(MemberCaps.certificationExpirations),
-    );
-    if (date == null) {
-      expiries.remove(certKey);
-    } else {
-      expiries[certKey] = '${date.year.toString().padLeft(4, '0')}-'
-          '${date.month.toString().padLeft(2, '0')}-'
-          '${date.day.toString().padLeft(2, '0')}';
-    }
-    var updated = base.setting(
-      MemberCaps.certificationExpirations,
-      expiries,
-    );
-    final today = _todayDate();
-    if (date != null && date.isBefore(today)) {
-      for (final cert in Certifications.all) {
-        if (cert.key != certKey) continue;
-        for (final gated in cert.gatesCaps) {
-          updated = updated.setting(gated, false);
-        }
-      }
-    }
-    await db.updateMemberCapabilities(memberId, updated.toJson());
-  }
-
-  DateTime _todayDate() {
-    final n = DateTime.now();
-    return DateTime(n.year, n.month, n.day);
-  }
+  // Cert add/remove + expiry moved to CertActions in
+  // lib/features/certifications/certifications_providers.dart now that
+  // certifications are a first-class entity (UX_DECISIONS §8).
 }
 
 final memberCapActionsProvider =
