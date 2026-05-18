@@ -195,9 +195,52 @@ class Entries extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Fleet vehicle. Directors manage the list; drivers (members with
+/// `can_drive` cap-gated by Driver certification) perform the
+/// check-out / check-in via [VehicleLogs] rows.
+class Vehicles extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get name => text()();
+  TextColumn get make => text().nullable()();
+  TextColumn get model => text().nullable()();
+  IntColumn get year => integer().nullable()();
+  TextColumn get licensePlate => text().nullable()();
+  TextColumn get color => text().nullable()();
+  TextColumn get photoUrl => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  TextColumn get capabilities => text()(); // JSON string
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Event stream for fleet activity. One row per check-out or check-in.
+/// Current state of a vehicle = derived from the latest row by
+/// vehicle_id ordered desc by created_at.
+class VehicleLogs extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get vehicleId => text()();
+  TextColumn get kind => text()(); // 'checkout' | 'checkin'
+  TextColumn get driverMemberId => text()();
+  IntColumn get odometer => integer().nullable()();
+  TextColumn get fuelLevel => text().nullable()();
+  TextColumn get items => text()(); // JSON string of inspection results
+  TextColumn get notes => text().nullable()();
+  TextColumn get bodyDamageNotes => text().nullable()();
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
-          GroupMembers, Entries, Guardians, SubjectGuardians],
+          GroupMembers, Entries, Guardians, SubjectGuardians,
+          Vehicles, VehicleLogs],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -837,6 +880,165 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteEntry(String id) async {
     await (delete(entries)..where((e) => e.id.equals(id))).go();
+  }
+
+  // -- Vehicles + vehicle_logs ---------------------------------------------
+
+  Stream<List<Vehicle>> watchVehiclesInSpace(String spaceId) {
+    return (select(vehicles)
+          ..where((v) => v.spaceId.equals(spaceId))
+          ..orderBy([(v) => OrderingTerm(expression: v.name)]))
+        .watch();
+  }
+
+  Stream<Vehicle?> watchVehicle(String id) {
+    return (select(vehicles)..where((v) => v.id.equals(id)))
+        .watchSingleOrNull();
+  }
+
+  Future<Vehicle?> findVehicleById(String id) {
+    return (select(vehicles)..where((v) => v.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<void> createVehicle({
+    required String id,
+    required String spaceId,
+    required String name,
+    String? make,
+    String? model,
+    int? year,
+    String? licensePlate,
+    String? color,
+    String? notes,
+    String capabilitiesJson = '{}',
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await into(vehicles).insert(
+      VehiclesCompanion.insert(
+        id: id,
+        spaceId: spaceId,
+        name: name,
+        make: Value(make),
+        model: Value(model),
+        year: Value(year),
+        licensePlate: Value(licensePlate),
+        color: Value(color),
+        notes: Value(notes),
+        capabilities: capabilitiesJson,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  Future<void> updateVehicle({
+    required String id,
+    String? name,
+    String? make,
+    String? model,
+    int? year,
+    String? licensePlate,
+    String? color,
+    String? notes,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(vehicles)..where((v) => v.id.equals(id))).write(
+      VehiclesCompanion(
+        name: name == null ? const Value.absent() : Value(name),
+        make: make == null ? const Value.absent() : Value(make),
+        model: model == null ? const Value.absent() : Value(model),
+        year: year == null ? const Value.absent() : Value(year),
+        licensePlate: licensePlate == null
+            ? const Value.absent()
+            : Value(licensePlate),
+        color: color == null ? const Value.absent() : Value(color),
+        notes: notes == null ? const Value.absent() : Value(notes),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> updateVehicleCapabilities(String id, String capsJson) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(vehicles)..where((v) => v.id.equals(id))).write(
+      VehiclesCompanion(
+        capabilities: Value(capsJson),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> updateVehiclePhotoUrl(String id, String? url) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(vehicles)..where((v) => v.id.equals(id))).write(
+      VehiclesCompanion(
+        photoUrl: Value(url),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> deleteVehicle(String id) async {
+    await (delete(vehicles)..where((v) => v.id.equals(id))).go();
+  }
+
+  Stream<List<VehicleLog>> watchLogsForVehicle(String vehicleId) {
+    return (select(vehicleLogs)
+          ..where((l) => l.vehicleId.equals(vehicleId))
+          ..orderBy([
+            (l) => OrderingTerm(
+                  expression: l.createdAt,
+                  mode: OrderingMode.desc,
+                ),
+          ]))
+        .watch();
+  }
+
+  /// Latest log row for a vehicle. The vehicle's current state is
+  /// "out" if this is a checkout, "in" otherwise (or no row → never
+  /// driven).
+  Stream<VehicleLog?> watchLatestLogForVehicle(String vehicleId) {
+    return (select(vehicleLogs)
+          ..where((l) => l.vehicleId.equals(vehicleId))
+          ..orderBy([
+            (l) => OrderingTerm(
+                  expression: l.createdAt,
+                  mode: OrderingMode.desc,
+                ),
+          ])
+          ..limit(1))
+        .watchSingleOrNull();
+  }
+
+  Future<void> createVehicleLog({
+    required String id,
+    required String spaceId,
+    required String vehicleId,
+    required String kind,
+    required String driverMemberId,
+    int? odometer,
+    String? fuelLevel,
+    String itemsJson = '{}',
+    String? notes,
+    String? bodyDamageNotes,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await into(vehicleLogs).insert(
+      VehicleLogsCompanion.insert(
+        id: id,
+        spaceId: spaceId,
+        vehicleId: vehicleId,
+        kind: kind,
+        driverMemberId: driverMemberId,
+        odometer: Value(odometer),
+        fuelLevel: Value(fuelLevel),
+        items: itemsJson,
+        notes: Value(notes),
+        bodyDamageNotes: Value(bodyDamageNotes),
+        createdAt: now,
+      ),
+    );
   }
 
   // -- Guardians ------------------------------------------------------------

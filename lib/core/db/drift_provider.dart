@@ -69,3 +69,14 @@ final myChildrenProvider = StreamProvider<List<Subject>>((ref) {
   if (guardian == null || db == null) return Stream<List<Subject>>.value([]);
   return db.watchChildrenForGuardian(guardian.id);
 });
+
+/// Live view of any Member by ID. Drives "who's driving" labels and
+/// similar callsites. Cheap because each Member row is small; safe to
+/// have many concurrent subscriptions (autoDispose tears down idle ones).
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final memberByIdProvider =
+    StreamProvider.autoDispose.family<Member?, String>((ref, id) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  yield* db.watchMember(id);
+});

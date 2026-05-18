@@ -32,6 +32,10 @@ streams:
       # Entries are the unified daily-log table — observations / meals
       # / naps / diapers / incidents. Same by-space scope as the rest.
       - SELECT * FROM entries            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Fleet: the vehicle list itself + the event log. Drivers need
+      # both so the check-in/check-out screen can show current state.
+      - SELECT * FROM vehicles           WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM vehicle_logs       WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Only stream un-accepted invites. Accepted ones don't need to
       # round-trip back to every director's device — they just bloat
       # the local table over time. The acceptance event itself reaches

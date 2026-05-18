@@ -79,6 +79,15 @@ class SettingsScreen extends ConsumerWidget {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/settings/team'),
             ),
+            ListTile(
+              leading: const Icon(Icons.directions_bus_outlined),
+              title: const Text('Vehicles'),
+              subtitle: const Text(
+                'Fleet vehicles, pre-trip checks, check-in/out',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/settings/vehicles'),
+            ),
             const Divider(),
             const _SectionLabel(label: 'About'),
             const ListTile(

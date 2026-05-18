@@ -19,6 +19,10 @@ import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_inspection_screen.dart';
+import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -127,6 +131,44 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => MemberDetailScreen(
                   memberId: state.pathParameters['id']!,
                 ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'vehicles',
+            builder: (_, _) => const VehiclesListScreen(),
+            routes: [
+              GoRoute(
+                path: 'new',
+                builder: (_, _) => const VehicleEditScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => VehicleDetailScreen(
+                  vehicleId: state.pathParameters['id']!,
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => VehicleEditScreen(
+                      vehicleId: state.pathParameters['id'],
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'checkout',
+                    builder: (_, state) => VehicleInspectionScreen(
+                      vehicleId: state.pathParameters['id']!,
+                      kind: 'checkout',
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'checkin',
+                    builder: (_, state) => VehicleInspectionScreen(
+                      vehicleId: state.pathParameters['id']!,
+                      kind: 'checkin',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
