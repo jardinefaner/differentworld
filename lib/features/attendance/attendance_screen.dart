@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
@@ -7,6 +9,7 @@ import 'package:differentworld/features/attendance/widgets/status_picker_sheet.d
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -43,10 +46,17 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     return '$y-$m-$d';
   }
 
+  DateTime get _todayMidnight {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }
+
+  bool get _canGoForward => _date.isBefore(_todayMidnight);
+
   void _shiftDay(int days) {
-    setState(() {
-      _date = _date.add(Duration(days: days));
-    });
+    final next = _date.add(Duration(days: days));
+    if (next.isAfter(_todayMidnight)) return; // clamp at today
+    setState(() => _date = next);
   }
 
   Future<void> _pickDate() async {
@@ -54,7 +64,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       context: context,
       initialDate: _date,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 30)),
+      lastDate: _todayMidnight,
     );
     if (picked != null && mounted) {
       setState(() => _date = picked);
@@ -62,13 +72,46 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   }
 
   String _dateLabel() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final diff = _date.difference(today).inDays;
+    final diff = _date.difference(_todayMidnight).inDays;
     if (diff == 0) return 'Today';
     if (diff == -1) return 'Yesterday';
-    if (diff == 1) return 'Tomorrow';
     return _isoDate;
+  }
+
+  Future<void> _markAllPresent(
+    List<Subject> subjects,
+    AsyncValue<List<AttendanceRecord>> recordsAsync,
+  ) async {
+    unawaited(HapticFeedback.mediumImpact());
+    final actions = ref.read(attendanceActionsProvider);
+    final records = recordsAsync.value ?? const <AttendanceRecord>[];
+    final marked = await actions.markAllPresent(
+      groupId: widget.groupId,
+      date: _isoDate,
+      subjectIds: subjects.map((s) => s.id).toList(),
+      alreadyRecordedSubjectIds:
+          records.map((r) => r.subjectId).toList(),
+    );
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (marked.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Everyone is already marked.')),
+      );
+      return;
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Marked ${marked.length} present.'),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () async {
+            await actions.undoBulkPresent(date: _isoDate, subjectIds: marked);
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -113,6 +156,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           children: [
             _DateScrubber(
               label: _dateLabel(),
+              canGoForward: _canGoForward,
               onPrev: () => _shiftDay(-1),
               onNext: () => _shiftDay(1),
               onTapLabel: _pickDate,
@@ -163,17 +207,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         data: (subjects) => subjects.isEmpty
             ? null
             : FloatingActionButton.extended(
-                onPressed: () async {
-                  final actions = ref.read(attendanceActionsProvider);
-                  final records = recordsAsync.value ?? const [];
-                  await actions.markAllPresent(
-                    groupId: widget.groupId,
-                    date: _isoDate,
-                    subjectIds: subjects.map((s) => s.id).toList(),
-                    alreadyRecordedSubjectIds:
-                        records.map((r) => r.subjectId).toList(),
-                  );
-                },
+                onPressed: () => _markAllPresent(subjects, recordsAsync),
                 icon: const Icon(Icons.check_circle_outline),
                 label: const Text('Mark all present'),
               ),
@@ -195,12 +229,14 @@ final _groupDetailProvider = StreamProvider.family<Group?, String>(
 class _DateScrubber extends StatelessWidget {
   const _DateScrubber({
     required this.label,
+    required this.canGoForward,
     required this.onPrev,
     required this.onNext,
     required this.onTapLabel,
   });
 
   final String label;
+  final bool canGoForward;
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback onTapLabel;
@@ -225,8 +261,8 @@ class _DateScrubber extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),
-            onPressed: onNext,
-            tooltip: 'Next day',
+            onPressed: canGoForward ? onNext : null,
+            tooltip: canGoForward ? 'Next day' : 'No future days',
           ),
         ],
       ),
@@ -305,6 +341,7 @@ class _AttendanceRow extends StatelessWidget {
       title: Text('${subject.firstName} ${subject.lastName}'),
       trailing: _StatusChip(status: status),
       onTap: () async {
+        unawaited(HapticFeedback.selectionClick());
         final picked = await StatusPickerSheet.show(
           context,
           studentName: '${subject.firstName} ${subject.lastName}',

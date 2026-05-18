@@ -51,12 +51,16 @@ class AttendanceActions {
   /// Bulk-mark every Subject in a Group as `present` for a date — only
   /// writes for Subjects that don't yet have a record (skips already-
   /// recorded so an existing "absent" isn't overwritten).
-  Future<void> markAllPresent({
+  ///
+  /// Returns the list of subjectIds that were actually written, so the
+  /// caller can offer an Undo for just those rows.
+  Future<List<String>> markAllPresent({
     required String groupId,
     required String date,
     required List<String> subjectIds,
     required List<String> alreadyRecordedSubjectIds,
   }) async {
+    final touched = <String>[];
     for (final subjectId in subjectIds) {
       if (alreadyRecordedSubjectIds.contains(subjectId)) continue;
       await setStatus(
@@ -65,7 +69,23 @@ class AttendanceActions {
         date: date,
         status: AttendanceStatus.present,
       );
+      touched.add(subjectId);
     }
+    return touched;
+  }
+
+  /// Undo a previous [markAllPresent] by deleting the attendance rows
+  /// for the supplied subjects on a given date.
+  Future<void> undoBulkPresent({
+    required String date,
+    required List<String> subjectIds,
+  }) async {
+    if (subjectIds.isEmpty) return;
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.deleteAttendanceForSubjectsOnDate(
+      subjectIds: subjectIds,
+      date: date,
+    );
   }
 }
 

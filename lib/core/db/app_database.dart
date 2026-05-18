@@ -414,6 +414,21 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  /// Delete attendance rows for the given (subject, date) pairs. Used
+  /// by the "Mark all present → Undo" snack — reverts the rows we just
+  /// wrote rather than overwriting them with another status.
+  Future<void> deleteAttendanceForSubjectsOnDate({
+    required List<String> subjectIds,
+    required String date,
+  }) async {
+    if (subjectIds.isEmpty) return;
+    await (delete(attendanceRecords)
+          ..where(
+            (a) => a.date.equals(date) & a.subjectId.isIn(subjectIds),
+          ))
+        .go();
+  }
+
   // -- Invites --------------------------------------------------------------
 
   /// Watch all un-accepted invites for a space. Expired ones are kept

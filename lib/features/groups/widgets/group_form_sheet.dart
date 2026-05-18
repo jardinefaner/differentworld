@@ -2,6 +2,7 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,6 +39,18 @@ class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
   String? _error;
 
   bool get _isEdit => widget.group != null;
+
+  bool _isDirty() {
+    final g = widget.group;
+    final capsJson = _caps.setting(GroupCaps.ageBand, _ageBand).toJson();
+    if (g == null) {
+      return _nameController.text.trim().isNotEmpty ||
+          _ageRangeController.text.trim().isNotEmpty;
+    }
+    return _nameController.text.trim() != g.name ||
+        _ageRangeController.text.trim() != (g.ageRange ?? '') ||
+        capsJson != g.capabilities;
+  }
 
   @override
   void initState() {
@@ -127,7 +140,9 @@ class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
     final theme = Theme.of(context);
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return Padding(
+    return DismissGuard(
+      isDirty: _isDirty,
+      child: Padding(
       padding: EdgeInsets.only(bottom: keyboardInset),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 720),
@@ -297,6 +312,7 @@ class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
           ),
         ),
       ),
+    ),
     );
   }
 }

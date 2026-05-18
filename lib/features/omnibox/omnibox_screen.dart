@@ -273,7 +273,7 @@ class _SuggestionTile extends ConsumerWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-      trailing: const Icon(Icons.north_west, size: 16),
+      trailing: const Icon(Icons.chevron_right),
       onTap: () => suggestion.onSelect(context, ref),
     );
   }

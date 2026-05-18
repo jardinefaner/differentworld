@@ -135,20 +135,22 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   onChanged: (v) => _set(MemberCaps.canTakeAttendance, v),
                 ),
                 _CapSwitch(
-                  label: 'Record daily routines',
-                  subtitle: 'Meals, naps, diaper changes',
+                  label: 'Record meals',
                   enabled: isDirector,
-                  value:
-                      caps.getBool(MemberCaps.canRecordMeal) &&
-                      caps.getBool(MemberCaps.canRecordNap) &&
-                      caps.getBool(MemberCaps.canRecordDiaper),
-                  onChanged: (v) {
-                    _setMultiple({
-                      MemberCaps.canRecordMeal: v,
-                      MemberCaps.canRecordNap: v,
-                      MemberCaps.canRecordDiaper: v,
-                    });
-                  },
+                  value: caps.getBool(MemberCaps.canRecordMeal),
+                  onChanged: (v) => _set(MemberCaps.canRecordMeal, v),
+                ),
+                _CapSwitch(
+                  label: 'Record naps',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canRecordNap),
+                  onChanged: (v) => _set(MemberCaps.canRecordNap, v),
+                ),
+                _CapSwitch(
+                  label: 'Record diaper changes',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canRecordDiaper),
+                  onChanged: (v) => _set(MemberCaps.canRecordDiaper, v),
                 ),
                 _CapSwitch(
                   label: 'Administer medication',
@@ -164,17 +166,16 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   onChanged: (v) => _set(MemberCaps.canDrive, v),
                 ),
                 _CapSwitch(
-                  label: 'Open / close the building',
+                  label: 'Open the building',
                   enabled: isDirector,
-                  value:
-                      caps.getBool(MemberCaps.canOpenBuilding) &&
-                      caps.getBool(MemberCaps.canCloseBuilding),
-                  onChanged: (v) {
-                    _setMultiple({
-                      MemberCaps.canOpenBuilding: v,
-                      MemberCaps.canCloseBuilding: v,
-                    });
-                  },
+                  value: caps.getBool(MemberCaps.canOpenBuilding),
+                  onChanged: (v) => _set(MemberCaps.canOpenBuilding, v),
+                ),
+                _CapSwitch(
+                  label: 'Close the building',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canCloseBuilding),
+                  onChanged: (v) => _set(MemberCaps.canCloseBuilding, v),
                 ),
                 _CapSwitch(
                   label: 'Authorize pickup changes',
@@ -228,19 +229,6 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           ref.read(_memberProvider(widget.memberId)).value?.caps ??
           const Capabilities.empty();
       _draft = base.setting(key, value);
-    });
-  }
-
-  void _setMultiple(Map<String, bool> updates) {
-    setState(() {
-      var base =
-          _draft ??
-          ref.read(_memberProvider(widget.memberId)).value?.caps ??
-          const Capabilities.empty();
-      for (final entry in updates.entries) {
-        base = base.setting(entry.key, entry.value);
-      }
-      _draft = base;
     });
   }
 

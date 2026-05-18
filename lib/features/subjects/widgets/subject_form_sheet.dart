@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +47,28 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
   String? _error;
 
   bool get _isEdit => widget.subject != null;
+
+  bool _isDirty() {
+    final s = widget.subject;
+    final dobIso = _dob == null
+        ? null
+        : '${_dob!.year.toString().padLeft(4, '0')}-'
+            '${_dob!.month.toString().padLeft(2, '0')}-'
+            '${_dob!.day.toString().padLeft(2, '0')}';
+    if (s == null) {
+      // New: dirty if anything has been typed.
+      return _firstName.text.trim().isNotEmpty ||
+          _lastName.text.trim().isNotEmpty ||
+          _allergies.text.trim().isNotEmpty ||
+          _notes.text.trim().isNotEmpty ||
+          _dob != null;
+    }
+    return _firstName.text.trim() != s.firstName ||
+        _lastName.text.trim() != s.lastName ||
+        _allergies.text.trim() != (s.allergies ?? '') ||
+        _notes.text.trim() != (s.notes ?? '') ||
+        dobIso != s.dob;
+  }
 
   @override
   void initState() {
@@ -135,7 +158,9 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
     final theme = Theme.of(context);
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return Padding(
+    return DismissGuard(
+      isDirty: _isDirty,
+      child: Padding(
       padding: EdgeInsets.only(bottom: keyboardInset),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
@@ -277,6 +302,7 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
           ),
         ),
       ),
+    ),
     );
   }
 

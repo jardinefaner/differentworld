@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
@@ -8,8 +10,10 @@ import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 /// Home screen: "what's happening today across my classrooms."
 ///
@@ -120,8 +124,7 @@ class _Greeting extends StatelessWidget {
     final theme = Theme.of(context);
     final greeting = greetingForTime(DateTime.now());
     final name = member?.displayName ?? '';
-    final today = DateTime.now();
-    final dayLabel = _dayLabel(today);
+    final dayLabel = DateFormat.yMMMMEEEEd().format(DateTime.now());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,35 +142,6 @@ class _Greeting extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static String _dayLabel(DateTime when) {
-    const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    final dow = days[when.weekday - 1];
-    final mon = months[when.month - 1];
-    return '$dow, $mon ${when.day}';
   }
 }
 
@@ -218,7 +192,10 @@ class _GroupTodayCard extends ConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.push('/groups/${group.id}'),
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          unawaited(context.push('/groups/${group.id}'));
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

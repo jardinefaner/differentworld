@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,6 +36,14 @@ class _InviteCreateSheetState extends ConsumerState<InviteCreateSheet> {
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  bool _isDirty() {
+    // The defaults (teacher / 7 days / no email) are the rest state.
+    // Anything off those = dirty.
+    return _role != 'teacher' ||
+        _expiry != InviteExpiry.sevenDays ||
+        _emailController.text.trim().isNotEmpty;
   }
 
   Future<void> _create() async {
@@ -87,7 +96,9 @@ class _InviteCreateSheetState extends ConsumerState<InviteCreateSheet> {
     final theme = Theme.of(context);
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return Padding(
+    return DismissGuard(
+      isDirty: _isDirty,
+      child: Padding(
       padding: EdgeInsets.only(bottom: keyboardInset),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxHeight: 720),
@@ -216,6 +227,7 @@ class _InviteCreateSheetState extends ConsumerState<InviteCreateSheet> {
           ),
         ),
       ),
+    ),
     );
   }
 }
