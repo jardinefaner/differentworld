@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -279,40 +280,52 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Diaper changes',
                   subtitle: 'Log every diaper change',
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksDiapers),
                   onChanged: (v) => _setBool(GroupCaps.tracksDiapers, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Naps',
                   subtitle: 'Track start, end, and quality',
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksNaps),
                   onChanged: (v) => _setBool(GroupCaps.tracksNaps, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Bottle feeds',
                   subtitle: 'Infants — milk type and volume',
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksBottleFeeds),
                   onChanged: (v) => _setBool(GroupCaps.tracksBottleFeeds, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Detailed meal logs',
                   subtitle: 'Log each meal/snack item and amount',
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksMealsDetailed),
                   onChanged: (v) =>
                       _setBool(GroupCaps.tracksMealsDetailed, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Outdoor time',
                   subtitle: 'Sun-safety and weather reminders',
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.hasOutdoorTime),
                   onChanged: (v) => _setBool(GroupCaps.hasOutdoorTime, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Field trips',
                   subtitle: 'Trips + permission slips',
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.hasFieldTrips),
                   onChanged: (v) => _setBool(GroupCaps.hasFieldTrips, v),
                 ),
@@ -344,32 +357,6 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
           },
         ),
       ),
-    );
-  }
-}
-
-class _CapSwitch extends StatelessWidget {
-  const _CapSwitch({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    this.subtitle,
-  });
-
-  final String label;
-  final String? subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      title: Text(label),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      value: value,
-      onChanged: onChanged,
     );
   }
 }

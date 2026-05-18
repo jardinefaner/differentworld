@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
+import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
@@ -83,7 +84,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                 ),
               ),
               const _SectionLabel(label: "What's tracked"),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Observations',
                   subtitle: 'Quick narrative + photo capture for kids',
                   value: caps.getBool(
@@ -92,7 +93,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                   ),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureObservations, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Meal logging',
                   subtitle: 'Daily meals/snacks per child',
                   value: caps.getBool(
@@ -101,7 +102,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                   ),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureMealLogging, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Nap logging',
                   subtitle: 'Start, end, and quality',
                   value: caps.getBool(
@@ -110,13 +111,13 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                   ),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureNapLogging, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Diaper logging',
                   subtitle: 'Default off — enable for infant/toddler programs',
                   value: caps.getBool(SpaceCaps.featureDiaperLogging),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureDiaperLogging, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Incident reports',
                   subtitle: 'Structured reports + parent notification',
                   value: caps.getBool(
@@ -125,33 +126,33 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                   ),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureIncidentReports, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Medication log',
                   subtitle:
                       'Track doses given (requires certified staff member)',
                   value: caps.getBool(SpaceCaps.featureMedicationLog),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureMedicationLog, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Field trips',
                   subtitle: 'Trips + permission slips',
                   value: caps.getBool(SpaceCaps.featureFieldTrips),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureFieldTrips, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Family login',
                   subtitle: 'Family-facing app access (coming soon)',
                   value: caps.getBool(SpaceCaps.featureFamilyLogin),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureFamilyLogin, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Billing',
                   subtitle: 'Attendance-based invoicing (coming soon)',
                   value: caps.getBool(SpaceCaps.featureBilling),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.featureBilling, v),
                 ),
                 const _SectionLabel(label: 'Defaults'),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Photo consent by default',
                   subtitle:
                       'New enrollments start with photo consent enabled. '
@@ -195,30 +196,6 @@ class _SectionLabel extends StatelessWidget {
           letterSpacing: 0.6,
         ),
       ),
-    );
-  }
-}
-
-class _CapSwitch extends StatelessWidget {
-  const _CapSwitch({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    this.subtitle,
-  });
-
-  final String label;
-  final String? subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(label),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      value: value,
-      onChanged: onChanged,
     );
   }
 }

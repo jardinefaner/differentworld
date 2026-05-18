@@ -9,6 +9,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
+import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -178,38 +179,38 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   ),
                 const Divider(),
                 const _SectionLabel(label: 'Abilities'),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Observe',
                   subtitle: 'Record developmental observations',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canObserve),
                   onChanged: (v) => _setCap(MemberCaps.canObserve, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Take attendance',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canTakeAttendance),
                   onChanged: (v) => _setCap(MemberCaps.canTakeAttendance, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Record meals',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordMeal),
                   onChanged: (v) => _setCap(MemberCaps.canRecordMeal, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Record naps',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordNap),
                   onChanged: (v) => _setCap(MemberCaps.canRecordNap, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Record diaper changes',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordDiaper),
                   onChanged: (v) => _setCap(MemberCaps.canRecordDiaper, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Administer medication',
                   subtitle: hasMatCert
                       ? 'MAT certification on file'
@@ -220,7 +221,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   value: caps.getBool(MemberCaps.canAdministerMedication),
                   onChanged: (v) => _setCap(MemberCaps.canAdministerMedication, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Drive (field trips)',
                   subtitle: hasDriverCert
                       ? 'Driver record on file'
@@ -231,38 +232,38 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   value: caps.getBool(MemberCaps.canDrive),
                   onChanged: (v) => _setCap(MemberCaps.canDrive, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Open the building',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canOpenBuilding),
                   onChanged: (v) => _setCap(MemberCaps.canOpenBuilding, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Close the building',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canCloseBuilding),
                   onChanged: (v) => _setCap(MemberCaps.canCloseBuilding, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Authorize pickup changes',
                   subtitle: 'Add or remove guardians for a child',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canAuthorizePickup),
                   onChanged: (v) => _setCap(MemberCaps.canAuthorizePickup, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Invite staff',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canInviteStaff),
                   onChanged: (v) => _setCap(MemberCaps.canInviteStaff, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'View billing',
                   enabled: canManage,
                   value: caps.getBool(MemberCaps.canViewBilling),
                   onChanged: (v) => _setCap(MemberCaps.canViewBilling, v),
                 ),
-                _CapSwitch(
+                CapSwitch(
                   label: 'Act as director',
                   subtitle: 'Full admin when the director is offsite',
                   enabled: canManage,
@@ -431,31 +432,6 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _CapSwitch extends StatelessWidget {
-  const _CapSwitch({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    this.subtitle,
-    this.enabled = true,
-  });
-
-  final String label;
-  final String? subtitle;
-  final bool value;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      title: Text(label),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      value: value,
-      onChanged: enabled ? onChanged : null,
-    );
-  }
-}
 
 /// Per-classroom assignment list. Renders one row per classroom in
 /// the space; the trailing widget is a Switch when [canEdit] is true
