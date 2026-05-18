@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -320,6 +321,10 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  if (_isEdit) ...[
+                    const SizedBox(height: 20),
+                    _GuardiansSection(subjectId: widget.subject!.id),
+                  ],
                   if (_error != null) ...[
                     const SizedBox(height: 12),
                     Text(
@@ -375,5 +380,285 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
     final m = dt.month.toString().padLeft(2, '0');
     final d = dt.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
+  }
+}
+
+/// Lists guardians attached to a subject + a button to add one.
+/// Renders only in edit mode (the new-student sheet doesn't have an
+/// id to attach guardians to yet).
+class _GuardiansSection extends ConsumerWidget {
+  const _GuardiansSection({required this.subjectId});
+
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final guardiansAsync = ref.watch(guardiansForSubjectProvider(subjectId));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Family',
+              style: theme.textTheme.titleSmall,
+            ),
+            const Spacer(),
+            TextButton.icon(
+              icon: const Icon(Icons.person_add_alt_1, size: 18),
+              label: const Text('Add'),
+              onPressed: () => _AddGuardianSheet.show(
+                context,
+                subjectId: subjectId,
+              ),
+            ),
+          ],
+        ),
+        guardiansAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(),
+          ),
+          error: (_, _) => Text(
+            'Could not load family.',
+            style: theme.textTheme.bodySmall,
+          ),
+          data: (guardians) {
+            if (guardians.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(
+                  'No guardians linked yet.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: [
+                for (final g in guardians)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    leading: PersonAvatar(name: g.name),
+                    title: Text(g.name),
+                    subtitle: Text(
+                      [
+                        g.relationship,
+                        g.phone,
+                        g.email,
+                      ].whereType<String>().join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: IconButton(
+                      tooltip: 'Unlink',
+                      icon: const Icon(Icons.link_off, size: 20),
+                      onPressed: () async {
+                        await ref.read(guardianActionsProvider).unlink(
+                              guardianId: g.id,
+                              subjectId: subjectId,
+                            );
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _AddGuardianSheet extends ConsumerStatefulWidget {
+  const _AddGuardianSheet({required this.subjectId});
+
+  final String subjectId;
+
+  static Future<void> show(BuildContext context,
+      {required String subjectId}) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _AddGuardianSheet(subjectId: subjectId),
+    );
+  }
+
+  @override
+  ConsumerState<_AddGuardianSheet> createState() => _AddGuardianSheetState();
+}
+
+class _AddGuardianSheetState extends ConsumerState<_AddGuardianSheet> {
+  final _name = TextEditingController();
+  final _relationship = TextEditingController();
+  final _phone = TextEditingController();
+  final _email = TextEditingController();
+  bool _isPrimary = false;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _relationship.dispose();
+    _phone.dispose();
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_saving) return;
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Name is required.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref.read(guardianActionsProvider).addToSubject(
+            subjectId: widget.subjectId,
+            name: name,
+            relationship: _relationship.text.trim().isEmpty
+                ? null
+                : _relationship.text.trim(),
+            phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+            email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+            isPrimary: _isPrimary,
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'guardians'),
+      );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = 'Could not save. Please try again.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text('Add guardian', style: theme.textTheme.titleLarge),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _name,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Full name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _relationship,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Relationship (e.g. Mother, Grandparent)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone (optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  labelText: 'Email (optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Primary guardian'),
+                subtitle: const Text(
+                  'Shown first; default contact for daily reports.',
+                ),
+                value: _isPrimary,
+                onChanged: (v) => setState(() => _isPrimary = v),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _saving
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check),
+                    label: const Text('Add'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

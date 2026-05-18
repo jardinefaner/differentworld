@@ -119,6 +119,41 @@ class GroupMembers extends Table {
   Set<Column> get primaryKey => {groupId, memberId};
 }
 
+/// A parent / family contact attached to one or more subjects via
+/// the join table [SubjectGuardians]. NOT a Member — staff and
+/// guardians are distinct identities. A guardian doesn't sign in
+/// (yet); when family-login ships they'll auth into the family lens.
+class Guardians extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get name => text()();
+  TextColumn get relationship => text().nullable()();
+  TextColumn get phone => text().nullable()();
+  TextColumn get email => text().nullable()();
+  IntColumn get authorizedForPickup => integer().nullable()();
+  TextColumn get notes => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Join: which guardians are linked to which subjects. Many-to-many
+/// since one parent can have multiple children in the same program,
+/// and one child can have multiple guardians (parents, grandparents,
+/// nanny).
+class SubjectGuardians extends Table {
+  TextColumn get subjectId => text()();
+  TextColumn get guardianId => text()();
+  TextColumn get spaceId => text()();
+  IntColumn get isPrimary => integer().nullable()();
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {subjectId, guardianId};
+}
+
 /// The unified daily-log table. `kind` discriminates between
 /// 'observation', 'meal', 'nap', 'diaper', 'incident', etc.
 /// `details` holds a JSON blob whose shape depends on `kind`.
@@ -146,7 +181,7 @@ class Entries extends Table {
 
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
-          GroupMembers, Entries],
+          GroupMembers, Entries, Guardians, SubjectGuardians],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -760,5 +795,79 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteEntry(String id) async {
     await (delete(entries)..where((e) => e.id.equals(id))).go();
+  }
+
+  // -- Guardians ------------------------------------------------------------
+
+  /// All guardians attached to a specific subject. Joined via the
+  /// subject_guardians link table.
+  Stream<List<Guardian>> watchGuardiansForSubject(String subjectId) {
+    final query = select(guardians).join([
+      innerJoin(
+        subjectGuardians,
+        subjectGuardians.guardianId.equalsExp(guardians.id),
+      ),
+    ])
+      ..where(subjectGuardians.subjectId.equals(subjectId))
+      ..orderBy([
+        OrderingTerm(expression: subjectGuardians.isPrimary, mode: OrderingMode.desc),
+        OrderingTerm(expression: guardians.name),
+      ]);
+    return query.watch().map((rows) =>
+        rows.map((r) => r.readTable(guardians)).toList());
+  }
+
+  /// Add a new guardian and attach them to a subject in one transaction.
+  /// Used by the "Add guardian" affordance on subject detail.
+  Future<void> createGuardianForSubject({
+    required String guardianId,
+    required String subjectId,
+    required String spaceId,
+    required String name,
+    String? relationship,
+    String? phone,
+    String? email,
+    bool isPrimary = false,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await transaction(() async {
+      await into(guardians).insert(
+        GuardiansCompanion.insert(
+          id: guardianId,
+          spaceId: spaceId,
+          name: name,
+          relationship:
+              relationship == null ? const Value.absent() : Value(relationship),
+          phone: phone == null ? const Value.absent() : Value(phone),
+          email: email == null ? const Value.absent() : Value(email),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      await into(subjectGuardians).insert(
+        SubjectGuardiansCompanion.insert(
+          subjectId: subjectId,
+          guardianId: guardianId,
+          spaceId: spaceId,
+          isPrimary: Value(isPrimary ? 1 : 0),
+          createdAt: now,
+        ),
+      );
+    });
+  }
+
+  /// Unlink a guardian from a subject. The guardian row stays — they
+  /// might still be attached to a sibling, or future re-add.
+  Future<void> unlinkGuardianFromSubject({
+    required String guardianId,
+    required String subjectId,
+  }) async {
+    await (delete(subjectGuardians)
+          ..where(
+            (sg) =>
+                sg.guardianId.equals(guardianId) &
+                sg.subjectId.equals(subjectId),
+          ))
+        .go();
   }
 }

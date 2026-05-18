@@ -4505,6 +4505,996 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
   }
 }
 
+class $GuardiansTable extends Guardians
+    with TableInfo<$GuardiansTable, Guardian> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GuardiansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _relationshipMeta = const VerificationMeta(
+    'relationship',
+  );
+  @override
+  late final GeneratedColumn<String> relationship = GeneratedColumn<String>(
+    'relationship',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _authorizedForPickupMeta =
+      const VerificationMeta('authorizedForPickup');
+  @override
+  late final GeneratedColumn<int> authorizedForPickup = GeneratedColumn<int>(
+    'authorized_for_pickup',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    name,
+    relationship,
+    phone,
+    email,
+    authorizedForPickup,
+    notes,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'guardians';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Guardian> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('relationship')) {
+      context.handle(
+        _relationshipMeta,
+        relationship.isAcceptableOrUnknown(
+          data['relationship']!,
+          _relationshipMeta,
+        ),
+      );
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('authorized_for_pickup')) {
+      context.handle(
+        _authorizedForPickupMeta,
+        authorizedForPickup.isAcceptableOrUnknown(
+          data['authorized_for_pickup']!,
+          _authorizedForPickupMeta,
+        ),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Guardian map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Guardian(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      relationship: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}relationship'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      authorizedForPickup: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}authorized_for_pickup'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $GuardiansTable createAlias(String alias) {
+    return $GuardiansTable(attachedDatabase, alias);
+  }
+}
+
+class Guardian extends DataClass implements Insertable<Guardian> {
+  final String id;
+  final String spaceId;
+  final String name;
+  final String? relationship;
+  final String? phone;
+  final String? email;
+  final int? authorizedForPickup;
+  final String? notes;
+  final String createdAt;
+  final String updatedAt;
+  const Guardian({
+    required this.id,
+    required this.spaceId,
+    required this.name,
+    this.relationship,
+    this.phone,
+    this.email,
+    this.authorizedForPickup,
+    this.notes,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || relationship != null) {
+      map['relationship'] = Variable<String>(relationship);
+    }
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || authorizedForPickup != null) {
+      map['authorized_for_pickup'] = Variable<int>(authorizedForPickup);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  GuardiansCompanion toCompanion(bool nullToAbsent) {
+    return GuardiansCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      name: Value(name),
+      relationship: relationship == null && nullToAbsent
+          ? const Value.absent()
+          : Value(relationship),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      authorizedForPickup: authorizedForPickup == null && nullToAbsent
+          ? const Value.absent()
+          : Value(authorizedForPickup),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Guardian.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Guardian(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      name: serializer.fromJson<String>(json['name']),
+      relationship: serializer.fromJson<String?>(json['relationship']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      email: serializer.fromJson<String?>(json['email']),
+      authorizedForPickup: serializer.fromJson<int?>(
+        json['authorizedForPickup'],
+      ),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'name': serializer.toJson<String>(name),
+      'relationship': serializer.toJson<String?>(relationship),
+      'phone': serializer.toJson<String?>(phone),
+      'email': serializer.toJson<String?>(email),
+      'authorizedForPickup': serializer.toJson<int?>(authorizedForPickup),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Guardian copyWith({
+    String? id,
+    String? spaceId,
+    String? name,
+    Value<String?> relationship = const Value.absent(),
+    Value<String?> phone = const Value.absent(),
+    Value<String?> email = const Value.absent(),
+    Value<int?> authorizedForPickup = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => Guardian(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    name: name ?? this.name,
+    relationship: relationship.present ? relationship.value : this.relationship,
+    phone: phone.present ? phone.value : this.phone,
+    email: email.present ? email.value : this.email,
+    authorizedForPickup: authorizedForPickup.present
+        ? authorizedForPickup.value
+        : this.authorizedForPickup,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Guardian copyWithCompanion(GuardiansCompanion data) {
+    return Guardian(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      name: data.name.present ? data.name.value : this.name,
+      relationship: data.relationship.present
+          ? data.relationship.value
+          : this.relationship,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      email: data.email.present ? data.email.value : this.email,
+      authorizedForPickup: data.authorizedForPickup.present
+          ? data.authorizedForPickup.value
+          : this.authorizedForPickup,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Guardian(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('relationship: $relationship, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('authorizedForPickup: $authorizedForPickup, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    name,
+    relationship,
+    phone,
+    email,
+    authorizedForPickup,
+    notes,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Guardian &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.name == this.name &&
+          other.relationship == this.relationship &&
+          other.phone == this.phone &&
+          other.email == this.email &&
+          other.authorizedForPickup == this.authorizedForPickup &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class GuardiansCompanion extends UpdateCompanion<Guardian> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> name;
+  final Value<String?> relationship;
+  final Value<String?> phone;
+  final Value<String?> email;
+  final Value<int?> authorizedForPickup;
+  final Value<String?> notes;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const GuardiansCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.relationship = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.authorizedForPickup = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GuardiansCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String name,
+    this.relationship = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.authorizedForPickup = const Value.absent(),
+    this.notes = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       name = Value(name),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Guardian> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? name,
+    Expression<String>? relationship,
+    Expression<String>? phone,
+    Expression<String>? email,
+    Expression<int>? authorizedForPickup,
+    Expression<String>? notes,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (name != null) 'name': name,
+      if (relationship != null) 'relationship': relationship,
+      if (phone != null) 'phone': phone,
+      if (email != null) 'email': email,
+      if (authorizedForPickup != null)
+        'authorized_for_pickup': authorizedForPickup,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GuardiansCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? name,
+    Value<String?>? relationship,
+    Value<String?>? phone,
+    Value<String?>? email,
+    Value<int?>? authorizedForPickup,
+    Value<String?>? notes,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return GuardiansCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      name: name ?? this.name,
+      relationship: relationship ?? this.relationship,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      authorizedForPickup: authorizedForPickup ?? this.authorizedForPickup,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (relationship.present) {
+      map['relationship'] = Variable<String>(relationship.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (authorizedForPickup.present) {
+      map['authorized_for_pickup'] = Variable<int>(authorizedForPickup.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GuardiansCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('relationship: $relationship, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('authorizedForPickup: $authorizedForPickup, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SubjectGuardiansTable extends SubjectGuardians
+    with TableInfo<$SubjectGuardiansTable, SubjectGuardian> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SubjectGuardiansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _guardianIdMeta = const VerificationMeta(
+    'guardianId',
+  );
+  @override
+  late final GeneratedColumn<String> guardianId = GeneratedColumn<String>(
+    'guardian_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isPrimaryMeta = const VerificationMeta(
+    'isPrimary',
+  );
+  @override
+  late final GeneratedColumn<int> isPrimary = GeneratedColumn<int>(
+    'is_primary',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    subjectId,
+    guardianId,
+    spaceId,
+    isPrimary,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'subject_guardians';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SubjectGuardian> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectIdMeta);
+    }
+    if (data.containsKey('guardian_id')) {
+      context.handle(
+        _guardianIdMeta,
+        guardianId.isAcceptableOrUnknown(data['guardian_id']!, _guardianIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_guardianIdMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('is_primary')) {
+      context.handle(
+        _isPrimaryMeta,
+        isPrimary.isAcceptableOrUnknown(data['is_primary']!, _isPrimaryMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {subjectId, guardianId};
+  @override
+  SubjectGuardian map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SubjectGuardian(
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      )!,
+      guardianId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}guardian_id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      isPrimary: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_primary'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SubjectGuardiansTable createAlias(String alias) {
+    return $SubjectGuardiansTable(attachedDatabase, alias);
+  }
+}
+
+class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
+  final String subjectId;
+  final String guardianId;
+  final String spaceId;
+  final int? isPrimary;
+  final String createdAt;
+  const SubjectGuardian({
+    required this.subjectId,
+    required this.guardianId,
+    required this.spaceId,
+    this.isPrimary,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['subject_id'] = Variable<String>(subjectId);
+    map['guardian_id'] = Variable<String>(guardianId);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || isPrimary != null) {
+      map['is_primary'] = Variable<int>(isPrimary);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    return map;
+  }
+
+  SubjectGuardiansCompanion toCompanion(bool nullToAbsent) {
+    return SubjectGuardiansCompanion(
+      subjectId: Value(subjectId),
+      guardianId: Value(guardianId),
+      spaceId: Value(spaceId),
+      isPrimary: isPrimary == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isPrimary),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SubjectGuardian.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SubjectGuardian(
+      subjectId: serializer.fromJson<String>(json['subjectId']),
+      guardianId: serializer.fromJson<String>(json['guardianId']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      isPrimary: serializer.fromJson<int?>(json['isPrimary']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'subjectId': serializer.toJson<String>(subjectId),
+      'guardianId': serializer.toJson<String>(guardianId),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'isPrimary': serializer.toJson<int?>(isPrimary),
+      'createdAt': serializer.toJson<String>(createdAt),
+    };
+  }
+
+  SubjectGuardian copyWith({
+    String? subjectId,
+    String? guardianId,
+    String? spaceId,
+    Value<int?> isPrimary = const Value.absent(),
+    String? createdAt,
+  }) => SubjectGuardian(
+    subjectId: subjectId ?? this.subjectId,
+    guardianId: guardianId ?? this.guardianId,
+    spaceId: spaceId ?? this.spaceId,
+    isPrimary: isPrimary.present ? isPrimary.value : this.isPrimary,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SubjectGuardian copyWithCompanion(SubjectGuardiansCompanion data) {
+    return SubjectGuardian(
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      guardianId: data.guardianId.present
+          ? data.guardianId.value
+          : this.guardianId,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      isPrimary: data.isPrimary.present ? data.isPrimary.value : this.isPrimary,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SubjectGuardian(')
+          ..write('subjectId: $subjectId, ')
+          ..write('guardianId: $guardianId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('isPrimary: $isPrimary, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(subjectId, guardianId, spaceId, isPrimary, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SubjectGuardian &&
+          other.subjectId == this.subjectId &&
+          other.guardianId == this.guardianId &&
+          other.spaceId == this.spaceId &&
+          other.isPrimary == this.isPrimary &&
+          other.createdAt == this.createdAt);
+}
+
+class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
+  final Value<String> subjectId;
+  final Value<String> guardianId;
+  final Value<String> spaceId;
+  final Value<int?> isPrimary;
+  final Value<String> createdAt;
+  final Value<int> rowid;
+  const SubjectGuardiansCompanion({
+    this.subjectId = const Value.absent(),
+    this.guardianId = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.isPrimary = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SubjectGuardiansCompanion.insert({
+    required String subjectId,
+    required String guardianId,
+    required String spaceId,
+    this.isPrimary = const Value.absent(),
+    required String createdAt,
+    this.rowid = const Value.absent(),
+  }) : subjectId = Value(subjectId),
+       guardianId = Value(guardianId),
+       spaceId = Value(spaceId),
+       createdAt = Value(createdAt);
+  static Insertable<SubjectGuardian> custom({
+    Expression<String>? subjectId,
+    Expression<String>? guardianId,
+    Expression<String>? spaceId,
+    Expression<int>? isPrimary,
+    Expression<String>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (subjectId != null) 'subject_id': subjectId,
+      if (guardianId != null) 'guardian_id': guardianId,
+      if (spaceId != null) 'space_id': spaceId,
+      if (isPrimary != null) 'is_primary': isPrimary,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SubjectGuardiansCompanion copyWith({
+    Value<String>? subjectId,
+    Value<String>? guardianId,
+    Value<String>? spaceId,
+    Value<int?>? isPrimary,
+    Value<String>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return SubjectGuardiansCompanion(
+      subjectId: subjectId ?? this.subjectId,
+      guardianId: guardianId ?? this.guardianId,
+      spaceId: spaceId ?? this.spaceId,
+      isPrimary: isPrimary ?? this.isPrimary,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (guardianId.present) {
+      map['guardian_id'] = Variable<String>(guardianId.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (isPrimary.present) {
+      map['is_primary'] = Variable<int>(isPrimary.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SubjectGuardiansCompanion(')
+          ..write('subjectId: $subjectId, ')
+          ..write('guardianId: $guardianId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('isPrimary: $isPrimary, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4517,6 +5507,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $InvitesTable invites = $InvitesTable(this);
   late final $GroupMembersTable groupMembers = $GroupMembersTable(this);
   late final $EntriesTable entries = $EntriesTable(this);
+  late final $GuardiansTable guardians = $GuardiansTable(this);
+  late final $SubjectGuardiansTable subjectGuardians = $SubjectGuardiansTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4530,6 +5524,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     invites,
     groupMembers,
     entries,
+    guardians,
+    subjectGuardians,
   ];
 }
 
@@ -6746,6 +7742,507 @@ typedef $$EntriesTableProcessedTableManager =
       Entry,
       PrefetchHooks Function()
     >;
+typedef $$GuardiansTableCreateCompanionBuilder =
+    GuardiansCompanion Function({
+      required String id,
+      required String spaceId,
+      required String name,
+      Value<String?> relationship,
+      Value<String?> phone,
+      Value<String?> email,
+      Value<int?> authorizedForPickup,
+      Value<String?> notes,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$GuardiansTableUpdateCompanionBuilder =
+    GuardiansCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> name,
+      Value<String?> relationship,
+      Value<String?> phone,
+      Value<String?> email,
+      Value<int?> authorizedForPickup,
+      Value<String?> notes,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$GuardiansTableFilterComposer
+    extends Composer<_$AppDatabase, $GuardiansTable> {
+  $$GuardiansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get relationship => $composableBuilder(
+    column: $table.relationship,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get authorizedForPickup => $composableBuilder(
+    column: $table.authorizedForPickup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GuardiansTableOrderingComposer
+    extends Composer<_$AppDatabase, $GuardiansTable> {
+  $$GuardiansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get relationship => $composableBuilder(
+    column: $table.relationship,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get authorizedForPickup => $composableBuilder(
+    column: $table.authorizedForPickup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GuardiansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GuardiansTable> {
+  $$GuardiansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get relationship => $composableBuilder(
+    column: $table.relationship,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<int> get authorizedForPickup => $composableBuilder(
+    column: $table.authorizedForPickup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$GuardiansTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GuardiansTable,
+          Guardian,
+          $$GuardiansTableFilterComposer,
+          $$GuardiansTableOrderingComposer,
+          $$GuardiansTableAnnotationComposer,
+          $$GuardiansTableCreateCompanionBuilder,
+          $$GuardiansTableUpdateCompanionBuilder,
+          (Guardian, BaseReferences<_$AppDatabase, $GuardiansTable, Guardian>),
+          Guardian,
+          PrefetchHooks Function()
+        > {
+  $$GuardiansTableTableManager(_$AppDatabase db, $GuardiansTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GuardiansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GuardiansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GuardiansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> relationship = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<int?> authorizedForPickup = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GuardiansCompanion(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                relationship: relationship,
+                phone: phone,
+                email: email,
+                authorizedForPickup: authorizedForPickup,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String name,
+                Value<String?> relationship = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<int?> authorizedForPickup = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => GuardiansCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                relationship: relationship,
+                phone: phone,
+                email: email,
+                authorizedForPickup: authorizedForPickup,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GuardiansTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GuardiansTable,
+      Guardian,
+      $$GuardiansTableFilterComposer,
+      $$GuardiansTableOrderingComposer,
+      $$GuardiansTableAnnotationComposer,
+      $$GuardiansTableCreateCompanionBuilder,
+      $$GuardiansTableUpdateCompanionBuilder,
+      (Guardian, BaseReferences<_$AppDatabase, $GuardiansTable, Guardian>),
+      Guardian,
+      PrefetchHooks Function()
+    >;
+typedef $$SubjectGuardiansTableCreateCompanionBuilder =
+    SubjectGuardiansCompanion Function({
+      required String subjectId,
+      required String guardianId,
+      required String spaceId,
+      Value<int?> isPrimary,
+      required String createdAt,
+      Value<int> rowid,
+    });
+typedef $$SubjectGuardiansTableUpdateCompanionBuilder =
+    SubjectGuardiansCompanion Function({
+      Value<String> subjectId,
+      Value<String> guardianId,
+      Value<String> spaceId,
+      Value<int?> isPrimary,
+      Value<String> createdAt,
+      Value<int> rowid,
+    });
+
+class $$SubjectGuardiansTableFilterComposer
+    extends Composer<_$AppDatabase, $SubjectGuardiansTable> {
+  $$SubjectGuardiansTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get isPrimary => $composableBuilder(
+    column: $table.isPrimary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SubjectGuardiansTableOrderingComposer
+    extends Composer<_$AppDatabase, $SubjectGuardiansTable> {
+  $$SubjectGuardiansTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get isPrimary => $composableBuilder(
+    column: $table.isPrimary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SubjectGuardiansTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SubjectGuardiansTable> {
+  $$SubjectGuardiansTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<int> get isPrimary =>
+      $composableBuilder(column: $table.isPrimary, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$SubjectGuardiansTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SubjectGuardiansTable,
+          SubjectGuardian,
+          $$SubjectGuardiansTableFilterComposer,
+          $$SubjectGuardiansTableOrderingComposer,
+          $$SubjectGuardiansTableAnnotationComposer,
+          $$SubjectGuardiansTableCreateCompanionBuilder,
+          $$SubjectGuardiansTableUpdateCompanionBuilder,
+          (
+            SubjectGuardian,
+            BaseReferences<
+              _$AppDatabase,
+              $SubjectGuardiansTable,
+              SubjectGuardian
+            >,
+          ),
+          SubjectGuardian,
+          PrefetchHooks Function()
+        > {
+  $$SubjectGuardiansTableTableManager(
+    _$AppDatabase db,
+    $SubjectGuardiansTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SubjectGuardiansTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SubjectGuardiansTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SubjectGuardiansTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> subjectId = const Value.absent(),
+                Value<String> guardianId = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<int?> isPrimary = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SubjectGuardiansCompanion(
+                subjectId: subjectId,
+                guardianId: guardianId,
+                spaceId: spaceId,
+                isPrimary: isPrimary,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String subjectId,
+                required String guardianId,
+                required String spaceId,
+                Value<int?> isPrimary = const Value.absent(),
+                required String createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SubjectGuardiansCompanion.insert(
+                subjectId: subjectId,
+                guardianId: guardianId,
+                spaceId: spaceId,
+                isPrimary: isPrimary,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SubjectGuardiansTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SubjectGuardiansTable,
+      SubjectGuardian,
+      $$SubjectGuardiansTableFilterComposer,
+      $$SubjectGuardiansTableOrderingComposer,
+      $$SubjectGuardiansTableAnnotationComposer,
+      $$SubjectGuardiansTableCreateCompanionBuilder,
+      $$SubjectGuardiansTableUpdateCompanionBuilder,
+      (
+        SubjectGuardian,
+        BaseReferences<_$AppDatabase, $SubjectGuardiansTable, SubjectGuardian>,
+      ),
+      SubjectGuardian,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6766,4 +8263,8 @@ class $AppDatabaseManager {
       $$GroupMembersTableTableManager(_db, _db.groupMembers);
   $$EntriesTableTableManager get entries =>
       $$EntriesTableTableManager(_db, _db.entries);
+  $$GuardiansTableTableManager get guardians =>
+      $$GuardiansTableTableManager(_db, _db.guardians);
+  $$SubjectGuardiansTableTableManager get subjectGuardians =>
+      $$SubjectGuardiansTableTableManager(_db, _db.subjectGuardians);
 }

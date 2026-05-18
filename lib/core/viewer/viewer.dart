@@ -153,8 +153,64 @@ class Viewer {
 
 /// Reactive view of the active viewer. Recomputes whenever the
 /// signed-in member's row or the current space changes.
+///
+/// When family-login ships, this provider also resolves a Guardian
+/// row when the signed-in identity matches a guardian rather than a
+/// member, returning a [GuardianViewer] instead of a [Viewer].
 final viewerProvider = Provider<Viewer>((ref) {
   final member = ref.watch(currentMemberProvider).value;
   final space = ref.watch(currentSpaceProvider).value;
   return Viewer(member: member, space: space);
 });
+
+/// Family lens — the viewer subclass for guardian accounts.
+///
+/// Skeleton in this commit: the class compiles, the data shape is
+/// established, but a `guardianViewerProvider` that produces one is
+/// future work (requires the family-login auth flow). The class is
+/// here so widgets can be written against `Viewer` polymorphically
+/// without further refactoring later.
+class GuardianViewer extends Viewer {
+  const GuardianViewer({
+    required this.guardian,
+    required this.childSubjectIds,
+    required super.space,
+  }) : super(member: null);
+
+  final Guardian guardian;
+
+  /// Subject IDs the guardian is allowed to see — derived from
+  /// `subject_guardians` rows where `guardian_id == this.guardian.id`.
+  /// Every family-side widget filters reads to this set.
+  final List<String> childSubjectIds;
+
+  @override
+  bool get isSignedIn => true;
+  @override
+  bool get hasSpace => true;
+  @override
+  String? get spaceId => guardian.spaceId;
+  @override
+  String get displayName => guardian.name;
+  @override
+  String get roleLabel => 'Family';
+
+  // Guardians never have staff caps — staff features hide entirely.
+  @override
+  bool get isDirector => false;
+  @override
+  bool get canManageProgram => false;
+  @override
+  bool get canInviteStaff => false;
+  @override
+  bool get canTakeAttendance => false;
+  @override
+  bool get canObserve => false;
+  @override
+  bool get isDailyLogger => false;
+
+  /// Per-subject visibility check. Family widgets call this to ensure
+  /// they're not rendering data about another family's child.
+  bool canSeeSubject(String subjectId) =>
+      childSubjectIds.contains(subjectId);
+}
