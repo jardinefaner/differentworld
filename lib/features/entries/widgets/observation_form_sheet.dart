@@ -173,26 +173,34 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     await _uploadAll(ref.read(photoServiceProvider), captured);
   }
 
-  /// Compress+upload each XFile in sequence, appending URLs to
-  /// `_photos`. The form's `_photoUploading` flag is set for the whole
-  /// batch so the user sees the inline progress until everything's
-  /// done. We don't parallel-upload — Storage rate limits are kinder
-  /// to sequential, and the user sees thumbs land one-by-one.
+  /// Compress+upload each XFile in parallel, appending URLs to
+  /// `_photos` as they finish. The form's `_photoUploading` flag is
+  /// set for the whole batch.
+  ///
+  /// Parallelism: a 5-shot burst at ~600ms per photo (compress in
+  /// isolate + upload) would take 3s sequentially. `Future.wait`
+  /// drops that to roughly one photo's worth (Storage is happy to
+  /// handle parallel uploads from one client; the isolate work
+  /// pipelines too). We preserve the user-facing order by awaiting
+  /// the wait + appending each URL to _photos in the same order the
+  /// shots were taken.
   Future<void> _uploadAll(PhotoService service, List<XFile> picks) async {
     setState(() {
       _photoUploading = true;
       _error = null;
     });
     try {
-      for (final pick in picks) {
-        final url = await service.uploadOnly(
-          entityKind: 'observation',
-          entityId: _entryId,
-          picked: pick,
-        );
-        if (!mounted) return;
-        setState(() => _photos = [..._photos, url]);
-      }
+      final urls = await Future.wait(
+        picks.map(
+          (pick) => service.uploadOnly(
+            entityKind: 'observation',
+            entityId: _entryId,
+            picked: pick,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      setState(() => _photos = [..._photos, ...urls]);
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'observations'),

@@ -263,7 +263,10 @@ class _TodayBody extends StatelessWidget {
             const SizedBox(height: 8),
             ...groups.map((g) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _GroupTodayCard(group: g),
+                  // RepaintBoundary so an InkWell ripple / re-watch
+                  // on one card doesn't repaint its siblings — each
+                  // card watches its own per-group state.
+                  child: RepaintBoundary(child: _GroupTodayCard(group: g)),
                 )),
           ],
         );

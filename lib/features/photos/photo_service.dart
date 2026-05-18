@@ -136,14 +136,37 @@ class PhotoService {
 /// Top-level so it can run inside `Isolate.run` (closures over instance
 /// fields can't be sent across isolate boundaries).
 ///
-/// Resize-to-fit + JPEG re-encode at descending quality until the byte
-/// count is at or below 1 MB. Image_picker already caps the longest
-/// edge at 1024 px and Q88, so this is mostly a safety net — but a
-/// large gallery photo unaffected by the picker's resize hint will
-/// still come through here.
+/// Resize-to-fit + JPEG re-encode at descending quality until the
+/// byte count is at or below the target. image_picker already caps
+/// the longest edge at 1024 px and Q88; this is mostly a safety net
+/// for an unresized gallery photo. Inputs that are already small AND
+/// don't exceed the max edge get passed through unmodified — re-
+/// encoding them at any quality often *grows* the file (JPEG markers
+/// + decode/encode roundtrip overhead), which we observed in the wild
+/// (121 KB → 142 KB on a Pixel-shot photo).
 Uint8List _compressSync(Uint8List input) {
-  const targetBytes = 1024 * 1024;
+  const targetBytes = 512 * 1024; // 512 KB ceiling — half the old 1MB.
+  const passThroughBytes = 200 * 1024; // below this, don't re-encode.
   const maxEdge = 1024;
+
+  // Pass-through path: if the input is already small enough, only
+  // re-encode when we actually need to resize it down. Avoids the
+  // grew-on-encode regression for tiny inputs.
+  if (input.lengthInBytes <= passThroughBytes) {
+    final decoded = img.decodeImage(input);
+    if (decoded != null &&
+        decoded.width <= maxEdge &&
+        decoded.height <= maxEdge) {
+      if (kDebugMode) {
+        debugPrint(
+          '[photo] pass-through ${input.lengthInBytes ~/ 1024}KB '
+          '(${decoded.width}x${decoded.height}) — no re-encode',
+        );
+      }
+      return input;
+    }
+  }
+
   final decoded = img.decodeImage(input);
   if (decoded == null) {
     throw const FormatException('Could not decode the picked image.');
@@ -157,10 +180,10 @@ Uint8List _compressSync(Uint8List input) {
       interpolation: img.Interpolation.average,
     );
   }
-  var quality = 88;
+  var quality = 82;
   var encoded = Uint8List.fromList(img.encodeJpg(resized, quality: quality));
   while (encoded.lengthInBytes > targetBytes && quality > 50) {
-    quality -= 10;
+    quality -= 8;
     encoded = Uint8List.fromList(img.encodeJpg(resized, quality: quality));
   }
   if (kDebugMode) {

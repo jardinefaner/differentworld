@@ -38,34 +38,39 @@ class AttendanceRow extends StatelessWidget {
     final theme = Theme.of(context);
     final fullName = '${subject.firstName} ${subject.lastName}';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        children: [
-          PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              fullName,
-              style: theme.textTheme.bodyLarge,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    // RepaintBoundary so a tap-ripple on one row doesn't repaint
+    // siblings — important on the morning checklist where users
+    // tap 20+ rows in quick succession.
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Row(
+          children: [
+            PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                fullName,
+                style: theme.textTheme.bodyLarge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          for (final s in AttendanceStatus.values) ...[
-            _StatusButton(
-              status: s,
-              selected: s == status,
-              onTap: () async {
-                unawaited(HapticFeedback.selectionClick());
-                // Re-tap clears; otherwise sets to this status.
-                await onChangeStatus(s == status ? null : s);
-              },
-            ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
+            for (final s in AttendanceStatus.values) ...[
+              _StatusButton(
+                status: s,
+                selected: s == status,
+                onTap: () async {
+                  unawaited(HapticFeedback.selectionClick());
+                  // Re-tap clears; otherwise sets to this status.
+                  await onChangeStatus(s == status ? null : s);
+                },
+              ),
+              const SizedBox(width: 4),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
