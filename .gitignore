@@ -54,6 +54,7 @@ app.*.map.json
 
 # Local-only Claude Code settings (Bash permission grants, etc.)
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 
 # Supabase CLI working state (cached credentials, link config)
 supabase/.temp/
