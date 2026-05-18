@@ -34,15 +34,23 @@ streams:
       # (not implemented yet — `by_space` is enough until someone
       # actually scrolls back). Windows chosen so a returning-from-
       # holidays teacher still has context on day one.
-      - SELECT * FROM attendance_records WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND date >= (current_date - INTERVAL '90 days')::text
+      #
+      # NOTE: PowerSync sync rules are evaluated in a SQLite subset,
+      # not Postgres — `now()`, `current_date`, `INTERVAL`, and
+      # `::text` casts are not supported. Use SQLite's
+      # `datetime('now', '-N days')` / `date('now', '-N days')`
+      # instead. The columns themselves are still Postgres types
+      # server-side; the comparison happens after PowerSync renders
+      # them as ISO strings, which lexically sort correctly.
+      - SELECT * FROM attendance_records WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND date >= date('now', '-90 days')
       - SELECT * FROM group_members      WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Entries (observations / meals / naps / diapers / incidents).
-      - SELECT * FROM entries            WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND recorded_at > now() - INTERVAL '90 days'
+      - SELECT * FROM entries            WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND recorded_at > datetime('now', '-90 days')
       # Fleet: keep the vehicle list full; only the event log is
       # time-windowed (the dashboard only needs recent trips to derive
       # current state — older trips are nice-to-have, not required).
       - SELECT * FROM vehicles           WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
-      - SELECT * FROM vehicle_logs       WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND created_at > now() - INTERVAL '60 days'
+      - SELECT * FROM vehicle_logs       WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND created_at > datetime('now', '-60 days')
       # Certifications — director needs the whole space's certs for
       # "expiring soon" dashboards; teachers see all but UI gates edits.
       # Full scope here (low row count, long-lived data).
@@ -53,7 +61,7 @@ streams:
       # (subject avatar, member avatar, vehicle photo, cert document)
       # stays full because those are infrequent + the UI always wants
       # them ready.
-      - SELECT * FROM attachments        WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND (entity_kind <> 'entry' OR created_at > now() - INTERVAL '90 days')
+      - SELECT * FROM attachments        WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND (entity_kind <> 'entry' OR created_at > datetime('now', '-90 days'))
       # Surveys — one row per (subject, template). Full scope; one
       # year of TK–3rd kid responses for a whole program is well under
       # the noise of any other table.
