@@ -8,6 +8,7 @@ import 'package:differentworld/features/attendance/widgets/status_picker_sheet.d
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -373,32 +374,21 @@ class _ChecklistRow extends ConsumerWidget {
   final AttendanceStatus? status;
   final String date;
 
-  String get _initials {
-    String firstChar(String s) {
-      final t = s.trim();
-      return t.isEmpty ? '' : t.substring(0, 1).toUpperCase();
-    }
-
-    final j = '${firstChar(subject.firstName)}${firstChar(subject.lastName)}';
-    return j.isEmpty ? '?' : j;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final fullName = '${subject.firstName} ${subject.lastName}';
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.primaryContainer,
-        foregroundColor: theme.colorScheme.onPrimaryContainer,
-        child: Text(_initials),
+      leading: PersonAvatar(
+        name: fullName,
+        photoUrl: subject.photoUrl,
       ),
-      title: Text('${subject.firstName} ${subject.lastName}'),
+      title: Text(fullName),
       trailing: _StatusChip(status: status),
       onTap: () async {
         unawaited(HapticFeedback.selectionClick());
         final picked = await StatusPickerSheet.show(
           context,
-          studentName: '${subject.firstName} ${subject.lastName}',
+          studentName: fullName,
           currentStatus: status,
         );
         if (picked != null) {

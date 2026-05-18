@@ -5,6 +5,7 @@ import 'package:differentworld/features/invites/widgets/invite_create_sheet.dart
 import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -131,18 +132,10 @@ class _MemberTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final initial =
-        (member.displayName.trim().isEmpty
-                ? '?'
-                : member.displayName.trim().substring(0, 1))
-            .toUpperCase();
-
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.primaryContainer,
-        foregroundColor: theme.colorScheme.onPrimaryContainer,
-        child: Text(initial),
+      leading: PersonAvatar(
+        name: member.displayName,
+        photoUrl: member.avatarUrl,
       ),
       title: Text(member.displayName),
       subtitle: Text(_roleLabel(member.role)),

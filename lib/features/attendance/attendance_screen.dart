@@ -8,6 +8,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/status_picker_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -328,23 +329,20 @@ class _AttendanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final initials = _initials(subject.firstName, subject.lastName);
+    final fullName = '${subject.firstName} ${subject.lastName}';
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: scheme.primaryContainer,
-        foregroundColor: scheme.onPrimaryContainer,
-        child: Text(initials),
+      leading: PersonAvatar(
+        name: fullName,
+        photoUrl: subject.photoUrl,
       ),
-      title: Text('${subject.firstName} ${subject.lastName}'),
+      title: Text(fullName),
       trailing: _StatusChip(status: status),
       onTap: () async {
         unawaited(HapticFeedback.selectionClick());
         final picked = await StatusPickerSheet.show(
           context,
-          studentName: '${subject.firstName} ${subject.lastName}',
+          studentName: fullName,
           currentStatus: status,
         );
         if (picked != null) {
@@ -352,16 +350,6 @@ class _AttendanceRow extends StatelessWidget {
         }
       },
     );
-  }
-
-  static String _initials(String first, String last) {
-    String firstChar(String s) {
-      final t = s.trim();
-      return t.isEmpty ? '' : t.substring(0, 1).toUpperCase();
-    }
-
-    final joined = '${firstChar(first)}${firstChar(last)}';
-    return joined.isEmpty ? '?' : joined;
   }
 }
 

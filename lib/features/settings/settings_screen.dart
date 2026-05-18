@@ -1,5 +1,6 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -37,7 +38,10 @@ class SettingsScreen extends ConsumerWidget {
               label: 'Signed in as',
             ),
             ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+              leading: PersonAvatar(
+                name: member?.displayName ?? '?',
+                photoUrl: member?.avatarUrl,
+              ),
               title: Text(member?.displayName ?? '—'),
               subtitle: Text(
                 _roleLabel(member?.role),

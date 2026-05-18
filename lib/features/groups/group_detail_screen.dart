@@ -5,6 +5,7 @@ import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/subject_form_sheet.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -132,17 +133,15 @@ class _SubjectTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final initials = _initials(subject.firstName, subject.lastName);
     final ageLine = _ageLine(subject.dob);
+    final fullName = '${subject.firstName} ${subject.lastName}';
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.primaryContainer,
-        foregroundColor: theme.colorScheme.onPrimaryContainer,
-        child: Text(initials),
+      leading: PersonAvatar(
+        name: fullName,
+        photoUrl: subject.photoUrl,
       ),
-      title: Text('${subject.firstName} ${subject.lastName}'),
+      title: Text(fullName),
       subtitle: ageLine == null ? null : Text(ageLine),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => SubjectFormSheet.show(
@@ -151,16 +150,6 @@ class _SubjectTile extends StatelessWidget {
         subject: subject,
       ),
     );
-  }
-
-  static String _initials(String first, String last) {
-    String firstChar(String s) {
-      final t = s.trim();
-      return t.isEmpty ? '' : t.substring(0, 1).toUpperCase();
-    }
-
-    final joined = '${firstChar(first)}${firstChar(last)}';
-    return joined.isEmpty ? '?' : joined;
   }
 
   static String? _ageLine(String? dobIso) {

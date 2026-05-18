@@ -3,6 +3,7 @@ import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -74,18 +75,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               children: [
                 const SizedBox(height: 12),
                 Center(
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer,
-                    foregroundColor: Theme.of(
-                      context,
-                    ).colorScheme.onPrimaryContainer,
-                    child: Text(
-                      _initial(member.displayName),
-                      style: const TextStyle(fontSize: 24),
-                    ),
+                  child: PersonAvatar(
+                    name: member.displayName,
+                    photoUrl: member.avatarUrl,
+                    radius: 40,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -315,12 +308,6 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  static String _initial(String name) {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) return '?';
-    return trimmed.substring(0, 1).toUpperCase();
   }
 
   static String _roleLabel(String role) => switch (role) {
