@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/status_picker_sheet.dart';
@@ -10,6 +11,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -118,6 +120,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final viewer = ref.watch(viewerProvider);
     final groupAsync = ref.watch(_groupDetailProvider(widget.groupId));
     final subjectsAsync = ref.watch(subjectsInGroupProvider(widget.groupId));
     final recordsAsync = ref.watch(
@@ -125,6 +128,13 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         (groupId: widget.groupId, date: _isoDate),
       ),
     );
+
+    // Deep-link defence: anyone navigating to /groups/:id/attendance
+    // without canTakeAttendance gets the deny-state, not a half-shown
+    // attendance UI.
+    if (!viewer.canTakeAttendance) {
+      return const EdgeScaffold(body: NoAccess());
+    }
 
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],

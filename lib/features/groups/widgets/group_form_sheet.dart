@@ -1,6 +1,7 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -137,6 +138,7 @@ class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
   }
 
   Future<void> _delete() async {
+    if (!ref.read(viewerProvider).canManageProgram) return; // defence-in-depth
     final group = widget.group;
     if (group == null) return;
     final confirmed = await confirmDestructive(
@@ -312,7 +314,9 @@ class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
                     const SizedBox(height: 20),
                     Row(
                       children: [
-                        if (_isEdit)
+                        // Delete only for managers — teachers see this
+                        // sheet read-only and can't archive classrooms.
+                        if (_isEdit && ref.watch(viewerProvider).canManageProgram)
                           DestructiveButton(
                             label: 'Delete',
                             onPressed: _saving ? null : _delete,

@@ -1,4 +1,5 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -158,6 +159,7 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
   }
 
   Future<void> _delete() async {
+    if (!ref.read(viewerProvider).canManageProgram) return; // defence-in-depth
     final subject = widget.subject;
     if (subject == null) return;
     final confirmed = await confirmDestructive(
@@ -330,7 +332,9 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      if (_isEdit)
+                      // Remove only for managers — teachers can edit
+                      // notes / allergies but can't unenroll a student.
+                      if (_isEdit && ref.watch(viewerProvider).canManageProgram)
                         DestructiveButton(
                           label: 'Remove',
                           onPressed: _saving ? null : _delete,

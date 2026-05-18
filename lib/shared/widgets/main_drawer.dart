@@ -1,18 +1,22 @@
+import 'dart:async';
+
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
-import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// The hamburger menu — opens from the top-left, shows the signed-in
-/// user's profile + every primary destination + sign out.
+/// The hamburger menu. Opens from the top-left edge.
 ///
-/// Drawer (not endDrawer) so the gesture matches the universal
-/// "swipe from the left edge" pattern. Programmatic open via the
-/// Scaffold key in EdgeScaffold.
+/// Layout decisions:
+/// - No visible divider lines. Sections are separated by whitespace +
+///   small uppercase labels.
+/// - The header is a single tappable row: avatar + name + role on the
+///   left (tap → your profile), sign-out icon on the right.
+/// - Program name sits above the profile row as a small breadcrumb so
+///   the user can see which space they're in at a glance.
 class MainDrawer extends ConsumerWidget {
   const MainDrawer({super.key});
 
@@ -29,79 +33,120 @@ class MainDrawer extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header — program name + signed-in user.
+            // Header — program breadcrumb + profile row.
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    space?.name ?? 'Different World',
-                    style: theme.textTheme.titleLarge,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      PersonAvatar(
-                        name: member?.displayName ?? '?',
-                        photoUrl: member?.avatarUrl,
+                  if (space != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      child: Text(
+                        space.name,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          letterSpacing: 0.4,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  // Profile row: tap the row → your own member detail;
+                  // tap the icon at the right → sign out.
+                  Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: member == null
+                          ? null
+                          : () {
+                              Navigator.of(context).pop(); // close drawer
+                              unawaited(
+                                context.push('/settings/team/${member.id}'),
+                              );
+                            },
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                        child: Row(
                           children: [
-                            Text(
-                              member?.displayName ?? '—',
-                              style: theme.textTheme.bodyMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            PersonAvatar(
+                              name: member?.displayName ?? '?',
+                              photoUrl: member?.avatarUrl,
+                              radius: 22,
                             ),
-                            Text(
-                              viewer.roleLabel,
-                              style: theme.textTheme.bodySmall?.copyWith(
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    member?.displayName ?? '—',
+                                    style: theme.textTheme.titleMedium,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    viewer.roleLabel,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color:
+                                          theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Sign out',
+                              icon: Icon(
+                                Icons.logout,
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              onPressed: () async {
+                                final navigator = Navigator.of(context);
+                                final auth = ref.read(authActionsProvider);
+                                navigator.pop(); // close drawer
+                                await auth.signOut();
+                              },
                             ),
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
 
-            // Primary destinations — every section gated by viewer caps.
+            const SizedBox(height: 8),
+
+            // Destinations.
             Expanded(
               child: ListView(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.only(bottom: 16),
                 children: [
                   _DrawerTile(
                     icon: Icons.today_outlined,
                     label: 'Today',
                     onTap: () => _go(context, '/'),
                   ),
-                  // Daily-log section appears only if the viewer can do
-                  // ANY of the daily-log actions.
                   if (viewer.isDailyLogger)
                     _DrawerTile(
                       icon: Icons.task_alt,
                       label: 'Morning checklist',
                       onTap: () => _go(context, '/checklist'),
                     ),
-                  const Divider(height: 16, indent: 16, endIndent: 16),
+
+                  const _SectionGap(),
                   const _SectionLabel(label: 'Classrooms'),
                   ...groupsAsync.maybeWhen(
                     data: (groups) => groups.isEmpty
                         ? const [
                             Padding(
-                              padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+                              padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
                               child: Text(
                                 'No classrooms yet.',
                                 style: TextStyle(fontSize: 13),
@@ -121,23 +166,24 @@ class MainDrawer extends ConsumerWidget {
                             .toList(),
                     orElse: () => const [SizedBox.shrink()],
                   ),
+
                   if (viewer.canSeeTeam ||
                       viewer.canManageProgram ||
                       viewer.showsBilling) ...[
-                    const Divider(height: 16, indent: 16, endIndent: 16),
+                    const _SectionGap(),
                     const _SectionLabel(label: 'Program'),
                   ],
-                  if (viewer.canManageProgram)
-                    _DrawerTile(
-                      icon: Icons.school_outlined,
-                      label: 'Program settings',
-                      onTap: () => _go(context, '/settings/program'),
-                    ),
                   if (viewer.canSeeTeam)
                     _DrawerTile(
                       icon: Icons.groups_outlined,
                       label: 'Team',
                       onTap: () => _go(context, '/settings/team'),
+                    ),
+                  if (viewer.canManageProgram)
+                    _DrawerTile(
+                      icon: Icons.school_outlined,
+                      label: 'Program settings',
+                      onTap: () => _go(context, '/settings/program'),
                     ),
                   if (viewer.showsBilling)
                     _DrawerTile(
@@ -151,25 +197,6 @@ class MainDrawer extends ConsumerWidget {
                     onTap: () => _go(context, '/settings'),
                   ),
                 ],
-              ),
-            ),
-            const Divider(height: 1),
-
-            // Footer — sign out.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: DestructiveButton(
-                  label: 'Sign out',
-                  icon: Icons.logout,
-                  onPressed: () async {
-                    final navigator = Navigator.of(context);
-                    final auth = ref.read(authActionsProvider);
-                    navigator.pop(); // close the drawer first
-                    await auth.signOut();
-                  },
-                ),
               ),
             ),
           ],
@@ -211,6 +238,13 @@ class _DrawerTile extends StatelessWidget {
   }
 }
 
+class _SectionGap extends StatelessWidget {
+  const _SectionGap();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(height: 16);
+}
+
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.label});
 
@@ -220,7 +254,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
       child: Text(
         label.toUpperCase(),
         style: theme.textTheme.labelSmall?.copyWith(

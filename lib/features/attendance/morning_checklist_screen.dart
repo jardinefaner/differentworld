@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/status_picker_sheet.dart';
@@ -10,6 +11,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -108,7 +110,15 @@ class _MorningChecklistScreenState
 
   @override
   Widget build(BuildContext context) {
+    final viewer = ref.watch(viewerProvider);
     final dataAsync = ref.watch(_morningChecklistProvider(_isoDate));
+
+    // Daily-log roles only. Director-without-attendance can still see
+    // it (their bundle defaults canTakeAttendance true), but the rare
+    // viewer that ONLY views (future kiosk / family) gets the deny.
+    if (!viewer.isDailyLogger) {
+      return const EdgeScaffold(body: NoAccess());
+    }
 
     return EdgeScaffold(
       actions: [

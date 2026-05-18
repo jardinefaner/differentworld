@@ -2,8 +2,10 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,8 +25,17 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final memberAsync = ref.watch(currentMemberProvider);
-    final spaceId = memberAsync.value?.spaceId;
+    final viewer = ref.watch(viewerProvider);
+    if (!viewer.canManageProgram) {
+      return const EdgeScaffold(
+        backFallbackRoute: '/settings',
+        body: NoAccess(
+          title: 'Only directors can edit program settings.',
+          message: 'Ask the program director to make changes here.',
+        ),
+      );
+    }
+    final spaceId = viewer.spaceId;
     if (spaceId == null) {
       return const EdgeScaffold(
         backFallbackRoute: '/settings',
