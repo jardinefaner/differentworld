@@ -623,6 +623,87 @@ supabase migration list --linked   # which migrations applied on server
 supabase db push                   # apply new migrations
 ```
 
+## When to run cleanup (the "flutter clean" decision tree)
+
+These steps come up at predictable moments. Run them proactively when
+the trigger appears — don't wait to be asked.
+
+### `flutter clean && flutter pub get`
+Run when:
+- A **pubspec.yaml dependency was added/removed/upgraded**
+- **`git pull` brought in pubspec.yaml changes** from another machine
+- Mysterious **build errors** that don't match the source (cache rot)
+- After **build_runner crashes or partial regens**
+- Switching between branches with different Flutter / Dart versions
+
+### `dart run build_runner build`
+Run when:
+- **Drift table classes changed** in `lib/core/db/app_database.dart`
+- **Freezed classes** or **json_serializable** classes changed
+- Any `.dart` file with codegen annotations was edited
+
+If build_runner says **"wrote 0 outputs"** but you know the source
+changed, run **`dart run build_runner clean && dart run build_runner build`**
+to force a full regen. drift_dev's incremental cache can lie.
+
+### `dart run powersync:setup_web`
+Run when:
+- **First time** setting up the project locally
+- **`powersync` package version bumped**
+- The `web/sqlite3.wasm` or `web/powersync_db.worker.js` files are
+  missing (e.g., a `git clone` won't have them — they're gitignored).
+- Browser console shows
+  `Failed to execute 'compile' on 'WebAssembly': Incorrect response MIME type`.
+
+### **Clear local device storage** (this is the one we keep forgetting)
+Run when:
+- A migration **renamed a table or column** that PowerSync syncs
+- The **PowerSync `appSchema` declaration in Dart changed** (table
+  added/removed/renamed, column added/removed/renamed)
+- App boots and gets stuck on **"Syncing your profile…"** forever
+- Logs show **`Validated and applied checkpoint`** but the UI shows
+  empty data
+- Symptoms of a **silent schema mismatch** between local SQLite and
+  server.
+
+How to clear:
+- **Web (Chrome)**: DevTools → **Application** tab → **Storage** →
+  "Clear site data" with all boxes ticked (especially IndexedDB and
+  Cache Storage). Then hard refresh.
+- **Android**: **uninstall the app** from the device, then
+  `flutter run -d <device>` again. App data → gone → fresh local DB.
+- **iOS**: same — delete the app from the simulator/device.
+- **Desktop (macOS)**: delete the local DB file under
+  `~/Library/Application Support/com.jardine.differentworld/`.
+
+Why: PowerSync's local schema reconciliation is **additive but not
+rename-aware**. If you rename `profiles` → `members` in the schema,
+PowerSync may create `members` empty while leaving `profiles` with
+the old data — Drift queries on `members` find nothing forever.
+Wiping the local DB forces a clean schema + full re-sync.
+
+### `supabase db push`
+Run after **writing a new migration** to `supabase/migrations/`. The
+Bash permission rule `Bash(supabase db push:*)` allows this directly —
+don't hand it back.
+
+### The full sequence after a Drift schema rename
+For future-me's sanity, if a Drift schema rename is involved:
+
+1. Write the SQL migration (`supabase/migrations/<ts>_<name>.sql`)
+2. Update `lib/core/db/power_sync_schema.dart` to match
+3. Update `lib/core/db/app_database.dart` (Drift classes) to match
+4. Update every consumer in `lib/` to use the new names
+5. **`supabase db push`** — apply server-side
+6. Update `supabase/sync_rules.yaml` and redeploy in PowerSync dashboard
+7. **`dart run build_runner build`** — regenerate `.g.dart` files
+8. **`flutter clean && flutter pub get`** — wipe build cache
+9. **`flutter analyze`** — confirm zero issues
+10. **`flutter test`** — confirm passing
+11. **Tell the user to clear local storage on every active device**
+    (uninstall on mobile, clear site data on web). Local SQLite needs
+    to recreate itself with the new schema.
+
 ---
 
 ## "Done" means
