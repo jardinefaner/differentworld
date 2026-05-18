@@ -1,17 +1,47 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 /// Stream of Subjects in a specific Group. Family provider keyed by
 /// group id. Uses `async*` so the provider stays in `loading` until the
 /// DB is ready.
+// Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
 final subjectsInGroupProvider =
     StreamProvider.family<List<Subject>, String>(
   (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
     yield* db.watchSubjectsInGroup(groupId);
+  },
+);
+
+/// Single Subject by id. Powers the subject detail screen.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final subjectByIdProvider =
+    StreamProvider.autoDispose.family<Subject?, String>(
+  (ref, id) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* (db.select(db.subjects)..where((s) => s.id.equals(id)))
+        .watchSingleOrNull();
+  },
+);
+
+/// Attendance history for a subject — recent days, newest first. Used
+/// by the subject detail "30-day strip" and any future analytics.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final attendanceHistoryForSubjectProvider =
+    StreamProvider.autoDispose.family<List<AttendanceRecord>, String>(
+  (ref, subjectId) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* (db.select(db.attendanceRecords)
+          ..where((a) => a.subjectId.equals(subjectId))
+          ..orderBy([(a) => OrderingTerm.desc(a.date)])
+          ..limit(60))
+        .watch();
   },
 );
 

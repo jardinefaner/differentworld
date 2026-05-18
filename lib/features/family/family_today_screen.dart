@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 /// Family-side home screen. Shown when the active viewer is a
@@ -128,9 +129,11 @@ class _ChildCard extends ConsumerWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      child: InkWell(
+        onTap: () => context.push('/children/${child.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
           children: [
             PersonAvatar(
               name: '${child.firstName} ${child.lastName}',
@@ -161,6 +164,7 @@ class _ChildCard extends ConsumerWidget {
             if (status != null)
               Icon(status.icon, color: status.color(theme.colorScheme)),
           ],
+        ),
         ),
       ),
     );

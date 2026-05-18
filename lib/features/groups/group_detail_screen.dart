@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
@@ -139,11 +141,11 @@ class _SubjectTile extends StatelessWidget {
       title: Text(fullName),
       subtitle: ageLine == null ? null : Text(ageLine),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => SubjectFormSheet.show(
-        context,
-        groupId: subject.groupId ?? '',
-        subject: subject,
-      ),
+      onTap: () {
+        final gid = subject.groupId;
+        if (gid == null) return;
+        unawaited(context.push('/groups/$gid/students/${subject.id}'));
+      },
     );
   }
 

@@ -15,6 +15,7 @@ import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
+import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,7 +65,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                   groupId: state.pathParameters['id']!,
                 ),
               ),
+              GoRoute(
+                path: 'students/:sid',
+                builder: (_, state) => SubjectDetailScreen(
+                  subjectId: state.pathParameters['sid']!,
+                ),
+              ),
             ],
+          ),
+          // Family-side direct route: a guardian navigates to a child
+          // without going through a classroom they don't see.
+          GoRoute(
+            path: 'children/:sid',
+            builder: (_, state) => SubjectDetailScreen(
+              subjectId: state.pathParameters['sid']!,
+            ),
           ),
         ],
       ),
