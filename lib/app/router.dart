@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
+import 'package:differentworld/features/omnibox/omnibox_screen.dart';
 import 'package:differentworld/features/onboarding/create_space_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:flutter/material.dart';
@@ -90,12 +91,45 @@ class _Home extends ConsumerWidget {
   }
 }
 
-class _SignedInHome extends ConsumerWidget {
+class _SignedInHome extends StatefulWidget {
   const _SignedInHome();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const TodayScreen();
+  State<_SignedInHome> createState() => _SignedInHomeState();
+}
+
+/// Home is a horizontal PageView with two pages:
+///   page 0 → Omnibox (search / actions)
+///   page 1 → Today (default landing)
+///
+/// Swipe right from Today reveals the Omnibox; swipe left (or tap back)
+/// from Omnibox returns to Today.
+class _SignedInHomeState extends State<_SignedInHome> {
+  late final PageController _controller = PageController(initialPage: 1);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toToday() {
+    unawaited(_controller.animateToPage(
+      1,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView(
+      controller: _controller,
+      children: [
+        OmniboxScreen(onDismiss: _toToday),
+        const TodayScreen(),
+      ],
+    );
   }
 }
 
