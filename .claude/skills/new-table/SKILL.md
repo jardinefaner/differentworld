@@ -13,12 +13,16 @@ Miss any and the table silently doesn't sync. Order matters.
 
 ```sql
 create table if not exists public.foos (
-  id          uuid primary key default gen_random_uuid(),
+  id          uuid primary key default gen_random_uuid(),  -- ALWAYS present
   space_id    uuid not null references public.spaces(id) on delete cascade,
   -- ... your columns
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+-- For JOIN tables: do NOT use a composite primary key. Always an `id`
+-- PK + a UNIQUE on the natural pair, or PowerSync's implicit `id`
+-- collides with Drift inserts and crashes with SQLite code 1811.
+-- See CLAUDE.md "PowerSync join tables still need an explicit `id`".
 
 -- Required for PowerSync to capture replica updates.
 alter table public.foos replica identity full;

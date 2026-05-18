@@ -3530,6 +3530,15 @@ class $GroupMembersTable extends GroupMembers
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $GroupMembersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _groupIdMeta = const VerificationMeta(
     'groupId',
   );
@@ -3587,6 +3596,7 @@ class $GroupMembersTable extends GroupMembers
   );
   @override
   List<GeneratedColumn> get $columns => [
+    id,
     groupId,
     memberId,
     spaceId,
@@ -3605,6 +3615,11 @@ class $GroupMembersTable extends GroupMembers
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
     if (data.containsKey('group_id')) {
       context.handle(
         _groupIdMeta,
@@ -3650,11 +3665,15 @@ class $GroupMembersTable extends GroupMembers
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {groupId, memberId};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
   GroupMember map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return GroupMember(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
       groupId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}group_id'],
@@ -3685,12 +3704,14 @@ class $GroupMembersTable extends GroupMembers
 }
 
 class GroupMember extends DataClass implements Insertable<GroupMember> {
+  final String id;
   final String groupId;
   final String memberId;
   final String spaceId;
   final String? roleInGroup;
   final String assignedAt;
   const GroupMember({
+    required this.id,
     required this.groupId,
     required this.memberId,
     required this.spaceId,
@@ -3700,6 +3721,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
     map['group_id'] = Variable<String>(groupId);
     map['member_id'] = Variable<String>(memberId);
     map['space_id'] = Variable<String>(spaceId);
@@ -3712,6 +3734,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
 
   GroupMembersCompanion toCompanion(bool nullToAbsent) {
     return GroupMembersCompanion(
+      id: Value(id),
       groupId: Value(groupId),
       memberId: Value(memberId),
       spaceId: Value(spaceId),
@@ -3728,6 +3751,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return GroupMember(
+      id: serializer.fromJson<String>(json['id']),
       groupId: serializer.fromJson<String>(json['groupId']),
       memberId: serializer.fromJson<String>(json['memberId']),
       spaceId: serializer.fromJson<String>(json['spaceId']),
@@ -3739,6 +3763,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
       'groupId': serializer.toJson<String>(groupId),
       'memberId': serializer.toJson<String>(memberId),
       'spaceId': serializer.toJson<String>(spaceId),
@@ -3748,12 +3773,14 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
   }
 
   GroupMember copyWith({
+    String? id,
     String? groupId,
     String? memberId,
     String? spaceId,
     Value<String?> roleInGroup = const Value.absent(),
     String? assignedAt,
   }) => GroupMember(
+    id: id ?? this.id,
     groupId: groupId ?? this.groupId,
     memberId: memberId ?? this.memberId,
     spaceId: spaceId ?? this.spaceId,
@@ -3762,6 +3789,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
   );
   GroupMember copyWithCompanion(GroupMembersCompanion data) {
     return GroupMember(
+      id: data.id.present ? data.id.value : this.id,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       memberId: data.memberId.present ? data.memberId.value : this.memberId,
       spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
@@ -3777,6 +3805,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
   @override
   String toString() {
     return (StringBuffer('GroupMember(')
+          ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('memberId: $memberId, ')
           ..write('spaceId: $spaceId, ')
@@ -3788,11 +3817,12 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
 
   @override
   int get hashCode =>
-      Object.hash(groupId, memberId, spaceId, roleInGroup, assignedAt);
+      Object.hash(id, groupId, memberId, spaceId, roleInGroup, assignedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is GroupMember &&
+          other.id == this.id &&
           other.groupId == this.groupId &&
           other.memberId == this.memberId &&
           other.spaceId == this.spaceId &&
@@ -3801,6 +3831,7 @@ class GroupMember extends DataClass implements Insertable<GroupMember> {
 }
 
 class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
+  final Value<String> id;
   final Value<String> groupId;
   final Value<String> memberId;
   final Value<String> spaceId;
@@ -3808,6 +3839,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
   final Value<String> assignedAt;
   final Value<int> rowid;
   const GroupMembersCompanion({
+    this.id = const Value.absent(),
     this.groupId = const Value.absent(),
     this.memberId = const Value.absent(),
     this.spaceId = const Value.absent(),
@@ -3816,17 +3848,20 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
     this.rowid = const Value.absent(),
   });
   GroupMembersCompanion.insert({
+    required String id,
     required String groupId,
     required String memberId,
     required String spaceId,
     this.roleInGroup = const Value.absent(),
     required String assignedAt,
     this.rowid = const Value.absent(),
-  }) : groupId = Value(groupId),
+  }) : id = Value(id),
+       groupId = Value(groupId),
        memberId = Value(memberId),
        spaceId = Value(spaceId),
        assignedAt = Value(assignedAt);
   static Insertable<GroupMember> custom({
+    Expression<String>? id,
     Expression<String>? groupId,
     Expression<String>? memberId,
     Expression<String>? spaceId,
@@ -3835,6 +3870,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (id != null) 'id': id,
       if (groupId != null) 'group_id': groupId,
       if (memberId != null) 'member_id': memberId,
       if (spaceId != null) 'space_id': spaceId,
@@ -3845,6 +3881,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
   }
 
   GroupMembersCompanion copyWith({
+    Value<String>? id,
     Value<String>? groupId,
     Value<String>? memberId,
     Value<String>? spaceId,
@@ -3853,6 +3890,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
     Value<int>? rowid,
   }) {
     return GroupMembersCompanion(
+      id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       memberId: memberId ?? this.memberId,
       spaceId: spaceId ?? this.spaceId,
@@ -3865,6 +3903,9 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
     if (groupId.present) {
       map['group_id'] = Variable<String>(groupId.value);
     }
@@ -3889,6 +3930,7 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
   @override
   String toString() {
     return (StringBuffer('GroupMembersCompanion(')
+          ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('memberId: $memberId, ')
           ..write('spaceId: $spaceId, ')
@@ -5233,6 +5275,15 @@ class $SubjectGuardiansTable extends SubjectGuardians
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $SubjectGuardiansTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _subjectIdMeta = const VerificationMeta(
     'subjectId',
   );
@@ -5290,6 +5341,7 @@ class $SubjectGuardiansTable extends SubjectGuardians
   );
   @override
   List<GeneratedColumn> get $columns => [
+    id,
     subjectId,
     guardianId,
     spaceId,
@@ -5308,6 +5360,11 @@ class $SubjectGuardiansTable extends SubjectGuardians
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
     if (data.containsKey('subject_id')) {
       context.handle(
         _subjectIdMeta,
@@ -5350,11 +5407,15 @@ class $SubjectGuardiansTable extends SubjectGuardians
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {subjectId, guardianId};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
   SubjectGuardian map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SubjectGuardian(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
       subjectId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}subject_id'],
@@ -5385,12 +5446,14 @@ class $SubjectGuardiansTable extends SubjectGuardians
 }
 
 class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
+  final String id;
   final String subjectId;
   final String guardianId;
   final String spaceId;
   final int? isPrimary;
   final String createdAt;
   const SubjectGuardian({
+    required this.id,
     required this.subjectId,
     required this.guardianId,
     required this.spaceId,
@@ -5400,6 +5463,7 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
     map['subject_id'] = Variable<String>(subjectId);
     map['guardian_id'] = Variable<String>(guardianId);
     map['space_id'] = Variable<String>(spaceId);
@@ -5412,6 +5476,7 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
 
   SubjectGuardiansCompanion toCompanion(bool nullToAbsent) {
     return SubjectGuardiansCompanion(
+      id: Value(id),
       subjectId: Value(subjectId),
       guardianId: Value(guardianId),
       spaceId: Value(spaceId),
@@ -5428,6 +5493,7 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SubjectGuardian(
+      id: serializer.fromJson<String>(json['id']),
       subjectId: serializer.fromJson<String>(json['subjectId']),
       guardianId: serializer.fromJson<String>(json['guardianId']),
       spaceId: serializer.fromJson<String>(json['spaceId']),
@@ -5439,6 +5505,7 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
       'subjectId': serializer.toJson<String>(subjectId),
       'guardianId': serializer.toJson<String>(guardianId),
       'spaceId': serializer.toJson<String>(spaceId),
@@ -5448,12 +5515,14 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
   }
 
   SubjectGuardian copyWith({
+    String? id,
     String? subjectId,
     String? guardianId,
     String? spaceId,
     Value<int?> isPrimary = const Value.absent(),
     String? createdAt,
   }) => SubjectGuardian(
+    id: id ?? this.id,
     subjectId: subjectId ?? this.subjectId,
     guardianId: guardianId ?? this.guardianId,
     spaceId: spaceId ?? this.spaceId,
@@ -5462,6 +5531,7 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
   );
   SubjectGuardian copyWithCompanion(SubjectGuardiansCompanion data) {
     return SubjectGuardian(
+      id: data.id.present ? data.id.value : this.id,
       subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
       guardianId: data.guardianId.present
           ? data.guardianId.value
@@ -5475,6 +5545,7 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
   @override
   String toString() {
     return (StringBuffer('SubjectGuardian(')
+          ..write('id: $id, ')
           ..write('subjectId: $subjectId, ')
           ..write('guardianId: $guardianId, ')
           ..write('spaceId: $spaceId, ')
@@ -5486,11 +5557,12 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
 
   @override
   int get hashCode =>
-      Object.hash(subjectId, guardianId, spaceId, isPrimary, createdAt);
+      Object.hash(id, subjectId, guardianId, spaceId, isPrimary, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SubjectGuardian &&
+          other.id == this.id &&
           other.subjectId == this.subjectId &&
           other.guardianId == this.guardianId &&
           other.spaceId == this.spaceId &&
@@ -5499,6 +5571,7 @@ class SubjectGuardian extends DataClass implements Insertable<SubjectGuardian> {
 }
 
 class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
+  final Value<String> id;
   final Value<String> subjectId;
   final Value<String> guardianId;
   final Value<String> spaceId;
@@ -5506,6 +5579,7 @@ class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
   final Value<String> createdAt;
   final Value<int> rowid;
   const SubjectGuardiansCompanion({
+    this.id = const Value.absent(),
     this.subjectId = const Value.absent(),
     this.guardianId = const Value.absent(),
     this.spaceId = const Value.absent(),
@@ -5514,17 +5588,20 @@ class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
     this.rowid = const Value.absent(),
   });
   SubjectGuardiansCompanion.insert({
+    required String id,
     required String subjectId,
     required String guardianId,
     required String spaceId,
     this.isPrimary = const Value.absent(),
     required String createdAt,
     this.rowid = const Value.absent(),
-  }) : subjectId = Value(subjectId),
+  }) : id = Value(id),
+       subjectId = Value(subjectId),
        guardianId = Value(guardianId),
        spaceId = Value(spaceId),
        createdAt = Value(createdAt);
   static Insertable<SubjectGuardian> custom({
+    Expression<String>? id,
     Expression<String>? subjectId,
     Expression<String>? guardianId,
     Expression<String>? spaceId,
@@ -5533,6 +5610,7 @@ class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (id != null) 'id': id,
       if (subjectId != null) 'subject_id': subjectId,
       if (guardianId != null) 'guardian_id': guardianId,
       if (spaceId != null) 'space_id': spaceId,
@@ -5543,6 +5621,7 @@ class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
   }
 
   SubjectGuardiansCompanion copyWith({
+    Value<String>? id,
     Value<String>? subjectId,
     Value<String>? guardianId,
     Value<String>? spaceId,
@@ -5551,6 +5630,7 @@ class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
     Value<int>? rowid,
   }) {
     return SubjectGuardiansCompanion(
+      id: id ?? this.id,
       subjectId: subjectId ?? this.subjectId,
       guardianId: guardianId ?? this.guardianId,
       spaceId: spaceId ?? this.spaceId,
@@ -5563,6 +5643,9 @@ class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
     if (subjectId.present) {
       map['subject_id'] = Variable<String>(subjectId.value);
     }
@@ -5587,6 +5670,7 @@ class SubjectGuardiansCompanion extends UpdateCompanion<SubjectGuardian> {
   @override
   String toString() {
     return (StringBuffer('SubjectGuardiansCompanion(')
+          ..write('id: $id, ')
           ..write('subjectId: $subjectId, ')
           ..write('guardianId: $guardianId, ')
           ..write('spaceId: $spaceId, ')
@@ -7350,6 +7434,7 @@ typedef $$InvitesTableProcessedTableManager =
     >;
 typedef $$GroupMembersTableCreateCompanionBuilder =
     GroupMembersCompanion Function({
+      required String id,
       required String groupId,
       required String memberId,
       required String spaceId,
@@ -7359,6 +7444,7 @@ typedef $$GroupMembersTableCreateCompanionBuilder =
     });
 typedef $$GroupMembersTableUpdateCompanionBuilder =
     GroupMembersCompanion Function({
+      Value<String> id,
       Value<String> groupId,
       Value<String> memberId,
       Value<String> spaceId,
@@ -7376,6 +7462,11 @@ class $$GroupMembersTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get groupId => $composableBuilder(
     column: $table.groupId,
     builder: (column) => ColumnFilters(column),
@@ -7411,6 +7502,11 @@ class $$GroupMembersTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get groupId => $composableBuilder(
     column: $table.groupId,
     builder: (column) => ColumnOrderings(column),
@@ -7446,6 +7542,9 @@ class $$GroupMembersTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
   GeneratedColumn<String> get groupId =>
       $composableBuilder(column: $table.groupId, builder: (column) => column);
 
@@ -7497,6 +7596,7 @@ class $$GroupMembersTableTableManager
               $$GroupMembersTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<String> id = const Value.absent(),
                 Value<String> groupId = const Value.absent(),
                 Value<String> memberId = const Value.absent(),
                 Value<String> spaceId = const Value.absent(),
@@ -7504,6 +7604,7 @@ class $$GroupMembersTableTableManager
                 Value<String> assignedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GroupMembersCompanion(
+                id: id,
                 groupId: groupId,
                 memberId: memberId,
                 spaceId: spaceId,
@@ -7513,6 +7614,7 @@ class $$GroupMembersTableTableManager
               ),
           createCompanionCallback:
               ({
+                required String id,
                 required String groupId,
                 required String memberId,
                 required String spaceId,
@@ -7520,6 +7622,7 @@ class $$GroupMembersTableTableManager
                 required String assignedAt,
                 Value<int> rowid = const Value.absent(),
               }) => GroupMembersCompanion.insert(
+                id: id,
                 groupId: groupId,
                 memberId: memberId,
                 spaceId: spaceId,
@@ -8178,6 +8281,7 @@ typedef $$GuardiansTableProcessedTableManager =
     >;
 typedef $$SubjectGuardiansTableCreateCompanionBuilder =
     SubjectGuardiansCompanion Function({
+      required String id,
       required String subjectId,
       required String guardianId,
       required String spaceId,
@@ -8187,6 +8291,7 @@ typedef $$SubjectGuardiansTableCreateCompanionBuilder =
     });
 typedef $$SubjectGuardiansTableUpdateCompanionBuilder =
     SubjectGuardiansCompanion Function({
+      Value<String> id,
       Value<String> subjectId,
       Value<String> guardianId,
       Value<String> spaceId,
@@ -8204,6 +8309,11 @@ class $$SubjectGuardiansTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get subjectId => $composableBuilder(
     column: $table.subjectId,
     builder: (column) => ColumnFilters(column),
@@ -8239,6 +8349,11 @@ class $$SubjectGuardiansTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get subjectId => $composableBuilder(
     column: $table.subjectId,
     builder: (column) => ColumnOrderings(column),
@@ -8274,6 +8389,9 @@ class $$SubjectGuardiansTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
   GeneratedColumn<String> get subjectId =>
       $composableBuilder(column: $table.subjectId, builder: (column) => column);
 
@@ -8329,6 +8447,7 @@ class $$SubjectGuardiansTableTableManager
               $$SubjectGuardiansTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<String> id = const Value.absent(),
                 Value<String> subjectId = const Value.absent(),
                 Value<String> guardianId = const Value.absent(),
                 Value<String> spaceId = const Value.absent(),
@@ -8336,6 +8455,7 @@ class $$SubjectGuardiansTableTableManager
                 Value<String> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SubjectGuardiansCompanion(
+                id: id,
                 subjectId: subjectId,
                 guardianId: guardianId,
                 spaceId: spaceId,
@@ -8345,6 +8465,7 @@ class $$SubjectGuardiansTableTableManager
               ),
           createCompanionCallback:
               ({
+                required String id,
                 required String subjectId,
                 required String guardianId,
                 required String spaceId,
@@ -8352,6 +8473,7 @@ class $$SubjectGuardiansTableTableManager
                 required String createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => SubjectGuardiansCompanion.insert(
+                id: id,
                 subjectId: subjectId,
                 guardianId: guardianId,
                 spaceId: spaceId,

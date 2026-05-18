@@ -575,6 +575,30 @@ Distinguishing the two RLS-related errors:
   `auth.uid()` was null at evaluation time — almost always because the
   upload ran without a valid session.
 
+### PowerSync join tables still need an explicit `id` column
+
+PowerSync auto-adds `id TEXT PRIMARY KEY NOT NULL` to every replicated
+table in the local SQLite. If your Postgres schema uses a composite
+primary key (e.g. `(group_id, member_id)`) and no `id` column, the
+local table has the implicit `id` BUT Drift doesn't know about it and
+generates INSERTs without it. SQLite rejects with constraint code
+**1811: "id is required"** and the upload retries forever:
+
+```
+[ERROR] SqliteException(1811): id is required, constraint failed
+  Causing statement: INSERT INTO "group_members" ("group_id", ...)
+```
+
+Fix: every synced table — including join tables — gets an explicit
+`id uuid` PK on the server. Demote the composite to `UNIQUE`. In the
+Drift class, declare `TextColumn get id => text()();` and set
+`primaryKey => {id}`. Generate the UUID client-side at insert time
+(`const Uuid().v4()`).
+
+This caught `group_members` and `subject_guardians`. Anywhere a future
+join table is tempted to use `primary key (a, b)`, do `id` + UNIQUE
+instead.
+
 ### `42501 permission denied` on PowerSync uploads
 PostgreSQL's privilege check fires **before** RLS evaluation. If
 `authenticated` doesn't hold table-level SELECT/INSERT/UPDATE/DELETE

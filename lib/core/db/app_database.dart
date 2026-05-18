@@ -3,6 +3,7 @@ import 'package:drift_sqlite_async/drift_sqlite_async.dart';
 // Both drift and powersync export a `Column` class — only import what we
 // actually need from powersync to avoid the ambiguity.
 import 'package:powersync/powersync.dart' show PowerSyncDatabase;
+import 'package:uuid/uuid.dart';
 
 part 'app_database.g.dart';
 
@@ -111,7 +112,14 @@ class Invites extends Table {
 /// Per-classroom staff assignment. A member can be assigned to many
 /// groups; a group has many members. Directors are implicitly
 /// assigned to every group in their space (no rows needed).
+///
+/// Carries its own `id` PK because PowerSync requires an id column
+/// on every replicated table — composite-PK join tables fail SQLite
+/// constraint 1811 ("id is required") on insert otherwise. The
+/// server-side `(group_id, member_id)` UNIQUE constraint keeps
+/// re-assigning idempotent.
 class GroupMembers extends Table {
+  TextColumn get id => text()();
   TextColumn get groupId => text()();
   TextColumn get memberId => text()();
   TextColumn get spaceId => text()();
@@ -119,7 +127,7 @@ class GroupMembers extends Table {
   TextColumn get assignedAt => text()();
 
   @override
-  Set<Column> get primaryKey => {groupId, memberId};
+  Set<Column> get primaryKey => {id};
 }
 
 /// A parent / family contact attached to one or more subjects via
@@ -147,11 +155,11 @@ class Guardians extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// Join: which guardians are linked to which subjects. Many-to-many
-/// since one parent can have multiple children in the same program,
-/// and one child can have multiple guardians (parents, grandparents,
-/// nanny).
+/// Join: which guardians are linked to which subjects. Many-to-many.
+/// Same PowerSync constraint as [GroupMembers] — needs an explicit
+/// `id` PK; the (subjectId, guardianId) pair is UNIQUE on the server.
 class SubjectGuardians extends Table {
+  TextColumn get id => text()();
   TextColumn get subjectId => text()();
   TextColumn get guardianId => text()();
   TextColumn get spaceId => text()();
@@ -159,7 +167,7 @@ class SubjectGuardians extends Table {
   TextColumn get createdAt => text()();
 
   @override
-  Set<Column> get primaryKey => {subjectId, guardianId};
+  Set<Column> get primaryKey => {id};
 }
 
 /// The unified daily-log table. `kind` discriminates between
@@ -644,6 +652,7 @@ class AppDatabase extends _$AppDatabase {
     final now = DateTime.now().toUtc().toIso8601String();
     await into(groupMembers).insert(
       GroupMembersCompanion.insert(
+        id: const Uuid().v4(),
         groupId: groupId,
         memberId: memberId,
         spaceId: spaceId,
@@ -857,6 +866,7 @@ class AppDatabase extends _$AppDatabase {
       );
       await into(subjectGuardians).insert(
         SubjectGuardiansCompanion.insert(
+          id: const Uuid().v4(),
           subjectId: subjectId,
           guardianId: guardianId,
           spaceId: spaceId,
