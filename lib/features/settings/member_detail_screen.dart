@@ -1,5 +1,6 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/capabilities/certifications.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -66,6 +67,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           }
           final currentRole = _draftRole ?? member.role;
           final caps = _draft ?? member.caps;
+          final activeCerts =
+              caps.getStringList(MemberCaps.certifications);
+          final hasMatCert = activeCerts.contains(Certifications.mat.key);
+          final hasDriverCert =
+              activeCerts.contains(Certifications.driver.key);
 
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
@@ -156,14 +162,19 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 ),
                 _CapSwitch(
                   label: 'Administer medication',
-                  subtitle: 'Requires state certification (MAT)',
-                  enabled: canManage,
+                  subtitle: hasMatCert
+                      ? 'MAT certification on file'
+                      : 'Add the MAT certification below to enable',
+                  enabled: canManage && hasMatCert,
                   value: caps.getBool(MemberCaps.canAdministerMedication),
                   onChanged: (v) => _set(MemberCaps.canAdministerMedication, v),
                 ),
                 _CapSwitch(
                   label: 'Drive (field trips)',
-                  enabled: canManage,
+                  subtitle: hasDriverCert
+                      ? 'Driver record on file'
+                      : 'Add the Driver certification below to enable',
+                  enabled: canManage && hasDriverCert,
                   value: caps.getBool(MemberCaps.canDrive),
                   onChanged: (v) => _set(MemberCaps.canDrive, v),
                 ),
@@ -215,6 +226,15 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       ),
                     ),
                   ),
+
+                // Certifications — list of credentials on file. Some
+                // (MAT, Driver) gate specific capabilities above.
+                const SizedBox(height: 24),
+                const _SectionLabel(label: 'Certifications'),
+                _CertificationsSection(
+                  active: activeCerts,
+                  onToggle: canManage ? _toggleCert : null,
+                ),
 
                 // Classroom assignments — director assigns this member
                 // to specific rooms. Director themselves doesn't need
@@ -289,6 +309,37 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           ref.read(_memberProvider(widget.memberId)).value?.caps ??
           const Capabilities.empty();
       _draft = base.setting(key, value);
+    });
+  }
+
+  /// Add / remove a certification from the member's caps list. When
+  /// removing a cert that gates a capability, also clears the gated
+  /// cap to avoid the silent-mismatch where a switch was on but the
+  /// cert was revoked.
+  void _toggleCert(String certKey, bool add) {
+    setState(() {
+      final base =
+          _draft ??
+          ref.read(_memberProvider(widget.memberId)).value?.caps ??
+          const Capabilities.empty();
+      final existing = base.getStringList(MemberCaps.certifications);
+      final next = {...existing};
+      if (add) {
+        next.add(certKey);
+      } else {
+        next.remove(certKey);
+      }
+      var updated = base.setting(MemberCaps.certifications, next.toList());
+      // Cascade off any caps the removed cert was gating.
+      if (!add) {
+        for (final cert in Certifications.all) {
+          if (cert.key != certKey) continue;
+          for (final gated in cert.gatesCaps) {
+            updated = updated.setting(gated, false);
+          }
+        }
+      }
+      _draft = updated;
     });
   }
 
@@ -514,6 +565,49 @@ class _AssignmentsList extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Row of toggle-chips for each known [Certification]. Director (or
+/// the member themselves when we eventually allow self-editing) flips
+/// chips on/off; tap-to-add for an inactive chip, tap-to-remove for
+/// an active one. [onToggle] is null for read-only viewers.
+class _CertificationsSection extends StatelessWidget {
+  const _CertificationsSection({
+    required this.active,
+    required this.onToggle,
+  });
+
+  /// List of cert keys currently on file for this member.
+  final List<String> active;
+
+  /// (certKey, add) → caller does the actual mutation. Null = read-only.
+  /// Positional bool: the callback is tiny and `add` reads naturally as
+  /// the second arg.
+  // ignore: avoid_positional_boolean_parameters
+  final void Function(String certKey, bool add)? onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          for (final cert in Certifications.all)
+            FilterChip(
+              label: Text(cert.label),
+              tooltip: cert.description,
+              selected: active.contains(cert.key),
+              showCheckmark: true,
+              onSelected: onToggle == null
+                  ? null
+                  : (next) => onToggle!(cert.key, next),
+            ),
+        ],
+      ),
     );
   }
 }
