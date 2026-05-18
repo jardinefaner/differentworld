@@ -31,3 +31,13 @@ final hasSpaceProvider = Provider<bool>((ref) {
   final m = memberAsync.value;
   return m != null && m.spaceId != null;
 });
+
+/// Reactive view of the signed-in user's Space row — the "program" in
+/// classroom-app UI. Null while the member hasn't joined a space.
+final currentSpaceProvider = StreamProvider<Space?>((ref) {
+  final spaceId = ref.watch(currentMemberProvider).value?.spaceId;
+  final dbAsync = ref.watch(appDatabaseProvider);
+  final db = dbAsync.value;
+  if (spaceId == null || db == null) return Stream<Space?>.value(null);
+  return db.watchSpace(spaceId);
+});

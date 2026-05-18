@@ -20,17 +20,48 @@ import 'package:intl/intl.dart';
 /// Per the v1 punch list (docs/PROJECT.md): the teacher's morning
 /// landing, glanceable status, fast access to today's attendance.
 class TodayScreen extends ConsumerWidget {
-  const TodayScreen({super.key});
+  const TodayScreen({this.onOpenOmnibox, super.key});
+
+  /// Callback the host `_SignedInHome` passes so the AppBar's search
+  /// icon can animate the PageView to the omnibox page. Null in tests
+  /// or anywhere TodayScreen is mounted standalone.
+  final VoidCallback? onOpenOmnibox;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final member = ref.watch(currentMemberProvider).value;
+    final space = ref.watch(currentSpaceProvider).value;
     final groupsAsync = ref.watch(groupsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Today'),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              space?.name ?? 'Today',
+              style: theme.textTheme.titleMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (space != null)
+              Text(
+                'Today',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
         actions: [
+          if (onOpenOmnibox != null)
+            IconButton(
+              tooltip: 'Search',
+              icon: const Icon(Icons.search),
+              onPressed: onOpenOmnibox,
+            ),
           const SyncStatusIndicator(),
           IconButton(
             tooltip: 'Settings',

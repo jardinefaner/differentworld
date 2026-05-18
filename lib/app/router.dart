@@ -164,6 +164,14 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
     ));
   }
 
+  void _toOmnibox() {
+    unawaited(_controller.animateToPage(
+      0,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     // A signed-in user with a space can't redeem an invite — refuse
@@ -188,7 +196,7 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
       controller: _controller,
       children: [
         OmniboxScreen(onDismiss: _toToday),
-        const TodayScreen(),
+        TodayScreen(onOpenOmnibox: _toOmnibox),
       ],
     );
   }
