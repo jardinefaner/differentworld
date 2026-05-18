@@ -94,6 +94,9 @@ class Invites extends Table {
   TextColumn get email => text().nullable()();
   TextColumn get code => text().nullable()();
   TextColumn get role => text()();
+  /// Set for guardian-intent invites — the child this guardian is
+  /// being invited as a parent / family member for. Null for staff.
+  TextColumn get subjectId => text().nullable()();
   TextColumn get capabilities => text()();
   TextColumn get createdBy => text().nullable()();
   TextColumn get createdAt => text()();
@@ -126,6 +129,11 @@ class GroupMembers extends Table {
 class Guardians extends Table {
   TextColumn get id => text()();
   TextColumn get spaceId => text()();
+
+  /// Links to auth.users.id once this guardian accepts an invite and
+  /// signs into the family app. Null until then — directors add
+  /// guardian contact info long before the parent ever logs in.
+  TextColumn get userId => text().nullable()();
   TextColumn get name => text()();
   TextColumn get relationship => text().nullable()();
   TextColumn get phone => text().nullable()();
@@ -683,6 +691,7 @@ class AppDatabase extends _$AppDatabase {
     String? code,
     String? createdBy,
     String? expiresAt,
+    String? subjectId,
     String capabilitiesJson = '{}',
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
@@ -693,6 +702,8 @@ class AppDatabase extends _$AppDatabase {
         role: role,
         email: email == null ? const Value.absent() : Value(email),
         code: code == null ? const Value.absent() : Value(code),
+        subjectId:
+            subjectId == null ? const Value.absent() : Value(subjectId),
         createdBy: createdBy == null ? const Value.absent() : Value(createdBy),
         expiresAt: expiresAt == null ? const Value.absent() : Value(expiresAt),
         capabilities: capabilitiesJson,
@@ -869,5 +880,31 @@ class AppDatabase extends _$AppDatabase {
                 sg.subjectId.equals(subjectId),
           ))
         .go();
+  }
+
+  /// Find the guardian row that an authenticated user resolves to.
+  /// Returns null when the signed-in user isn't linked to any guardian
+  /// — i.e., they're staff or not yet onboarded.
+  Stream<Guardian?> watchGuardianForUser(String authUserId) {
+    return (select(guardians)..where((g) => g.userId.equals(authUserId)))
+        .watchSingleOrNull();
+  }
+
+  /// Subjects this guardian is linked to via subject_guardians. The
+  /// family-side lens reads ONLY these subjects.
+  Stream<List<Subject>> watchChildrenForGuardian(String guardianId) {
+    final query = select(subjects).join([
+      innerJoin(
+        subjectGuardians,
+        subjectGuardians.subjectId.equalsExp(subjects.id),
+      ),
+    ])
+      ..where(subjectGuardians.guardianId.equals(guardianId))
+      ..orderBy([
+        OrderingTerm(expression: subjects.firstName),
+        OrderingTerm(expression: subjects.lastName),
+      ]);
+    return query.watch().map((rows) =>
+        rows.map((r) => r.readTable(subjects)).toList());
   }
 }

@@ -2862,6 +2862,17 @@ class $InvitesTable extends Invites with TableInfo<$InvitesTable, Invite> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
     'capabilities',
   );
@@ -2935,6 +2946,7 @@ class $InvitesTable extends Invites with TableInfo<$InvitesTable, Invite> {
     email,
     code,
     role,
+    subjectId,
     capabilities,
     createdBy,
     createdAt,
@@ -2986,6 +2998,12 @@ class $InvitesTable extends Invites with TableInfo<$InvitesTable, Invite> {
       );
     } else if (isInserting) {
       context.missing(_roleMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
     }
     if (data.containsKey('capabilities')) {
       context.handle(
@@ -3059,6 +3077,10 @@ class $InvitesTable extends Invites with TableInfo<$InvitesTable, Invite> {
         DriftSqlType.string,
         data['${effectivePrefix}role'],
       )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      ),
       capabilities: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}capabilities'],
@@ -3098,6 +3120,10 @@ class Invite extends DataClass implements Insertable<Invite> {
   final String? email;
   final String? code;
   final String role;
+
+  /// Set for guardian-intent invites — the child this guardian is
+  /// being invited as a parent / family member for. Null for staff.
+  final String? subjectId;
   final String capabilities;
   final String? createdBy;
   final String createdAt;
@@ -3110,6 +3136,7 @@ class Invite extends DataClass implements Insertable<Invite> {
     this.email,
     this.code,
     required this.role,
+    this.subjectId,
     required this.capabilities,
     this.createdBy,
     required this.createdAt,
@@ -3129,6 +3156,9 @@ class Invite extends DataClass implements Insertable<Invite> {
       map['code'] = Variable<String>(code);
     }
     map['role'] = Variable<String>(role);
+    if (!nullToAbsent || subjectId != null) {
+      map['subject_id'] = Variable<String>(subjectId);
+    }
     map['capabilities'] = Variable<String>(capabilities);
     if (!nullToAbsent || createdBy != null) {
       map['created_by'] = Variable<String>(createdBy);
@@ -3155,6 +3185,9 @@ class Invite extends DataClass implements Insertable<Invite> {
           : Value(email),
       code: code == null && nullToAbsent ? const Value.absent() : Value(code),
       role: Value(role),
+      subjectId: subjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectId),
       capabilities: Value(capabilities),
       createdBy: createdBy == null && nullToAbsent
           ? const Value.absent()
@@ -3183,6 +3216,7 @@ class Invite extends DataClass implements Insertable<Invite> {
       email: serializer.fromJson<String?>(json['email']),
       code: serializer.fromJson<String?>(json['code']),
       role: serializer.fromJson<String>(json['role']),
+      subjectId: serializer.fromJson<String?>(json['subjectId']),
       capabilities: serializer.fromJson<String>(json['capabilities']),
       createdBy: serializer.fromJson<String?>(json['createdBy']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
@@ -3200,6 +3234,7 @@ class Invite extends DataClass implements Insertable<Invite> {
       'email': serializer.toJson<String?>(email),
       'code': serializer.toJson<String?>(code),
       'role': serializer.toJson<String>(role),
+      'subjectId': serializer.toJson<String?>(subjectId),
       'capabilities': serializer.toJson<String>(capabilities),
       'createdBy': serializer.toJson<String?>(createdBy),
       'createdAt': serializer.toJson<String>(createdAt),
@@ -3215,6 +3250,7 @@ class Invite extends DataClass implements Insertable<Invite> {
     Value<String?> email = const Value.absent(),
     Value<String?> code = const Value.absent(),
     String? role,
+    Value<String?> subjectId = const Value.absent(),
     String? capabilities,
     Value<String?> createdBy = const Value.absent(),
     String? createdAt,
@@ -3227,6 +3263,7 @@ class Invite extends DataClass implements Insertable<Invite> {
     email: email.present ? email.value : this.email,
     code: code.present ? code.value : this.code,
     role: role ?? this.role,
+    subjectId: subjectId.present ? subjectId.value : this.subjectId,
     capabilities: capabilities ?? this.capabilities,
     createdBy: createdBy.present ? createdBy.value : this.createdBy,
     createdAt: createdAt ?? this.createdAt,
@@ -3241,6 +3278,7 @@ class Invite extends DataClass implements Insertable<Invite> {
       email: data.email.present ? data.email.value : this.email,
       code: data.code.present ? data.code.value : this.code,
       role: data.role.present ? data.role.value : this.role,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
       capabilities: data.capabilities.present
           ? data.capabilities.value
           : this.capabilities,
@@ -3264,6 +3302,7 @@ class Invite extends DataClass implements Insertable<Invite> {
           ..write('email: $email, ')
           ..write('code: $code, ')
           ..write('role: $role, ')
+          ..write('subjectId: $subjectId, ')
           ..write('capabilities: $capabilities, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
@@ -3281,6 +3320,7 @@ class Invite extends DataClass implements Insertable<Invite> {
     email,
     code,
     role,
+    subjectId,
     capabilities,
     createdBy,
     createdAt,
@@ -3297,6 +3337,7 @@ class Invite extends DataClass implements Insertable<Invite> {
           other.email == this.email &&
           other.code == this.code &&
           other.role == this.role &&
+          other.subjectId == this.subjectId &&
           other.capabilities == this.capabilities &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
@@ -3311,6 +3352,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
   final Value<String?> email;
   final Value<String?> code;
   final Value<String> role;
+  final Value<String?> subjectId;
   final Value<String> capabilities;
   final Value<String?> createdBy;
   final Value<String> createdAt;
@@ -3324,6 +3366,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
     this.email = const Value.absent(),
     this.code = const Value.absent(),
     this.role = const Value.absent(),
+    this.subjectId = const Value.absent(),
     this.capabilities = const Value.absent(),
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -3338,6 +3381,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
     this.email = const Value.absent(),
     this.code = const Value.absent(),
     required String role,
+    this.subjectId = const Value.absent(),
     required String capabilities,
     this.createdBy = const Value.absent(),
     required String createdAt,
@@ -3356,6 +3400,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
     Expression<String>? email,
     Expression<String>? code,
     Expression<String>? role,
+    Expression<String>? subjectId,
     Expression<String>? capabilities,
     Expression<String>? createdBy,
     Expression<String>? createdAt,
@@ -3370,6 +3415,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
       if (email != null) 'email': email,
       if (code != null) 'code': code,
       if (role != null) 'role': role,
+      if (subjectId != null) 'subject_id': subjectId,
       if (capabilities != null) 'capabilities': capabilities,
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
@@ -3386,6 +3432,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
     Value<String?>? email,
     Value<String?>? code,
     Value<String>? role,
+    Value<String?>? subjectId,
     Value<String>? capabilities,
     Value<String?>? createdBy,
     Value<String>? createdAt,
@@ -3400,6 +3447,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
       email: email ?? this.email,
       code: code ?? this.code,
       role: role ?? this.role,
+      subjectId: subjectId ?? this.subjectId,
       capabilities: capabilities ?? this.capabilities,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
@@ -3427,6 +3475,9 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
     }
     if (role.present) {
       map['role'] = Variable<String>(role.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
     }
     if (capabilities.present) {
       map['capabilities'] = Variable<String>(capabilities.value);
@@ -3460,6 +3511,7 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
           ..write('email: $email, ')
           ..write('code: $code, ')
           ..write('role: $role, ')
+          ..write('subjectId: $subjectId, ')
           ..write('capabilities: $capabilities, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
@@ -4531,6 +4583,15 @@ class $GuardiansTable extends Guardians
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -4614,6 +4675,7 @@ class $GuardiansTable extends Guardians
   List<GeneratedColumn> get $columns => [
     id,
     spaceId,
+    userId,
     name,
     relationship,
     phone,
@@ -4647,6 +4709,12 @@ class $GuardiansTable extends Guardians
       );
     } else if (isInserting) {
       context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -4725,6 +4793,10 @@ class $GuardiansTable extends Guardians
         DriftSqlType.string,
         data['${effectivePrefix}space_id'],
       )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -4769,6 +4841,11 @@ class $GuardiansTable extends Guardians
 class Guardian extends DataClass implements Insertable<Guardian> {
   final String id;
   final String spaceId;
+
+  /// Links to auth.users.id once this guardian accepts an invite and
+  /// signs into the family app. Null until then — directors add
+  /// guardian contact info long before the parent ever logs in.
+  final String? userId;
   final String name;
   final String? relationship;
   final String? phone;
@@ -4780,6 +4857,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
   const Guardian({
     required this.id,
     required this.spaceId,
+    this.userId,
     required this.name,
     this.relationship,
     this.phone,
@@ -4794,6 +4872,9 @@ class Guardian extends DataClass implements Insertable<Guardian> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || relationship != null) {
       map['relationship'] = Variable<String>(relationship);
@@ -4819,6 +4900,9 @@ class Guardian extends DataClass implements Insertable<Guardian> {
     return GuardiansCompanion(
       id: Value(id),
       spaceId: Value(spaceId),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
       name: Value(name),
       relationship: relationship == null && nullToAbsent
           ? const Value.absent()
@@ -4848,6 +4932,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
     return Guardian(
       id: serializer.fromJson<String>(json['id']),
       spaceId: serializer.fromJson<String>(json['spaceId']),
+      userId: serializer.fromJson<String?>(json['userId']),
       name: serializer.fromJson<String>(json['name']),
       relationship: serializer.fromJson<String?>(json['relationship']),
       phone: serializer.fromJson<String?>(json['phone']),
@@ -4866,6 +4951,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'spaceId': serializer.toJson<String>(spaceId),
+      'userId': serializer.toJson<String?>(userId),
       'name': serializer.toJson<String>(name),
       'relationship': serializer.toJson<String?>(relationship),
       'phone': serializer.toJson<String?>(phone),
@@ -4880,6 +4966,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
   Guardian copyWith({
     String? id,
     String? spaceId,
+    Value<String?> userId = const Value.absent(),
     String? name,
     Value<String?> relationship = const Value.absent(),
     Value<String?> phone = const Value.absent(),
@@ -4891,6 +4978,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
   }) => Guardian(
     id: id ?? this.id,
     spaceId: spaceId ?? this.spaceId,
+    userId: userId.present ? userId.value : this.userId,
     name: name ?? this.name,
     relationship: relationship.present ? relationship.value : this.relationship,
     phone: phone.present ? phone.value : this.phone,
@@ -4906,6 +4994,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
     return Guardian(
       id: data.id.present ? data.id.value : this.id,
       spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      userId: data.userId.present ? data.userId.value : this.userId,
       name: data.name.present ? data.name.value : this.name,
       relationship: data.relationship.present
           ? data.relationship.value
@@ -4926,6 +5015,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
     return (StringBuffer('Guardian(')
           ..write('id: $id, ')
           ..write('spaceId: $spaceId, ')
+          ..write('userId: $userId, ')
           ..write('name: $name, ')
           ..write('relationship: $relationship, ')
           ..write('phone: $phone, ')
@@ -4942,6 +5032,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
   int get hashCode => Object.hash(
     id,
     spaceId,
+    userId,
     name,
     relationship,
     phone,
@@ -4957,6 +5048,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
       (other is Guardian &&
           other.id == this.id &&
           other.spaceId == this.spaceId &&
+          other.userId == this.userId &&
           other.name == this.name &&
           other.relationship == this.relationship &&
           other.phone == this.phone &&
@@ -4970,6 +5062,7 @@ class Guardian extends DataClass implements Insertable<Guardian> {
 class GuardiansCompanion extends UpdateCompanion<Guardian> {
   final Value<String> id;
   final Value<String> spaceId;
+  final Value<String?> userId;
   final Value<String> name;
   final Value<String?> relationship;
   final Value<String?> phone;
@@ -4982,6 +5075,7 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
   const GuardiansCompanion({
     this.id = const Value.absent(),
     this.spaceId = const Value.absent(),
+    this.userId = const Value.absent(),
     this.name = const Value.absent(),
     this.relationship = const Value.absent(),
     this.phone = const Value.absent(),
@@ -4995,6 +5089,7 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
   GuardiansCompanion.insert({
     required String id,
     required String spaceId,
+    this.userId = const Value.absent(),
     required String name,
     this.relationship = const Value.absent(),
     this.phone = const Value.absent(),
@@ -5012,6 +5107,7 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
   static Insertable<Guardian> custom({
     Expression<String>? id,
     Expression<String>? spaceId,
+    Expression<String>? userId,
     Expression<String>? name,
     Expression<String>? relationship,
     Expression<String>? phone,
@@ -5025,6 +5121,7 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (spaceId != null) 'space_id': spaceId,
+      if (userId != null) 'user_id': userId,
       if (name != null) 'name': name,
       if (relationship != null) 'relationship': relationship,
       if (phone != null) 'phone': phone,
@@ -5041,6 +5138,7 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
   GuardiansCompanion copyWith({
     Value<String>? id,
     Value<String>? spaceId,
+    Value<String?>? userId,
     Value<String>? name,
     Value<String?>? relationship,
     Value<String?>? phone,
@@ -5054,6 +5152,7 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
     return GuardiansCompanion(
       id: id ?? this.id,
       spaceId: spaceId ?? this.spaceId,
+      userId: userId ?? this.userId,
       name: name ?? this.name,
       relationship: relationship ?? this.relationship,
       phone: phone ?? this.phone,
@@ -5074,6 +5173,9 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
     }
     if (spaceId.present) {
       map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -5110,6 +5212,7 @@ class GuardiansCompanion extends UpdateCompanion<Guardian> {
     return (StringBuffer('GuardiansCompanion(')
           ..write('id: $id, ')
           ..write('spaceId: $spaceId, ')
+          ..write('userId: $userId, ')
           ..write('name: $name, ')
           ..write('relationship: $relationship, ')
           ..write('phone: $phone, ')
@@ -6919,6 +7022,7 @@ typedef $$InvitesTableCreateCompanionBuilder =
       Value<String?> email,
       Value<String?> code,
       required String role,
+      Value<String?> subjectId,
       required String capabilities,
       Value<String?> createdBy,
       required String createdAt,
@@ -6934,6 +7038,7 @@ typedef $$InvitesTableUpdateCompanionBuilder =
       Value<String?> email,
       Value<String?> code,
       Value<String> role,
+      Value<String?> subjectId,
       Value<String> capabilities,
       Value<String?> createdBy,
       Value<String> createdAt,
@@ -6974,6 +7079,11 @@ class $$InvitesTableFilterComposer
 
   ColumnFilters<String> get role => $composableBuilder(
     column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7042,6 +7152,11 @@ class $$InvitesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get capabilities => $composableBuilder(
     column: $table.capabilities,
     builder: (column) => ColumnOrderings(column),
@@ -7096,6 +7211,9 @@ class $$InvitesTableAnnotationComposer
 
   GeneratedColumn<String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
 
   GeneratedColumn<String> get capabilities => $composableBuilder(
     column: $table.capabilities,
@@ -7155,6 +7273,7 @@ class $$InvitesTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<String?> code = const Value.absent(),
                 Value<String> role = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
                 Value<String> capabilities = const Value.absent(),
                 Value<String?> createdBy = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
@@ -7168,6 +7287,7 @@ class $$InvitesTableTableManager
                 email: email,
                 code: code,
                 role: role,
+                subjectId: subjectId,
                 capabilities: capabilities,
                 createdBy: createdBy,
                 createdAt: createdAt,
@@ -7183,6 +7303,7 @@ class $$InvitesTableTableManager
                 Value<String?> email = const Value.absent(),
                 Value<String?> code = const Value.absent(),
                 required String role,
+                Value<String?> subjectId = const Value.absent(),
                 required String capabilities,
                 Value<String?> createdBy = const Value.absent(),
                 required String createdAt,
@@ -7196,6 +7317,7 @@ class $$InvitesTableTableManager
                 email: email,
                 code: code,
                 role: role,
+                subjectId: subjectId,
                 capabilities: capabilities,
                 createdBy: createdBy,
                 createdAt: createdAt,
@@ -7746,6 +7868,7 @@ typedef $$GuardiansTableCreateCompanionBuilder =
     GuardiansCompanion Function({
       required String id,
       required String spaceId,
+      Value<String?> userId,
       required String name,
       Value<String?> relationship,
       Value<String?> phone,
@@ -7760,6 +7883,7 @@ typedef $$GuardiansTableUpdateCompanionBuilder =
     GuardiansCompanion Function({
       Value<String> id,
       Value<String> spaceId,
+      Value<String?> userId,
       Value<String> name,
       Value<String?> relationship,
       Value<String?> phone,
@@ -7787,6 +7911,11 @@ class $$GuardiansTableFilterComposer
 
   ColumnFilters<String> get spaceId => $composableBuilder(
     column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7850,6 +7979,11 @@ class $$GuardiansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get name => $composableBuilder(
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
@@ -7905,6 +8039,9 @@ class $$GuardiansTableAnnotationComposer
 
   GeneratedColumn<String> get spaceId =>
       $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -7965,6 +8102,7 @@ class $$GuardiansTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> spaceId = const Value.absent(),
+                Value<String?> userId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> relationship = const Value.absent(),
                 Value<String?> phone = const Value.absent(),
@@ -7977,6 +8115,7 @@ class $$GuardiansTableTableManager
               }) => GuardiansCompanion(
                 id: id,
                 spaceId: spaceId,
+                userId: userId,
                 name: name,
                 relationship: relationship,
                 phone: phone,
@@ -7991,6 +8130,7 @@ class $$GuardiansTableTableManager
               ({
                 required String id,
                 required String spaceId,
+                Value<String?> userId = const Value.absent(),
                 required String name,
                 Value<String?> relationship = const Value.absent(),
                 Value<String?> phone = const Value.absent(),
@@ -8003,6 +8143,7 @@ class $$GuardiansTableTableManager
               }) => GuardiansCompanion.insert(
                 id: id,
                 spaceId: spaceId,
+                userId: userId,
                 name: name,
                 relationship: relationship,
                 phone: phone,

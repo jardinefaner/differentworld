@@ -55,6 +55,7 @@ const appSchema = Schema([
   ]),
   Table('guardians', [
     Column.text('space_id'),
+    Column.text('user_id'),
     Column.text('name'),
     Column.text('relationship'),
     Column.text('phone'),
@@ -87,6 +88,7 @@ const appSchema = Schema([
     Column.text('email'),
     Column.text('code'),
     Column.text('role'),
+    Column.text('subject_id'),
     Column.text('capabilities'),
     Column.text('created_by'),
     Column.text('created_at'),

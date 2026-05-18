@@ -66,6 +66,7 @@ class InviteActions {
     required InviteExpiry expiry,
     String? email,
     String? createdBy,
+    String? subjectId,
     String capabilitiesJson = '{}',
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
@@ -84,13 +85,33 @@ class InviteActions {
       code: code,
       createdBy: createdBy,
       expiresAt: expiresAt,
+      subjectId: subjectId,
       capabilitiesJson: capabilitiesJson,
     );
 
-    // Return the row we just wrote, freshly read from the DB so the
-    // caller doesn't have to assemble it.
     return (db.select(db.invites)..where((i) => i.id.equals(id)))
         .getSingle();
+  }
+
+  /// Convenience for the family-side invite: a director attaches a
+  /// guardian to a child, then mints an invite they can text or email
+  /// to the parent. Subject is required so accept_invite knows which
+  /// child this guardian goes with.
+  Future<Invite> createGuardianInvite({
+    required String spaceId,
+    required String subjectId,
+    required InviteExpiry expiry,
+    String? email,
+    String? createdBy,
+  }) {
+    return create(
+      spaceId: spaceId,
+      role: 'guardian',
+      expiry: expiry,
+      email: email,
+      createdBy: createdBy,
+      subjectId: subjectId,
+    );
   }
 
   Future<void> revoke(String id) async {

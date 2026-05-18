@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
+import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
@@ -115,6 +117,15 @@ class _Home extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Family lens wins — if the signed-in user has a guardian row,
+    // we render the family Today and skip the staff-side state
+    // machine entirely. The viewerProvider resolves to GuardianViewer
+    // automatically in that case.
+    final viewer = ref.watch(viewerProvider);
+    if (viewer is GuardianViewer) {
+      return const FamilyTodayScreen(key: ValueKey('family'));
+    }
+
     final memberAsync = ref.watch(currentMemberProvider);
 
     final child = memberAsync.when(

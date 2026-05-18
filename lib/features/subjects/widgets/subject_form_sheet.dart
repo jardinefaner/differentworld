@@ -1,6 +1,9 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
+import 'package:differentworld/features/invites/invites_providers.dart';
+import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -383,6 +386,46 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
   }
 }
 
+Future<void> _sendGuardianInvite(
+  BuildContext context,
+  WidgetRef ref,
+  Guardian g,
+) async {
+  final viewer = ref.read(viewerProvider);
+  final spaceId = viewer.spaceId;
+  if (spaceId == null) return;
+  // The first subject this guardian is linked to is what the invite
+  // ties them to (we don't currently surface multiple-children-in-one-
+  // invite). Read subjectId from the join table.
+  final db = await ref.read(appDatabaseProvider.future);
+  final sg = await (db.select(db.subjectGuardians)
+        ..where((row) => row.guardianId.equals(g.id))
+        ..limit(1))
+      .getSingleOrNull();
+  if (sg == null) return;
+
+  try {
+    final invite =
+        await ref.read(inviteActionsProvider).createGuardianInvite(
+              spaceId: spaceId,
+              subjectId: sg.subjectId,
+              expiry: InviteExpiry.thirtyDays,
+              email: g.email,
+              createdBy: viewer.memberId,
+            );
+    if (!context.mounted) return;
+    await InviteShareSheet.show(context, invite: invite);
+  } on Exception catch (e, st) {
+    FlutterError.reportError(
+      FlutterErrorDetails(exception: e, stack: st, library: 'guardians'),
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not create invite. Try again.')),
+    );
+  }
+}
+
 /// Lists guardians attached to a subject + a button to add one.
 /// Renders only in edit mode (the new-student sheet doesn't have an
 /// id to attach guardians to yet).
@@ -444,25 +487,57 @@ class _GuardiansSection extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     leading: PersonAvatar(name: g.name),
-                    title: Text(g.name),
+                    title: Row(
+                      children: [
+                        Expanded(child: Text(g.name)),
+                        // Linked = the guardian has signed in via invite
+                        // and is now an app user. Visual cue only.
+                        if (g.userId != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Icon(
+                              Icons.check_circle,
+                              size: 14,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                      ],
+                    ),
                     subtitle: Text(
                       [
                         g.relationship,
                         g.phone,
                         g.email,
+                        if (g.userId != null) 'Signed in',
                       ].whereType<String>().join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    trailing: IconButton(
-                      tooltip: 'Unlink',
-                      icon: const Icon(Icons.link_off, size: 20),
-                      onPressed: () async {
-                        await ref.read(guardianActionsProvider).unlink(
-                              guardianId: g.id,
-                              subjectId: subjectId,
-                            );
-                      },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Mint an invite the parent can use to sign in.
+                        // Hidden once they're already linked.
+                        if (g.userId == null)
+                          IconButton(
+                            tooltip: 'Send sign-in invite',
+                            icon: const Icon(Icons.send_outlined, size: 20),
+                            onPressed: () =>
+                                _sendGuardianInvite(context, ref, g),
+                          ),
+                        IconButton(
+                          tooltip: 'Unlink',
+                          icon: const Icon(Icons.link_off, size: 20),
+                          onPressed: () async {
+                            await ref
+                                .read(guardianActionsProvider)
+                                .unlink(
+                                  guardianId: g.id,
+                                  subjectId: subjectId,
+                                );
+                          },
+                        ),
+                      ],
                     ),
                   ),
               ],

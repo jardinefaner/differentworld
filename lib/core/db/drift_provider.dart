@@ -34,10 +34,38 @@ final hasSpaceProvider = Provider<bool>((ref) {
 
 /// Reactive view of the signed-in user's Space row — the "program" in
 /// classroom-app UI. Null while the member hasn't joined a space.
+///
+/// Resolves the space_id from EITHER the member row (staff path) OR
+/// the guardian row (family path), so a guardian also gets the space
+/// to display program name etc.
 final currentSpaceProvider = StreamProvider<Space?>((ref) {
-  final spaceId = ref.watch(currentMemberProvider).value?.spaceId;
+  final memberSpaceId = ref.watch(currentMemberProvider).value?.spaceId;
+  final guardianSpaceId = ref.watch(currentGuardianProvider).value?.spaceId;
+  final spaceId = memberSpaceId ?? guardianSpaceId;
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
   if (spaceId == null || db == null) return Stream<Space?>.value(null);
   return db.watchSpace(spaceId);
+});
+
+/// Reactive view of the signed-in user's Guardian row, if they have
+/// one. Returns null for staff (Members) or anyone not yet linked.
+/// Drives the family-side viewer resolution.
+final currentGuardianProvider = StreamProvider<Guardian?>((ref) {
+  final session = ref.watch(sessionProvider);
+  if (session == null) return Stream<Guardian?>.value(null);
+  final dbAsync = ref.watch(appDatabaseProvider);
+  final db = dbAsync.value;
+  if (db == null) return Stream<Guardian?>.value(null);
+  return db.watchGuardianForUser(session.user.id);
+});
+
+/// The list of children the signed-in guardian is linked to. Empty
+/// for anyone but a guardian. Re-emits when subject_guardians changes.
+final myChildrenProvider = StreamProvider<List<Subject>>((ref) {
+  final guardian = ref.watch(currentGuardianProvider).value;
+  final dbAsync = ref.watch(appDatabaseProvider);
+  final db = dbAsync.value;
+  if (guardian == null || db == null) return Stream<List<Subject>>.value([]);
+  return db.watchChildrenForGuardian(guardian.id);
 });

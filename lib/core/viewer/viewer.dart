@@ -151,15 +151,28 @@ class Viewer {
   bool get showsBilling => featureBilling && canViewBilling;
 }
 
-/// Reactive view of the active viewer. Recomputes whenever the
-/// signed-in member's row or the current space changes.
+/// Reactive view of the active viewer.
 ///
-/// When family-login ships, this provider also resolves a Guardian
-/// row when the signed-in identity matches a guardian rather than a
-/// member, returning a [GuardianViewer] instead of a [Viewer].
+/// Resolution order: if the signed-in auth user matches a [Guardian]
+/// row, returns a [GuardianViewer]. Otherwise the staff-side [Viewer]
+/// backed by the member row.
+///
+/// The handle_new_user trigger always creates a members row on first
+/// auth; for guardians that row stays alive with `space_id = null` —
+/// the viewer falls back to the guardian's space_id via
+/// currentSpaceProvider.
 final viewerProvider = Provider<Viewer>((ref) {
-  final member = ref.watch(currentMemberProvider).value;
+  final guardian = ref.watch(currentGuardianProvider).value;
   final space = ref.watch(currentSpaceProvider).value;
+  if (guardian != null) {
+    final children = ref.watch(myChildrenProvider).value ?? const <Subject>[];
+    return GuardianViewer(
+      guardian: guardian,
+      childSubjectIds: children.map((s) => s.id).toList(),
+      space: space,
+    );
+  }
+  final member = ref.watch(currentMemberProvider).value;
   return Viewer(member: member, space: space);
 });
 
