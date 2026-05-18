@@ -3848,6 +3848,663 @@ class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
   }
 }
 
+class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _photoUrlMeta = const VerificationMeta(
+    'photoUrl',
+  );
+  @override
+  late final GeneratedColumn<String> photoUrl = GeneratedColumn<String>(
+    'photo_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _detailsMeta = const VerificationMeta(
+    'details',
+  );
+  @override
+  late final GeneratedColumn<String> details = GeneratedColumn<String>(
+    'details',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedByMeta = const VerificationMeta(
+    'recordedBy',
+  );
+  @override
+  late final GeneratedColumn<String> recordedBy = GeneratedColumn<String>(
+    'recorded_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMeta = const VerificationMeta(
+    'recordedAt',
+  );
+  @override
+  late final GeneratedColumn<String> recordedAt = GeneratedColumn<String>(
+    'recorded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    groupId,
+    subjectId,
+    kind,
+    body,
+    photoUrl,
+    details,
+    recordedBy,
+    recordedAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Entry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('text')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['text']!, _bodyMeta),
+      );
+    }
+    if (data.containsKey('photo_url')) {
+      context.handle(
+        _photoUrlMeta,
+        photoUrl.isAcceptableOrUnknown(data['photo_url']!, _photoUrlMeta),
+      );
+    }
+    if (data.containsKey('details')) {
+      context.handle(
+        _detailsMeta,
+        details.isAcceptableOrUnknown(data['details']!, _detailsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_detailsMeta);
+    }
+    if (data.containsKey('recorded_by')) {
+      context.handle(
+        _recordedByMeta,
+        recordedBy.isAcceptableOrUnknown(data['recorded_by']!, _recordedByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedByMeta);
+    }
+    if (data.containsKey('recorded_at')) {
+      context.handle(
+        _recordedAtMeta,
+        recordedAt.isAcceptableOrUnknown(data['recorded_at']!, _recordedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Entry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Entry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text'],
+      ),
+      photoUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_url'],
+      ),
+      details: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}details'],
+      )!,
+      recordedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recorded_by'],
+      )!,
+      recordedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recorded_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $EntriesTable createAlias(String alias) {
+    return $EntriesTable(attachedDatabase, alias);
+  }
+}
+
+class Entry extends DataClass implements Insertable<Entry> {
+  final String id;
+  final String spaceId;
+  final String? groupId;
+  final String? subjectId;
+  final String kind;
+  final String? body;
+  final String? photoUrl;
+  final String details;
+  final String recordedBy;
+  final String recordedAt;
+  final String updatedAt;
+  const Entry({
+    required this.id,
+    required this.spaceId,
+    this.groupId,
+    this.subjectId,
+    required this.kind,
+    this.body,
+    this.photoUrl,
+    required this.details,
+    required this.recordedBy,
+    required this.recordedAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    if (!nullToAbsent || subjectId != null) {
+      map['subject_id'] = Variable<String>(subjectId);
+    }
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || body != null) {
+      map['text'] = Variable<String>(body);
+    }
+    if (!nullToAbsent || photoUrl != null) {
+      map['photo_url'] = Variable<String>(photoUrl);
+    }
+    map['details'] = Variable<String>(details);
+    map['recorded_by'] = Variable<String>(recordedBy);
+    map['recorded_at'] = Variable<String>(recordedAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  EntriesCompanion toCompanion(bool nullToAbsent) {
+    return EntriesCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      subjectId: subjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectId),
+      kind: Value(kind),
+      body: body == null && nullToAbsent ? const Value.absent() : Value(body),
+      photoUrl: photoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoUrl),
+      details: Value(details),
+      recordedBy: Value(recordedBy),
+      recordedAt: Value(recordedAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Entry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Entry(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      subjectId: serializer.fromJson<String?>(json['subjectId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      body: serializer.fromJson<String?>(json['body']),
+      photoUrl: serializer.fromJson<String?>(json['photoUrl']),
+      details: serializer.fromJson<String>(json['details']),
+      recordedBy: serializer.fromJson<String>(json['recordedBy']),
+      recordedAt: serializer.fromJson<String>(json['recordedAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'groupId': serializer.toJson<String?>(groupId),
+      'subjectId': serializer.toJson<String?>(subjectId),
+      'kind': serializer.toJson<String>(kind),
+      'body': serializer.toJson<String?>(body),
+      'photoUrl': serializer.toJson<String?>(photoUrl),
+      'details': serializer.toJson<String>(details),
+      'recordedBy': serializer.toJson<String>(recordedBy),
+      'recordedAt': serializer.toJson<String>(recordedAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Entry copyWith({
+    String? id,
+    String? spaceId,
+    Value<String?> groupId = const Value.absent(),
+    Value<String?> subjectId = const Value.absent(),
+    String? kind,
+    Value<String?> body = const Value.absent(),
+    Value<String?> photoUrl = const Value.absent(),
+    String? details,
+    String? recordedBy,
+    String? recordedAt,
+    String? updatedAt,
+  }) => Entry(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    subjectId: subjectId.present ? subjectId.value : this.subjectId,
+    kind: kind ?? this.kind,
+    body: body.present ? body.value : this.body,
+    photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
+    details: details ?? this.details,
+    recordedBy: recordedBy ?? this.recordedBy,
+    recordedAt: recordedAt ?? this.recordedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Entry copyWithCompanion(EntriesCompanion data) {
+    return Entry(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      body: data.body.present ? data.body.value : this.body,
+      photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
+      details: data.details.present ? data.details.value : this.details,
+      recordedBy: data.recordedBy.present
+          ? data.recordedBy.value
+          : this.recordedBy,
+      recordedAt: data.recordedAt.present
+          ? data.recordedAt.value
+          : this.recordedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Entry(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('kind: $kind, ')
+          ..write('body: $body, ')
+          ..write('photoUrl: $photoUrl, ')
+          ..write('details: $details, ')
+          ..write('recordedBy: $recordedBy, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    groupId,
+    subjectId,
+    kind,
+    body,
+    photoUrl,
+    details,
+    recordedBy,
+    recordedAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Entry &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.groupId == this.groupId &&
+          other.subjectId == this.subjectId &&
+          other.kind == this.kind &&
+          other.body == this.body &&
+          other.photoUrl == this.photoUrl &&
+          other.details == this.details &&
+          other.recordedBy == this.recordedBy &&
+          other.recordedAt == this.recordedAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class EntriesCompanion extends UpdateCompanion<Entry> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String?> groupId;
+  final Value<String?> subjectId;
+  final Value<String> kind;
+  final Value<String?> body;
+  final Value<String?> photoUrl;
+  final Value<String> details;
+  final Value<String> recordedBy;
+  final Value<String> recordedAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const EntriesCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.body = const Value.absent(),
+    this.photoUrl = const Value.absent(),
+    this.details = const Value.absent(),
+    this.recordedBy = const Value.absent(),
+    this.recordedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EntriesCompanion.insert({
+    required String id,
+    required String spaceId,
+    this.groupId = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    required String kind,
+    this.body = const Value.absent(),
+    this.photoUrl = const Value.absent(),
+    required String details,
+    required String recordedBy,
+    required String recordedAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       kind = Value(kind),
+       details = Value(details),
+       recordedBy = Value(recordedBy),
+       recordedAt = Value(recordedAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Entry> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? groupId,
+    Expression<String>? subjectId,
+    Expression<String>? kind,
+    Expression<String>? body,
+    Expression<String>? photoUrl,
+    Expression<String>? details,
+    Expression<String>? recordedBy,
+    Expression<String>? recordedAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (groupId != null) 'group_id': groupId,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (kind != null) 'kind': kind,
+      if (body != null) 'text': body,
+      if (photoUrl != null) 'photo_url': photoUrl,
+      if (details != null) 'details': details,
+      if (recordedBy != null) 'recorded_by': recordedBy,
+      if (recordedAt != null) 'recorded_at': recordedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EntriesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String?>? groupId,
+    Value<String?>? subjectId,
+    Value<String>? kind,
+    Value<String?>? body,
+    Value<String?>? photoUrl,
+    Value<String>? details,
+    Value<String>? recordedBy,
+    Value<String>? recordedAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return EntriesCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      groupId: groupId ?? this.groupId,
+      subjectId: subjectId ?? this.subjectId,
+      kind: kind ?? this.kind,
+      body: body ?? this.body,
+      photoUrl: photoUrl ?? this.photoUrl,
+      details: details ?? this.details,
+      recordedBy: recordedBy ?? this.recordedBy,
+      recordedAt: recordedAt ?? this.recordedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (body.present) {
+      map['text'] = Variable<String>(body.value);
+    }
+    if (photoUrl.present) {
+      map['photo_url'] = Variable<String>(photoUrl.value);
+    }
+    if (details.present) {
+      map['details'] = Variable<String>(details.value);
+    }
+    if (recordedBy.present) {
+      map['recorded_by'] = Variable<String>(recordedBy.value);
+    }
+    if (recordedAt.present) {
+      map['recorded_at'] = Variable<String>(recordedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('kind: $kind, ')
+          ..write('body: $body, ')
+          ..write('photoUrl: $photoUrl, ')
+          ..write('details: $details, ')
+          ..write('recordedBy: $recordedBy, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3859,6 +4516,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $AttendanceRecordsTable(this);
   late final $InvitesTable invites = $InvitesTable(this);
   late final $GroupMembersTable groupMembers = $GroupMembersTable(this);
+  late final $EntriesTable entries = $EntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3871,6 +4529,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     attendanceRecords,
     invites,
     groupMembers,
+    entries,
   ];
 }
 
@@ -5775,6 +6434,318 @@ typedef $$GroupMembersTableProcessedTableManager =
       GroupMember,
       PrefetchHooks Function()
     >;
+typedef $$EntriesTableCreateCompanionBuilder =
+    EntriesCompanion Function({
+      required String id,
+      required String spaceId,
+      Value<String?> groupId,
+      Value<String?> subjectId,
+      required String kind,
+      Value<String?> body,
+      Value<String?> photoUrl,
+      required String details,
+      required String recordedBy,
+      required String recordedAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$EntriesTableUpdateCompanionBuilder =
+    EntriesCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String?> groupId,
+      Value<String?> subjectId,
+      Value<String> kind,
+      Value<String?> body,
+      Value<String?> photoUrl,
+      Value<String> details,
+      Value<String> recordedBy,
+      Value<String> recordedAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$EntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $EntriesTable> {
+  $$EntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoUrl => $composableBuilder(
+    column: $table.photoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get details => $composableBuilder(
+    column: $table.details,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordedBy => $composableBuilder(
+    column: $table.recordedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$EntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $EntriesTable> {
+  $$EntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get photoUrl => $composableBuilder(
+    column: $table.photoUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get details => $composableBuilder(
+    column: $table.details,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordedBy => $composableBuilder(
+    column: $table.recordedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $EntriesTable> {
+  $$EntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get photoUrl =>
+      $composableBuilder(column: $table.photoUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get details =>
+      $composableBuilder(column: $table.details, builder: (column) => column);
+
+  GeneratedColumn<String> get recordedBy => $composableBuilder(
+    column: $table.recordedBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$EntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $EntriesTable,
+          Entry,
+          $$EntriesTableFilterComposer,
+          $$EntriesTableOrderingComposer,
+          $$EntriesTableAnnotationComposer,
+          $$EntriesTableCreateCompanionBuilder,
+          $$EntriesTableUpdateCompanionBuilder,
+          (Entry, BaseReferences<_$AppDatabase, $EntriesTable, Entry>),
+          Entry,
+          PrefetchHooks Function()
+        > {
+  $$EntriesTableTableManager(_$AppDatabase db, $EntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> body = const Value.absent(),
+                Value<String?> photoUrl = const Value.absent(),
+                Value<String> details = const Value.absent(),
+                Value<String> recordedBy = const Value.absent(),
+                Value<String> recordedAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EntriesCompanion(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                subjectId: subjectId,
+                kind: kind,
+                body: body,
+                photoUrl: photoUrl,
+                details: details,
+                recordedBy: recordedBy,
+                recordedAt: recordedAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                Value<String?> groupId = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
+                required String kind,
+                Value<String?> body = const Value.absent(),
+                Value<String?> photoUrl = const Value.absent(),
+                required String details,
+                required String recordedBy,
+                required String recordedAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => EntriesCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                subjectId: subjectId,
+                kind: kind,
+                body: body,
+                photoUrl: photoUrl,
+                details: details,
+                recordedBy: recordedBy,
+                recordedAt: recordedAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$EntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $EntriesTable,
+      Entry,
+      $$EntriesTableFilterComposer,
+      $$EntriesTableOrderingComposer,
+      $$EntriesTableAnnotationComposer,
+      $$EntriesTableCreateCompanionBuilder,
+      $$EntriesTableUpdateCompanionBuilder,
+      (Entry, BaseReferences<_$AppDatabase, $EntriesTable, Entry>),
+      Entry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5793,4 +6764,6 @@ class $AppDatabaseManager {
       $$InvitesTableTableManager(_db, _db.invites);
   $$GroupMembersTableTableManager get groupMembers =>
       $$GroupMembersTableTableManager(_db, _db.groupMembers);
+  $$EntriesTableTableManager get entries =>
+      $$EntriesTableTableManager(_db, _db.entries);
 }

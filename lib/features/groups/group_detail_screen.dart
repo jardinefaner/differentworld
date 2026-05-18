@@ -34,6 +34,14 @@ class GroupDetailScreen extends ConsumerWidget {
             icon: const Icon(Icons.fact_check_outlined),
             onPressed: () => context.push('/groups/$groupId/attendance'),
           ),
+        // Observations: any viewer with canObserve (or director) can
+        // see + add.
+        if (viewer.canObserve || viewer.canManageProgram)
+          IconButton(
+            tooltip: 'Observations',
+            icon: const Icon(Icons.menu_book_outlined),
+            onPressed: () => context.push('/groups/$groupId/observations'),
+          ),
         // Edit classroom is a program-management action.
         if (group != null && viewer.canManageProgram)
           IconButton(

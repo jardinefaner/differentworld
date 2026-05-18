@@ -119,9 +119,34 @@ class GroupMembers extends Table {
   Set<Column> get primaryKey => {groupId, memberId};
 }
 
+/// The unified daily-log table. `kind` discriminates between
+/// 'observation', 'meal', 'nap', 'diaper', 'incident', etc.
+/// `details` holds a JSON blob whose shape depends on `kind`.
+///
+/// The Dart getter is named `body` because `text` collides with
+/// Drift's `text()` column-builder method and breaks codegen. The
+/// underlying Postgres / PowerSync column is still called `text` —
+/// see the `.named('text')` mapping.
+class Entries extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get groupId => text().nullable()();
+  TextColumn get subjectId => text().nullable()();
+  TextColumn get kind => text()();
+  TextColumn get body => text().named('text').nullable()();
+  TextColumn get photoUrl => text().nullable()();
+  TextColumn get details => text()(); // JSON string
+  TextColumn get recordedBy => text()();
+  TextColumn get recordedAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
-          GroupMembers],
+          GroupMembers, Entries],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -646,5 +671,94 @@ class AppDatabase extends _$AppDatabase {
   /// because their sync stream filters to their own space.
   Future<void> revokeInvite(String id) async {
     await (delete(invites)..where((i) => i.id.equals(id))).go();
+  }
+
+  // -- Entries (observations / meals / naps / diapers / ...) ---------------
+
+  /// All entries for a classroom of a given kind, newest first. The
+  /// observations screen uses kind='observation'.
+  Stream<List<Entry>> watchEntriesForGroup({
+    required String groupId,
+    required String kind,
+    int limit = 100,
+  }) {
+    return (select(entries)
+          ..where((e) => e.groupId.equals(groupId) & e.kind.equals(kind))
+          ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
+          ..limit(limit))
+        .watch();
+  }
+
+  /// All entries for a subject, newest first. Powers a future Subject
+  /// detail screen and the "recent observations" surface.
+  Stream<List<Entry>> watchEntriesForSubject({
+    required String subjectId,
+    String? kind,
+    int limit = 50,
+  }) {
+    final query = select(entries)
+      ..where((e) {
+        final base = e.subjectId.equals(subjectId);
+        return kind == null ? base : base & e.kind.equals(kind);
+      })
+      ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
+      ..limit(limit);
+    return query.watch();
+  }
+
+  Future<void> createEntry({
+    required String id,
+    required String spaceId,
+    required String kind,
+    required String recordedBy,
+    String? groupId,
+    String? subjectId,
+    String? body,
+    String? photoUrl,
+    String detailsJson = '{}',
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await into(entries).insert(
+      EntriesCompanion.insert(
+        id: id,
+        spaceId: spaceId,
+        kind: kind,
+        groupId: groupId == null ? const Value.absent() : Value(groupId),
+        subjectId:
+            subjectId == null ? const Value.absent() : Value(subjectId),
+        body: body == null ? const Value.absent() : Value(body),
+        photoUrl: photoUrl == null ? const Value.absent() : Value(photoUrl),
+        details: detailsJson,
+        recordedBy: recordedBy,
+        recordedAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  /// Update an entry's text and / or photo. The other fields are
+  /// effectively immutable — kind / subject / group don't move once
+  /// the row is created.
+  Future<void> updateEntry({
+    required String id,
+    String? body,
+    String? photoUrl,
+    String? detailsJson,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(entries)..where((e) => e.id.equals(id))).write(
+      EntriesCompanion(
+        body: body == null ? const Value.absent() : Value(body),
+        photoUrl:
+            photoUrl == null ? const Value.absent() : Value(photoUrl),
+        details:
+            detailsJson == null ? const Value.absent() : Value(detailsJson),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> deleteEntry(String id) async {
+    await (delete(entries)..where((e) => e.id.equals(id))).go();
   }
 }

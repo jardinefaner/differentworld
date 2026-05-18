@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
+import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
@@ -52,6 +53,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'attendance',
                 builder: (_, state) => AttendanceScreen(
+                  groupId: state.pathParameters['id']!,
+                ),
+              ),
+              GoRoute(
+                path: 'observations',
+                builder: (_, state) => ObservationsScreen(
                   groupId: state.pathParameters['id']!,
                 ),
               ),

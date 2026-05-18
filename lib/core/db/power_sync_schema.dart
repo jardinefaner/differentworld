@@ -101,4 +101,16 @@ const appSchema = Schema([
     Column.text('role_in_group'),
     Column.text('assigned_at'),
   ]),
+  Table('entries', [
+    Column.text('space_id'),
+    Column.text('group_id'),
+    Column.text('subject_id'),
+    Column.text('kind'),
+    Column.text('text'),
+    Column.text('photo_url'),
+    Column.text('details'),
+    Column.text('recorded_by'),
+    Column.text('recorded_at'),
+    Column.text('updated_at'),
+  ]),
 ]);
