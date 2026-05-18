@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:differentworld/core/env/env.dart';
 import 'package:flutter/foundation.dart';
 import 'package:powersync/powersync.dart';
@@ -101,14 +103,17 @@ class SupabaseConnector extends PowerSyncBackendConnector {
     try {
       for (final op in transaction.crud) {
         final table = _supabase.from(op.table);
+        final patched = _decodeJsonbColumns(op.opData);
         switch (op.op) {
           case UpdateType.put:
             await table.upsert(<String, dynamic>{
               'id': op.id,
-              ...?op.opData,
+              ...?patched,
             });
           case UpdateType.patch:
-            await table.update(op.opData ?? <String, dynamic>{}).eq('id', op.id);
+            await table
+                .update(patched ?? <String, dynamic>{})
+                .eq('id', op.id);
           case UpdateType.delete:
             await table.delete().eq('id', op.id);
         }
@@ -120,6 +125,39 @@ class SupabaseConnector extends PowerSyncBackendConnector {
       // policy when we hit that in practice.
       rethrow;
     }
+  }
+
+  /// PowerSync's local schema stores jsonb columns as TEXT (the raw JSON
+  /// string). PostgREST expects an actual JSON value for jsonb columns —
+  /// if we pass the string verbatim it lands as a *jsonb string literal*,
+  /// not a jsonb object. The next sync round-trip then returns that
+  /// stringified blob, parsed once it's a plain `String` instead of a
+  /// `Map`, and every reader falls back to empty caps. So: detect known
+  /// jsonb columns and `jsonDecode` them before they leave the device.
+  ///
+  /// Columns enumerated per `supabase/migrations/` — keep this in sync
+  /// when adding jsonb columns. Better fragile than silently wrong.
+  Map<String, dynamic>? _decodeJsonbColumns(Map<String, dynamic>? opData) {
+    if (opData == null) return null;
+    const jsonbColumns = <String>{
+      'capabilities', // spaces / members / groups / subjects / invites
+      'settings', // spaces
+      'details', // entries
+    };
+    Map<String, dynamic>? next;
+    for (final entry in opData.entries) {
+      if (!jsonbColumns.contains(entry.key)) continue;
+      final raw = entry.value;
+      if (raw is! String) continue; // already a Map/List, nothing to do
+      try {
+        final decoded = jsonDecode(raw);
+        next ??= Map<String, dynamic>.from(opData);
+        next[entry.key] = decoded;
+      } on FormatException {
+        // Not JSON — leave it alone; server can reject if invalid.
+      }
+    }
+    return next ?? opData;
   }
 
   static bool _isExpiringSoon(Session session) {

@@ -11,8 +11,23 @@ class Capabilities {
   factory Capabilities.fromJson(String? json) {
     if (json == null || json.isEmpty) return const Capabilities.empty();
     try {
-      final decoded = jsonDecode(json);
+      var decoded = jsonDecode(json);
+      // Tolerate double-encoded values. Old rows in the DB were uploaded
+      // as JSON-encoded strings instead of jsonb objects (fixed in the
+      // supabase_connector), so PowerSync brought them back as a string
+      // that wraps another JSON string. Decode again when we see one.
+      if (decoded is String) {
+        decoded = jsonDecode(decoded);
+      }
       if (decoded is Map<String, dynamic>) return Capabilities(decoded);
+      // jsonDecode of a JSON object returns Map<String, dynamic>, but a
+      // generic Map (e.g. from deeply-nested re-encoding) may not exactly
+      // match the generic. Coerce keys to String defensively.
+      if (decoded is Map) {
+        return Capabilities(
+          decoded.map((k, v) => MapEntry(k.toString(), v)),
+        );
+      }
       return const Capabilities.empty();
     } on FormatException {
       return const Capabilities.empty();
