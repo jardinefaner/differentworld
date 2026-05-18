@@ -608,10 +608,10 @@ class _AttendanceDot extends StatelessWidget {
     final color = status == null
         ? scheme.surfaceContainerHighest
         : status!.color(scheme).withValues(alpha: 0.85);
-    return Tooltip(
-      message: '${DateFormat.MMMd().format(date)} '
-          '· ${status?.label ?? "no record"}',
-      child: Expanded(
+    return Expanded(
+      child: Tooltip(
+        message: '${DateFormat.MMMd().format(date)} '
+            '· ${status?.label ?? "no record"}',
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
