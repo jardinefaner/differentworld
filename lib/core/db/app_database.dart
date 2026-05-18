@@ -436,6 +436,58 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  /// Bulk-insert attendance rows for all subjects in a group on a
+  /// single date — one transaction, one commit. Used by Mark all
+  /// present to avoid N round-trips when filling a roomful of kids.
+  /// Returns the list of subjectIds that actually had a row inserted
+  /// (skipping any subject already on record for that date).
+  ///
+  /// Records are inserted with the given [status]; existing rows are
+  /// left alone so an "absent" isn't accidentally overwritten.
+  Future<List<String>> bulkInsertAttendance({
+    required String spaceId,
+    required String groupId,
+    required String date,
+    required String status,
+    required String recordedBy,
+    required List<({String id, String subjectId})> entries,
+  }) async {
+    if (entries.isEmpty) return const [];
+    final now = DateTime.now().toUtc().toIso8601String();
+    final inserted = <String>[];
+    await transaction(() async {
+      // One query for the whole batch — find which subjects already
+      // have a row today.
+      final subjectIds = entries.map((e) => e.subjectId).toList();
+      final existingRows = await (select(attendanceRecords)
+            ..where(
+              (a) => a.date.equals(date) & a.subjectId.isIn(subjectIds),
+            ))
+          .get();
+      final alreadyHave =
+          existingRows.map((r) => r.subjectId).toSet();
+
+      for (final entry in entries) {
+        if (alreadyHave.contains(entry.subjectId)) continue;
+        await into(attendanceRecords).insert(
+          AttendanceRecordsCompanion.insert(
+            id: entry.id,
+            spaceId: spaceId,
+            groupId: Value(groupId),
+            subjectId: entry.subjectId,
+            date: date,
+            status: status,
+            recordedBy: recordedBy,
+            recordedAt: now,
+            updatedAt: now,
+          ),
+        );
+        inserted.add(entry.subjectId);
+      }
+    });
+    return inserted;
+  }
+
   /// Delete attendance rows for the given (subject, date) pairs. Used
   /// by the "Mark all present → Undo" snack — reverts the rows we just
   /// wrote rather than overwriting them with another status.

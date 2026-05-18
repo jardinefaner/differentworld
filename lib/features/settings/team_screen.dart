@@ -248,9 +248,11 @@ class _InviteTile extends ConsumerWidget {
         confirmLabel: 'Revoke',
       ),
       onDismissed: (_) async {
+        // Grab the messenger before the await so we don't deref the
+        // BuildContext after a possible unmount.
+        final messenger = ScaffoldMessenger.of(context);
         await ref.read(inviteActionsProvider).revoke(invite.id);
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Invite revoked'),
             duration: Duration(seconds: 2),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
+import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
@@ -37,6 +38,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/',
         builder: (_, _) => const _Home(),
         routes: [
+          GoRoute(
+            path: 'checklist',
+            builder: (_, state) => MorningChecklistScreen(
+              initialFilter: state.uri.queryParameters['filter'],
+            ),
+          ),
           GoRoute(
             path: 'groups/:id',
             builder: (_, state) => GroupDetailScreen(

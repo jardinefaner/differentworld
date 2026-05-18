@@ -109,6 +109,73 @@ class TodayScreen extends ConsumerWidget {
   }
 }
 
+/// Top-of-Today card that launches the Morning Checklist. This is the
+/// primary daily-use entry point — one scroll across every classroom.
+class _ChecklistCallToAction extends StatelessWidget {
+  const _ChecklistCallToAction();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      color: theme.colorScheme.primaryContainer,
+      child: InkWell(
+        onTap: () {
+          unawaited(HapticFeedback.selectionClick());
+          unawaited(context.push('/checklist'));
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.task_alt,
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Morning checklist',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'One scroll, every classroom, mark everyone in.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer
+                            .withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TodayBody extends StatelessWidget {
   const _TodayBody({required this.member, required this.groups});
 
@@ -128,7 +195,9 @@ class _TodayBody extends StatelessWidget {
           padding: padding,
           children: [
             _Greeting(member: member),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            const _ChecklistCallToAction(),
+            const SizedBox(height: 16),
             _SectionHeader(
               label: 'Your classrooms',
               count: groups.length,
@@ -277,7 +346,8 @@ class _GroupTodayCard extends ConsumerWidget {
                   text: 'Could not load attendance.',
                   color: null,
                 ),
-                data: (state) => _DayStateRow(state: state),
+                data: (state) =>
+                    _DayStateRow(state: state, groupId: group.id),
               ),
             ],
           ),
@@ -288,14 +358,20 @@ class _GroupTodayCard extends ConsumerWidget {
 }
 
 class _DayStateRow extends StatelessWidget {
-  const _DayStateRow({required this.state});
+  const _DayStateRow({required this.state, required this.groupId});
 
   final GroupDayState state;
+  final String groupId;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+
+    void openUnmarked() {
+      unawaited(HapticFeedback.selectionClick());
+      unawaited(context.push('/groups/$groupId/attendance'));
+    }
 
     if (state.totalSubjects == 0) {
       return _StateLine(
@@ -310,18 +386,25 @@ class _DayStateRow extends StatelessWidget {
       );
     }
     if (state.markedCount == 0) {
-      return _StateLine(
-        text: '${state.totalSubjects} students • none marked yet',
-        color: scheme.error,
+      return InkWell(
+        onTap: openUnmarked,
+        borderRadius: BorderRadius.circular(8),
+        child: _StateLine(
+          text: '${state.totalSubjects} students • none marked yet',
+          color: scheme.error,
+        ),
       );
     }
 
-    // Mixed state: show breakdown.
+    // Mixed state: show breakdown. The "unmarked" pill is tappable —
+    // jumps into the per-room attendance screen so the teacher can
+    // finish the room without losing their place.
     final pieces = <Widget>[
       _StatusPill(
         status: null,
         label: '${state.unmarked} unmarked',
         color: scheme.error,
+        onTap: openUnmarked,
       ),
     ];
     for (final s in AttendanceStatus.values) {
@@ -344,15 +427,17 @@ class _StatusPill extends StatelessWidget {
     required this.status,
     required this.label,
     required this.color,
+    this.onTap,
   });
 
   final AttendanceStatus? status;
   final String label;
   final Color color;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final body = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
@@ -373,6 +458,12 @@ class _StatusPill extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (onTap == null) return body;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: body,
     );
   }
 }

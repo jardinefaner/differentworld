@@ -52,6 +52,10 @@ class AttendanceActions {
   /// writes for Subjects that don't yet have a record (skips already-
   /// recorded so an existing "absent" isn't overwritten).
   ///
+  /// Goes through `db.bulkInsertAttendance` so all the inserts run in
+  /// a single transaction — one commit, one PowerSync CRUD-batch per
+  /// classroom regardless of roster size.
+  ///
   /// Returns the list of subjectIds that were actually written, so the
   /// caller can offer an Undo for just those rows.
   Future<List<String>> markAllPresent({
@@ -60,18 +64,28 @@ class AttendanceActions {
     required List<String> subjectIds,
     required List<String> alreadyRecordedSubjectIds,
   }) async {
-    final touched = <String>[];
-    for (final subjectId in subjectIds) {
-      if (alreadyRecordedSubjectIds.contains(subjectId)) continue;
-      await setStatus(
-        groupId: groupId,
-        subjectId: subjectId,
-        date: date,
-        status: AttendanceStatus.present,
-      );
-      touched.add(subjectId);
+    if (subjectIds.isEmpty) return const [];
+    final db = await _ref.read(appDatabaseProvider.future);
+    final member = _ref.read(currentMemberProvider).value;
+    final spaceId = member?.spaceId;
+    final recordedBy = member?.id;
+    if (spaceId == null || recordedBy == null) {
+      throw StateError('No Space / signed-in Member.');
     }
-    return touched;
+    final alreadySet = alreadyRecordedSubjectIds.toSet();
+    final entries = <({String id, String subjectId})>[];
+    for (final subjectId in subjectIds) {
+      if (alreadySet.contains(subjectId)) continue;
+      entries.add((id: _uuid.v4(), subjectId: subjectId));
+    }
+    return db.bulkInsertAttendance(
+      spaceId: spaceId,
+      groupId: groupId,
+      date: date,
+      status: AttendanceStatus.present.dbValue,
+      recordedBy: recordedBy,
+      entries: entries,
+    );
   }
 
   /// Undo a previous [markAllPresent] by deleting the attendance rows

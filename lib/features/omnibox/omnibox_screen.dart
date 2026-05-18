@@ -109,6 +109,13 @@ class _OmniboxScreenState extends ConsumerState<OmniboxScreen> {
         onSelect: (ctx, ref) => ctx.go('/'),
       ),
       _Suggestion(
+        label: 'Morning checklist',
+        kindLabel: 'Page',
+        icon: Icons.task_alt,
+        keywords: const ['attendance', 'check-in', 'morning', 'mark'],
+        onSelect: (ctx, ref) => ctx.push('/checklist'),
+      ),
+      _Suggestion(
         label: 'Settings',
         kindLabel: 'Page',
         icon: Icons.settings_outlined,
