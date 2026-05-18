@@ -695,14 +695,24 @@ For future-me's sanity, if a Drift schema rename is involved:
 3. Update `lib/core/db/app_database.dart` (Drift classes) to match
 4. Update every consumer in `lib/` to use the new names
 5. **`supabase db push`** — apply server-side
-6. Update `supabase/sync_rules.yaml` and redeploy in PowerSync dashboard
-7. **`dart run build_runner build`** — regenerate `.g.dart` files
-8. **`flutter clean && flutter pub get`** — wipe build cache
-9. **`flutter analyze`** — confirm zero issues
-10. **`flutter test`** — confirm passing
-11. **Tell the user to clear local storage on every active device**
+6. Update `supabase/sync_rules.yaml` in the repo
+7. **PASTE THE NEW SYNC RULES INTO THE POWERSYNC DASHBOARD AND HIT
+   DEPLOY.** The repo file is just our source-of-truth; the
+   dashboard is the runtime. Forgetting this leaves PowerSync's
+   queries pointing at the old (now non-existent) tables. The sync
+   "succeeds" with zero rows; local tables stay empty; the app sits
+   on its loading spinner forever with no error in the logs.
+8. **`dart run build_runner build`** — regenerate `.g.dart` files
+9. **`flutter clean && flutter pub get`** — wipe build cache
+10. **`flutter analyze`** — confirm zero issues
+11. **`flutter test`** — confirm passing
+12. **Tell the user to clear local storage on every active device**
     (uninstall on mobile, clear site data on web). Local SQLite needs
     to recreate itself with the new schema.
+
+If symptoms are "Validated and applied checkpoint" but **no
+`downloading: true (progress: X/Y)` line** and the local tables are
+empty when you query them, step 7 is the culprit 99% of the time.
 
 ---
 
