@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
@@ -138,6 +139,7 @@ class _ObservationRow extends ConsumerWidget {
         ? 'Unknown student'
         : '${subject.firstName} ${subject.lastName}';
 
+    final photoUrl = entry.photoUrl;
     return ListTile(
       leading: PersonAvatar(
         name: fullName,
@@ -161,6 +163,19 @@ class _ObservationRow extends ConsumerWidget {
           ),
         ],
       ),
+      trailing: photoUrl == null
+          ? null
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: CachedNetworkImage(
+                imageUrl: photoUrl,
+                width: 44,
+                height: 44,
+                fit: BoxFit.cover,
+                errorWidget: (_, _, _) =>
+                    const Icon(Icons.broken_image_outlined),
+              ),
+            ),
       isThreeLine: true,
       onTap: () => ObservationFormSheet.show(
         context,

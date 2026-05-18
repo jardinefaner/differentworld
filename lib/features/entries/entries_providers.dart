@@ -48,12 +48,16 @@ class EntryActions {
   final Ref _ref;
   static const _uuid = Uuid();
 
-  /// Create an observation. Returns the new entry's id.
+  /// Create an observation. Returns the new entry's id. If [id] is
+  /// supplied the caller controls it (so a pre-uploaded photo's path
+  /// already points at the right entry); otherwise a new uuid is
+  /// generated inside.
   Future<String> createObservation({
     required String subjectId,
     required String groupId,
     required String text,
     String? photoUrl,
+    String? id,
   }) async {
     return _create(
       kind: EntryKind.observation,
@@ -61,6 +65,7 @@ class EntryActions {
       groupId: groupId,
       body: text,
       photoUrl: photoUrl,
+      id: id,
     );
   }
 
@@ -71,6 +76,7 @@ class EntryActions {
     String? body,
     String? photoUrl,
     String detailsJson = '{}',
+    String? id,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
     final member = _ref.read(currentMemberProvider).value;
@@ -79,9 +85,9 @@ class EntryActions {
     if (spaceId == null || recordedBy == null) {
       throw StateError('No Space / signed-in Member.');
     }
-    final id = _uuid.v4();
+    final useId = id ?? _uuid.v4();
     await db.createEntry(
-      id: id,
+      id: useId,
       spaceId: spaceId,
       kind: kind,
       recordedBy: recordedBy,
@@ -91,12 +97,16 @@ class EntryActions {
       photoUrl: photoUrl,
       detailsJson: detailsJson,
     );
-    return id;
+    return useId;
   }
 
-  Future<void> updateText({required String id, required String text}) async {
+  Future<void> updateText({
+    required String id,
+    required String text,
+    String? photoUrl,
+  }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateEntry(id: id, body: text);
+    await db.updateEntry(id: id, body: text, photoUrl: photoUrl);
   }
 
   Future<void> delete(String id) async {

@@ -102,6 +102,35 @@ class PhotoService {
     }
   }
 
+  /// Upload + return URL WITHOUT writing to any row. Caller persists
+  /// the URL wherever it belongs (Drift mutation on a row, or a JSON
+  /// blob, or held in widget state until form save).
+  ///
+  /// Used by observations: the entry doesn't exist at the moment the
+  /// user picks the photo, so we pre-generate an id, upload under
+  /// `<space_id>/<entityKind>/<entityId>/<uuid>.jpg`, and the form
+  /// includes the URL in the `createEntry` call.
+  Future<String> uploadOnly({
+    required String entityKind,
+    required String entityId,
+    required XFile picked,
+  }) async {
+    final me = _ref.read(currentMemberProvider).value;
+    final spaceId = me?.spaceId;
+    if (spaceId == null) {
+      throw StateError('No Space — sign in and join a program first.');
+    }
+    final bytes = await picked.readAsBytes();
+    final compressed = await Isolate.run(() => _compressSync(bytes));
+    final path = '$spaceId/$entityKind/$entityId/${_uuid.v4()}.jpg';
+    await _supabase.storage.from(_bucket).uploadBinary(
+          path,
+          compressed,
+          fileOptions: const FileOptions(contentType: 'image/jpeg'),
+        );
+    return _supabase.storage.from(_bucket).getPublicUrl(path);
+  }
+
 }
 
 /// Top-level so it can run inside `Isolate.run` (closures over instance

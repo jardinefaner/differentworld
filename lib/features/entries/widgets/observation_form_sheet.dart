@@ -1,13 +1,17 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 /// Modal bottom sheet for creating or editing an observation.
 ///
@@ -60,7 +64,18 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   late final TextEditingController _textCtrl;
   String? _subjectId;
   bool _saving = false;
+  bool _photoUploading = false;
   String? _error;
+
+  /// Pre-generated entry id when creating. Photo uploads use this in
+  /// the storage path so the path is stable even if the form is
+  /// re-mounted (e.g. on rebuild from a draft). For edit mode it's
+  /// just the existing entry id.
+  late final String _entryId;
+
+  /// Photo URL — already in Storage. Persisted to the entry's row at
+  /// save time. Null = no photo (or none yet).
+  String? _photoUrl;
 
   bool get _isEdit => widget.existing != null;
 
@@ -72,6 +87,8 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     super.initState();
     _textCtrl = TextEditingController(text: widget.existing?.body ?? '');
     _subjectId = widget.existing?.subjectId ?? widget.initialSubjectId;
+    _entryId = widget.existing?.id ?? const Uuid().v4();
+    _photoUrl = widget.existing?.photoUrl;
   }
 
   @override
@@ -83,10 +100,55 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   bool _isDirty() {
     final original = widget.existing;
     if (original == null) {
-      return _textCtrl.text.trim().isNotEmpty || _subjectId != null;
+      return _textCtrl.text.trim().isNotEmpty ||
+          _subjectId != null ||
+          _photoUrl != null;
     }
     return _textCtrl.text.trim() != (original.body ?? '') ||
-        _subjectId != original.subjectId;
+        _subjectId != original.subjectId ||
+        _photoUrl != original.photoUrl;
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    if (_photoUploading) return;
+    final picker = ref.read(photoServiceProvider);
+    XFile? picked;
+    try {
+      picked = await picker.pickPhoto(source);
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'observations'),
+      );
+      if (!mounted) return;
+      setState(() => _error = 'Could not open the picker.');
+      return;
+    }
+    if (picked == null) return;
+    setState(() {
+      _photoUploading = true;
+      _error = null;
+    });
+    try {
+      final url = await picker.uploadOnly(
+        entityKind: 'observation',
+        entityId: _entryId,
+        picked: picked,
+      );
+      if (!mounted) return;
+      setState(() => _photoUrl = url);
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'observations'),
+      );
+      if (!mounted) return;
+      setState(() => _error = 'Could not upload that photo.');
+    } finally {
+      if (mounted) setState(() => _photoUploading = false);
+    }
+  }
+
+  void _clearPhoto() {
+    setState(() => _photoUrl = null);
   }
 
   Future<void> _save() async {
@@ -107,12 +169,18 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     try {
       final actions = ref.read(entryActionsProvider);
       if (_isEdit) {
-        await actions.updateText(id: widget.existing!.id, text: text);
+        await actions.updateText(
+          id: widget.existing!.id,
+          text: text,
+          photoUrl: _photoUrl,
+        );
       } else {
         await actions.createObservation(
           subjectId: _subjectId!,
           groupId: _effectiveGroupId,
           text: text,
+          photoUrl: _photoUrl,
+          id: _entryId,
         );
       }
       if (!mounted) return;
@@ -250,6 +318,14 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  _PhotoRow(
+                    photoUrl: _photoUrl,
+                    uploading: _photoUploading,
+                    onCamera: () => _pickPhoto(ImageSource.camera),
+                    onGallery: () => _pickPhoto(ImageSource.gallery),
+                    onClear: _clearPhoto,
+                  ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
                     Text(
@@ -378,6 +454,107 @@ class _SelectedSubjectChip extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Photo affordance for the observation form. Two states:
+/// - No photo yet: row of `Camera` / `Library` buttons.
+/// - Photo set: thumbnail with an X to clear + a "Replace" button.
+/// Upload state shows a small linear progress beneath.
+class _PhotoRow extends StatelessWidget {
+  const _PhotoRow({
+    required this.photoUrl,
+    required this.uploading,
+    required this.onCamera,
+    required this.onGallery,
+    required this.onClear,
+  });
+
+  final String? photoUrl;
+  final bool uploading;
+  final VoidCallback onCamera;
+  final VoidCallback onGallery;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasPhoto = photoUrl != null && !uploading;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (uploading)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Uploading photo…',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          )
+        else if (hasPhoto)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: photoUrl!,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, _, _) => Container(
+                      width: 56,
+                      height: 56,
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.broken_image_outlined),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Photo attached',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Remove photo',
+                  icon: Icon(Icons.close, color: theme.colorScheme.error),
+                  onPressed: onClear,
+                ),
+              ],
+            ),
+          ),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: uploading ? null : onCamera,
+              icon: const Icon(Icons.photo_camera_outlined, size: 18),
+              label: Text(hasPhoto ? 'Replace · Camera' : 'Camera'),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: uploading ? null : onGallery,
+              icon: const Icon(Icons.photo_library_outlined, size: 18),
+              label: Text(hasPhoto ? 'Replace · Library' : 'Library'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
@@ -479,6 +480,7 @@ class _ObservationItem extends StatelessWidget {
     final when = DateTime.tryParse(entry.recordedAt);
     final whenLabel =
         when == null ? '' : DateFormat.MMMd().add_jm().format(when);
+    final photoUrl = entry.photoUrl;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Container(
@@ -498,6 +500,22 @@ class _ObservationItem extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(entry.body ?? ''),
+            if (photoUrl != null) ...[
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: photoUrl,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, _, _) => Container(
+                    height: 200,
+                    color: theme.colorScheme.surfaceContainerHigh,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image_outlined),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
