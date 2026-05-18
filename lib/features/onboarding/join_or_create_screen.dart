@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/invites/invite_code.dart';
+import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/onboarding/create_space_screen.dart';
 import 'package:flutter/material.dart';
@@ -75,6 +76,42 @@ class _JoinOrCreateScreenState extends ConsumerState<JoinOrCreateScreen> {
   }
 
   Future<void> _tryAutoMatch() async {
+    // Honor a code from an inbound deep link first — if a user just
+    // scanned a QR or tapped a shared link, that takes precedence over
+    // the email auto-match path.
+    final pending = ref.read(pendingInviteCodeProvider);
+    if (pending != null && pending.isNotEmpty) {
+      // Clear the pending code now so a transient failure doesn't trap
+      // the user in a redeem loop.
+      ref.read(pendingInviteCodeProvider.notifier).clear();
+      _autoMatchTimeout?.cancel();
+      try {
+        await ref.read(inviteActionsProvider).redeem(code: pending);
+        // Stream swap-out as usual.
+        return;
+      } on NoMatchingInviteException {
+        if (!mounted) return;
+        setState(() {
+          _stage = _Stage.enteringCode;
+          _codeController.text = pending;
+          _error = "We couldn't find that invite. Double-check the code "
+              'with your director.';
+        });
+        return;
+      } on Exception catch (e, st) {
+        FlutterError.reportError(
+          FlutterErrorDetails(exception: e, stack: st, library: 'invites'),
+        );
+        if (!mounted) return;
+        setState(() {
+          _stage = _Stage.enteringCode;
+          _codeController.text = pending;
+          _error = 'Could not redeem that invite. Please try again.';
+        });
+        return;
+      }
+    }
+
     try {
       await ref.read(inviteActionsProvider).redeem();
       // On success the currentMember stream will pick up the new
@@ -133,6 +170,19 @@ class _JoinOrCreateScreenState extends ConsumerState<JoinOrCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Warm deep-link arrivals: if a new code lands while the user is
+    // still on the choosing/code-entry screens, snap back to the
+    // auto-match path so it consumes the code.
+    ref.listen<String?>(pendingInviteCodeProvider, (prev, next) {
+      if (next == null || next.isEmpty) return;
+      if (_stage == _Stage.redeeming || _stage == _Stage.autoMatching) return;
+      setState(() {
+        _stage = _Stage.autoMatching;
+        _error = null;
+      });
+      unawaited(_tryAutoMatch());
+    });
+
     return switch (_stage) {
       _Stage.autoMatching => const _AutoMatchScaffold(),
       _Stage.choosing => _ChoosingScaffold(

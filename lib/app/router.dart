@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
+import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/omnibox/omnibox_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
@@ -117,11 +118,11 @@ class _Home extends ConsumerWidget {
   }
 }
 
-class _SignedInHome extends StatefulWidget {
+class _SignedInHome extends ConsumerStatefulWidget {
   const _SignedInHome();
 
   @override
-  State<_SignedInHome> createState() => _SignedInHomeState();
+  ConsumerState<_SignedInHome> createState() => _SignedInHomeState();
 }
 
 /// Home is a horizontal PageView with two pages:
@@ -130,7 +131,7 @@ class _SignedInHome extends StatefulWidget {
 ///
 /// Swipe right from Today reveals the Omnibox; swipe left (or tap back)
 /// from Omnibox returns to Today.
-class _SignedInHomeState extends State<_SignedInHome> {
+class _SignedInHomeState extends ConsumerState<_SignedInHome> {
   late final PageController _controller = PageController(initialPage: 1);
 
   @override
@@ -149,6 +150,24 @@ class _SignedInHomeState extends State<_SignedInHome> {
 
   @override
   Widget build(BuildContext context) {
+    // A signed-in user with a space can't redeem an invite — refuse
+    // cleanly and clear the pending code so they aren't bounced into
+    // some other state. Switching programs is a sign-out-and-back-in
+    // workflow for now.
+    ref.listen<String?>(pendingInviteCodeProvider, (prev, next) {
+      if (next == null || next.isEmpty) return;
+      ref.read(pendingInviteCodeProvider.notifier).clear();
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            "You're already in a program. Sign out first to join a "
+            'different one.',
+          ),
+        ),
+      );
+    });
+
     return PageView(
       controller: _controller,
       children: [

@@ -33,6 +33,31 @@
                 <data android:scheme="com.jardine.differentworld"
                       android:host="login-callback"/>
             </intent-filter>
+            <!-- Invite deep links — custom scheme.
+                 The QR + share-text use differentworld://invite/<code>.
+                 Works today, no domain ownership required. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="differentworld"
+                      android:host="invite"/>
+            </intent-filter>
+            <!-- HTTPS fallback for invite links. autoVerify is false because
+                 we don't host assetlinks.json at differentworld.app yet —
+                 enabling autoVerify would have Android silently drop the
+                 filter when verification fails. With autoVerify=false, a
+                 tap on the https URL gives the user an "Open with" chooser
+                 that includes our app. Promote to verified once the
+                 domain + .well-known/assetlinks.json are wired. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="differentworld.app"
+                      android:pathPrefix="/invite"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

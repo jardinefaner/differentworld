@@ -42,17 +42,52 @@ abstract final class InviteCode {
     return cleaned.toString();
   }
 
-  /// Deep-link URI for a code. The receiver app responds to this scheme
-  /// (Pass 2: app_links wiring + manifest filters). For now the string
-  /// is what we embed in QR codes and share-sheet text.
-  static String deepLinkFor(String code) =>
+  /// Custom-scheme deep link the app actually responds to today.
+  /// Registered in AndroidManifest.xml + ios/Runner/Info.plist.
+  ///
+  /// Why not https? — We don't own differentworld.app yet, so a Universal
+  /// Link / Android App Link can't be auto-verified by Apple/Google.
+  /// The custom scheme works without infrastructure; once the domain
+  /// is wired, we add a webHttpsLinkFor() helper alongside this and
+  /// embed both into the QR.
+  static String deepLinkFor(String code) => 'differentworld://invite/$code';
+
+  /// Web fallback URL — what we'd embed if/when Universal Links are wired.
+  /// Currently unused; kept here as a single source of truth so the
+  /// transition only needs one edit.
+  static String httpsLinkFor(String code) =>
       'https://differentworld.app/invite/$code';
 
   /// Plain-text share blurb a director can copy / SMS / paste.
+  /// Includes both the human-typeable code AND the deep link.
   static String shareTextFor({required String code, String? programName}) {
     final lead = programName == null
         ? 'Join my Different World program.'
         : 'Join $programName on Different World.';
     return '$lead\n\nCode: $code\n\n${deepLinkFor(code)}';
+  }
+
+  /// Extract a code from an inbound deep link. Accepts both the custom
+  /// scheme (`differentworld://invite/ABC123`) and the https form
+  /// (`https://differentworld.app/invite/ABC123`). Returns null if the
+  /// URI doesn't match either shape.
+  static String? extractFromUri(Uri uri) {
+    final isCustomScheme =
+        uri.scheme == 'differentworld' && uri.host == 'invite';
+    final isHttpsLink = uri.scheme == 'https' &&
+        uri.host == 'differentworld.app' &&
+        uri.pathSegments.isNotEmpty &&
+        uri.pathSegments.first == 'invite';
+    if (!isCustomScheme && !isHttpsLink) return null;
+
+    final segments = uri.pathSegments;
+    // For differentworld://invite/CODE the segments are ['CODE'].
+    // For https://.../invite/CODE the segments are ['invite', 'CODE'].
+    final raw = isCustomScheme
+        ? (segments.isEmpty ? '' : segments.last)
+        : (segments.length < 2 ? '' : segments[1]);
+    if (raw.isEmpty) return null;
+    final normalized = normalize(raw);
+    return normalized.isEmpty ? null : normalized;
   }
 }

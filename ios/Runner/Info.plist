@@ -34,6 +34,20 @@
 				<string>com.jardine.differentworld</string>
 			</array>
 		</dict>
+		<dict>
+			<!-- Invite deep links — differentworld://invite/<code>.
+			     Universal Links over https://differentworld.app/invite/*
+			     can be added later by configuring an Associated Domain
+			     entitlement + hosting apple-app-site-association. -->
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>com.jardine.differentworld.invite</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>differentworld</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
