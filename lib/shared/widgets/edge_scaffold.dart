@@ -1,5 +1,6 @@
 import 'package:differentworld/shared/widgets/floating_actions.dart';
 import 'package:differentworld/shared/widgets/floating_back.dart';
+import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -24,6 +25,7 @@ class EdgeScaffold extends StatelessWidget {
     this.actions = const <Widget>[],
     this.showBack = true,
     this.backFallbackRoute = '/',
+    this.drawer,
     this.floatingActionButton,
     this.bottomSheet,
     this.resizeToAvoidBottomInset,
@@ -32,8 +34,19 @@ class EdgeScaffold extends StatelessWidget {
 
   final Widget body;
   final List<Widget> actions;
+
+  /// When true (default), the top-left shows a FloatingBack pill.
+  /// When false AND [drawer] is non-null, the top-left shows a
+  /// FloatingHamburger that opens the drawer.
   final bool showBack;
   final String backFallbackRoute;
+
+  /// Optional left-side drawer. When provided, the top-left renders a
+  /// hamburger pill on home pages (showBack: false). On drill-in pages
+  /// the FloatingBack stays visible and the drawer is still openable
+  /// via swipe-from-left-edge.
+  final Widget? drawer;
+
   final Widget? floatingActionButton;
   final Widget? bottomSheet;
   final bool? resizeToAvoidBottomInset;
@@ -63,6 +76,7 @@ class EdgeScaffold extends StatelessWidget {
         extendBodyBehindAppBar: true,
         extendBody: true,
         resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+        drawer: drawer,
         body: Stack(
           children: [
             // Content. SafeArea only top — bottom flows under gesture nav.
@@ -73,13 +87,20 @@ class EdgeScaffold extends StatelessWidget {
                 child: body,
               ),
             ),
-            // Floating chrome — sits 8 px below the status bar inset.
+            // Top-left: back arrow on drill-ins, hamburger on home pages.
             if (showBack)
               Positioned(
                 top: topInset + 8,
                 left: 8,
                 child: FloatingBack(fallbackRoute: backFallbackRoute),
+              )
+            else if (drawer != null)
+              Positioned(
+                top: topInset + 8,
+                left: 8,
+                child: const FloatingHamburger(),
               ),
+            // Top-right: action pill.
             if (actions.isNotEmpty)
               Positioned(
                 top: topInset + 8,

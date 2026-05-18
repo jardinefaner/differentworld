@@ -11,6 +11,7 @@ import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,9 +37,13 @@ class TodayScreen extends ConsumerWidget {
     final groupsAsync = ref.watch(groupsProvider);
 
     return EdgeScaffold(
-      // Home: no back button, just the action pill.
+      // Home: no back button → top-left is the hamburger that opens
+      // the MainDrawer instead.
       showBack: false,
+      drawer: const MainDrawer(),
       actions: [
+        // Settings moved to the drawer; the top-right pill now just
+        // holds search + sync. Less chrome, more thumb-zone reach.
         if (onOpenOmnibox != null)
           IconButton(
             tooltip: 'Search',
@@ -46,11 +51,6 @@ class TodayScreen extends ConsumerWidget {
             onPressed: onOpenOmnibox,
           ),
         const SyncStatusIndicator(),
-        IconButton(
-          tooltip: 'Settings',
-          icon: const Icon(Icons.settings_outlined),
-          onPressed: () => context.push('/settings'),
-        ),
       ],
       body: groupsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
