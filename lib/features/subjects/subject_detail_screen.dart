@@ -10,6 +10,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
+import 'package:differentworld/features/pickup/pickup_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/subject_form_sheet.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -239,6 +240,16 @@ class _SubjectBody extends ConsumerWidget {
           child: Text('Family', style: theme.textTheme.titleSmall),
         ),
         _GuardiansList(subjectId: subject.id),
+
+        const _SectionGap(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Text(
+            'Authorized for pickup',
+            style: theme.textTheme.titleSmall,
+          ),
+        ),
+        _PickupList(subject: subject),
 
         if ((subject.notes ?? '').isNotEmpty) ...[
           const _SectionGap(),
@@ -676,6 +687,254 @@ class _GuardiansList extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Authorized for pickup" — non-guardian adults approved to collect
+/// this child. Editable by guardians of the subject OR staff with
+/// canAuthorizePickup; read-only for everyone else.
+class _PickupList extends ConsumerWidget {
+  const _PickupList({required this.subject});
+
+  final Subject subject;
+
+  Future<void> _addOrEdit(
+    BuildContext context,
+    WidgetRef ref, {
+    int? editIndex,
+  }) async {
+    final all = pickupPeopleFor(subject);
+    final existing = editIndex == null ? null : all[editIndex];
+    final result = await _PickupPersonSheet.show(context, existing: existing);
+    if (result == null) return;
+    final next = [...all];
+    if (editIndex == null) {
+      next.add(result);
+    } else {
+      next[editIndex] = result;
+    }
+    await ref
+        .read(pickupActionsProvider)
+        .setPickupPeople(subject: subject, people: next);
+  }
+
+  Future<void> _remove(WidgetRef ref, int idx) async {
+    final all = pickupPeopleFor(subject);
+    final next = [...all]..removeAt(idx);
+    await ref
+        .read(pickupActionsProvider)
+        .setPickupPeople(subject: subject, people: next);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final viewer = ref.watch(viewerProvider);
+    final canEdit = viewer.canEditPickupFor(subject.id);
+    final people = pickupPeopleFor(subject);
+
+    if (people.isEmpty && !canEdit) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        child: Text(
+          'No additional pickup people on file.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < people.length; i++)
+          ListTile(
+            leading: PersonAvatar(name: people[i].name),
+            title: Text(people[i].name),
+            subtitle: Text(
+              [
+                people[i].phone,
+                people[i].notes,
+              ].whereType<String>().where((s) => s.isNotEmpty).join(' · '),
+            ),
+            trailing: canEdit
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Edit',
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        onPressed: () =>
+                            _addOrEdit(context, ref, editIndex: i),
+                      ),
+                      IconButton(
+                        tooltip: 'Remove',
+                        icon: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: theme.colorScheme.error,
+                        ),
+                        onPressed: () => _remove(ref, i),
+                      ),
+                    ],
+                  )
+                : null,
+            onTap: canEdit ? () => _addOrEdit(context, ref, editIndex: i) : null,
+          ),
+        if (canEdit)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => _addOrEdit(context, ref),
+                icon: const Icon(Icons.person_add_alt_1, size: 18),
+                label: const Text('Add pickup person'),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PickupPersonSheet extends StatefulWidget {
+  const _PickupPersonSheet({this.existing});
+
+  final PickupPerson? existing;
+
+  static Future<PickupPerson?> show(
+    BuildContext context, {
+    PickupPerson? existing,
+  }) {
+    return showModalBottomSheet<PickupPerson>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _PickupPersonSheet(existing: existing),
+    );
+  }
+
+  @override
+  State<_PickupPersonSheet> createState() => _PickupPersonSheetState();
+}
+
+class _PickupPersonSheetState extends State<_PickupPersonSheet> {
+  late final TextEditingController _name;
+  late final TextEditingController _phone;
+  late final TextEditingController _notes;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = TextEditingController(text: widget.existing?.name ?? '');
+    _phone = TextEditingController(text: widget.existing?.phone ?? '');
+    _notes = TextEditingController(text: widget.existing?.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _phone.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _name.text.trim();
+    if (name.isEmpty) return;
+    final phone = _phone.text.trim();
+    final notes = _notes.text.trim();
+    Navigator.of(context).pop(
+      PickupPerson(
+        name: name,
+        phone: phone.isEmpty ? null : phone,
+        notes: notes.isEmpty ? null : notes,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                widget.existing == null ? 'Add pickup person' : 'Edit pickup person',
+                style: theme.textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _name,
+                autofocus: widget.existing == null,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone (optional)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notes,
+                textCapitalization: TextCapitalization.sentences,
+                minLines: 2,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Notes (e.g. "Picks up Wednesdays")',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _save,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

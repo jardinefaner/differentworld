@@ -81,6 +81,11 @@ abstract class SubjectCaps {
   static const authorizedPickupGuardianIds = 'authorized_pickup_guardian_ids';
   static const photoVisibility = 'photo_visibility';
 
+  /// Free-form list of additional people authorized to pick up this
+  /// child (beyond the formal guardian rows). Stored as a list of
+  /// maps: [{"name": "...", "phone": "...", "notes": "..."}].
+  static const pickupPeople = 'pickup_people';
+
   // Behavioral / care notes
   static const comfortItems = 'comfort_items';
   static const napRoutine = 'nap_routine';

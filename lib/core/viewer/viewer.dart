@@ -128,6 +128,11 @@ class Viewer {
   bool canEditMember(Member other) =>
       isDirector || other.id == member?.id;
 
+  /// Can edit the authorized-pickup list for a specific subject.
+  /// Default: any staff with [canAuthorizePickup]; guardians of the
+  /// subject (overridden in [GuardianViewer]).
+  bool canEditPickupFor(String subjectId) => canAuthorizePickup;
+
   // ---------------------------------------------------------------------
   // Space-level features (per-program toggles)
   // ---------------------------------------------------------------------
@@ -246,4 +251,8 @@ class GuardianViewer extends Viewer {
   /// they're not rendering data about another family's child.
   bool canSeeSubject(String subjectId) =>
       childSubjectIds.contains(subjectId);
+
+  /// Guardian can edit pickup for their own children.
+  @override
+  bool canEditPickupFor(String subjectId) => canSeeSubject(subjectId);
 }
