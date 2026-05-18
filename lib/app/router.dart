@@ -6,7 +6,7 @@ import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_screen.dart';
-import 'package:differentworld/features/onboarding/create_space_screen.dart';
+import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
@@ -110,7 +110,7 @@ class _Home extends ConsumerWidget {
       error: (err, _) => _ErrorScaffold(error: err),
       data: (member) {
         if (member == null) return const _SyncingScaffold();
-        if (member.spaceId == null) return const CreateSpaceScreen();
+        if (member.spaceId == null) return const JoinOrCreateScreen();
         return const _SignedInHome();
       },
     );

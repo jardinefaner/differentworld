@@ -537,6 +537,16 @@ populating `request.jwt.claims`. Likely candidates:
 
 For now, single-user dev safety is fine.
 
+**Side-effect on RLS tightening.** Anywhere we'd naturally want a
+narrow policy like
+`for delete using (space_id = app.current_space_id() and app.is_director())`
+we have to leave the relaxed `to authenticated using (true)` form
+instead, because the inner check evaluates `auth.uid()` (null) and
+rejects all writes. The known gap: invites can be deleted by any
+authenticated user that knows the row id (low-impact at our scale —
+invites are not high-value targets — but list it among the things to
+re-tighten once JWT claims work).
+
 ### PowerSync `uploadData` must guard against null Supabase session
 `PowerSyncBackendConnector.uploadData` runs **independently** of
 `fetchCredentials`. PowerSync drains the local CRUD queue whenever

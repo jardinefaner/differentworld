@@ -28,4 +28,8 @@ streams:
       - SELECT * FROM guardians          WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM subject_guardians  WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM attendance_records WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
-      - SELECT * FROM invites            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Only stream un-accepted invites. Accepted ones don't need to
+      # round-trip back to every director's device — they just bloat
+      # the local table over time. The acceptance event itself reaches
+      # the director by the members row being updated.
+      - SELECT * FROM invites            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND accepted_at IS NULL

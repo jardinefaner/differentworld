@@ -1,0 +1,140 @@
+import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/invites/invite_code.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
+
+/// Pending (un-accepted, un-expired) invites for a space. Driven by the
+/// local Drift stream — PowerSync replicates the rows down whenever the
+/// signed-in user's space matches.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final pendingInvitesProvider =
+    StreamProvider.autoDispose.family<List<Invite>, String>(
+  (ref, spaceId) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* db.watchPendingInvitesInSpace(spaceId);
+  },
+);
+
+/// Stable expiration presets, surfaced in the create-invite sheet.
+enum InviteExpiry {
+  oneDay,
+  sevenDays,
+  thirtyDays,
+  never,
+}
+
+extension InviteExpiryX on InviteExpiry {
+  String get label => switch (this) {
+        InviteExpiry.oneDay => '1 day',
+        InviteExpiry.sevenDays => '7 days',
+        InviteExpiry.thirtyDays => '30 days',
+        InviteExpiry.never => 'Never',
+      };
+
+  /// Returns the ISO-8601 timestamp to store, or null for "Never".
+  String? expiresAtFromNow() {
+    final now = DateTime.now().toUtc();
+    return switch (this) {
+      InviteExpiry.oneDay => now.add(const Duration(days: 1)).toIso8601String(),
+      InviteExpiry.sevenDays =>
+        now.add(const Duration(days: 7)).toIso8601String(),
+      InviteExpiry.thirtyDays =>
+        now.add(const Duration(days: 30)).toIso8601String(),
+      InviteExpiry.never => null,
+    };
+  }
+}
+
+class InviteActions {
+  InviteActions(this._ref);
+
+  final Ref _ref;
+
+  /// Creates a pending invite. Returns the created `Invite` (with a fresh
+  /// code) so the caller can render the share view immediately.
+  ///
+  /// The local Drift write is optimistic; PowerSync uploads to Supabase
+  /// in the background. The `code` is generated client-side from a
+  /// secure RNG against an unambiguous alphabet — see InviteCode.
+  Future<Invite> create({
+    required String spaceId,
+    required String role,
+    required InviteExpiry expiry,
+    String? email,
+    String? createdBy,
+    String capabilitiesJson = '{}',
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final id = const Uuid().v4();
+    final code = InviteCode.generate();
+    final expiresAt = expiry.expiresAtFromNow();
+    final normalizedEmail = (email == null || email.trim().isEmpty)
+        ? null
+        : email.trim().toLowerCase();
+
+    await db.createInvite(
+      id: id,
+      spaceId: spaceId,
+      role: role,
+      email: normalizedEmail,
+      code: code,
+      createdBy: createdBy,
+      expiresAt: expiresAt,
+      capabilitiesJson: capabilitiesJson,
+    );
+
+    // Return the row we just wrote, freshly read from the DB so the
+    // caller doesn't have to assemble it.
+    return (db.select(db.invites)..where((i) => i.id.equals(id)))
+        .getSingle();
+  }
+
+  Future<void> revoke(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.revokeInvite(id);
+  }
+
+  /// Newcomer-side: redeem an invite. If `code` is null the backend
+  /// matches by the signed-in user's auth.users.email (the magic path).
+  ///
+  /// Calls the Supabase RPC directly because the consumption is a
+  /// server-only transaction (members.space_id update + invites.accepted_at
+  /// in one shot) and a Drift-local optimistic version doesn't make
+  /// sense. This is the one place outside auth where the UI talks to
+  /// Supabase directly.
+  Future<void> redeem({String? code}) async {
+    final supabase = Supabase.instance.client;
+    try {
+      await supabase.rpc<dynamic>(
+        'accept_invite',
+        params: {'invite_code': code},
+      );
+    } on PostgrestException catch (e) {
+      // Surface 'No matching active invite' as a clean exception the
+      // UI can branch on. Any other Postgrest error bubbles up.
+      if (e.message.contains('No matching active invite')) {
+        throw const NoMatchingInviteException();
+      }
+      debugPrint(
+        '[invites] accept_invite rpc failed: ${e.message} code=${e.code}',
+      );
+      rethrow;
+    }
+  }
+}
+
+final inviteActionsProvider = Provider<InviteActions>(InviteActions.new);
+
+/// Thrown when the backend reports no active invite for the signed-in
+/// user or the provided code. The newcomer flow catches this and asks
+/// for a code.
+class NoMatchingInviteException implements Exception {
+  const NoMatchingInviteException();
+
+  @override
+  String toString() => 'NoMatchingInviteException';
+}

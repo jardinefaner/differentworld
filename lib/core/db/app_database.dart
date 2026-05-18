@@ -88,8 +88,25 @@ class AttendanceRecords extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+class Invites extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get email => text().nullable()();
+  TextColumn get code => text().nullable()();
+  TextColumn get role => text()();
+  TextColumn get capabilities => text()();
+  TextColumn get createdBy => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get expiresAt => text().nullable()();
+  TextColumn get acceptedAt => text().nullable()();
+  TextColumn get acceptedBy => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
-  tables: [Spaces, Members, Groups, Subjects, AttendanceRecords],
+  tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -395,5 +412,55 @@ class AppDatabase extends _$AppDatabase {
         );
       }
     });
+  }
+
+  // -- Invites --------------------------------------------------------------
+
+  /// Watch all un-accepted invites for a space. Expired ones are kept
+  /// in the list intentionally — the UI labels them "Expired" so the
+  /// director can revoke them. (If we filtered by `expires_at > now()`
+  /// here, the predicate would be captured at subscription time and
+  /// not re-evaluate as the wall clock moves; rows would stick around
+  /// past their expiry until the stream is re-subscribed.)
+  Stream<List<Invite>> watchPendingInvitesInSpace(String spaceId) {
+    return (select(invites)
+          ..where(
+            (i) => i.spaceId.equals(spaceId) & i.acceptedAt.isNull(),
+          )
+          ..orderBy([(i) => OrderingTerm.desc(i.createdAt)]))
+        .watch();
+  }
+
+  Future<void> createInvite({
+    required String id,
+    required String spaceId,
+    required String role,
+    String? email,
+    String? code,
+    String? createdBy,
+    String? expiresAt,
+    String capabilitiesJson = '{}',
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await into(invites).insert(
+      InvitesCompanion.insert(
+        id: id,
+        spaceId: spaceId,
+        role: role,
+        email: email == null ? const Value.absent() : Value(email),
+        code: code == null ? const Value.absent() : Value(code),
+        createdBy: createdBy == null ? const Value.absent() : Value(createdBy),
+        expiresAt: expiresAt == null ? const Value.absent() : Value(expiresAt),
+        capabilities: capabilitiesJson,
+        createdAt: now,
+      ),
+    );
+  }
+
+  /// "Revoke" = delete the row. The unique constraint on `code` releases
+  /// the code for future reuse; the recipient (if any) won't see it
+  /// because their sync stream filters to their own space.
+  Future<void> revokeInvite(String id) async {
+    await (delete(invites)..where((i) => i.id.equals(id))).go();
   }
 }

@@ -2810,6 +2810,668 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   }
 }
 
+class $InvitesTable extends Invites with TableInfo<$InvitesTable, Invite> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InvitesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _codeMeta = const VerificationMeta('code');
+  @override
+  late final GeneratedColumn<String> code = GeneratedColumn<String>(
+    'code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  @override
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
+    'capabilities',
+  );
+  @override
+  late final GeneratedColumn<String> capabilities = GeneratedColumn<String>(
+    'capabilities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expiresAtMeta = const VerificationMeta(
+    'expiresAt',
+  );
+  @override
+  late final GeneratedColumn<String> expiresAt = GeneratedColumn<String>(
+    'expires_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _acceptedAtMeta = const VerificationMeta(
+    'acceptedAt',
+  );
+  @override
+  late final GeneratedColumn<String> acceptedAt = GeneratedColumn<String>(
+    'accepted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _acceptedByMeta = const VerificationMeta(
+    'acceptedBy',
+  );
+  @override
+  late final GeneratedColumn<String> acceptedBy = GeneratedColumn<String>(
+    'accepted_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    email,
+    code,
+    role,
+    capabilities,
+    createdBy,
+    createdAt,
+    expiresAt,
+    acceptedAt,
+    acceptedBy,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'invites';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Invite> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('code')) {
+      context.handle(
+        _codeMeta,
+        code.isAcceptableOrUnknown(data['code']!, _codeMeta),
+      );
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_roleMeta);
+    }
+    if (data.containsKey('capabilities')) {
+      context.handle(
+        _capabilitiesMeta,
+        capabilities.isAcceptableOrUnknown(
+          data['capabilities']!,
+          _capabilitiesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capabilitiesMeta);
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('expires_at')) {
+      context.handle(
+        _expiresAtMeta,
+        expiresAt.isAcceptableOrUnknown(data['expires_at']!, _expiresAtMeta),
+      );
+    }
+    if (data.containsKey('accepted_at')) {
+      context.handle(
+        _acceptedAtMeta,
+        acceptedAt.isAcceptableOrUnknown(data['accepted_at']!, _acceptedAtMeta),
+      );
+    }
+    if (data.containsKey('accepted_by')) {
+      context.handle(
+        _acceptedByMeta,
+        acceptedBy.isAcceptableOrUnknown(data['accepted_by']!, _acceptedByMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Invite map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Invite(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      code: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}code'],
+      ),
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      capabilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capabilities'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      expiresAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expires_at'],
+      ),
+      acceptedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accepted_at'],
+      ),
+      acceptedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accepted_by'],
+      ),
+    );
+  }
+
+  @override
+  $InvitesTable createAlias(String alias) {
+    return $InvitesTable(attachedDatabase, alias);
+  }
+}
+
+class Invite extends DataClass implements Insertable<Invite> {
+  final String id;
+  final String spaceId;
+  final String? email;
+  final String? code;
+  final String role;
+  final String capabilities;
+  final String? createdBy;
+  final String createdAt;
+  final String? expiresAt;
+  final String? acceptedAt;
+  final String? acceptedBy;
+  const Invite({
+    required this.id,
+    required this.spaceId,
+    this.email,
+    this.code,
+    required this.role,
+    required this.capabilities,
+    this.createdBy,
+    required this.createdAt,
+    this.expiresAt,
+    this.acceptedAt,
+    this.acceptedBy,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || code != null) {
+      map['code'] = Variable<String>(code);
+    }
+    map['role'] = Variable<String>(role);
+    map['capabilities'] = Variable<String>(capabilities);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    if (!nullToAbsent || expiresAt != null) {
+      map['expires_at'] = Variable<String>(expiresAt);
+    }
+    if (!nullToAbsent || acceptedAt != null) {
+      map['accepted_at'] = Variable<String>(acceptedAt);
+    }
+    if (!nullToAbsent || acceptedBy != null) {
+      map['accepted_by'] = Variable<String>(acceptedBy);
+    }
+    return map;
+  }
+
+  InvitesCompanion toCompanion(bool nullToAbsent) {
+    return InvitesCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      code: code == null && nullToAbsent ? const Value.absent() : Value(code),
+      role: Value(role),
+      capabilities: Value(capabilities),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      createdAt: Value(createdAt),
+      expiresAt: expiresAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expiresAt),
+      acceptedAt: acceptedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(acceptedAt),
+      acceptedBy: acceptedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(acceptedBy),
+    );
+  }
+
+  factory Invite.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Invite(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      email: serializer.fromJson<String?>(json['email']),
+      code: serializer.fromJson<String?>(json['code']),
+      role: serializer.fromJson<String>(json['role']),
+      capabilities: serializer.fromJson<String>(json['capabilities']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      expiresAt: serializer.fromJson<String?>(json['expiresAt']),
+      acceptedAt: serializer.fromJson<String?>(json['acceptedAt']),
+      acceptedBy: serializer.fromJson<String?>(json['acceptedBy']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'email': serializer.toJson<String?>(email),
+      'code': serializer.toJson<String?>(code),
+      'role': serializer.toJson<String>(role),
+      'capabilities': serializer.toJson<String>(capabilities),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'expiresAt': serializer.toJson<String?>(expiresAt),
+      'acceptedAt': serializer.toJson<String?>(acceptedAt),
+      'acceptedBy': serializer.toJson<String?>(acceptedBy),
+    };
+  }
+
+  Invite copyWith({
+    String? id,
+    String? spaceId,
+    Value<String?> email = const Value.absent(),
+    Value<String?> code = const Value.absent(),
+    String? role,
+    String? capabilities,
+    Value<String?> createdBy = const Value.absent(),
+    String? createdAt,
+    Value<String?> expiresAt = const Value.absent(),
+    Value<String?> acceptedAt = const Value.absent(),
+    Value<String?> acceptedBy = const Value.absent(),
+  }) => Invite(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    email: email.present ? email.value : this.email,
+    code: code.present ? code.value : this.code,
+    role: role ?? this.role,
+    capabilities: capabilities ?? this.capabilities,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+    expiresAt: expiresAt.present ? expiresAt.value : this.expiresAt,
+    acceptedAt: acceptedAt.present ? acceptedAt.value : this.acceptedAt,
+    acceptedBy: acceptedBy.present ? acceptedBy.value : this.acceptedBy,
+  );
+  Invite copyWithCompanion(InvitesCompanion data) {
+    return Invite(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      email: data.email.present ? data.email.value : this.email,
+      code: data.code.present ? data.code.value : this.code,
+      role: data.role.present ? data.role.value : this.role,
+      capabilities: data.capabilities.present
+          ? data.capabilities.value
+          : this.capabilities,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
+      acceptedAt: data.acceptedAt.present
+          ? data.acceptedAt.value
+          : this.acceptedAt,
+      acceptedBy: data.acceptedBy.present
+          ? data.acceptedBy.value
+          : this.acceptedBy,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Invite(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('email: $email, ')
+          ..write('code: $code, ')
+          ..write('role: $role, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('acceptedAt: $acceptedAt, ')
+          ..write('acceptedBy: $acceptedBy')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    email,
+    code,
+    role,
+    capabilities,
+    createdBy,
+    createdAt,
+    expiresAt,
+    acceptedAt,
+    acceptedBy,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Invite &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.email == this.email &&
+          other.code == this.code &&
+          other.role == this.role &&
+          other.capabilities == this.capabilities &&
+          other.createdBy == this.createdBy &&
+          other.createdAt == this.createdAt &&
+          other.expiresAt == this.expiresAt &&
+          other.acceptedAt == this.acceptedAt &&
+          other.acceptedBy == this.acceptedBy);
+}
+
+class InvitesCompanion extends UpdateCompanion<Invite> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String?> email;
+  final Value<String?> code;
+  final Value<String> role;
+  final Value<String> capabilities;
+  final Value<String?> createdBy;
+  final Value<String> createdAt;
+  final Value<String?> expiresAt;
+  final Value<String?> acceptedAt;
+  final Value<String?> acceptedBy;
+  final Value<int> rowid;
+  const InvitesCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.email = const Value.absent(),
+    this.code = const Value.absent(),
+    this.role = const Value.absent(),
+    this.capabilities = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.acceptedAt = const Value.absent(),
+    this.acceptedBy = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  InvitesCompanion.insert({
+    required String id,
+    required String spaceId,
+    this.email = const Value.absent(),
+    this.code = const Value.absent(),
+    required String role,
+    required String capabilities,
+    this.createdBy = const Value.absent(),
+    required String createdAt,
+    this.expiresAt = const Value.absent(),
+    this.acceptedAt = const Value.absent(),
+    this.acceptedBy = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       role = Value(role),
+       capabilities = Value(capabilities),
+       createdAt = Value(createdAt);
+  static Insertable<Invite> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? email,
+    Expression<String>? code,
+    Expression<String>? role,
+    Expression<String>? capabilities,
+    Expression<String>? createdBy,
+    Expression<String>? createdAt,
+    Expression<String>? expiresAt,
+    Expression<String>? acceptedAt,
+    Expression<String>? acceptedBy,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (email != null) 'email': email,
+      if (code != null) 'code': code,
+      if (role != null) 'role': role,
+      if (capabilities != null) 'capabilities': capabilities,
+      if (createdBy != null) 'created_by': createdBy,
+      if (createdAt != null) 'created_at': createdAt,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (acceptedAt != null) 'accepted_at': acceptedAt,
+      if (acceptedBy != null) 'accepted_by': acceptedBy,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  InvitesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String?>? email,
+    Value<String?>? code,
+    Value<String>? role,
+    Value<String>? capabilities,
+    Value<String?>? createdBy,
+    Value<String>? createdAt,
+    Value<String?>? expiresAt,
+    Value<String?>? acceptedAt,
+    Value<String?>? acceptedBy,
+    Value<int>? rowid,
+  }) {
+    return InvitesCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      email: email ?? this.email,
+      code: code ?? this.code,
+      role: role ?? this.role,
+      capabilities: capabilities ?? this.capabilities,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      acceptedAt: acceptedAt ?? this.acceptedAt,
+      acceptedBy: acceptedBy ?? this.acceptedBy,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (code.present) {
+      map['code'] = Variable<String>(code.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
+    if (capabilities.present) {
+      map['capabilities'] = Variable<String>(capabilities.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (expiresAt.present) {
+      map['expires_at'] = Variable<String>(expiresAt.value);
+    }
+    if (acceptedAt.present) {
+      map['accepted_at'] = Variable<String>(acceptedAt.value);
+    }
+    if (acceptedBy.present) {
+      map['accepted_by'] = Variable<String>(acceptedBy.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InvitesCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('email: $email, ')
+          ..write('code: $code, ')
+          ..write('role: $role, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('acceptedAt: $acceptedAt, ')
+          ..write('acceptedBy: $acceptedBy, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2819,6 +3481,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SubjectsTable subjects = $SubjectsTable(this);
   late final $AttendanceRecordsTable attendanceRecords =
       $AttendanceRecordsTable(this);
+  late final $InvitesTable invites = $InvitesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2829,6 +3492,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     groups,
     subjects,
     attendanceRecords,
+    invites,
   ];
 }
 
@@ -4215,6 +4879,320 @@ typedef $$AttendanceRecordsTableProcessedTableManager =
       AttendanceRecord,
       PrefetchHooks Function()
     >;
+typedef $$InvitesTableCreateCompanionBuilder =
+    InvitesCompanion Function({
+      required String id,
+      required String spaceId,
+      Value<String?> email,
+      Value<String?> code,
+      required String role,
+      required String capabilities,
+      Value<String?> createdBy,
+      required String createdAt,
+      Value<String?> expiresAt,
+      Value<String?> acceptedAt,
+      Value<String?> acceptedBy,
+      Value<int> rowid,
+    });
+typedef $$InvitesTableUpdateCompanionBuilder =
+    InvitesCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String?> email,
+      Value<String?> code,
+      Value<String> role,
+      Value<String> capabilities,
+      Value<String?> createdBy,
+      Value<String> createdAt,
+      Value<String?> expiresAt,
+      Value<String?> acceptedAt,
+      Value<String?> acceptedBy,
+      Value<int> rowid,
+    });
+
+class $$InvitesTableFilterComposer
+    extends Composer<_$AppDatabase, $InvitesTable> {
+  $$InvitesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get code => $composableBuilder(
+    column: $table.code,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get acceptedAt => $composableBuilder(
+    column: $table.acceptedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get acceptedBy => $composableBuilder(
+    column: $table.acceptedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$InvitesTableOrderingComposer
+    extends Composer<_$AppDatabase, $InvitesTable> {
+  $$InvitesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get code => $composableBuilder(
+    column: $table.code,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get acceptedAt => $composableBuilder(
+    column: $table.acceptedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get acceptedBy => $composableBuilder(
+    column: $table.acceptedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$InvitesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InvitesTable> {
+  $$InvitesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get code =>
+      $composableBuilder(column: $table.code, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get expiresAt =>
+      $composableBuilder(column: $table.expiresAt, builder: (column) => column);
+
+  GeneratedColumn<String> get acceptedAt => $composableBuilder(
+    column: $table.acceptedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get acceptedBy => $composableBuilder(
+    column: $table.acceptedBy,
+    builder: (column) => column,
+  );
+}
+
+class $$InvitesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $InvitesTable,
+          Invite,
+          $$InvitesTableFilterComposer,
+          $$InvitesTableOrderingComposer,
+          $$InvitesTableAnnotationComposer,
+          $$InvitesTableCreateCompanionBuilder,
+          $$InvitesTableUpdateCompanionBuilder,
+          (Invite, BaseReferences<_$AppDatabase, $InvitesTable, Invite>),
+          Invite,
+          PrefetchHooks Function()
+        > {
+  $$InvitesTableTableManager(_$AppDatabase db, $InvitesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$InvitesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InvitesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InvitesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> code = const Value.absent(),
+                Value<String> role = const Value.absent(),
+                Value<String> capabilities = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String?> expiresAt = const Value.absent(),
+                Value<String?> acceptedAt = const Value.absent(),
+                Value<String?> acceptedBy = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => InvitesCompanion(
+                id: id,
+                spaceId: spaceId,
+                email: email,
+                code: code,
+                role: role,
+                capabilities: capabilities,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                expiresAt: expiresAt,
+                acceptedAt: acceptedAt,
+                acceptedBy: acceptedBy,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                Value<String?> email = const Value.absent(),
+                Value<String?> code = const Value.absent(),
+                required String role,
+                required String capabilities,
+                Value<String?> createdBy = const Value.absent(),
+                required String createdAt,
+                Value<String?> expiresAt = const Value.absent(),
+                Value<String?> acceptedAt = const Value.absent(),
+                Value<String?> acceptedBy = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => InvitesCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                email: email,
+                code: code,
+                role: role,
+                capabilities: capabilities,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                expiresAt: expiresAt,
+                acceptedAt: acceptedAt,
+                acceptedBy: acceptedBy,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$InvitesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $InvitesTable,
+      Invite,
+      $$InvitesTableFilterComposer,
+      $$InvitesTableOrderingComposer,
+      $$InvitesTableAnnotationComposer,
+      $$InvitesTableCreateCompanionBuilder,
+      $$InvitesTableUpdateCompanionBuilder,
+      (Invite, BaseReferences<_$AppDatabase, $InvitesTable, Invite>),
+      Invite,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4229,4 +5207,6 @@ class $AppDatabaseManager {
       $$SubjectsTableTableManager(_db, _db.subjects);
   $$AttendanceRecordsTableTableManager get attendanceRecords =>
       $$AttendanceRecordsTableTableManager(_db, _db.attendanceRecords);
+  $$InvitesTableTableManager get invites =>
+      $$InvitesTableTableManager(_db, _db.invites);
 }
