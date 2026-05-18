@@ -682,12 +682,13 @@ class _AttendanceDot extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               '${date.day}',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
                 fontSize: 10,
+                height: 1,
               ),
             ),
           ],
