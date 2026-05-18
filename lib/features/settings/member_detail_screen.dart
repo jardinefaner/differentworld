@@ -2,6 +2,8 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -79,6 +81,17 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                     name: member.displayName,
                     photoUrl: member.avatarUrl,
                     radius: 40,
+                    // Director can change anyone's photo; everyone else
+                    // can change their own.
+                    onTap: (isDirector || me?.id == member.id)
+                        ? () => PhotoSourceSheet.show(
+                              context,
+                              entity: PhotoEntity.member,
+                              entityId: member.id,
+                              hasExisting: member.avatarUrl != null,
+                              displayName: member.displayName,
+                            )
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 8),

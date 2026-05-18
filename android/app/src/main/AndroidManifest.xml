@@ -1,4 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Camera capture for person avatars. Modern Android (API 33+)
+         uses the system Photo Picker which needs no permissions; the
+         CAMERA permission is required only when image_picker's source
+         is ImageSource.camera. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:label="differentworld"
         android:name="${applicationName}"

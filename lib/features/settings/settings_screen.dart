@@ -1,5 +1,7 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +43,15 @@ class SettingsScreen extends ConsumerWidget {
               leading: PersonAvatar(
                 name: member?.displayName ?? '?',
                 photoUrl: member?.avatarUrl,
+                onTap: member == null
+                    ? null
+                    : () => PhotoSourceSheet.show(
+                          context,
+                          entity: PhotoEntity.member,
+                          entityId: member.id,
+                          hasExisting: member.avatarUrl != null,
+                          displayName: member.displayName,
+                        ),
               ),
               title: Text(member?.displayName ?? '—'),
               subtitle: Text(

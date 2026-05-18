@@ -93,5 +93,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Photo capture for person avatars (staff + students). -->
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo for your staff or student profile.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a photo for your staff or student profile.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app does not record audio.</string>
 </dict>
 </plist>

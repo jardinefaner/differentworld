@@ -41,6 +41,11 @@ dependencies:
   app_links: ^6.4.1
   intl: ^0.20.2
 
+  # Photo capture + display
+  image_picker: ^1.1.2
+  image: ^4.5.4
+  cached_network_image: ^3.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

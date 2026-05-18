@@ -260,6 +260,30 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// Set or clear the member's avatar_url. Pass null to remove the
+  /// photo (the underlying Storage object stays — orphans are cheaper
+  /// than risking a delete on a still-referenced path).
+  Future<void> updateMemberAvatarUrl(String id, String? url) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(members)..where((m) => m.id.equals(id))).write(
+      MembersCompanion(
+        avatarUrl: Value(url),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Set or clear the subject's photo_url.
+  Future<void> updateSubjectPhotoUrl(String id, String? url) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(subjects)..where((s) => s.id.equals(id))).write(
+      SubjectsCompanion(
+        photoUrl: Value(url),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   Future<void> updateSubjectCapabilities(
     String id,
     String capabilitiesJson,

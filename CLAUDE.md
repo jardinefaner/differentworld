@@ -766,6 +766,13 @@ For exploratory / scoping conversations: no gate, just answer.
   OAuth URL)
 - **Background photo upload + thumbnail generation** — when we wire
   observations
+- **Flip `person-photos` Storage bucket private + signed URLs** — currently
+  public-with-obscurity (UUID paths inside `<space_id>/` prefix). CLAUDE.md
+  binary-media contract requires private bucket + signed URLs for
+  student photos. Migrations
+  `20260518000003_person_photos_bucket.sql` /
+  `20260518000004_person_photos_space_gate.sql` ship the v0.1
+  compromise; flip before any external rollout.
 
 ---
 

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Renders a circular avatar for a person (member, subject, guardian).
@@ -50,30 +51,34 @@ class PersonAvatar extends StatelessWidget {
         ? Colors.white
         : Colors.black87;
 
-    final avatar = CircleAvatar(
-      radius: radius,
-      backgroundColor: tint,
-      foregroundColor: fg,
-      backgroundImage:
-          hasPhoto ? NetworkImage(photoUrl!) : null,
-      onBackgroundImageError: hasPhoto
-          ? (_, _) {
-              // Image failed to load. NetworkImage's error handler
-              // doesn't give us a way to swap to the initials path
-              // declaratively, but the foreground Text below will
-              // remain visible underneath the failed image area.
-            }
-          : null,
-      child: hasPhoto
-          ? null
-          : Text(
-              _initials(name),
-              style: TextStyle(
-                fontSize: radius * 0.8,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+    final fallback = Container(
+      width: radius * 2,
+      height: radius * 2,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
+      child: Text(
+        _initials(name),
+        style: TextStyle(
+          fontSize: radius * 0.8,
+          fontWeight: FontWeight.w600,
+          color: fg,
+        ),
+      ),
     );
+
+    final avatar = hasPhoto
+        ? ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: photoUrl!,
+              width: radius * 2,
+              height: radius * 2,
+              fit: BoxFit.cover,
+              placeholder: (_, _) => fallback,
+              errorWidget: (_, _, _) => fallback,
+              fadeInDuration: const Duration(milliseconds: 200),
+            ),
+          )
+        : fallback;
 
     if (onTap == null) return avatar;
 

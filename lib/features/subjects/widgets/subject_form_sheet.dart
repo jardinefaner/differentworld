@@ -1,7 +1,10 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -221,6 +224,27 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
+                  // Photo affordance is only useful once we have an id
+                  // to attach the photo to — i.e. edit mode. New
+                  // students get a photo prompt after they're saved.
+                  if (_isEdit) ...[
+                    Center(
+                      child: PersonAvatar(
+                        name: '${_firstName.text} ${_lastName.text}',
+                        photoUrl: widget.subject?.photoUrl,
+                        radius: 40,
+                        onTap: () => PhotoSourceSheet.show(
+                          context,
+                          entity: PhotoEntity.subject,
+                          entityId: widget.subject!.id,
+                          hasExisting: widget.subject?.photoUrl != null,
+                          displayName:
+                              '${widget.subject!.firstName} ${widget.subject!.lastName}',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   Row(
                     children: [
                       Expanded(
