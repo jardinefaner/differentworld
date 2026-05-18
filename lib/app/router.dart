@@ -9,6 +9,7 @@ import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
+import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
@@ -16,6 +17,7 @@ import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
+import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,11 +50,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: 'groups/new',
+            builder: (_, _) => const GroupEditScreen(),
+          ),
+          GoRoute(
             path: 'groups/:id',
             builder: (_, state) => GroupDetailScreen(
               groupId: state.pathParameters['id']!,
             ),
             routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (_, state) => GroupEditScreen(
+                  groupId: state.pathParameters['id'],
+                ),
+              ),
               GoRoute(
                 path: 'attendance',
                 builder: (_, state) => AttendanceScreen(
@@ -66,10 +78,25 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ),
               GoRoute(
+                path: 'students/new',
+                builder: (_, state) => SubjectEditScreen(
+                  groupId: state.pathParameters['id']!,
+                ),
+              ),
+              GoRoute(
                 path: 'students/:sid',
                 builder: (_, state) => SubjectDetailScreen(
                   subjectId: state.pathParameters['sid']!,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => SubjectEditScreen(
+                      groupId: state.pathParameters['id']!,
+                      subjectId: state.pathParameters['sid'],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

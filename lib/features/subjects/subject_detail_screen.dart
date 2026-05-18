@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
@@ -12,13 +14,13 @@ import 'package:differentworld/features/entries/widgets/observation_form_sheet.d
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/features/subjects/widgets/subject_form_sheet.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 /// Per-child timeline. Same screen for staff (reached via classroom →
@@ -58,11 +60,13 @@ class SubjectDetailScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Edit',
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => SubjectFormSheet.show(
-              context,
-              groupId: subjectAsync.value!.groupId ?? '',
-              subject: subjectAsync.value,
-            ),
+            onPressed: () {
+              final gid = subjectAsync.value!.groupId ?? '';
+              if (gid.isEmpty) return;
+              unawaited(
+                context.push('/groups/$gid/students/$subjectId/edit'),
+              );
+            },
           ),
         const SyncStatusIndicator(),
       ],

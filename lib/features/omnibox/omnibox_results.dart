@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
-import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -95,7 +94,7 @@ class OmniboxResults extends ConsumerWidget {
         icon: Icons.add_circle_outline,
         keywords: const ['new group', 'create room', 'classroom'],
         onSelect: (ctx, ref) {
-          unawaited(GroupFormSheet.show(ctx));
+          unawaited(ctx.push('/groups/new'));
         },
       ),
       _Suggestion(

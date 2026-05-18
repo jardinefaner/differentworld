@@ -5,7 +5,6 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
-import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:differentworld/features/omnibox/omnibox_results.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
@@ -113,7 +112,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         action: viewer.canManageProgram
                             ? FilledButton.icon(
                                 onPressed: () =>
-                                    GroupFormSheet.show(context),
+                                    context.push('/groups/new'),
                                 icon: const Icon(Icons.add),
                                 label: const Text('Add classroom'),
                               )
@@ -140,7 +139,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               data: (groups) => groups.isEmpty
                   ? null
                   : FloatingActionButton.extended(
-                      onPressed: () => GroupFormSheet.show(context),
+                      onPressed: () => context.push('/groups/new'),
                       icon: const Icon(Icons.add),
                       label: const Text('Classroom'),
                     ),

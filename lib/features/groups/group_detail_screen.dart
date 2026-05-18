@@ -4,9 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/features/subjects/widgets/subject_form_sheet.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -49,7 +47,7 @@ class GroupDetailScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Edit classroom',
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () => GroupFormSheet.show(context, group: group),
+            onPressed: () => context.push('/groups/$groupId/edit'),
           ),
         const SyncStatusIndicator(),
       ],
@@ -68,10 +66,8 @@ class GroupDetailScreen extends ConsumerWidget {
                   'Add your first student to start taking attendance '
                   'and logging observations.',
               action: FilledButton.icon(
-                onPressed: () => SubjectFormSheet.show(
-                  context,
-                  groupId: groupId,
-                ),
+                onPressed: () =>
+                    context.push('/groups/$groupId/students/new'),
                 icon: const Icon(Icons.add),
                 label: const Text('Add student'),
               ),
@@ -101,10 +97,8 @@ class GroupDetailScreen extends ConsumerWidget {
         data: (s) => (s.isEmpty || !viewer.canManageProgram)
             ? null
             : FloatingActionButton.extended(
-                onPressed: () => SubjectFormSheet.show(
-                  context,
-                  groupId: groupId,
-                ),
+                onPressed: () =>
+                    context.push('/groups/$groupId/students/new'),
                 icon: const Icon(Icons.add),
                 label: const Text('Student'),
               ),
