@@ -29,6 +29,14 @@ class GroupDayState {
   int get markedCount => counts.values.fold<int>(0, (a, b) => a + b);
   int get unmarked => totalSubjects - markedCount;
   bool get isComplete => totalSubjects > 0 && unmarked == 0;
+
+  /// Late or absent count today. Drives the "flag" badge on the
+  /// classroom card.
+  int get flagCount =>
+      (counts[AttendanceStatus.late] ?? 0) +
+      (counts[AttendanceStatus.absent] ?? 0);
+
+  bool get hasFlag => flagCount > 0;
 }
 
 /// Reactive day state for one Group on today's date.

@@ -345,11 +345,28 @@ class _GroupTodayCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          group.name,
-                          style: theme.textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                group.name,
+                                style: theme.textTheme.titleMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // Flag badge: there's at least one late /
+                            // absent student today in this room.
+                            stateAsync.maybeWhen(
+                              data: (s) => s.hasFlag
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: _FlagBadge(count: s.flagCount),
+                                    )
+                                  : const SizedBox.shrink(),
+                              orElse: () => const SizedBox.shrink(),
+                            ),
+                          ],
                         ),
                         if (group.ageRange != null)
                           Text(
@@ -512,6 +529,45 @@ class _StateLine extends StatelessWidget {
       text,
       style: theme.textTheme.bodyMedium?.copyWith(
         color: color ?? theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+/// Small amber capsule shown next to a classroom name when there's at
+/// least one late / absent student today. Draws the eye for the
+/// staff Today scan.
+class _FlagBadge extends StatelessWidget {
+  const _FlagBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tint = scheme.error;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: tint.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.flag, size: 12, color: tint),
+          const SizedBox(width: 3),
+          Text(
+            '$count',
+            style: TextStyle(
+              color: tint,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
       ),
     );
   }

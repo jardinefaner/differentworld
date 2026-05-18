@@ -127,44 +127,70 @@ class _ChildCard extends ConsumerWidget {
         ? null
         : AttendanceStatus.fromDb(myRecord.status);
 
+    final flagged = status == AttendanceStatus.late ||
+        status == AttendanceStatus.absent;
+    final scheme = theme.colorScheme;
+
     return Card(
       clipBehavior: Clip.antiAlias,
+      // Late / absent → tinted card with a colored top edge so the
+      // flag is unmissable when a parent glances at the family Today.
+      color: flagged
+          ? status!.color(scheme).withValues(alpha: 0.08)
+          : null,
+      shape: flagged
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: status!.color(scheme).withValues(alpha: 0.45),
+              ),
+            )
+          : null,
       child: InkWell(
         onTap: () => context.push('/children/${child.id}'),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
-          children: [
-            PersonAvatar(
-              name: '${child.firstName} ${child.lastName}',
-              photoUrl: child.photoUrl,
-              radius: 26,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${child.firstName} ${child.lastName}',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _statusLabel(status),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: status == null
-                          ? theme.colorScheme.onSurfaceVariant
-                          : status.color(theme.colorScheme),
-                    ),
-                  ),
-                ],
+            children: [
+              PersonAvatar(
+                name: '${child.firstName} ${child.lastName}',
+                photoUrl: child.photoUrl,
+                radius: 26,
               ),
-            ),
-            if (status != null)
-              Icon(status.icon, color: status.color(theme.colorScheme)),
-          ],
-        ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${child.firstName} ${child.lastName}',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ),
+                        if (flagged && status != null)
+                          Icon(Icons.flag, size: 16, color: status.color(scheme)),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _statusLabel(status),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: status == null
+                            ? scheme.onSurfaceVariant
+                            : status.color(scheme),
+                        fontWeight: flagged ? FontWeight.w600 : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (status != null)
+                Icon(status.icon, color: status.color(scheme)),
+            ],
+          ),
         ),
       ),
     );
