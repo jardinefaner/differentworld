@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
@@ -32,8 +32,9 @@ class TodayScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final member = ref.watch(currentMemberProvider).value;
-    final space = ref.watch(currentSpaceProvider).value;
+    final viewer = ref.watch(viewerProvider);
+    final member = viewer.member;
+    final space = viewer.space;
     final groupsAsync = ref.watch(groupsProvider);
 
     return EdgeScaffold(
@@ -63,20 +64,32 @@ class TodayScreen extends ConsumerWidget {
             return EmptyState(
               icon: Icons.meeting_room_outlined,
               title: 'No classrooms yet',
-              message: 'Add your first classroom to start taking '
-                  'attendance and logging the day.',
-              action: FilledButton.icon(
-                onPressed: () => GroupFormSheet.show(context),
-                icon: const Icon(Icons.add),
-                label: const Text('Add classroom'),
-              ),
+              message: viewer.canManageProgram
+                  ? 'Add your first classroom to start taking attendance '
+                      'and logging the day.'
+                  : 'Your director will set up classrooms here. '
+                      'Check back later.',
+              action: viewer.canManageProgram
+                  ? FilledButton.icon(
+                      onPressed: () => GroupFormSheet.show(context),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add classroom'),
+                    )
+                  : null,
             );
           }
-          return _TodayBody(member: member, groups: groups, space: space);
+          return _TodayBody(
+            member: member,
+            groups: groups,
+            space: space,
+            viewer: viewer,
+          );
         },
       ),
       floatingActionButton: groupsAsync.maybeWhen(
-        data: (groups) => groups.isEmpty
+        // FAB only for viewers who actually manage the program. Teachers
+        // see the rooms but can't create new ones.
+        data: (groups) => (groups.isEmpty || !viewer.canManageProgram)
             ? null
             : FloatingActionButton.extended(
                 onPressed: () => GroupFormSheet.show(context),
@@ -161,11 +174,13 @@ class _TodayBody extends StatelessWidget {
     required this.member,
     required this.groups,
     required this.space,
+    required this.viewer,
   });
 
   final Member? member;
   final List<Group> groups;
   final Space? space;
+  final Viewer viewer;
 
   @override
   Widget build(BuildContext context) {
@@ -184,8 +199,11 @@ class _TodayBody extends StatelessWidget {
               title: space?.name ?? 'Today',
               subtitle: _greetingLine(member),
             ),
-            const _ChecklistCallToAction(),
-            const SizedBox(height: 24),
+            // Morning Checklist is only useful to staff who can
+            // actually mark daily routines — hide for read-only viewers.
+            if (viewer.isDailyLogger) const _ChecklistCallToAction(),
+            if (viewer.isDailyLogger) const SizedBox(height: 24)
+            else const SizedBox(height: 8),
             _SectionHeader(
               label: 'Your classrooms',
               count: groups.length,

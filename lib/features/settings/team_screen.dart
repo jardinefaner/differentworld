@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/invites/widgets/invite_create_sheet.dart';
 import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
@@ -20,9 +21,11 @@ class TeamScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final me = ref.watch(currentMemberProvider).value;
-    final spaceId = me?.spaceId;
-    final isDirector = me?.role == 'director';
+    final viewer = ref.watch(viewerProvider);
+    final spaceId = viewer.spaceId;
+    // "Invite teammates" is the cap, not the role — a lead-teacher
+    // with canInviteStaff = true also gets the invite FAB.
+    final canInvite = viewer.canInviteStaff;
 
     if (spaceId == null) {
       return const EdgeScaffold(
@@ -60,7 +63,7 @@ class TeamScreen extends ConsumerWidget {
                   for (final m in members) _MemberTile(member: m),
                 const SizedBox(height: 16),
                 const Divider(),
-                _PendingInvitesHeader(isDirector: isDirector),
+                _PendingInvitesHeader(canInvite: canInvite),
                 invitesAsync.when(
                   loading: () => const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -75,7 +78,7 @@ class TeamScreen extends ConsumerWidget {
                       return Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                         child: Text(
-                          isDirector
+                          canInvite
                               ? 'No pending invites. Tap the button below '
                                   'to invite a teammate.'
                               : 'No pending invites.',
@@ -88,7 +91,7 @@ class TeamScreen extends ConsumerWidget {
                     return Column(
                       children: [
                         for (final inv in invites)
-                          _InviteTile(invite: inv, viewerIsDirector: isDirector),
+                          _InviteTile(invite: inv, viewerCanInvite: canInvite),
                       ],
                     );
                   },
@@ -98,7 +101,7 @@ class TeamScreen extends ConsumerWidget {
             );
         },
       ),
-      floatingActionButton: isDirector
+      floatingActionButton: canInvite
           ? FloatingActionButton.extended(
               onPressed: () => InviteCreateSheet.show(context),
               icon: const Icon(Icons.person_add_alt_1),
@@ -147,9 +150,9 @@ class _MemberTile extends StatelessWidget {
 }
 
 class _PendingInvitesHeader extends StatelessWidget {
-  const _PendingInvitesHeader({required this.isDirector});
+  const _PendingInvitesHeader({required this.canInvite});
 
-  final bool isDirector;
+  final bool canInvite;
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +170,7 @@ class _PendingInvitesHeader extends StatelessWidget {
               ),
             ),
           ),
-          if (!isDirector)
+          if (!canInvite)
             Icon(
               Icons.lock_outline,
               size: 14,
@@ -180,10 +183,10 @@ class _PendingInvitesHeader extends StatelessWidget {
 }
 
 class _InviteTile extends ConsumerWidget {
-  const _InviteTile({required this.invite, required this.viewerIsDirector});
+  const _InviteTile({required this.invite, required this.viewerCanInvite});
 
   final Invite invite;
-  final bool viewerIsDirector;
+  final bool viewerCanInvite;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -201,15 +204,15 @@ class _InviteTile extends ConsumerWidget {
       ),
       title: Text(primary),
       subtitle: Text(subtitle),
-      trailing: viewerIsDirector
+      trailing: viewerCanInvite
           ? const Icon(Icons.chevron_right)
           : null,
-      onTap: viewerIsDirector
+      onTap: viewerCanInvite
           ? () => InviteShareSheet.show(context, invite: invite)
           : null,
     );
 
-    if (!viewerIsDirector) return tile;
+    if (!viewerCanInvite) return tile;
 
     // Swipe-left-to-revoke for directors. The dismiss callback awaits a
     // confirm dialog; if declined the tile springs back.

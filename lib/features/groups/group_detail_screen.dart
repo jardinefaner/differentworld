@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/subject_form_sheet.dart';
@@ -19,18 +20,22 @@ class GroupDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
     final groupAsync = ref.watch(_groupProvider(groupId));
     final subjectsAsync = ref.watch(subjectsInGroupProvider(groupId));
 
     final group = groupAsync.value;
     return EdgeScaffold(
       actions: [
-        IconButton(
-          tooltip: 'Take attendance',
-          icon: const Icon(Icons.fact_check_outlined),
-          onPressed: () => context.push('/groups/$groupId/attendance'),
-        ),
-        if (group != null)
+        // Attendance affordance only when the viewer can take attendance.
+        if (viewer.canTakeAttendance)
+          IconButton(
+            tooltip: 'Take attendance',
+            icon: const Icon(Icons.fact_check_outlined),
+            onPressed: () => context.push('/groups/$groupId/attendance'),
+          ),
+        // Edit classroom is a program-management action.
+        if (group != null && viewer.canManageProgram)
           IconButton(
             tooltip: 'Edit classroom',
             icon: const Icon(Icons.edit_outlined),
@@ -81,7 +86,9 @@ class GroupDetailScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: subjectsAsync.maybeWhen(
-        data: (s) => s.isEmpty
+        // Adding students is a program-management action; teachers
+        // record on existing rosters but don't create them.
+        data: (s) => (s.isEmpty || !viewer.canManageProgram)
             ? null
             : FloatingActionButton.extended(
                 onPressed: () => SubjectFormSheet.show(

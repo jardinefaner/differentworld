@@ -1,4 +1,5 @@
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -54,10 +55,11 @@ class _InviteCreateSheetState extends ConsumerState<InviteCreateSheet> {
       setState(() => _error = 'No program selected.');
       return;
     }
-    if (me?.role != 'director') {
-      // Defence-in-depth: the UI path that opens this sheet already
-      // checks isDirector, but refuse here too.
-      setState(() => _error = 'Only directors can invite teammates.');
+    if (!ref.read(viewerProvider).canInviteStaff) {
+      // Defence-in-depth: the Team screen FAB is gated by the same
+      // cap; refuse here too in case this sheet was opened by other
+      // means.
+      setState(() => _error = "You don't have permission to invite.");
       return;
     }
 

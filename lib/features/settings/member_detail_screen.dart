@@ -2,6 +2,7 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -29,8 +30,12 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final me = ref.watch(currentMemberProvider).value;
-    final isDirector = me?.role == 'director';
+    final viewer = ref.watch(viewerProvider);
+    final me = viewer.member;
+    // Editing this screen requires Manage Program rights — director,
+    // or a member with canActAsDirector. Renamed from `canManage` for
+    // semantic clarity; the gate is the cap, not the role string.
+    final canManage = viewer.canManageProgram;
     final memberAsync = ref.watch(_memberProvider(widget.memberId));
 
     return EdgeScaffold(
@@ -71,7 +76,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                     radius: 40,
                     // Director can change anyone's photo; everyone else
                     // can change their own.
-                    onTap: (isDirector || me?.id == member.id)
+                    onTap: (canManage || me?.id == member.id)
                         ? () => PhotoSourceSheet.show(
                               context,
                               entity: PhotoEntity.member,
@@ -91,7 +96,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 ),
                 const SizedBox(height: 24),
                 const _SectionLabel(label: 'Role'),
-                if (isDirector)
+                if (canManage)
                   _RoleSelector(
                     selected: currentRole,
                     onChanged: (next) {
@@ -119,82 +124,82 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 _CapSwitch(
                   label: 'Observe',
                   subtitle: 'Record developmental observations',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canObserve),
                   onChanged: (v) => _set(MemberCaps.canObserve, v),
                 ),
                 _CapSwitch(
                   label: 'Take attendance',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canTakeAttendance),
                   onChanged: (v) => _set(MemberCaps.canTakeAttendance, v),
                 ),
                 _CapSwitch(
                   label: 'Record meals',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordMeal),
                   onChanged: (v) => _set(MemberCaps.canRecordMeal, v),
                 ),
                 _CapSwitch(
                   label: 'Record naps',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordNap),
                   onChanged: (v) => _set(MemberCaps.canRecordNap, v),
                 ),
                 _CapSwitch(
                   label: 'Record diaper changes',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canRecordDiaper),
                   onChanged: (v) => _set(MemberCaps.canRecordDiaper, v),
                 ),
                 _CapSwitch(
                   label: 'Administer medication',
                   subtitle: 'Requires state certification (MAT)',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canAdministerMedication),
                   onChanged: (v) => _set(MemberCaps.canAdministerMedication, v),
                 ),
                 _CapSwitch(
                   label: 'Drive (field trips)',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canDrive),
                   onChanged: (v) => _set(MemberCaps.canDrive, v),
                 ),
                 _CapSwitch(
                   label: 'Open the building',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canOpenBuilding),
                   onChanged: (v) => _set(MemberCaps.canOpenBuilding, v),
                 ),
                 _CapSwitch(
                   label: 'Close the building',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canCloseBuilding),
                   onChanged: (v) => _set(MemberCaps.canCloseBuilding, v),
                 ),
                 _CapSwitch(
                   label: 'Authorize pickup changes',
                   subtitle: 'Add or remove guardians for a child',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canAuthorizePickup),
                   onChanged: (v) => _set(MemberCaps.canAuthorizePickup, v),
                 ),
                 _CapSwitch(
                   label: 'Invite staff',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canInviteStaff),
                   onChanged: (v) => _set(MemberCaps.canInviteStaff, v),
                 ),
                 _CapSwitch(
                   label: 'View billing',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canViewBilling),
                   onChanged: (v) => _set(MemberCaps.canViewBilling, v),
                 ),
                 _CapSwitch(
                   label: 'Act as director',
                   subtitle: 'Full admin when the director is offsite',
-                  enabled: isDirector,
+                  enabled: canManage,
                   value: caps.getBool(MemberCaps.canActAsDirector),
                   onChanged: (v) => _set(MemberCaps.canActAsDirector, v),
                 ),
@@ -210,7 +215,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   ),
                 const SizedBox(height: 24),
                 // Director-only "Remove from team" — can't remove yourself.
-                if (isDirector && me?.id != member.id) ...[
+                if (canManage && me?.id != member.id) ...[
                   const Divider(),
                   const _SectionLabel(label: 'Danger zone'),
                   Padding(
@@ -273,11 +278,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   }
 
   Future<void> _save(Member member) async {
-    // Runtime guard — the UI gates editing on isDirector, but defence-
-    // in-depth: refuse to write if the caller isn't a director regardless
-    // of how this method gets reached.
-    final me = ref.read(currentMemberProvider).value;
-    if (me?.role != 'director') return;
+    // Runtime guard — the UI gates editing on canManage, but defence-
+    // in-depth: refuse to write if the caller can't manage the program
+    // regardless of how this method gets reached.
+    final viewer = ref.read(viewerProvider);
+    if (!viewer.canManageProgram) return;
 
     setState(() {
       _saving = true;

@@ -1,5 +1,5 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
-import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -19,10 +19,10 @@ class MainDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final member = ref.watch(currentMemberProvider).value;
-    final space = ref.watch(currentSpaceProvider).value;
+    final viewer = ref.watch(viewerProvider);
+    final member = viewer.member;
+    final space = viewer.space;
     final groupsAsync = ref.watch(groupsProvider);
-    final isDirector = member?.role == 'director';
 
     return Drawer(
       child: SafeArea(
@@ -60,7 +60,7 @@ class MainDrawer extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              _roleLabel(member?.role),
+                              viewer.roleLabel,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -77,7 +77,7 @@ class MainDrawer extends ConsumerWidget {
             ),
             const Divider(height: 1),
 
-            // Primary destinations.
+            // Primary destinations — every section gated by viewer caps.
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -87,11 +87,14 @@ class MainDrawer extends ConsumerWidget {
                     label: 'Today',
                     onTap: () => _go(context, '/'),
                   ),
-                  _DrawerTile(
-                    icon: Icons.task_alt,
-                    label: 'Morning checklist',
-                    onTap: () => _go(context, '/checklist'),
-                  ),
+                  // Daily-log section appears only if the viewer can do
+                  // ANY of the daily-log actions.
+                  if (viewer.isDailyLogger)
+                    _DrawerTile(
+                      icon: Icons.task_alt,
+                      label: 'Morning checklist',
+                      onTap: () => _go(context, '/checklist'),
+                    ),
                   const Divider(height: 16, indent: 16, endIndent: 16),
                   const _SectionLabel(label: 'Classrooms'),
                   ...groupsAsync.maybeWhen(
@@ -118,19 +121,30 @@ class MainDrawer extends ConsumerWidget {
                             .toList(),
                     orElse: () => const [SizedBox.shrink()],
                   ),
-                  const Divider(height: 16, indent: 16, endIndent: 16),
-                  const _SectionLabel(label: 'Settings'),
-                  if (isDirector)
+                  if (viewer.canSeeTeam ||
+                      viewer.canManageProgram ||
+                      viewer.showsBilling) ...[
+                    const Divider(height: 16, indent: 16, endIndent: 16),
+                    const _SectionLabel(label: 'Program'),
+                  ],
+                  if (viewer.canManageProgram)
                     _DrawerTile(
                       icon: Icons.school_outlined,
                       label: 'Program settings',
                       onTap: () => _go(context, '/settings/program'),
                     ),
-                  _DrawerTile(
-                    icon: Icons.groups_outlined,
-                    label: 'Team',
-                    onTap: () => _go(context, '/settings/team'),
-                  ),
+                  if (viewer.canSeeTeam)
+                    _DrawerTile(
+                      icon: Icons.groups_outlined,
+                      label: 'Team',
+                      onTap: () => _go(context, '/settings/team'),
+                    ),
+                  if (viewer.showsBilling)
+                    _DrawerTile(
+                      icon: Icons.receipt_long_outlined,
+                      label: 'Billing',
+                      onTap: () => _go(context, '/settings'),
+                    ),
                   _DrawerTile(
                     icon: Icons.settings_outlined,
                     label: 'All settings',
@@ -170,14 +184,6 @@ class MainDrawer extends ConsumerWidget {
     // chose where to be, no stack to preserve.
     context.go(route);
   }
-
-  static String _roleLabel(String? role) => switch (role) {
-        'director' => 'Director',
-        'lead_teacher' => 'Lead teacher',
-        'teacher' => 'Teacher',
-        'assistant' => 'Assistant',
-        _ => 'Signed in',
-      };
 }
 
 class _DrawerTile extends StatelessWidget {

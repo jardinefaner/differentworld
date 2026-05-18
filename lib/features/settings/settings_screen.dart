@@ -1,5 +1,5 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
-import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -17,8 +17,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final member = ref.watch(currentMemberProvider).value;
-    final isDirector = member?.role == 'director';
+    final viewer = ref.watch(viewerProvider);
+    final member = viewer.member;
 
     return EdgeScaffold(
       body: ListView(
@@ -67,9 +67,10 @@ class SettingsScreen extends ConsumerWidget {
                 "What's tracked program-wide, pickup window, defaults",
               ),
               trailing: const Icon(Icons.chevron_right),
-              enabled: isDirector,
-              onTap:
-                  isDirector ? () => context.push('/settings/program') : null,
+              enabled: viewer.canManageProgram,
+              onTap: viewer.canManageProgram
+                  ? () => context.push('/settings/program')
+                  : null,
             ),
             ListTile(
               leading: const Icon(Icons.groups_outlined),
