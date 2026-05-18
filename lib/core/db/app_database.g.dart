@@ -3472,6 +3472,382 @@ class InvitesCompanion extends UpdateCompanion<Invite> {
   }
 }
 
+class $GroupMembersTable extends GroupMembers
+    with TableInfo<$GroupMembersTable, GroupMember> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupMembersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _roleInGroupMeta = const VerificationMeta(
+    'roleInGroup',
+  );
+  @override
+  late final GeneratedColumn<String> roleInGroup = GeneratedColumn<String>(
+    'role_in_group',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _assignedAtMeta = const VerificationMeta(
+    'assignedAt',
+  );
+  @override
+  late final GeneratedColumn<String> assignedAt = GeneratedColumn<String>(
+    'assigned_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    groupId,
+    memberId,
+    spaceId,
+    roleInGroup,
+    assignedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'group_members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GroupMember> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('role_in_group')) {
+      context.handle(
+        _roleInGroupMeta,
+        roleInGroup.isAcceptableOrUnknown(
+          data['role_in_group']!,
+          _roleInGroupMeta,
+        ),
+      );
+    }
+    if (data.containsKey('assigned_at')) {
+      context.handle(
+        _assignedAtMeta,
+        assignedAt.isAcceptableOrUnknown(data['assigned_at']!, _assignedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assignedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {groupId, memberId};
+  @override
+  GroupMember map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroupMember(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      roleInGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role_in_group'],
+      ),
+      assignedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assigned_at'],
+      )!,
+    );
+  }
+
+  @override
+  $GroupMembersTable createAlias(String alias) {
+    return $GroupMembersTable(attachedDatabase, alias);
+  }
+}
+
+class GroupMember extends DataClass implements Insertable<GroupMember> {
+  final String groupId;
+  final String memberId;
+  final String spaceId;
+  final String? roleInGroup;
+  final String assignedAt;
+  const GroupMember({
+    required this.groupId,
+    required this.memberId,
+    required this.spaceId,
+    this.roleInGroup,
+    required this.assignedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<String>(groupId);
+    map['member_id'] = Variable<String>(memberId);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || roleInGroup != null) {
+      map['role_in_group'] = Variable<String>(roleInGroup);
+    }
+    map['assigned_at'] = Variable<String>(assignedAt);
+    return map;
+  }
+
+  GroupMembersCompanion toCompanion(bool nullToAbsent) {
+    return GroupMembersCompanion(
+      groupId: Value(groupId),
+      memberId: Value(memberId),
+      spaceId: Value(spaceId),
+      roleInGroup: roleInGroup == null && nullToAbsent
+          ? const Value.absent()
+          : Value(roleInGroup),
+      assignedAt: Value(assignedAt),
+    );
+  }
+
+  factory GroupMember.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroupMember(
+      groupId: serializer.fromJson<String>(json['groupId']),
+      memberId: serializer.fromJson<String>(json['memberId']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      roleInGroup: serializer.fromJson<String?>(json['roleInGroup']),
+      assignedAt: serializer.fromJson<String>(json['assignedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<String>(groupId),
+      'memberId': serializer.toJson<String>(memberId),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'roleInGroup': serializer.toJson<String?>(roleInGroup),
+      'assignedAt': serializer.toJson<String>(assignedAt),
+    };
+  }
+
+  GroupMember copyWith({
+    String? groupId,
+    String? memberId,
+    String? spaceId,
+    Value<String?> roleInGroup = const Value.absent(),
+    String? assignedAt,
+  }) => GroupMember(
+    groupId: groupId ?? this.groupId,
+    memberId: memberId ?? this.memberId,
+    spaceId: spaceId ?? this.spaceId,
+    roleInGroup: roleInGroup.present ? roleInGroup.value : this.roleInGroup,
+    assignedAt: assignedAt ?? this.assignedAt,
+  );
+  GroupMember copyWithCompanion(GroupMembersCompanion data) {
+    return GroupMember(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      roleInGroup: data.roleInGroup.present
+          ? data.roleInGroup.value
+          : this.roleInGroup,
+      assignedAt: data.assignedAt.present
+          ? data.assignedAt.value
+          : this.assignedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMember(')
+          ..write('groupId: $groupId, ')
+          ..write('memberId: $memberId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('roleInGroup: $roleInGroup, ')
+          ..write('assignedAt: $assignedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(groupId, memberId, spaceId, roleInGroup, assignedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroupMember &&
+          other.groupId == this.groupId &&
+          other.memberId == this.memberId &&
+          other.spaceId == this.spaceId &&
+          other.roleInGroup == this.roleInGroup &&
+          other.assignedAt == this.assignedAt);
+}
+
+class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
+  final Value<String> groupId;
+  final Value<String> memberId;
+  final Value<String> spaceId;
+  final Value<String?> roleInGroup;
+  final Value<String> assignedAt;
+  final Value<int> rowid;
+  const GroupMembersCompanion({
+    this.groupId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.roleInGroup = const Value.absent(),
+    this.assignedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GroupMembersCompanion.insert({
+    required String groupId,
+    required String memberId,
+    required String spaceId,
+    this.roleInGroup = const Value.absent(),
+    required String assignedAt,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       memberId = Value(memberId),
+       spaceId = Value(spaceId),
+       assignedAt = Value(assignedAt);
+  static Insertable<GroupMember> custom({
+    Expression<String>? groupId,
+    Expression<String>? memberId,
+    Expression<String>? spaceId,
+    Expression<String>? roleInGroup,
+    Expression<String>? assignedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (memberId != null) 'member_id': memberId,
+      if (spaceId != null) 'space_id': spaceId,
+      if (roleInGroup != null) 'role_in_group': roleInGroup,
+      if (assignedAt != null) 'assigned_at': assignedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GroupMembersCompanion copyWith({
+    Value<String>? groupId,
+    Value<String>? memberId,
+    Value<String>? spaceId,
+    Value<String?>? roleInGroup,
+    Value<String>? assignedAt,
+    Value<int>? rowid,
+  }) {
+    return GroupMembersCompanion(
+      groupId: groupId ?? this.groupId,
+      memberId: memberId ?? this.memberId,
+      spaceId: spaceId ?? this.spaceId,
+      roleInGroup: roleInGroup ?? this.roleInGroup,
+      assignedAt: assignedAt ?? this.assignedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (roleInGroup.present) {
+      map['role_in_group'] = Variable<String>(roleInGroup.value);
+    }
+    if (assignedAt.present) {
+      map['assigned_at'] = Variable<String>(assignedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMembersCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('memberId: $memberId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('roleInGroup: $roleInGroup, ')
+          ..write('assignedAt: $assignedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3482,6 +3858,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AttendanceRecordsTable attendanceRecords =
       $AttendanceRecordsTable(this);
   late final $InvitesTable invites = $InvitesTable(this);
+  late final $GroupMembersTable groupMembers = $GroupMembersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3493,6 +3870,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     subjects,
     attendanceRecords,
     invites,
+    groupMembers,
   ];
 }
 
@@ -5193,6 +5571,210 @@ typedef $$InvitesTableProcessedTableManager =
       Invite,
       PrefetchHooks Function()
     >;
+typedef $$GroupMembersTableCreateCompanionBuilder =
+    GroupMembersCompanion Function({
+      required String groupId,
+      required String memberId,
+      required String spaceId,
+      Value<String?> roleInGroup,
+      required String assignedAt,
+      Value<int> rowid,
+    });
+typedef $$GroupMembersTableUpdateCompanionBuilder =
+    GroupMembersCompanion Function({
+      Value<String> groupId,
+      Value<String> memberId,
+      Value<String> spaceId,
+      Value<String?> roleInGroup,
+      Value<String> assignedAt,
+      Value<int> rowid,
+    });
+
+class $$GroupMembersTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get roleInGroup => $composableBuilder(
+    column: $table.roleInGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assignedAt => $composableBuilder(
+    column: $table.assignedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GroupMembersTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get roleInGroup => $composableBuilder(
+    column: $table.roleInGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get assignedAt => $composableBuilder(
+    column: $table.assignedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GroupMembersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get roleInGroup => $composableBuilder(
+    column: $table.roleInGroup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get assignedAt => $composableBuilder(
+    column: $table.assignedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$GroupMembersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroupMembersTable,
+          GroupMember,
+          $$GroupMembersTableFilterComposer,
+          $$GroupMembersTableOrderingComposer,
+          $$GroupMembersTableAnnotationComposer,
+          $$GroupMembersTableCreateCompanionBuilder,
+          $$GroupMembersTableUpdateCompanionBuilder,
+          (
+            GroupMember,
+            BaseReferences<_$AppDatabase, $GroupMembersTable, GroupMember>,
+          ),
+          GroupMember,
+          PrefetchHooks Function()
+        > {
+  $$GroupMembersTableTableManager(_$AppDatabase db, $GroupMembersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupMembersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupMembersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupMembersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> groupId = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> roleInGroup = const Value.absent(),
+                Value<String> assignedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GroupMembersCompanion(
+                groupId: groupId,
+                memberId: memberId,
+                spaceId: spaceId,
+                roleInGroup: roleInGroup,
+                assignedAt: assignedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String groupId,
+                required String memberId,
+                required String spaceId,
+                Value<String?> roleInGroup = const Value.absent(),
+                required String assignedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => GroupMembersCompanion.insert(
+                groupId: groupId,
+                memberId: memberId,
+                spaceId: spaceId,
+                roleInGroup: roleInGroup,
+                assignedAt: assignedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GroupMembersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroupMembersTable,
+      GroupMember,
+      $$GroupMembersTableFilterComposer,
+      $$GroupMembersTableOrderingComposer,
+      $$GroupMembersTableAnnotationComposer,
+      $$GroupMembersTableCreateCompanionBuilder,
+      $$GroupMembersTableUpdateCompanionBuilder,
+      (
+        GroupMember,
+        BaseReferences<_$AppDatabase, $GroupMembersTable, GroupMember>,
+      ),
+      GroupMember,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5209,4 +5791,6 @@ class $AppDatabaseManager {
       $$AttendanceRecordsTableTableManager(_db, _db.attendanceRecords);
   $$InvitesTableTableManager get invites =>
       $$InvitesTableTableManager(_db, _db.invites);
+  $$GroupMembersTableTableManager get groupMembers =>
+      $$GroupMembersTableTableManager(_db, _db.groupMembers);
 }

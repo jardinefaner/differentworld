@@ -97,6 +97,11 @@ class Viewer {
   /// name so screens read intent, not impl.
   bool get canManageProgram => isDirector;
 
+  /// True when this viewer sees every classroom in the space implicitly
+  /// (directors), regardless of group_members assignment. Non-directors
+  /// are scoped to their assignments.
+  bool get seesAllClassrooms => isDirector;
+
   /// Can edit a specific member (themselves OR a director can edit
   /// anyone). Used to gate the photo-change tap + role editor in
   /// MemberDetailScreen.

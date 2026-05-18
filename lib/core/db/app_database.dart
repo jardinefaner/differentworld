@@ -105,8 +105,23 @@ class Invites extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Per-classroom staff assignment. A member can be assigned to many
+/// groups; a group has many members. Directors are implicitly
+/// assigned to every group in their space (no rows needed).
+class GroupMembers extends Table {
+  TextColumn get groupId => text()();
+  TextColumn get memberId => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get roleInGroup => text().nullable()();
+  TextColumn get assignedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {groupId, memberId};
+}
+
 @DriftDatabase(
-  tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites],
+  tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
+          GroupMembers],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -523,6 +538,62 @@ class AppDatabase extends _$AppDatabase {
     await (delete(attendanceRecords)
           ..where(
             (a) => a.date.equals(date) & a.subjectId.isIn(subjectIds),
+          ))
+        .go();
+  }
+
+  // -- Group members (staff assignment) -------------------------------------
+
+  /// All assignment rows for a member — used to derive which classrooms
+  /// they're scoped to. Directors don't need this; their groupsProvider
+  /// returns the full space.
+  Stream<List<GroupMember>> watchAssignmentsForMember(String memberId) {
+    return (select(groupMembers)..where((g) => g.memberId.equals(memberId)))
+        .watch();
+  }
+
+  /// All members assigned to a classroom. Used by the Group detail
+  /// screen's staff list.
+  Stream<List<GroupMember>> watchAssignmentsForGroup(String groupId) {
+    return (select(groupMembers)..where((g) => g.groupId.equals(groupId)))
+        .watch();
+  }
+
+  /// Idempotent assign. Inserts a row if the (group, member) pair
+  /// isn't already there; otherwise no-op.
+  Future<void> assignMemberToGroup({
+    required String groupId,
+    required String memberId,
+    required String spaceId,
+    String? roleInGroup,
+  }) async {
+    final existing = await (select(groupMembers)
+          ..where(
+            (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
+          ))
+        .getSingleOrNull();
+    if (existing != null) return;
+    final now = DateTime.now().toUtc().toIso8601String();
+    await into(groupMembers).insert(
+      GroupMembersCompanion.insert(
+        groupId: groupId,
+        memberId: memberId,
+        spaceId: spaceId,
+        roleInGroup:
+            roleInGroup == null ? const Value.absent() : Value(roleInGroup),
+        assignedAt: now,
+      ),
+    );
+  }
+
+  /// Idempotent unassign.
+  Future<void> unassignMemberFromGroup({
+    required String groupId,
+    required String memberId,
+  }) async {
+    await (delete(groupMembers)
+          ..where(
+            (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
           ))
         .go();
   }

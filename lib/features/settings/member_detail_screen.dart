@@ -3,6 +3,8 @@ import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/groups/group_assignments_providers.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -213,6 +215,19 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       ),
                     ),
                   ),
+
+                // Classroom assignments — director assigns this member
+                // to specific rooms. Director themselves doesn't need
+                // assignments (they see all rooms).
+                if (member.role != 'director') ...[
+                  const SizedBox(height: 24),
+                  const _SectionLabel(label: 'Assigned classrooms'),
+                  _AssignmentsList(
+                    member: member,
+                    canEdit: canManage,
+                  ),
+                ],
+
                 const SizedBox(height: 24),
                 // Director-only "Remove from team" — can't remove yourself.
                 if (canManage && me?.id != member.id) ...[
@@ -409,6 +424,96 @@ class _CapSwitch extends StatelessWidget {
       subtitle: subtitle == null ? null : Text(subtitle!),
       value: value,
       onChanged: enabled ? onChanged : null,
+    );
+  }
+}
+
+/// Per-classroom assignment list. Renders one row per classroom in
+/// the space; the trailing widget is a Switch when [canEdit] is true
+/// (director editing someone else) or a static check / dash when read-
+/// only (anyone else viewing their own / others' assignments).
+class _AssignmentsList extends ConsumerWidget {
+  const _AssignmentsList({required this.member, required this.canEdit});
+
+  final Member member;
+  final bool canEdit;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final groupsAsync = ref.watch(allGroupsInSpaceProvider);
+    final assignmentsAsync =
+        ref.watch(assignmentsForMemberProvider(member.id));
+
+    return groupsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: LinearProgressIndicator(),
+      ),
+      error: (_, _) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Text(
+          'Could not load classrooms.',
+          style: theme.textTheme.bodySmall,
+        ),
+      ),
+      data: (groups) {
+        if (groups.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(
+              'No classrooms exist yet.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+        return assignmentsAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: LinearProgressIndicator(),
+          ),
+          error: (_, _) => Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text(
+              'Could not load assignments.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+          data: (assignments) {
+            final assignedIds = assignments.map((a) => a.groupId).toSet();
+            return Column(
+              children: [
+                for (final g in groups)
+                  SwitchListTile(
+                    title: Text(g.name),
+                    subtitle: g.ageRange == null ? null : Text(g.ageRange!),
+                    value: assignedIds.contains(g.id),
+                    onChanged: canEdit
+                        ? (next) async {
+                            final actions = ref.read(
+                              groupAssignmentActionsProvider,
+                            );
+                            if (next) {
+                              await actions.assign(
+                                groupId: g.id,
+                                memberId: member.id,
+                              );
+                            } else {
+                              await actions.unassign(
+                                groupId: g.id,
+                                memberId: member.id,
+                              );
+                            }
+                          }
+                        : null,
+                  ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

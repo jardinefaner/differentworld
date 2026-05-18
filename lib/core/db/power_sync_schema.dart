@@ -94,4 +94,11 @@ const appSchema = Schema([
     Column.text('accepted_at'),
     Column.text('accepted_by'),
   ]),
+  Table('group_members', [
+    Column.text('group_id'),
+    Column.text('member_id'),
+    Column.text('space_id'),
+    Column.text('role_in_group'),
+    Column.text('assigned_at'),
+  ]),
 ]);
