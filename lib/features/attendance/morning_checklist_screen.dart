@@ -5,14 +5,13 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
-import 'package:differentworld/features/attendance/widgets/status_picker_sheet.dart';
+import 'package:differentworld/features/attendance/widgets/attendance_row.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
-import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -373,57 +372,24 @@ class _ChecklistRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fullName = '${subject.firstName} ${subject.lastName}';
-    return ListTile(
-      leading: PersonAvatar(
-        name: fullName,
-        photoUrl: subject.photoUrl,
-      ),
-      title: Text(fullName),
-      trailing: _StatusChip(status: status),
-      onTap: () async {
-        unawaited(HapticFeedback.selectionClick());
-        final picked = await StatusPickerSheet.show(
-          context,
-          studentName: fullName,
-          currentStatus: status,
-        );
-        if (picked != null) {
+    return AttendanceRow(
+      subject: subject,
+      status: status,
+      onChangeStatus: (next) async {
+        if (next == null) {
+          await ref.read(attendanceActionsProvider).clearStatus(
+                subjectId: subject.id,
+                date: date,
+              );
+        } else {
           await ref.read(attendanceActionsProvider).setStatus(
                 groupId: groupId,
                 subjectId: subject.id,
                 date: date,
-                status: picked,
+                status: next,
               );
         }
       },
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-
-  final AttendanceStatus? status;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (status == null) {
-      return Chip(
-        label: const Text('Mark'),
-        avatar: const Icon(Icons.add, size: 16),
-        labelStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      );
-    }
-    final color = status!.color(theme.colorScheme);
-    return Chip(
-      avatar: Icon(status!.icon, size: 16, color: color),
-      label: Text(status!.label, style: TextStyle(color: color)),
-      backgroundColor: color.withValues(alpha: 0.10),
-      side: BorderSide(color: color.withValues(alpha: 0.35)),
     );
   }
 }

@@ -101,6 +101,19 @@ class AttendanceActions {
       date: date,
     );
   }
+
+  /// Remove a single attendance record (driver: the new inline rows
+  /// let the user re-tap the current status to clear it).
+  Future<void> clearStatus({
+    required String subjectId,
+    required String date,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.deleteAttendanceForSubjectsOnDate(
+      subjectIds: [subjectId],
+      date: date,
+    );
+  }
 }
 
 final attendanceActionsProvider =
