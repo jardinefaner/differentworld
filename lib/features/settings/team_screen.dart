@@ -146,7 +146,7 @@ class _MemberTile extends StatelessWidget {
       title: Text(member.displayName),
       subtitle: Text(_roleLabel(member.role)),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.go('/settings/team/${member.id}'),
+      onTap: () => context.push('/settings/team/${member.id}'),
     );
   }
 

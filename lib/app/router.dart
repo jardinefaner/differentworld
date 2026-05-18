@@ -104,22 +104,38 @@ class _Home extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final memberAsync = ref.watch(currentMemberProvider);
 
-    return memberAsync.when(
+    final child = memberAsync.when(
       // The first sync after sign-in: Member row hasn't arrived yet.
       // Show a spinner instead of flashing the onboarding screen.
-      loading: _SyncingScaffold.new,
-      error: (err, _) => _ErrorScaffold(error: err),
+      loading: () => const _SyncingScaffold(key: ValueKey('syncing')),
+      error: (err, _) => _ErrorScaffold(
+        key: const ValueKey('error'),
+        error: err,
+      ),
       data: (member) {
-        if (member == null) return const _SyncingScaffold();
-        if (member.spaceId == null) return const JoinOrCreateScreen();
-        return const _SignedInHome();
+        if (member == null) {
+          return const _SyncingScaffold(key: ValueKey('syncing'));
+        }
+        if (member.spaceId == null) {
+          return const JoinOrCreateScreen(key: ValueKey('join'));
+        }
+        return const _SignedInHome(key: ValueKey('home'));
       },
+    );
+
+    // Fade between the three top-level states (syncing → join → home)
+    // so the swap is smooth when the member row arrives mid-boot.
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      child: child,
     );
   }
 }
 
 class _SignedInHome extends ConsumerStatefulWidget {
-  const _SignedInHome();
+  const _SignedInHome({super.key});
 
   @override
   ConsumerState<_SignedInHome> createState() => _SignedInHomeState();
@@ -179,7 +195,7 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
 }
 
 class _SyncingScaffold extends StatelessWidget {
-  const _SyncingScaffold();
+  const _SyncingScaffold({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +215,7 @@ class _SyncingScaffold extends StatelessWidget {
 }
 
 class _ErrorScaffold extends StatelessWidget {
-  const _ErrorScaffold({required this.error});
+  const _ErrorScaffold({required this.error, super.key});
 
   final Object error;
 

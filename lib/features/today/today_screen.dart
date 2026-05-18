@@ -31,7 +31,7 @@ class TodayScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Settings',
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.go('/settings'),
+            onPressed: () => context.push('/settings'),
           ),
         ],
       ),
@@ -218,7 +218,7 @@ class _GroupTodayCard extends ConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.go('/groups/${group.id}'),
+        onTap: () => context.push('/groups/${group.id}'),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -255,7 +255,7 @@ class _GroupTodayCard extends ConsumerWidget {
                     tooltip: 'Take attendance',
                     icon: const Icon(Icons.fact_check_outlined),
                     onPressed: () =>
-                        context.go('/groups/${group.id}/attendance'),
+                        context.push('/groups/${group.id}/attendance'),
                   ),
                 ],
               ),

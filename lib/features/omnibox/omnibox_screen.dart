@@ -113,21 +113,21 @@ class _OmniboxScreenState extends ConsumerState<OmniboxScreen> {
         kindLabel: 'Page',
         icon: Icons.settings_outlined,
         keywords: const ['preferences', 'admin', 'config'],
-        onSelect: (ctx, ref) => ctx.go('/settings'),
+        onSelect: (ctx, ref) => ctx.push('/settings'),
       ),
       _Suggestion(
         label: 'Team',
         kindLabel: 'Page',
         icon: Icons.groups_outlined,
         keywords: const ['staff', 'teachers', 'members'],
-        onSelect: (ctx, ref) => ctx.go('/settings/team'),
+        onSelect: (ctx, ref) => ctx.push('/settings/team'),
       ),
       _Suggestion(
         label: 'Program settings',
         kindLabel: 'Page',
         icon: Icons.school_outlined,
         keywords: const ['program', 'space', 'features'],
-        onSelect: (ctx, ref) => ctx.go('/settings/program'),
+        onSelect: (ctx, ref) => ctx.push('/settings/program'),
       ),
 
       // --- Static actions -------------------------------------------------
@@ -158,14 +158,14 @@ class _OmniboxScreenState extends ConsumerState<OmniboxScreen> {
           kindLabel: 'Classroom',
           icon: Icons.meeting_room_outlined,
           keywords: const ['class', 'room', 'group'],
-          onSelect: (ctx, ref) => ctx.go('/groups/${g.id}'),
+          onSelect: (ctx, ref) => ctx.push('/groups/${g.id}'),
         ),
         _Suggestion(
           label: 'Take attendance · ${g.name}',
           kindLabel: 'Action',
           icon: Icons.fact_check_outlined,
           keywords: const ['attendance', 'mark', 'present'],
-          onSelect: (ctx, ref) => ctx.go('/groups/${g.id}/attendance'),
+          onSelect: (ctx, ref) => ctx.push('/groups/${g.id}/attendance'),
         ),
       ],
     ];

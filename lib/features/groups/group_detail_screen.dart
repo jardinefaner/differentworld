@@ -51,7 +51,7 @@ class GroupDetailScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Take attendance',
             icon: const Icon(Icons.fact_check_outlined),
-            onPressed: () => context.go('/groups/$groupId/attendance'),
+            onPressed: () => context.push('/groups/$groupId/attendance'),
           ),
           if (groupAsync.value != null)
             IconButton(

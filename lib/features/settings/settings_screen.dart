@@ -61,14 +61,15 @@ class SettingsScreen extends ConsumerWidget {
               ),
               trailing: const Icon(Icons.chevron_right),
               enabled: isDirector,
-              onTap: isDirector ? () => context.go('/settings/program') : null,
+              onTap:
+                  isDirector ? () => context.push('/settings/program') : null,
             ),
             ListTile(
               leading: const Icon(Icons.groups_outlined),
               title: const Text('Team'),
               subtitle: const Text('Members and their abilities'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.go('/settings/team'),
+              onTap: () => context.push('/settings/team'),
             ),
             const Divider(),
             const _SectionLabel(label: 'About'),
