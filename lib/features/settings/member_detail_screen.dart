@@ -5,10 +5,10 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Per-member detail screen: shows role + capability checkboxes. Editing
 /// is gated on the signed-in member being a director.
@@ -33,50 +33,38 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final isDirector = me?.role == 'director';
     final memberAsync = ref.watch(_memberProvider(widget.memberId));
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/settings/team');
-            }
-          },
-        ),
-        title: Text(memberAsync.value?.displayName ?? 'Team member'),
-        actions: [
-          if ((_draft != null || _draftRole != null) &&
-              memberAsync.value != null)
-            TextButton.icon(
-              onPressed: _saving ? null : () => _save(memberAsync.value!),
-              icon: _saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check),
-              label: const Text('Save'),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: memberAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => const Center(child: Text('Could not load member.')),
-          data: (member) {
-            if (member == null) {
-              return const Center(child: Text('Member not found.'));
-            }
-            final currentRole = _draftRole ?? member.role;
-            final caps = _draft ?? member.caps;
+    return EdgeScaffold(
+      backFallbackRoute: '/settings/team',
+      actions: [
+        if ((_draft != null || _draftRole != null) &&
+            memberAsync.value != null)
+          IconButton(
+            tooltip: 'Save',
+            onPressed: _saving ? null : () => _save(memberAsync.value!),
+            icon: _saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check),
+          ),
+      ],
+      body: memberAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => const Center(child: Text('Could not load member.')),
+        data: (member) {
+          if (member == null) {
+            return const Center(child: Text('Member not found.'));
+          }
+          final currentRole = _draftRole ?? member.role;
+          final caps = _draft ?? member.caps;
 
-            return ListView(
-              children: [
-                const SizedBox(height: 12),
-                Center(
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 32),
+            children: [
+              const SizedBox(height: 56),
+              Center(
                   child: PersonAvatar(
                     name: member.displayName,
                     photoUrl: member.avatarUrl,
@@ -237,8 +225,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 const SizedBox(height: 32),
               ],
             );
-          },
-        ),
+        },
       ),
     );
   }

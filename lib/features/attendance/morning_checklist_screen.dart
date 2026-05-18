@@ -7,12 +7,13 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/status_picker_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// "Morning checklist" — every student in every classroom on today's
 /// date, grouped by classroom. One scroll, swipe / tap to mark, done.
@@ -107,83 +108,58 @@ class _MorningChecklistScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final dataAsync = ref.watch(_morningChecklistProvider(_isoDate));
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Morning checklist'),
-            Text(
-              _filter == _Filter.unmarked
-                  ? 'Only students with no status yet'
-                  : 'Every student, every classroom',
-              style: theme.textTheme.bodySmall,
+    return EdgeScaffold(
+      actions: [
+        PopupMenuButton<_Filter>(
+          tooltip: 'Filter',
+          icon: Icon(
+            _filter == _Filter.everyone
+                ? Icons.filter_list
+                : Icons.filter_alt,
+          ),
+          onSelected: (f) => setState(() => _filter = f),
+          itemBuilder: (_) => [
+            CheckedPopupMenuItem(
+              value: _Filter.everyone,
+              checked: _filter == _Filter.everyone,
+              child: const Text('Everyone'),
+            ),
+            CheckedPopupMenuItem(
+              value: _Filter.unmarked,
+              checked: _filter == _Filter.unmarked,
+              child: const Text('Only unmarked'),
             ),
           ],
         ),
-        actions: [
-          PopupMenuButton<_Filter>(
-            tooltip: 'Filter',
-            icon: Icon(
-              _filter == _Filter.everyone
-                  ? Icons.filter_list
-                  : Icons.filter_alt,
-            ),
-            onSelected: (f) => setState(() => _filter = f),
-            itemBuilder: (_) => [
-              CheckedPopupMenuItem(
-                value: _Filter.everyone,
-                checked: _filter == _Filter.everyone,
-                child: const Text('Everyone'),
-              ),
-              CheckedPopupMenuItem(
-                value: _Filter.unmarked,
-                checked: _filter == _Filter.unmarked,
-                child: const Text('Only unmarked'),
-              ),
-            ],
-          ),
-          const SyncStatusIndicator(),
-        ],
-      ),
-      body: SafeArea(
-        child: dataAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => const EmptyState(
-            icon: Icons.error_outline,
-            title: 'Could not load the checklist',
-          ),
-          data: (sections) {
-            if (sections.isEmpty) {
-              return const EmptyState(
-                icon: Icons.child_care_outlined,
-                title: 'No students to check in',
-                message:
-                    'Add classrooms and students first; this list builds '
-                    'itself.',
-              );
-            }
-            return _ChecklistList(
-              sections: sections,
-              filter: _filter,
-              date: _isoDate,
-            );
-          },
+        const SyncStatusIndicator(),
+      ],
+      body: dataAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => const EmptyState(
+          icon: Icons.error_outline,
+          title: 'Could not load the checklist',
         ),
+        data: (sections) {
+          if (sections.isEmpty) {
+            return const EmptyState(
+              icon: Icons.child_care_outlined,
+              title: 'No students to check in',
+              message:
+                  'Add classrooms and students first; this list builds '
+                  'itself.',
+            );
+          }
+          return _ChecklistList(
+            sections: sections,
+            filter: _filter,
+            date: _isoDate,
+            subtitle: _filter == _Filter.unmarked
+                ? 'Only students with no status yet'
+                : 'Every student, every classroom',
+          );
+        },
       ),
       floatingActionButton: dataAsync.maybeWhen(
         data: (sections) => sections.isEmpty
@@ -253,15 +229,26 @@ class _ChecklistList extends ConsumerWidget {
     required this.sections,
     required this.filter,
     required this.date,
+    required this.subtitle,
   });
 
   final List<_Section> sections;
   final _Filter filter;
   final String date;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = <Widget>[];
+    final items = <Widget>[
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: ContentHeader(
+          title: 'Morning checklist',
+          subtitle: subtitle,
+          bottomGap: 8,
+        ),
+      ),
+    ];
 
     for (final s in sections) {
       final byId = <String, AttendanceStatus>{};

@@ -7,12 +7,13 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/status_picker_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Daily attendance for a single Group. Per-Subject status, optimistic
 /// writes, date scrubber, "Mark all present" shortcut.
@@ -125,46 +126,28 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       ),
     );
 
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Attendance'),
-            Text(
-              groupAsync.value?.name ?? '',
-              style: theme.textTheme.bodySmall,
+    return EdgeScaffold(
+      actions: const [SyncStatusIndicator()],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ContentHeader(
+              title: 'Attendance',
+              subtitle: groupAsync.value?.name,
+              bottomGap: 8,
             ),
-          ],
-        ),
-        actions: const [SyncStatusIndicator()],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _DateScrubber(
-              label: _dateLabel(),
-              canGoForward: _canGoForward,
-              onPrev: () => _shiftDay(-1),
-              onNext: () => _shiftDay(1),
-              onTapLabel: _pickDate,
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: subjectsAsync.when(
+          ),
+          _DateScrubber(
+            label: _dateLabel(),
+            canGoForward: _canGoForward,
+            onPrev: () => _shiftDay(-1),
+            onNext: () => _shiftDay(1),
+            onTapLabel: _pickDate,
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: subjectsAsync.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => const EmptyState(
@@ -197,12 +180,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                 },
               ),
             ),
-            _SummaryBar(
-              subjects: subjectsAsync.value,
-              records: recordsAsync.value,
-            ),
-          ],
-        ),
+          _SummaryBar(
+            subjects: subjectsAsync.value,
+            records: recordsAsync.value,
+          ),
+        ],
       ),
       floatingActionButton: subjectsAsync.maybeWhen(
         data: (subjects) => subjects.isEmpty
@@ -294,7 +276,7 @@ class _AttendanceList extends ConsumerWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 96), // bottom clearance for FAB
       itemCount: subjects.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {

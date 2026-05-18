@@ -4,6 +4,8 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/subject_form_sheet.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -20,85 +22,63 @@ class GroupDetailScreen extends ConsumerWidget {
     final groupAsync = ref.watch(_groupProvider(groupId));
     final subjectsAsync = ref.watch(subjectsInGroupProvider(groupId));
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
+    final group = groupAsync.value;
+    return EdgeScaffold(
+      actions: [
+        IconButton(
+          tooltip: 'Take attendance',
+          icon: const Icon(Icons.fact_check_outlined),
+          onPressed: () => context.push('/groups/$groupId/attendance'),
         ),
-        title: groupAsync.when(
-          loading: () => const Text('Classroom'),
-          error: (_, _) => const Text('Classroom'),
-          data: (g) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(g?.name ?? 'Classroom'),
-              if (g?.ageRange != null)
-                Text(
-                  g!.ageRange!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-            ],
-          ),
-        ),
-        actions: [
+        if (group != null)
           IconButton(
-            tooltip: 'Take attendance',
-            icon: const Icon(Icons.fact_check_outlined),
-            onPressed: () => context.push('/groups/$groupId/attendance'),
+            tooltip: 'Edit classroom',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => GroupFormSheet.show(context, group: group),
           ),
-          if (groupAsync.value != null)
-            IconButton(
-              tooltip: 'Edit classroom',
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => GroupFormSheet.show(
-                context,
-                group: groupAsync.value,
-              ),
-            ),
-          const SyncStatusIndicator(),
-        ],
-      ),
-      body: SafeArea(
-        child: subjectsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => const EmptyState(
-            icon: Icons.error_outline,
-            title: 'Could not load students',
-          ),
-          data: (subjects) {
-            if (subjects.isEmpty) {
-              return EmptyState(
-                icon: Icons.child_care_outlined,
-                title: 'No students yet',
-                message:
-                    'Add your first student to start taking attendance '
-                    'and logging observations.',
-                action: FilledButton.icon(
-                  onPressed: () => SubjectFormSheet.show(
-                    context,
-                    groupId: groupId,
-                  ),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add student'),
-                ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: subjects.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (_, i) => _SubjectTile(subject: subjects[i]),
-            );
-          },
+        const SyncStatusIndicator(),
+      ],
+      body: subjectsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => const EmptyState(
+          icon: Icons.error_outline,
+          title: 'Could not load students',
         ),
+        data: (subjects) {
+          if (subjects.isEmpty) {
+            return EmptyState(
+              icon: Icons.child_care_outlined,
+              title: 'No students yet',
+              message:
+                  'Add your first student to start taking attendance '
+                  'and logging observations.',
+              action: FilledButton.icon(
+                onPressed: () => SubjectFormSheet.show(
+                  context,
+                  groupId: groupId,
+                ),
+                icon: const Icon(Icons.add),
+                label: const Text('Add student'),
+              ),
+            );
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 96),
+            itemCount: subjects.length + 1,
+            itemBuilder: (_, i) {
+              if (i == 0) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ContentHeader(
+                    title: group?.name ?? 'Classroom',
+                    subtitle: group?.ageRange,
+                  ),
+                );
+              }
+              return _SubjectTile(subject: subjects[i - 1]);
+            },
+          );
+        },
       ),
       floatingActionButton: subjectsAsync.maybeWhen(
         data: (s) => s.isEmpty

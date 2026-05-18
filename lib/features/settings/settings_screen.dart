@@ -2,6 +2,8 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,27 +20,17 @@ class SettingsScreen extends ConsumerWidget {
     final member = ref.watch(currentMemberProvider).value;
     final isDirector = member?.role == 'director';
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-        title: const Text('Settings'),
-      ),
-      body: SafeArea(
-        child: ListView(
-          children: [
-            const SizedBox(height: 8),
-            const _SectionLabel(
-              label: 'Signed in as',
-            ),
+    return EdgeScaffold(
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 96),
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: ContentHeader(title: 'Settings', bottomGap: 8),
+          ),
+          const _SectionLabel(
+            label: 'Signed in as',
+          ),
             ListTile(
               leading: PersonAvatar(
                 name: member?.displayName ?? '?',
@@ -93,8 +85,7 @@ class SettingsScreen extends ConsumerWidget {
               title: Text('Different World'),
               subtitle: Text('v0.1 · offline-first classroom logging'),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

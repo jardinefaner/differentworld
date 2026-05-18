@@ -3,7 +3,9 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/invites/widgets/invite_create_sheet.dart';
 import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -23,40 +25,32 @@ class TeamScreen extends ConsumerWidget {
     final isDirector = me?.role == 'director';
 
     if (spaceId == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Team')),
-        body: const Center(child: Text('No space selected.')),
+      return const EdgeScaffold(
+        backFallbackRoute: '/settings',
+        body: Center(child: Text('No space selected.')),
       );
     }
 
     final teamAsync = ref.watch(_teamProvider(spaceId));
     final invitesAsync = ref.watch(pendingInvitesProvider(spaceId));
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/settings');
-            }
-          },
+    return EdgeScaffold(
+      backFallbackRoute: '/settings',
+      body: teamAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => const EmptyState(
+          icon: Icons.error_outline,
+          title: 'Could not load team',
         ),
-        title: const Text('Team'),
-      ),
-      body: SafeArea(
-        child: teamAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => const EmptyState(
-            icon: Icons.error_outline,
-            title: 'Could not load team',
-          ),
-          data: (members) {
-            return ListView(
-              children: [
-                const _SectionLabel(label: 'Members'),
+        data: (members) {
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 96),
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: ContentHeader(title: 'Team', bottomGap: 8),
+              ),
+              const _SectionLabel(label: 'Members'),
                 if (members.isEmpty)
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -102,8 +96,7 @@ class TeamScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
               ],
             );
-          },
-        ),
+        },
       ),
       floatingActionButton: isDirector
           ? FloatingActionButton.extended(

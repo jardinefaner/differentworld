@@ -8,6 +8,8 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,71 +31,49 @@ class TodayScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final member = ref.watch(currentMemberProvider).value;
     final space = ref.watch(currentSpaceProvider).value;
     final groupsAsync = ref.watch(groupsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              space?.name ?? 'Today',
-              style: theme.textTheme.titleMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (space != null)
-              Text(
-                'Today',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          if (onOpenOmnibox != null)
-            IconButton(
-              tooltip: 'Search',
-              icon: const Icon(Icons.search),
-              onPressed: onOpenOmnibox,
-            ),
-          const SyncStatusIndicator(),
+    return EdgeScaffold(
+      // Home: no back button, just the action pill.
+      showBack: false,
+      actions: [
+        if (onOpenOmnibox != null)
           IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/settings'),
+            tooltip: 'Search',
+            icon: const Icon(Icons.search),
+            onPressed: onOpenOmnibox,
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: groupsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => const EmptyState(
-            icon: Icons.error_outline,
-            title: 'Could not load today',
-          ),
-          data: (groups) {
-            if (groups.isEmpty) {
-              return EmptyState(
-                icon: Icons.meeting_room_outlined,
-                title: 'No classrooms yet',
-                message: 'Add your first classroom to start taking '
-                    'attendance and logging the day.',
-                action: FilledButton.icon(
-                  onPressed: () => GroupFormSheet.show(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add classroom'),
-                ),
-              );
-            }
-            return _TodayBody(member: member, groups: groups);
-          },
+        const SyncStatusIndicator(),
+        IconButton(
+          tooltip: 'Settings',
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => context.push('/settings'),
         ),
+      ],
+      body: groupsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => const EmptyState(
+          icon: Icons.error_outline,
+          title: 'Could not load today',
+        ),
+        data: (groups) {
+          if (groups.isEmpty) {
+            return EmptyState(
+              icon: Icons.meeting_room_outlined,
+              title: 'No classrooms yet',
+              message: 'Add your first classroom to start taking '
+                  'attendance and logging the day.',
+              action: FilledButton.icon(
+                onPressed: () => GroupFormSheet.show(context),
+                icon: const Icon(Icons.add),
+                label: const Text('Add classroom'),
+              ),
+            );
+          }
+          return _TodayBody(member: member, groups: groups, space: space);
+        },
       ),
       floatingActionButton: groupsAsync.maybeWhen(
         data: (groups) => groups.isEmpty
@@ -177,27 +157,35 @@ class _ChecklistCallToAction extends StatelessWidget {
 }
 
 class _TodayBody extends StatelessWidget {
-  const _TodayBody({required this.member, required this.groups});
+  const _TodayBody({
+    required this.member,
+    required this.groups,
+    required this.space,
+  });
 
   final Member? member;
   final List<Group> groups;
+  final Space? space;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final formFactor = FormFactor.fromWidth(constraints.maxWidth);
-        final padding = formFactor.isExpanded
-            ? const EdgeInsets.symmetric(horizontal: 48, vertical: 24)
-            : const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
+        final horiz = formFactor.isExpanded ? 48.0 : 16.0;
 
         return ListView(
-          padding: padding,
+          // Horizontal-only padding; vertical comes from ContentHeader
+          // (which builds in clearance for the floating chrome) and a
+          // generous bottom slot so FAB doesn't cover the last card.
+          padding: EdgeInsets.fromLTRB(horiz, 0, horiz, 96),
           children: [
-            _Greeting(member: member),
-            const SizedBox(height: 20),
+            ContentHeader(
+              title: space?.name ?? 'Today',
+              subtitle: _greetingLine(member),
+            ),
             const _ChecklistCallToAction(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _SectionHeader(
               label: 'Your classrooms',
               count: groups.length,
@@ -212,36 +200,13 @@ class _TodayBody extends StatelessWidget {
       },
     );
   }
-}
 
-class _Greeting extends StatelessWidget {
-  const _Greeting({required this.member});
-
-  final Member? member;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  static String _greetingLine(Member? member) {
     final greeting = greetingForTime(DateTime.now());
-    final name = member?.displayName ?? '';
     final dayLabel = DateFormat.yMMMMEEEEd().format(DateTime.now());
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          name.isEmpty ? '$greeting.' : '$greeting, $name.',
-          style: theme.textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          dayLabel,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
+    final name = member?.displayName ?? '';
+    if (name.isEmpty) return '$greeting · $dayLabel';
+    return '$greeting, $name · $dayLabel';
   }
 }
 

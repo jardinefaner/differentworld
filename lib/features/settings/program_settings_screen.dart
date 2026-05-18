@@ -2,9 +2,10 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 /// Director-only screen: edit Space-level feature toggles & defaults.
 class ProgramSettingsScreen extends ConsumerStatefulWidget {
@@ -25,53 +26,48 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
     final memberAsync = ref.watch(currentMemberProvider);
     final spaceId = memberAsync.value?.spaceId;
     if (spaceId == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Program settings')),
-        body: const Center(child: Text('No space selected.')),
+      return const EdgeScaffold(
+        backFallbackRoute: '/settings',
+        body: Center(child: Text('No space selected.')),
       );
     }
     final spaceAsync = ref.watch(_spaceProvider(spaceId));
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/settings');
-            }
-          },
-        ),
-        title: const Text('Program settings'),
-        actions: [
-          if (_draft != null && spaceAsync.value != null)
-            TextButton.icon(
-              onPressed: _saving ? null : () => _save(spaceAsync.value!),
-              icon: _saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check),
-              label: const Text('Save'),
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: spaceAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) =>
-              const Center(child: Text('Could not load program settings.')),
-          data: (space) {
-            if (space == null) return const Center(child: Text('No space.'));
-            final caps = _draft ?? space.caps;
-            return ListView(
-              children: [
-                _Section(label: space.name, helper: 'This program'),
-                const _SectionLabel(label: "What's tracked"),
+    return EdgeScaffold(
+      backFallbackRoute: '/settings',
+      actions: [
+        if (_draft != null && spaceAsync.value != null)
+          IconButton(
+            tooltip: 'Save',
+            onPressed: _saving ? null : () => _save(spaceAsync.value!),
+            icon: _saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check),
+          ),
+      ],
+      body: spaceAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) =>
+            const Center(child: Text('Could not load program settings.')),
+        data: (space) {
+          if (space == null) return const Center(child: Text('No space.'));
+          final caps = _draft ?? space.caps;
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 32),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ContentHeader(
+                  title: space.name,
+                  subtitle: 'Program settings',
+                  bottomGap: 8,
+                ),
+              ),
+              const _SectionLabel(label: "What's tracked"),
                 _CapSwitch(
                   label: 'Observations',
                   subtitle: 'Quick narrative + photo capture for kids',
@@ -161,8 +157,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                 const SizedBox(height: 32),
               ],
             );
-          },
-        ),
+        },
       ),
     );
   }
@@ -215,34 +210,6 @@ final _spaceProvider = StreamProvider.autoDispose.family<Space?, String>(
     yield* db.watchSpace(id);
   },
 );
-
-class _Section extends StatelessWidget {
-  const _Section({required this.label, this.helper});
-
-  final String label;
-  final String? helper;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: theme.textTheme.headlineSmall),
-          if (helper != null)
-            Text(
-              helper!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
 
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.label});
