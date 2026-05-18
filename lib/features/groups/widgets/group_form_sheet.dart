@@ -2,6 +2,7 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -132,6 +133,35 @@ class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
       );
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    final group = widget.group;
+    if (group == null) return;
+    final confirmed = await confirmDestructive(
+      context,
+      title: 'Delete this classroom?',
+      message:
+          '${group.name} and its assignments will be removed for everyone '
+          "on your team. Students stay; they just won't be in a classroom.",
+      confirmLabel: 'Delete classroom',
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(groupActionsProvider).delete(group.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'groups'),
+      );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = 'Could not delete. Please try again.';
+      });
     }
   }
 
@@ -281,8 +311,13 @@ class _GroupFormSheetState extends ConsumerState<GroupFormSheet> {
                     ],
                     const SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
+                        if (_isEdit)
+                          DestructiveButton(
+                            label: 'Delete',
+                            onPressed: _saving ? null : _delete,
+                          ),
+                        const Spacer(),
                         TextButton(
                           onPressed: _saving
                               ? null

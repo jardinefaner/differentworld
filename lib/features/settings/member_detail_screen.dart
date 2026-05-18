@@ -2,6 +2,7 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -213,6 +214,20 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       ),
                     ),
                   ),
+                const SizedBox(height: 24),
+                // Director-only "Remove from team" — can't remove yourself.
+                if (isDirector && me?.id != member.id) ...[
+                  const Divider(),
+                  const _SectionLabel(label: 'Danger zone'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: DestructiveButton(
+                      label: 'Remove from team',
+                      icon: Icons.person_remove_alt_1_outlined,
+                      onPressed: _saving ? null : () => _removeFromTeam(member),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 32),
               ],
             );
@@ -220,6 +235,38 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _removeFromTeam(Member member) async {
+    final confirmed = await confirmDestructive(
+      context,
+      title: 'Remove ${member.displayName}?',
+      message:
+          'They will lose access to this program immediately. Their past '
+          'attendance and notes stay attributed to them. You can re-invite '
+          'them by email later.',
+      confirmLabel: 'Remove from team',
+    );
+    if (!confirmed || !mounted) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final db = await ref.read(appDatabaseProvider.future);
+      await db.removeMemberFromSpace(member.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'members'),
+      );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = 'Could not remove. Please try again.';
+      });
+    }
   }
 
   void _set(String key, bool value) {

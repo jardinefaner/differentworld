@@ -353,6 +353,28 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<void> deleteSubject(String id) async {
+    await (delete(subjects)..where((s) => s.id.equals(id))).go();
+  }
+
+  /// Soft-remove a member from a space — clears their space_id and
+  /// resets capabilities to empty. Their auth account still exists, so
+  /// they can be re-invited later; their historical attendance / notes
+  /// stay attributed to their member id.
+  ///
+  /// We don't actually `delete(members)` because that would break
+  /// foreign-key references from attendance_records, observations, etc.
+  Future<void> removeMemberFromSpace(String memberId) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(members)..where((m) => m.id.equals(memberId))).write(
+      MembersCompanion(
+        spaceId: const Value(null),
+        capabilities: const Value('{}'),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   // -- Attendance -----------------------------------------------------------
 
   Stream<List<AttendanceRecord>> watchAttendanceForGroupOnDate(

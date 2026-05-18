@@ -3,6 +3,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/invites/widgets/invite_create_sheet.dart';
 import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -192,21 +193,21 @@ class _PendingInvitesHeader extends StatelessWidget {
   }
 }
 
-class _InviteTile extends StatelessWidget {
+class _InviteTile extends ConsumerWidget {
   const _InviteTile({required this.invite, required this.viewerIsDirector});
 
   final Invite invite;
   final bool viewerIsDirector;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final code = invite.code;
     final email = invite.email;
     final primary = email ?? (code == null ? 'Invite' : _formatCode(code));
     final subtitle = _subtitleFor(invite);
 
-    return ListTile(
+    final tile = ListTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.secondaryContainer,
         foregroundColor: theme.colorScheme.onSecondaryContainer,
@@ -220,6 +221,43 @@ class _InviteTile extends StatelessWidget {
       onTap: viewerIsDirector
           ? () => InviteShareSheet.show(context, invite: invite)
           : null,
+    );
+
+    if (!viewerIsDirector) return tile;
+
+    // Swipe-left-to-revoke for directors. The dismiss callback awaits a
+    // confirm dialog; if declined the tile springs back.
+    return Dismissible(
+      key: ValueKey('invite-${invite.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        color: theme.colorScheme.errorContainer,
+        child: Icon(
+          Icons.delete_outline,
+          color: theme.colorScheme.onErrorContainer,
+        ),
+      ),
+      confirmDismiss: (_) => confirmDestructive(
+        context,
+        title: 'Revoke this invite?',
+        message: email == null
+            ? 'Code ${_formatCode(code ?? '')} will stop working immediately.'
+            : '$email will no longer be able to join with this invite.',
+        confirmLabel: 'Revoke',
+      ),
+      onDismissed: (_) async {
+        await ref.read(inviteActionsProvider).revoke(invite.id);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invite revoked'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      child: tile,
     );
   }
 

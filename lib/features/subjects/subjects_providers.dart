@@ -67,6 +67,11 @@ class SubjectActions {
       groupId: groupId,
     );
   }
+
+  Future<void> delete(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.deleteSubject(id);
+  }
 }
 
 final subjectActionsProvider = Provider<SubjectActions>(SubjectActions.new);

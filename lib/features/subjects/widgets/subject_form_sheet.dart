@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,6 +154,36 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
     }
   }
 
+  Future<void> _delete() async {
+    final subject = widget.subject;
+    if (subject == null) return;
+    final confirmed = await confirmDestructive(
+      context,
+      title: 'Remove this student?',
+      message:
+          'Removing ${subject.firstName} ${subject.lastName} hides them '
+          'from attendance and the classroom roster. Their history stays '
+          'in your records.',
+      confirmLabel: 'Remove student',
+    );
+    if (!confirmed || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(subjectActionsProvider).delete(subject.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'subjects'),
+      );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _error = 'Could not remove. Please try again.';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -274,8 +305,13 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
                   ],
                   const SizedBox(height: 20),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      if (_isEdit)
+                        DestructiveButton(
+                          label: 'Remove',
+                          onPressed: _saving ? null : _delete,
+                        ),
+                      const Spacer(),
                       TextButton(
                         onPressed:
                             _saving ? null : () => Navigator.of(context).pop(),
