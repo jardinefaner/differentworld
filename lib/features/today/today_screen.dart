@@ -7,6 +7,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_results.dart';
 import 'package:differentworld/features/today/today_providers.dart';
+import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -251,6 +252,10 @@ class _TodayBody extends StatelessWidget {
             if (viewer.isDailyLogger) const _ChecklistCallToAction(),
             if (viewer.isDailyLogger) const SizedBox(height: 24)
             else const SizedBox(height: 8),
+            // Capability-aware one-tap launchpad. Hides itself when the
+            // viewer has nothing to launch.
+            const QuickActions(),
+            const SizedBox(height: 16),
             _SectionHeader(
               label: 'Your classrooms',
               count: groups.length,

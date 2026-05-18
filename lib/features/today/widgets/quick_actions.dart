@@ -1,0 +1,205 @@
+import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+/// Capability-aware row of one-tap action tiles on the Today screen.
+///
+/// Each tile renders only when the signed-in viewer has the matching
+/// capability — so a teacher with `canObserve` sees "New observation",
+/// a driver sees "Vehicles", a director sees "Team", etc.
+///
+/// The whole row hides when there's nothing to show (e.g. a strict
+/// read-only role) so we don't render an empty band.
+class QuickActions extends ConsumerWidget {
+  const QuickActions({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    final tiles = <_Tile>[
+      if (viewer.canObserve)
+        _Tile(
+          icon: Icons.edit_note_outlined,
+          label: 'New observation',
+          onTap: () => _newObservation(context, ref),
+        ),
+      if (viewer.canDrive || viewer.canManageProgram)
+        _Tile(
+          icon: Icons.directions_bus_outlined,
+          label: 'Vehicles',
+          onTap: () => context.push('/settings/vehicles'),
+        ),
+      if (viewer.canManageProgram || viewer.canInviteStaff)
+        _Tile(
+          icon: Icons.groups_outlined,
+          label: 'Team',
+          onTap: () => context.push('/settings/team'),
+        ),
+    ];
+
+    if (tiles.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick actions',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              for (var i = 0; i < tiles.length; i++) ...[
+                if (i > 0) const SizedBox(width: 12),
+                tiles[i],
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// "New observation" entry point:
+  ///   - 0 visible classrooms → show a quick "no rooms yet" snackbar
+  ///   - 1 visible classroom → open the form for that group directly
+  ///   - 2+ → show a transient classroom picker, then open the form
+  Future<void> _newObservation(BuildContext context, WidgetRef ref) async {
+    final groupsAsync = ref.read(groupsProvider);
+    final groups = groupsAsync.value ?? const <Group>[];
+    if (groups.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You're not assigned to a classroom yet."),
+        ),
+      );
+      return;
+    }
+    if (groups.length == 1) {
+      await ObservationFormSheet.show(context, groupId: groups.first.id);
+      return;
+    }
+    final picked = await _ClassroomPickerSheet.show(context, groups: groups);
+    if (picked == null || !context.mounted) return;
+    await ObservationFormSheet.show(context, groupId: picked.id);
+  }
+}
+
+class _Tile extends StatelessWidget {
+  const _Tile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 104,
+      height: 88,
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Transient picker used when "New observation" is tapped and the
+/// driver/teacher is assigned to more than one classroom. Bottom sheet
+/// (not a route) because it's a one-shot quick choice — the user picks
+/// a classroom and we hand off to the observation form.
+class _ClassroomPickerSheet extends StatelessWidget {
+  const _ClassroomPickerSheet({required this.groups});
+
+  final List<Group> groups;
+
+  static Future<Group?> show(
+    BuildContext context, {
+    required List<Group> groups,
+  }) {
+    return showModalBottomSheet<Group>(
+      context: context,
+      useSafeArea: true,
+      builder: (_) => _ClassroomPickerSheet(groups: groups),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurfaceVariant
+                      .withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(
+              'Which classroom?',
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            for (final g in groups)
+              ListTile(
+                leading: const Icon(Icons.meeting_room_outlined),
+                title: Text(g.name),
+                subtitle: g.ageRange == null
+                    ? null
+                    : Text(g.ageRange!),
+                onTap: () => Navigator.of(context).pop(g),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}

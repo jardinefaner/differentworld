@@ -142,6 +142,50 @@ for the transient sheets in §2 but never for an edit destination.
 
 ---
 
+## 6. Today is a capability-aware launchpad
+
+**Rule.** The Today screen surfaces one-tap action tiles for every
+capability the signed-in viewer has, so daily-use work isn't
+"buried somewhere in the app." A teacher with `canObserve` sees a
+"New observation" tile right on home. A driver with `canDrive` sees
+"Vehicles." A director sees "Team." Nothing the viewer *can't* do
+appears — the row is filtered live by the Viewer's caps.
+
+**Why.** This is an offline-first, mobile-first, role-driven app —
+each shift starts on Today. Forcing teachers to navigate
+classroom → tab → screen for the action they take every hour costs
+them time and discoverability. Capabilities already define what each
+person can do; reuse that as the layout signal so the screen
+self-adapts to the role without per-role custom UIs.
+
+**How.**
+- `lib/features/today/widgets/quick_actions.dart` builds the row.
+- Each tile is gated on a `viewer.canXxx` getter.
+- Tiles route to the canonical destination (`/settings/vehicles`,
+  ObservationFormSheet, etc.) — they're shortcuts, not duplicated
+  flows. One source of truth per action.
+- When the action needs context the launchpad doesn't have
+  (e.g. observation needs a `groupId`), the tile uses smart defaults
+  (single visible classroom → straight in; multiple → transient
+  picker sheet). Never block the launchpad on choice.
+- The whole row hides when the viewer has zero matching caps so a
+  read-only family lens doesn't render an empty band.
+
+**Adding a new tile.** Add a `viewer.canXxx` getter if missing, add
+one `if (viewer.canXxx) _Tile(...)` to the list in `QuickActions`,
+and ensure the destination is reachable as a route. Don't bypass
+the route for inline navigation — the launchpad must not become a
+divergent action surface.
+
+**Exception.** Tiles are not the right surface for stateful work
+("you have a vehicle out → check it in"). Those become **status
+banners** above the tile row instead, so they're noticed even when
+the user isn't already scanning the launchpad. The Vehicles tile
+will graduate to a state-aware "Check in [Name]" pill in a follow-
+up commit once that pattern is needed in more than one place.
+
+---
+
 ## Changelog
 
 - **2026-05-18** — §1 capability-toggle auto-save adopted after the
@@ -154,3 +198,6 @@ for the transient sheets in §2 but never for an edit destination.
   inline section on the subject edit screen (`_GuardiansSection`).
 - **2026-05-18** — §3 `DismissGuard` codified after observing that
   swipe-down on bottom sheets silently discarded form state.
+- **2026-05-18** — §6 Today becomes a capability-aware launchpad.
+  First tiles: New observation (canObserve), Vehicles (canDrive or
+  canManageProgram), Team (canInviteStaff or canManageProgram).
