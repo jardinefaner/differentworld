@@ -257,10 +257,38 @@ class MemberCertifications extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Photo / PDF / audio attached to any entity. First-class per
+/// UX_DECISIONS §8 so photos have proper identity (caption,
+/// sort_order), can be queried independently ("all photos this week"),
+/// and live in one canonical table instead of being a `photo_url`
+/// column on every parent.
+///
+/// `entityKind` is a string discriminator: 'entry' | 'subject' |
+/// 'member' | 'vehicle' | 'certification' | future kinds. Keep
+/// lowercase-singular by convention.
+class Attachments extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get entityKind => text()();
+  TextColumn get entityId => text()();
+  TextColumn get url => text()();
+  TextColumn get thumbUrl => text().nullable()();
+  TextColumn get mimeType => text()();
+  TextColumn get caption => text().nullable()();
+  IntColumn get sortOrder => integer().nullable()();
+  TextColumn get uploadedBy => text().nullable()();
+  TextColumn get takenAt => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
-          Vehicles, VehicleLogs, MemberCertifications],
+          Vehicles, VehicleLogs, MemberCertifications, Attachments],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -1059,6 +1087,102 @@ class AppDatabase extends _$AppDatabase {
           ])
           ..limit(1))
         .watchSingleOrNull();
+  }
+
+  // -- Attachments --------------------------------------------------------
+
+  /// Every attachment for a given entity, ordered by sort_order (nulls
+  /// last) then created_at. Used by photo grids on observation / cert
+  /// / future galleries.
+  Stream<List<Attachment>> watchAttachmentsFor({
+    required String entityKind,
+    required String entityId,
+  }) {
+    return (select(attachments)
+          ..where(
+            (a) =>
+                a.entityKind.equals(entityKind) &
+                a.entityId.equals(entityId),
+          )
+          ..orderBy([
+            (a) => OrderingTerm(expression: a.sortOrder),
+            (a) => OrderingTerm(expression: a.createdAt),
+          ]))
+        .watch();
+  }
+
+  /// One-shot read of attachments for an entity. Used by writers that
+  /// need the latest list to compute a new sort_order.
+  Future<List<Attachment>> findAttachmentsFor({
+    required String entityKind,
+    required String entityId,
+  }) {
+    return (select(attachments)
+          ..where(
+            (a) =>
+                a.entityKind.equals(entityKind) &
+                a.entityId.equals(entityId),
+          )
+          ..orderBy([
+            (a) => OrderingTerm(expression: a.sortOrder),
+            (a) => OrderingTerm(expression: a.createdAt),
+          ]))
+        .get();
+  }
+
+  Future<void> createAttachment({
+    required String id,
+    required String spaceId,
+    required String entityKind,
+    required String entityId,
+    required String url,
+    String mimeType = 'image/jpeg',
+    String? thumbUrl,
+    String? caption,
+    int? sortOrder,
+    String? uploadedBy,
+    String? takenAt,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await into(attachments).insert(
+      AttachmentsCompanion.insert(
+        id: id,
+        spaceId: spaceId,
+        entityKind: entityKind,
+        entityId: entityId,
+        url: url,
+        thumbUrl: Value(thumbUrl),
+        mimeType: mimeType,
+        caption: Value(caption),
+        sortOrder: Value(sortOrder),
+        uploadedBy: Value(uploadedBy),
+        takenAt: Value(takenAt),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
+  Future<void> updateAttachment({
+    required String id,
+    String? caption,
+    int? sortOrder,
+    String? thumbUrl,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(attachments)..where((a) => a.id.equals(id))).write(
+      AttachmentsCompanion(
+        caption: caption == null ? const Value.absent() : Value(caption),
+        sortOrder:
+            sortOrder == null ? const Value.absent() : Value(sortOrder),
+        thumbUrl: thumbUrl == null ? const Value.absent() : Value(thumbUrl),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> deleteAttachment(String id) async {
+    await (delete(attachments)..where((a) => a.id.equals(id))).go();
   }
 
   // -- Member certifications ----------------------------------------------

@@ -1,7 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/entries/entry_photos.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
@@ -96,9 +96,10 @@ class EntryActions {
   /// already point at the right entry); otherwise a new uuid is
   /// generated inside.
   ///
-  /// Pass [photoUrls] as the full list of photos (primary first).
-  /// The first URL lands in the legacy `photo_url` column for back-
-  /// compat with single-photo readers; the rest go to `details.photos`.
+  /// Photos are persisted as separate `attachments` rows (entity_kind:
+  /// 'entry'), in the order they appear in [photoUrls]. Per
+  /// UX_DECISIONS §8 the entry row no longer carries photo URLs
+  /// directly; attachments are first-class.
   Future<String> createObservation({
     required String subjectId,
     required String groupId,
@@ -106,16 +107,26 @@ class EntryActions {
     List<String> photoUrls = const [],
     String? id,
   }) async {
-    final split = SerializedPhotos.split(photoUrls);
-    return _create(
+    final entryId = await _create(
       kind: EntryKind.observation,
       subjectId: subjectId,
       groupId: groupId,
       body: text,
-      photoUrl: split.primary,
-      detailsJson: split.detailsJson,
       id: id,
     );
+    if (photoUrls.isNotEmpty) {
+      final attachments = _ref.read(attachmentActionsProvider);
+      var sort = 0;
+      for (final url in photoUrls) {
+        await attachments.add(
+          entityKind: 'entry',
+          entityId: entryId,
+          url: url,
+          sortOrder: sort++,
+        );
+      }
+    }
+    return entryId;
   }
 
   Future<String> _create({
@@ -123,8 +134,6 @@ class EntryActions {
     String? subjectId,
     String? groupId,
     String? body,
-    String? photoUrl,
-    String detailsJson = '{}',
     String? id,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
@@ -143,35 +152,20 @@ class EntryActions {
       subjectId: subjectId,
       groupId: groupId,
       body: body,
-      photoUrl: photoUrl,
-      detailsJson: detailsJson,
     );
     return useId;
   }
 
-  /// Update an existing entry's text and photos. The full [photoUrls]
-  /// list replaces whatever was on the entry; pass `[]` to clear.
+  /// Update an existing entry's text. Photo changes go through
+  /// [AttachmentActions]; this method does not touch attachments.
+  /// The observation form computes a diff against the existing
+  /// attachment list and adds / removes rows directly.
   Future<void> updateText({
     required String id,
     required String text,
-    List<String> photoUrls = const [],
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    // Preserve any non-photo keys that already exist in `details`
-    // (kind-specific payloads on future entry types, etc.).
-    final existing = await (db.select(db.entries)
-          ..where((e) => e.id.equals(id)))
-        .getSingleOrNull();
-    final split = SerializedPhotos.split(
-      photoUrls,
-      baseDetailsJson: existing?.details,
-    );
     await db.updateEntry(id: id, body: text);
-    await db.updateEntryPhotos(
-      id: id,
-      photoUrl: split.primary,
-      detailsJson: split.detailsJson,
-    );
   }
 
   Future<void> delete(String id) async {

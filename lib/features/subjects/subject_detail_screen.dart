@@ -10,9 +10,9 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/entries/entry_photos.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -486,18 +486,21 @@ class _AlertRow extends StatelessWidget {
   }
 }
 
-class _ObservationItem extends StatelessWidget {
+class _ObservationItem extends ConsumerWidget {
   const _ObservationItem({required this.entry});
 
   final Entry entry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final when = DateTime.tryParse(entry.recordedAt);
     final whenLabel =
         when == null ? '' : DateFormat.MMMd().add_jm().format(when);
-    final photos = entry.photos;
+    final attachmentsAsync = ref.watch(
+      attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
+    );
+    final photos = attachmentsAsync.value?.urls ?? const <String>[];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Container(

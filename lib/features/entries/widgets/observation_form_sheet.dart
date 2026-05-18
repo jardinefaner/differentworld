@@ -3,7 +3,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/entries/entry_photos.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -75,10 +75,23 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   /// just the existing entry id.
   late final String _entryId;
 
-  /// Photo URLs — each already uploaded to Storage. Persisted to the
-  /// entry's row at save time (first → photo_url column, rest →
-  /// details.photos). Empty = no photos.
+  /// Local working copy of attachment URLs in display order. On open
+  /// we seed this from the existing attachments stream (edit mode);
+  /// the user adds/removes locally; on save we diff against the
+  /// original list and create/delete the matching attachment rows.
   List<String> _photos = const [];
+
+  /// Snapshot of the original attachment URLs at form-open time. Used
+  /// for the diff on save and for the dirty check.
+  List<String> _originalPhotos = const [];
+
+  /// Map URL → existing attachment id, for the delete diff on save.
+  /// New photos uploaded in this session won't appear here.
+  Map<String, String> _attachmentIdByUrl = const {};
+
+  /// True once we've seeded `_photos` from the stream (edit mode).
+  /// New-observation mode flips this true immediately in initState.
+  bool _seededAttachments = false;
 
   bool get _isEdit => widget.existing != null;
 
@@ -91,13 +104,24 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     _textCtrl = TextEditingController(text: widget.existing?.body ?? '');
     _subjectId = widget.existing?.subjectId ?? widget.initialSubjectId;
     _entryId = widget.existing?.id ?? const Uuid().v4();
-    _photos = widget.existing?.photos ?? const <String>[];
+    if (!_isEdit) _seededAttachments = true;
   }
 
   @override
   void dispose() {
     _textCtrl.dispose();
     super.dispose();
+  }
+
+  /// Seeded once per form-open from the `attachmentsForEntityProvider`
+  /// stream. After this, the stream can refresh independently but
+  /// the form holds local state until save.
+  void _seedAttachments(List<Attachment> rows) {
+    if (_seededAttachments) return;
+    _photos = rows.map((a) => a.url).toList(growable: false);
+    _originalPhotos = _photos;
+    _attachmentIdByUrl = {for (final a in rows) a.url: a.id};
+    _seededAttachments = true;
   }
 
   bool _isDirty() {
@@ -107,10 +131,12 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
           _subjectId != null ||
           _photos.isNotEmpty;
     }
-    final originalPhotos = original.photos;
-    final samePhotos = _photos.length == originalPhotos.length &&
-        List.generate(_photos.length, (i) => _photos[i] == originalPhotos[i])
-            .every((b) => b);
+    final samePhotos =
+        _photos.length == _originalPhotos.length &&
+        List.generate(
+          _photos.length,
+          (i) => _photos[i] == _originalPhotos[i],
+        ).every((b) => b);
     return _textCtrl.text.trim() != (original.body ?? '') ||
         _subjectId != original.subjectId ||
         !samePhotos;
@@ -204,13 +230,38 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     });
     try {
       final actions = ref.read(entryActionsProvider);
+      final attachments = ref.read(attachmentActionsProvider);
       if (_isEdit) {
         await actions.updateText(
           id: widget.existing!.id,
           text: text,
-          photoUrls: _photos,
         );
+        // Diff attachments: delete those gone, add new ones in order.
+        final originalSet = _originalPhotos.toSet();
+        final currentSet = _photos.toSet();
+        for (final url in originalSet.difference(currentSet)) {
+          final id = _attachmentIdByUrl[url];
+          if (id != null) await attachments.remove(id);
+        }
+        // For order changes / new uploads, walk in order and reorder
+        // existing rows / create rows for new URLs.
+        for (var i = 0; i < _photos.length; i++) {
+          final url = _photos[i];
+          final existingId = _attachmentIdByUrl[url];
+          if (existingId != null) {
+            await attachments.reorder(id: existingId, sortOrder: i);
+          } else {
+            await attachments.add(
+              entityKind: 'entry',
+              entityId: _entryId,
+              url: url,
+              sortOrder: i,
+            );
+          }
+        }
       } else {
+        // createObservation handles its own attachment writes from
+        // photoUrls; it preserves order.
         await actions.createObservation(
           subjectId: _subjectId!,
           groupId: _effectiveGroupId,
@@ -265,6 +316,15 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     final subjectsAsync = _effectiveGroupId.isEmpty
         ? const AsyncValue<List<Subject>>.data([])
         : ref.watch(subjectsInGroupProvider(_effectiveGroupId));
+
+    // Seed the photos working-copy on first arrival of the attachments
+    // stream (edit mode). For new-observation mode `_seededAttachments`
+    // was set in initState so we never enter this branch.
+    if (_isEdit && !_seededAttachments) {
+      ref
+          .watch(attachmentsForEntityProvider((kind: 'entry', id: _entryId)))
+          .whenData(_seedAttachments);
+    }
 
     return DismissGuard(
       isDirty: _isDirty,

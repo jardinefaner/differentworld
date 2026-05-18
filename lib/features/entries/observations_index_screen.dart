@@ -3,9 +3,9 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/entries/entry_photos.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
@@ -179,7 +179,10 @@ class _ObservationListItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final photos = entry.photos;
+    final attachmentsAsync = ref.watch(
+      attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
+    );
+    final photos = attachmentsAsync.value?.urls ?? const <String>[];
     final when = DateTime.tryParse(entry.recordedAt);
     final whenLabel =
         when == null ? '' : DateFormat.MMMd().add_jm().format(when.toLocal());

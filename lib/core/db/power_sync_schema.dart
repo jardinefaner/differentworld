@@ -152,4 +152,18 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  Table('attachments', [
+    Column.text('space_id'),
+    Column.text('entity_kind'),
+    Column.text('entity_id'),
+    Column.text('url'),
+    Column.text('thumb_url'),
+    Column.text('mime_type'),
+    Column.text('caption'),
+    Column.integer('sort_order'),
+    Column.text('uploaded_by'),
+    Column.text('taken_at'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 ]);

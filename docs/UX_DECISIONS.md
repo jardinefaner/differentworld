@@ -393,3 +393,14 @@ become two different things — one gets a polish pass, the other rots.
 - **2026-05-18** — Observations index landed at `/observations` —
   first top-level entry surface for an existing first-class entity
   that was buried under classroom / child paths.
+- **2026-05-18** — §8: attachments promoted to first-class
+  (`attachments` table, polymorphic via `entity_kind` + `entity_id`,
+  with caption / sort_order / mime_type). Entries migrated to use it
+  as the canonical photo store: backfill moved every existing
+  `entries.photo_url` and `entries.details.photos` URL into rows,
+  and the `details.photos` JSONB key was dropped. Readers
+  (observations feed, index, per-child timeline) watch
+  `attachmentsForEntityProvider`; the form maintains a local list
+  and diff-writes attachments on save. Subjects / members / vehicles
+  photos remain on legacy `photo_url` / `avatar_url` columns — they
+  migrate in a follow-up commit.
