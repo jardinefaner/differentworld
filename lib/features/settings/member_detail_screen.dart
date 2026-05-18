@@ -1,0 +1,387 @@
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+/// Per-member detail screen: shows role + capability checkboxes. Editing
+/// is gated on the signed-in member being a director.
+class MemberDetailScreen extends ConsumerStatefulWidget {
+  const MemberDetailScreen({required this.memberId, super.key});
+
+  final String memberId;
+
+  @override
+  ConsumerState<MemberDetailScreen> createState() => _MemberDetailScreenState();
+}
+
+class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
+  Capabilities? _draft;
+  String? _draftRole;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  Widget build(BuildContext context) {
+    final me = ref.watch(currentMemberProvider).value;
+    final isDirector = me?.role == 'director';
+    final memberAsync = ref.watch(_memberProvider(widget.memberId));
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/settings/team');
+            }
+          },
+        ),
+        title: Text(memberAsync.value?.displayName ?? 'Team member'),
+        actions: [
+          if ((_draft != null || _draftRole != null) &&
+              memberAsync.value != null)
+            TextButton.icon(
+              onPressed: _saving ? null : () => _save(memberAsync.value!),
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check),
+              label: const Text('Save'),
+            ),
+        ],
+      ),
+      body: SafeArea(
+        child: memberAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => const Center(child: Text('Could not load member.')),
+          data: (member) {
+            if (member == null) {
+              return const Center(child: Text('Member not found.'));
+            }
+            final currentRole = _draftRole ?? member.role;
+            final caps = _draft ?? member.caps;
+
+            return ListView(
+              children: [
+                const SizedBox(height: 12),
+                Center(
+                  child: CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onPrimaryContainer,
+                    child: Text(
+                      _initial(member.displayName),
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    member.displayName,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const _SectionLabel(label: 'Role'),
+                if (isDirector)
+                  _RoleSelector(
+                    selected: currentRole,
+                    onChanged: (next) {
+                      setState(() {
+                        _draftRole = next;
+                        // Apply role defaults to caps draft so the toggles
+                        // visually reflect the new bundle. Director can
+                        // still override individual toggles after.
+                        _draft = caps.mergedWith(
+                          RoleBundles.defaultsFor(next),
+                        );
+                      });
+                    },
+                  )
+                else
+                  ListTile(
+                    leading: const Icon(Icons.shield_outlined),
+                    title: Text(_roleLabel(currentRole)),
+                    subtitle: const Text(
+                      'Only a director can change roles.',
+                    ),
+                  ),
+                const Divider(),
+                const _SectionLabel(label: 'Abilities'),
+                _CapSwitch(
+                  label: 'Observe',
+                  subtitle: 'Record developmental observations',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canObserve),
+                  onChanged: (v) => _set(MemberCaps.canObserve, v),
+                ),
+                _CapSwitch(
+                  label: 'Take attendance',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canTakeAttendance),
+                  onChanged: (v) => _set(MemberCaps.canTakeAttendance, v),
+                ),
+                _CapSwitch(
+                  label: 'Record daily routines',
+                  subtitle: 'Meals, naps, diaper changes',
+                  enabled: isDirector,
+                  value:
+                      caps.getBool(MemberCaps.canRecordMeal) &&
+                      caps.getBool(MemberCaps.canRecordNap) &&
+                      caps.getBool(MemberCaps.canRecordDiaper),
+                  onChanged: (v) {
+                    _setMultiple({
+                      MemberCaps.canRecordMeal: v,
+                      MemberCaps.canRecordNap: v,
+                      MemberCaps.canRecordDiaper: v,
+                    });
+                  },
+                ),
+                _CapSwitch(
+                  label: 'Administer medication',
+                  subtitle: 'Requires state certification (MAT)',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canAdministerMedication),
+                  onChanged: (v) => _set(MemberCaps.canAdministerMedication, v),
+                ),
+                _CapSwitch(
+                  label: 'Drive (field trips)',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canDrive),
+                  onChanged: (v) => _set(MemberCaps.canDrive, v),
+                ),
+                _CapSwitch(
+                  label: 'Open / close the building',
+                  enabled: isDirector,
+                  value:
+                      caps.getBool(MemberCaps.canOpenBuilding) &&
+                      caps.getBool(MemberCaps.canCloseBuilding),
+                  onChanged: (v) {
+                    _setMultiple({
+                      MemberCaps.canOpenBuilding: v,
+                      MemberCaps.canCloseBuilding: v,
+                    });
+                  },
+                ),
+                _CapSwitch(
+                  label: 'Authorize pickup changes',
+                  subtitle: 'Add or remove guardians for a child',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canAuthorizePickup),
+                  onChanged: (v) => _set(MemberCaps.canAuthorizePickup, v),
+                ),
+                _CapSwitch(
+                  label: 'Invite staff',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canInviteStaff),
+                  onChanged: (v) => _set(MemberCaps.canInviteStaff, v),
+                ),
+                _CapSwitch(
+                  label: 'View billing',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canViewBilling),
+                  onChanged: (v) => _set(MemberCaps.canViewBilling, v),
+                ),
+                _CapSwitch(
+                  label: 'Act as director',
+                  subtitle: 'Full admin when the director is offsite',
+                  enabled: isDirector,
+                  value: caps.getBool(MemberCaps.canActAsDirector),
+                  onChanged: (v) => _set(MemberCaps.canActAsDirector, v),
+                ),
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Text(
+                      _error!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 32),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _set(String key, bool value) {
+    setState(() {
+      final base =
+          _draft ??
+          ref.read(_memberProvider(widget.memberId)).value?.caps ??
+          const Capabilities.empty();
+      _draft = base.setting(key, value);
+    });
+  }
+
+  void _setMultiple(Map<String, bool> updates) {
+    setState(() {
+      var base =
+          _draft ??
+          ref.read(_memberProvider(widget.memberId)).value?.caps ??
+          const Capabilities.empty();
+      for (final entry in updates.entries) {
+        base = base.setting(entry.key, entry.value);
+      }
+      _draft = base;
+    });
+  }
+
+  Future<void> _save(Member member) async {
+    // Runtime guard — the UI gates editing on isDirector, but defence-
+    // in-depth: refuse to write if the caller isn't a director regardless
+    // of how this method gets reached.
+    final me = ref.read(currentMemberProvider).value;
+    if (me?.role != 'director') return;
+
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final db = await ref.read(appDatabaseProvider.future);
+      if (_draft != null) {
+        await db.updateMemberCapabilities(
+          member.id,
+          _draft!.toJson(),
+        );
+      }
+      if (_draftRole != null && _draftRole != member.role) {
+        await db.updateMemberRole(member.id, _draftRole!);
+      }
+      if (!mounted) return;
+      setState(() {
+        _draft = null;
+        _draftRole = null;
+      });
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'members'),
+      );
+      if (!mounted) return;
+      setState(() => _error = 'Could not save. Please try again.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  static String _initial(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '?';
+    return trimmed.substring(0, 1).toUpperCase();
+  }
+
+  static String _roleLabel(String role) => switch (role) {
+    'director' => 'Director',
+    'lead_teacher' => 'Lead teacher',
+    'teacher' => 'Teacher',
+    'assistant' => 'Assistant',
+    _ => role,
+  };
+}
+
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final _memberProvider = StreamProvider.autoDispose.family<Member?, String>(
+  (ref, id) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* db.watchMember(id);
+  },
+);
+
+class _RoleSelector extends StatelessWidget {
+  const _RoleSelector({required this.selected, required this.onChanged});
+
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const roles = [
+      ('director', 'Director'),
+      ('lead_teacher', 'Lead teacher'),
+      ('teacher', 'Teacher'),
+      ('assistant', 'Assistant'),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Wrap(
+        spacing: 8,
+        children: [
+          for (final (value, label) in roles)
+            ChoiceChip(
+              label: Text(label),
+              selected: selected == value,
+              onSelected: (s) {
+                if (s) onChanged(value);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Text(
+        label.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+class _CapSwitch extends StatelessWidget {
+  const _CapSwitch({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+    this.enabled = true,
+  });
+
+  final String label;
+  final String? subtitle;
+  final bool value;
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      title: Text(label),
+      subtitle: subtitle == null ? null : Text(subtitle!),
+      value: value,
+      onChanged: enabled ? onChanged : null,
+    );
+  }
+}

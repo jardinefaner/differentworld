@@ -24,6 +24,7 @@ class GroupActions {
     required String name,
     String? ageRange,
     String? color,
+    String? capabilitiesJson,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
     final member = _ref.read(currentMemberProvider).value;
@@ -37,6 +38,7 @@ class GroupActions {
       name: name,
       ageRange: ageRange,
       color: color,
+      capabilitiesJson: capabilitiesJson ?? '{}',
     );
   }
 
@@ -45,6 +47,7 @@ class GroupActions {
     String? name,
     String? ageRange,
     String? color,
+    String? capabilitiesJson,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.updateGroup(
@@ -52,6 +55,7 @@ class GroupActions {
       name: name,
       ageRange: ageRange,
       color: color,
+      capabilitiesJson: capabilitiesJson,
     );
   }
 

@@ -167,6 +167,7 @@ class AppDatabase extends _$AppDatabase {
     required String name,
     String? ageRange,
     String? color,
+    String capabilitiesJson = '{}',
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await into(groups).insert(
@@ -176,7 +177,7 @@ class AppDatabase extends _$AppDatabase {
         name: name,
         ageRange: Value(ageRange),
         color: Value(color),
-        capabilities: '{}',
+        capabilities: capabilitiesJson,
         createdAt: now,
         updatedAt: now,
       ),
@@ -188,6 +189,7 @@ class AppDatabase extends _$AppDatabase {
     String? name,
     String? ageRange,
     String? color,
+    String? capabilitiesJson,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await (update(groups)..where((g) => g.id.equals(id))).write(
@@ -195,9 +197,75 @@ class AppDatabase extends _$AppDatabase {
         name: name == null ? const Value.absent() : Value(name),
         ageRange: ageRange == null ? const Value.absent() : Value(ageRange),
         color: color == null ? const Value.absent() : Value(color),
+        capabilities: capabilitiesJson == null
+            ? const Value.absent()
+            : Value(capabilitiesJson),
         updatedAt: Value(now),
       ),
     );
+  }
+
+  // -- Capability mutators (write the JSONB column on each entity) ---------
+
+  Future<void> updateSpaceCapabilities(
+    String id,
+    String capabilitiesJson,
+  ) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(spaces)..where((s) => s.id.equals(id))).write(
+      SpacesCompanion(
+        capabilities: Value(capabilitiesJson),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> updateMemberCapabilities(
+    String id,
+    String capabilitiesJson,
+  ) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(members)..where((m) => m.id.equals(id))).write(
+      MembersCompanion(
+        capabilities: Value(capabilitiesJson),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Updates a member's role using the typed Drift API so PowerSync's
+  /// CRUD queue picks it up. Don't use `customStatement` for this —
+  /// raw SQL bypasses the WAL triggers PowerSync relies on.
+  Future<void> updateMemberRole(String id, String role) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(members)..where((m) => m.id.equals(id))).write(
+      MembersCompanion(role: Value(role), updatedAt: Value(now)),
+    );
+  }
+
+  Future<void> updateSubjectCapabilities(
+    String id,
+    String capabilitiesJson,
+  ) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(subjects)..where((s) => s.id.equals(id))).write(
+      SubjectsCompanion(
+        capabilities: Value(capabilitiesJson),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Stream<Space?> watchSpace(String id) {
+    return (select(spaces)..where((s) => s.id.equals(id)))
+        .watchSingleOrNull();
+  }
+
+  Stream<List<Member>> watchMembersInSpace(String spaceId) {
+    return (select(members)
+          ..where((m) => m.spaceId.equals(spaceId))
+          ..orderBy([(m) => OrderingTerm(expression: m.displayName)]))
+        .watch();
   }
 
   Future<void> deleteGroup(String id) async {

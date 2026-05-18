@@ -77,7 +77,8 @@ class GroupDetailScreen extends ConsumerWidget {
               return EmptyState(
                 icon: Icons.child_care_outlined,
                 title: 'No students yet',
-                message: 'Add your first student to start taking attendance '
+                message:
+                    'Add your first student to start taking attendance '
                     'and logging observations.',
                 action: FilledButton.icon(
                   onPressed: () => SubjectFormSheet.show(

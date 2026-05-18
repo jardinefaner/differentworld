@@ -1,4 +1,3 @@
-import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
@@ -30,11 +29,9 @@ class TodayScreen extends ConsumerWidget {
         actions: [
           const SyncStatusIndicator(),
           IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authActionsProvider).signOut();
-            },
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.go('/settings'),
           ),
         ],
       ),

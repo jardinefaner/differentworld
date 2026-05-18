@@ -7,6 +7,10 @@ import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_screen.dart';
 import 'package:differentworld/features/onboarding/create_space_screen.dart';
+import 'package:differentworld/features/settings/member_detail_screen.dart';
+import 'package:differentworld/features/settings/program_settings_screen.dart';
+import 'package:differentworld/features/settings/settings_screen.dart';
+import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +46,28 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'attendance',
                 builder: (_, state) => AttendanceScreen(
                   groupId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (_, _) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'program',
+            builder: (_, _) => const ProgramSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'team',
+            builder: (_, _) => const TeamScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => MemberDetailScreen(
+                  memberId: state.pathParameters['id']!,
                 ),
               ),
             ],

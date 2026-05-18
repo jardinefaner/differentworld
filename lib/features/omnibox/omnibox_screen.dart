@@ -108,6 +108,27 @@ class _OmniboxScreenState extends ConsumerState<OmniboxScreen> {
         keywords: const ['home', 'dashboard'],
         onSelect: (ctx, ref) => ctx.go('/'),
       ),
+      _Suggestion(
+        label: 'Settings',
+        kindLabel: 'Page',
+        icon: Icons.settings_outlined,
+        keywords: const ['preferences', 'admin', 'config'],
+        onSelect: (ctx, ref) => ctx.go('/settings'),
+      ),
+      _Suggestion(
+        label: 'Team',
+        kindLabel: 'Page',
+        icon: Icons.groups_outlined,
+        keywords: const ['staff', 'teachers', 'members'],
+        onSelect: (ctx, ref) => ctx.go('/settings/team'),
+      ),
+      _Suggestion(
+        label: 'Program settings',
+        kindLabel: 'Page',
+        icon: Icons.school_outlined,
+        keywords: const ['program', 'space', 'features'],
+        onSelect: (ctx, ref) => ctx.go('/settings/program'),
+      ),
 
       // --- Static actions -------------------------------------------------
       _Suggestion(
