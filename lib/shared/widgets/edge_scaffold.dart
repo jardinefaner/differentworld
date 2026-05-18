@@ -26,6 +26,7 @@ class EdgeScaffold extends StatelessWidget {
     this.showBack = true,
     this.backFallbackRoute = '/',
     this.drawer,
+    this.topOverlay,
     this.floatingActionButton,
     this.bottomSheet,
     this.resizeToAvoidBottomInset,
@@ -46,6 +47,12 @@ class EdgeScaffold extends StatelessWidget {
   /// the FloatingBack stays visible and the drawer is still openable
   /// via swipe-from-left-edge.
   final Widget? drawer;
+
+  /// When non-null, replaces BOTH the left chrome (back / hamburger)
+  /// AND the right chrome (action pill) with a single full-width
+  /// overlay. Used by the inline search bar on Today — the chrome
+  /// transforms into a search input in place.
+  final Widget? topOverlay;
 
   final Widget? floatingActionButton;
   final Widget? bottomSheet;
@@ -87,26 +94,39 @@ class EdgeScaffold extends StatelessWidget {
                 child: body,
               ),
             ),
-            // Top-left: back arrow on drill-ins, hamburger on home pages.
-            if (showBack)
+            // Chrome row. topOverlay wins over the default left+right
+            // floating pills when provided — the search bar uses this
+            // to replace the whole top in place without restructuring
+            // the scaffold.
+            if (topOverlay != null)
               Positioned(
                 top: topInset + 8,
                 left: 8,
-                child: FloatingBack(fallbackRoute: backFallbackRoute),
-              )
-            else if (drawer != null)
-              Positioned(
-                top: topInset + 8,
-                left: 8,
-                child: const FloatingHamburger(),
-              ),
-            // Top-right: action pill.
-            if (actions.isNotEmpty)
-              Positioned(
-                top: topInset + 8,
                 right: 8,
-                child: FloatingActions(children: actions),
-              ),
+                child: topOverlay!,
+              )
+            else ...[
+              // Top-left: back arrow on drill-ins, hamburger on home pages.
+              if (showBack)
+                Positioned(
+                  top: topInset + 8,
+                  left: 8,
+                  child: FloatingBack(fallbackRoute: backFallbackRoute),
+                )
+              else if (drawer != null)
+                Positioned(
+                  top: topInset + 8,
+                  left: 8,
+                  child: const FloatingHamburger(),
+                ),
+              // Top-right: action pill.
+              if (actions.isNotEmpty)
+                Positioned(
+                  top: topInset + 8,
+                  right: 8,
+                  child: FloatingActions(children: actions),
+                ),
+            ],
           ],
         ),
         floatingActionButton: floatingActionButton,

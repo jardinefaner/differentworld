@@ -6,12 +6,14 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/groups/widgets/group_form_sheet.dart';
+import 'package:differentworld/features/omnibox/omnibox_results.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
+import 'package:differentworld/shared/widgets/search_bar_pill.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,84 +22,130 @@ import 'package:intl/intl.dart';
 
 /// Home screen: "what's happening today across my classrooms."
 ///
-/// Per the v1 punch list (docs/PROJECT.md): the teacher's morning
-/// landing, glanceable status, fast access to today's attendance.
-class TodayScreen extends ConsumerWidget {
-  const TodayScreen({this.onOpenOmnibox, super.key});
-
-  /// Callback the host `_SignedInHome` passes so the AppBar's search
-  /// icon can animate the PageView to the omnibox page. Null in tests
-  /// or anywhere TodayScreen is mounted standalone.
-  final VoidCallback? onOpenOmnibox;
+/// Stateful so it can host the inline search mode: tap the search
+/// icon → top chrome transforms into a search input (hamburger + sync
+/// fade out) → body stays the same until the first character, at
+/// which point the body crossfades to the omnibox results list.
+class TodayScreen extends ConsumerStatefulWidget {
+  const TodayScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TodayScreen> createState() => _TodayScreenState();
+}
+
+class _TodayScreenState extends ConsumerState<TodayScreen> {
+  final _searchCtrl = TextEditingController();
+  bool _searching = false;
+  String _query = '';
+
+  void _enterSearch() {
+    setState(() => _searching = true);
+  }
+
+  void _exitSearch() {
+    _searchCtrl.clear();
+    setState(() {
+      _searching = false;
+      _query = '';
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
     final member = viewer.member;
     final space = viewer.space;
     final groupsAsync = ref.watch(groupsProvider);
 
     return EdgeScaffold(
-      // Home: no back button → top-left is the hamburger that opens
-      // the MainDrawer instead.
+      // In search mode the hamburger pill is replaced by the search bar
+      // (drawer is still reachable via swipe-from-left). Out of search
+      // mode the hamburger is shown via the drawer presence.
       showBack: false,
       drawer: const MainDrawer(),
-      actions: [
-        // Settings moved to the drawer; the top-right pill now just
-        // holds search + sync. Less chrome, more thumb-zone reach.
-        if (onOpenOmnibox != null)
-          IconButton(
-            tooltip: 'Search',
-            icon: const Icon(Icons.search),
-            onPressed: onOpenOmnibox,
-          ),
-        const SyncStatusIndicator(),
-      ],
-      body: groupsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
-          title: 'Could not load today',
-        ),
-        data: (groups) {
-          if (groups.isEmpty) {
-            return EmptyState(
-              icon: Icons.meeting_room_outlined,
-              title: 'No classrooms yet',
-              message: viewer.canManageProgram
-                  ? 'Add your first classroom to start taking attendance '
-                      'and logging the day.'
-                  : 'Your director will set up classrooms here. '
-                      'Check back later.',
-              action: viewer.canManageProgram
-                  ? FilledButton.icon(
+      topOverlay: _searching
+          ? SearchBarPill(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v),
+              onClose: _exitSearch,
+            )
+          : null,
+      actions: _searching
+          ? const <Widget>[]
+          : [
+              IconButton(
+                tooltip: 'Search',
+                icon: const Icon(Icons.search),
+                onPressed: _enterSearch,
+              ),
+              const SyncStatusIndicator(),
+            ],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: _query.isEmpty
+            ? KeyedSubtree(
+                key: const ValueKey('today-content'),
+                child: groupsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, _) => const EmptyState(
+                    icon: Icons.error_outline,
+                    title: 'Could not load today',
+                  ),
+                  data: (groups) {
+                    if (groups.isEmpty) {
+                      return EmptyState(
+                        icon: Icons.meeting_room_outlined,
+                        title: 'No classrooms yet',
+                        message: viewer.canManageProgram
+                            ? 'Add your first classroom to start taking '
+                                'attendance and logging the day.'
+                            : 'Your director will set up classrooms here. '
+                                'Check back later.',
+                        action: viewer.canManageProgram
+                            ? FilledButton.icon(
+                                onPressed: () =>
+                                    GroupFormSheet.show(context),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add classroom'),
+                              )
+                            : null,
+                      );
+                    }
+                    return _TodayBody(
+                      member: member,
+                      groups: groups,
+                      space: space,
+                      viewer: viewer,
+                    );
+                  },
+                ),
+              )
+            : KeyedSubtree(
+                key: const ValueKey('search-results'),
+                child: OmniboxResults(query: _query),
+              ),
+      ),
+      floatingActionButton: (_searching || !viewer.canManageProgram)
+          ? null
+          : groupsAsync.maybeWhen(
+              data: (groups) => groups.isEmpty
+                  ? null
+                  : FloatingActionButton.extended(
                       onPressed: () => GroupFormSheet.show(context),
                       icon: const Icon(Icons.add),
-                      label: const Text('Add classroom'),
-                    )
-                  : null,
-            );
-          }
-          return _TodayBody(
-            member: member,
-            groups: groups,
-            space: space,
-            viewer: viewer,
-          );
-        },
-      ),
-      floatingActionButton: groupsAsync.maybeWhen(
-        // FAB only for viewers who actually manage the program. Teachers
-        // see the rooms but can't create new ones.
-        data: (groups) => (groups.isEmpty || !viewer.canManageProgram)
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: () => GroupFormSheet.show(context),
-                icon: const Icon(Icons.add),
-                label: const Text('Classroom'),
-              ),
-        orElse: () => null,
-      ),
+                      label: const Text('Classroom'),
+                    ),
+              orElse: () => null,
+            ),
     );
   }
 }

@@ -7,7 +7,6 @@ import 'package:differentworld/features/attendance/morning_checklist_screen.dart
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
-import 'package:differentworld/features/omnibox/omnibox_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
@@ -141,46 +140,16 @@ class _Home extends ConsumerWidget {
   }
 }
 
-class _SignedInHome extends ConsumerStatefulWidget {
+/// Home is just Today — search is now inline (the chrome transforms
+/// into a search input on Today itself), so the PageView the omnibox
+/// used to occupy is gone. We still need a stateful host here because
+/// the home is where we listen for pending invite codes that arrive
+/// while the user already has a space (refuse cleanly + snackbar).
+class _SignedInHome extends ConsumerWidget {
   const _SignedInHome({super.key});
 
   @override
-  ConsumerState<_SignedInHome> createState() => _SignedInHomeState();
-}
-
-/// Home is a horizontal PageView with two pages:
-///   page 0 → Omnibox (search / actions)
-///   page 1 → Today (default landing)
-///
-/// Swipe right from Today reveals the Omnibox; swipe left (or tap back)
-/// from Omnibox returns to Today.
-class _SignedInHomeState extends ConsumerState<_SignedInHome> {
-  late final PageController _controller = PageController(initialPage: 1);
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _toToday() {
-    unawaited(_controller.animateToPage(
-      1,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-    ));
-  }
-
-  void _toOmnibox() {
-    unawaited(_controller.animateToPage(
-      0,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-    ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // A signed-in user with a space can't redeem an invite — refuse
     // cleanly and clear the pending code so they aren't bounced into
     // some other state. Switching programs is a sign-out-and-back-in
@@ -199,13 +168,7 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
       );
     });
 
-    return PageView(
-      controller: _controller,
-      children: [
-        OmniboxScreen(onDismiss: _toToday),
-        TodayScreen(onOpenOmnibox: _toOmnibox),
-      ],
-    );
+    return const TodayScreen();
   }
 }
 
