@@ -133,6 +133,14 @@ class OmniboxResults extends ConsumerWidget {
           keywords: const ['notes', 'feed', 'all observations'],
           onSelect: (ctx, ref) => ctx.push('/observations'),
         ),
+      // -- Surveys -------------------------------------------------------
+      _Suggestion(
+        label: 'Surveys',
+        kindLabel: 'Page',
+        icon: Icons.poll_outlined,
+        keywords: const ['questionnaire', 'feedback', 'basecamp', 'student'],
+        onSelect: (ctx, ref) => ctx.push('/surveys'),
+      ),
       if (viewer.canObserve)
         _Suggestion(
           label: 'New observation',

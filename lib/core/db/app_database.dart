@@ -257,6 +257,28 @@ class MemberCertifications extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// One row per (subject, survey-template). The questions themselves
+/// are app-defined templates (see `survey_templates.dart`); only the
+/// answers a kid gave land here, keyed by question_key inside
+/// `answers` JSONB. Status: 'draft' (started, partial) or
+/// 'completed' (submitted).
+class SurveyResponses extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get templateId => text()();
+  TextColumn get subjectId => text()();
+  TextColumn get status => text()();
+  TextColumn get recordedBy => text().nullable()();
+  TextColumn get answers => text()(); // JSON string keyed by question_key
+  TextColumn get startedAt => text()();
+  TextColumn get completedAt => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Photo / PDF / audio attached to any entity. First-class per
 /// UX_DECISIONS §8 so photos have proper identity (caption,
 /// sort_order), can be queried independently ("all photos this week"),
@@ -288,7 +310,8 @@ class Attachments extends Table {
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
-          Vehicles, VehicleLogs, MemberCertifications, Attachments],
+          Vehicles, VehicleLogs, MemberCertifications, Attachments,
+          SurveyResponses],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -514,6 +537,18 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<Subject>> watchSubjectsInGroup(String groupId) {
     return (select(subjects)
           ..where((s) => s.groupId.equals(groupId))
+          ..orderBy([
+            (s) => OrderingTerm(expression: s.firstName),
+            (s) => OrderingTerm(expression: s.lastName),
+          ]))
+        .watch();
+  }
+
+  /// Every Subject in a space, ordered by name. Used by space-wide
+  /// surfaces (survey list, future "all kids" rosters).
+  Stream<List<Subject>> watchSubjectsInSpace(String spaceId) {
+    return (select(subjects)
+          ..where((s) => s.spaceId.equals(spaceId))
           ..orderBy([
             (s) => OrderingTerm(expression: s.firstName),
             (s) => OrderingTerm(expression: s.lastName),
@@ -1087,6 +1122,105 @@ class AppDatabase extends _$AppDatabase {
           ])
           ..limit(1))
         .watchSingleOrNull();
+  }
+
+  // -- Survey responses ---------------------------------------------------
+
+  /// All responses in the space for one template, used by the survey
+  /// list screen to render per-child completion status.
+  Stream<List<SurveyResponse>> watchSurveyResponses({
+    required String spaceId,
+    required String templateId,
+  }) {
+    return (select(surveyResponses)
+          ..where(
+            (r) =>
+                r.spaceId.equals(spaceId) &
+                r.templateId.equals(templateId),
+          )
+          ..orderBy([(r) => OrderingTerm(expression: r.updatedAt)]))
+        .watch();
+  }
+
+  /// The (at most one) response for a given subject + template.
+  Stream<SurveyResponse?> watchSurveyResponse({
+    required String templateId,
+    required String subjectId,
+  }) {
+    return (select(surveyResponses)
+          ..where(
+            (r) =>
+                r.templateId.equals(templateId) &
+                r.subjectId.equals(subjectId),
+          ))
+        .watchSingleOrNull();
+  }
+
+  Future<SurveyResponse?> findSurveyResponse({
+    required String templateId,
+    required String subjectId,
+  }) {
+    return (select(surveyResponses)
+          ..where(
+            (r) =>
+                r.templateId.equals(templateId) &
+                r.subjectId.equals(subjectId),
+          ))
+        .getSingleOrNull();
+  }
+
+  Future<String> upsertSurveyResponse({
+    required String id,
+    required String spaceId,
+    required String templateId,
+    required String subjectId,
+    required String answersJson,
+    required String status,
+    String? recordedBy,
+    DateTime? completedAt,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final existing = await findSurveyResponse(
+      templateId: templateId,
+      subjectId: subjectId,
+    );
+    final completedIso = completedAt?.toUtc().toIso8601String();
+    if (existing == null) {
+      await into(surveyResponses).insert(
+        SurveyResponsesCompanion.insert(
+          id: id,
+          spaceId: spaceId,
+          templateId: templateId,
+          subjectId: subjectId,
+          status: status,
+          recordedBy: Value(recordedBy),
+          answers: answersJson,
+          startedAt: now,
+          completedAt: Value(completedIso),
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      return id;
+    }
+    await (update(surveyResponses)
+          ..where((r) => r.id.equals(existing.id)))
+        .write(
+      SurveyResponsesCompanion(
+        status: Value(status),
+        answers: Value(answersJson),
+        recordedBy: recordedBy == null
+            ? const Value.absent()
+            : Value(recordedBy),
+        completedAt: Value(completedIso),
+        updatedAt: Value(now),
+      ),
+    );
+    return existing.id;
+  }
+
+  Future<void> deleteSurveyResponse(String id) async {
+    await (delete(surveyResponses)..where((r) => r.id.equals(id))).go();
   }
 
   // -- Attachments --------------------------------------------------------

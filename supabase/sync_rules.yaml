@@ -54,6 +54,10 @@ streams:
       # stays full because those are infrequent + the UI always wants
       # them ready.
       - SELECT * FROM attachments        WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND (entity_kind <> 'entry' OR created_at > now() - INTERVAL '90 days')
+      # Surveys — one row per (subject, template). Full scope; one
+      # year of TK–3rd kid responses for a whole program is well under
+      # the noise of any other table.
+      - SELECT * FROM survey_responses   WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Only stream un-accepted invites. Accepted ones don't need to
       # round-trip back to every director's device — they just bloat
       # the local table over time. The acceptance event itself reaches

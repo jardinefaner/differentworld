@@ -166,4 +166,16 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  Table('survey_responses', [
+    Column.text('space_id'),
+    Column.text('template_id'),
+    Column.text('subject_id'),
+    Column.text('status'),
+    Column.text('recorded_by'),
+    Column.text('answers'),
+    Column.text('started_at'),
+    Column.text('completed_at'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 ]);

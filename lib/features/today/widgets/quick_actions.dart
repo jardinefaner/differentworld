@@ -61,6 +61,13 @@ class QuickActions extends ConsumerWidget {
           label: 'Observations',
           onTap: () => context.push('/observations'),
         ),
+      // Everyone in the program can run a survey for a kid — it's an
+      // instructor-administered flow, not a privileged action.
+      _Tile(
+        icon: Icons.poll_outlined,
+        label: 'Surveys',
+        onTap: () => context.push('/surveys'),
+      ),
       if (viewer.canDrive || viewer.canManageProgram)
         _Tile(
           icon: Icons.directions_bus_outlined,

@@ -19,6 +19,8 @@ import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
+import 'package:differentworld/features/surveys/survey_list_screen.dart';
+import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
@@ -110,6 +112,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'observations',
             builder: (_, _) => const ObservationsIndexScreen(),
+          ),
+          // Surveys — index of templates + per-template list of kids
+          // + take-survey flow.
+          GoRoute(
+            path: 'surveys',
+            builder: (_, _) => const SurveyIndexScreen(),
+            routes: [
+              GoRoute(
+                path: ':templateId',
+                builder: (_, state) => SurveyTemplateDetailScreen(
+                  templateId: state.pathParameters['templateId']!,
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'take/:subjectId',
+                    builder: (_, state) => SurveyTakeScreen(
+                      templateId: state.pathParameters['templateId']!,
+                      subjectId: state.pathParameters['subjectId']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           // Family-side direct route: a guardian navigates to a child
           // without going through a classroom they don't see.

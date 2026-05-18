@@ -17,6 +17,19 @@ final subjectsInGroupProvider =
   },
 );
 
+/// Every Subject in the signed-in user's program. Used by space-wide
+/// rosters (survey list, future "all kids" surfaces) where the group
+/// scoping doesn't apply.
+final subjectsInSpaceProvider = StreamProvider<List<Subject>>((ref) async* {
+  final spaceId = ref.watch(currentMemberProvider).value?.spaceId;
+  if (spaceId == null) {
+    yield const [];
+    return;
+  }
+  final db = await ref.watch(appDatabaseProvider.future);
+  yield* db.watchSubjectsInSpace(spaceId);
+});
+
 /// Single Subject by id. Powers the subject detail screen.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
