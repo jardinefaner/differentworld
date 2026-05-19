@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/dao/captures_dao.dart';
 import 'package:differentworld/core/db/dao/certifications_dao.dart';
 import 'package:differentworld/core/db/dao/dismissed_insights_dao.dart';
 import 'package:differentworld/core/db/dao/entries_dao.dart';
+import 'package:differentworld/core/db/dao/exports_dao.dart';
 import 'package:differentworld/core/db/dao/group_members_dao.dart';
 import 'package:differentworld/core/db/dao/groups_dao.dart';
 import 'package:differentworld/core/db/dao/guardians_dao.dart';
@@ -399,11 +400,62 @@ class Messages extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Exports — the audit + snapshot trail for every PDF / CSV the
+/// program generates. Bytes live in Supabase Storage; this row
+/// carries the metadata + JSON snapshot of the source data used
+/// to render it. See migration `20260519000001_exports.sql`.
+class Exports extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get authorId => text().nullable()();
+  TextColumn get templateId => text()();
+  TextColumn get templateVersion => text()();
+  TextColumn get subjectId => text().nullable()();
+  TextColumn get groupId => text().nullable()();
+  TextColumn get status => text()(); // 'draft' | 'sent' | 'archived'
+  TextColumn get format => text()(); // 'pdf' | 'csv'
+  TextColumn get storagePath => text().nullable()();
+  TextColumn get snapshotJson => text()(); // JSON blob
+  TextColumn get note => text().nullable()();
+  TextColumn get generatedAt => text()();
+  TextColumn get sentAt => text().nullable()();
+  TextColumn get archivedAt => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Per-export recipient list. Each row records one address the
+/// document was sent to (guardian, internal member, or free-text
+/// external party) and the channel + delivery state.
+class ExportRecipients extends Table {
+  TextColumn get id => text()();
+  TextColumn get exportId => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get kind => text()(); // 'guardian' | 'member' | 'external'
+  TextColumn get guardianId => text().nullable()();
+  TextColumn get memberId => text().nullable()();
+  TextColumn get externalLabel => text().nullable()();
+  TextColumn get externalEmail => text().nullable()();
+  TextColumn get channel => text()();
+  TextColumn get state => text()(); // pending|delivered|failed|manual
+  TextColumn get stateDetail => text().nullable()();
+  TextColumn get sentAt => text().nullable()();
+  TextColumn get readAt => text().nullable()();
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
           Vehicles, VehicleLogs, MemberCertifications, Attachments,
-          SurveyResponses, DismissedInsights, Captures, Tasks, Messages],
+          SurveyResponses, DismissedInsights, Captures, Tasks, Messages,
+          Exports, ExportRecipients],
   daos: [
     AttachmentsDao,
     AttendanceDao,
@@ -411,6 +463,7 @@ class Messages extends Table {
     CertificationsDao,
     DismissedInsightsDao,
     EntriesDao,
+    ExportsDao,
     GroupMembersDao,
     GroupsDao,
     GuardiansDao,

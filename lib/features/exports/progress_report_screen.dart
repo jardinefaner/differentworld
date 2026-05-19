@@ -5,6 +5,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/features/exports/templates/progress_report.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -173,17 +174,53 @@ class _ProgressReportScreenState
 
   Future<void> _shareOrPrint(ProgressReportData data) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
+    final actions = ref.read(exportActionsProvider);
     await runReported(
       library: 'exports',
       messenger: messenger,
       onError: 'Could not generate the report.',
+      onSuccess: 'Report saved to your exports.',
       action: () async {
         final doc = await buildProgressReportPdf(data);
         final bytes = await doc.save();
+        // 1. Create the audit row + upload bytes to Storage. This
+        //    makes the doc permanent in the program's records even
+        //    if the user never actually shares.
+        final exportId = await actions.createAndStore(
+          templateId: 'progress_report',
+          templateVersion: 'v1',
+          format: 'pdf',
+          bytes: bytes,
+          snapshot: {
+            'subjectId': data.subject.id,
+            'windowDays': data.attendanceSummary.windowDays,
+            'generatedAt': data.generatedAt.toIso8601String(),
+          },
+          subjectId: data.subject.id,
+          groupId: data.subject.groupId,
+        );
+        // 2. Hand the local bytes to the share sheet — they go to
+        //    AirDrop, email, Save to Files, print, whatever.
         await Printing.sharePdf(
           bytes: bytes,
           filename: 'progress-${data.subject.firstName.toLowerCase()}-'
               '${data.generatedAt.toIso8601String().substring(0, 10)}.pdf',
+        );
+        // 3. Mark sent with channel = 'manual' — we don't know
+        //    where the OS share sheet ended up, but the audit at
+        //    least records that the doc *left* the device.
+        await actions.markSent(
+          exportId: exportId,
+          recipients: [
+            (
+              kind: 'external',
+              guardianId: null,
+              memberId: null,
+              externalLabel: 'Share sheet',
+              externalEmail: null,
+              channel: 'manual',
+            ),
+          ],
         );
       },
     );

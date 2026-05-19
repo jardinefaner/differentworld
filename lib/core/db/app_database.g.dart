@@ -11592,6 +11592,1790 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   }
 }
 
+class $ExportsTable extends Exports with TableInfo<$ExportsTable, Export> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExportsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorIdMeta = const VerificationMeta(
+    'authorId',
+  );
+  @override
+  late final GeneratedColumn<String> authorId = GeneratedColumn<String>(
+    'author_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _templateIdMeta = const VerificationMeta(
+    'templateId',
+  );
+  @override
+  late final GeneratedColumn<String> templateId = GeneratedColumn<String>(
+    'template_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _templateVersionMeta = const VerificationMeta(
+    'templateVersion',
+  );
+  @override
+  late final GeneratedColumn<String> templateVersion = GeneratedColumn<String>(
+    'template_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _formatMeta = const VerificationMeta('format');
+  @override
+  late final GeneratedColumn<String> format = GeneratedColumn<String>(
+    'format',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _storagePathMeta = const VerificationMeta(
+    'storagePath',
+  );
+  @override
+  late final GeneratedColumn<String> storagePath = GeneratedColumn<String>(
+    'storage_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _snapshotJsonMeta = const VerificationMeta(
+    'snapshotJson',
+  );
+  @override
+  late final GeneratedColumn<String> snapshotJson = GeneratedColumn<String>(
+    'snapshot_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _generatedAtMeta = const VerificationMeta(
+    'generatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> generatedAt = GeneratedColumn<String>(
+    'generated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sentAtMeta = const VerificationMeta('sentAt');
+  @override
+  late final GeneratedColumn<String> sentAt = GeneratedColumn<String>(
+    'sent_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _archivedAtMeta = const VerificationMeta(
+    'archivedAt',
+  );
+  @override
+  late final GeneratedColumn<String> archivedAt = GeneratedColumn<String>(
+    'archived_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    authorId,
+    templateId,
+    templateVersion,
+    subjectId,
+    groupId,
+    status,
+    format,
+    storagePath,
+    snapshotJson,
+    note,
+    generatedAt,
+    sentAt,
+    archivedAt,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'exports';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Export> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('author_id')) {
+      context.handle(
+        _authorIdMeta,
+        authorId.isAcceptableOrUnknown(data['author_id']!, _authorIdMeta),
+      );
+    }
+    if (data.containsKey('template_id')) {
+      context.handle(
+        _templateIdMeta,
+        templateId.isAcceptableOrUnknown(data['template_id']!, _templateIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_templateIdMeta);
+    }
+    if (data.containsKey('template_version')) {
+      context.handle(
+        _templateVersionMeta,
+        templateVersion.isAcceptableOrUnknown(
+          data['template_version']!,
+          _templateVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_templateVersionMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('format')) {
+      context.handle(
+        _formatMeta,
+        format.isAcceptableOrUnknown(data['format']!, _formatMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_formatMeta);
+    }
+    if (data.containsKey('storage_path')) {
+      context.handle(
+        _storagePathMeta,
+        storagePath.isAcceptableOrUnknown(
+          data['storage_path']!,
+          _storagePathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('snapshot_json')) {
+      context.handle(
+        _snapshotJsonMeta,
+        snapshotJson.isAcceptableOrUnknown(
+          data['snapshot_json']!,
+          _snapshotJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_snapshotJsonMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('generated_at')) {
+      context.handle(
+        _generatedAtMeta,
+        generatedAt.isAcceptableOrUnknown(
+          data['generated_at']!,
+          _generatedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_generatedAtMeta);
+    }
+    if (data.containsKey('sent_at')) {
+      context.handle(
+        _sentAtMeta,
+        sentAt.isAcceptableOrUnknown(data['sent_at']!, _sentAtMeta),
+      );
+    }
+    if (data.containsKey('archived_at')) {
+      context.handle(
+        _archivedAtMeta,
+        archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Export map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Export(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      authorId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author_id'],
+      ),
+      templateId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}template_id'],
+      )!,
+      templateVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}template_version'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      ),
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      format: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}format'],
+      )!,
+      storagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}storage_path'],
+      ),
+      snapshotJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}snapshot_json'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      generatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}generated_at'],
+      )!,
+      sentAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sent_at'],
+      ),
+      archivedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}archived_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ExportsTable createAlias(String alias) {
+    return $ExportsTable(attachedDatabase, alias);
+  }
+}
+
+class Export extends DataClass implements Insertable<Export> {
+  final String id;
+  final String spaceId;
+  final String? authorId;
+  final String templateId;
+  final String templateVersion;
+  final String? subjectId;
+  final String? groupId;
+  final String status;
+  final String format;
+  final String? storagePath;
+  final String snapshotJson;
+  final String? note;
+  final String generatedAt;
+  final String? sentAt;
+  final String? archivedAt;
+  final String createdAt;
+  final String updatedAt;
+  const Export({
+    required this.id,
+    required this.spaceId,
+    this.authorId,
+    required this.templateId,
+    required this.templateVersion,
+    this.subjectId,
+    this.groupId,
+    required this.status,
+    required this.format,
+    this.storagePath,
+    required this.snapshotJson,
+    this.note,
+    required this.generatedAt,
+    this.sentAt,
+    this.archivedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || authorId != null) {
+      map['author_id'] = Variable<String>(authorId);
+    }
+    map['template_id'] = Variable<String>(templateId);
+    map['template_version'] = Variable<String>(templateVersion);
+    if (!nullToAbsent || subjectId != null) {
+      map['subject_id'] = Variable<String>(subjectId);
+    }
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    map['status'] = Variable<String>(status);
+    map['format'] = Variable<String>(format);
+    if (!nullToAbsent || storagePath != null) {
+      map['storage_path'] = Variable<String>(storagePath);
+    }
+    map['snapshot_json'] = Variable<String>(snapshotJson);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['generated_at'] = Variable<String>(generatedAt);
+    if (!nullToAbsent || sentAt != null) {
+      map['sent_at'] = Variable<String>(sentAt);
+    }
+    if (!nullToAbsent || archivedAt != null) {
+      map['archived_at'] = Variable<String>(archivedAt);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  ExportsCompanion toCompanion(bool nullToAbsent) {
+    return ExportsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      authorId: authorId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(authorId),
+      templateId: Value(templateId),
+      templateVersion: Value(templateVersion),
+      subjectId: subjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectId),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      status: Value(status),
+      format: Value(format),
+      storagePath: storagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(storagePath),
+      snapshotJson: Value(snapshotJson),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      generatedAt: Value(generatedAt),
+      sentAt: sentAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sentAt),
+      archivedAt: archivedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(archivedAt),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Export.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Export(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      authorId: serializer.fromJson<String?>(json['authorId']),
+      templateId: serializer.fromJson<String>(json['templateId']),
+      templateVersion: serializer.fromJson<String>(json['templateVersion']),
+      subjectId: serializer.fromJson<String?>(json['subjectId']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      status: serializer.fromJson<String>(json['status']),
+      format: serializer.fromJson<String>(json['format']),
+      storagePath: serializer.fromJson<String?>(json['storagePath']),
+      snapshotJson: serializer.fromJson<String>(json['snapshotJson']),
+      note: serializer.fromJson<String?>(json['note']),
+      generatedAt: serializer.fromJson<String>(json['generatedAt']),
+      sentAt: serializer.fromJson<String?>(json['sentAt']),
+      archivedAt: serializer.fromJson<String?>(json['archivedAt']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'authorId': serializer.toJson<String?>(authorId),
+      'templateId': serializer.toJson<String>(templateId),
+      'templateVersion': serializer.toJson<String>(templateVersion),
+      'subjectId': serializer.toJson<String?>(subjectId),
+      'groupId': serializer.toJson<String?>(groupId),
+      'status': serializer.toJson<String>(status),
+      'format': serializer.toJson<String>(format),
+      'storagePath': serializer.toJson<String?>(storagePath),
+      'snapshotJson': serializer.toJson<String>(snapshotJson),
+      'note': serializer.toJson<String?>(note),
+      'generatedAt': serializer.toJson<String>(generatedAt),
+      'sentAt': serializer.toJson<String?>(sentAt),
+      'archivedAt': serializer.toJson<String?>(archivedAt),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Export copyWith({
+    String? id,
+    String? spaceId,
+    Value<String?> authorId = const Value.absent(),
+    String? templateId,
+    String? templateVersion,
+    Value<String?> subjectId = const Value.absent(),
+    Value<String?> groupId = const Value.absent(),
+    String? status,
+    String? format,
+    Value<String?> storagePath = const Value.absent(),
+    String? snapshotJson,
+    Value<String?> note = const Value.absent(),
+    String? generatedAt,
+    Value<String?> sentAt = const Value.absent(),
+    Value<String?> archivedAt = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => Export(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    authorId: authorId.present ? authorId.value : this.authorId,
+    templateId: templateId ?? this.templateId,
+    templateVersion: templateVersion ?? this.templateVersion,
+    subjectId: subjectId.present ? subjectId.value : this.subjectId,
+    groupId: groupId.present ? groupId.value : this.groupId,
+    status: status ?? this.status,
+    format: format ?? this.format,
+    storagePath: storagePath.present ? storagePath.value : this.storagePath,
+    snapshotJson: snapshotJson ?? this.snapshotJson,
+    note: note.present ? note.value : this.note,
+    generatedAt: generatedAt ?? this.generatedAt,
+    sentAt: sentAt.present ? sentAt.value : this.sentAt,
+    archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Export copyWithCompanion(ExportsCompanion data) {
+    return Export(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      authorId: data.authorId.present ? data.authorId.value : this.authorId,
+      templateId: data.templateId.present
+          ? data.templateId.value
+          : this.templateId,
+      templateVersion: data.templateVersion.present
+          ? data.templateVersion.value
+          : this.templateVersion,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      status: data.status.present ? data.status.value : this.status,
+      format: data.format.present ? data.format.value : this.format,
+      storagePath: data.storagePath.present
+          ? data.storagePath.value
+          : this.storagePath,
+      snapshotJson: data.snapshotJson.present
+          ? data.snapshotJson.value
+          : this.snapshotJson,
+      note: data.note.present ? data.note.value : this.note,
+      generatedAt: data.generatedAt.present
+          ? data.generatedAt.value
+          : this.generatedAt,
+      sentAt: data.sentAt.present ? data.sentAt.value : this.sentAt,
+      archivedAt: data.archivedAt.present
+          ? data.archivedAt.value
+          : this.archivedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Export(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('authorId: $authorId, ')
+          ..write('templateId: $templateId, ')
+          ..write('templateVersion: $templateVersion, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('groupId: $groupId, ')
+          ..write('status: $status, ')
+          ..write('format: $format, ')
+          ..write('storagePath: $storagePath, ')
+          ..write('snapshotJson: $snapshotJson, ')
+          ..write('note: $note, ')
+          ..write('generatedAt: $generatedAt, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    authorId,
+    templateId,
+    templateVersion,
+    subjectId,
+    groupId,
+    status,
+    format,
+    storagePath,
+    snapshotJson,
+    note,
+    generatedAt,
+    sentAt,
+    archivedAt,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Export &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.authorId == this.authorId &&
+          other.templateId == this.templateId &&
+          other.templateVersion == this.templateVersion &&
+          other.subjectId == this.subjectId &&
+          other.groupId == this.groupId &&
+          other.status == this.status &&
+          other.format == this.format &&
+          other.storagePath == this.storagePath &&
+          other.snapshotJson == this.snapshotJson &&
+          other.note == this.note &&
+          other.generatedAt == this.generatedAt &&
+          other.sentAt == this.sentAt &&
+          other.archivedAt == this.archivedAt &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ExportsCompanion extends UpdateCompanion<Export> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String?> authorId;
+  final Value<String> templateId;
+  final Value<String> templateVersion;
+  final Value<String?> subjectId;
+  final Value<String?> groupId;
+  final Value<String> status;
+  final Value<String> format;
+  final Value<String?> storagePath;
+  final Value<String> snapshotJson;
+  final Value<String?> note;
+  final Value<String> generatedAt;
+  final Value<String?> sentAt;
+  final Value<String?> archivedAt;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const ExportsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.authorId = const Value.absent(),
+    this.templateId = const Value.absent(),
+    this.templateVersion = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.format = const Value.absent(),
+    this.storagePath = const Value.absent(),
+    this.snapshotJson = const Value.absent(),
+    this.note = const Value.absent(),
+    this.generatedAt = const Value.absent(),
+    this.sentAt = const Value.absent(),
+    this.archivedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExportsCompanion.insert({
+    required String id,
+    required String spaceId,
+    this.authorId = const Value.absent(),
+    required String templateId,
+    required String templateVersion,
+    this.subjectId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    required String status,
+    required String format,
+    this.storagePath = const Value.absent(),
+    required String snapshotJson,
+    this.note = const Value.absent(),
+    required String generatedAt,
+    this.sentAt = const Value.absent(),
+    this.archivedAt = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       templateId = Value(templateId),
+       templateVersion = Value(templateVersion),
+       status = Value(status),
+       format = Value(format),
+       snapshotJson = Value(snapshotJson),
+       generatedAt = Value(generatedAt),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Export> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? authorId,
+    Expression<String>? templateId,
+    Expression<String>? templateVersion,
+    Expression<String>? subjectId,
+    Expression<String>? groupId,
+    Expression<String>? status,
+    Expression<String>? format,
+    Expression<String>? storagePath,
+    Expression<String>? snapshotJson,
+    Expression<String>? note,
+    Expression<String>? generatedAt,
+    Expression<String>? sentAt,
+    Expression<String>? archivedAt,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (authorId != null) 'author_id': authorId,
+      if (templateId != null) 'template_id': templateId,
+      if (templateVersion != null) 'template_version': templateVersion,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (groupId != null) 'group_id': groupId,
+      if (status != null) 'status': status,
+      if (format != null) 'format': format,
+      if (storagePath != null) 'storage_path': storagePath,
+      if (snapshotJson != null) 'snapshot_json': snapshotJson,
+      if (note != null) 'note': note,
+      if (generatedAt != null) 'generated_at': generatedAt,
+      if (sentAt != null) 'sent_at': sentAt,
+      if (archivedAt != null) 'archived_at': archivedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExportsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String?>? authorId,
+    Value<String>? templateId,
+    Value<String>? templateVersion,
+    Value<String?>? subjectId,
+    Value<String?>? groupId,
+    Value<String>? status,
+    Value<String>? format,
+    Value<String?>? storagePath,
+    Value<String>? snapshotJson,
+    Value<String?>? note,
+    Value<String>? generatedAt,
+    Value<String?>? sentAt,
+    Value<String?>? archivedAt,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ExportsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      authorId: authorId ?? this.authorId,
+      templateId: templateId ?? this.templateId,
+      templateVersion: templateVersion ?? this.templateVersion,
+      subjectId: subjectId ?? this.subjectId,
+      groupId: groupId ?? this.groupId,
+      status: status ?? this.status,
+      format: format ?? this.format,
+      storagePath: storagePath ?? this.storagePath,
+      snapshotJson: snapshotJson ?? this.snapshotJson,
+      note: note ?? this.note,
+      generatedAt: generatedAt ?? this.generatedAt,
+      sentAt: sentAt ?? this.sentAt,
+      archivedAt: archivedAt ?? this.archivedAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (authorId.present) {
+      map['author_id'] = Variable<String>(authorId.value);
+    }
+    if (templateId.present) {
+      map['template_id'] = Variable<String>(templateId.value);
+    }
+    if (templateVersion.present) {
+      map['template_version'] = Variable<String>(templateVersion.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (format.present) {
+      map['format'] = Variable<String>(format.value);
+    }
+    if (storagePath.present) {
+      map['storage_path'] = Variable<String>(storagePath.value);
+    }
+    if (snapshotJson.present) {
+      map['snapshot_json'] = Variable<String>(snapshotJson.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (generatedAt.present) {
+      map['generated_at'] = Variable<String>(generatedAt.value);
+    }
+    if (sentAt.present) {
+      map['sent_at'] = Variable<String>(sentAt.value);
+    }
+    if (archivedAt.present) {
+      map['archived_at'] = Variable<String>(archivedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExportsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('authorId: $authorId, ')
+          ..write('templateId: $templateId, ')
+          ..write('templateVersion: $templateVersion, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('groupId: $groupId, ')
+          ..write('status: $status, ')
+          ..write('format: $format, ')
+          ..write('storagePath: $storagePath, ')
+          ..write('snapshotJson: $snapshotJson, ')
+          ..write('note: $note, ')
+          ..write('generatedAt: $generatedAt, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExportRecipientsTable extends ExportRecipients
+    with TableInfo<$ExportRecipientsTable, ExportRecipient> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExportRecipientsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _exportIdMeta = const VerificationMeta(
+    'exportId',
+  );
+  @override
+  late final GeneratedColumn<String> exportId = GeneratedColumn<String>(
+    'export_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _guardianIdMeta = const VerificationMeta(
+    'guardianId',
+  );
+  @override
+  late final GeneratedColumn<String> guardianId = GeneratedColumn<String>(
+    'guardian_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _externalLabelMeta = const VerificationMeta(
+    'externalLabel',
+  );
+  @override
+  late final GeneratedColumn<String> externalLabel = GeneratedColumn<String>(
+    'external_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _externalEmailMeta = const VerificationMeta(
+    'externalEmail',
+  );
+  @override
+  late final GeneratedColumn<String> externalEmail = GeneratedColumn<String>(
+    'external_email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _channelMeta = const VerificationMeta(
+    'channel',
+  );
+  @override
+  late final GeneratedColumn<String> channel = GeneratedColumn<String>(
+    'channel',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateDetailMeta = const VerificationMeta(
+    'stateDetail',
+  );
+  @override
+  late final GeneratedColumn<String> stateDetail = GeneratedColumn<String>(
+    'state_detail',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sentAtMeta = const VerificationMeta('sentAt');
+  @override
+  late final GeneratedColumn<String> sentAt = GeneratedColumn<String>(
+    'sent_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _readAtMeta = const VerificationMeta('readAt');
+  @override
+  late final GeneratedColumn<String> readAt = GeneratedColumn<String>(
+    'read_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    exportId,
+    spaceId,
+    kind,
+    guardianId,
+    memberId,
+    externalLabel,
+    externalEmail,
+    channel,
+    state,
+    stateDetail,
+    sentAt,
+    readAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'export_recipients';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExportRecipient> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('export_id')) {
+      context.handle(
+        _exportIdMeta,
+        exportId.isAcceptableOrUnknown(data['export_id']!, _exportIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_exportIdMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('guardian_id')) {
+      context.handle(
+        _guardianIdMeta,
+        guardianId.isAcceptableOrUnknown(data['guardian_id']!, _guardianIdMeta),
+      );
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    }
+    if (data.containsKey('external_label')) {
+      context.handle(
+        _externalLabelMeta,
+        externalLabel.isAcceptableOrUnknown(
+          data['external_label']!,
+          _externalLabelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('external_email')) {
+      context.handle(
+        _externalEmailMeta,
+        externalEmail.isAcceptableOrUnknown(
+          data['external_email']!,
+          _externalEmailMeta,
+        ),
+      );
+    }
+    if (data.containsKey('channel')) {
+      context.handle(
+        _channelMeta,
+        channel.isAcceptableOrUnknown(data['channel']!, _channelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_channelMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stateMeta);
+    }
+    if (data.containsKey('state_detail')) {
+      context.handle(
+        _stateDetailMeta,
+        stateDetail.isAcceptableOrUnknown(
+          data['state_detail']!,
+          _stateDetailMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sent_at')) {
+      context.handle(
+        _sentAtMeta,
+        sentAt.isAcceptableOrUnknown(data['sent_at']!, _sentAtMeta),
+      );
+    }
+    if (data.containsKey('read_at')) {
+      context.handle(
+        _readAtMeta,
+        readAt.isAcceptableOrUnknown(data['read_at']!, _readAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ExportRecipient map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExportRecipient(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      exportId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}export_id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      guardianId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}guardian_id'],
+      ),
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      ),
+      externalLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}external_label'],
+      ),
+      externalEmail: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}external_email'],
+      ),
+      channel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}channel'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      stateDetail: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state_detail'],
+      ),
+      sentAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sent_at'],
+      ),
+      readAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}read_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ExportRecipientsTable createAlias(String alias) {
+    return $ExportRecipientsTable(attachedDatabase, alias);
+  }
+}
+
+class ExportRecipient extends DataClass implements Insertable<ExportRecipient> {
+  final String id;
+  final String exportId;
+  final String spaceId;
+  final String kind;
+  final String? guardianId;
+  final String? memberId;
+  final String? externalLabel;
+  final String? externalEmail;
+  final String channel;
+  final String state;
+  final String? stateDetail;
+  final String? sentAt;
+  final String? readAt;
+  final String createdAt;
+  const ExportRecipient({
+    required this.id,
+    required this.exportId,
+    required this.spaceId,
+    required this.kind,
+    this.guardianId,
+    this.memberId,
+    this.externalLabel,
+    this.externalEmail,
+    required this.channel,
+    required this.state,
+    this.stateDetail,
+    this.sentAt,
+    this.readAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['export_id'] = Variable<String>(exportId);
+    map['space_id'] = Variable<String>(spaceId);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || guardianId != null) {
+      map['guardian_id'] = Variable<String>(guardianId);
+    }
+    if (!nullToAbsent || memberId != null) {
+      map['member_id'] = Variable<String>(memberId);
+    }
+    if (!nullToAbsent || externalLabel != null) {
+      map['external_label'] = Variable<String>(externalLabel);
+    }
+    if (!nullToAbsent || externalEmail != null) {
+      map['external_email'] = Variable<String>(externalEmail);
+    }
+    map['channel'] = Variable<String>(channel);
+    map['state'] = Variable<String>(state);
+    if (!nullToAbsent || stateDetail != null) {
+      map['state_detail'] = Variable<String>(stateDetail);
+    }
+    if (!nullToAbsent || sentAt != null) {
+      map['sent_at'] = Variable<String>(sentAt);
+    }
+    if (!nullToAbsent || readAt != null) {
+      map['read_at'] = Variable<String>(readAt);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    return map;
+  }
+
+  ExportRecipientsCompanion toCompanion(bool nullToAbsent) {
+    return ExportRecipientsCompanion(
+      id: Value(id),
+      exportId: Value(exportId),
+      spaceId: Value(spaceId),
+      kind: Value(kind),
+      guardianId: guardianId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(guardianId),
+      memberId: memberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memberId),
+      externalLabel: externalLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(externalLabel),
+      externalEmail: externalEmail == null && nullToAbsent
+          ? const Value.absent()
+          : Value(externalEmail),
+      channel: Value(channel),
+      state: Value(state),
+      stateDetail: stateDetail == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stateDetail),
+      sentAt: sentAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sentAt),
+      readAt: readAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(readAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ExportRecipient.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExportRecipient(
+      id: serializer.fromJson<String>(json['id']),
+      exportId: serializer.fromJson<String>(json['exportId']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      guardianId: serializer.fromJson<String?>(json['guardianId']),
+      memberId: serializer.fromJson<String?>(json['memberId']),
+      externalLabel: serializer.fromJson<String?>(json['externalLabel']),
+      externalEmail: serializer.fromJson<String?>(json['externalEmail']),
+      channel: serializer.fromJson<String>(json['channel']),
+      state: serializer.fromJson<String>(json['state']),
+      stateDetail: serializer.fromJson<String?>(json['stateDetail']),
+      sentAt: serializer.fromJson<String?>(json['sentAt']),
+      readAt: serializer.fromJson<String?>(json['readAt']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'exportId': serializer.toJson<String>(exportId),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'kind': serializer.toJson<String>(kind),
+      'guardianId': serializer.toJson<String?>(guardianId),
+      'memberId': serializer.toJson<String?>(memberId),
+      'externalLabel': serializer.toJson<String?>(externalLabel),
+      'externalEmail': serializer.toJson<String?>(externalEmail),
+      'channel': serializer.toJson<String>(channel),
+      'state': serializer.toJson<String>(state),
+      'stateDetail': serializer.toJson<String?>(stateDetail),
+      'sentAt': serializer.toJson<String?>(sentAt),
+      'readAt': serializer.toJson<String?>(readAt),
+      'createdAt': serializer.toJson<String>(createdAt),
+    };
+  }
+
+  ExportRecipient copyWith({
+    String? id,
+    String? exportId,
+    String? spaceId,
+    String? kind,
+    Value<String?> guardianId = const Value.absent(),
+    Value<String?> memberId = const Value.absent(),
+    Value<String?> externalLabel = const Value.absent(),
+    Value<String?> externalEmail = const Value.absent(),
+    String? channel,
+    String? state,
+    Value<String?> stateDetail = const Value.absent(),
+    Value<String?> sentAt = const Value.absent(),
+    Value<String?> readAt = const Value.absent(),
+    String? createdAt,
+  }) => ExportRecipient(
+    id: id ?? this.id,
+    exportId: exportId ?? this.exportId,
+    spaceId: spaceId ?? this.spaceId,
+    kind: kind ?? this.kind,
+    guardianId: guardianId.present ? guardianId.value : this.guardianId,
+    memberId: memberId.present ? memberId.value : this.memberId,
+    externalLabel: externalLabel.present
+        ? externalLabel.value
+        : this.externalLabel,
+    externalEmail: externalEmail.present
+        ? externalEmail.value
+        : this.externalEmail,
+    channel: channel ?? this.channel,
+    state: state ?? this.state,
+    stateDetail: stateDetail.present ? stateDetail.value : this.stateDetail,
+    sentAt: sentAt.present ? sentAt.value : this.sentAt,
+    readAt: readAt.present ? readAt.value : this.readAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ExportRecipient copyWithCompanion(ExportRecipientsCompanion data) {
+    return ExportRecipient(
+      id: data.id.present ? data.id.value : this.id,
+      exportId: data.exportId.present ? data.exportId.value : this.exportId,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      guardianId: data.guardianId.present
+          ? data.guardianId.value
+          : this.guardianId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      externalLabel: data.externalLabel.present
+          ? data.externalLabel.value
+          : this.externalLabel,
+      externalEmail: data.externalEmail.present
+          ? data.externalEmail.value
+          : this.externalEmail,
+      channel: data.channel.present ? data.channel.value : this.channel,
+      state: data.state.present ? data.state.value : this.state,
+      stateDetail: data.stateDetail.present
+          ? data.stateDetail.value
+          : this.stateDetail,
+      sentAt: data.sentAt.present ? data.sentAt.value : this.sentAt,
+      readAt: data.readAt.present ? data.readAt.value : this.readAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExportRecipient(')
+          ..write('id: $id, ')
+          ..write('exportId: $exportId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('kind: $kind, ')
+          ..write('guardianId: $guardianId, ')
+          ..write('memberId: $memberId, ')
+          ..write('externalLabel: $externalLabel, ')
+          ..write('externalEmail: $externalEmail, ')
+          ..write('channel: $channel, ')
+          ..write('state: $state, ')
+          ..write('stateDetail: $stateDetail, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    exportId,
+    spaceId,
+    kind,
+    guardianId,
+    memberId,
+    externalLabel,
+    externalEmail,
+    channel,
+    state,
+    stateDetail,
+    sentAt,
+    readAt,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExportRecipient &&
+          other.id == this.id &&
+          other.exportId == this.exportId &&
+          other.spaceId == this.spaceId &&
+          other.kind == this.kind &&
+          other.guardianId == this.guardianId &&
+          other.memberId == this.memberId &&
+          other.externalLabel == this.externalLabel &&
+          other.externalEmail == this.externalEmail &&
+          other.channel == this.channel &&
+          other.state == this.state &&
+          other.stateDetail == this.stateDetail &&
+          other.sentAt == this.sentAt &&
+          other.readAt == this.readAt &&
+          other.createdAt == this.createdAt);
+}
+
+class ExportRecipientsCompanion extends UpdateCompanion<ExportRecipient> {
+  final Value<String> id;
+  final Value<String> exportId;
+  final Value<String> spaceId;
+  final Value<String> kind;
+  final Value<String?> guardianId;
+  final Value<String?> memberId;
+  final Value<String?> externalLabel;
+  final Value<String?> externalEmail;
+  final Value<String> channel;
+  final Value<String> state;
+  final Value<String?> stateDetail;
+  final Value<String?> sentAt;
+  final Value<String?> readAt;
+  final Value<String> createdAt;
+  final Value<int> rowid;
+  const ExportRecipientsCompanion({
+    this.id = const Value.absent(),
+    this.exportId = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.guardianId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.externalLabel = const Value.absent(),
+    this.externalEmail = const Value.absent(),
+    this.channel = const Value.absent(),
+    this.state = const Value.absent(),
+    this.stateDetail = const Value.absent(),
+    this.sentAt = const Value.absent(),
+    this.readAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExportRecipientsCompanion.insert({
+    required String id,
+    required String exportId,
+    required String spaceId,
+    required String kind,
+    this.guardianId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.externalLabel = const Value.absent(),
+    this.externalEmail = const Value.absent(),
+    required String channel,
+    required String state,
+    this.stateDetail = const Value.absent(),
+    this.sentAt = const Value.absent(),
+    this.readAt = const Value.absent(),
+    required String createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       exportId = Value(exportId),
+       spaceId = Value(spaceId),
+       kind = Value(kind),
+       channel = Value(channel),
+       state = Value(state),
+       createdAt = Value(createdAt);
+  static Insertable<ExportRecipient> custom({
+    Expression<String>? id,
+    Expression<String>? exportId,
+    Expression<String>? spaceId,
+    Expression<String>? kind,
+    Expression<String>? guardianId,
+    Expression<String>? memberId,
+    Expression<String>? externalLabel,
+    Expression<String>? externalEmail,
+    Expression<String>? channel,
+    Expression<String>? state,
+    Expression<String>? stateDetail,
+    Expression<String>? sentAt,
+    Expression<String>? readAt,
+    Expression<String>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (exportId != null) 'export_id': exportId,
+      if (spaceId != null) 'space_id': spaceId,
+      if (kind != null) 'kind': kind,
+      if (guardianId != null) 'guardian_id': guardianId,
+      if (memberId != null) 'member_id': memberId,
+      if (externalLabel != null) 'external_label': externalLabel,
+      if (externalEmail != null) 'external_email': externalEmail,
+      if (channel != null) 'channel': channel,
+      if (state != null) 'state': state,
+      if (stateDetail != null) 'state_detail': stateDetail,
+      if (sentAt != null) 'sent_at': sentAt,
+      if (readAt != null) 'read_at': readAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExportRecipientsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? exportId,
+    Value<String>? spaceId,
+    Value<String>? kind,
+    Value<String?>? guardianId,
+    Value<String?>? memberId,
+    Value<String?>? externalLabel,
+    Value<String?>? externalEmail,
+    Value<String>? channel,
+    Value<String>? state,
+    Value<String?>? stateDetail,
+    Value<String?>? sentAt,
+    Value<String?>? readAt,
+    Value<String>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ExportRecipientsCompanion(
+      id: id ?? this.id,
+      exportId: exportId ?? this.exportId,
+      spaceId: spaceId ?? this.spaceId,
+      kind: kind ?? this.kind,
+      guardianId: guardianId ?? this.guardianId,
+      memberId: memberId ?? this.memberId,
+      externalLabel: externalLabel ?? this.externalLabel,
+      externalEmail: externalEmail ?? this.externalEmail,
+      channel: channel ?? this.channel,
+      state: state ?? this.state,
+      stateDetail: stateDetail ?? this.stateDetail,
+      sentAt: sentAt ?? this.sentAt,
+      readAt: readAt ?? this.readAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (exportId.present) {
+      map['export_id'] = Variable<String>(exportId.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (guardianId.present) {
+      map['guardian_id'] = Variable<String>(guardianId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (externalLabel.present) {
+      map['external_label'] = Variable<String>(externalLabel.value);
+    }
+    if (externalEmail.present) {
+      map['external_email'] = Variable<String>(externalEmail.value);
+    }
+    if (channel.present) {
+      map['channel'] = Variable<String>(channel.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (stateDetail.present) {
+      map['state_detail'] = Variable<String>(stateDetail.value);
+    }
+    if (sentAt.present) {
+      map['sent_at'] = Variable<String>(sentAt.value);
+    }
+    if (readAt.present) {
+      map['read_at'] = Variable<String>(readAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExportRecipientsCompanion(')
+          ..write('id: $id, ')
+          ..write('exportId: $exportId, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('kind: $kind, ')
+          ..write('guardianId: $guardianId, ')
+          ..write('memberId: $memberId, ')
+          ..write('externalLabel: $externalLabel, ')
+          ..write('externalEmail: $externalEmail, ')
+          ..write('channel: $channel, ')
+          ..write('state: $state, ')
+          ..write('stateDetail: $stateDetail, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11621,6 +13405,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CapturesTable captures = $CapturesTable(this);
   late final $TasksTable tasks = $TasksTable(this);
   late final $MessagesTable messages = $MessagesTable(this);
+  late final $ExportsTable exports = $ExportsTable(this);
+  late final $ExportRecipientsTable exportRecipients = $ExportRecipientsTable(
+    this,
+  );
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
@@ -11633,6 +13421,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final EntriesDao entriesDao = EntriesDao(this as AppDatabase);
+  late final ExportsDao exportsDao = ExportsDao(this as AppDatabase);
   late final GroupMembersDao groupMembersDao = GroupMembersDao(
     this as AppDatabase,
   );
@@ -11670,6 +13459,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     captures,
     tasks,
     messages,
+    exports,
+    exportRecipients,
   ];
 }
 
@@ -17305,6 +19096,825 @@ typedef $$MessagesTableProcessedTableManager =
       Message,
       PrefetchHooks Function()
     >;
+typedef $$ExportsTableCreateCompanionBuilder =
+    ExportsCompanion Function({
+      required String id,
+      required String spaceId,
+      Value<String?> authorId,
+      required String templateId,
+      required String templateVersion,
+      Value<String?> subjectId,
+      Value<String?> groupId,
+      required String status,
+      required String format,
+      Value<String?> storagePath,
+      required String snapshotJson,
+      Value<String?> note,
+      required String generatedAt,
+      Value<String?> sentAt,
+      Value<String?> archivedAt,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ExportsTableUpdateCompanionBuilder =
+    ExportsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String?> authorId,
+      Value<String> templateId,
+      Value<String> templateVersion,
+      Value<String?> subjectId,
+      Value<String?> groupId,
+      Value<String> status,
+      Value<String> format,
+      Value<String?> storagePath,
+      Value<String> snapshotJson,
+      Value<String?> note,
+      Value<String> generatedAt,
+      Value<String?> sentAt,
+      Value<String?> archivedAt,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ExportsTableFilterComposer
+    extends Composer<_$AppDatabase, $ExportsTable> {
+  $$ExportsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorId => $composableBuilder(
+    column: $table.authorId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get templateId => $composableBuilder(
+    column: $table.templateId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get templateVersion => $composableBuilder(
+    column: $table.templateVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get storagePath => $composableBuilder(
+    column: $table.storagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get snapshotJson => $composableBuilder(
+    column: $table.snapshotJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get generatedAt => $composableBuilder(
+    column: $table.generatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExportsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExportsTable> {
+  $$ExportsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorId => $composableBuilder(
+    column: $table.authorId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get templateId => $composableBuilder(
+    column: $table.templateId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get templateVersion => $composableBuilder(
+    column: $table.templateVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get format => $composableBuilder(
+    column: $table.format,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get storagePath => $composableBuilder(
+    column: $table.storagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get snapshotJson => $composableBuilder(
+    column: $table.snapshotJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get generatedAt => $composableBuilder(
+    column: $table.generatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExportsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExportsTable> {
+  $$ExportsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get authorId =>
+      $composableBuilder(column: $table.authorId, builder: (column) => column);
+
+  GeneratedColumn<String> get templateId => $composableBuilder(
+    column: $table.templateId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get templateVersion => $composableBuilder(
+    column: $table.templateVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get format =>
+      $composableBuilder(column: $table.format, builder: (column) => column);
+
+  GeneratedColumn<String> get storagePath => $composableBuilder(
+    column: $table.storagePath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get snapshotJson => $composableBuilder(
+    column: $table.snapshotJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get generatedAt => $composableBuilder(
+    column: $table.generatedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sentAt =>
+      $composableBuilder(column: $table.sentAt, builder: (column) => column);
+
+  GeneratedColumn<String> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ExportsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExportsTable,
+          Export,
+          $$ExportsTableFilterComposer,
+          $$ExportsTableOrderingComposer,
+          $$ExportsTableAnnotationComposer,
+          $$ExportsTableCreateCompanionBuilder,
+          $$ExportsTableUpdateCompanionBuilder,
+          (Export, BaseReferences<_$AppDatabase, $ExportsTable, Export>),
+          Export,
+          PrefetchHooks Function()
+        > {
+  $$ExportsTableTableManager(_$AppDatabase db, $ExportsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExportsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExportsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExportsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> authorId = const Value.absent(),
+                Value<String> templateId = const Value.absent(),
+                Value<String> templateVersion = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> format = const Value.absent(),
+                Value<String?> storagePath = const Value.absent(),
+                Value<String> snapshotJson = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<String> generatedAt = const Value.absent(),
+                Value<String?> sentAt = const Value.absent(),
+                Value<String?> archivedAt = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExportsCompanion(
+                id: id,
+                spaceId: spaceId,
+                authorId: authorId,
+                templateId: templateId,
+                templateVersion: templateVersion,
+                subjectId: subjectId,
+                groupId: groupId,
+                status: status,
+                format: format,
+                storagePath: storagePath,
+                snapshotJson: snapshotJson,
+                note: note,
+                generatedAt: generatedAt,
+                sentAt: sentAt,
+                archivedAt: archivedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                Value<String?> authorId = const Value.absent(),
+                required String templateId,
+                required String templateVersion,
+                Value<String?> subjectId = const Value.absent(),
+                Value<String?> groupId = const Value.absent(),
+                required String status,
+                required String format,
+                Value<String?> storagePath = const Value.absent(),
+                required String snapshotJson,
+                Value<String?> note = const Value.absent(),
+                required String generatedAt,
+                Value<String?> sentAt = const Value.absent(),
+                Value<String?> archivedAt = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ExportsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                authorId: authorId,
+                templateId: templateId,
+                templateVersion: templateVersion,
+                subjectId: subjectId,
+                groupId: groupId,
+                status: status,
+                format: format,
+                storagePath: storagePath,
+                snapshotJson: snapshotJson,
+                note: note,
+                generatedAt: generatedAt,
+                sentAt: sentAt,
+                archivedAt: archivedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExportsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExportsTable,
+      Export,
+      $$ExportsTableFilterComposer,
+      $$ExportsTableOrderingComposer,
+      $$ExportsTableAnnotationComposer,
+      $$ExportsTableCreateCompanionBuilder,
+      $$ExportsTableUpdateCompanionBuilder,
+      (Export, BaseReferences<_$AppDatabase, $ExportsTable, Export>),
+      Export,
+      PrefetchHooks Function()
+    >;
+typedef $$ExportRecipientsTableCreateCompanionBuilder =
+    ExportRecipientsCompanion Function({
+      required String id,
+      required String exportId,
+      required String spaceId,
+      required String kind,
+      Value<String?> guardianId,
+      Value<String?> memberId,
+      Value<String?> externalLabel,
+      Value<String?> externalEmail,
+      required String channel,
+      required String state,
+      Value<String?> stateDetail,
+      Value<String?> sentAt,
+      Value<String?> readAt,
+      required String createdAt,
+      Value<int> rowid,
+    });
+typedef $$ExportRecipientsTableUpdateCompanionBuilder =
+    ExportRecipientsCompanion Function({
+      Value<String> id,
+      Value<String> exportId,
+      Value<String> spaceId,
+      Value<String> kind,
+      Value<String?> guardianId,
+      Value<String?> memberId,
+      Value<String?> externalLabel,
+      Value<String?> externalEmail,
+      Value<String> channel,
+      Value<String> state,
+      Value<String?> stateDetail,
+      Value<String?> sentAt,
+      Value<String?> readAt,
+      Value<String> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ExportRecipientsTableFilterComposer
+    extends Composer<_$AppDatabase, $ExportRecipientsTable> {
+  $$ExportRecipientsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get exportId => $composableBuilder(
+    column: $table.exportId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get externalLabel => $composableBuilder(
+    column: $table.externalLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get externalEmail => $composableBuilder(
+    column: $table.externalEmail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get channel => $composableBuilder(
+    column: $table.channel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stateDetail => $composableBuilder(
+    column: $table.stateDetail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExportRecipientsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExportRecipientsTable> {
+  $$ExportRecipientsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get exportId => $composableBuilder(
+    column: $table.exportId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get externalLabel => $composableBuilder(
+    column: $table.externalLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get externalEmail => $composableBuilder(
+    column: $table.externalEmail,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get channel => $composableBuilder(
+    column: $table.channel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stateDetail => $composableBuilder(
+    column: $table.stateDetail,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExportRecipientsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExportRecipientsTable> {
+  $$ExportRecipientsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get exportId =>
+      $composableBuilder(column: $table.exportId, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get externalLabel => $composableBuilder(
+    column: $table.externalLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get externalEmail => $composableBuilder(
+    column: $table.externalEmail,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get channel =>
+      $composableBuilder(column: $table.channel, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<String> get stateDetail => $composableBuilder(
+    column: $table.stateDetail,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sentAt =>
+      $composableBuilder(column: $table.sentAt, builder: (column) => column);
+
+  GeneratedColumn<String> get readAt =>
+      $composableBuilder(column: $table.readAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ExportRecipientsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExportRecipientsTable,
+          ExportRecipient,
+          $$ExportRecipientsTableFilterComposer,
+          $$ExportRecipientsTableOrderingComposer,
+          $$ExportRecipientsTableAnnotationComposer,
+          $$ExportRecipientsTableCreateCompanionBuilder,
+          $$ExportRecipientsTableUpdateCompanionBuilder,
+          (
+            ExportRecipient,
+            BaseReferences<
+              _$AppDatabase,
+              $ExportRecipientsTable,
+              ExportRecipient
+            >,
+          ),
+          ExportRecipient,
+          PrefetchHooks Function()
+        > {
+  $$ExportRecipientsTableTableManager(
+    _$AppDatabase db,
+    $ExportRecipientsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExportRecipientsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExportRecipientsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExportRecipientsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> exportId = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> guardianId = const Value.absent(),
+                Value<String?> memberId = const Value.absent(),
+                Value<String?> externalLabel = const Value.absent(),
+                Value<String?> externalEmail = const Value.absent(),
+                Value<String> channel = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<String?> stateDetail = const Value.absent(),
+                Value<String?> sentAt = const Value.absent(),
+                Value<String?> readAt = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExportRecipientsCompanion(
+                id: id,
+                exportId: exportId,
+                spaceId: spaceId,
+                kind: kind,
+                guardianId: guardianId,
+                memberId: memberId,
+                externalLabel: externalLabel,
+                externalEmail: externalEmail,
+                channel: channel,
+                state: state,
+                stateDetail: stateDetail,
+                sentAt: sentAt,
+                readAt: readAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String exportId,
+                required String spaceId,
+                required String kind,
+                Value<String?> guardianId = const Value.absent(),
+                Value<String?> memberId = const Value.absent(),
+                Value<String?> externalLabel = const Value.absent(),
+                Value<String?> externalEmail = const Value.absent(),
+                required String channel,
+                required String state,
+                Value<String?> stateDetail = const Value.absent(),
+                Value<String?> sentAt = const Value.absent(),
+                Value<String?> readAt = const Value.absent(),
+                required String createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ExportRecipientsCompanion.insert(
+                id: id,
+                exportId: exportId,
+                spaceId: spaceId,
+                kind: kind,
+                guardianId: guardianId,
+                memberId: memberId,
+                externalLabel: externalLabel,
+                externalEmail: externalEmail,
+                channel: channel,
+                state: state,
+                stateDetail: stateDetail,
+                sentAt: sentAt,
+                readAt: readAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExportRecipientsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExportRecipientsTable,
+      ExportRecipient,
+      $$ExportRecipientsTableFilterComposer,
+      $$ExportRecipientsTableOrderingComposer,
+      $$ExportRecipientsTableAnnotationComposer,
+      $$ExportRecipientsTableCreateCompanionBuilder,
+      $$ExportRecipientsTableUpdateCompanionBuilder,
+      (
+        ExportRecipient,
+        BaseReferences<_$AppDatabase, $ExportRecipientsTable, ExportRecipient>,
+      ),
+      ExportRecipient,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -17347,4 +19957,8 @@ class $AppDatabaseManager {
       $$TasksTableTableManager(_db, _db.tasks);
   $$MessagesTableTableManager get messages =>
       $$MessagesTableTableManager(_db, _db.messages);
+  $$ExportsTableTableManager get exports =>
+      $$ExportsTableTableManager(_db, _db.exports);
+  $$ExportRecipientsTableTableManager get exportRecipients =>
+      $$ExportRecipientsTableTableManager(_db, _db.exportRecipients);
 }

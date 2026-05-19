@@ -7,6 +7,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
+import 'package:differentworld/features/exports/widgets/exports_list.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/alerts_section.dart';
 import 'package:differentworld/features/subjects/widgets/attendance_strip.dart';
@@ -268,6 +269,16 @@ class _SubjectBody extends ConsumerWidget {
           ),
         ),
         PickupList(subject: subject),
+
+        const _SectionGap(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Text(
+            'Sent reports',
+            style: theme.textTheme.titleSmall,
+          ),
+        ),
+        ExportsListForSubject(subjectId: subject.id),
 
         if ((subject.notes ?? '').isNotEmpty) ...[
           const _SectionGap(),

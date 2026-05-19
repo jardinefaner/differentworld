@@ -63,6 +63,11 @@ streams:
       # they're on (enforced by RLS, not sync rule — the per-row
       # filter would need joins this SQL subset doesn't support).
       - SELECT * FROM messages           WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Exports — audit + snapshot of every PDF / CSV the director
+      # has generated. The rendered bytes live in Storage; this
+      # table just carries the metadata + the source-data snapshot.
+      - SELECT * FROM exports            WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM export_recipients  WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Only stream un-accepted invites. Accepted ones don't need to
       # round-trip back to every director's device — they just bloat
       # the local table over time. The acceptance event itself reaches
