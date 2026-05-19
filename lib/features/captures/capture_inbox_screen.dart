@@ -144,20 +144,62 @@ Future<void> _openTriage(
   Capture capture,
 ) async {
   unawaited(HapticFeedback.selectionClick());
+  // Snapshot the stable dependencies BEFORE opening the sheet — the
+  // sheet's own BuildContext/WidgetRef die the moment it pops, so any
+  // post-pop work (the subject picker, the snackbar, the discard
+  // mutation) has to use these captured references instead.
+  final actions = ref.read(captureActionsProvider);
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  // The card's context survives sheet dismissal; use it for any
+  // follow-up navigators (e.g. opening the subject picker).
+  final parentContext = context;
   await showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (sheetCtx) => _TriageSheet(capture: capture),
+    builder: (sheetCtx) => _TriageSheet(
+      capture: capture,
+      onDismiss: () async {
+        Navigator.of(sheetCtx).pop();
+        try {
+          await actions.discard(capture.id);
+        } on Exception catch (e, st) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: e,
+              stack: st,
+              library: 'captures',
+            ),
+          );
+        }
+      },
+      onMakeObservation: () async {
+        Navigator.of(sheetCtx).pop();
+        await _pickSubjectAndPromote(
+          rootContext: parentContext,
+          actions: actions,
+          messenger: messenger,
+          capture: capture,
+        );
+      },
+    ),
   );
 }
 
-class _TriageSheet extends ConsumerWidget {
-  const _TriageSheet({required this.capture});
+typedef _AsyncAction = Future<void> Function();
+
+class _TriageSheet extends StatelessWidget {
+  const _TriageSheet({
+    required this.capture,
+    required this.onDismiss,
+    required this.onMakeObservation,
+  });
 
   final Capture capture;
+  final _AsyncAction onDismiss;
+  final _AsyncAction onMakeObservation;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SafeArea(
       top: false,
@@ -179,10 +221,7 @@ class _TriageSheet extends ConsumerWidget {
               leading: const Icon(Icons.menu_book_outlined),
               title: const Text('Make this an observation'),
               subtitle: const Text('Pick a child to attach it to'),
-              onTap: () async {
-                Navigator.of(context).pop();
-                await _pickSubjectAndPromote(context, ref, capture);
-              },
+              onTap: () => unawaited(onMakeObservation()),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -191,22 +230,7 @@ class _TriageSheet extends ConsumerWidget {
               subtitle: const Text(
                 'Not going to act on this. Hide from inbox.',
               ),
-              onTap: () async {
-                Navigator.of(context).pop();
-                try {
-                  await ref
-                      .read(captureActionsProvider)
-                      .discard(capture.id);
-                } on Exception catch (e, st) {
-                  FlutterError.reportError(
-                    FlutterErrorDetails(
-                      exception: e,
-                      stack: st,
-                      library: 'captures',
-                    ),
-                  );
-                }
-              },
+              onTap: () => unawaited(onDismiss()),
             ),
           ],
         ),
@@ -215,27 +239,24 @@ class _TriageSheet extends ConsumerWidget {
   }
 }
 
-Future<void> _pickSubjectAndPromote(
-  BuildContext context,
-  WidgetRef ref,
-  Capture capture,
-) async {
-  // Capture the messenger BEFORE the await; using it after the
-  // sheet closes would otherwise hit the use_build_context_synchronously
-  // lint (the original context's State may have been disposed).
-  final messenger = ScaffoldMessenger.maybeOf(context);
+Future<void> _pickSubjectAndPromote({
+  required BuildContext rootContext,
+  required CaptureActions actions,
+  required ScaffoldMessengerState? messenger,
+  required Capture capture,
+}) async {
   final picked = await showModalBottomSheet<Subject>(
-    context: context,
+    context: rootContext,
     isScrollControlled: true,
     showDragHandle: true,
     builder: (_) => const _SubjectPickerSheet(),
   );
   if (picked == null) return;
   try {
-    await ref.read(captureActionsProvider).promoteToObservation(
-          captureId: capture.id,
-          subjectId: picked.id,
-        );
+    await actions.promoteToObservation(
+      captureId: capture.id,
+      subjectId: picked.id,
+    );
     messenger?.showSnackBar(
       SnackBar(
         content: Text('Saved as an observation for ${picked.firstName}.'),

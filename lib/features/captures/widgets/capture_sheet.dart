@@ -7,15 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Drop a quick "I noticed…" into the inbox.
 ///
-/// The lifecycle is deliberately autosave-only — there is no Save
-/// button. Per UX_DECISIONS §1, a save button on a single-field
-/// capture is friction we don't need: the user types, dismisses, and
-/// the row is there. If they dismiss before typing anything, the row
-/// is hard-deleted (no audit value in keeping empty captures).
-///
-/// On first non-empty keystroke we INSERT the row and remember the id.
-/// Every subsequent change (debounced ~400ms) UPDATEs the body. This
-/// keeps each open-sheet to at most one row in the inbox.
+/// Saves on EVERY keystroke through a serialized `Future` chain, so a
+/// swipe-to-dismiss never loses the last character the user typed. The
+/// first non-empty keystroke INSERTs the row; later keystrokes UPDATE
+/// it. We hold an [CaptureActions] instance captured at initState so
+/// any in-flight write completes safely even after the widget
+/// unmounts (the chain references the actions instance, not the
+/// sheet's `ref`).
 Future<void> showCaptureSheet(BuildContext context) async {
   unawaited(HapticFeedback.selectionClick());
   await showModalBottomSheet<void>(
@@ -36,52 +34,68 @@ class _CaptureSheet extends ConsumerStatefulWidget {
 class _CaptureSheetState extends ConsumerState<_CaptureSheet> {
   final TextEditingController _ctrl = TextEditingController();
   final FocusNode _focus = FocusNode();
-  Timer? _saveTimer;
 
-  /// Once the row exists in the DB, we remember its id so subsequent
-  /// edits target it instead of inserting again.
+  /// The actions instance is read once at mount and stays alive for
+  /// the chain's lifetime, even after the widget is gone.
+  late final CaptureActions _actions;
+
+  /// Serialized chain of write Futures. Each keystroke appends its
+  /// own `then(...)` so writes happen in the order they were typed.
+  /// If a save is in flight when the sheet dismisses, the chain
+  /// continues running in the background — no data loss.
+  Future<void> _saveChain = Future<void>.value();
+
+  /// The id of this sheet's capture row, after the first non-empty
+  /// save. Subsequent saves UPDATE this row.
   String? _captureId;
 
-  /// Visual feedback after a save completes — a 700ms "Saved" chip.
+  /// Set to `true` while a save round-trip is in flight, so the
+  /// "Saved" chip can flash green.
   bool _savedFlash = false;
   Timer? _flashTimer;
 
   @override
   void initState() {
     super.initState();
-    // Auto-focus the next frame — the bottom sheet animation needs to
-    // settle first or the keyboard fights the slide-up.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
+    _actions = ref.read(captureActionsProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focus.requestFocus();
+    });
     _ctrl.addListener(_onChanged);
   }
 
   @override
   void dispose() {
-    _saveTimer?.cancel();
     _flashTimer?.cancel();
-    _ctrl
-      ..removeListener(_onChanged)
-      ..dispose();
+    _ctrl.removeListener(_onChanged);
+    // Schedule one last cleanup: if the user opened the sheet, never
+    // typed anything meaningful, and dismissed it — hard-delete the
+    // shell row so the inbox stays tidy. Capture the id here because
+    // `this._captureId` may be read by the chain after super.dispose().
+    final id = _captureId;
+    final lastText = _ctrl.text;
+    if (id != null && lastText.trim().isEmpty) {
+      _saveChain = _saveChain.then((_) => _actions.discardEmpty(id));
+    }
+    _ctrl.dispose();
     _focus.dispose();
     super.dispose();
   }
 
   void _onChanged() {
-    _saveTimer?.cancel();
-    _saveTimer = Timer(const Duration(milliseconds: 400), _flushSave);
+    // Capture the current text NOW; never read _ctrl inside the
+    // chain (it could be disposed by then).
+    final text = _ctrl.text;
+    _saveChain = _saveChain.then((_) => _doSave(text));
   }
 
-  Future<void> _flushSave() async {
-    final text = _ctrl.text;
-    final actions = ref.read(captureActionsProvider);
+  Future<void> _doSave(String text) async {
     try {
       if (_captureId == null) {
         if (text.trim().isEmpty) return; // nothing to persist yet
-        final id = await actions.start(body: text);
-        if (!mounted) return;
-        setState(() => _captureId = id);
+        _captureId = await _actions.start(body: text);
       } else {
-        await actions.updateBody(id: _captureId!, body: text);
+        await _actions.updateBody(id: _captureId!, body: text);
       }
       if (!mounted) return;
       _flashSaved();
@@ -99,19 +113,6 @@ class _CaptureSheetState extends ConsumerState<_CaptureSheet> {
       if (!mounted) return;
       setState(() => _savedFlash = false);
     });
-  }
-
-  Future<void> _closeNow() async {
-    // Force a flush so a fast typist who dismisses 200ms after the
-    // last keystroke doesn't lose that last keystroke.
-    _saveTimer?.cancel();
-    await _flushSave();
-    if (_captureId != null && _ctrl.text.trim().isEmpty) {
-      // Row was created but emptied — clean it up.
-      await ref.read(captureActionsProvider).discardEmpty(_captureId!);
-    }
-    if (!mounted) return;
-    unawaited(Navigator.of(context).maybePop());
   }
 
   @override
@@ -181,12 +182,14 @@ class _CaptureSheetState extends ConsumerState<_CaptureSheet> {
               Row(
                 children: [
                   TextButton(
-                    onPressed: _closeNow,
+                    onPressed: () =>
+                        unawaited(Navigator.of(context).maybePop()),
                     child: const Text('Cancel'),
                   ),
                   const Spacer(),
                   FilledButton.icon(
-                    onPressed: _closeNow,
+                    onPressed: () =>
+                        unawaited(Navigator.of(context).maybePop()),
                     icon: const Icon(Icons.check),
                     label: const Text('Done'),
                   ),
