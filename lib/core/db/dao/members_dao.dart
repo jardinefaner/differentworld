@@ -41,10 +41,37 @@ class MembersDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Allowed values for `members.role` — must stay in sync with the
+  /// `member_role` Postgres enum (see migration 1). Caller passing
+  /// anything else trips an assertion *before* the write lands in
+  /// PowerSync's CRUD queue. Without this guard, an off-enum value
+  /// like `'guardian'` would queue locally, get rejected by PostgREST
+  /// during upload with `22P02 / invalid input value for enum`, and
+  /// then retry forever — blocking every later op behind it.
+  static const _allowedRoles = {
+    'director',
+    'lead_teacher',
+    'teacher',
+    'assistant',
+  };
+
   /// Updates a member's role using the typed Drift API so PowerSync's
   /// CRUD queue picks it up. Don't use `customStatement` for this —
   /// raw SQL bypasses the WAL triggers PowerSync relies on.
   Future<void> updateRole(String id, String role) async {
+    assert(
+      _allowedRoles.contains(role),
+      'Invalid member role "$role" — must be one of $_allowedRoles. '
+      "Guardians don't go in the members table; they get a row in "
+      '`guardians`.',
+    );
+    if (!_allowedRoles.contains(role)) {
+      throw ArgumentError.value(
+        role,
+        'role',
+        'Not a valid member_role enum value',
+      );
+    }
     final now = DateTime.now().toUtc().toIso8601String();
     await (update(members)..where((m) => m.id.equals(id))).write(
       MembersCompanion(role: Value(role), updatedAt: Value(now)),
