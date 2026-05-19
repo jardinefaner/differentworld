@@ -287,6 +287,12 @@ class _CloseoutPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             FilledButton(onPressed: onClose, child: const Text('Done')),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () => context.push('/review/year'),
+              icon: const Icon(Icons.event_note_outlined),
+              label: const Text('Open the yearly review'),
+            ),
           ],
         ),
       ),

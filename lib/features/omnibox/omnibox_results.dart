@@ -186,6 +186,21 @@ class OmniboxResults extends ConsumerWidget {
           unawaited(ctx.push('/review'));
         },
       ),
+      // Yearly review — Foundation re-grounding, long-tempo.
+      _Suggestion(
+        label: 'Yearly review',
+        kindLabel: 'Page',
+        icon: Icons.event_note_outlined,
+        keywords: const [
+          'year',
+          'yearly',
+          'annual',
+          'foundation',
+          'reflect',
+          'long',
+        ],
+        onSelect: (ctx, ref) => ctx.push('/review/year'),
+      ),
       // -- Surveys -------------------------------------------------------
       _Suggestion(
         label: 'Surveys',

@@ -16,6 +16,7 @@ import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
+import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
@@ -136,6 +137,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'review',
             builder: (_, _) => const WeeklyReviewScreen(),
+            routes: [
+              // Yearly review — the long-tempo Foundation re-grounding.
+              // A calm snapshot + three open-ended prompts; no data to
+              // submit, just orientation.
+              GoRoute(
+                path: 'year',
+                builder: (_, _) => const YearlyReviewScreen(),
+              ),
+            ],
           ),
           // Surveys — index of templates + per-template list of kids
           // + take-survey flow.
