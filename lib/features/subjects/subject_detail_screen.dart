@@ -12,6 +12,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
+import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
@@ -735,20 +736,82 @@ class _GuardiansList extends ConsumerWidget {
         return Column(
           children: [
             for (final g in guardians)
-              ListTile(
-                leading: PersonAvatar(name: g.name),
-                title: Text(g.name),
-                subtitle: Text(
-                  [
-                    g.relationship,
-                    g.phone,
-                    g.email,
-                  ].whereType<String>().join(' · '),
-                ),
-              ),
+              _GuardianRow(subjectId: subjectId, guardian: g),
           ],
         );
       },
+    );
+  }
+}
+
+/// One guardian row inside the family list, with a "Message" trailing
+/// affordance and an unread badge if this guardian has sent messages
+/// staff hasn't read yet. Tap the chat icon to open the thread.
+class _GuardianRow extends ConsumerWidget {
+  const _GuardianRow({required this.subjectId, required this.guardian});
+
+  final String subjectId;
+  final Guardian guardian;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final messagesAsync = ref.watch(messageThreadProvider(
+      (subjectId: subjectId, guardianId: guardian.id),
+    ));
+    final messages = messagesAsync.value ?? const <Message>[];
+    final unread = messages
+        .where((m) => m.senderKind == 'guardian' && m.readAt == null)
+        .length;
+
+    return ListTile(
+      leading: PersonAvatar(name: guardian.name),
+      title: Text(guardian.name),
+      subtitle: Text(
+        [
+          guardian.relationship,
+          guardian.phone,
+          guardian.email,
+        ].whereType<String>().join(' · '),
+      ),
+      trailing: IconButton(
+        tooltip: unread > 0
+            ? '$unread unread message${unread == 1 ? '' : 's'}'
+            : 'Message',
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Icon(Icons.forum_outlined),
+            if (unread > 0)
+              Positioned(
+                top: -4,
+                right: -6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  constraints: const BoxConstraints(minWidth: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    unread > 9 ? '9+' : '$unread',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        onPressed: () =>
+            context.push('/messages/$subjectId/${guardian.id}'),
+      ),
     );
   }
 }
