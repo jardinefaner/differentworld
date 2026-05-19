@@ -19,7 +19,7 @@ final openCapturesProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchOpenCaptures(spaceId);
+  yield* db.capturesDao.watchOpen(spaceId);
 });
 
 /// Includes discarded + promoted rows. Used by the inbox's "show
@@ -34,7 +34,7 @@ final allCapturesProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchAllCaptures(spaceId);
+  yield* db.capturesDao.watchAll(spaceId);
 });
 
 /// Mutations on the capture inbox. The sheet UI calls `start` once on
@@ -54,7 +54,7 @@ class CaptureActions {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.requireSpaceId(action: 'capture');
     final db = await _ref.read(appDatabaseProvider.future);
-    return db.insertCapture(
+    return db.capturesDao.insert(
       id: _uuid.v4(),
       spaceId: spaceId,
       authorId: viewer.memberId,
@@ -67,7 +67,7 @@ class CaptureActions {
     required String body,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateCaptureBody(id: id, body: body);
+    await db.capturesDao.updateBody(id: id, body: body);
   }
 
   /// The sheet calls this when the user backs out without ever typing
@@ -75,10 +75,10 @@ class CaptureActions {
   /// empty rows.
   Future<void> discardEmpty(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final row = await db.findCaptureById(id);
+    final row = await db.capturesDao.findById(id);
     if (row == null) return;
     if (row.body.trim().isNotEmpty) return; // somebody re-edited; leave it
-    await db.deleteCapture(id);
+    await db.capturesDao.deleteById(id);
   }
 
   /// Promote a capture to a standalone observation on a chosen subject.
@@ -97,7 +97,7 @@ class CaptureActions {
     final (:spaceId, :memberId) =
         viewer.requireSpaceAndMember(action: 'promote a capture');
     final db = await _ref.read(appDatabaseProvider.future);
-    final cap = await db.findCaptureById(captureId);
+    final cap = await db.capturesDao.findById(captureId);
     if (cap == null) {
       throw StateError('Capture $captureId not found.');
     }
@@ -114,7 +114,7 @@ class CaptureActions {
       subjectId: subjectId,
       body: cap.body,
     );
-    await db.markCapturePromoted(
+    await db.capturesDao.markPromoted(
       id: captureId,
       promotedToKind: 'entry',
       promotedToId: entryId,
@@ -127,7 +127,7 @@ class CaptureActions {
   /// hides it from the inbox.
   Future<void> discard(String captureId) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.markCaptureDiscarded(captureId);
+    await db.capturesDao.markDiscarded(captureId);
   }
 
   /// Rewind: pull a promoted / discarded capture back into the inbox.
@@ -135,7 +135,7 @@ class CaptureActions {
   /// correctable from a debug surface.
   Future<void> reopen(String captureId) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.reopenCapture(captureId);
+    await db.capturesDao.reopen(captureId);
   }
 }
 

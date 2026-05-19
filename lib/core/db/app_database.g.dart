@@ -10270,6 +10270,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DismissedInsightsTable dismissedInsights =
       $DismissedInsightsTable(this);
   late final $CapturesTable captures = $CapturesTable(this);
+  late final CapturesDao capturesDao = CapturesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();

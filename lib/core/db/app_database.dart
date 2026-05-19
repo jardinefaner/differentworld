@@ -1,3 +1,4 @@
+import 'package:differentworld/core/db/dao/captures_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
 // Both drift and powersync export a `Column` class — only import what we
@@ -349,6 +350,7 @@ class Captures extends Table {
           GroupMembers, Entries, Guardians, SubjectGuardians,
           Vehicles, VehicleLogs, MemberCertifications, Attachments,
           SurveyResponses, DismissedInsights, Captures],
+  daos: [CapturesDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -1329,132 +1331,6 @@ class AppDatabase extends _$AppDatabase {
                 d.memberId.equals(memberId) & d.insightId.equals(insightId),
           ))
         .go();
-  }
-
-  // -- Captures (the upward loop's input inbox) ---------------------------
-
-  /// Open captures in a space, newest first. Drives the inbox screen and
-  /// the Today launchpad's "captures awaiting triage" indicator.
-  Stream<List<Capture>> watchOpenCaptures(String spaceId) {
-    return (select(captures)
-          ..where((c) => c.spaceId.equals(spaceId) & c.status.equals('open'))
-          ..orderBy([
-            (c) => OrderingTerm(
-                  expression: c.createdAt,
-                  mode: OrderingMode.desc,
-                ),
-          ]))
-        .watch();
-  }
-
-  /// All captures (any status), newest first — used by the inbox screen
-  /// when the user toggles "show triaged" or by an audit view later.
-  Stream<List<Capture>> watchAllCaptures(String spaceId) {
-    return (select(captures)
-          ..where((c) => c.spaceId.equals(spaceId))
-          ..orderBy([
-            (c) => OrderingTerm(
-                  expression: c.createdAt,
-                  mode: OrderingMode.desc,
-                ),
-          ]))
-        .watch();
-  }
-
-  Future<Capture?> findCaptureById(String id) {
-    return (select(captures)..where((c) => c.id.equals(id))).getSingleOrNull();
-  }
-
-  /// Insert a fresh capture and return its id. The sheet calls this once
-  /// the user starts typing; subsequent edits go through [updateCaptureBody]
-  /// against the returned id (so the cursor keystroke at t+200ms doesn't
-  /// create a second row).
-  Future<String> insertCapture({
-    required String id,
-    required String spaceId,
-    required String body,
-    String? authorId,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await into(captures).insert(
-      CapturesCompanion.insert(
-        id: id,
-        spaceId: spaceId,
-        authorId: Value(authorId),
-        body: body,
-        status: 'open',
-        createdAt: now,
-        updatedAt: now,
-      ),
-    );
-    return id;
-  }
-
-  Future<void> updateCaptureBody({
-    required String id,
-    required String body,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(captures)..where((c) => c.id.equals(id))).write(
-      CapturesCompanion(body: Value(body), updatedAt: Value(now)),
-    );
-  }
-
-  /// Mark a capture as turned into a downstream entity. The pointer is
-  /// loose (no FK to the other table) because the destination table is
-  /// open-ended.
-  Future<void> markCapturePromoted({
-    required String id,
-    required String promotedToKind,
-    required String promotedToId,
-    String? promotedSubjectId,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(captures)..where((c) => c.id.equals(id))).write(
-      CapturesCompanion(
-        status: const Value('promoted'),
-        promotedToKind: Value(promotedToKind),
-        promotedToId: Value(promotedToId),
-        promotedSubjectId: Value(promotedSubjectId),
-        processedAt: Value(now),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  Future<void> markCaptureDiscarded(String id) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(captures)..where((c) => c.id.equals(id))).write(
-      CapturesCompanion(
-        status: const Value('discarded'),
-        processedAt: Value(now),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  /// Reopens a capture that was previously promoted or discarded. We
-  /// don't expose this in v1 UI, but it's cheap to have so the audit
-  /// trail stays correctable.
-  Future<void> reopenCapture(String id) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(captures)..where((c) => c.id.equals(id))).write(
-      CapturesCompanion(
-        status: const Value('open'),
-        promotedToKind: const Value(null),
-        promotedToId: const Value(null),
-        promotedSubjectId: const Value(null),
-        processedAt: const Value(null),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  /// Hard-delete a capture. Distinct from discard, which keeps the row
-  /// for audit. Use when the user mis-typed and immediately backs out
-  /// of an empty draft.
-  Future<void> deleteCapture(String id) async {
-    await (delete(captures)..where((c) => c.id.equals(id))).go();
   }
 
   // -- Attachments --------------------------------------------------------
