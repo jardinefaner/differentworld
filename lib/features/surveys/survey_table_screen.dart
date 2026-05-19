@@ -21,15 +21,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// `/surveys/:templateId/table` — spreadsheet-style review of every
-/// kid's answers for one survey template.
+/// `/surveys/:templateId/table` — spreadsheet review of every kid's
+/// answers for one survey template.
 ///
-/// Rows: subjects in the space (optionally filtered to one classroom).
-/// Columns: the template's questions (skipping practice ones).
-/// Cells: the kid's answer, formatted compactly per question kind.
-///
-/// Director scans for patterns ("a third of the class said they don't
-/// like reading"), then exports as CSV to share or archive.
+/// Columns are *answer slots* — one per agree3/text question, and one
+/// per option for multiselect questions (so a 3-option multiselect
+/// becomes 3 columns of Yes/No instead of one comma-joined cell).
+/// CSV export uses the same slot layout for easy import into Sheets.
 class SurveyTableScreen extends ConsumerStatefulWidget {
   const SurveyTableScreen({required this.templateId, super.key});
 
@@ -78,14 +76,11 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
               : allSubjects
                   .where((s) => s.groupId == _filterGroupId)
                   .toList();
-          // Index answers by subject for fast lookup.
           final answersBySubject = <String, SurveyAnswers>{
             for (final r in responses)
               r.subjectId: SurveyAnswers.fromJson(r.answers),
           };
-          // Only scored questions (skip practice ones — they're warm-ups
-          // and clutter the comparison view).
-          final questions = template.scored.toList();
+          final cols = _buildColumns(template);
 
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
@@ -97,7 +92,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                   subtitle: '${template.year} · '
                       '${subjects.length} '
                       '${subjects.length == 1 ? 'kid' : 'kids'} · '
-                      '${questions.length} questions',
+                      '${cols.length} columns',
                 ),
               ),
               Padding(
@@ -119,7 +114,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                           : () => _exportCsv(
                                 template: template,
                                 subjects: subjects,
-                                questions: questions,
+                                cols: cols,
                                 answersBySubject: answersBySubject,
                               ),
                       icon: const Icon(Icons.download),
@@ -142,7 +137,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
               else
                 _ResponsesGrid(
                   subjects: subjects,
-                  questions: questions,
+                  cols: cols,
                   answersBySubject: answersBySubject,
                 ),
             ],
@@ -155,7 +150,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
   Future<void> _exportCsv({
     required SurveyTemplate template,
     required List<Subject> subjects,
-    required List<SurveyQuestion> questions,
+    required List<_Col> cols,
     required Map<String, SurveyAnswers> answersBySubject,
   }) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
@@ -166,42 +161,37 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
       action: () => _writeAndShareCsv(
         template: template,
         subjects: subjects,
-        questions: questions,
+        cols: cols,
         answersBySubject: answersBySubject,
       ),
     );
   }
 
-  /// Format the table as CSV, write to a temp file, hand off to the
-  /// platform share sheet. On web the share-as-file degrades to a
-  /// download via share_plus's web implementation.
   Future<void> _writeAndShareCsv({
     required SurveyTemplate template,
     required List<Subject> subjects,
-    required List<SurveyQuestion> questions,
+    required List<_Col> cols,
     required Map<String, SurveyAnswers> answersBySubject,
   }) async {
-    // Header row.
+    final groups = ref.read(groupsProvider).value ?? const <Group>[];
+    final groupName = {for (final g in groups) g.id: g.name};
+
     final header = <String>[
       'First name',
       'Last name',
       'Classroom',
       'Status',
-      for (final q in questions) q.prompt,
+      for (final c in cols) c.header,
     ];
     final rows = <List<String>>[header];
-    final groups = ref.read(groupsProvider).value ?? const <Group>[];
-    final groupName = {for (final g in groups) g.id: g.name};
     for (final subject in subjects) {
       final answers = answersBySubject[subject.id];
-      final status = _statusLabel(answers, questions);
       rows.add([
         subject.firstName,
         subject.lastName,
         groupName[subject.groupId] ?? '',
-        status,
-        for (final q in questions)
-          _formatAnswerForCsv(q, answers),
+        _statusLabel(answers, template.scored.toList()),
+        for (final c in cols) c.csv(answers),
       ]);
     }
     final csv = rows.map(_csvLine).join('\r\n');
@@ -209,12 +199,11 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
         '${template.id}-${DateTime.now().toIso8601String().substring(0, 10)}.csv';
 
     if (kIsWeb) {
-      // share_plus on web hands the bytes to the browser as a download.
       await SharePlus.instance.share(
         ShareParams(
           files: [
             XFile.fromData(
-              utf8Bytes(csv),
+              _utf8Bytes(csv),
               name: fileName,
               mimeType: 'text/csv',
             ),
@@ -233,9 +222,135 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
   }
 }
 
-/// UTF-8 encoder for the web download path. `dart:io.File` doesn't
-/// exist on web, so we hand bytes to share_plus directly there.
-Uint8List utf8Bytes(String s) => Uint8List.fromList(utf8.encode(s));
+Uint8List _utf8Bytes(String s) => Uint8List.fromList(utf8.encode(s));
+
+// ---------------------------------------------------------------------------
+// Column specs — one per answer slot. Multiselect questions expand to
+// one column per option (each cell = Yes/No). Agree3 + text are 1:1.
+// ---------------------------------------------------------------------------
+
+sealed class _Col {
+  String get header;
+
+  /// Human-readable cell content for the on-screen DataTable.
+  String display(SurveyAnswers? a);
+
+  /// Same content shaped for CSV (no emoji; multiselect-option columns
+  /// are Yes/No so the values line up across rows cleanly).
+  String csv(SurveyAnswers? a);
+}
+
+class _Agree3Col extends _Col {
+  _Agree3Col(this.q);
+  final SurveyQuestion q;
+
+  @override
+  String get header => q.prompt;
+
+  @override
+  String display(SurveyAnswers? a) {
+    if (a == null) return '—';
+    final v = a.agree3(q.key);
+    return switch (v) {
+      0 => '😟 No',
+      1 => '😐 Maybe',
+      2 => '😀 Yes',
+      _ => '—',
+    };
+  }
+
+  @override
+  String csv(SurveyAnswers? a) {
+    if (a == null) return '';
+    final v = a.agree3(q.key);
+    return switch (v) {
+      0 => 'No',
+      1 => 'Maybe',
+      2 => 'Yes',
+      _ => '',
+    };
+  }
+}
+
+/// One column per multiselect option. The cell renders Yes if the
+/// option key is in the kid's pick list, No if it's not.
+///
+/// Note: "No" is ambiguous between "kid said no" and "kid hasn't
+/// answered this question yet" — we render `—` when the kid has NO
+/// answer recorded for the parent question (i.e. no response row at
+/// all), and only fall back to "No" once there's a response with at
+/// least one option picked elsewhere on this question.
+class _MultiOptCol extends _Col {
+  _MultiOptCol(this.q, this.opt);
+  final SurveyQuestion q;
+  final SurveyOption opt;
+
+  @override
+  String get header => '${q.prompt} — ${opt.label}';
+
+  @override
+  String display(SurveyAnswers? a) {
+    if (a == null) return '—';
+    final picks = a.multiselect(q.key);
+    if (picks.contains(opt.key)) return '✓ Yes';
+    // Heuristic for "answered no" vs "not answered": if the kid has
+    // ANY pick on this question, they engaged with it; missing keys
+    // are deliberate Nos.
+    if (picks.isNotEmpty) return 'No';
+    return '—';
+  }
+
+  @override
+  String csv(SurveyAnswers? a) {
+    if (a == null) return '';
+    final picks = a.multiselect(q.key);
+    if (picks.contains(opt.key)) return 'Yes';
+    if (picks.isNotEmpty) return 'No';
+    return '';
+  }
+}
+
+class _TextCol extends _Col {
+  _TextCol(this.q);
+  final SurveyQuestion q;
+
+  @override
+  String get header => q.prompt;
+
+  @override
+  String display(SurveyAnswers? a) {
+    if (a == null) return '—';
+    final t = a.text(q.key);
+    return t.isEmpty ? '—' : t;
+  }
+
+  @override
+  String csv(SurveyAnswers? a) {
+    if (a == null) return '';
+    return a.text(q.key);
+  }
+}
+
+List<_Col> _buildColumns(SurveyTemplate t) {
+  final out = <_Col>[];
+  for (final q in t.scored) {
+    switch (q.kind) {
+      case SurveyQuestionKind.agree3:
+        out.add(_Agree3Col(q));
+      case SurveyQuestionKind.multiselect:
+        for (final opt in q.options) {
+          out.add(_MultiOptCol(q, opt));
+        }
+      case SurveyQuestionKind.text:
+        out.add(_TextCol(q));
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// UI bits.
+// ---------------------------------------------------------------------------
 
 class _GroupFilter extends StatelessWidget {
   const _GroupFilter({
@@ -272,20 +387,17 @@ class _GroupFilter extends StatelessWidget {
 class _ResponsesGrid extends StatelessWidget {
   const _ResponsesGrid({
     required this.subjects,
-    required this.questions,
+    required this.cols,
     required this.answersBySubject,
   });
 
   final List<Subject> subjects;
-  final List<SurveyQuestion> questions;
+  final List<_Col> cols;
   final Map<String, SurveyAnswers> answersBySubject;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Build a Material DataTable inside a horizontal scroll for wide
-    // surveys. On phones the user swipes left/right; on iPad+/desktop
-    // the whole grid sits inside the screen width.
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -295,12 +407,12 @@ class _ResponsesGrid extends StatelessWidget {
         columns: [
           const DataColumn(label: Text('Name')),
           const DataColumn(label: Text('Status')),
-          for (final q in questions)
+          for (final c in cols)
             DataColumn(
               label: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 220),
                 child: Text(
-                  q.prompt,
+                  c.header,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -312,7 +424,7 @@ class _ResponsesGrid extends StatelessWidget {
             _row(
               context,
               subject: subject,
-              questions: questions,
+              cols: cols,
               answers: answersBySubject[subject.id],
             ),
         ],
@@ -321,30 +433,22 @@ class _ResponsesGrid extends StatelessWidget {
   }
 }
 
-/// Assemble one row, computing the "done / total" status inline since
-/// the questions list is in scope here.
 DataRow _row(
   BuildContext context, {
   required Subject subject,
-  required List<SurveyQuestion> questions,
+  required List<_Col> cols,
   required SurveyAnswers? answers,
 }) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
-  final total = questions.length;
+  final total = cols.length;
   var done = 0;
   if (answers != null) {
-    for (final q in questions) {
-      final has = switch (q.kind) {
-        SurveyQuestionKind.agree3 => answers.agree3(q.key) != null,
-        SurveyQuestionKind.multiselect =>
-          answers.multiselect(q.key).isNotEmpty,
-        SurveyQuestionKind.text => answers.text(q.key).isNotEmpty,
-      };
-      if (has) done++;
+    for (final c in cols) {
+      if (c.csv(answers).isNotEmpty) done++;
     }
   }
-  final isComplete = done >= total;
+  final isComplete = done >= total && total > 0;
   final statusChip = answers == null
       ? Text('—', style: TextStyle(color: scheme.onSurfaceVariant))
       : Container(
@@ -369,109 +473,28 @@ DataRow _row(
     cells: [
       DataCell(Text('${subject.firstName} ${subject.lastName}')),
       DataCell(statusChip),
-      for (final q in questions)
+      for (final c in cols)
         DataCell(
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 220),
-            child: _AnswerCell(question: q, answers: answers),
+            child: Text(
+              c.display(answers),
+              style: theme.textTheme.bodyMedium,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
     ],
   );
 }
 
-/// Renders one cell — what the kid answered for one question. Format
-/// depends on the question's kind.
-class _AnswerCell extends StatelessWidget {
-  const _AnswerCell({required this.question, required this.answers});
-  final SurveyQuestion question;
-  final SurveyAnswers? answers;
+// ---------------------------------------------------------------------------
+// CSV serialization (RFC 4180-ish: CRLF lines, quote on commas/quotes/
+// newlines, double quotes for embedded ones).
+// ---------------------------------------------------------------------------
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (answers == null) {
-      return Text('—',
-          style: TextStyle(color: theme.colorScheme.onSurfaceVariant));
-    }
-    return Text(
-      _formatAnswerDisplay(question, answers),
-      style: theme.textTheme.bodyMedium,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-}
-
-// -- formatters ----------------------------------------------------------
-
-/// Human-readable cell content. Uses emoji for agree3 because it's
-/// dense and scannable at a glance.
-String _formatAnswerDisplay(SurveyQuestion q, SurveyAnswers? a) {
-  if (a == null) return '—';
-  switch (q.kind) {
-    case SurveyQuestionKind.agree3:
-      final v = a.agree3(q.key);
-      if (v == null) return '—';
-      return switch (v) {
-        0 => '😟 No',
-        1 => '😐 Maybe',
-        2 => '😀 Yes',
-        _ => '—',
-      };
-    case SurveyQuestionKind.multiselect:
-      final ks = a.multiselect(q.key);
-      if (ks.isEmpty) return '—';
-      final labels = <String>[];
-      for (final k in ks) {
-        final opt = q.options.firstWhere(
-          (o) => o.key == k,
-          orElse: () => SurveyOption(key: k, label: k),
-        );
-        labels.add(opt.label);
-      }
-      return labels.join(', ');
-    case SurveyQuestionKind.text:
-      final t = a.text(q.key);
-      return t.isEmpty ? '—' : t;
-  }
-}
-
-/// Same content as the display version but without emoji (CSV consumers
-/// don't all render emoji uniformly).
-String _formatAnswerForCsv(SurveyQuestion q, SurveyAnswers? a) {
-  if (a == null) return '';
-  switch (q.kind) {
-    case SurveyQuestionKind.agree3:
-      final v = a.agree3(q.key);
-      return switch (v) {
-        0 => 'No',
-        1 => 'Maybe',
-        2 => 'Yes',
-        _ => '',
-      };
-    case SurveyQuestionKind.multiselect:
-      final ks = a.multiselect(q.key);
-      if (ks.isEmpty) return '';
-      final labels = <String>[];
-      for (final k in ks) {
-        final opt = q.options.firstWhere(
-          (o) => o.key == k,
-          orElse: () => SurveyOption(key: k, label: k),
-        );
-        labels.add(opt.label);
-      }
-      return labels.join('; '); // ; not , so CSV stays unambiguous
-    case SurveyQuestionKind.text:
-      return a.text(q.key);
-  }
-}
-
-/// CSV-safe line: each cell quoted if it contains the separator,
-/// quotes, or newlines. Quotes inside cells doubled per RFC 4180.
-String _csvLine(List<String> cells) {
-  return cells.map(_csvField).join(',');
-}
+String _csvLine(List<String> cells) => cells.map(_csvField).join(',');
 
 String _csvField(String s) {
   final needsQuote =
@@ -481,8 +504,6 @@ String _csvField(String s) {
   return '"$escaped"';
 }
 
-/// Same done/total math the status chip uses, returning a CSV-friendly
-/// string instead of a widget.
 String _statusLabel(SurveyAnswers? a, List<SurveyQuestion> questions) {
   if (a == null) return 'Not started';
   var n = 0;
@@ -495,5 +516,7 @@ String _statusLabel(SurveyAnswers? a, List<SurveyQuestion> questions) {
     if (has) n++;
   }
   if (n == 0) return 'Not started';
-  return n == questions.length ? 'Completed' : 'In progress ($n / ${questions.length})';
+  return n == questions.length
+      ? 'Completed'
+      : 'In progress ($n / ${questions.length})';
 }
