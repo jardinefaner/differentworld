@@ -46,6 +46,9 @@ streams:
       # year of TK–3rd kid responses for a whole program is well under
       # the noise of any other table.
       - SELECT * FROM survey_responses   WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Dismissed insights — per-member snooze rows. Tiny table
+      # (one row per insight a member has chosen to mute).
+      - SELECT * FROM dismissed_insights WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Only stream un-accepted invites. Accepted ones don't need to
       # round-trip back to every director's device — they just bloat
       # the local table over time. The acceptance event itself reaches

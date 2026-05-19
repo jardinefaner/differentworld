@@ -178,4 +178,11 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  Table('dismissed_insights', [
+    Column.text('space_id'),
+    Column.text('member_id'),
+    Column.text('insight_id'),
+    Column.text('dismissed_until'),
+    Column.text('created_at'),
+  ]),
 ]);

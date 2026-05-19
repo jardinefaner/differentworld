@@ -121,7 +121,7 @@ class InsightCard extends ConsumerWidget {
         color: bg,
         borderRadius: BorderRadius.circular(14),
       ),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -136,11 +136,14 @@ class InsightCard extends ConsumerWidget {
                   style: theme.textTheme.bodyMedium?.copyWith(color: fg),
                 ),
               ),
+              _SnoozeButton(insightId: insight.id, foreground: fg),
             ],
           ),
           if (insight.actions.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 8,
+              runSpacing: -8,
               children: [
                 // Default action: prominent filled button.
                 FilledButton(
@@ -148,7 +151,6 @@ class InsightCard extends ConsumerWidget {
                       context.push(insight.actions.first.route),
                   child: Text(insight.actions.first.label),
                 ),
-                const SizedBox(width: 8),
                 // Secondary actions render as text buttons.
                 for (final a in insight.actions.skip(1))
                   TextButton(
@@ -179,6 +181,41 @@ class InsightCard extends ConsumerWidget {
           scheme.onSurface,
         ),
     };
+  }
+}
+
+/// Overflow menu in the corner of every InsightCard. The user picks
+/// a snooze duration; the card vanishes immediately (the underlying
+/// `dismissed_insights` row arrives in the stream and filters the
+/// insight out next frame).
+class _SnoozeButton extends ConsumerWidget {
+  const _SnoozeButton({required this.insightId, required this.foreground});
+
+  final String insightId;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<InsightSnoozeOption>(
+      tooltip: 'Snooze',
+      icon: Icon(Icons.more_horiz, color: foreground),
+      onSelected: (option) async {
+        try {
+          await ref.read(insightActionsProvider).snooze(
+                insightId: insightId,
+                option: option,
+              );
+        } on Exception catch (e, st) {
+          FlutterError.reportError(
+            FlutterErrorDetails(exception: e, stack: st, library: 'insights'),
+          );
+        }
+      },
+      itemBuilder: (_) => [
+        for (final opt in InsightSnoozeOption.values)
+          PopupMenuItem(value: opt, child: Text(opt.label)),
+      ],
+    );
   }
 }
 

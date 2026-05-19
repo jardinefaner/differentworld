@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
@@ -11,6 +12,7 @@ import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 /// Insights are the visible part of the upward loop — the system
 /// watches what Surface produces, finds patterns, and surfaces them
@@ -94,9 +96,43 @@ class InsightAction {
   final String route;
 }
 
-/// The full sorted list of insights for the current viewer. Severity
-/// first (urgent → suggestion → info), then by kind for stable order
-/// across rebuilds.
+/// Per-member set of insight_ids that are currently snoozed. An entry
+/// with `dismissed_until` null is muted indefinitely (until the user
+/// explicitly un-snoozes). An entry with a timestamp re-surfaces
+/// automatically when the timestamp passes.
+final _dismissedInsightIdsProvider =
+    StreamProvider<Set<String>>((ref) async* {
+  final viewer = ref.watch(viewerProvider);
+  final memberId = viewer.memberId;
+  if (memberId == null) {
+    yield <String>{};
+    return;
+  }
+  final db = await ref.watch(appDatabaseProvider.future);
+  yield* db.watchDismissedInsightsForMember(memberId).map((rows) {
+    final now = DateTime.now();
+    final active = <String>{};
+    for (final r in rows) {
+      final iso = r.dismissedUntil;
+      if (iso == null || iso.isEmpty) {
+        active.add(r.insightId);
+        continue;
+      }
+      final until = DateTime.tryParse(iso);
+      if (until == null || until.isAfter(now)) {
+        active.add(r.insightId);
+      }
+      // else: expired snooze — drop from the active set so the
+      // insight re-surfaces. The row stays in the DB so we can show
+      // "re-snoozed N times" if we ever want that metric.
+    }
+    return active;
+  });
+});
+
+/// The full sorted list of insights for the current viewer, with
+/// snoozed ones filtered out. Severity first (urgent → suggestion →
+/// info), then by kind for stable order across rebuilds.
 final insightsProvider = Provider<AsyncValue<List<Insight>>>((ref) {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
@@ -106,6 +142,7 @@ final insightsProvider = Provider<AsyncValue<List<Insight>>>((ref) {
   final certsAsync = ref.watch(certsInSpaceProvider);
   final vehiclesAsync = ref.watch(vehiclesProvider);
   final observationsAsync = ref.watch(observationsInSpaceProvider);
+  final dismissedAsync = ref.watch(_dismissedInsightIdsProvider);
 
   if (subjectsAsync.isLoading ||
       certsAsync.isLoading ||
@@ -118,6 +155,7 @@ final insightsProvider = Provider<AsyncValue<List<Insight>>>((ref) {
   final certs = certsAsync.value ?? const <MemberCertification>[];
   final vehicles = vehiclesAsync.value ?? const <Vehicle>[];
   final observations = observationsAsync.value ?? const <Entry>[];
+  final dismissed = dismissedAsync.value ?? const <String>{};
 
   final insights = <Insight>[
     ..._certInsights(certs),
@@ -125,13 +163,86 @@ final insightsProvider = Provider<AsyncValue<List<Insight>>>((ref) {
     ..._quietKidInsights(subjects, observations),
     ..._attendanceInsights(ref, subjects),
     ..._surveyInsights(ref, spaceId, subjects),
-  ]..sort((a, b) {
+  ].where((i) => !dismissed.contains(i.id)).toList()
+    ..sort((a, b) {
       final s = a.severity.index.compareTo(b.severity.index);
       if (s != 0) return s;
       return a.kind.index.compareTo(b.kind.index);
     });
   return AsyncValue.data(List<Insight>.unmodifiable(insights));
 });
+
+/// Snooze options offered on each insight card. Concrete choices so
+/// the user doesn't have to think — "until tomorrow" is the
+/// most-used by design.
+enum InsightSnoozeOption {
+  untilTomorrow,
+  untilNextWeek,
+  untilFurtherNotice,
+}
+
+extension InsightSnoozeOptionX on InsightSnoozeOption {
+  String get label => switch (this) {
+        InsightSnoozeOption.untilTomorrow => 'Snooze until tomorrow',
+        InsightSnoozeOption.untilNextWeek => 'Snooze for a week',
+        InsightSnoozeOption.untilFurtherNotice =>
+          'Hide until I unhide it',
+      };
+
+  /// Returns the resolved `dismissed_until` timestamp, or null for
+  /// "indefinitely."
+  DateTime? resolveUntil() {
+    final now = DateTime.now();
+    return switch (this) {
+      InsightSnoozeOption.untilTomorrow =>
+        DateTime(now.year, now.month, now.day + 1, 6),
+      InsightSnoozeOption.untilNextWeek =>
+        DateTime(now.year, now.month, now.day + 7, 6),
+      InsightSnoozeOption.untilFurtherNotice => null,
+    };
+  }
+}
+
+class InsightActions {
+  InsightActions(this._ref);
+
+  final Ref _ref;
+  final Uuid _uuid = const Uuid();
+
+  Future<void> snooze({
+    required String insightId,
+    required InsightSnoozeOption option,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId = viewer.spaceId;
+    final memberId = viewer.memberId;
+    if (spaceId == null || memberId == null) {
+      throw StateError('No Space / signed-in Member.');
+    }
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.upsertDismissedInsight(
+      id: _uuid.v4(),
+      spaceId: spaceId,
+      memberId: memberId,
+      insightId: insightId,
+      dismissedUntil: option.resolveUntil(),
+    );
+  }
+
+  Future<void> unsnooze(String insightId) async {
+    final viewer = _ref.read(viewerProvider);
+    final memberId = viewer.memberId;
+    if (memberId == null) return;
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.deleteDismissedInsight(
+      memberId: memberId,
+      insightId: insightId,
+    );
+  }
+}
+
+final insightActionsProvider =
+    Provider<InsightActions>(InsightActions.new);
 
 // ---------------------------------------------------------------------------
 // Derivations — pure-ish functions over the streams handed in. Each

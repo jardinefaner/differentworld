@@ -257,6 +257,22 @@ class MemberCertifications extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Per-member snooze for derived insights. Insights themselves have
+/// no DB row — they're computed on-device — but the dismissal *is*
+/// a real piece of state, so it gets a table. Unique on
+/// (member_id, insight_id): re-dismissing replaces the prior row.
+class DismissedInsights extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get memberId => text()();
+  TextColumn get insightId => text()();
+  TextColumn get dismissedUntil => text().nullable()(); // ISO timestamp
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// One row per (subject, survey-template). The questions themselves
 /// are app-defined templates (see `survey_templates.dart`); only the
 /// answers a kid gave land here, keyed by question_key inside
@@ -311,7 +327,7 @@ class Attachments extends Table {
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
           Vehicles, VehicleLogs, MemberCertifications, Attachments,
-          SurveyResponses],
+          SurveyResponses, DismissedInsights],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
@@ -1221,6 +1237,77 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> deleteSurveyResponse(String id) async {
     await (delete(surveyResponses)..where((r) => r.id.equals(id))).go();
+  }
+
+  // -- Dismissed insights -------------------------------------------------
+
+  /// All dismissal rows for a specific member. Drives the insights
+  /// provider's snoozed-out filter.
+  Stream<List<DismissedInsight>> watchDismissedInsightsForMember(
+    String memberId,
+  ) {
+    return (select(dismissedInsights)
+          ..where((d) => d.memberId.equals(memberId)))
+        .watch();
+  }
+
+  Future<DismissedInsight?> findDismissedInsight({
+    required String memberId,
+    required String insightId,
+  }) {
+    return (select(dismissedInsights)
+          ..where(
+            (d) =>
+                d.memberId.equals(memberId) & d.insightId.equals(insightId),
+          ))
+        .getSingleOrNull();
+  }
+
+  /// Upsert by (member_id, insight_id). Re-dismissing replaces the
+  /// row with a new `dismissed_until`.
+  Future<void> upsertDismissedInsight({
+    required String id,
+    required String spaceId,
+    required String memberId,
+    required String insightId,
+    required DateTime? dismissedUntil,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final existing = await findDismissedInsight(
+      memberId: memberId,
+      insightId: insightId,
+    );
+    final untilIso = dismissedUntil?.toUtc().toIso8601String();
+    if (existing == null) {
+      await into(dismissedInsights).insert(
+        DismissedInsightsCompanion.insert(
+          id: id,
+          spaceId: spaceId,
+          memberId: memberId,
+          insightId: insightId,
+          dismissedUntil: Value(untilIso),
+          createdAt: now,
+        ),
+      );
+      return;
+    }
+    await (update(dismissedInsights)
+          ..where((d) => d.id.equals(existing.id)))
+        .write(DismissedInsightsCompanion(
+      dismissedUntil: Value(untilIso),
+    ));
+  }
+
+  Future<void> deleteDismissedInsight({
+    required String memberId,
+    required String insightId,
+  }) async {
+    await (delete(dismissedInsights)
+          ..where(
+            (d) =>
+                d.memberId.equals(memberId) & d.insightId.equals(insightId),
+          ))
+        .go();
   }
 
   // -- Attachments --------------------------------------------------------

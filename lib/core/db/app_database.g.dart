@@ -9141,6 +9141,425 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
   }
 }
 
+class $DismissedInsightsTable extends DismissedInsights
+    with TableInfo<$DismissedInsightsTable, DismissedInsight> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DismissedInsightsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _insightIdMeta = const VerificationMeta(
+    'insightId',
+  );
+  @override
+  late final GeneratedColumn<String> insightId = GeneratedColumn<String>(
+    'insight_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dismissedUntilMeta = const VerificationMeta(
+    'dismissedUntil',
+  );
+  @override
+  late final GeneratedColumn<String> dismissedUntil = GeneratedColumn<String>(
+    'dismissed_until',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    memberId,
+    insightId,
+    dismissedUntil,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dismissed_insights';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DismissedInsight> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('insight_id')) {
+      context.handle(
+        _insightIdMeta,
+        insightId.isAcceptableOrUnknown(data['insight_id']!, _insightIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_insightIdMeta);
+    }
+    if (data.containsKey('dismissed_until')) {
+      context.handle(
+        _dismissedUntilMeta,
+        dismissedUntil.isAcceptableOrUnknown(
+          data['dismissed_until']!,
+          _dismissedUntilMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DismissedInsight map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DismissedInsight(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      insightId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}insight_id'],
+      )!,
+      dismissedUntil: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dismissed_until'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DismissedInsightsTable createAlias(String alias) {
+    return $DismissedInsightsTable(attachedDatabase, alias);
+  }
+}
+
+class DismissedInsight extends DataClass
+    implements Insertable<DismissedInsight> {
+  final String id;
+  final String spaceId;
+  final String memberId;
+  final String insightId;
+  final String? dismissedUntil;
+  final String createdAt;
+  const DismissedInsight({
+    required this.id,
+    required this.spaceId,
+    required this.memberId,
+    required this.insightId,
+    this.dismissedUntil,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['member_id'] = Variable<String>(memberId);
+    map['insight_id'] = Variable<String>(insightId);
+    if (!nullToAbsent || dismissedUntil != null) {
+      map['dismissed_until'] = Variable<String>(dismissedUntil);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    return map;
+  }
+
+  DismissedInsightsCompanion toCompanion(bool nullToAbsent) {
+    return DismissedInsightsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      memberId: Value(memberId),
+      insightId: Value(insightId),
+      dismissedUntil: dismissedUntil == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dismissedUntil),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory DismissedInsight.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DismissedInsight(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      memberId: serializer.fromJson<String>(json['memberId']),
+      insightId: serializer.fromJson<String>(json['insightId']),
+      dismissedUntil: serializer.fromJson<String?>(json['dismissedUntil']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'memberId': serializer.toJson<String>(memberId),
+      'insightId': serializer.toJson<String>(insightId),
+      'dismissedUntil': serializer.toJson<String?>(dismissedUntil),
+      'createdAt': serializer.toJson<String>(createdAt),
+    };
+  }
+
+  DismissedInsight copyWith({
+    String? id,
+    String? spaceId,
+    String? memberId,
+    String? insightId,
+    Value<String?> dismissedUntil = const Value.absent(),
+    String? createdAt,
+  }) => DismissedInsight(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    memberId: memberId ?? this.memberId,
+    insightId: insightId ?? this.insightId,
+    dismissedUntil: dismissedUntil.present
+        ? dismissedUntil.value
+        : this.dismissedUntil,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  DismissedInsight copyWithCompanion(DismissedInsightsCompanion data) {
+    return DismissedInsight(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      insightId: data.insightId.present ? data.insightId.value : this.insightId,
+      dismissedUntil: data.dismissedUntil.present
+          ? data.dismissedUntil.value
+          : this.dismissedUntil,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DismissedInsight(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('memberId: $memberId, ')
+          ..write('insightId: $insightId, ')
+          ..write('dismissedUntil: $dismissedUntil, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, spaceId, memberId, insightId, dismissedUntil, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DismissedInsight &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.memberId == this.memberId &&
+          other.insightId == this.insightId &&
+          other.dismissedUntil == this.dismissedUntil &&
+          other.createdAt == this.createdAt);
+}
+
+class DismissedInsightsCompanion extends UpdateCompanion<DismissedInsight> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> memberId;
+  final Value<String> insightId;
+  final Value<String?> dismissedUntil;
+  final Value<String> createdAt;
+  final Value<int> rowid;
+  const DismissedInsightsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.insightId = const Value.absent(),
+    this.dismissedUntil = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DismissedInsightsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String memberId,
+    required String insightId,
+    this.dismissedUntil = const Value.absent(),
+    required String createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       memberId = Value(memberId),
+       insightId = Value(insightId),
+       createdAt = Value(createdAt);
+  static Insertable<DismissedInsight> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? memberId,
+    Expression<String>? insightId,
+    Expression<String>? dismissedUntil,
+    Expression<String>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (memberId != null) 'member_id': memberId,
+      if (insightId != null) 'insight_id': insightId,
+      if (dismissedUntil != null) 'dismissed_until': dismissedUntil,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DismissedInsightsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? memberId,
+    Value<String>? insightId,
+    Value<String?>? dismissedUntil,
+    Value<String>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return DismissedInsightsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      memberId: memberId ?? this.memberId,
+      insightId: insightId ?? this.insightId,
+      dismissedUntil: dismissedUntil ?? this.dismissedUntil,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (insightId.present) {
+      map['insight_id'] = Variable<String>(insightId.value);
+    }
+    if (dismissedUntil.present) {
+      map['dismissed_until'] = Variable<String>(dismissedUntil.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DismissedInsightsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('memberId: $memberId, ')
+          ..write('insightId: $insightId, ')
+          ..write('dismissedUntil: $dismissedUntil, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9165,6 +9584,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SurveyResponsesTable surveyResponses = $SurveyResponsesTable(
     this,
   );
+  late final $DismissedInsightsTable dismissedInsights =
+      $DismissedInsightsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9185,6 +9606,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     memberCertifications,
     attachments,
     surveyResponses,
+    dismissedInsights,
   ];
 }
 
@@ -13641,6 +14063,240 @@ typedef $$SurveyResponsesTableProcessedTableManager =
       SurveyResponse,
       PrefetchHooks Function()
     >;
+typedef $$DismissedInsightsTableCreateCompanionBuilder =
+    DismissedInsightsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String memberId,
+      required String insightId,
+      Value<String?> dismissedUntil,
+      required String createdAt,
+      Value<int> rowid,
+    });
+typedef $$DismissedInsightsTableUpdateCompanionBuilder =
+    DismissedInsightsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> memberId,
+      Value<String> insightId,
+      Value<String?> dismissedUntil,
+      Value<String> createdAt,
+      Value<int> rowid,
+    });
+
+class $$DismissedInsightsTableFilterComposer
+    extends Composer<_$AppDatabase, $DismissedInsightsTable> {
+  $$DismissedInsightsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get insightId => $composableBuilder(
+    column: $table.insightId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dismissedUntil => $composableBuilder(
+    column: $table.dismissedUntil,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DismissedInsightsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DismissedInsightsTable> {
+  $$DismissedInsightsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get insightId => $composableBuilder(
+    column: $table.insightId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dismissedUntil => $composableBuilder(
+    column: $table.dismissedUntil,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DismissedInsightsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DismissedInsightsTable> {
+  $$DismissedInsightsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get insightId =>
+      $composableBuilder(column: $table.insightId, builder: (column) => column);
+
+  GeneratedColumn<String> get dismissedUntil => $composableBuilder(
+    column: $table.dismissedUntil,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$DismissedInsightsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DismissedInsightsTable,
+          DismissedInsight,
+          $$DismissedInsightsTableFilterComposer,
+          $$DismissedInsightsTableOrderingComposer,
+          $$DismissedInsightsTableAnnotationComposer,
+          $$DismissedInsightsTableCreateCompanionBuilder,
+          $$DismissedInsightsTableUpdateCompanionBuilder,
+          (
+            DismissedInsight,
+            BaseReferences<
+              _$AppDatabase,
+              $DismissedInsightsTable,
+              DismissedInsight
+            >,
+          ),
+          DismissedInsight,
+          PrefetchHooks Function()
+        > {
+  $$DismissedInsightsTableTableManager(
+    _$AppDatabase db,
+    $DismissedInsightsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DismissedInsightsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DismissedInsightsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DismissedInsightsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> insightId = const Value.absent(),
+                Value<String?> dismissedUntil = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DismissedInsightsCompanion(
+                id: id,
+                spaceId: spaceId,
+                memberId: memberId,
+                insightId: insightId,
+                dismissedUntil: dismissedUntil,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String memberId,
+                required String insightId,
+                Value<String?> dismissedUntil = const Value.absent(),
+                required String createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DismissedInsightsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                memberId: memberId,
+                insightId: insightId,
+                dismissedUntil: dismissedUntil,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DismissedInsightsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DismissedInsightsTable,
+      DismissedInsight,
+      $$DismissedInsightsTableFilterComposer,
+      $$DismissedInsightsTableOrderingComposer,
+      $$DismissedInsightsTableAnnotationComposer,
+      $$DismissedInsightsTableCreateCompanionBuilder,
+      $$DismissedInsightsTableUpdateCompanionBuilder,
+      (
+        DismissedInsight,
+        BaseReferences<
+          _$AppDatabase,
+          $DismissedInsightsTable,
+          DismissedInsight
+        >,
+      ),
+      DismissedInsight,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -13675,4 +14331,6 @@ class $AppDatabaseManager {
       $$AttachmentsTableTableManager(_db, _db.attachments);
   $$SurveyResponsesTableTableManager get surveyResponses =>
       $$SurveyResponsesTableTableManager(_db, _db.surveyResponses);
+  $$DismissedInsightsTableTableManager get dismissedInsights =>
+      $$DismissedInsightsTableTableManager(_db, _db.dismissedInsights);
 }
