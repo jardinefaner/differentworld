@@ -11,6 +11,7 @@ import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
@@ -112,6 +113,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'observations',
             builder: (_, _) => const ObservationsIndexScreen(),
+          ),
+          // Insights — questions surfaced by the upward loop from
+          // patterns in existing data (attendance / certs / vehicles
+          // / observations / surveys). No new schema; pure derivation.
+          GoRoute(
+            path: 'insights',
+            builder: (_, _) => const InsightsScreen(),
           ),
           // Surveys — index of templates + per-template list of kids
           // + take-survey flow.

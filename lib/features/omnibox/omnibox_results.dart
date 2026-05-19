@@ -133,6 +133,21 @@ class OmniboxResults extends ConsumerWidget {
           keywords: const ['notes', 'feed', 'all observations'],
           onSelect: (ctx, ref) => ctx.push('/observations'),
         ),
+      // -- Insights — the upward loop made browsable ---------------------
+      _Suggestion(
+        label: 'Insights',
+        kindLabel: 'Page',
+        icon: Icons.lightbulb_outline,
+        keywords: const [
+          'patterns',
+          'questions',
+          'review',
+          'expiring',
+          'late',
+          'flagged',
+        ],
+        onSelect: (ctx, ref) => ctx.push('/insights'),
+      ),
       // -- Surveys -------------------------------------------------------
       _Suggestion(
         label: 'Surveys',

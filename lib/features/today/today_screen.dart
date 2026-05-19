@@ -5,6 +5,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_results.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
@@ -250,8 +251,12 @@ class _TodayBody extends StatelessWidget {
             // Morning Checklist is only useful to staff who can
             // actually mark daily routines — hide for read-only viewers.
             if (viewer.isDailyLogger) const _ChecklistCallToAction(),
-            if (viewer.isDailyLogger) const SizedBox(height: 24)
-            else const SizedBox(height: 8),
+            if (viewer.isDailyLogger) const SizedBox(height: 16),
+            // Upward loop made visible: the system surfaces one
+            // question here when the data demands it; silent when
+            // it doesn't. UX_DECISIONS §6 / framework upward loop.
+            const TopInsightCard(),
+            const SizedBox(height: 16),
             // Capability-aware one-tap launchpad. Hides itself when the
             // viewer has nothing to launch.
             const QuickActions(),

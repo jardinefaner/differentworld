@@ -61,6 +61,15 @@ class QuickActions extends ConsumerWidget {
           label: 'Observations',
           onTap: () => context.push('/observations'),
         ),
+      // The director-facing aggregation surface for the upward loop.
+      // Teachers see the relevant insights on Today's Top card; the
+      // full list is one tap deeper.
+      if (viewer.canManageProgram)
+        _Tile(
+          icon: Icons.lightbulb_outline,
+          label: 'Insights',
+          onTap: () => context.push('/insights'),
+        ),
       // Everyone in the program can run a survey for a kid — it's an
       // instructor-administered flow, not a privileged action.
       _Tile(
