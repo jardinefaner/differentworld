@@ -3,7 +3,7 @@ name: index
 description: Catalog of every skill in this repo grouped by category. Use to discover what's available before starting work.
 ---
 
-# Skill index — 74 skills
+# Skill index — 83 skills
 
 ## Workflow / dev commands (13)
 
@@ -88,9 +88,15 @@ description: Catalog of every skill in this repo grouped by category. Use to dis
 - `copy-tone` — direct, specific, action-oriented copy
 - `google-only-auth` — single "Continue with Google" button
 
-## Architecture / domain references (6)
+## Architecture / domain references (11)
 
 - `architecture` — 5 load-bearing invariants
+- `file-size` — soft/hard caps + how to split
+- `feature-folder` — canonical layout under lib/features/<noun>/
+- `cross-platform` — web/desktop/mobile compat patterns
+- `shared-helpers` — pointer to lib/shared/ (LoadingSlot,
+  requireSpaceId, pickSubject, relativeTimeAgo, …)
+- `split-dao` — DriftAccessor recipe for shrinking app_database.dart
 - `gotchas` — known platform / dep traps
 - `capabilities` — JSONB caps system reference
 - `universal-naming` — engine vs UI terms
