@@ -118,7 +118,7 @@ class TeamScreen extends ConsumerWidget {
 final _teamProvider = StreamProvider.autoDispose.family<List<Member>, String>(
   (ref, spaceId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchMembersInSpace(spaceId);
+    yield* db.membersDao.watchInSpace(spaceId);
   },
 );
 

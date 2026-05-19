@@ -21,7 +21,7 @@ final currentMemberProvider = StreamProvider<Member?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
   if (db == null) return Stream<Member?>.value(null);
-  return db.watchMember(session.user.id);
+  return db.membersDao.watchById(session.user.id);
 });
 
 /// Convenience: has the signed-in user joined a Space (i.e., finished
@@ -45,7 +45,7 @@ final currentSpaceProvider = StreamProvider<Space?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
   if (spaceId == null || db == null) return Stream<Space?>.value(null);
-  return db.watchSpace(spaceId);
+  return db.spacesDao.watchById(spaceId);
 });
 
 /// Reactive view of the signed-in user's Guardian row, if they have
@@ -78,5 +78,5 @@ final myChildrenProvider = StreamProvider<List<Subject>>((ref) {
 final memberByIdProvider =
     StreamProvider.autoDispose.family<Member?, String>((ref, id) async* {
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchMember(id);
+  yield* db.membersDao.watchById(id);
 });

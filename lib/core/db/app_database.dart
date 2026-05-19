@@ -6,6 +6,8 @@ import 'package:differentworld/core/db/dao/group_members_dao.dart';
 import 'package:differentworld/core/db/dao/groups_dao.dart';
 import 'package:differentworld/core/db/dao/guardians_dao.dart';
 import 'package:differentworld/core/db/dao/invites_dao.dart';
+import 'package:differentworld/core/db/dao/members_dao.dart';
+import 'package:differentworld/core/db/dao/spaces_dao.dart';
 import 'package:differentworld/core/db/dao/surveys_dao.dart';
 import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:drift/drift.dart';
@@ -367,6 +369,8 @@ class Captures extends Table {
     GroupsDao,
     GuardiansDao,
     InvitesDao,
+    MembersDao,
+    SpacesDao,
     SurveysDao,
     VehiclesDao,
   ],
@@ -388,26 +392,7 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 
-  // -- Members --------------------------------------------------------------
-
-  Stream<Member?> watchMember(String userId) {
-    return (select(members)..where((m) => m.id.equals(userId)))
-        .watchSingleOrNull();
-  }
-
-  /// One-shot read by ID. Use this — not a captured widget prop — when
-  /// a write needs the latest `capabilities` to avoid clobbering
-  /// concurrent edits to other cap keys.
-  Future<Member?> findMemberById(String id) {
-    return (select(members)..where((m) => m.id.equals(id)))
-        .getSingleOrNull();
-  }
-
-  /// Same pattern as findMemberById, for Space-level capability writes.
-  Future<Space?> findSpaceById(String id) {
-    return (select(spaces)..where((s) => s.id.equals(id)))
-        .getSingleOrNull();
-  }
+  // -- Cross-table writes (members + spaces) -------------------------------
 
   /// Two writes in one transaction:
   ///   1. INSERT the new space row.
@@ -443,55 +428,6 @@ class AppDatabase extends _$AppDatabase {
 
   // -- Capability mutators (write the JSONB column on each entity) ---------
 
-  Future<void> updateSpaceCapabilities(
-    String id,
-    String capabilitiesJson,
-  ) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(spaces)..where((s) => s.id.equals(id))).write(
-      SpacesCompanion(
-        capabilities: Value(capabilitiesJson),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  Future<void> updateMemberCapabilities(
-    String id,
-    String capabilitiesJson,
-  ) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(members)..where((m) => m.id.equals(id))).write(
-      MembersCompanion(
-        capabilities: Value(capabilitiesJson),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  /// Updates a member's role using the typed Drift API so PowerSync's
-  /// CRUD queue picks it up. Don't use `customStatement` for this —
-  /// raw SQL bypasses the WAL triggers PowerSync relies on.
-  Future<void> updateMemberRole(String id, String role) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(members)..where((m) => m.id.equals(id))).write(
-      MembersCompanion(role: Value(role), updatedAt: Value(now)),
-    );
-  }
-
-  /// Set or clear the member's avatar_url. Pass null to remove the
-  /// photo (the underlying Storage object stays — orphans are cheaper
-  /// than risking a delete on a still-referenced path).
-  Future<void> updateMemberAvatarUrl(String id, String? url) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(members)..where((m) => m.id.equals(id))).write(
-      MembersCompanion(
-        avatarUrl: Value(url),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
   /// Set or clear the subject's photo_url.
   Future<void> updateSubjectPhotoUrl(String id, String? url) async {
     final now = DateTime.now().toUtc().toIso8601String();
@@ -514,18 +450,6 @@ class AppDatabase extends _$AppDatabase {
         updatedAt: Value(now),
       ),
     );
-  }
-
-  Stream<Space?> watchSpace(String id) {
-    return (select(spaces)..where((s) => s.id.equals(id)))
-        .watchSingleOrNull();
-  }
-
-  Stream<List<Member>> watchMembersInSpace(String spaceId) {
-    return (select(members)
-          ..where((m) => m.spaceId.equals(spaceId))
-          ..orderBy([(m) => OrderingTerm(expression: m.displayName)]))
-        .watch();
   }
 
   // -- Subjects -------------------------------------------------------------

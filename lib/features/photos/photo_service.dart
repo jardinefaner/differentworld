@@ -79,7 +79,7 @@ class PhotoService {
     final db = await _ref.read(appDatabaseProvider.future);
     switch (entity) {
       case PhotoEntity.member:
-        await db.updateMemberAvatarUrl(entityId, url);
+        await db.membersDao.updateAvatarUrl(entityId, url);
       case PhotoEntity.subject:
         await db.updateSubjectPhotoUrl(entityId, url);
     }
@@ -96,7 +96,7 @@ class PhotoService {
     final db = await _ref.read(appDatabaseProvider.future);
     switch (entity) {
       case PhotoEntity.member:
-        await db.updateMemberAvatarUrl(entityId, null);
+        await db.membersDao.updateAvatarUrl(entityId, null);
       case PhotoEntity.subject:
         await db.updateSubjectPhotoUrl(entityId, null);
     }

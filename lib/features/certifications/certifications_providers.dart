@@ -159,7 +159,7 @@ class CertActions {
   /// the permission.
   Future<void> _cascadeOffGatedCaps(String memberId, String certKey) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final member = await db.findMemberById(memberId);
+    final member = await db.membersDao.findById(memberId);
     if (member == null) return;
     var caps = member.caps;
     var changed = false;
@@ -173,7 +173,7 @@ class CertActions {
       }
     }
     if (!changed) return;
-    await db.updateMemberCapabilities(memberId, caps.toJson());
+    await db.membersDao.updateCapabilities(memberId, caps.toJson());
   }
 }
 

@@ -176,7 +176,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
 final _spaceProvider = StreamProvider.autoDispose.family<Space?, String>(
   (ref, id) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchSpace(id);
+    yield* db.spacesDao.watchById(id);
   },
 );
 

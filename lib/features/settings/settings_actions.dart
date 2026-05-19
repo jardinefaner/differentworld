@@ -20,10 +20,10 @@ class MemberCapActions {
   // ignore: avoid_positional_boolean_parameters
   Future<void> setCap(String memberId, String key, bool value) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final m = await db.findMemberById(memberId);
+    final m = await db.membersDao.findById(memberId);
     if (m == null) return;
     final caps = m.caps.setting(key, value);
-    await db.updateMemberCapabilities(memberId, caps.toJson());
+    await db.membersDao.updateCapabilities(memberId, caps.toJson());
   }
 
   /// Change role AND apply the role's default cap bundle on top of the
@@ -31,13 +31,13 @@ class MemberCapActions {
   /// PowerSync picks them up as a single CRUD batch.
   Future<void> setRole(String memberId, String role) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final m = await db.findMemberById(memberId);
+    final m = await db.membersDao.findById(memberId);
     if (m == null) return;
     final mergedCaps =
         m.caps.mergedWith(RoleBundles.defaultsFor(role)).toJson();
     await db.transaction(() async {
-      await db.updateMemberRole(memberId, role);
-      await db.updateMemberCapabilities(memberId, mergedCaps);
+      await db.membersDao.updateRole(memberId, role);
+      await db.membersDao.updateCapabilities(memberId, mergedCaps);
     });
   }
 
@@ -61,10 +61,10 @@ class SpaceCapActions {
   // ignore: avoid_positional_boolean_parameters
   Future<void> setCap(String spaceId, String key, bool value) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final s = await db.findSpaceById(spaceId);
+    final s = await db.spacesDao.findById(spaceId);
     if (s == null) return;
     final caps = s.caps.setting(key, value);
-    await db.updateSpaceCapabilities(spaceId, caps.toJson());
+    await db.spacesDao.updateCapabilities(spaceId, caps.toJson());
   }
 }
 

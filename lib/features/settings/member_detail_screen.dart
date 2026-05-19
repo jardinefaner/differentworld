@@ -376,7 +376,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
 final _memberProvider = StreamProvider.autoDispose.family<Member?, String>(
   (ref, id) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchMember(id);
+    yield* db.membersDao.watchById(id);
   },
 );
 
