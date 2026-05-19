@@ -106,10 +106,22 @@ class SupabaseConnector extends PowerSyncBackendConnector {
         final patched = _decodeJsonbColumns(op.opData);
         switch (op.op) {
           case UpdateType.put:
-            await table.upsert(<String, dynamic>{
-              'id': op.id,
-              ...?patched,
-            });
+            final payload = <String, dynamic>{'id': op.id, ...?patched};
+            final naturalKey = _naturalKeyByTable[op.table];
+            if (naturalKey != null) {
+              // Multi-device offline-first writes can collide on a
+              // non-PK UNIQUE constraint. Each device generates its own
+              // local uuid for what's logically the same row (e.g. the
+              // same kid + same survey template). Without onConflict
+              // the second device hits 23505 and PowerSync retries
+              // forever, blocking every later op in the queue. With
+              // it, PostgREST merges by the natural key. The id may
+              // "drift" once when devices first reconcile — that's the
+              // accepted cost; the row stays consistent thereafter.
+              await table.upsert(payload, onConflict: naturalKey);
+            } else {
+              await table.upsert(payload);
+            }
           case UpdateType.patch:
             await table
                 .update(patched ?? <String, dynamic>{})
@@ -126,6 +138,24 @@ class SupabaseConnector extends PowerSyncBackendConnector {
       rethrow;
     }
   }
+
+  /// Tables where the server enforces uniqueness on something other
+  /// than the PK. PowerSync's CRUD queue uploads each device's local
+  /// `id`, but the constraint is on the natural key — so we tell
+  /// PostgREST to resolve a conflict on that key instead of failing
+  /// the INSERT.
+  ///
+  /// Keep in sync with the `create unique index ... on public.<table>
+  /// (...)` declarations in `supabase/migrations/`. Anything LOW-risk
+  /// for cross-device collision (most join tables) can be left out;
+  /// the worst case is a single retry-and-recover, not an infinite
+  /// loop, because join-table writes are typically single-origin.
+  static const Map<String, String> _naturalKeyByTable = {
+    'survey_responses': 'subject_id,template_id',
+    'dismissed_insights': 'member_id,insight_id',
+    'member_certifications': 'member_id,cert_key',
+    'attendance_records': 'subject_id,date',
+  };
 
   /// PowerSync's local schema stores jsonb columns as TEXT (the raw JSON
   /// string). PostgREST expects an actual JSON value for jsonb columns —
