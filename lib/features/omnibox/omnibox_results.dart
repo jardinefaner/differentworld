@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:flutter/material.dart';
@@ -146,6 +147,28 @@ class OmniboxResults extends ConsumerWidget {
           'flagged',
         ],
         onSelect: (ctx, ref) => ctx.push('/insights'),
+      ),
+      // -- Captures — the upward loop's input ----------------------------
+      _Suggestion(
+        label: 'Capture',
+        kindLabel: 'Action',
+        icon: Icons.bolt_outlined,
+        keywords: const [
+          'note',
+          'jot',
+          'noticed',
+          'quick',
+          'capture',
+          'thought',
+        ],
+        onSelect: (ctx, ref) => showCaptureSheet(ctx),
+      ),
+      _Suggestion(
+        label: 'Capture inbox',
+        kindLabel: 'Page',
+        icon: Icons.inbox_outlined,
+        keywords: const ['triage', 'inbox', 'captures', 'notes'],
+        onSelect: (ctx, ref) => ctx.push('/captures'),
       ),
       // Weekly review — same data, guided walk-through.
       _Suggestion(

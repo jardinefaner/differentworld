@@ -185,4 +185,16 @@ const appSchema = Schema([
     Column.text('dismissed_until'),
     Column.text('created_at'),
   ]),
+  Table('captures', [
+    Column.text('space_id'),
+    Column.text('author_id'),
+    Column.text('body'),
+    Column.text('status'),
+    Column.text('promoted_to_kind'),
+    Column.text('promoted_to_id'),
+    Column.text('promoted_subject_id'),
+    Column.text('processed_at'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 ]);

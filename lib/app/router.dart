@@ -6,6 +6,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
+import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
@@ -121,6 +122,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'insights',
             builder: (_, _) => const InsightsScreen(),
+          ),
+          // Capture inbox — the upward loop's *input* side. Quick
+          // "I noticed…" notes awaiting triage into observations
+          // or dismissal.
+          GoRoute(
+            path: 'captures',
+            builder: (_, _) => const CaptureInboxScreen(),
           ),
           // Weekly review — same data as /insights but presented as a
           // guided one-question-per-page flow. The framework's

@@ -49,6 +49,10 @@ streams:
       # Dismissed insights — per-member snooze rows. Tiny table
       # (one row per insight a member has chosen to mute).
       - SELECT * FROM dismissed_insights WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Capture inbox — quick "I noticed…" notes awaiting triage. The
+      # upward loop's input side. Stays small (most captures get
+      # promoted to entries or discarded within a week).
+      - SELECT * FROM captures           WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Only stream un-accepted invites. Accepted ones don't need to
       # round-trip back to every director's device — they just bloat
       # the local table over time. The acceptance event itself reaches

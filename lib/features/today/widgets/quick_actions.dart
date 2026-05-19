@@ -1,5 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +50,26 @@ class QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
+    final openCaptureCount =
+        ref.watch(openCapturesProvider).value?.length ?? 0;
     final tiles = <_Tile>[
+      // Capture is the lowest-friction entry on the launchpad —
+      // a teacher mid-class can drop a note in two taps without
+      // committing to a subject. Always present.
+      _Tile(
+        icon: Icons.bolt_outlined,
+        label: 'Capture',
+        onTap: () => showCaptureSheet(context),
+      ),
+      // The triage destination — only surfaces when there's actually
+      // something to triage. Count badge makes the pressure visible.
+      if (openCaptureCount > 0)
+        _Tile(
+          icon: Icons.inbox_outlined,
+          label: 'Inbox',
+          badge: '$openCaptureCount',
+          onTap: () => context.push('/captures'),
+        ),
       if (viewer.canObserve)
         _Tile(
           icon: Icons.edit_note_outlined,
@@ -124,11 +145,15 @@ class _Tile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.badge,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  /// Optional small count chip in the top-right corner (e.g. "3" for
+  /// the capture inbox). Renders only when non-null.
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -136,32 +161,64 @@ class _Tile extends StatelessWidget {
     return SizedBox(
       width: 104,
       height: 88,
-      child: Material(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: theme.colorScheme.onSurfaceVariant),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Material(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, color: theme.colorScheme.onSurfaceVariant),
+                      const SizedBox(height: 6),
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          if (badge != null)
+            Positioned(
+              top: -6,
+              right: -6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                constraints: const BoxConstraints(minWidth: 22),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Text(
+                  badge!,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

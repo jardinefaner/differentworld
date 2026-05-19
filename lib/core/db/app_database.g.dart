@@ -9560,6 +9560,689 @@ class DismissedInsightsCompanion extends UpdateCompanion<DismissedInsight> {
   }
 }
 
+class $CapturesTable extends Captures with TableInfo<$CapturesTable, Capture> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CapturesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorIdMeta = const VerificationMeta(
+    'authorId',
+  );
+  @override
+  late final GeneratedColumn<String> authorId = GeneratedColumn<String>(
+    'author_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _promotedToKindMeta = const VerificationMeta(
+    'promotedToKind',
+  );
+  @override
+  late final GeneratedColumn<String> promotedToKind = GeneratedColumn<String>(
+    'promoted_to_kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _promotedToIdMeta = const VerificationMeta(
+    'promotedToId',
+  );
+  @override
+  late final GeneratedColumn<String> promotedToId = GeneratedColumn<String>(
+    'promoted_to_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _promotedSubjectIdMeta = const VerificationMeta(
+    'promotedSubjectId',
+  );
+  @override
+  late final GeneratedColumn<String> promotedSubjectId =
+      GeneratedColumn<String>(
+        'promoted_subject_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _processedAtMeta = const VerificationMeta(
+    'processedAt',
+  );
+  @override
+  late final GeneratedColumn<String> processedAt = GeneratedColumn<String>(
+    'processed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    authorId,
+    body,
+    status,
+    promotedToKind,
+    promotedToId,
+    promotedSubjectId,
+    processedAt,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'captures';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Capture> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('author_id')) {
+      context.handle(
+        _authorIdMeta,
+        authorId.isAcceptableOrUnknown(data['author_id']!, _authorIdMeta),
+      );
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('promoted_to_kind')) {
+      context.handle(
+        _promotedToKindMeta,
+        promotedToKind.isAcceptableOrUnknown(
+          data['promoted_to_kind']!,
+          _promotedToKindMeta,
+        ),
+      );
+    }
+    if (data.containsKey('promoted_to_id')) {
+      context.handle(
+        _promotedToIdMeta,
+        promotedToId.isAcceptableOrUnknown(
+          data['promoted_to_id']!,
+          _promotedToIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('promoted_subject_id')) {
+      context.handle(
+        _promotedSubjectIdMeta,
+        promotedSubjectId.isAcceptableOrUnknown(
+          data['promoted_subject_id']!,
+          _promotedSubjectIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('processed_at')) {
+      context.handle(
+        _processedAtMeta,
+        processedAt.isAcceptableOrUnknown(
+          data['processed_at']!,
+          _processedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Capture map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Capture(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      authorId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author_id'],
+      ),
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      promotedToKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}promoted_to_kind'],
+      ),
+      promotedToId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}promoted_to_id'],
+      ),
+      promotedSubjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}promoted_subject_id'],
+      ),
+      processedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}processed_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CapturesTable createAlias(String alias) {
+    return $CapturesTable(attachedDatabase, alias);
+  }
+}
+
+class Capture extends DataClass implements Insertable<Capture> {
+  final String id;
+  final String spaceId;
+  final String? authorId;
+  final String body;
+  final String status;
+  final String? promotedToKind;
+  final String? promotedToId;
+  final String? promotedSubjectId;
+  final String? processedAt;
+  final String createdAt;
+  final String updatedAt;
+  const Capture({
+    required this.id,
+    required this.spaceId,
+    this.authorId,
+    required this.body,
+    required this.status,
+    this.promotedToKind,
+    this.promotedToId,
+    this.promotedSubjectId,
+    this.processedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || authorId != null) {
+      map['author_id'] = Variable<String>(authorId);
+    }
+    map['body'] = Variable<String>(body);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || promotedToKind != null) {
+      map['promoted_to_kind'] = Variable<String>(promotedToKind);
+    }
+    if (!nullToAbsent || promotedToId != null) {
+      map['promoted_to_id'] = Variable<String>(promotedToId);
+    }
+    if (!nullToAbsent || promotedSubjectId != null) {
+      map['promoted_subject_id'] = Variable<String>(promotedSubjectId);
+    }
+    if (!nullToAbsent || processedAt != null) {
+      map['processed_at'] = Variable<String>(processedAt);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  CapturesCompanion toCompanion(bool nullToAbsent) {
+    return CapturesCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      authorId: authorId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(authorId),
+      body: Value(body),
+      status: Value(status),
+      promotedToKind: promotedToKind == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promotedToKind),
+      promotedToId: promotedToId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promotedToId),
+      promotedSubjectId: promotedSubjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promotedSubjectId),
+      processedAt: processedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(processedAt),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Capture.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Capture(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      authorId: serializer.fromJson<String?>(json['authorId']),
+      body: serializer.fromJson<String>(json['body']),
+      status: serializer.fromJson<String>(json['status']),
+      promotedToKind: serializer.fromJson<String?>(json['promotedToKind']),
+      promotedToId: serializer.fromJson<String?>(json['promotedToId']),
+      promotedSubjectId: serializer.fromJson<String?>(
+        json['promotedSubjectId'],
+      ),
+      processedAt: serializer.fromJson<String?>(json['processedAt']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'authorId': serializer.toJson<String?>(authorId),
+      'body': serializer.toJson<String>(body),
+      'status': serializer.toJson<String>(status),
+      'promotedToKind': serializer.toJson<String?>(promotedToKind),
+      'promotedToId': serializer.toJson<String?>(promotedToId),
+      'promotedSubjectId': serializer.toJson<String?>(promotedSubjectId),
+      'processedAt': serializer.toJson<String?>(processedAt),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Capture copyWith({
+    String? id,
+    String? spaceId,
+    Value<String?> authorId = const Value.absent(),
+    String? body,
+    String? status,
+    Value<String?> promotedToKind = const Value.absent(),
+    Value<String?> promotedToId = const Value.absent(),
+    Value<String?> promotedSubjectId = const Value.absent(),
+    Value<String?> processedAt = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => Capture(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    authorId: authorId.present ? authorId.value : this.authorId,
+    body: body ?? this.body,
+    status: status ?? this.status,
+    promotedToKind: promotedToKind.present
+        ? promotedToKind.value
+        : this.promotedToKind,
+    promotedToId: promotedToId.present ? promotedToId.value : this.promotedToId,
+    promotedSubjectId: promotedSubjectId.present
+        ? promotedSubjectId.value
+        : this.promotedSubjectId,
+    processedAt: processedAt.present ? processedAt.value : this.processedAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Capture copyWithCompanion(CapturesCompanion data) {
+    return Capture(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      authorId: data.authorId.present ? data.authorId.value : this.authorId,
+      body: data.body.present ? data.body.value : this.body,
+      status: data.status.present ? data.status.value : this.status,
+      promotedToKind: data.promotedToKind.present
+          ? data.promotedToKind.value
+          : this.promotedToKind,
+      promotedToId: data.promotedToId.present
+          ? data.promotedToId.value
+          : this.promotedToId,
+      promotedSubjectId: data.promotedSubjectId.present
+          ? data.promotedSubjectId.value
+          : this.promotedSubjectId,
+      processedAt: data.processedAt.present
+          ? data.processedAt.value
+          : this.processedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Capture(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('authorId: $authorId, ')
+          ..write('body: $body, ')
+          ..write('status: $status, ')
+          ..write('promotedToKind: $promotedToKind, ')
+          ..write('promotedToId: $promotedToId, ')
+          ..write('promotedSubjectId: $promotedSubjectId, ')
+          ..write('processedAt: $processedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    authorId,
+    body,
+    status,
+    promotedToKind,
+    promotedToId,
+    promotedSubjectId,
+    processedAt,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Capture &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.authorId == this.authorId &&
+          other.body == this.body &&
+          other.status == this.status &&
+          other.promotedToKind == this.promotedToKind &&
+          other.promotedToId == this.promotedToId &&
+          other.promotedSubjectId == this.promotedSubjectId &&
+          other.processedAt == this.processedAt &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CapturesCompanion extends UpdateCompanion<Capture> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String?> authorId;
+  final Value<String> body;
+  final Value<String> status;
+  final Value<String?> promotedToKind;
+  final Value<String?> promotedToId;
+  final Value<String?> promotedSubjectId;
+  final Value<String?> processedAt;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const CapturesCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.authorId = const Value.absent(),
+    this.body = const Value.absent(),
+    this.status = const Value.absent(),
+    this.promotedToKind = const Value.absent(),
+    this.promotedToId = const Value.absent(),
+    this.promotedSubjectId = const Value.absent(),
+    this.processedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CapturesCompanion.insert({
+    required String id,
+    required String spaceId,
+    this.authorId = const Value.absent(),
+    required String body,
+    required String status,
+    this.promotedToKind = const Value.absent(),
+    this.promotedToId = const Value.absent(),
+    this.promotedSubjectId = const Value.absent(),
+    this.processedAt = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       body = Value(body),
+       status = Value(status),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Capture> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? authorId,
+    Expression<String>? body,
+    Expression<String>? status,
+    Expression<String>? promotedToKind,
+    Expression<String>? promotedToId,
+    Expression<String>? promotedSubjectId,
+    Expression<String>? processedAt,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (authorId != null) 'author_id': authorId,
+      if (body != null) 'body': body,
+      if (status != null) 'status': status,
+      if (promotedToKind != null) 'promoted_to_kind': promotedToKind,
+      if (promotedToId != null) 'promoted_to_id': promotedToId,
+      if (promotedSubjectId != null) 'promoted_subject_id': promotedSubjectId,
+      if (processedAt != null) 'processed_at': processedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CapturesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String?>? authorId,
+    Value<String>? body,
+    Value<String>? status,
+    Value<String?>? promotedToKind,
+    Value<String?>? promotedToId,
+    Value<String?>? promotedSubjectId,
+    Value<String?>? processedAt,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CapturesCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      authorId: authorId ?? this.authorId,
+      body: body ?? this.body,
+      status: status ?? this.status,
+      promotedToKind: promotedToKind ?? this.promotedToKind,
+      promotedToId: promotedToId ?? this.promotedToId,
+      promotedSubjectId: promotedSubjectId ?? this.promotedSubjectId,
+      processedAt: processedAt ?? this.processedAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (authorId.present) {
+      map['author_id'] = Variable<String>(authorId.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (promotedToKind.present) {
+      map['promoted_to_kind'] = Variable<String>(promotedToKind.value);
+    }
+    if (promotedToId.present) {
+      map['promoted_to_id'] = Variable<String>(promotedToId.value);
+    }
+    if (promotedSubjectId.present) {
+      map['promoted_subject_id'] = Variable<String>(promotedSubjectId.value);
+    }
+    if (processedAt.present) {
+      map['processed_at'] = Variable<String>(processedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CapturesCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('authorId: $authorId, ')
+          ..write('body: $body, ')
+          ..write('status: $status, ')
+          ..write('promotedToKind: $promotedToKind, ')
+          ..write('promotedToId: $promotedToId, ')
+          ..write('promotedSubjectId: $promotedSubjectId, ')
+          ..write('processedAt: $processedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -9586,6 +10269,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $DismissedInsightsTable dismissedInsights =
       $DismissedInsightsTable(this);
+  late final $CapturesTable captures = $CapturesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -9607,6 +10291,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     attachments,
     surveyResponses,
     dismissedInsights,
+    captures,
   ];
 }
 
@@ -14297,6 +14982,322 @@ typedef $$DismissedInsightsTableProcessedTableManager =
       DismissedInsight,
       PrefetchHooks Function()
     >;
+typedef $$CapturesTableCreateCompanionBuilder =
+    CapturesCompanion Function({
+      required String id,
+      required String spaceId,
+      Value<String?> authorId,
+      required String body,
+      required String status,
+      Value<String?> promotedToKind,
+      Value<String?> promotedToId,
+      Value<String?> promotedSubjectId,
+      Value<String?> processedAt,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CapturesTableUpdateCompanionBuilder =
+    CapturesCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String?> authorId,
+      Value<String> body,
+      Value<String> status,
+      Value<String?> promotedToKind,
+      Value<String?> promotedToId,
+      Value<String?> promotedSubjectId,
+      Value<String?> processedAt,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CapturesTableFilterComposer
+    extends Composer<_$AppDatabase, $CapturesTable> {
+  $$CapturesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorId => $composableBuilder(
+    column: $table.authorId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get promotedToKind => $composableBuilder(
+    column: $table.promotedToKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get promotedToId => $composableBuilder(
+    column: $table.promotedToId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get promotedSubjectId => $composableBuilder(
+    column: $table.promotedSubjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get processedAt => $composableBuilder(
+    column: $table.processedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CapturesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CapturesTable> {
+  $$CapturesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorId => $composableBuilder(
+    column: $table.authorId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get promotedToKind => $composableBuilder(
+    column: $table.promotedToKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get promotedToId => $composableBuilder(
+    column: $table.promotedToId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get promotedSubjectId => $composableBuilder(
+    column: $table.promotedSubjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get processedAt => $composableBuilder(
+    column: $table.processedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CapturesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CapturesTable> {
+  $$CapturesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get authorId =>
+      $composableBuilder(column: $table.authorId, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get promotedToKind => $composableBuilder(
+    column: $table.promotedToKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get promotedToId => $composableBuilder(
+    column: $table.promotedToId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get promotedSubjectId => $composableBuilder(
+    column: $table.promotedSubjectId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get processedAt => $composableBuilder(
+    column: $table.processedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CapturesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CapturesTable,
+          Capture,
+          $$CapturesTableFilterComposer,
+          $$CapturesTableOrderingComposer,
+          $$CapturesTableAnnotationComposer,
+          $$CapturesTableCreateCompanionBuilder,
+          $$CapturesTableUpdateCompanionBuilder,
+          (Capture, BaseReferences<_$AppDatabase, $CapturesTable, Capture>),
+          Capture,
+          PrefetchHooks Function()
+        > {
+  $$CapturesTableTableManager(_$AppDatabase db, $CapturesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CapturesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CapturesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CapturesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> authorId = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> promotedToKind = const Value.absent(),
+                Value<String?> promotedToId = const Value.absent(),
+                Value<String?> promotedSubjectId = const Value.absent(),
+                Value<String?> processedAt = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CapturesCompanion(
+                id: id,
+                spaceId: spaceId,
+                authorId: authorId,
+                body: body,
+                status: status,
+                promotedToKind: promotedToKind,
+                promotedToId: promotedToId,
+                promotedSubjectId: promotedSubjectId,
+                processedAt: processedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                Value<String?> authorId = const Value.absent(),
+                required String body,
+                required String status,
+                Value<String?> promotedToKind = const Value.absent(),
+                Value<String?> promotedToId = const Value.absent(),
+                Value<String?> promotedSubjectId = const Value.absent(),
+                Value<String?> processedAt = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CapturesCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                authorId: authorId,
+                body: body,
+                status: status,
+                promotedToKind: promotedToKind,
+                promotedToId: promotedToId,
+                promotedSubjectId: promotedSubjectId,
+                processedAt: processedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CapturesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CapturesTable,
+      Capture,
+      $$CapturesTableFilterComposer,
+      $$CapturesTableOrderingComposer,
+      $$CapturesTableAnnotationComposer,
+      $$CapturesTableCreateCompanionBuilder,
+      $$CapturesTableUpdateCompanionBuilder,
+      (Capture, BaseReferences<_$AppDatabase, $CapturesTable, Capture>),
+      Capture,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14333,4 +15334,6 @@ class $AppDatabaseManager {
       $$SurveyResponsesTableTableManager(_db, _db.surveyResponses);
   $$DismissedInsightsTableTableManager get dismissedInsights =>
       $$DismissedInsightsTableTableManager(_db, _db.dismissedInsights);
+  $$CapturesTableTableManager get captures =>
+      $$CapturesTableTableManager(_db, _db.captures);
 }
