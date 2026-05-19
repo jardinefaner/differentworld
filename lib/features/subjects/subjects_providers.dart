@@ -1,5 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/shared/viewer_x.dart';
 import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -73,11 +75,9 @@ class SubjectActions {
     String? notes,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final member = _ref.read(currentMemberProvider).value;
-    final spaceId = member?.spaceId;
-    if (spaceId == null) {
-      throw StateError('No Space selected for the current Member.');
-    }
+    final spaceId = _ref
+        .read(viewerProvider)
+        .requireSpaceId(action: 'create a child');
     await db.subjectsDao.create(
       id: _uuid.v4(),
       spaceId: spaceId,

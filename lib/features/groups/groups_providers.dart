@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
@@ -61,11 +62,9 @@ class GroupActions {
     String? capabilitiesJson,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final member = _ref.read(currentMemberProvider).value;
-    final spaceId = member?.spaceId;
-    if (spaceId == null) {
-      throw StateError('No Space selected for the current Member.');
-    }
+    final spaceId = _ref
+        .read(viewerProvider)
+        .requireSpaceId(action: 'create a classroom');
     await db.groupsDao.create(
       id: _uuid.v4(),
       spaceId: spaceId,

@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:uuid/uuid.dart';
@@ -137,18 +138,15 @@ class EntryActions {
     String? id,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final member = _ref.read(currentMemberProvider).value;
-    final spaceId = member?.spaceId;
-    final recordedBy = member?.id;
-    if (spaceId == null || recordedBy == null) {
-      throw StateError('No Space / signed-in Member.');
-    }
+    final (:spaceId, :memberId) = _ref
+        .read(viewerProvider)
+        .requireSpaceAndMember(action: 'create an entry');
     final useId = id ?? _uuid.v4();
     await db.entriesDao.create(
       id: useId,
       spaceId: spaceId,
       kind: kind,
-      recordedBy: recordedBy,
+      recordedBy: memberId,
       subjectId: subjectId,
       groupId: groupId,
       body: body,

@@ -1,6 +1,8 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -31,12 +33,9 @@ class AttendanceActions {
     required AttendanceStatus status,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final member = _ref.read(currentMemberProvider).value;
-    final spaceId = member?.spaceId;
-    final recordedBy = member?.id;
-    if (spaceId == null || recordedBy == null) {
-      throw StateError('No Space / signed-in Member.');
-    }
+    final (:spaceId, :memberId) = _ref
+        .read(viewerProvider)
+        .requireSpaceAndMember(action: 'mark attendance');
     await db.attendanceDao.upsert(
       id: _uuid.v4(),
       spaceId: spaceId,
@@ -44,7 +43,7 @@ class AttendanceActions {
       subjectId: subjectId,
       date: date,
       status: status.dbValue,
-      recordedBy: recordedBy,
+      recordedBy: memberId,
     );
   }
 
@@ -66,12 +65,9 @@ class AttendanceActions {
   }) async {
     if (subjectIds.isEmpty) return const [];
     final db = await _ref.read(appDatabaseProvider.future);
-    final member = _ref.read(currentMemberProvider).value;
-    final spaceId = member?.spaceId;
-    final recordedBy = member?.id;
-    if (spaceId == null || recordedBy == null) {
-      throw StateError('No Space / signed-in Member.');
-    }
+    final (:spaceId, :memberId) = _ref
+        .read(viewerProvider)
+        .requireSpaceAndMember(action: 'mark all present');
     final alreadySet = alreadyRecordedSubjectIds.toSet();
     final entries = <({String id, String subjectId})>[];
     for (final subjectId in subjectIds) {
@@ -83,7 +79,7 @@ class AttendanceActions {
       groupId: groupId,
       date: date,
       status: AttendanceStatus.present.dbValue,
-      recordedBy: recordedBy,
+      recordedBy: memberId,
       entries: entries,
     );
   }
