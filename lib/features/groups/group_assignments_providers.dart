@@ -11,7 +11,7 @@ final assignmentsForMemberProvider =
     StreamProvider.autoDispose.family<List<GroupMember>, String>(
   (ref, memberId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchAssignmentsForMember(memberId);
+    yield* db.groupMembersDao.watchForMember(memberId);
   },
 );
 
@@ -22,7 +22,7 @@ final assignmentsForGroupProvider =
     StreamProvider.autoDispose.family<List<GroupMember>, String>(
   (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchAssignmentsForGroup(groupId);
+    yield* db.groupMembersDao.watchForGroup(groupId);
   },
 );
 
@@ -40,7 +40,7 @@ class GroupAssignmentActions {
     if (spaceId == null) {
       throw StateError('No Space — sign in and join a program first.');
     }
-    await db.assignMemberToGroup(
+    await db.groupMembersDao.assign(
       groupId: groupId,
       memberId: memberId,
       spaceId: spaceId,
@@ -52,7 +52,7 @@ class GroupAssignmentActions {
     required String memberId,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.unassignMemberFromGroup(groupId: groupId, memberId: memberId);
+    await db.groupMembersDao.unassign(groupId: groupId, memberId: memberId);
   }
 }
 

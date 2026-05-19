@@ -2,6 +2,10 @@ import 'package:differentworld/core/db/dao/attachments_dao.dart';
 import 'package:differentworld/core/db/dao/captures_dao.dart';
 import 'package:differentworld/core/db/dao/certifications_dao.dart';
 import 'package:differentworld/core/db/dao/dismissed_insights_dao.dart';
+import 'package:differentworld/core/db/dao/group_members_dao.dart';
+import 'package:differentworld/core/db/dao/groups_dao.dart';
+import 'package:differentworld/core/db/dao/guardians_dao.dart';
+import 'package:differentworld/core/db/dao/invites_dao.dart';
 import 'package:differentworld/core/db/dao/surveys_dao.dart';
 import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:drift/drift.dart';
@@ -9,7 +13,6 @@ import 'package:drift_sqlite_async/drift_sqlite_async.dart';
 // Both drift and powersync export a `Column` class — only import what we
 // actually need from powersync to avoid the ambiguity.
 import 'package:powersync/powersync.dart' show PowerSyncDatabase;
-import 'package:uuid/uuid.dart';
 
 part 'app_database.g.dart';
 
@@ -360,6 +363,10 @@ class Captures extends Table {
     CapturesDao,
     CertificationsDao,
     DismissedInsightsDao,
+    GroupMembersDao,
+    GroupsDao,
+    GuardiansDao,
+    InvitesDao,
     SurveysDao,
     VehiclesDao,
   ],
@@ -432,64 +439,6 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     });
-  }
-
-  // -- Groups ---------------------------------------------------------------
-
-  Stream<List<Group>> watchGroupsInSpace(String spaceId) {
-    return (select(groups)
-          ..where((g) => g.spaceId.equals(spaceId))
-          ..orderBy([(g) => OrderingTerm(expression: g.name)]))
-        .watch();
-  }
-
-  Stream<Group?> watchGroup(String id) {
-    return (select(groups)..where((g) => g.id.equals(id)))
-        .watchSingleOrNull();
-  }
-
-  Future<void> createGroup({
-    required String id,
-    required String spaceId,
-    required String name,
-    String? ageRange,
-    String? color,
-    String capabilitiesJson = '{}',
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await into(groups).insert(
-      GroupsCompanion.insert(
-        id: id,
-        spaceId: spaceId,
-        name: name,
-        ageRange: Value(ageRange),
-        color: Value(color),
-        capabilities: capabilitiesJson,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    );
-  }
-
-  Future<void> updateGroup({
-    required String id,
-    String? name,
-    String? ageRange,
-    String? color,
-    String? capabilitiesJson,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(groups)..where((g) => g.id.equals(id))).write(
-      GroupsCompanion(
-        name: name == null ? const Value.absent() : Value(name),
-        ageRange: ageRange == null ? const Value.absent() : Value(ageRange),
-        color: color == null ? const Value.absent() : Value(color),
-        capabilities: capabilitiesJson == null
-            ? const Value.absent()
-            : Value(capabilitiesJson),
-        updatedAt: Value(now),
-      ),
-    );
   }
 
   // -- Capability mutators (write the JSONB column on each entity) ---------
@@ -577,10 +526,6 @@ class AppDatabase extends _$AppDatabase {
           ..where((m) => m.spaceId.equals(spaceId))
           ..orderBy([(m) => OrderingTerm(expression: m.displayName)]))
         .watch();
-  }
-
-  Future<void> deleteGroup(String id) async {
-    await (delete(groups)..where((g) => g.id.equals(id))).go();
   }
 
   // -- Subjects -------------------------------------------------------------
@@ -817,116 +762,6 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
-  // -- Group members (staff assignment) -------------------------------------
-
-  /// All assignment rows for a member — used to derive which classrooms
-  /// they're scoped to. Directors don't need this; their groupsProvider
-  /// returns the full space.
-  Stream<List<GroupMember>> watchAssignmentsForMember(String memberId) {
-    return (select(groupMembers)..where((g) => g.memberId.equals(memberId)))
-        .watch();
-  }
-
-  /// All members assigned to a classroom. Used by the Group detail
-  /// screen's staff list.
-  Stream<List<GroupMember>> watchAssignmentsForGroup(String groupId) {
-    return (select(groupMembers)..where((g) => g.groupId.equals(groupId)))
-        .watch();
-  }
-
-  /// Idempotent assign. Inserts a row if the (group, member) pair
-  /// isn't already there; otherwise no-op.
-  Future<void> assignMemberToGroup({
-    required String groupId,
-    required String memberId,
-    required String spaceId,
-    String? roleInGroup,
-  }) async {
-    final existing = await (select(groupMembers)
-          ..where(
-            (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
-          ))
-        .getSingleOrNull();
-    if (existing != null) return;
-    final now = DateTime.now().toUtc().toIso8601String();
-    await into(groupMembers).insert(
-      GroupMembersCompanion.insert(
-        id: const Uuid().v4(),
-        groupId: groupId,
-        memberId: memberId,
-        spaceId: spaceId,
-        roleInGroup:
-            roleInGroup == null ? const Value.absent() : Value(roleInGroup),
-        assignedAt: now,
-      ),
-    );
-  }
-
-  /// Idempotent unassign.
-  Future<void> unassignMemberFromGroup({
-    required String groupId,
-    required String memberId,
-  }) async {
-    await (delete(groupMembers)
-          ..where(
-            (g) => g.groupId.equals(groupId) & g.memberId.equals(memberId),
-          ))
-        .go();
-  }
-
-  // -- Invites --------------------------------------------------------------
-
-  /// Watch all un-accepted invites for a space. Expired ones are kept
-  /// in the list intentionally — the UI labels them "Expired" so the
-  /// director can revoke them. (If we filtered by `expires_at > now()`
-  /// here, the predicate would be captured at subscription time and
-  /// not re-evaluate as the wall clock moves; rows would stick around
-  /// past their expiry until the stream is re-subscribed.)
-  Stream<List<Invite>> watchPendingInvitesInSpace(String spaceId) {
-    return (select(invites)
-          ..where(
-            (i) => i.spaceId.equals(spaceId) & i.acceptedAt.isNull(),
-          )
-          ..orderBy([(i) => OrderingTerm.desc(i.createdAt)]))
-        .watch();
-  }
-
-  Future<void> createInvite({
-    required String id,
-    required String spaceId,
-    required String role,
-    String? email,
-    String? code,
-    String? createdBy,
-    String? expiresAt,
-    String? subjectId,
-    String capabilitiesJson = '{}',
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await into(invites).insert(
-      InvitesCompanion.insert(
-        id: id,
-        spaceId: spaceId,
-        role: role,
-        email: email == null ? const Value.absent() : Value(email),
-        code: code == null ? const Value.absent() : Value(code),
-        subjectId:
-            subjectId == null ? const Value.absent() : Value(subjectId),
-        createdBy: createdBy == null ? const Value.absent() : Value(createdBy),
-        expiresAt: expiresAt == null ? const Value.absent() : Value(expiresAt),
-        capabilities: capabilitiesJson,
-        createdAt: now,
-      ),
-    );
-  }
-
-  /// "Revoke" = delete the row. The unique constraint on `code` releases
-  /// the code for future reuse; the recipient (if any) won't see it
-  /// because their sync stream filters to their own space.
-  Future<void> revokeInvite(String id) async {
-    await (delete(invites)..where((i) => i.id.equals(id))).go();
-  }
-
   // -- Entries (observations / meals / naps / diapers / ...) ---------------
 
   /// All entries for a classroom of a given kind, newest first. The
@@ -1046,104 +881,4 @@ class AppDatabase extends _$AppDatabase {
     await (delete(entries)..where((e) => e.id.equals(id))).go();
   }
 
-  // -- Guardians ------------------------------------------------------------
-
-  /// All guardians attached to a specific subject. Joined via the
-  /// subject_guardians link table.
-  Stream<List<Guardian>> watchGuardiansForSubject(String subjectId) {
-    final query = select(guardians).join([
-      innerJoin(
-        subjectGuardians,
-        subjectGuardians.guardianId.equalsExp(guardians.id),
-      ),
-    ])
-      ..where(subjectGuardians.subjectId.equals(subjectId))
-      ..orderBy([
-        OrderingTerm(expression: subjectGuardians.isPrimary, mode: OrderingMode.desc),
-        OrderingTerm(expression: guardians.name),
-      ]);
-    return query.watch().map((rows) =>
-        rows.map((r) => r.readTable(guardians)).toList());
-  }
-
-  /// Add a new guardian and attach them to a subject in one transaction.
-  /// Used by the "Add guardian" affordance on subject detail.
-  Future<void> createGuardianForSubject({
-    required String guardianId,
-    required String subjectId,
-    required String spaceId,
-    required String name,
-    String? relationship,
-    String? phone,
-    String? email,
-    bool isPrimary = false,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await transaction(() async {
-      await into(guardians).insert(
-        GuardiansCompanion.insert(
-          id: guardianId,
-          spaceId: spaceId,
-          name: name,
-          relationship:
-              relationship == null ? const Value.absent() : Value(relationship),
-          phone: phone == null ? const Value.absent() : Value(phone),
-          email: email == null ? const Value.absent() : Value(email),
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
-      await into(subjectGuardians).insert(
-        SubjectGuardiansCompanion.insert(
-          id: const Uuid().v4(),
-          subjectId: subjectId,
-          guardianId: guardianId,
-          spaceId: spaceId,
-          isPrimary: Value(isPrimary ? 1 : 0),
-          createdAt: now,
-        ),
-      );
-    });
-  }
-
-  /// Unlink a guardian from a subject. The guardian row stays — they
-  /// might still be attached to a sibling, or future re-add.
-  Future<void> unlinkGuardianFromSubject({
-    required String guardianId,
-    required String subjectId,
-  }) async {
-    await (delete(subjectGuardians)
-          ..where(
-            (sg) =>
-                sg.guardianId.equals(guardianId) &
-                sg.subjectId.equals(subjectId),
-          ))
-        .go();
-  }
-
-  /// Find the guardian row that an authenticated user resolves to.
-  /// Returns null when the signed-in user isn't linked to any guardian
-  /// — i.e., they're staff or not yet onboarded.
-  Stream<Guardian?> watchGuardianForUser(String authUserId) {
-    return (select(guardians)..where((g) => g.userId.equals(authUserId)))
-        .watchSingleOrNull();
-  }
-
-  /// Subjects this guardian is linked to via subject_guardians. The
-  /// family-side lens reads ONLY these subjects.
-  Stream<List<Subject>> watchChildrenForGuardian(String guardianId) {
-    final query = select(subjects).join([
-      innerJoin(
-        subjectGuardians,
-        subjectGuardians.subjectId.equalsExp(subjects.id),
-      ),
-    ])
-      ..where(subjectGuardians.guardianId.equals(guardianId))
-      ..orderBy([
-        OrderingTerm(expression: subjects.firstName),
-        OrderingTerm(expression: subjects.lastName),
-      ]);
-    return query.watch().map((rows) =>
-        rows.map((r) => r.readTable(subjects)).toList());
-  }
 }

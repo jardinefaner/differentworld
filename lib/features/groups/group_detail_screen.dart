@@ -114,7 +114,7 @@ class GroupDetailScreen extends ConsumerWidget {
 final _groupProvider = StreamProvider.family<Group?, String>(
   (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchGroup(groupId);
+    yield* db.groupsDao.watchById(groupId);
   },
 );
 

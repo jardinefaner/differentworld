@@ -57,7 +57,7 @@ final currentGuardianProvider = StreamProvider<Guardian?>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
   if (db == null) return Stream<Guardian?>.value(null);
-  return db.watchGuardianForUser(session.user.id);
+  return db.guardiansDao.watchForUser(session.user.id);
 });
 
 /// The list of children the signed-in guardian is linked to. Empty
@@ -67,7 +67,7 @@ final myChildrenProvider = StreamProvider<List<Subject>>((ref) {
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
   if (guardian == null || db == null) return Stream<List<Subject>>.value([]);
-  return db.watchChildrenForGuardian(guardian.id);
+  return db.guardiansDao.watchChildrenFor(guardian.id);
 });
 
 /// Live view of any Member by ID. Drives "who's driving" labels and

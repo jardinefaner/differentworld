@@ -20,14 +20,14 @@ final groupsProvider = StreamProvider<List<Group>>((ref) async* {
   if (spaceId == null || memberId == null) return;
 
   final db = await ref.watch(appDatabaseProvider.future);
-  final allGroups = db.watchGroupsInSpace(spaceId);
+  final allGroups = db.groupsDao.watchInSpace(spaceId);
 
   if (viewer.seesAllClassrooms) {
     yield* allGroups;
     return;
   }
 
-  final assignments = db.watchAssignmentsForMember(memberId);
+  final assignments = db.groupMembersDao.watchForMember(memberId);
   yield* Rx.combineLatest2<List<Group>, List<GroupMember>, List<Group>>(
     allGroups,
     assignments,
@@ -45,7 +45,7 @@ final allGroupsInSpaceProvider = StreamProvider<List<Group>>((ref) async* {
   final spaceId = ref.watch(currentMemberProvider).value?.spaceId;
   if (spaceId == null) return;
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchGroupsInSpace(spaceId);
+  yield* db.groupsDao.watchInSpace(spaceId);
 });
 
 class GroupActions {
@@ -66,7 +66,7 @@ class GroupActions {
     if (spaceId == null) {
       throw StateError('No Space selected for the current Member.');
     }
-    await db.createGroup(
+    await db.groupsDao.create(
       id: _uuid.v4(),
       spaceId: spaceId,
       name: name,
@@ -84,7 +84,7 @@ class GroupActions {
     String? capabilitiesJson,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateGroup(
+    await db.groupsDao.update_(
       id: id,
       name: name,
       ageRange: ageRange,
@@ -95,7 +95,7 @@ class GroupActions {
 
   Future<void> delete(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteGroup(id);
+    await db.groupsDao.deleteById(id);
   }
 }
 

@@ -15,7 +15,7 @@ final pendingInvitesProvider =
     StreamProvider.autoDispose.family<List<Invite>, String>(
   (ref, spaceId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchPendingInvitesInSpace(spaceId);
+    yield* db.invitesDao.watchPendingInSpace(spaceId);
   },
 );
 
@@ -77,7 +77,7 @@ class InviteActions {
         ? null
         : email.trim().toLowerCase();
 
-    await db.createInvite(
+    await db.invitesDao.create(
       id: id,
       spaceId: spaceId,
       role: role,
@@ -116,7 +116,7 @@ class InviteActions {
 
   Future<void> revoke(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.revokeInvite(id);
+    await db.invitesDao.revoke(id);
   }
 
   /// Newcomer-side: redeem an invite. If `code` is null the backend

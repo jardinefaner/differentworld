@@ -10280,6 +10280,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final DismissedInsightsDao dismissedInsightsDao = DismissedInsightsDao(
     this as AppDatabase,
   );
+  late final GroupMembersDao groupMembersDao = GroupMembersDao(
+    this as AppDatabase,
+  );
+  late final GroupsDao groupsDao = GroupsDao(this as AppDatabase);
+  late final GuardiansDao guardiansDao = GuardiansDao(this as AppDatabase);
+  late final InvitesDao invitesDao = InvitesDao(this as AppDatabase);
   late final SurveysDao surveysDao = SurveysDao(this as AppDatabase);
   late final VehiclesDao vehiclesDao = VehiclesDao(this as AppDatabase);
   @override

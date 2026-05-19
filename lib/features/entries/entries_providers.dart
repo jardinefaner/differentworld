@@ -57,7 +57,7 @@ final observationsInSpaceProvider =
     yield* entries;
     return;
   }
-  final assignments = db.watchAssignmentsForMember(memberId);
+  final assignments = db.groupMembersDao.watchForMember(memberId);
   yield* Rx.combineLatest2<List<Entry>, List<GroupMember>, List<Entry>>(
     entries,
     assignments,

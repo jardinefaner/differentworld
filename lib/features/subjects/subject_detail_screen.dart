@@ -300,7 +300,7 @@ final _groupForDetailProvider =
     StreamProvider.autoDispose.family<Group?, String>(
   (ref, id) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchGroup(id);
+    yield* db.groupsDao.watchById(id);
   },
 );
 

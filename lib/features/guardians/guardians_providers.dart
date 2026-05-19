@@ -11,7 +11,7 @@ final guardiansForSubjectProvider =
     StreamProvider.autoDispose.family<List<Guardian>, String>(
   (ref, subjectId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchGuardiansForSubject(subjectId);
+    yield* db.guardiansDao.watchForSubject(subjectId);
   },
 );
 
@@ -34,7 +34,7 @@ class GuardianActions {
     if (spaceId == null) {
       throw StateError('No Space — sign in and join a program first.');
     }
-    await db.createGuardianForSubject(
+    await db.guardiansDao.createForSubject(
       guardianId: _uuid.v4(),
       subjectId: subjectId,
       spaceId: spaceId,
@@ -51,7 +51,7 @@ class GuardianActions {
     required String subjectId,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.unlinkGuardianFromSubject(
+    await db.guardiansDao.unlinkFromSubject(
       guardianId: guardianId,
       subjectId: subjectId,
     );
