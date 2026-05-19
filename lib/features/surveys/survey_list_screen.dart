@@ -139,6 +139,12 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
     return EdgeScaffold(
       backFallbackRoute: '/surveys',
       actions: const [SyncStatusIndicator()],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () =>
+            context.push('/surveys/$templateId/table'),
+        icon: const Icon(Icons.table_chart_outlined),
+        label: const Text('Table view'),
+      ),
       body: subjectsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => const EmptyState(

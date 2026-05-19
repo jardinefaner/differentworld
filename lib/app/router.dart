@@ -27,6 +27,7 @@ import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
+import 'package:differentworld/features/surveys/survey_table_screen.dart';
 import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
@@ -189,6 +190,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => SurveyTakeScreen(
                       templateId: state.pathParameters['templateId']!,
                       subjectId: state.pathParameters['subjectId']!,
+                    ),
+                  ),
+                  // Spreadsheet review across kids — director scans
+                  // patterns and exports CSV.
+                  GoRoute(
+                    path: 'table',
+                    builder: (_, state) => SurveyTableScreen(
+                      templateId: state.pathParameters['templateId']!,
                     ),
                   ),
                 ],
