@@ -10968,6 +10968,630 @@ class TasksCompanion extends UpdateCompanion<Task> {
   }
 }
 
+class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MessagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _guardianIdMeta = const VerificationMeta(
+    'guardianId',
+  );
+  @override
+  late final GeneratedColumn<String> guardianId = GeneratedColumn<String>(
+    'guardian_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _senderKindMeta = const VerificationMeta(
+    'senderKind',
+  );
+  @override
+  late final GeneratedColumn<String> senderKind = GeneratedColumn<String>(
+    'sender_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _senderMemberIdMeta = const VerificationMeta(
+    'senderMemberId',
+  );
+  @override
+  late final GeneratedColumn<String> senderMemberId = GeneratedColumn<String>(
+    'sender_member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _senderGuardianIdMeta = const VerificationMeta(
+    'senderGuardianId',
+  );
+  @override
+  late final GeneratedColumn<String> senderGuardianId = GeneratedColumn<String>(
+    'sender_guardian_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _readAtMeta = const VerificationMeta('readAt');
+  @override
+  late final GeneratedColumn<String> readAt = GeneratedColumn<String>(
+    'read_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    subjectId,
+    guardianId,
+    senderKind,
+    senderMemberId,
+    senderGuardianId,
+    body,
+    readAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'messages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Message> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectIdMeta);
+    }
+    if (data.containsKey('guardian_id')) {
+      context.handle(
+        _guardianIdMeta,
+        guardianId.isAcceptableOrUnknown(data['guardian_id']!, _guardianIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_guardianIdMeta);
+    }
+    if (data.containsKey('sender_kind')) {
+      context.handle(
+        _senderKindMeta,
+        senderKind.isAcceptableOrUnknown(data['sender_kind']!, _senderKindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_senderKindMeta);
+    }
+    if (data.containsKey('sender_member_id')) {
+      context.handle(
+        _senderMemberIdMeta,
+        senderMemberId.isAcceptableOrUnknown(
+          data['sender_member_id']!,
+          _senderMemberIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sender_guardian_id')) {
+      context.handle(
+        _senderGuardianIdMeta,
+        senderGuardianId.isAcceptableOrUnknown(
+          data['sender_guardian_id']!,
+          _senderGuardianIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('read_at')) {
+      context.handle(
+        _readAtMeta,
+        readAt.isAcceptableOrUnknown(data['read_at']!, _readAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Message map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Message(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      )!,
+      guardianId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}guardian_id'],
+      )!,
+      senderKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sender_kind'],
+      )!,
+      senderMemberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sender_member_id'],
+      ),
+      senderGuardianId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sender_guardian_id'],
+      ),
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      readAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}read_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MessagesTable createAlias(String alias) {
+    return $MessagesTable(attachedDatabase, alias);
+  }
+}
+
+class Message extends DataClass implements Insertable<Message> {
+  final String id;
+  final String spaceId;
+  final String subjectId;
+  final String guardianId;
+  final String senderKind;
+  final String? senderMemberId;
+  final String? senderGuardianId;
+  final String body;
+  final String? readAt;
+  final String createdAt;
+  const Message({
+    required this.id,
+    required this.spaceId,
+    required this.subjectId,
+    required this.guardianId,
+    required this.senderKind,
+    this.senderMemberId,
+    this.senderGuardianId,
+    required this.body,
+    this.readAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['subject_id'] = Variable<String>(subjectId);
+    map['guardian_id'] = Variable<String>(guardianId);
+    map['sender_kind'] = Variable<String>(senderKind);
+    if (!nullToAbsent || senderMemberId != null) {
+      map['sender_member_id'] = Variable<String>(senderMemberId);
+    }
+    if (!nullToAbsent || senderGuardianId != null) {
+      map['sender_guardian_id'] = Variable<String>(senderGuardianId);
+    }
+    map['body'] = Variable<String>(body);
+    if (!nullToAbsent || readAt != null) {
+      map['read_at'] = Variable<String>(readAt);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    return map;
+  }
+
+  MessagesCompanion toCompanion(bool nullToAbsent) {
+    return MessagesCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      subjectId: Value(subjectId),
+      guardianId: Value(guardianId),
+      senderKind: Value(senderKind),
+      senderMemberId: senderMemberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(senderMemberId),
+      senderGuardianId: senderGuardianId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(senderGuardianId),
+      body: Value(body),
+      readAt: readAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(readAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Message.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Message(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      subjectId: serializer.fromJson<String>(json['subjectId']),
+      guardianId: serializer.fromJson<String>(json['guardianId']),
+      senderKind: serializer.fromJson<String>(json['senderKind']),
+      senderMemberId: serializer.fromJson<String?>(json['senderMemberId']),
+      senderGuardianId: serializer.fromJson<String?>(json['senderGuardianId']),
+      body: serializer.fromJson<String>(json['body']),
+      readAt: serializer.fromJson<String?>(json['readAt']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'subjectId': serializer.toJson<String>(subjectId),
+      'guardianId': serializer.toJson<String>(guardianId),
+      'senderKind': serializer.toJson<String>(senderKind),
+      'senderMemberId': serializer.toJson<String?>(senderMemberId),
+      'senderGuardianId': serializer.toJson<String?>(senderGuardianId),
+      'body': serializer.toJson<String>(body),
+      'readAt': serializer.toJson<String?>(readAt),
+      'createdAt': serializer.toJson<String>(createdAt),
+    };
+  }
+
+  Message copyWith({
+    String? id,
+    String? spaceId,
+    String? subjectId,
+    String? guardianId,
+    String? senderKind,
+    Value<String?> senderMemberId = const Value.absent(),
+    Value<String?> senderGuardianId = const Value.absent(),
+    String? body,
+    Value<String?> readAt = const Value.absent(),
+    String? createdAt,
+  }) => Message(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    subjectId: subjectId ?? this.subjectId,
+    guardianId: guardianId ?? this.guardianId,
+    senderKind: senderKind ?? this.senderKind,
+    senderMemberId: senderMemberId.present
+        ? senderMemberId.value
+        : this.senderMemberId,
+    senderGuardianId: senderGuardianId.present
+        ? senderGuardianId.value
+        : this.senderGuardianId,
+    body: body ?? this.body,
+    readAt: readAt.present ? readAt.value : this.readAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Message copyWithCompanion(MessagesCompanion data) {
+    return Message(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      guardianId: data.guardianId.present
+          ? data.guardianId.value
+          : this.guardianId,
+      senderKind: data.senderKind.present
+          ? data.senderKind.value
+          : this.senderKind,
+      senderMemberId: data.senderMemberId.present
+          ? data.senderMemberId.value
+          : this.senderMemberId,
+      senderGuardianId: data.senderGuardianId.present
+          ? data.senderGuardianId.value
+          : this.senderGuardianId,
+      body: data.body.present ? data.body.value : this.body,
+      readAt: data.readAt.present ? data.readAt.value : this.readAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Message(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('guardianId: $guardianId, ')
+          ..write('senderKind: $senderKind, ')
+          ..write('senderMemberId: $senderMemberId, ')
+          ..write('senderGuardianId: $senderGuardianId, ')
+          ..write('body: $body, ')
+          ..write('readAt: $readAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    subjectId,
+    guardianId,
+    senderKind,
+    senderMemberId,
+    senderGuardianId,
+    body,
+    readAt,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Message &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.subjectId == this.subjectId &&
+          other.guardianId == this.guardianId &&
+          other.senderKind == this.senderKind &&
+          other.senderMemberId == this.senderMemberId &&
+          other.senderGuardianId == this.senderGuardianId &&
+          other.body == this.body &&
+          other.readAt == this.readAt &&
+          other.createdAt == this.createdAt);
+}
+
+class MessagesCompanion extends UpdateCompanion<Message> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> subjectId;
+  final Value<String> guardianId;
+  final Value<String> senderKind;
+  final Value<String?> senderMemberId;
+  final Value<String?> senderGuardianId;
+  final Value<String> body;
+  final Value<String?> readAt;
+  final Value<String> createdAt;
+  final Value<int> rowid;
+  const MessagesCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.guardianId = const Value.absent(),
+    this.senderKind = const Value.absent(),
+    this.senderMemberId = const Value.absent(),
+    this.senderGuardianId = const Value.absent(),
+    this.body = const Value.absent(),
+    this.readAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MessagesCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String subjectId,
+    required String guardianId,
+    required String senderKind,
+    this.senderMemberId = const Value.absent(),
+    this.senderGuardianId = const Value.absent(),
+    required String body,
+    this.readAt = const Value.absent(),
+    required String createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       subjectId = Value(subjectId),
+       guardianId = Value(guardianId),
+       senderKind = Value(senderKind),
+       body = Value(body),
+       createdAt = Value(createdAt);
+  static Insertable<Message> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? subjectId,
+    Expression<String>? guardianId,
+    Expression<String>? senderKind,
+    Expression<String>? senderMemberId,
+    Expression<String>? senderGuardianId,
+    Expression<String>? body,
+    Expression<String>? readAt,
+    Expression<String>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (guardianId != null) 'guardian_id': guardianId,
+      if (senderKind != null) 'sender_kind': senderKind,
+      if (senderMemberId != null) 'sender_member_id': senderMemberId,
+      if (senderGuardianId != null) 'sender_guardian_id': senderGuardianId,
+      if (body != null) 'body': body,
+      if (readAt != null) 'read_at': readAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MessagesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? subjectId,
+    Value<String>? guardianId,
+    Value<String>? senderKind,
+    Value<String?>? senderMemberId,
+    Value<String?>? senderGuardianId,
+    Value<String>? body,
+    Value<String?>? readAt,
+    Value<String>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return MessagesCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      subjectId: subjectId ?? this.subjectId,
+      guardianId: guardianId ?? this.guardianId,
+      senderKind: senderKind ?? this.senderKind,
+      senderMemberId: senderMemberId ?? this.senderMemberId,
+      senderGuardianId: senderGuardianId ?? this.senderGuardianId,
+      body: body ?? this.body,
+      readAt: readAt ?? this.readAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (guardianId.present) {
+      map['guardian_id'] = Variable<String>(guardianId.value);
+    }
+    if (senderKind.present) {
+      map['sender_kind'] = Variable<String>(senderKind.value);
+    }
+    if (senderMemberId.present) {
+      map['sender_member_id'] = Variable<String>(senderMemberId.value);
+    }
+    if (senderGuardianId.present) {
+      map['sender_guardian_id'] = Variable<String>(senderGuardianId.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (readAt.present) {
+      map['read_at'] = Variable<String>(readAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MessagesCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('guardianId: $guardianId, ')
+          ..write('senderKind: $senderKind, ')
+          ..write('senderMemberId: $senderMemberId, ')
+          ..write('senderGuardianId: $senderGuardianId, ')
+          ..write('body: $body, ')
+          ..write('readAt: $readAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -10996,6 +11620,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $DismissedInsightsTable(this);
   late final $CapturesTable captures = $CapturesTable(this);
   late final $TasksTable tasks = $TasksTable(this);
+  late final $MessagesTable messages = $MessagesTable(this);
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
@@ -11015,6 +11640,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final GuardiansDao guardiansDao = GuardiansDao(this as AppDatabase);
   late final InvitesDao invitesDao = InvitesDao(this as AppDatabase);
   late final MembersDao membersDao = MembersDao(this as AppDatabase);
+  late final MessagesDao messagesDao = MessagesDao(this as AppDatabase);
   late final SpacesDao spacesDao = SpacesDao(this as AppDatabase);
   late final SubjectsDao subjectsDao = SubjectsDao(this as AppDatabase);
   late final SurveysDao surveysDao = SurveysDao(this as AppDatabase);
@@ -11043,6 +11669,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     dismissedInsights,
     captures,
     tasks,
+    messages,
   ];
 }
 
@@ -16381,6 +17008,303 @@ typedef $$TasksTableProcessedTableManager =
       Task,
       PrefetchHooks Function()
     >;
+typedef $$MessagesTableCreateCompanionBuilder =
+    MessagesCompanion Function({
+      required String id,
+      required String spaceId,
+      required String subjectId,
+      required String guardianId,
+      required String senderKind,
+      Value<String?> senderMemberId,
+      Value<String?> senderGuardianId,
+      required String body,
+      Value<String?> readAt,
+      required String createdAt,
+      Value<int> rowid,
+    });
+typedef $$MessagesTableUpdateCompanionBuilder =
+    MessagesCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> subjectId,
+      Value<String> guardianId,
+      Value<String> senderKind,
+      Value<String?> senderMemberId,
+      Value<String?> senderGuardianId,
+      Value<String> body,
+      Value<String?> readAt,
+      Value<String> createdAt,
+      Value<int> rowid,
+    });
+
+class $$MessagesTableFilterComposer
+    extends Composer<_$AppDatabase, $MessagesTable> {
+  $$MessagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get senderKind => $composableBuilder(
+    column: $table.senderKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get senderMemberId => $composableBuilder(
+    column: $table.senderMemberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get senderGuardianId => $composableBuilder(
+    column: $table.senderGuardianId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MessagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MessagesTable> {
+  $$MessagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get senderKind => $composableBuilder(
+    column: $table.senderKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get senderMemberId => $composableBuilder(
+    column: $table.senderMemberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get senderGuardianId => $composableBuilder(
+    column: $table.senderGuardianId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MessagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MessagesTable> {
+  $$MessagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get guardianId => $composableBuilder(
+    column: $table.guardianId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get senderKind => $composableBuilder(
+    column: $table.senderKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get senderMemberId => $composableBuilder(
+    column: $table.senderMemberId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get senderGuardianId => $composableBuilder(
+    column: $table.senderGuardianId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get readAt =>
+      $composableBuilder(column: $table.readAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$MessagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MessagesTable,
+          Message,
+          $$MessagesTableFilterComposer,
+          $$MessagesTableOrderingComposer,
+          $$MessagesTableAnnotationComposer,
+          $$MessagesTableCreateCompanionBuilder,
+          $$MessagesTableUpdateCompanionBuilder,
+          (Message, BaseReferences<_$AppDatabase, $MessagesTable, Message>),
+          Message,
+          PrefetchHooks Function()
+        > {
+  $$MessagesTableTableManager(_$AppDatabase db, $MessagesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MessagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MessagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MessagesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> subjectId = const Value.absent(),
+                Value<String> guardianId = const Value.absent(),
+                Value<String> senderKind = const Value.absent(),
+                Value<String?> senderMemberId = const Value.absent(),
+                Value<String?> senderGuardianId = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String?> readAt = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MessagesCompanion(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                guardianId: guardianId,
+                senderKind: senderKind,
+                senderMemberId: senderMemberId,
+                senderGuardianId: senderGuardianId,
+                body: body,
+                readAt: readAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String subjectId,
+                required String guardianId,
+                required String senderKind,
+                Value<String?> senderMemberId = const Value.absent(),
+                Value<String?> senderGuardianId = const Value.absent(),
+                required String body,
+                Value<String?> readAt = const Value.absent(),
+                required String createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MessagesCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                guardianId: guardianId,
+                senderKind: senderKind,
+                senderMemberId: senderMemberId,
+                senderGuardianId: senderGuardianId,
+                body: body,
+                readAt: readAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MessagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MessagesTable,
+      Message,
+      $$MessagesTableFilterComposer,
+      $$MessagesTableOrderingComposer,
+      $$MessagesTableAnnotationComposer,
+      $$MessagesTableCreateCompanionBuilder,
+      $$MessagesTableUpdateCompanionBuilder,
+      (Message, BaseReferences<_$AppDatabase, $MessagesTable, Message>),
+      Message,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -16421,4 +17345,6 @@ class $AppDatabaseManager {
       $$CapturesTableTableManager(_db, _db.captures);
   $$TasksTableTableManager get tasks =>
       $$TasksTableTableManager(_db, _db.tasks);
+  $$MessagesTableTableManager get messages =>
+      $$MessagesTableTableManager(_db, _db.messages);
 }

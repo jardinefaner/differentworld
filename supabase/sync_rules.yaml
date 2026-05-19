@@ -57,6 +57,12 @@ streams:
       # a program runs hundreds of unclosed action items, which would
       # be a process problem, not a sync problem.
       - SELECT * FROM tasks              WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Messages — staff↔guardian threads keyed on (subject, guardian).
+      # Each thread is a back-and-forth about one kid. Staff side
+      # syncs all messages in the space; guardians only see threads
+      # they're on (enforced by RLS, not sync rule — the per-row
+      # filter would need joins this SQL subset doesn't support).
+      - SELECT * FROM messages           WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Only stream un-accepted invites. Accepted ones don't need to
       # round-trip back to every director's device — they just bloat
       # the local table over time. The acceptance event itself reaches

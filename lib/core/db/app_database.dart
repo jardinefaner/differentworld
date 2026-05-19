@@ -9,6 +9,7 @@ import 'package:differentworld/core/db/dao/groups_dao.dart';
 import 'package:differentworld/core/db/dao/guardians_dao.dart';
 import 'package:differentworld/core/db/dao/invites_dao.dart';
 import 'package:differentworld/core/db/dao/members_dao.dart';
+import 'package:differentworld/core/db/dao/messages_dao.dart';
 import 'package:differentworld/core/db/dao/spaces_dao.dart';
 import 'package:differentworld/core/db/dao/subjects_dao.dart';
 import 'package:differentworld/core/db/dao/surveys_dao.dart';
@@ -379,11 +380,30 @@ class Tasks extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Messages — staff↔guardian per-child threads. Thread identity is
+/// the (subject_id, guardian_id) pair; no separate threads table.
+/// See migration `20260518000016_messages.sql`.
+class Messages extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get subjectId => text()();
+  TextColumn get guardianId => text()();
+  TextColumn get senderKind => text()(); // 'staff' | 'guardian'
+  TextColumn get senderMemberId => text().nullable()();
+  TextColumn get senderGuardianId => text().nullable()();
+  TextColumn get body => text()();
+  TextColumn get readAt => text().nullable()();
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
           Vehicles, VehicleLogs, MemberCertifications, Attachments,
-          SurveyResponses, DismissedInsights, Captures, Tasks],
+          SurveyResponses, DismissedInsights, Captures, Tasks, Messages],
   daos: [
     AttachmentsDao,
     AttendanceDao,
@@ -396,6 +416,7 @@ class Tasks extends Table {
     GuardiansDao,
     InvitesDao,
     MembersDao,
+    MessagesDao,
     SpacesDao,
     SubjectsDao,
     SurveysDao,

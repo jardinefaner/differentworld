@@ -185,6 +185,23 @@ class OmniboxResults extends ConsumerWidget {
         ],
         onSelect: (ctx, ref) => ctx.push('/tasks'),
       ),
+      // -- Messages — guardian-side only (staff doesn't have a single
+      //    inbox; threads are reached from each kid's detail screen).
+      if (viewer is GuardianViewer && viewer.childSubjectIds.isNotEmpty)
+        _Suggestion(
+          label: 'Messages',
+          kindLabel: 'Page',
+          icon: Icons.forum_outlined,
+          keywords: const ['message', 'chat', 'teacher', 'family'],
+          onSelect: (ctx, ref) {
+            // Open the thread for the first linked child. When we
+            // have multiple kids, add a per-thread chooser later.
+            final v = viewer;
+            unawaited(ctx.push(
+              '/messages/${v.childSubjectIds.first}/${v.guardian.id}',
+            ));
+          },
+        ),
       // Weekly review — same data, guided walk-through.
       _Suggestion(
         label: 'Weekly review',

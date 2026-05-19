@@ -210,4 +210,15 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  Table('messages', [
+    Column.text('space_id'),
+    Column.text('subject_id'),
+    Column.text('guardian_id'),
+    Column.text('sender_kind'),
+    Column.text('sender_member_id'),
+    Column.text('sender_guardian_id'),
+    Column.text('body'),
+    Column.text('read_at'),
+    Column.text('created_at'),
+  ]),
 ]);

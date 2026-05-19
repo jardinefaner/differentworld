@@ -15,6 +15,7 @@ import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
+import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
@@ -138,6 +139,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'tasks',
             builder: (_, _) => const TasksScreen(),
+          ),
+          // Messages — staff↔guardian threads keyed on (subject,
+          // guardian). Reached from family-side child detail and
+          // staff-side subject detail.
+          GoRoute(
+            path: 'messages/:subjectId/:guardianId',
+            builder: (_, state) => MessageThreadScreen(
+              subjectId: state.pathParameters['subjectId']!,
+              guardianId: state.pathParameters['guardianId']!,
+            ),
           ),
           // Weekly review — same data as /insights but presented as a
           // guided one-question-per-page flow. The framework's

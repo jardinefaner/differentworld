@@ -5,6 +5,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -15,6 +16,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Family-side per-child screen. A simpler, read-only feed of "what
 /// my kid did today" — no admin chrome, no editing affordances.
@@ -102,6 +104,10 @@ class _FamilyDetailBody extends ConsumerWidget {
             _TodayCard(subject: subject),
             const SizedBox(height: 8),
             _TodayObservations(subjectId: subject.id),
+
+            // -- Messages -----------------------------------------------
+            _SectionLabel(label: 'Messages', theme: theme),
+            _MessagesCard(subjectId: subject.id),
 
             // -- Recent observations --------------------------------------
             const SizedBox(height: 16),
@@ -365,6 +371,89 @@ class _ObservationCard extends StatelessWidget {
             relativeTimeAgo(when),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Family-side messages preview: shows the latest message (if any)
+/// and a button to open the thread. Guardian-only — the viewer must
+/// be a [GuardianViewer] to render this card.
+class _MessagesCard extends ConsumerWidget {
+  const _MessagesCard({required this.subjectId});
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final viewer = ref.watch(viewerProvider);
+    if (viewer is! GuardianViewer) {
+      // Staff hitting /children/:sid shouldn't normally reach here
+      // (they use the staff route), but defensively render nothing.
+      return const SizedBox.shrink();
+    }
+    final guardianId = viewer.guardian.id;
+    final messagesAsync = ref.watch(messageThreadProvider(
+      (subjectId: subjectId, guardianId: guardianId),
+    ));
+    final messages = messagesAsync.value ?? const <Message>[];
+    final lastFromStaff = messages.lastWhere(
+      (m) => m.senderKind == 'staff',
+      orElse: () => const Message(
+        id: '',
+        spaceId: '',
+        subjectId: '',
+        guardianId: '',
+        senderKind: '',
+        body: '',
+        createdAt: '',
+      ),
+    );
+    final hasMessages = messages.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasMessages && lastFromStaff.id.isNotEmpty) ...[
+            Text(
+              lastFromStaff.body,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'From your teacher · ${relativeTimeAgo(
+                DateTime.tryParse(lastFromStaff.createdAt)?.toLocal(),
+              )}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ] else
+            Text(
+              'No messages yet.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(
+              onPressed: () =>
+                  context.push('/messages/$subjectId/$guardianId'),
+              icon: const Icon(Icons.forum_outlined),
+              label: Text(hasMessages ? 'Open thread' : 'Start a thread'),
             ),
           ),
         ],
