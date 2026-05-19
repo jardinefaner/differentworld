@@ -9,6 +9,7 @@ import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
+import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
@@ -171,10 +172,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           // Family-side direct route: a guardian navigates to a child
-          // without going through a classroom they don't see.
+          // without going through a classroom they don't see. Renders
+          // a read-only family-tailored detail (no admin chrome) —
+          // staff hitting their kid's profile use the nested staff
+          // route at /groups/:id/students/:sid instead.
           GoRoute(
             path: 'children/:sid',
-            builder: (_, state) => SubjectDetailScreen(
+            builder: (_, state) => FamilySubjectDetailScreen(
               subjectId: state.pathParameters['sid']!,
             ),
           ),
