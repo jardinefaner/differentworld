@@ -9,6 +9,7 @@ import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
+import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
@@ -140,9 +141,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'tasks',
             builder: (_, _) => const TasksScreen(),
           ),
-          // Messages — staff↔guardian threads keyed on (subject,
-          // guardian). Reached from family-side child detail and
-          // staff-side subject detail.
+          // Messages — `/messages` is the family-side index (one row
+          // per linked child). Threads themselves are reached at
+          // `/messages/:subjectId/:guardianId` from either the family
+          // index or the staff subject_detail.
+          GoRoute(
+            path: 'messages',
+            builder: (_, _) => const FamilyMessagesScreen(),
+          ),
           GoRoute(
             path: 'messages/:subjectId/:guardianId',
             builder: (_, state) => MessageThreadScreen(

@@ -206,11 +206,42 @@ class _MessageBubble extends ConsumerWidget {
                 children: [
                   Text(message.body, style: TextStyle(color: fg)),
                   const SizedBox(height: 4),
-                  Text(
-                    relativeTimeAgo(when),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: fg.withValues(alpha: 0.7),
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        relativeTimeAgo(when),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: fg.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      // Read receipt: only on messages YOU sent. The
+                      // other side never sees their own "you read this"
+                      // marker — useless noise on incoming bubbles.
+                      if (mine && message.readAt != null) ...[
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.done_all,
+                          size: 14,
+                          color: fg.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          'Seen',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: fg.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ] else if (mine) ...[
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.done,
+                          size: 14,
+                          color: fg.withValues(alpha: 0.5),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
