@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -112,35 +113,31 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
       _error = null;
     });
 
-    try {
-      final actions = ref.read(groupActionsProvider);
-      if (widget.isEdit) {
-        await actions.update(
-          id: widget.groupId!,
-          name: name,
-          ageRange: ageRange.isEmpty ? null : ageRange,
-          capabilitiesJson: capsToSave,
-        );
-      } else {
-        await actions.create(
-          name: name,
-          ageRange: ageRange.isEmpty ? null : ageRange,
-          capabilitiesJson: capsToSave,
-        );
-      }
-      if (!mounted) return;
+    final actions = ref.read(groupActionsProvider);
+    final ok = await runReported(
+      library: 'groups',
+      action: () => widget.isEdit
+          ? actions.update(
+              id: widget.groupId!,
+              name: name,
+              ageRange: ageRange.isEmpty ? null : ageRange,
+              capabilitiesJson: capsToSave,
+            )
+          : actions.create(
+              name: name,
+              ageRange: ageRange.isEmpty ? null : ageRange,
+              capabilitiesJson: capsToSave,
+            ),
+    );
+    if (!mounted) return;
+    if (ok) {
       context.pop();
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'groups'),
-      );
-      if (!mounted) return;
-      setState(
-        () => _error = 'Could not save the classroom. Please try again.',
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      return;
     }
+    setState(() {
+      _saving = false;
+      _error = 'Could not save the classroom. Please try again.';
+    });
   }
 
   Future<void> _delete() async {
@@ -158,23 +155,22 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     );
     if (!confirmed || !mounted) return;
     setState(() => _saving = true);
-    try {
-      await ref.read(groupActionsProvider).delete(g.id);
-      if (!mounted) return;
+    final ok = await runReported(
+      library: 'groups',
+      action: () => ref.read(groupActionsProvider).delete(g.id),
+    );
+    if (!mounted) return;
+    if (ok) {
       // Pop both the edit screen AND the detail beneath (now stale).
       context.pop();
       if (!mounted) return;
       if (context.canPop()) context.pop();
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'groups'),
-      );
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _error = 'Could not delete. Please try again.';
-      });
+      return;
     }
+    setState(() {
+      _saving = false;
+      _error = 'Could not delete. Please try again.';
+    });
   }
 
   @override

@@ -7,6 +7,7 @@ import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart'
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -127,44 +128,42 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
       _error = null;
     });
 
-    try {
-      final actions = ref.read(subjectActionsProvider);
-      final dob = _dob?.toIso8601String().substring(0, 10);
-      final allergiesText = _allergies.text.trim();
-      final notesText = _notes.text.trim();
-      final allergies = allergiesText.isEmpty ? null : allergiesText;
-      final notes = notesText.isEmpty ? null : notesText;
+    final actions = ref.read(subjectActionsProvider);
+    final dob = _dob?.toIso8601String().substring(0, 10);
+    final allergiesText = _allergies.text.trim();
+    final notesText = _notes.text.trim();
+    final allergies = allergiesText.isEmpty ? null : allergiesText;
+    final notes = notesText.isEmpty ? null : notesText;
 
-      if (widget.isEdit) {
-        await actions.update(
-          id: widget.subjectId!,
-          firstName: _firstName.text.trim(),
-          lastName: _lastName.text.trim(),
-          dob: dob,
-          allergies: allergies,
-          notes: notes,
-        );
-      } else {
-        await actions.create(
-          groupId: widget.groupId,
-          firstName: _firstName.text.trim(),
-          lastName: _lastName.text.trim(),
-          dob: dob,
-          allergies: allergies,
-          notes: notes,
-        );
-      }
-      if (!mounted) return;
+    final ok = await runReported(
+      library: 'subjects',
+      action: () => widget.isEdit
+          ? actions.update(
+              id: widget.subjectId!,
+              firstName: _firstName.text.trim(),
+              lastName: _lastName.text.trim(),
+              dob: dob,
+              allergies: allergies,
+              notes: notes,
+            )
+          : actions.create(
+              groupId: widget.groupId,
+              firstName: _firstName.text.trim(),
+              lastName: _lastName.text.trim(),
+              dob: dob,
+              allergies: allergies,
+              notes: notes,
+            ),
+    );
+    if (!mounted) return;
+    if (ok) {
       context.pop();
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'subjects'),
-      );
-      if (!mounted) return;
-      setState(() => _error = 'Could not save. Please try again.');
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      return;
     }
+    setState(() {
+      _saving = false;
+      _error = 'Could not save. Please try again.';
+    });
   }
 
   Future<void> _delete() async {
@@ -183,9 +182,12 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
     );
     if (!confirmed || !mounted) return;
     setState(() => _saving = true);
-    try {
-      await ref.read(subjectActionsProvider).delete(s.id);
-      if (!mounted) return;
+    final ok = await runReported(
+      library: 'subjects',
+      action: () => ref.read(subjectActionsProvider).delete(s.id),
+    );
+    if (!mounted) return;
+    if (ok) {
       // Pop twice: this edit screen + the subject detail beneath it
       // would otherwise still point at the now-deleted row.
       context.pop();
@@ -193,16 +195,12 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
       // Some callers reach edit from the classroom roster (no detail
       // beneath); pop only if the navigator still has somewhere to go.
       if (context.canPop()) context.pop();
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'subjects'),
-      );
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _error = 'Could not remove. Please try again.';
-      });
+      return;
     }
+    setState(() {
+      _saving = false;
+      _error = 'Could not remove. Please try again.';
+    });
   }
 
   @override
@@ -405,6 +403,9 @@ Future<void> _sendGuardianInvite(
   final viewer = ref.read(viewerProvider);
   final spaceId = viewer.spaceId;
   if (spaceId == null) return;
+  // Capture messenger BEFORE the first await — the lint flags us
+  // for reading context-derived state after async gaps otherwise.
+  final messenger = ScaffoldMessenger.maybeOf(context);
   final db = await ref.read(appDatabaseProvider.future);
   final sg = await (db.select(db.subjectGuardians)
         ..where((row) => row.guardianId.equals(g.id))
@@ -412,26 +413,23 @@ Future<void> _sendGuardianInvite(
       .getSingleOrNull();
   if (sg == null) return;
 
-  try {
-    final invite =
-        await ref.read(inviteActionsProvider).createGuardianInvite(
-              spaceId: spaceId,
-              subjectId: sg.subjectId,
-              expiry: InviteExpiry.thirtyDays,
-              email: g.email,
-              createdBy: viewer.memberId,
-            );
-    if (!context.mounted) return;
-    await InviteShareSheet.show(context, invite: invite);
-  } on Exception catch (e, st) {
-    FlutterError.reportError(
-      FlutterErrorDetails(exception: e, stack: st, library: 'guardians'),
-    );
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not create invite. Try again.')),
-    );
-  }
+  Invite? created;
+  final ok = await runReported(
+    library: 'guardians',
+    messenger: messenger,
+    onError: 'Could not create invite. Try again.',
+    action: () async {
+      created = await ref.read(inviteActionsProvider).createGuardianInvite(
+            spaceId: spaceId,
+            subjectId: sg.subjectId,
+            expiry: InviteExpiry.thirtyDays,
+            email: g.email,
+            createdBy: viewer.memberId,
+          );
+    },
+  );
+  if (!ok || created == null || !context.mounted) return;
+  await InviteShareSheet.show(context, invite: created!);
 }
 
 /// Inline guardians editor — lists existing guardians and offers an
@@ -612,8 +610,9 @@ class _InlineAddGuardianState extends ConsumerState<_InlineAddGuardian> {
       _saving = true;
       _error = null;
     });
-    try {
-      await ref.read(guardianActionsProvider).addToSubject(
+    final ok = await runReported(
+      library: 'guardians',
+      action: () => ref.read(guardianActionsProvider).addToSubject(
             subjectId: widget.subjectId,
             name: name,
             relationship: _relationship.text.trim().isEmpty
@@ -622,19 +621,17 @@ class _InlineAddGuardianState extends ConsumerState<_InlineAddGuardian> {
             phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
             email: _email.text.trim().isEmpty ? null : _email.text.trim(),
             isPrimary: _isPrimary,
-          );
-      if (!mounted) return;
+          ),
+    );
+    if (!mounted) return;
+    if (ok) {
       widget.onSaved();
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'guardians'),
-      );
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _error = 'Could not save. Please try again.';
-      });
+      return;
     }
+    setState(() {
+      _saving = false;
+      _error = 'Could not save. Please try again.';
+    });
   }
 
   @override
