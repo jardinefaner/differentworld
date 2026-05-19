@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -15,9 +16,12 @@ import 'package:go_router/go_router.dart';
 
 /// `/surveys/:templateId/take/:subjectId`
 ///
-/// One-question-at-a-time survey runner for TK–3rd graders. The
-/// instructor reads the prompt out loud; the kid taps a smiley (or
-/// checks options, or speaks the answer for the instructor to type).
+/// One-question-at-a-time runner. Tap a chibi → auto-advance to the
+/// next question after a quick squash + particle burst feedback.
+/// Multiselect / text questions don't auto-advance — they use the
+/// explicit Next button so a kid can change their picks before
+/// committing. Back button always lets the user revisit any earlier
+/// answer (autosave keeps everything synced).
 class SurveyTakeScreen extends ConsumerStatefulWidget {
   const SurveyTakeScreen({
     required this.templateId,
@@ -54,7 +58,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
     super.dispose();
   }
 
-  /// Seed local answers from any existing draft response. Runs once.
   void _seed(SurveyResponse? row) {
     if (_seeded) return;
     _seeded = true;
@@ -63,9 +66,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
     }
   }
 
-  /// Autosave the draft. Cheap because answers JSON is tiny; the
-  /// upsert is one row per (subject, template) and PowerSync uploads
-  /// in the background.
   Future<void> _autosave() async {
     final t = _template;
     if (t == null) return;
@@ -86,21 +86,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
   Future<void> _submit() async {
     final t = _template;
     if (t == null) return;
-    final missing = t.scored.where((q) => !_answers.isAnswered(q)).toList();
-    if (missing.isNotEmpty) {
-      // Jump to the first unanswered scored question so the instructor
-      // can finish it.
-      final idx = t.questions.indexOf(missing.first);
-      if (idx >= 0) {
-        await _page.animateToPage(
-          idx,
-          duration: const Duration(milliseconds: 240),
-          curve: Curves.easeOut,
-        );
-      }
-      setState(() => _error = "There's one more answer needed before finishing.");
-      return;
-    }
     setState(() {
       _saving = true;
       _error = null;
@@ -125,6 +110,21 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
     }
   }
 
+  /// Auto-advance: scoot to the next page (or to the closeout page
+  /// if we're on the last question). Called from the answer
+  /// handlers after the visual feedback window.
+  void _advanceFrom(int from) {
+    final t = _template;
+    if (t == null) return;
+    final pageCount = t.questions.length + 1;
+    if (from + 1 >= pageCount) return;
+    unawaited(_page.animateToPage(
+      from + 1,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = _template;
@@ -144,9 +144,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
     final subjectAsync = ref.watch(subjectByIdProvider(widget.subjectId));
     final subject = subjectAsync.value;
 
-    final total = t.questions.length;
+    final totalQuestions = t.questions.length;
+    // PageView holds N question pages + 1 closeout page at the end.
+    final pageCount = totalQuestions + 1;
     final answeredScored =
         t.scored.where((q) => _answers.isAnswered(q)).length;
+    final atCloseout = _index >= totalQuestions;
 
     return DismissGuard(
       isDirty: () => !_seeded || _answers.toJson() != '{}',
@@ -157,25 +160,47 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
             _SurveyHeader(
               template: t,
               subject: subject,
-              progressIndex: _index + 1,
-              progressTotal: total,
+              progressIndex: math.min(_index + 1, totalQuestions),
+              progressTotal: totalQuestions,
               answeredScored: answeredScored,
               scoredTotal: t.scored.length,
+              atCloseout: atCloseout,
             ),
             const SizedBox(height: 8),
             Expanded(
               child: PageView.builder(
                 controller: _page,
                 onPageChanged: (i) => setState(() => _index = i),
-                itemCount: total,
+                itemCount: pageCount,
                 itemBuilder: (_, i) {
+                  if (i == totalQuestions) {
+                    return _CloseoutPage(
+                      template: t,
+                      answeredScored: answeredScored,
+                      scoredTotal: t.scored.length,
+                      saving: _saving,
+                      onFinish: _saving ? null : _submit,
+                    );
+                  }
                   final q = t.questions[i];
                   return _QuestionPage(
+                    questionIndex: i,
                     question: q,
                     answers: _answers,
-                    onAnswered: (next) {
+                    onAnswered: (next, {required autoAdvance}) {
                       setState(() => _answers = next);
                       unawaited(_autosave());
+                      if (autoAdvance) {
+                        // Give the chibi tap-animation a beat (~450ms)
+                        // before the page slides, so the kid sees
+                        // their answer register before the swap.
+                        Future.delayed(
+                          const Duration(milliseconds: 450),
+                          () {
+                            if (mounted) _advanceFrom(i);
+                          },
+                        );
+                      }
                     },
                   );
                 },
@@ -211,32 +236,18 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
                       label: const Text('Back'),
                     ),
                     const Spacer(),
-                    if (_index < total - 1)
-                      FilledButton.icon(
-                        onPressed: () {
-                          unawaited(HapticFeedback.selectionClick());
-                          unawaited(_page.nextPage(
-                            duration: const Duration(milliseconds: 240),
-                            curve: Curves.easeOut,
-                          ));
-                        },
-                        icon: const Icon(Icons.arrow_forward),
-                        label: const Text('Next'),
-                      )
-                    else
-                      FilledButton.icon(
-                        onPressed: _saving ? null : _submit,
-                        icon: _saving
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.check_circle_outline),
-                        label: const Text('Finish'),
-                      ),
+                    // Forward affordance ONLY appears for kinds that
+                    // don't auto-advance (multiselect / text) and on
+                    // the question pages — closeout has its own
+                    // Finish button inside the page body.
+                    if (!atCloseout) _ForwardButton(
+                      question: t.questions[_index],
+                      atCloseout: false,
+                      onTap: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        _advanceFrom(_index);
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -244,6 +255,33 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ForwardButton extends StatelessWidget {
+  const _ForwardButton({
+    required this.question,
+    required this.atCloseout,
+    required this.onTap,
+  });
+
+  final SurveyQuestion question;
+  final bool atCloseout;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (atCloseout) return const SizedBox.shrink();
+    // agree3 auto-advances on tap; the explicit Next button on those
+    // pages is dead weight + invites double-press.
+    if (question.kind == SurveyQuestionKind.agree3) {
+      return const SizedBox.shrink();
+    }
+    return FilledButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.arrow_forward),
+      label: const Text('Next'),
     );
   }
 }
@@ -256,6 +294,7 @@ class _SurveyHeader extends StatelessWidget {
     required this.progressTotal,
     required this.answeredScored,
     required this.scoredTotal,
+    required this.atCloseout,
   });
 
   final SurveyTemplate template;
@@ -264,6 +303,7 @@ class _SurveyHeader extends StatelessWidget {
   final int progressTotal;
   final int answeredScored;
   final int scoredTotal;
+  final bool atCloseout;
 
   @override
   Widget build(BuildContext context) {
@@ -279,10 +319,7 @@ class _SurveyHeader extends StatelessWidget {
           Row(
             children: [
               if (subject != null)
-                PersonAvatar(
-                  name: name,
-                  photoUrl: subject!.photoUrl,
-                ),
+                PersonAvatar(name: name, photoUrl: subject!.photoUrl),
               if (subject != null) const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -311,10 +348,9 @@ class _SurveyHeader extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: progressIndex / progressTotal,
+              value: atCloseout ? 1 : progressIndex / progressTotal,
               minHeight: 6,
-              backgroundColor:
-                  theme.colorScheme.surfaceContainerHighest,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
             ),
           ),
         ],
@@ -325,18 +361,21 @@ class _SurveyHeader extends StatelessWidget {
 
 class _QuestionPage extends StatelessWidget {
   const _QuestionPage({
+    required this.questionIndex,
     required this.question,
     required this.answers,
     required this.onAnswered,
   });
 
+  final int questionIndex;
   final SurveyQuestion question;
   final SurveyAnswers answers;
-  final ValueChanged<SurveyAnswers> onAnswered;
+  final void Function(SurveyAnswers next, {required bool autoAdvance}) onAnswered;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final variant = ChibiVariant.forQuestionIndex(questionIndex);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       child: Column(
@@ -357,17 +396,22 @@ class _QuestionPage extends StatelessWidget {
             SurveyQuestionKind.agree3 => _Agree3Row(
                 question: question,
                 answers: answers,
-                onAnswered: onAnswered,
+                variant: variant,
+                onAnswered: (next) =>
+                    onAnswered(next, autoAdvance: true),
               ),
             SurveyQuestionKind.multiselect => _MultiselectList(
                 question: question,
                 answers: answers,
-                onAnswered: onAnswered,
+                variant: variant,
+                onAnswered: (next) =>
+                    onAnswered(next, autoAdvance: false),
               ),
             SurveyQuestionKind.text => _TextAnswer(
                 question: question,
                 answers: answers,
-                onAnswered: onAnswered,
+                onAnswered: (next) =>
+                    onAnswered(next, autoAdvance: false),
               ),
           },
         ],
@@ -402,42 +446,74 @@ class _PracticeBadge extends StatelessWidget {
   }
 }
 
-class _Agree3Row extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// agree3 row — three chibis, one shape+color, three expressions.
+// Tap one → squash, particle burst, color modulation, auto-advance.
+// ---------------------------------------------------------------------------
+
+class _Agree3Row extends StatefulWidget {
   const _Agree3Row({
     required this.question,
     required this.answers,
+    required this.variant,
     required this.onAnswered,
   });
 
   final SurveyQuestion question;
   final SurveyAnswers answers;
+  final ChibiVariant variant;
   final ValueChanged<SurveyAnswers> onAnswered;
 
   @override
+  State<_Agree3Row> createState() => _Agree3RowState();
+}
+
+class _Agree3RowState extends State<_Agree3Row> {
+  int? _tappingValue;
+  Timer? _tapTimer;
+
+  @override
+  void dispose() {
+    _tapTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onTap(int value) {
+    unawaited(HapticFeedback.selectionClick());
+    setState(() => _tappingValue = value);
+    _tapTimer?.cancel();
+    _tapTimer = Timer(const Duration(milliseconds: 220), () {
+      if (!mounted) return;
+      setState(() => _tappingValue = null);
+    });
+    final next = SurveyAnswers.fromJson(widget.answers.toJson())
+      ..setAgree3(widget.question.key, value);
+    widget.onAnswered(next);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final selected = answers.agree3(question.key);
+    final selected = widget.answers.agree3(widget.question.key);
     return LayoutBuilder(
       builder: (context, c) {
-        // Three big smileys; fit comfortably on a 360dp phone with
-        // 24dp side padding (3 × ~100 with gaps).
         final smileySize = ((c.maxWidth - 32) / 3).clamp(96.0, 160.0);
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final mood in ChibiMood.values)
+            for (final value in const [0, 1, 2])
               _SmileyChoice(
-                mood: mood,
-                isPractice: question.isPractice,
+                variant: widget.variant,
+                expression: ChibiExpression.forAgree3(value),
+                label: ChibiExpression.agree3Label(
+                  value,
+                  practice: widget.question.isPractice,
+                ),
                 size: smileySize,
-                selected: selected == mood.index,
-                dimmed: selected != null && selected != mood.index,
-                onTap: () {
-                  unawaited(HapticFeedback.selectionClick());
-                  final next = SurveyAnswers.fromJson(answers.toJson())
-                    ..setAgree3(question.key, mood.index);
-                  onAnswered(next);
-                },
+                selected: selected == value,
+                dimmed: selected != null && selected != value,
+                tapping: _tappingValue == value,
+                onTap: () => _onTap(value),
               ),
           ],
         );
@@ -448,28 +524,28 @@ class _Agree3Row extends StatelessWidget {
 
 class _SmileyChoice extends StatelessWidget {
   const _SmileyChoice({
-    required this.mood,
+    required this.variant,
+    required this.expression,
+    required this.label,
     required this.size,
     required this.selected,
     required this.dimmed,
-    required this.isPractice,
+    required this.tapping,
     required this.onTap,
   });
 
-  final ChibiMood mood;
+  final ChibiVariant variant;
+  final ChibiExpression expression;
+  final String label;
   final double size;
   final bool selected;
   final bool dimmed;
-  final bool isPractice;
+  final bool tapping;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Practice questions use feeling-flavored labels ("Not great /
-    // Okay / Great!"); real questions use the survey's
-    // "Disagree / Kind of agree / Agree!" labels.
-    final label = isPractice ? mood.feelingLabel : mood.label;
     return Semantics(
       button: true,
       selected: selected,
@@ -482,11 +558,30 @@ class _SmileyChoice extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ChibiSmiley(
-                mood: mood,
-                size: size,
-                selected: selected,
-                dimmed: dimmed,
+              // Particle burst rendered on top of the chibi via a
+              // Stack so a re-tap can fire a fresh burst without
+              // re-laying out the chibi underneath.
+              SizedBox(
+                width: size,
+                height: size,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ChibiSmiley(
+                      variant: variant,
+                      expression: expression,
+                      size: size,
+                      selected: selected,
+                      dimmed: dimmed,
+                      tapping: tapping,
+                    ),
+                    if (tapping)
+                      _SelectionBurst(
+                        key: ValueKey('burst-${UniqueKey()}'),
+                        size: size,
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -498,8 +593,11 @@ class _SmileyChoice extends StatelessWidget {
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: dimmed
                         ? theme.colorScheme.onSurfaceVariant
-                        : theme.colorScheme.onSurface,
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                        : selected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface,
+                    fontWeight:
+                        selected ? FontWeight.w800 : FontWeight.w600,
                   ),
                 ),
               ),
@@ -511,15 +609,105 @@ class _SmileyChoice extends StatelessWidget {
   }
 }
 
+/// Eight particles radiating from the center, fading out over ~600ms.
+/// Runs once per mount — the parent rebuilds with a new key when it
+/// wants the burst to fire again.
+class _SelectionBurst extends StatefulWidget {
+  const _SelectionBurst({required this.size, super.key});
+  final double size;
+
+  @override
+  State<_SelectionBurst> createState() => _SelectionBurstState();
+}
+
+class _SelectionBurstState extends State<_SelectionBurst>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    unawaited(_c.forward());
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (_, _) => CustomPaint(
+          painter: _BurstPainter(
+            t: _c.value,
+            color: theme.colorScheme.primary,
+          ),
+          size: Size.square(widget.size),
+        ),
+      ),
+    );
+  }
+}
+
+class _BurstPainter extends CustomPainter {
+  _BurstPainter({required this.t, required this.color});
+  final double t; // 0..1
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final maxR = size.width * 0.55;
+    // Eight particles, spaced 45° apart. Each particle is a small
+    // circle that scoots outward + fades + shrinks.
+    for (var i = 0; i < 8; i++) {
+      final angle = i * (math.pi / 4);
+      // Eased outward distance.
+      final d = Curves.easeOutCubic.transform(t) * maxR;
+      final dx = math.cos(angle) * d;
+      final dy = math.sin(angle) * d;
+      final alpha = (1 - t).clamp(0.0, 1.0);
+      final radius = 5 * (1 - t * 0.6);
+      canvas.drawCircle(
+        center + Offset(dx, dy),
+        radius,
+        Paint()
+          ..color = color.withValues(alpha: alpha)
+          ..isAntiAlias = true,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BurstPainter old) =>
+      old.t != t || old.color != color;
+}
+
+// ---------------------------------------------------------------------------
+// Multiselect — one row per option, each row has Yes / No chibis.
+// No auto-advance; kid hits Next at the bottom when ready.
+// ---------------------------------------------------------------------------
+
 class _MultiselectList extends StatelessWidget {
   const _MultiselectList({
     required this.question,
     required this.answers,
+    required this.variant,
     required this.onAnswered,
   });
 
   final SurveyQuestion question;
   final SurveyAnswers answers;
+  final ChibiVariant variant;
   final ValueChanged<SurveyAnswers> onAnswered;
 
   @override
@@ -530,7 +718,7 @@ class _MultiselectList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Tap each one that fits — you can pick several.',
+          'For each one, tap Yes or No.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -538,97 +726,146 @@ class _MultiselectList extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         for (final opt in question.options) ...[
-          _MultiselectTile(
+          _MultiOptionRow(
             label: opt.label,
-            selected: picked.contains(opt.key),
-            onTap: () {
+            variant: variant,
+            isYes: picked.contains(opt.key),
+            onYes: () {
               unawaited(HapticFeedback.selectionClick());
-              final next = picked.toSet();
-              if (next.contains(opt.key)) {
-                next.remove(opt.key);
-              } else {
-                next.add(opt.key);
-              }
+              final next = picked.toSet()..add(opt.key);
+              final updated = SurveyAnswers.fromJson(answers.toJson())
+                ..setMultiselect(question.key, next.toList());
+              onAnswered(updated);
+            },
+            onNo: () {
+              unawaited(HapticFeedback.selectionClick());
+              final next = picked.toSet()..remove(opt.key);
               final updated = SurveyAnswers.fromJson(answers.toJson())
                 ..setMultiselect(question.key, next.toList());
               onAnswered(updated);
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
         ],
-        // Explicit "I'm done picking" so an empty list is still a
-        // recorded answer (vs. the kid hasn't engaged yet).
-        Align(
-          child: TextButton(
-            onPressed: () {
-              final updated = SurveyAnswers.fromJson(answers.toJson())
-                ..setMultiselect(question.key, picked.toList());
-              onAnswered(updated);
-            },
-            child: Text(
-              picked.isEmpty ? "None of these · I'm done" : "I'm done",
-            ),
-          ),
-        ),
       ],
     );
   }
 }
 
-class _MultiselectTile extends StatelessWidget {
-  const _MultiselectTile({
+class _MultiOptionRow extends StatelessWidget {
+  const _MultiOptionRow({
     required this.label,
+    required this.variant,
+    required this.isYes,
+    required this.onYes,
+    required this.onNo,
+  });
+
+  final String label;
+  final ChibiVariant variant;
+  final bool isYes;
+  final VoidCallback onYes;
+  final VoidCallback onNo;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const chibiSize = 72.0;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          _OptionToggleChip(
+            label: 'No',
+            variant: variant,
+            expression: ChibiExpression.sad,
+            size: chibiSize,
+            selected: !isYes,
+            onTap: onNo,
+          ),
+          const SizedBox(width: 8),
+          _OptionToggleChip(
+            label: 'Yes',
+            variant: variant,
+            expression: ChibiExpression.happy,
+            size: chibiSize,
+            selected: isYes,
+            onTap: onYes,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OptionToggleChip extends StatelessWidget {
+  const _OptionToggleChip({
+    required this.label,
+    required this.variant,
+    required this.expression,
+    required this.size,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final ChibiVariant variant;
+  final ChibiExpression expression;
+  final double size;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: selected
-          ? theme.colorScheme.primaryContainer
-          : theme.colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(14),
-      clipBehavior: Clip.antiAlias,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Icon(
-                selected
-                    ? Icons.check_circle
-                    : Icons.radio_button_unchecked,
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ChibiSmiley(
+              variant: variant,
+              expression: expression,
+              size: size,
+              selected: selected,
+              dimmed: !selected,
+            ),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
                 color: selected
-                    ? theme.colorScheme.onPrimaryContainer
+                    ? theme.colorScheme.primary
                     : theme.colorScheme.onSurfaceVariant,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: selected
-                        ? theme.colorScheme.onPrimaryContainer
-                        : theme.colorScheme.onSurface,
-                    fontWeight:
-                        selected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Text question — debounced autosave, no auto-advance, Next at bottom.
+// ---------------------------------------------------------------------------
 
 class _TextAnswer extends StatefulWidget {
   const _TextAnswer({
@@ -699,6 +936,80 @@ class _TextAnswerState extends State<_TextAnswer> {
           onChanged: _onChanged,
         ),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Closeout — N+1 page after the last question.
+// ---------------------------------------------------------------------------
+
+class _CloseoutPage extends StatelessWidget {
+  const _CloseoutPage({
+    required this.template,
+    required this.answeredScored,
+    required this.scoredTotal,
+    required this.saving,
+    required this.onFinish,
+  });
+
+  final SurveyTemplate template;
+  final int answeredScored;
+  final int scoredTotal;
+  final bool saving;
+  final VoidCallback? onFinish;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final allAnswered = answeredScored == scoredTotal;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Last page gets the excited variant — the celebration
+            // smiley, not tied to any question's variant rotation.
+            const ChibiSmiley(
+              variant: ChibiVariant.circleGold,
+              expression: ChibiExpression.excited,
+              size: 160,
+              selected: true,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              allAnswered ? 'All done!' : "You're almost there!",
+              style: theme.textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              allAnswered
+                  ? 'Great job. Tap Finish to save your answers.'
+                  : 'Tap Back to fill in the $scoredTotal — $answeredScored '
+                      "you haven't answered yet, or Finish to save what "
+                      'you have.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onFinish,
+              icon: saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_circle_outline),
+              label: const Text('Finish'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
