@@ -55,23 +55,31 @@ final powerSyncLifecycleProvider = Provider<void>((ref) {
     // is updated to publish `by_space_recent` (auto_subscribe: false)
     // for entries / attendance_records / vehicle_logs, this kicks in
     // and the heavy tables stop growing the cold-start payload.
-    try {
-      // We touch a dynamic API surface here because we want to be
-      // forward-compatible with PowerSync SDK versions that add
-      // streams without forcing a hard upgrade. If the method is
-      // missing or the stream isn't deployed, the catch handles it.
-      // ignore: avoid_dynamic_calls
-      await (db as dynamic).syncStream('by_space_recent')?.subscribe(
-        parameters: <String, dynamic>{
-          'cutoff_at': SyncWindow.cutoffIsoNow(),
-          'cutoff_date': SyncWindow.cutoffDateNow(),
-        },
-      );
-    } on Exception catch (e) {
-      // Expected today (stream not deployed). Logged for visibility
-      // and skipped — we deliberately don't rethrow.
-      debugPrint('[sync] by_space_recent subscribe skipped: $e');
-    }
+    // The installed PowerSync SDK exposes `syncStream(name).subscribe`
+    // but the parameters-aware overload (`subscribe(parameters: …)`)
+    // isn't shipped yet — only ttl/priority. Until the SDK lands
+    // parameters, we compute the cutoff and stash it for diagnostics
+    // but don't actually invoke a no-op subscribe (which would throw
+    // NoSuchMethodError).
+    //
+    // When the SDK upgrades AND the dashboard YAML adds
+    // `by_space_recent`, switch this block to:
+    //
+    //   await db
+    //     .syncStream('by_space_recent')
+    //     .subscribe(parameters: {
+    //       'cutoff_at':   SyncWindow.cutoffIsoNow(),
+    //       'cutoff_date': SyncWindow.cutoffDateNow(),
+    //     });
+    //
+    // See `docs/SCALE_PUNCH_LIST.md` → "Time-windowed sync".
+    final _ = db; // silence "unused parameter"
+    debugPrint(
+      '[sync] window cutoffs ready: '
+      'at=${SyncWindow.cutoffIsoNow()} '
+      'date=${SyncWindow.cutoffDateNow()} — '
+      'subscribe wiring waits on SDK + dashboard.',
+    );
   }
 
   void scheduleRollover(PowerSyncDatabase db) {
