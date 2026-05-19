@@ -22,6 +22,21 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Every attendance record for a single subject, newest first.
+  /// Drives per-kid history surfaces (subject detail, the progress
+  /// report export, future analytics).
+  Stream<List<AttendanceRecord>> watchForSubject(String subjectId) {
+    return (select(attendanceRecords)
+          ..where((a) => a.subjectId.equals(subjectId))
+          ..orderBy([
+            (a) => OrderingTerm(
+                  expression: a.date,
+                  mode: OrderingMode.desc,
+                ),
+          ]))
+        .watch();
+  }
+
   /// Insert-or-update an attendance row for a (subject, date) pair.
   Future<void> upsert({
     required String id,

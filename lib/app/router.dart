@@ -9,6 +9,7 @@ import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
+import 'package:differentworld/features/exports/progress_report_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
@@ -110,6 +111,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => SubjectEditScreen(
                       groupId: state.pathParameters['id']!,
                       subjectId: state.pathParameters['sid'],
+                    ),
+                  ),
+                  // Progress-report PDF — preview + share/print.
+                  // Reached from the staff subject detail screen.
+                  GoRoute(
+                    path: 'progress-report',
+                    builder: (_, state) => ProgressReportScreen(
+                      subjectId: state.pathParameters['sid']!,
                     ),
                   ),
                 ],

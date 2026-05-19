@@ -56,6 +56,20 @@ class SubjectDetailScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       actions: [
+        if (viewer.canObserve && subjectAsync.value != null)
+          IconButton(
+            tooltip: 'Progress report',
+            icon: const Icon(Icons.description_outlined),
+            onPressed: () {
+              final gid = subjectAsync.value!.groupId ?? '';
+              if (gid.isEmpty) return;
+              unawaited(
+                context.push(
+                  '/groups/$gid/students/$subjectId/progress-report',
+                ),
+              );
+            },
+          ),
         if (viewer.canManageProgram && subjectAsync.value != null)
           IconButton(
             tooltip: 'Edit',
