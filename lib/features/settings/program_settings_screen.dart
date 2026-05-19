@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
+import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -28,18 +29,14 @@ class ProgramSettingsScreen extends ConsumerStatefulWidget {
 
 class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
   Future<void> _setCap(String spaceId, String key, bool value) async {
-    try {
-      await ref.read(spaceCapActionsProvider).setCap(spaceId, key, value);
-    } on Exception catch (e, st) {
-      FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'settings'),
-      );
-      if (!mounted) return;
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      messenger?.showSnackBar(
-        const SnackBar(content: Text("Couldn't save that change. Try again.")),
-      );
-    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final actions = ref.read(spaceCapActionsProvider);
+    await runReported(
+      library: 'settings',
+      messenger: messenger,
+      onError: "Couldn't save that change. Try again.",
+      action: () => actions.setCap(spaceId, key, value),
+    );
   }
 
   @override

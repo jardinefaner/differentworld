@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
+import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -162,17 +163,10 @@ Future<void> _openTriage(
       capture: capture,
       onDismiss: () async {
         Navigator.of(sheetCtx).pop();
-        try {
-          await actions.discard(capture.id);
-        } on Exception catch (e, st) {
-          FlutterError.reportError(
-            FlutterErrorDetails(
-              exception: e,
-              stack: st,
-              library: 'captures',
-            ),
-          );
-        }
+        await runReported(
+          library: 'captures',
+          action: () => actions.discard(capture.id),
+        );
       },
       onMakeObservation: () async {
         Navigator.of(sheetCtx).pop();
@@ -185,23 +179,13 @@ Future<void> _openTriage(
       },
       onMakeTask: () async {
         Navigator.of(sheetCtx).pop();
-        try {
-          await actions.promoteToTask(captureId: capture.id);
-          messenger?.showSnackBar(
-            const SnackBar(content: Text('Saved as a task.')),
-          );
-        } on Exception catch (e, st) {
-          FlutterError.reportError(
-            FlutterErrorDetails(
-              exception: e,
-              stack: st,
-              library: 'captures',
-            ),
-          );
-          messenger?.showSnackBar(
-            const SnackBar(content: Text('Could not create the task.')),
-          );
-        }
+        await runReported(
+          library: 'captures',
+          messenger: messenger,
+          onSuccess: 'Saved as a task.',
+          onError: 'Could not create the task.',
+          action: () => actions.promoteToTask(captureId: capture.id),
+        );
       },
     ),
   );
@@ -283,22 +267,14 @@ Future<void> _pickSubjectAndPromote({
     title: 'Whose observation is this?',
   );
   if (picked == null) return;
-  try {
-    await actions.promoteToObservation(
+  await runReported(
+    library: 'captures',
+    messenger: messenger,
+    onSuccess: 'Saved as an observation for ${picked.firstName}.',
+    onError: 'Could not promote the capture.',
+    action: () => actions.promoteToObservation(
       captureId: capture.id,
       subjectId: picked.id,
-    );
-    messenger?.showSnackBar(
-      SnackBar(
-        content: Text('Saved as an observation for ${picked.firstName}.'),
-      ),
-    );
-  } on Exception catch (e, st) {
-    FlutterError.reportError(
-      FlutterErrorDetails(exception: e, stack: st, library: 'captures'),
-    );
-    messenger?.showSnackBar(
-      const SnackBar(content: Text('Could not promote the capture.')),
-    );
-  }
+    ),
+  );
 }

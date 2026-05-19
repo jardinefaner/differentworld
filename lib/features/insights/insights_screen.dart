@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/insights/insights_providers.dart';
+import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -215,16 +216,14 @@ class _SnoozeButton extends ConsumerWidget {
       tooltip: 'Snooze',
       icon: Icon(Icons.more_horiz, color: foreground),
       onSelected: (option) async {
-        try {
-          await ref.read(insightActionsProvider).snooze(
-                insightId: insightId,
-                option: option,
-              );
-        } on Exception catch (e, st) {
-          FlutterError.reportError(
-            FlutterErrorDetails(exception: e, stack: st, library: 'insights'),
-          );
-        }
+        final actions = ref.read(insightActionsProvider);
+        await runReported(
+          library: 'insights',
+          action: () => actions.snooze(
+            insightId: insightId,
+            option: option,
+          ),
+        );
       },
       itemBuilder: (_) => [
         for (final opt in InsightSnoozeOption.values)
