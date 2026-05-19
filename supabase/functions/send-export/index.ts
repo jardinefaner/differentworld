@@ -227,7 +227,7 @@ function renderEmailHtml({
     ? `A report about ${escapeHtml(kidName)}`
     : 'A report from your child\'s program';
   const blurb = templateId === 'progress_report'
-    ? "Your child's teacher has prepared a progress report. "
+    ? "Your child's teacher has prepared a progress report. " +
       'Tap below to view it — the link is valid for the next week.'
     : 'A report has been shared with you. Tap below to view it.';
   return `<!doctype html><html><body style="font-family: -apple-system, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px;">
