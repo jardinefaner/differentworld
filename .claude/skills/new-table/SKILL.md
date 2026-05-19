@@ -1,9 +1,9 @@
 ---
 name: new-table
-description: The 5-place checklist for adding a new synced table. Triggered when adding a new entity that needs to live in Drift + sync to Supabase.
+description: The 6-place checklist for adding a new synced table. Triggered when adding a new entity that needs to live in Drift + sync to Supabase.
 ---
 
-# /new-table — the 5-place sync checklist
+# /new-table — the 6-place sync checklist
 
 Miss any and the table silently doesn't sync. Order matters.
 
@@ -70,7 +70,8 @@ Don't declare `id` — PowerSync adds it. All types are TEXT/INTEGER/REAL
 
 ## 4. Drift class
 
-`lib/core/db/app_database.dart`:
+`lib/core/db/app_database.dart` — add the Table class only (mutators
+go in the DAO, step 5):
 
 ```dart
 class Foos extends Table {
@@ -85,18 +86,53 @@ class Foos extends Table {
 }
 
 @DriftDatabase(
-  tables: [Spaces, Members, ..., Foos],  // add to the list
+  tables: [..., Foos],          // add to the table list
+  daos: [..., FoosDao],         // add to the DAO list (next step)
 )
+```
+
+## 5. DAO (mutators + readers)
+
+`lib/core/db/dao/foos_dao.dart` — see `split-dao` for the full
+template. The bones:
+
+```dart
+import 'package:differentworld/core/db/app_database.dart';
+import 'package:drift/drift.dart';
+
+part 'foos_dao.g.dart';
+
+@DriftAccessor(tables: [Foos])
+class FoosDao extends DatabaseAccessor<AppDatabase>
+    with _$FoosDaoMixin {
+  FoosDao(super.attachedDatabase);
+
+  Stream<List<Foo>> watchInSpace(String spaceId) {
+    return (select(foos)
+          ..where((f) => f.spaceId.equals(spaceId))
+          ..orderBy([(f) => OrderingTerm(expression: f.createdAt)]))
+        .watch();
+  }
+
+  Future<Foo?> findById(String id) {
+    return (select(foos)..where((f) => f.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<void> create({required String id, required String spaceId, …}) async {
+    // …
+  }
+}
 ```
 
 Run `/regen`.
 
-## 5. Local DB wipe
+## 6. Local DB wipe
 
 Tell the user to **uninstall + reinstall on every active device**
 (`/wipe-pixel`) so PowerSync recreates the local schema from scratch.
 
-## After all 5
+## After all 6
 
-Add a Drift query method (`watchFoosInSpace(spaceId)`) and a Riverpod
-provider (`StreamProvider.autoDispose.family<...>`). See `new-provider`.
+Add a Riverpod provider that wraps the DAO stream
+(`StreamProvider.autoDispose.family<…>`). See `new-provider`. Reads go
+through `db.foosDao.watchX`; writes through `ref.read(fooActionsProvider).…`.

@@ -132,23 +132,38 @@ Rules for adding a new `SECURITY DEFINER` helper:
   call it.
 - Reference it from policies as `app.<name>()`.
 
-### 3. Adding a synced table touches **five** places
+### 3. Adding a synced table touches **six** places
 
-Miss any and it silently won't sync:
+Miss any and the table silently won't sync — or its mutators will clog
+the AppDatabase root, violating the DAO pattern below.
 
-1. **Migration SQL** (`supabase/migrations/<ts>_<name>.sql`): create the
-   table with `program_id uuid not null references public.programs(id)`,
+1. **Migration SQL** (`supabase/migrations/<ts>_<name>.sql`): create
+   the table with `space_id uuid not null references public.spaces(id)`,
    add `alter table public.<name> replica identity full;`, add RLS
-   policies gating on `program_id = public.current_program_id()`.
+   policies.
 2. **Publication**: `alter publication powersync add table public.<name>;`
-3. **Sync rules** (`supabase/sync_rules.yaml`): add a `SELECT * FROM <name>
-   WHERE program_id IN (SELECT program_id FROM profiles WHERE id =
-   auth.user_id())` line to the `by_program` stream, redeploy.
-4. **PowerSync local schema** (`lib/core/db/power_sync_schema.dart`): add
-   `Table('<name>', [Column.text('col'), …])`. Don't declare `id`.
-5. **Drift table** (`lib/core/db/app_database.dart`) — only if you'll
-   query it: add `class <Name>s extends Table { … }`, add to
-   `@DriftDatabase(tables: […])`, run `dart run build_runner build`.
+3. **Sync rules** (`supabase/sync_rules.yaml`): add a `SELECT * FROM
+   <name> WHERE space_id IN (SELECT space_id FROM members WHERE id =
+   auth.user_id())` line to the `by_space` stream, **redeploy on the
+   PowerSync dashboard** (the YAML file in the repo is just a source
+   of truth — the dashboard is the runtime).
+4. **PowerSync local schema** (`lib/core/db/power_sync_schema.dart`):
+   add `Table('<name>', [Column.text('col'), …])`. Don't declare `id`.
+5. **Drift Table class** (`lib/core/db/app_database.dart`): add
+   `class <Name>s extends Table { … }`, add to
+   `@DriftDatabase(tables: […], daos: […])`. **Mutators do NOT go here
+   anymore — they live in the DAO** (next step).
+6. **DAO** (`lib/core/db/dao/<name>_dao.dart`): one file per feature
+   domain, owns the watch / find / create / update_ / delete methods
+   for that entity. Register on `@DriftDatabase(daos:)`. Run
+   `dart run build_runner build`. See the `split-dao` skill for the
+   full template, naming conventions, and the `update_` trailing-
+   underscore convention.
+
+Call sites read `db.<noun>Dao.<verb>(...)` — e.g.
+`db.capturesDao.watchOpen(spaceId)`, `db.entriesDao.create(...)`. Only
+cross-table transactions (e.g. `createSpaceForMember` which writes
+spaces + members in one transaction) live on `AppDatabase`.
 
 ### 4. IDs are uuid server-side, text client-side
 

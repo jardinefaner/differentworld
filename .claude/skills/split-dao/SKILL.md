@@ -1,127 +1,143 @@
 ---
 name: split-dao
-description: Extract a domain's Drift mutators into a `@DriftAccessor` DAO file. Use when app_database.dart crosses 800 lines, or when a feature's mutators sprawl across the database root.
+description: Add a new domain DAO under lib/core/db/dao/ when a feature's mutators sprawl, OR consult this for the conventions every existing DAO already follows. The 15-DAO refactor is done — new domains slot in alongside.
 ---
 
-# /split-dao — pull a domain into its own DAO
+# /split-dao — the established DAO pattern
 
-`app_database.dart` is the codegen root — it owns the `@DriftDatabase`
-annotation and is the single class consumers `ref.read(appDatabaseProvider)`
-into. As the app grows, its line count balloons because every
-feature's mutators live in that one class.
+## Status: refactor complete (May 2026)
 
-Drift solves this with `@DriftAccessor` — a per-domain class that
-holds mutators for a subset of tables, generated alongside the root.
+The original DAO split (May 2026) extracted 15 domains out of
+`app_database.dart` — it dropped from 1787 → 434 lines. This skill is
+now the canonical *forward* reference: when you add a new domain (or
+extend an existing one), follow this pattern.
 
-## When to do it
+## Where DAOs live
 
-Trigger: `app_database.dart` is over **800 lines** OR a single
-domain's mutators are ≥ 150 lines AND the feature has its own folder.
+```
+lib/core/db/dao/
+  attachments_dao.dart
+  attendance_dao.dart
+  captures_dao.dart
+  certifications_dao.dart
+  dismissed_insights_dao.dart
+  entries_dao.dart
+  group_members_dao.dart
+  groups_dao.dart
+  guardians_dao.dart
+  invites_dao.dart
+  members_dao.dart
+  spaces_dao.dart
+  subjects_dao.dart
+  surveys_dao.dart
+  vehicles_dao.dart
+```
 
-Good candidates (current scale audit, May 2026):
-- `subjects` — watch/find/upsert/delete subjects + watchSubjectsInSpace
-- `entries` — observation CRUD
-- `attendance` — attendance + bulk insert
-- `captures` — newest tenant, clean lines
-- `vehicles` — vehicles + vehicle_logs
-- `surveys` — survey_responses
-- `attachments` — attachments
-- `certifications` — member_certifications
+One DAO per **feature domain** (not per table — `VehiclesDao` owns
+both vehicles + vehicle_logs, `GuardiansDao` owns guardians +
+subject_guardians + reads of subjects).
 
-## Recipe
-
-### 1. Create the DAO file
-
-`lib/core/db/dao/<feature>_dao.dart`:
+## DAO file template
 
 ```dart
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:drift/drift.dart';
 
-part '<feature>_dao.g.dart';
+part 'foo_dao.g.dart';
 
-@DriftAccessor(tables: [Captures])
-class CapturesDao extends DatabaseAccessor<AppDatabase>
-    with _$CapturesDaoMixin {
-  CapturesDao(super.db);
+/// Short doc on the domain and any cross-table concerns.
+@DriftAccessor(tables: [Foos])
+class FoosDao extends DatabaseAccessor<AppDatabase>
+    with _$FoosDaoMixin {
+  FoosDao(super.attachedDatabase);
 
-  Stream<List<Capture>> watchOpenCaptures(String spaceId) {
-    return (select(captures)
-          ..where((c) => c.spaceId.equals(spaceId) & c.status.equals('open'))
-          ..orderBy([
-            (c) => OrderingTerm.desc(c.createdAt),
-          ]))
-        .watch();
-  }
-
-  // … remaining mutators, copied verbatim from app_database.dart
+  Stream<List<Foo>> watchInSpace(String spaceId) { ... }
+  Future<Foo?> findById(String id) { ... }
+  Future<void> create({...}) async { ... }
+  Future<void> update_({...}) async { ... }       // ← note the `_`
+  Future<void> deleteById(String id) async { ... }
 }
 ```
 
-### 2. Register on the database
+### Method naming — drop redundant nouns
+
+The noun lives in the accessor (`db.vehiclesDao.X`), so methods are
+verb-only at the call site:
+
+| Old (on AppDatabase) | New (on DAO) |
+|---|---|
+| `db.watchVehiclesInSpace(...)` | `db.vehiclesDao.watchInSpace(...)` |
+| `db.findVehicleById(...)` | `db.vehiclesDao.findById(...)` |
+| `db.createVehicle(...)` | `db.vehiclesDao.create(...)` |
+| `db.updateVehicle(...)` | `db.vehiclesDao.update_(...)` |
+| `db.deleteVehicle(...)` | `db.vehiclesDao.deleteById(...)` |
+
+### The `update_` trailing-underscore convention
+
+`DatabaseAccessor` already owns `update(table)` (the statement
+builder) — declaring a method named `update` on the DAO would shadow
+it and break calls like `update(foos)..where(...)`. The codebase uses
+`update_` as the consistent rename when the verb is just "update".
+Reads at the call site as `db.foosDao.update_(id: ...)` — slightly
+ugly but unambiguous and consistent across all 15 DAOs.
+
+## Registering the DAO
 
 `lib/core/db/app_database.dart`:
 
 ```dart
+import 'package:differentworld/core/db/dao/foos_dao.dart';
+
 @DriftDatabase(
-  tables: [Spaces, Members, /* … */ Captures],
-  daos: [CapturesDao],          // ← add here
+  tables: [..., Foos],
+  daos: [..., FoosDao],   // ← alphabetically sorted
 )
 class AppDatabase extends _$AppDatabase {
   // existing code
 }
 ```
 
-### 3. Run codegen
+Drift auto-generates the `db.foosDao` accessor from this declaration.
 
-```bash
-dart run build_runner build
-```
+## What stays on `AppDatabase` (the root)
 
-### 4. Remove the methods from `app_database.dart`
+- Drift Table classes (the schema source of truth for codegen).
+- `@DriftDatabase` declaration.
+- `schemaVersion` + the no-op `MigrationStrategy` (PowerSync owns the
+  schema).
+- **Cross-table transactions** — methods that write to tables owned
+  by two different DAOs. Today the only one is
+  `createSpaceForMember` (INSERTs a spaces row + UPDATEs a members
+  row in one transaction). If you add one, document why it's
+  cross-domain.
 
-Cut every `watchOpenCaptures`, `insertCapture`, etc. from
-`app_database.dart` — they now live on the DAO.
+## Adding a new mutator
 
-### 5. Update callers
+The standard flow:
 
-Old:
-```dart
-final db = await ref.read(appDatabaseProvider.future);
-await db.insertCapture(...);
-```
+1. Identify the right DAO (it should be the one whose primary table
+   you're mutating).
+2. Add the method to that DAO file.
+3. If the method touches a SECOND table for read context (e.g.
+   `promoteToObservation` reads from `subjectsDao.findById` before
+   writing to `capturesDao.markPromoted`), that's fine — but the
+   write itself goes on one DAO.
+4. If the method writes to two tables in one transaction, it belongs
+   on `AppDatabase` (cross-table). Document why.
 
-New:
-```dart
-final db = await ref.read(appDatabaseProvider.future);
-await db.capturesDao.insertCapture(...);   // ← .<dao> accessor
-```
+## When to add a NEW DAO
 
-Drift auto-generates the `capturesDao` getter on `AppDatabase`.
-
-### 6. Verify
-
-```bash
-flutter analyze
-flutter test
-```
-
-## What stays on `AppDatabase`
-
-- `@DriftDatabase` declaration
-- `schemaVersion`
-- `MigrationStrategy` (no-op for PowerSync, keep it)
-- Constructor
-- **Cross-domain mutators** — anything that touches tables from two
-  DAOs in one transaction. Leave those on the root.
+You're adding a brand-new synced table (see `new-table`). Default to
+its own DAO unless it's a join table whose entire purpose is to glue
+two existing entities (e.g. a `subject_tags` table — that joins onto
+the SubjectsDao or TagsDao depending on the read patterns).
 
 ## Don't
 
-- Don't move the Drift table CLASSES into the DAO file — they stay
-  in `app_database.dart` so the codegen can see them. Only the
-  **mutator methods** move.
-- Don't make a DAO per table — make one per **feature domain**. A
-  vehicles DAO owns both `vehicles` and `vehicle_logs`.
-- Don't forget the `part '<file>.g.dart'` directive — codegen needs it.
-- Don't migrate all DAOs in one commit. One feature at a time, each
-  with its own commit, so you can bisect if anything breaks.
+- Don't add new mutators to `AppDatabase` unless they're truly
+  cross-table. The root is held under 500 lines on purpose.
+- Don't redundant-noun your method names. `db.surveysDao.upsertSurveyResponse`
+  reads worse than `db.surveysDao.upsert`.
+- Don't try to make a single "GodDao" — one DAO per domain.
+- Don't migrate multiple DAOs in one commit. One per commit, so
+  bisect works if anything breaks.
