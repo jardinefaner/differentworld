@@ -105,7 +105,7 @@ class CaptureActions {
     // the per-classroom observation feeds too.
     final subj = await db.subjectsDao.findById(subjectId);
     final entryId = _uuid.v4();
-    await db.createEntry(
+    await db.entriesDao.create(
       id: entryId,
       spaceId: spaceId,
       kind: kind,

@@ -10273,6 +10273,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
+  late final AttendanceDao attendanceDao = AttendanceDao(this as AppDatabase);
   late final CapturesDao capturesDao = CapturesDao(this as AppDatabase);
   late final CertificationsDao certificationsDao = CertificationsDao(
     this as AppDatabase,
@@ -10280,6 +10281,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final DismissedInsightsDao dismissedInsightsDao = DismissedInsightsDao(
     this as AppDatabase,
   );
+  late final EntriesDao entriesDao = EntriesDao(this as AppDatabase);
   late final GroupMembersDao groupMembersDao = GroupMembersDao(
     this as AppDatabase,
   );

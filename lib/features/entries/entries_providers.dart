@@ -26,7 +26,7 @@ final entriesForGroupProvider =
     StreamProvider.autoDispose.family<List<Entry>, GroupEntriesKey>(
   (ref, key) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchEntriesForGroup(groupId: key.groupId, kind: key.kind);
+    yield* db.entriesDao.watchForGroup(groupId: key.groupId, kind: key.kind);
   },
 );
 
@@ -49,7 +49,7 @@ final observationsInSpaceProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  final entries = db.watchEntriesInSpace(
+  final entries = db.entriesDao.watchInSpace(
     spaceId: spaceId,
     kind: EntryKind.observation,
   );
@@ -78,7 +78,7 @@ final entriesForSubjectProvider =
     StreamProvider.autoDispose.family<List<Entry>, SubjectEntriesKey>(
   (ref, key) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchEntriesForSubject(
+    yield* db.entriesDao.watchForSubject(
       subjectId: key.subjectId,
       kind: key.kind,
     );
@@ -144,7 +144,7 @@ class EntryActions {
       throw StateError('No Space / signed-in Member.');
     }
     final useId = id ?? _uuid.v4();
-    await db.createEntry(
+    await db.entriesDao.create(
       id: useId,
       spaceId: spaceId,
       kind: kind,
@@ -165,12 +165,12 @@ class EntryActions {
     required String text,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateEntry(id: id, body: text);
+    await db.entriesDao.updateText(id: id, body: text);
   }
 
   Future<void> delete(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteEntry(id);
+    await db.entriesDao.deleteById(id);
   }
 }
 

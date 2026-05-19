@@ -14,7 +14,7 @@ final attendanceForDayProvider =
     StreamProvider.family<List<AttendanceRecord>, AttendanceKey>(
   (ref, key) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchAttendanceForGroupOnDate(key.groupId, key.date);
+    yield* db.attendanceDao.watchForGroupOnDate(key.groupId, key.date);
   },
 );
 
@@ -37,7 +37,7 @@ class AttendanceActions {
     if (spaceId == null || recordedBy == null) {
       throw StateError('No Space / signed-in Member.');
     }
-    await db.upsertAttendance(
+    await db.attendanceDao.upsert(
       id: _uuid.v4(),
       spaceId: spaceId,
       groupId: groupId,
@@ -78,7 +78,7 @@ class AttendanceActions {
       if (alreadySet.contains(subjectId)) continue;
       entries.add((id: _uuid.v4(), subjectId: subjectId));
     }
-    return db.bulkInsertAttendance(
+    return db.attendanceDao.bulkInsert(
       spaceId: spaceId,
       groupId: groupId,
       date: date,
@@ -96,7 +96,7 @@ class AttendanceActions {
   }) async {
     if (subjectIds.isEmpty) return;
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteAttendanceForSubjectsOnDate(
+    await db.attendanceDao.deleteForSubjectsOnDate(
       subjectIds: subjectIds,
       date: date,
     );
@@ -109,7 +109,7 @@ class AttendanceActions {
     required String date,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteAttendanceForSubjectsOnDate(
+    await db.attendanceDao.deleteForSubjectsOnDate(
       subjectIds: [subjectId],
       date: date,
     );
