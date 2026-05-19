@@ -141,12 +141,27 @@ class OmniboxResults extends ConsumerWidget {
         keywords: const [
           'patterns',
           'questions',
-          'review',
           'expiring',
           'late',
           'flagged',
         ],
         onSelect: (ctx, ref) => ctx.push('/insights'),
+      ),
+      // Weekly review — same data, guided walk-through.
+      _Suggestion(
+        label: 'Weekly review',
+        kindLabel: 'Action',
+        icon: Icons.play_circle_outline,
+        keywords: const [
+          'walk',
+          'review',
+          'sunday',
+          'triage',
+          'one at a time',
+        ],
+        onSelect: (ctx, ref) {
+          unawaited(ctx.push('/review'));
+        },
       ),
       // -- Surveys -------------------------------------------------------
       _Suggestion(

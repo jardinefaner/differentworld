@@ -14,6 +14,7 @@ import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
+import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
@@ -120,6 +121,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'insights',
             builder: (_, _) => const InsightsScreen(),
+          ),
+          // Weekly review — same data as /insights but presented as a
+          // guided one-question-per-page flow. The framework's
+          // medium-tempo surface.
+          GoRoute(
+            path: 'review',
+            builder: (_, _) => const WeeklyReviewScreen(),
           ),
           // Surveys — index of templates + per-template list of kids
           // + take-survey flow.

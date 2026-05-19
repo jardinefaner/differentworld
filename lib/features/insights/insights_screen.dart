@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/insights/insights_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,8 +19,19 @@ class InsightsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final insightsAsync = ref.watch(insightsProvider);
+    final insightCount = insightsAsync.value?.length ?? 0;
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
+      floatingActionButton: insightCount >= 2
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                unawaited(HapticFeedback.selectionClick());
+                unawaited(context.push('/review'));
+              },
+              icon: const Icon(Icons.play_circle_outline),
+              label: const Text('Walk me through'),
+            )
+          : null,
       body: insightsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => const EmptyState(
