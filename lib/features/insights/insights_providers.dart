@@ -10,6 +10,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -214,11 +215,8 @@ class InsightActions {
     required InsightSnoozeOption option,
   }) async {
     final viewer = _ref.read(viewerProvider);
-    final spaceId = viewer.spaceId;
-    final memberId = viewer.memberId;
-    if (spaceId == null || memberId == null) {
-      throw StateError('No Space / signed-in Member.');
-    }
+    final (:spaceId, :memberId) =
+        viewer.requireSpaceAndMember(action: 'snooze an insight');
     final db = await _ref.read(appDatabaseProvider.future);
     await db.upsertDismissedInsight(
       id: _uuid.v4(),

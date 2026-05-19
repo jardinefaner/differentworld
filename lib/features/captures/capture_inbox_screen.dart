@@ -4,10 +4,12 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/format/relative_time.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +33,7 @@ class CaptureInboxScreen extends ConsumerWidget {
         label: const Text('Capture'),
       ),
       body: capturesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (_, _) => const EmptyState(
           icon: Icons.error_outline,
           title: 'Could not load captures',
@@ -117,7 +119,7 @@ class _CaptureCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _relativeTime(created),
+                      relativeTimeAgo(created),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -245,11 +247,9 @@ Future<void> _pickSubjectAndPromote({
   required ScaffoldMessengerState? messenger,
   required Capture capture,
 }) async {
-  final picked = await showModalBottomSheet<Subject>(
-    context: rootContext,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (_) => const _SubjectPickerSheet(),
+  final picked = await pickSubject(
+    rootContext,
+    title: 'Whose observation is this?',
   );
   if (picked == null) return;
   try {
@@ -270,132 +270,4 @@ Future<void> _pickSubjectAndPromote({
       const SnackBar(content: Text('Could not promote the capture.')),
     );
   }
-}
-
-class _SubjectPickerSheet extends ConsumerStatefulWidget {
-  const _SubjectPickerSheet();
-
-  @override
-  ConsumerState<_SubjectPickerSheet> createState() =>
-      _SubjectPickerSheetState();
-}
-
-class _SubjectPickerSheetState
-    extends ConsumerState<_SubjectPickerSheet> {
-  String _filter = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final subjects =
-        ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
-    final filtered = _filter.trim().isEmpty
-        ? subjects
-        : subjects.where((s) {
-            final q = _filter.toLowerCase();
-            return s.firstName.toLowerCase().contains(q) ||
-                s.lastName.toLowerCase().contains(q);
-          }).toList();
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SafeArea(
-        top: false,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.face_outlined,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Whose observation is this?',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TextField(
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: 'Search children',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  onChanged: (v) => setState(() => _filter = v),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: filtered.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          subjects.isEmpty
-                              ? 'No children in your program yet.'
-                              : 'No match.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, _) =>
-                            const Divider(height: 1),
-                        itemBuilder: (_, i) {
-                          final s = filtered[i];
-                          final fullName = [
-                            s.firstName,
-                            if (s.lastName.isNotEmpty) s.lastName,
-                          ].join(' ');
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: s.photoUrl == null
-                                  ? null
-                                  : NetworkImage(s.photoUrl!),
-                              child: s.photoUrl == null
-                                  ? Text(
-                                      s.firstName.isEmpty
-                                          ? '?'
-                                          : s.firstName[0].toUpperCase(),
-                                    )
-                                  : null,
-                            ),
-                            title: Text(fullName),
-                            onTap: () => Navigator.of(context).pop(s),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-String _relativeTime(DateTime? when) {
-  if (when == null) return '';
-  final diff = DateTime.now().difference(when);
-  if (diff.inMinutes < 1) return 'just now';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-  if (diff.inHours < 24) return '${diff.inHours} h ago';
-  if (diff.inDays == 1) return 'yesterday';
-  if (diff.inDays < 7) return '${diff.inDays} days ago';
-  return '${(diff.inDays / 7).floor()} wk ago';
 }

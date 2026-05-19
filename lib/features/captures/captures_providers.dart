@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -51,10 +52,7 @@ class CaptureActions {
   /// later keystrokes go through [updateBody] using the returned id.
   Future<String> start({String body = ''}) async {
     final viewer = _ref.read(viewerProvider);
-    final spaceId = viewer.spaceId;
-    if (spaceId == null) {
-      throw StateError('No Space — cannot capture.');
-    }
+    final spaceId = viewer.requireSpaceId(action: 'capture');
     final db = await _ref.read(appDatabaseProvider.future);
     return db.insertCapture(
       id: _uuid.v4(),
@@ -96,11 +94,8 @@ class CaptureActions {
     String kind = 'observation',
   }) async {
     final viewer = _ref.read(viewerProvider);
-    final spaceId = viewer.spaceId;
-    final memberId = viewer.memberId;
-    if (spaceId == null || memberId == null) {
-      throw StateError('No Space — cannot promote a capture.');
-    }
+    final (:spaceId, :memberId) =
+        viewer.requireSpaceAndMember(action: 'promote a capture');
     final db = await _ref.read(appDatabaseProvider.future);
     final cap = await db.findCaptureById(captureId);
     if (cap == null) {
