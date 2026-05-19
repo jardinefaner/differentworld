@@ -53,6 +53,10 @@ streams:
       # upward loop's input side. Stays small (most captures get
       # promoted to entries or discarded within a week).
       - SELECT * FROM captures           WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Tasks — the third capture-promotion destination. Small unless
+      # a program runs hundreds of unclosed action items, which would
+      # be a process problem, not a sync problem.
+      - SELECT * FROM tasks              WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Only stream un-accepted invites. Accepted ones don't need to
       # round-trip back to every director's device — they just bloat
       # the local table over time. The acceptance event itself reaches

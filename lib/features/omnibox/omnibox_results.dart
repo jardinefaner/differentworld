@@ -170,6 +170,21 @@ class OmniboxResults extends ConsumerWidget {
         keywords: const ['triage', 'inbox', 'captures', 'notes'],
         onSelect: (ctx, ref) => ctx.push('/captures'),
       ),
+      // -- Tasks --------------------------------------------------------
+      _Suggestion(
+        label: 'Tasks',
+        kindLabel: 'Page',
+        icon: Icons.check_circle_outline,
+        keywords: const [
+          'tasks',
+          'todo',
+          'to-do',
+          'reminder',
+          'remind',
+          'follow up',
+        ],
+        onSelect: (ctx, ref) => ctx.push('/tasks'),
+      ),
       // Weekly review — same data, guided walk-through.
       _Suggestion(
         label: 'Weekly review',

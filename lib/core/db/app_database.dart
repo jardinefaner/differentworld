@@ -12,6 +12,7 @@ import 'package:differentworld/core/db/dao/members_dao.dart';
 import 'package:differentworld/core/db/dao/spaces_dao.dart';
 import 'package:differentworld/core/db/dao/subjects_dao.dart';
 import 'package:differentworld/core/db/dao/surveys_dao.dart';
+import 'package:differentworld/core/db/dao/tasks_dao.dart';
 import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
@@ -358,11 +359,31 @@ class Captures extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Tasks — the third destination for a triaged capture, and a
+/// first-class to-do entity. See migration `20260518000015_tasks.sql`.
+class Tasks extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get authorId => text().nullable()();
+  TextColumn get subjectId => text().nullable()();
+  TextColumn get body => text()();
+  TextColumn get status => text()(); // 'open' | 'done' | 'discarded'
+  TextColumn get dueAt => text().nullable()();
+  TextColumn get completedBy => text().nullable()();
+  TextColumn get completedAt => text().nullable()();
+  TextColumn get createdFromCaptureId => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
           Vehicles, VehicleLogs, MemberCertifications, Attachments,
-          SurveyResponses, DismissedInsights, Captures],
+          SurveyResponses, DismissedInsights, Captures, Tasks],
   daos: [
     AttachmentsDao,
     AttendanceDao,
@@ -378,6 +399,7 @@ class Captures extends Table {
     SpacesDao,
     SubjectsDao,
     SurveysDao,
+    TasksDao,
     VehiclesDao,
   ],
 )

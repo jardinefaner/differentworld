@@ -26,6 +26,7 @@ import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
 import 'package:differentworld/features/surveys/survey_take_screen.dart';
+import 'package:differentworld/features/tasks/tasks_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
@@ -131,6 +132,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'captures',
             builder: (_, _) => const CaptureInboxScreen(),
+          ),
+          // Tasks — the third capture-promotion destination, and a
+          // standalone to-do list for the program.
+          GoRoute(
+            path: 'tasks',
+            builder: (_, _) => const TasksScreen(),
           ),
           // Weekly review — same data as /insights but presented as a
           // guided one-question-per-page flow. The framework's

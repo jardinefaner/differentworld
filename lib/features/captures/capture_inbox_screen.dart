@@ -183,6 +183,26 @@ Future<void> _openTriage(
           capture: capture,
         );
       },
+      onMakeTask: () async {
+        Navigator.of(sheetCtx).pop();
+        try {
+          await actions.promoteToTask(captureId: capture.id);
+          messenger?.showSnackBar(
+            const SnackBar(content: Text('Saved as a task.')),
+          );
+        } on Exception catch (e, st) {
+          FlutterError.reportError(
+            FlutterErrorDetails(
+              exception: e,
+              stack: st,
+              library: 'captures',
+            ),
+          );
+          messenger?.showSnackBar(
+            const SnackBar(content: Text('Could not create the task.')),
+          );
+        }
+      },
     ),
   );
 }
@@ -194,11 +214,13 @@ class _TriageSheet extends StatelessWidget {
     required this.capture,
     required this.onDismiss,
     required this.onMakeObservation,
+    required this.onMakeTask,
   });
 
   final Capture capture;
   final _AsyncAction onDismiss;
   final _AsyncAction onMakeObservation;
+  final _AsyncAction onMakeTask;
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +246,15 @@ class _TriageSheet extends StatelessWidget {
               title: const Text('Make this an observation'),
               subtitle: const Text('Pick a child to attach it to'),
               onTap: () => unawaited(onMakeObservation()),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.check_circle_outline),
+              title: const Text('Make this a task'),
+              subtitle: const Text(
+                'A to-do that lives in /tasks until done.',
+              ),
+              onTap: () => unawaited(onMakeTask()),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,

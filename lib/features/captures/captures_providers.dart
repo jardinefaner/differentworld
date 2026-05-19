@@ -123,6 +123,42 @@ class CaptureActions {
     return entryId;
   }
 
+  /// Promote a capture to a standalone task. Subject is optional —
+  /// the user can attach the task to a kid or leave it program-level.
+  /// Same two-step pattern as promoteToObservation: create the task,
+  /// then flip the capture's status to 'promoted'.
+  Future<String> promoteToTask({
+    required String captureId,
+    String? subjectId,
+    String? dueAt,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId =
+        viewer.requireSpaceId(action: 'promote a capture to a task');
+    final db = await _ref.read(appDatabaseProvider.future);
+    final cap = await db.capturesDao.findById(captureId);
+    if (cap == null) {
+      throw StateError('Capture $captureId not found.');
+    }
+    final taskId = _uuid.v4();
+    await db.tasksDao.insert(
+      id: taskId,
+      spaceId: spaceId,
+      body: cap.body,
+      authorId: viewer.memberId,
+      subjectId: subjectId,
+      dueAt: dueAt,
+      createdFromCaptureId: captureId,
+    );
+    await db.capturesDao.markPromoted(
+      id: captureId,
+      promotedToKind: 'task',
+      promotedToId: taskId,
+      promotedSubjectId: subjectId,
+    );
+    return taskId;
+  }
+
   /// Explicit "not going to act on this" — keeps the row for audit but
   /// hides it from the inbox.
   Future<void> discard(String captureId) async {

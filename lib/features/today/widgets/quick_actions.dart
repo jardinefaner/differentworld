@@ -4,6 +4,7 @@ import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -52,6 +53,7 @@ class QuickActions extends ConsumerWidget {
     final viewer = ref.watch(viewerProvider);
     final openCaptureCount =
         ref.watch(openCapturesProvider).value?.length ?? 0;
+    final openTaskCount = ref.watch(openTasksProvider).value?.length ?? 0;
     final tiles = <_Tile>[
       // Capture is the lowest-friction entry on the launchpad —
       // a teacher mid-class can drop a note in two taps without
@@ -69,6 +71,15 @@ class QuickActions extends ConsumerWidget {
           label: 'Inbox',
           badge: '$openCaptureCount',
           onTap: () => context.push('/captures'),
+        ),
+      // Tasks — visible only when there are open to-dos. Same visible-
+      // pressure pattern as the capture inbox tile.
+      if (openTaskCount > 0)
+        _Tile(
+          icon: Icons.check_circle_outline,
+          label: 'Tasks',
+          badge: '$openTaskCount',
+          onTap: () => context.push('/tasks'),
         ),
       if (viewer.canObserve)
         _Tile(

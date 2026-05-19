@@ -197,4 +197,17 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  Table('tasks', [
+    Column.text('space_id'),
+    Column.text('author_id'),
+    Column.text('subject_id'),
+    Column.text('body'),
+    Column.text('status'),
+    Column.text('due_at'),
+    Column.text('completed_by'),
+    Column.text('completed_at'),
+    Column.text('created_from_capture_id'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 ]);
