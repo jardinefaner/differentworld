@@ -13,7 +13,7 @@ final certsForMemberProvider =
     StreamProvider.autoDispose.family<List<MemberCertification>, String>(
   (ref, memberId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchCertsForMember(memberId);
+    yield* db.certificationsDao.watchForMember(memberId);
   },
 );
 
@@ -28,7 +28,7 @@ final certsInSpaceProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchCertsInSpace(spaceId: spaceId);
+  yield* db.certificationsDao.watchInSpace(spaceId: spaceId);
 });
 
 /// Helpers on a `List<MemberCertification>` for cap-gating UI:
@@ -97,7 +97,7 @@ class CertActions {
       throw StateError('No Space — cannot add a cert.');
     }
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.upsertCert(
+    await db.certificationsDao.upsert(
       id: _uuid.v4(),
       spaceId: spaceId,
       memberId: memberId,
@@ -125,7 +125,7 @@ class CertActions {
         : '${expiresAt.year.toString().padLeft(4, '0')}-'
             '${expiresAt.month.toString().padLeft(2, '0')}-'
             '${expiresAt.day.toString().padLeft(2, '0')}';
-    await db.upsertCert(
+    await db.certificationsDao.upsert(
       id: _uuid.v4(),
       spaceId: spaceId,
       memberId: memberId,
@@ -145,7 +145,7 @@ class CertActions {
     required String certKey,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteCertByMemberKey(
+    await db.certificationsDao.deleteByMemberKey(
       memberId: memberId,
       certKey: certKey,
     );

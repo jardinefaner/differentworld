@@ -15,7 +15,7 @@ typedef SurveyResponsesKey = ({String spaceId, String templateId});
 final surveyResponsesProvider = StreamProvider.autoDispose
     .family<List<SurveyResponse>, SurveyResponsesKey>((ref, key) async* {
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchSurveyResponses(
+  yield* db.surveysDao.watchForTemplate(
     spaceId: key.spaceId,
     templateId: key.templateId,
   );
@@ -29,7 +29,7 @@ typedef SurveyResponseKey = ({String templateId, String subjectId});
 final surveyResponseProvider = StreamProvider.autoDispose
     .family<SurveyResponse?, SurveyResponseKey>((ref, key) async* {
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchSurveyResponse(
+  yield* db.surveysDao.watchForSubject(
     templateId: key.templateId,
     subjectId: key.subjectId,
   );
@@ -150,7 +150,7 @@ class SurveyActions {
       throw StateError('No Space — cannot save a survey response.');
     }
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.upsertSurveyResponse(
+    await db.surveysDao.upsert(
       id: _uuid.v4(),
       spaceId: spaceId,
       templateId: templateId,
@@ -168,12 +168,12 @@ class SurveyActions {
     required String subjectId,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final existing = await db.findSurveyResponse(
+    final existing = await db.surveysDao.findForSubject(
       templateId: templateId,
       subjectId: subjectId,
     );
     if (existing == null) return;
-    await db.deleteSurveyResponse(existing.id);
+    await db.surveysDao.deleteById(existing.id);
   }
 }
 

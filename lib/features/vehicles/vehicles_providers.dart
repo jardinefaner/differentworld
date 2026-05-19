@@ -13,7 +13,7 @@ final vehiclesProvider = StreamProvider<List<Vehicle>>((ref) async* {
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchVehiclesInSpace(spaceId);
+  yield* db.vehiclesDao.watchInSpace(spaceId);
 });
 
 /// Live stream of one vehicle by ID. Auto-disposes; family-keyed.
@@ -22,7 +22,7 @@ final vehiclesProvider = StreamProvider<List<Vehicle>>((ref) async* {
 final vehicleByIdProvider =
     StreamProvider.autoDispose.family<Vehicle?, String>((ref, id) async* {
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchVehicle(id);
+  yield* db.vehiclesDao.watchById(id);
 });
 
 /// Full log history for a vehicle, newest first.
@@ -30,7 +30,7 @@ final vehicleByIdProvider =
 final vehicleLogsProvider = StreamProvider.autoDispose
     .family<List<VehicleLog>, String>((ref, vehicleId) async* {
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchLogsForVehicle(vehicleId);
+  yield* db.vehiclesDao.watchLogsFor(vehicleId);
 });
 
 /// The most recent log row for a vehicle. Drives the "currently out
@@ -39,7 +39,7 @@ final vehicleLogsProvider = StreamProvider.autoDispose
 final latestVehicleLogProvider = StreamProvider.autoDispose
     .family<VehicleLog?, String>((ref, vehicleId) async* {
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchLatestLogForVehicle(vehicleId);
+  yield* db.vehiclesDao.watchLatestLogFor(vehicleId);
 });
 
 /// Whether a vehicle is currently out (last log was a checkout) vs in.
@@ -69,7 +69,7 @@ class VehicleActions {
     }
     final db = await _ref.read(appDatabaseProvider.future);
     final id = _uuid.v4();
-    await db.createVehicle(
+    await db.vehiclesDao.create(
       id: id,
       spaceId: spaceId,
       name: name,
@@ -94,7 +94,7 @@ class VehicleActions {
     String? notes,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateVehicle(
+    await db.vehiclesDao.update_(
       id: id,
       name: name,
       make: make,
@@ -108,7 +108,7 @@ class VehicleActions {
 
   Future<void> delete(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteVehicle(id);
+    await db.vehiclesDao.deleteById(id);
   }
 }
 
@@ -142,7 +142,7 @@ class VehicleLogActions {
     }
     final db = await _ref.read(appDatabaseProvider.future);
     final id = _uuid.v4();
-    await db.createVehicleLog(
+    await db.vehiclesDao.createLog(
       id: id,
       spaceId: spaceId,
       vehicleId: vehicleId,

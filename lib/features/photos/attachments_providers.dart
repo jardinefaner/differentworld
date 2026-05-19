@@ -16,7 +16,7 @@ final attachmentsForEntityProvider =
     StreamProvider.autoDispose.family<List<Attachment>, AttachmentEntity>(
   (ref, key) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchAttachmentsFor(
+    yield* db.attachmentsDao.watchFor(
       entityKind: key.kind,
       entityId: key.id,
     );
@@ -67,7 +67,7 @@ class AttachmentActions {
     final db = await _ref.read(appDatabaseProvider.future);
     final id = _uuid.v4();
     final effectiveSort = sortOrder ?? await _nextSortOrder(db, entityKind, entityId);
-    await db.createAttachment(
+    await db.attachmentsDao.create(
       id: id,
       spaceId: spaceId,
       entityKind: entityKind,
@@ -85,17 +85,17 @@ class AttachmentActions {
 
   Future<void> updateCaption({required String id, String? caption}) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateAttachment(id: id, caption: caption);
+    await db.attachmentsDao.update_(id: id, caption: caption);
   }
 
   Future<void> reorder({required String id, required int sortOrder}) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateAttachment(id: id, sortOrder: sortOrder);
+    await db.attachmentsDao.update_(id: id, sortOrder: sortOrder);
   }
 
   Future<void> remove(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteAttachment(id);
+    await db.attachmentsDao.deleteById(id);
   }
 
   /// "Insert after everything currently attached." Reads the existing
@@ -109,7 +109,7 @@ class AttachmentActions {
     String entityKind,
     String entityId,
   ) async {
-    final existing = await db.findAttachmentsFor(
+    final existing = await db.attachmentsDao.findFor(
       entityKind: entityKind,
       entityId: entityId,
     );

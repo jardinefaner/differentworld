@@ -110,7 +110,7 @@ final _dismissedInsightIdsProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchDismissedInsightsForMember(memberId).map((rows) {
+  yield* db.dismissedInsightsDao.watchForMember(memberId).map((rows) {
     final now = DateTime.now();
     final active = <String>{};
     for (final r in rows) {
@@ -218,7 +218,7 @@ class InsightActions {
     final (:spaceId, :memberId) =
         viewer.requireSpaceAndMember(action: 'snooze an insight');
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.upsertDismissedInsight(
+    await db.dismissedInsightsDao.upsert(
       id: _uuid.v4(),
       spaceId: spaceId,
       memberId: memberId,
@@ -232,7 +232,7 @@ class InsightActions {
     final memberId = viewer.memberId;
     if (memberId == null) return;
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteDismissedInsight(
+    await db.dismissedInsightsDao.deleteFor(
       memberId: memberId,
       insightId: insightId,
     );
