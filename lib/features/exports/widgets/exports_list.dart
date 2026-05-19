@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
+import 'package:differentworld/features/exports/widgets/send_export_sheet.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:flutter/material.dart';
@@ -79,10 +80,21 @@ class _ExportRow extends ConsumerWidget {
         '${export.format.toUpperCase()} · ${relativeTimeAgo(when)} · '
         '${_statusLabel(export.status)}',
       ),
-      trailing: IconButton(
-        tooltip: 'Open',
-        icon: const Icon(Icons.open_in_new),
-        onPressed: () => _open(context, ref, export),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Send',
+            icon: const Icon(Icons.send_outlined),
+            onPressed: () =>
+                showSendExportSheet(context, export: export),
+          ),
+          IconButton(
+            tooltip: 'Open',
+            icon: const Icon(Icons.open_in_new),
+            onPressed: () => _open(context, ref, export),
+          ),
+        ],
       ),
     );
   }

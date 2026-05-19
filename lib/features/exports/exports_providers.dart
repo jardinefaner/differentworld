@@ -168,6 +168,62 @@ class ExportActions {
         .from('exports')
         .createSignedUrl(row.storagePath!, expiresInSeconds);
   }
+
+  /// Generate a longer-lived shareable URL — same kind of signed
+  /// link, just minted with a 7-day expiry by default. UI labels this
+  /// as the "Copy link" affordance for parents who don't have email
+  /// or for asynchronous channels.
+  Future<String?> shareableLink(String exportId,
+      {int expiresInSeconds = 7 * 24 * 60 * 60}) {
+    return downloadUrl(exportId, expiresInSeconds: expiresInSeconds);
+  }
+
+  /// Dispatch an export to one or more email addresses via the
+  /// `send-export` Edge Function. The function authenticates as the
+  /// caller (RLS gates access), mints a signed download URL, fans
+  /// out to Resend, and stamps `export_recipients` server-side with
+  /// the actual delivered/failed state.
+  ///
+  /// Returns the list of (email, ok) pairs so the UI can surface
+  /// per-recipient failures.
+  Future<List<({String email, bool ok})>> sendByEmail({
+    required String exportId,
+    required List<({
+      String email,
+      String? label,
+      String? guardianId,
+      String kind, // 'guardian' | 'member' | 'external'
+    })> recipients,
+  }) async {
+    final supabase = Supabase.instance.client;
+    final resp = await supabase.functions.invoke(
+      'send-export',
+      body: {
+        'exportId': exportId,
+        'recipients': [
+          for (final r in recipients)
+            {
+              'email': r.email,
+              if (r.label != null) 'label': r.label,
+              if (r.guardianId != null) 'guardianId': r.guardianId,
+              'kind': r.kind,
+            },
+        ],
+      },
+    );
+    final results = (resp.data as Map?)?['results'] as List? ?? const [];
+    return [
+      for (final raw in results)
+        () {
+          final r = raw as Map;
+          final recipient = (r['recipient'] as Map?) ?? const {};
+          return (
+            email: (recipient['email'] as String?) ?? '',
+            ok: (r['ok'] as bool?) ?? false,
+          );
+        }(),
+    ];
+  }
 }
 
 String _contentTypeFor(String format) => switch (format) {
