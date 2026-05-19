@@ -103,7 +103,7 @@ class CaptureActions {
     }
     // Pull the subject's group so the new entry shows up in
     // the per-classroom observation feeds too.
-    final subj = await db.findSubjectById(subjectId);
+    final subj = await db.subjectsDao.findById(subjectId);
     final entryId = _uuid.v4();
     await db.createEntry(
       id: entryId,

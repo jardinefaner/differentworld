@@ -81,7 +81,7 @@ class PhotoService {
       case PhotoEntity.member:
         await db.membersDao.updateAvatarUrl(entityId, url);
       case PhotoEntity.subject:
-        await db.updateSubjectPhotoUrl(entityId, url);
+        await db.subjectsDao.updatePhotoUrl(entityId, url);
     }
     return url;
   }
@@ -98,7 +98,7 @@ class PhotoService {
       case PhotoEntity.member:
         await db.membersDao.updateAvatarUrl(entityId, null);
       case PhotoEntity.subject:
-        await db.updateSubjectPhotoUrl(entityId, null);
+        await db.subjectsDao.updatePhotoUrl(entityId, null);
     }
   }
 

@@ -13,7 +13,7 @@ final subjectsInGroupProvider =
     StreamProvider.family<List<Subject>, String>(
   (ref, groupId) async* {
     final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.watchSubjectsInGroup(groupId);
+    yield* db.subjectsDao.watchInGroup(groupId);
   },
 );
 
@@ -27,7 +27,7 @@ final subjectsInSpaceProvider = StreamProvider<List<Subject>>((ref) async* {
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.watchSubjectsInSpace(spaceId);
+  yield* db.subjectsDao.watchInSpace(spaceId);
 });
 
 /// Single Subject by id. Powers the subject detail screen.
@@ -78,7 +78,7 @@ class SubjectActions {
     if (spaceId == null) {
       throw StateError('No Space selected for the current Member.');
     }
-    await db.createSubject(
+    await db.subjectsDao.create(
       id: _uuid.v4(),
       spaceId: spaceId,
       groupId: groupId,
@@ -100,7 +100,7 @@ class SubjectActions {
     String? groupId,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.updateSubject(
+    await db.subjectsDao.update_(
       id: id,
       firstName: firstName,
       lastName: lastName,
@@ -113,7 +113,7 @@ class SubjectActions {
 
   Future<void> delete(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.deleteSubject(id);
+    await db.subjectsDao.deleteById(id);
   }
 }
 

@@ -8,6 +8,7 @@ import 'package:differentworld/core/db/dao/guardians_dao.dart';
 import 'package:differentworld/core/db/dao/invites_dao.dart';
 import 'package:differentworld/core/db/dao/members_dao.dart';
 import 'package:differentworld/core/db/dao/spaces_dao.dart';
+import 'package:differentworld/core/db/dao/subjects_dao.dart';
 import 'package:differentworld/core/db/dao/surveys_dao.dart';
 import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:drift/drift.dart';
@@ -371,6 +372,7 @@ class Captures extends Table {
     InvitesDao,
     MembersDao,
     SpacesDao,
+    SubjectsDao,
     SurveysDao,
     VehiclesDao,
   ],
@@ -424,138 +426,6 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
     });
-  }
-
-  // -- Capability mutators (write the JSONB column on each entity) ---------
-
-  /// Set or clear the subject's photo_url.
-  Future<void> updateSubjectPhotoUrl(String id, String? url) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(subjects)..where((s) => s.id.equals(id))).write(
-      SubjectsCompanion(
-        photoUrl: Value(url),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  Future<void> updateSubjectCapabilities(
-    String id,
-    String capabilitiesJson,
-  ) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(subjects)..where((s) => s.id.equals(id))).write(
-      SubjectsCompanion(
-        capabilities: Value(capabilitiesJson),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  // -- Subjects -------------------------------------------------------------
-
-  Stream<List<Subject>> watchSubjectsInGroup(String groupId) {
-    return (select(subjects)
-          ..where((s) => s.groupId.equals(groupId))
-          ..orderBy([
-            (s) => OrderingTerm(expression: s.firstName),
-            (s) => OrderingTerm(expression: s.lastName),
-          ]))
-        .watch();
-  }
-
-  /// Every Subject in a space, ordered by name. Used by space-wide
-  /// surfaces (survey list, future "all kids" rosters).
-  Stream<List<Subject>> watchSubjectsInSpace(String spaceId) {
-    return (select(subjects)
-          ..where((s) => s.spaceId.equals(spaceId))
-          ..orderBy([
-            (s) => OrderingTerm(expression: s.firstName),
-            (s) => OrderingTerm(expression: s.lastName),
-          ]))
-        .watch();
-  }
-
-  /// One-shot fetch of a subject row by ID. Use this — not a cached
-  /// widget prop — when a write needs the latest `capabilities` to
-  /// avoid clobbering concurrent edits to other cap keys.
-  Future<Subject?> findSubjectById(String id) {
-    return (select(subjects)..where((s) => s.id.equals(id)))
-        .getSingleOrNull();
-  }
-
-  Future<void> createSubject({
-    required String id,
-    required String spaceId,
-    required String groupId,
-    required String firstName,
-    required String lastName,
-    String? dob,
-    String? allergies,
-    String? notes,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await into(subjects).insert(
-      SubjectsCompanion.insert(
-        id: id,
-        spaceId: spaceId,
-        groupId: Value(groupId),
-        firstName: firstName,
-        lastName: lastName,
-        dob: Value(dob),
-        allergies: Value(allergies),
-        notes: Value(notes),
-        capabilities: '{}',
-        createdAt: now,
-        updatedAt: now,
-      ),
-    );
-  }
-
-  Future<void> updateSubject({
-    required String id,
-    String? firstName,
-    String? lastName,
-    String? dob,
-    String? allergies,
-    String? notes,
-    String? groupId,
-  }) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(subjects)..where((s) => s.id.equals(id))).write(
-      SubjectsCompanion(
-        firstName: firstName == null ? const Value.absent() : Value(firstName),
-        lastName: lastName == null ? const Value.absent() : Value(lastName),
-        dob: dob == null ? const Value.absent() : Value(dob),
-        allergies:
-            allergies == null ? const Value.absent() : Value(allergies),
-        notes: notes == null ? const Value.absent() : Value(notes),
-        groupId: groupId == null ? const Value.absent() : Value(groupId),
-        updatedAt: Value(now),
-      ),
-    );
-  }
-
-  Future<void> deleteSubject(String id) async {
-    await (delete(subjects)..where((s) => s.id.equals(id))).go();
-  }
-
-  /// Soft-remove a member from a space — clears their space_id and
-  /// resets capabilities to empty. Their auth account still exists, so
-  /// they can be re-invited later; their historical attendance / notes
-  /// stay attributed to their member id.
-  ///
-  /// We don't actually `delete(members)` because that would break
-  /// foreign-key references from attendance_records, observations, etc.
-  Future<void> removeMemberFromSpace(String memberId) async {
-    final now = DateTime.now().toUtc().toIso8601String();
-    await (update(members)..where((m) => m.id.equals(memberId))).write(
-      MembersCompanion(
-        spaceId: const Value(null),
-        capabilities: const Value('{}'),
-        updatedAt: Value(now),
-      ),
-    );
   }
 
   // -- Attendance -----------------------------------------------------------

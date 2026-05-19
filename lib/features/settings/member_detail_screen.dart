@@ -347,7 +347,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     });
     try {
       final db = await ref.read(appDatabaseProvider.future);
-      await db.removeMemberFromSpace(member.id);
+      await db.membersDao.removeFromSpace(member.id);
       if (!mounted) return;
       Navigator.of(context).pop();
     } on Exception catch (e, st) {

@@ -64,14 +64,14 @@ class PickupActions {
     required List<PickupPerson> people,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final fresh = await db.findSubjectById(subjectId);
+    final fresh = await db.subjectsDao.findById(subjectId);
     if (fresh == null) return; // Subject was removed concurrently.
     final caps = Capabilities.fromJson(fresh.capabilities);
     final updated = caps.setting(
       SubjectCaps.pickupPeople,
       people.map((p) => p.toJson()).toList(),
     );
-    await db.updateSubjectCapabilities(subjectId, updated.toJson());
+    await db.subjectsDao.updateCapabilities(subjectId, updated.toJson());
   }
 }
 
