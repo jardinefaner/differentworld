@@ -67,29 +67,71 @@ linearly. At 50 kids × 5 obs/week × 40 weeks = 10k observations per
 year per program. Cold launch downloads everything in `by_space`.
 Fine today; not fine at year 3.
 
-**What's blocking.** PowerSync's sync-rule SQL doesn't support
-`now()` / `date()` / `INTERVAL` (the user hit this on 2026-05-18).
-The supported pattern is `request.parameters.<name>` populated by
-the client at subscribe time. To use it we need to:
+**Status (May 2026).** Client side built; dashboard YAML pending.
 
-1. Switch `by_space` from `auto_subscribe: true` to manual
-   subscription, OR find a way to inject the cutoff through the JWT
-   (Supabase Auth doesn't easily let us add custom claims, so this
-   is the harder path).
-2. Compute `cutoff_at` client-side at boot.
-3. Re-subscribe on day-rollover so the window slides.
+**Client side (DONE).** `lib/core/sync/sync_window.dart` computes
+`cutoff_at` (ISO timestamp) and `cutoff_date` (YYYY-MM-DD).
+`powerSyncLifecycleProvider` calls
+`db.syncStream('by_space_recent').subscribe(parameters: …)` on every
+auth state change and reschedules at the next local midnight so the
+window slides. The call is wrapped in a forward-compat try/catch —
+if the stream isn't deployed (today), PowerSync logs a warning and
+the rest of the auto-subscribed `by_space` keeps working unchanged.
 
-**Verification plan.**
-1. In a staging environment, paste a parameterized sync rule with
-   `request.parameters.cutoff_at`. Confirm dashboard accepts it.
-2. From a test client, call `db.syncStream('by_space').subscribe(
-   parameters: {'cutoff_at': '…'})`. Confirm the older rows drop
-   from the local DB on the next checkpoint.
-3. Time-jump the device clock, force a re-subscribe, confirm the
-   window slides.
+**Dashboard YAML to paste once staging exists.** Adds a manual stream
+for the three growing tables; the existing `by_space` stops carrying
+them.
 
-**Effort.** Real day of work. ~80 lines of Dart in the sync layer
-+ a sync-rules deployment + a day-rollover scheduler.
+```yaml
+streams:
+  current_member:
+    auto_subscribe: true
+    query: SELECT * FROM members WHERE id = auth.user_id()
+
+  by_space:
+    auto_subscribe: true
+    queries:
+      # Permanent / small tables stay fully synced.
+      - SELECT * FROM spaces             WHERE id        IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM members            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM groups             WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM enrollments        WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM subjects           WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM guardians          WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM subject_guardians  WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM group_members      WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM vehicles           WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM member_certifications WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM attachments        WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM survey_responses   WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM dismissed_insights WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM captures           WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM invites            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND accepted_at IS NULL
+
+  by_space_recent:
+    auto_subscribe: false
+    queries:
+      - SELECT * FROM entries            WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND recorded_at >= request.parameters.cutoff_at
+      - SELECT * FROM attendance_records WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND date         >= request.parameters.cutoff_date
+      - SELECT * FROM vehicle_logs       WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND created_at   >= request.parameters.cutoff_at
+```
+
+**Verification plan (staging).**
+1. Paste the YAML, click Deploy. Confirm the dashboard accepts the
+   `request.parameters.cutoff_at` syntax — PowerSync rejected
+   `date()`/`now()` earlier; if it rejects this too, the path forward
+   shifts to JWT claims (harder).
+2. Open the app on a clean device. Confirm logs show
+   `[sync] by_space_recent subscribe` succeeding (no
+   "skipped" warning).
+3. Confirm the local DB only has rows newer than `cutoff_at`
+   (90 days back by default) — older rows dropped.
+4. Time-jump the device clock past midnight, force a re-subscribe.
+   Confirm the window slides — a row that was at day `T-90` is now
+   at day `T-91` and should drop.
+
+**Effort remaining.** Just the dashboard paste + verify. Client is
+ready.
 
 ---
 
