@@ -179,7 +179,11 @@ class _ProgressReportScreenState
       library: 'exports',
       messenger: messenger,
       onError: 'Could not generate the report.',
-      onSuccess: 'Report saved to your exports.',
+      // No onSuccess message — the OS share sheet IS the visible
+      // confirmation. A redundant snackbar shows up on top of /
+      // after the share sheet and reads as if something else just
+      // happened. The "Sent reports" row on the kid's detail
+      // screen is the durable confirmation.
       action: () async {
         final doc = await buildProgressReportPdf(data);
         final bytes = await doc.save();

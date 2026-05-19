@@ -630,6 +630,28 @@ migration `20260517000001_restore_role_grants.sql`. Any time you `drop
 schema public cascade` for any reason in dev, re-run that GRANT block
 or all subsequent CRUD breaks silently.
 
+### Guardians don't sync space-scoped tables via `by_space`
+The `by_space` stream gates every query on
+`space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`.
+A guardian doesn't have a `members` row (they're in `guardians`), so
+the membership subquery is empty and **no rows from `by_space` reach
+their device via the live stream.** This is intentional: most of
+`by_space` is staff-only data (attendance, observations, vehicle
+logs).
+
+The exception is anything a guardian explicitly needs to see:
+`messages` already has a per-thread RLS branch on
+`guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.uid())`
+so the family lens reads via direct PostgREST queries rather than
+the PowerSync mirror. Same for `exports` + `export_recipients` —
+RLS gates by recipient, but the PowerSync mirror never populates
+locally on the guardian side.
+
+**If you build a guardian-facing list of *anything*** (My reports,
+My captures, etc.), wire it to a dedicated stream or fall back to
+direct Supabase reads — don't expect the local Drift mirror to
+have the data.
+
 ---
 
 ## Mutations: write through Drift, sync through PowerSync

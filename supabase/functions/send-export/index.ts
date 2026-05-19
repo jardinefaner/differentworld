@@ -39,6 +39,22 @@ const LINK_TTL = parseInt(
   10,
 );
 
+// Fail loudly if the deploy is missing the API key. Without this
+// guard, the function would fire every request through Resend with
+// an empty Bearer token, get back a 4xx for each recipient, and
+// return Resend's error text in the response body — leaking
+// implementation details and masking the real cause (you forgot to
+// run `supabase secrets set RESEND_API_KEY=...`).
+function assertConfigured(): Response | null {
+  if (!RESEND_API_KEY) {
+    return json(500, {
+      error:
+        'send-export not configured: set RESEND_API_KEY via `supabase secrets set`',
+    });
+  }
+  return null;
+}
+
 interface Recipient {
   email: string;
   label?: string;
@@ -61,6 +77,12 @@ serve(async (req) => {
   if (req.method !== 'POST') {
     return json(405, { error: 'POST only' });
   }
+
+  // Early-out if the deploy is missing required secrets — better
+  // to surface a 500 with a clear error than to silently fail every
+  // recipient and return Resend's response body to the caller.
+  const configError = assertConfigured();
+  if (configError) return configError;
 
   // The function runs with the caller's JWT — RLS will reject any
   // export they shouldn't see.

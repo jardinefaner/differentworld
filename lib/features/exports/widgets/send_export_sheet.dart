@@ -98,7 +98,7 @@ class _SendExportSheetState extends ConsumerState<_SendExportSheet> {
       messenger?.showSnackBar(
         const SnackBar(content: Text('Pick at least one recipient.')),
       );
-      setState(() => _sending = false);
+      if (mounted) setState(() => _sending = false);
       return;
     }
 
@@ -139,7 +139,11 @@ class _SendExportSheetState extends ConsumerState<_SendExportSheet> {
       Navigator.of(context).pop();
       return;
     }
-    setState(() => _sending = false);
+    // Defensive — between the mounted check above and here there's
+    // no await, but a future refactor could insert one. The cost of
+    // the extra `mounted` guard is one comparison; the cost of a
+    // setState-after-dispose is a debug-only crash log.
+    if (mounted) setState(() => _sending = false);
   }
 
   Future<void> _copyLink() async {
