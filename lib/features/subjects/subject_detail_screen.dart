@@ -16,6 +16,7 @@ import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
@@ -84,7 +85,7 @@ class SubjectDetailScreen extends ConsumerWidget {
             )
           : null,
       body: subjectAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (_, _) => const EmptyState(
           icon: Icons.error_outline,
           title: 'Could not load',

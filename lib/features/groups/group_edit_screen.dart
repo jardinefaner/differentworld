@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -204,7 +205,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
           ),
         ],
         body: groupAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSlot(),
           error: (_, _) =>
               const Center(child: Text('Could not load classroom.')),
           data: (group) {

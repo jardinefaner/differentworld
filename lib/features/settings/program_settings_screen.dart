@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -66,7 +67,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       body: spaceAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (e, _) =>
             const Center(child: Text('Could not load program settings.')),
         data: (space) {

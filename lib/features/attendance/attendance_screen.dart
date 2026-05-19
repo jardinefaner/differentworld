@@ -8,6 +8,7 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/attendance_row.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -158,7 +159,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           Expanded(
             child: subjectsAsync.when(
                 loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                    const LoadingSlot(),
                 error: (e, _) => const EmptyState(
                   icon: Icons.error_outline,
                   title: 'Could not load students',
@@ -174,7 +175,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                   }
                   return recordsAsync.when(
                     loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                        const LoadingSlot(),
                     error: (e, _) => const EmptyState(
                       icon: Icons.error_outline,
                       title: 'Could not load attendance',

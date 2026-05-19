@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -52,7 +53,7 @@ class GroupDetailScreen extends ConsumerWidget {
         const SyncStatusIndicator(),
       ],
       body: subjectsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (err, _) => const EmptyState(
           icon: Icons.error_outline,
           title: 'Could not load students',

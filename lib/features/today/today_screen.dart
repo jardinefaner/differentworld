@@ -10,6 +10,7 @@ import 'package:differentworld/features/omnibox/omnibox_results.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/breakpoints.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -96,7 +97,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 key: const ValueKey('today-content'),
                 child: groupsAsync.when(
                   loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                      const LoadingSlot(),
                   error: (_, _) => const EmptyState(
                     icon: Icons.error_outline,
                     title: 'Could not load today',

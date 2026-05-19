@@ -7,6 +7,7 @@ import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart'
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -235,7 +236,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
           ),
         ],
         body: subjectAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSlot(),
           error: (_, _) =>
               const Center(child: Text('Could not load student.')),
           data: (subject) {

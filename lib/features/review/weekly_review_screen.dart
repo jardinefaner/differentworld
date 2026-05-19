@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/insights/insights_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -81,9 +82,7 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
     ];
 
     if (insightsAsync.isLoading && !_seeded) {
-      return const EdgeScaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const EdgeScaffold(body: LoadingSlot());
     }
     if (ordered.isEmpty) {
       return EdgeScaffold(

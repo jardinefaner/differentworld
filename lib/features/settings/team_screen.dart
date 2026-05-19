@@ -4,6 +4,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/invites/widgets/invite_create_sheet.dart';
 import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -40,7 +41,7 @@ class TeamScreen extends ConsumerWidget {
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       body: teamAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (e, _) => const EmptyState(
           icon: Icons.error_outline,
           title: 'Could not load team',

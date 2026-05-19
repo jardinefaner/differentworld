@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -218,7 +219,7 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
           ),
         ],
         body: vehicleAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSlot(),
           error: (_, _) =>
               const Center(child: Text('Could not load vehicle.')),
           data: (v) {

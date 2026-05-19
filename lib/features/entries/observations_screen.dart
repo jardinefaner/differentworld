@@ -10,6 +10,7 @@ import 'package:differentworld/features/entries/widgets/observation_form_sheet.d
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -46,7 +47,7 @@ class ObservationsScreen extends ConsumerWidget {
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
       body: entriesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (_, _) => const EmptyState(
           icon: Icons.error_outline,
           title: 'Could not load observations',

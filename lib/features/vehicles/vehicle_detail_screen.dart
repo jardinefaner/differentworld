@@ -4,6 +4,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/vehicles/inspection_checklist.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,7 @@ class VehicleDetailScreen extends ConsumerWidget {
               label: Text(isOut ? 'Check in' : 'Check out'),
             ),
       body: vehicleAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (_, _) =>
             const Center(child: Text('Could not load vehicle.')),
         data: (v) {

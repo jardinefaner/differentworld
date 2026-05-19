@@ -10,6 +10,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -117,7 +118,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     return EdgeScaffold(
       backFallbackRoute: '/settings/team',
       body: memberAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const LoadingSlot(),
         error: (e, _) => const Center(child: Text('Could not load member.')),
         data: (member) {
           if (member == null) {
