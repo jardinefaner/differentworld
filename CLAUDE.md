@@ -416,6 +416,14 @@ COPPA in the US) will eventually audit.
   product analytics, it's event-level, never row-level.
 - **Auth tokens never logged.** Supabase access/refresh tokens stay in
   `flutter_secure_storage`-backed channels only.
+- **Vendor API keys** (Deepgram, OpenAI) currently ship in `.env`
+  embedded in the app bundle — recoverable from the APK/IPA. For
+  personal-dev that's acceptable risk; bound it with vendor-side
+  spend caps + rate limits + project-scoped keys. Before external
+  rollout, broker through Supabase Edge Functions so the master key
+  never reaches the device. Full pattern + tier table in
+  `docs/SECRETS.md`. Public config (Supabase URL, anon key, PowerSync
+  URL, Sentry DSN) stays in the binary — RLS is the real gate.
 - **Data export & deletion** — a parent or program admin must be able to
   export all data for a child and request deletion. Plan endpoints when
   we get there.
@@ -888,6 +896,14 @@ For exploratory / scoping conversations: no gate, just answer.
 - **Native `google_sign_in`** for smoother mobile UX (current flow opens
   external browser — works, slightly clunky on iOS/Android)
 - **Sentry / crash reporting** — env slot ready, wire near ship
+- **Edge Function broker for vendor API keys** — Deepgram + OpenAI
+  master keys currently live in `.env` → end up in the compiled
+  binary, recoverable from the APK/IPA. For personal-dev that's
+  acceptable risk (set vendor-side spend caps + rate limits); for
+  EXTERNAL ROLLOUT, broker through Supabase Edge Functions so the
+  master key never reaches the device. See `docs/SECRETS.md` for the
+  full pattern (Deepgram supports short-lived `/v1/auth/grant`
+  tokens; OpenAI uses a simple REST proxy).
 - **Push notifications** (late pickup alerts, etc.) — separate concern
 - **App icons + splash + store listings**
 - **Release signing configs** (Android keystore, iOS certs)
