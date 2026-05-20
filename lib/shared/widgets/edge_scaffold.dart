@@ -78,13 +78,16 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
   @override
   void initState() {
     super.initState();
-    // Publish chrome synchronously — this is the ONLY way to avoid
-    // the 1-frame stale-chrome blip during route transitions (the
-    // old route's actions visible while the new page is already
-    // painting). We're safe here because AppShell finished its
-    // build BEFORE this child route's initState fires; Riverpod
-    // accepts the write and schedules AppShell's next rebuild.
-    _publishChrome();
+    // Defer the first publish — initState fires DURING the widget
+    // tree's build phase (the parent route's build is what mounts
+    // this widget). Writing to a Riverpod notifier that AppShell is
+    // currently watching trips the "modified provider while the
+    // widget tree was building" assertion. A microtask runs after
+    // the build phase completes for the current synchronous tick
+    // but BEFORE the next frame's render — fast enough that the
+    // new chrome paints in the same visible frame as the new page,
+    // no 1-frame stale-chrome flicker.
+    unawaited(Future.microtask(_publishChrome));
   }
 
   @override
@@ -92,16 +95,13 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
     super.didUpdateWidget(oldWidget);
     // Only republish when something the chrome cares about actually
     // changed. Avoids gratuitous notifier writes on every parent
-    // rebuild. The diff guard means the synchronous write doesn't
-    // cause a rebuild storm.
+    // rebuild.
     if (!identical(widget.actions, oldWidget.actions) ||
         widget.showBack != oldWidget.showBack ||
         widget.backFallbackRoute != oldWidget.backFallbackRoute ||
         !identical(widget.topOverlay, oldWidget.topOverlay)) {
-      // didUpdateWidget CAN fire during a frame in which the parent
-      // is rebuilding the same provider's watchers — defer one
-      // microtask so we don't get the "modified provider during
-      // build" assertion.
+      // Same reason as initState — defer past the current build
+      // phase so we don't trip the Riverpod build-write guard.
       unawaited(Future.microtask(_publishChrome));
     }
   }
