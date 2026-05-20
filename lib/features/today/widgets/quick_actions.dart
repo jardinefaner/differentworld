@@ -61,16 +61,31 @@ class QuickActions extends ConsumerWidget {
     // entry is a _VehicleQuickTile ConsumerWidget so it can watch
     // fleetStatusProvider in isolation. Heterogeneous list is fine
     // since the row builder just iterates Widgets.
+    // The row is sorted by URGENCY: state-driven tiles (something
+    // is pending) come first, then everyday actions. Off-screen on
+    // a phone is a real cost — only 3–4 tiles fit at a time, so a
+    // tile past index 4 is effectively hidden until the user
+    // scrolls horizontally.
     final tiles = <Widget>[
-      // Capture is the lowest-friction entry on the launchpad —
-      // a teacher mid-class can drop a note in two taps without
-      // committing to a subject. Always present.
+      // Capture is always first — the lowest-friction entry. A
+      // teacher mid-class can drop a note in two taps without
+      // committing to a subject.
       _Tile(
         icon: Icons.bolt_outlined,
         label: 'Capture',
         onTap: () => showCaptureSheet(context),
       ),
-      // The triage destination — only surfaces when there's actually
+      // The vehicle tile is a ConsumerWidget that watches
+      // fleetStatusProvider; when the viewer has a vehicle out it
+      // renders "Return {name}" with a count badge — that's pending
+      // work and belongs near the front. When nothing's out, it
+      // renders "Check out a vehicle" (still useful upfront for any
+      // teacher about to leave for a field trip). Director-only
+      // "Fleet" sticks here too — admin-side use is OK to surface
+      // alongside the operational ones.
+      if (viewer.canDrive || viewer.canManageProgram)
+        _VehicleQuickTile(viewer: viewer),
+      // The triage destinations — only surface when there's actually
       // something to triage. Count badge makes the pressure visible.
       if (openCaptureCount > 0)
         _Tile(
@@ -79,8 +94,6 @@ class QuickActions extends ConsumerWidget {
           badge: '$openCaptureCount',
           onTap: () => context.push('/captures'),
         ),
-      // Tasks — visible only when there are open to-dos. Same visible-
-      // pressure pattern as the capture inbox tile.
       if (openTaskCount > 0)
         _Tile(
           icon: Icons.check_circle_outline,
@@ -88,6 +101,7 @@ class QuickActions extends ConsumerWidget {
           badge: '$openTaskCount',
           onTap: () => context.push('/tasks'),
         ),
+      // Everyday actions — verbs the user reaches for daily.
       if (viewer.canObserve)
         _Tile(
           icon: Icons.edit_note_outlined,
@@ -100,37 +114,19 @@ class QuickActions extends ConsumerWidget {
           label: 'Observations',
           onTap: () => context.push('/observations'),
         ),
-      // The director-facing aggregation surface for the upward loop.
-      // Teachers see the relevant insights on Today's Top card; the
-      // full list is one tap deeper.
+      _Tile(
+        icon: Icons.poll_outlined,
+        label: 'Surveys',
+        onTap: () => context.push('/surveys'),
+      ),
+      // Admin / aggregate surfaces — later in the row since they're
+      // not daily destinations. Director-only.
       if (viewer.canManageProgram)
         _Tile(
           icon: Icons.lightbulb_outline,
           label: 'Insights',
           onTap: () => context.push('/insights'),
         ),
-      // Everyone in the program can run a survey for a kid — it's an
-      // instructor-administered flow, not a privileged action.
-      _Tile(
-        icon: Icons.poll_outlined,
-        label: 'Surveys',
-        onTap: () => context.push('/surveys'),
-      ),
-      // Vehicles — the tile speaks the VERB based on state:
-      //   - viewer has a vehicle out → "Return van" (or "Return N
-      //     vans" if multiple) → routes directly to checkin for the
-      //     first one
-      //   - viewer can drive but nothing out → "Check out a van" →
-      //     routes to the fleet list where the user picks one
-      //   - viewer is a director without canDrive → "Fleet" → the
-      //     list, since their use is admin-side
-      // The point: never just "Vehicles" as a noun — that's why the
-      // check-in / check-out flow was hard to find.
-      if (viewer.canDrive || viewer.canManageProgram)
-        // Extracted into its own ConsumerWidget so fleet-log changes
-        // don't rebuild the whole QuickActions row (and through it
-        // the captures / tasks counters).
-        _VehicleQuickTile(viewer: viewer),
       if (viewer.canManageProgram || viewer.canInviteStaff)
         _Tile(
           icon: Icons.groups_outlined,

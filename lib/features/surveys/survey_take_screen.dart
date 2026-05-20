@@ -46,6 +46,20 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
   bool _saving = false;
   String? _error;
 
+  /// Set true after the staff exit gesture completes; lets the next
+  /// pop go through. Re-arms (back to false) whenever kid mode is
+  /// still locked, so the user re-does the gesture to leave again.
+  bool _staffUnlocked = false;
+
+  /// Rolling tap-count for the hidden staff-exit gesture (5 fast
+  /// taps in the top-right corner of the screen). Resets after
+  /// `_staffTapWindow` of silence so a kid randomly tapping can't
+  /// accidentally unlock.
+  int _staffTapCount = 0;
+  Timer? _staffTapReset;
+  static const _staffTapTarget = 5;
+  static const _staffTapWindow = Duration(milliseconds: 1500);
+
   SurveyTemplate? get _template => SurveyTemplates.byId(widget.templateId);
 
   @override
@@ -74,10 +88,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
 
   @override
   void dispose() {
-    // Drop the lock when the screen pops. See initState for why this
-    // is safe here; future kid-launchable flows will skip this and
-    // require an explicit unlock instead.
+    // Drop the lock when the screen pops. The PopScope below
+    // intercepts system-back while still in kid mode, so this only
+    // runs after the staff has unlocked (or after a programmatic
+    // pop from completion).
     ref.read(kidModeProvider.notifier).exit();
+    _staffTapReset?.cancel();
+    _staffTapReset = null;
     _page.dispose();
     super.dispose();
   }
@@ -149,6 +166,30 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
     ));
   }
 
+  /// Five quick taps on the hidden top-right corner unlocks kid
+  /// mode so a teacher can navigate away. Window resets after 1.5 s
+  /// of silence so a kid tapping randomly can't accumulate.
+  void _onStaffCornerTap() {
+    _staffTapCount += 1;
+    _staffTapReset?.cancel();
+    if (_staffTapCount >= _staffTapTarget) {
+      _staffTapCount = 0;
+      _staffTapReset = null;
+      setState(() => _staffUnlocked = true);
+      // Confirmation so the staff knows the gesture took.
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Unlocked. Press back to exit.'),
+        ),
+      );
+      return;
+    }
+    _staffTapReset = Timer(_staffTapWindow, () {
+      _staffTapCount = 0;
+      _staffTapReset = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = _template;
@@ -175,10 +216,48 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
         t.scored.where((q) => _answers.isAnswered(q)).length;
     final atCloseout = _index >= totalQuestions;
 
-    return DismissGuard(
+    // Kid-mode hardening: while locked, refuse the system back
+    // gesture. The hidden top-right tap target (5 fast taps in the
+    // corner) is the staff-only unlock — once tapped, the next pop
+    // goes through normally.
+    final inKidMode = ref.watch(kidModeProvider);
+    final blockPop = inKidMode && !_staffUnlocked;
+    return PopScope(
+      canPop: !blockPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // A kid tried to leave. Show a discrete hint so staff who
+        // are watching see what's expected; the kid sees a generic
+        // copy that doesn't reveal the gesture.
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(
+            content: Text('Hand the device back to a teacher to exit.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      child: DismissGuard(
       isDirty: () => !_seeded || _answers.toJson() != '{}',
       child: EdgeScaffold(
-        body: Column(
+        body: Stack(
+          children: [
+            // The hidden staff-corner: 48 dp invisible tap target in
+            // the very top-right. Five fast taps unlocks (see
+            // `_onStaffCornerTap`). Behind everything else so the
+            // survey UI's own widgets keep their normal hit areas;
+            // the corner only catches taps in the deadzone above
+            // the top-right of the first question's chibi grid.
+            Positioned(
+              top: 0,
+              right: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _onStaffCornerTap,
+                child: const SizedBox(width: 48, height: 48),
+              ),
+            ),
+            Positioned.fill(
+              child: Column(
           children: [
             const SizedBox(height: 56),
             _SurveyHeader(
@@ -278,9 +357,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
               ),
             ),
           ],
+              ),
+            ),
+          ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
