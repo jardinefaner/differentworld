@@ -102,6 +102,17 @@ class DeepgramVoiceController {
       return;
     }
 
+    if (kIsWeb) {
+      // `dart:io` compiles on web but `WebSocket.connect()` throws
+      // `UnsupportedError` at runtime — caught by the try/catch
+      // below as a vague "Could not start voice" error which doesn't
+      // help the user. Tell them honestly; we can revisit with the
+      // Deepgram-browser SDK or the subprotocol fallback later if
+      // voice on web becomes important.
+      _emitError('Voice dictation is not available in the browser yet.');
+      return;
+    }
+
     _setState(VoiceState.requestingPermission);
     final granted = await Permission.microphone.request();
     if (!granted.isGranted) {
@@ -140,6 +151,16 @@ class DeepgramVoiceController {
           'Authorization': 'Token ${Env.deepgramApiKey}',
         },
       );
+      // If `cancel()` (or another `stop()`) fired while the connect
+      // was in flight — possible on fast nav or low-memory eviction
+      // — `_teardown()` already nulled out `_channel`. Without this
+      // guard we'd happily install a fresh channel that nobody owns
+      // any more; the mic + WS would leak. `_setState` re-emits idle
+      // in `cancel()` so we don't have to here.
+      if (_state == VoiceState.idle) {
+        await socket.close();
+        return;
+      }
       _channel = IOWebSocketChannel(socket);
       _wsSub = _channel!.stream.listen(
         _onWsMessage,

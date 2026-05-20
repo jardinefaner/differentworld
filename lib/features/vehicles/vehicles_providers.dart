@@ -73,7 +73,14 @@ class VehicleWithStatus {
 /// Used by surfaces that need to branch behavior on "is this vehicle
 /// out, and by whom" — Today's Quick Actions and the `/checkout` /
 /// `/checkin` slash commands.
-final fleetStatusProvider = StreamProvider<List<VehicleWithStatus>>((ref) {
+///
+/// `autoDispose` to match the sibling per-entity vehicle providers
+/// — keeps the inner per-vehicle Drift watch streams from staying
+/// alive after every watcher has unmounted.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final fleetStatusProvider =
+    StreamProvider.autoDispose<List<VehicleWithStatus>>((ref) {
   return ref.watch(vehiclesProvider).when(
     loading: () => const Stream<List<VehicleWithStatus>>.empty(),
     error: (_, _) => const Stream<List<VehicleWithStatus>>.empty(),

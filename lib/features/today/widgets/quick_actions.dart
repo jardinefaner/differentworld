@@ -57,7 +57,11 @@ class QuickActions extends ConsumerWidget {
     final openCaptureCount =
         ref.watch(openCapturesProvider).value?.length ?? 0;
     final openTaskCount = ref.watch(openTasksProvider).value?.length ?? 0;
-    final tiles = <_Tile>[
+    // Widget list — most entries are plain _Tile, but the vehicle
+    // entry is a _VehicleQuickTile ConsumerWidget so it can watch
+    // fleetStatusProvider in isolation. Heterogeneous list is fine
+    // since the row builder just iterates Widgets.
+    final tiles = <Widget>[
       // Capture is the lowest-friction entry on the launchpad —
       // a teacher mid-class can drop a note in two taps without
       // committing to a subject. Always present.
@@ -123,7 +127,10 @@ class QuickActions extends ConsumerWidget {
       // The point: never just "Vehicles" as a noun — that's why the
       // check-in / check-out flow was hard to find.
       if (viewer.canDrive || viewer.canManageProgram)
-        _vehicleTile(context, ref, viewer),
+        // Extracted into its own ConsumerWidget so fleet-log changes
+        // don't rebuild the whole QuickActions row (and through it
+        // the captures / tasks counters).
+        _VehicleQuickTile(viewer: viewer),
       if (viewer.canManageProgram || viewer.canInviteStaff)
         _Tile(
           icon: Icons.groups_outlined,
@@ -158,20 +165,31 @@ class QuickActions extends ConsumerWidget {
     );
   }
 
-  /// Builds the vehicle Quick Action tile with state-aware labeling.
-  /// See the call-site comment for the labeling rules — the goal is
-  /// for the user to never see a generic "Vehicles" noun when the
-  /// app KNOWS what verb they're trying to do next.
-  _Tile _vehicleTile(BuildContext context, WidgetRef ref, Viewer viewer) {
+}
+
+/// State-aware Quick Action tile for vehicles. Lives in its own
+/// ConsumerWidget so fleet-log changes (which fire on every check-
+/// in/out and odometer update) don't rebuild the rest of the
+/// QuickActions row.
+///
+/// Labeling rules:
+///   - viewer has a vehicle out → "Return {name}" → direct to
+///     checkin form. Badge with count if multiple.
+///   - viewer canDrive, nothing out → "Check out a vehicle" → list
+///   - director without canDrive → "Fleet" → list
+class _VehicleQuickTile extends ConsumerWidget {
+  const _VehicleQuickTile({required this.viewer});
+
+  final Viewer viewer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final fleet = ref.watch(fleetStatusProvider).value ??
         const <VehicleWithStatus>[];
     final myOut = fleet
         .where((vws) => vws.isOutBy(viewer.memberId))
         .toList(growable: false);
     if (myOut.isNotEmpty) {
-      // The viewer has at least one vehicle currently checked out to
-      // them — the next-most-likely action is RETURNING it, not
-      // taking another. Route directly to the checkin form.
       final first = myOut.first.vehicle;
       return _Tile(
         icon: Icons.assignment_turned_in_outlined,
@@ -191,8 +209,6 @@ class QuickActions extends ConsumerWidget {
         onTap: () => unawaited(context.push('/settings/vehicles')),
       );
     }
-    // Director without canDrive — still benefits from a fleet view
-    // (audit, capacity planning) but no verb-style action.
     return _Tile(
       icon: Icons.directions_bus_outlined,
       label: 'Fleet',
