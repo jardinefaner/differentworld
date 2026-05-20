@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
@@ -5,6 +7,7 @@ import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
+import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -109,12 +112,18 @@ class QuickActions extends ConsumerWidget {
         label: 'Surveys',
         onTap: () => context.push('/surveys'),
       ),
+      // Vehicles — the tile speaks the VERB based on state:
+      //   - viewer has a vehicle out → "Return van" (or "Return N
+      //     vans" if multiple) → routes directly to checkin for the
+      //     first one
+      //   - viewer can drive but nothing out → "Check out a van" →
+      //     routes to the fleet list where the user picks one
+      //   - viewer is a director without canDrive → "Fleet" → the
+      //     list, since their use is admin-side
+      // The point: never just "Vehicles" as a noun — that's why the
+      // check-in / check-out flow was hard to find.
       if (viewer.canDrive || viewer.canManageProgram)
-        _Tile(
-          icon: Icons.directions_bus_outlined,
-          label: 'Vehicles',
-          onTap: () => context.push('/settings/vehicles'),
-        ),
+        _vehicleTile(context, ref, viewer),
       if (viewer.canManageProgram || viewer.canInviteStaff)
         _Tile(
           icon: Icons.groups_outlined,
@@ -149,6 +158,47 @@ class QuickActions extends ConsumerWidget {
     );
   }
 
+  /// Builds the vehicle Quick Action tile with state-aware labeling.
+  /// See the call-site comment for the labeling rules — the goal is
+  /// for the user to never see a generic "Vehicles" noun when the
+  /// app KNOWS what verb they're trying to do next.
+  _Tile _vehicleTile(BuildContext context, WidgetRef ref, Viewer viewer) {
+    final fleet = ref.watch(fleetStatusProvider).value ??
+        const <VehicleWithStatus>[];
+    final myOut = fleet
+        .where((vws) => vws.isOutBy(viewer.memberId))
+        .toList(growable: false);
+    if (myOut.isNotEmpty) {
+      // The viewer has at least one vehicle currently checked out to
+      // them — the next-most-likely action is RETURNING it, not
+      // taking another. Route directly to the checkin form.
+      final first = myOut.first.vehicle;
+      return _Tile(
+        icon: Icons.assignment_turned_in_outlined,
+        label: myOut.length == 1
+            ? 'Return ${first.name}'
+            : 'Return vehicle',
+        badge: myOut.length > 1 ? '${myOut.length}' : null,
+        onTap: () => unawaited(
+          context.push('/settings/vehicles/${first.id}/checkin'),
+        ),
+      );
+    }
+    if (viewer.canDrive) {
+      return _Tile(
+        icon: Icons.key_outlined,
+        label: 'Check out a vehicle',
+        onTap: () => unawaited(context.push('/settings/vehicles')),
+      );
+    }
+    // Director without canDrive — still benefits from a fleet view
+    // (audit, capacity planning) but no verb-style action.
+    return _Tile(
+      icon: Icons.directions_bus_outlined,
+      label: 'Fleet',
+      onTap: () => unawaited(context.push('/settings/vehicles')),
+    );
+  }
 }
 
 class _Tile extends StatelessWidget {

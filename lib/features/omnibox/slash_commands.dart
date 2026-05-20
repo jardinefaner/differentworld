@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -161,6 +163,22 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     icon: Icons.calendar_view_week_outlined,
     exec: (ctx, _, _) => unawaited(ctx.push('/schedule')),
   ),
+  const SlashCommand(
+    name: 'checkout',
+    label: '/checkout {vehicle}',
+    hint: 'Check out a vehicle by name (or jump to the fleet list)',
+    icon: Icons.key_outlined,
+    aliases: ['co'],
+    exec: _execCheckout,
+  ),
+  const SlashCommand(
+    name: 'checkin',
+    label: '/checkin {vehicle}',
+    hint: 'Check in a vehicle by name (or jump to the fleet list)',
+    icon: Icons.assignment_turned_in_outlined,
+    aliases: ['ci', 'return'],
+    exec: _execCheckin,
+  ),
 ];
 
 void _execAttendance(BuildContext ctx, WidgetRef ref, String? args) {
@@ -231,6 +249,68 @@ void _execLog(BuildContext ctx, WidgetRef ref, String? args) {
     return;
   }
   unawaited(ctx.push('/groups/$gid/students/${hit.id}'));
+}
+
+void _execCheckout(BuildContext ctx, WidgetRef ref, String? args) {
+  _execVehicleAction(ctx, ref, args, kind: 'checkout');
+}
+
+void _execCheckin(BuildContext ctx, WidgetRef ref, String? args) {
+  _execVehicleAction(ctx, ref, args, kind: 'checkin');
+}
+
+/// Shared resolver for `/checkout {name}` and `/checkin {name}`.
+/// Empty args opens the fleet list; a typed name fuzzy-matches a
+/// vehicle and routes directly to the checkout / checkin form. If
+/// no match, a snackbar names what was typed so the user can fix it.
+void _execVehicleAction(
+  BuildContext ctx,
+  WidgetRef ref,
+  String? args, {
+  required String kind,
+}) {
+  final viewer = ref.read(viewerProvider);
+  // Gate on capability — non-drivers won't have a `checkout` flow.
+  // Directors managing the fleet still benefit from the list view.
+  if (!viewer.canDrive && !viewer.canManageProgram) {
+    ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'You need the "drive" capability to check vehicles in or out.',
+        ),
+      ),
+    );
+    return;
+  }
+  if (args == null || args.isEmpty) {
+    unawaited(ctx.push('/settings/vehicles'));
+    return;
+  }
+  final fleet =
+      ref.read(fleetStatusProvider).value ?? const <VehicleWithStatus>[];
+  final q = args.toLowerCase();
+  // Prefer prefix matches on name, then licence plate, then substring.
+  VehicleWithStatus? hit;
+  for (final v in fleet) {
+    if (v.vehicle.name.toLowerCase().startsWith(q)) {
+      hit = v;
+      break;
+    }
+  }
+  hit ??= fleet.firstWhereOrNull((v) {
+    final plate = v.vehicle.licensePlate?.toLowerCase() ?? '';
+    return plate.startsWith(q);
+  });
+  hit ??= fleet.firstWhereOrNull(
+    (v) => v.vehicle.name.toLowerCase().contains(q),
+  );
+  if (hit == null) {
+    ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+      SnackBar(content: Text('No vehicle matches "$args".')),
+    );
+    return;
+  }
+  unawaited(ctx.push('/settings/vehicles/${hit.vehicle.id}/$kind'));
 }
 
 extension _ListFirstWhereOrNullX<T> on Iterable<T> {

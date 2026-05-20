@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -46,6 +48,83 @@ final latestVehicleLogProvider = StreamProvider.autoDispose
 extension VehicleStatusX on VehicleLog {
   bool get isCheckout => kind == 'checkout';
 }
+
+/// Pair of a [Vehicle] + its latest log, for surfaces that need
+/// "what's the current state of every vehicle" — Today's Quick
+/// Actions, the slash-command resolver, etc.
+class VehicleWithStatus {
+  const VehicleWithStatus({required this.vehicle, this.latestLog});
+
+  final Vehicle vehicle;
+  final VehicleLog? latestLog;
+
+  /// True when the latest log is a checkout AND that checkout hasn't
+  /// been followed by a check-in. (Today's UI uses this directly.)
+  bool get isOut => latestLog?.isCheckout ?? false;
+
+  /// True when [isOut] AND the given member is the one who took it
+  /// out. Drives "Return van" on a per-viewer basis.
+  bool isOutBy(String? memberId) =>
+      isOut && memberId != null && latestLog?.driverMemberId == memberId;
+}
+
+/// Snapshot of every vehicle's current status. Combines
+/// [vehiclesProvider] with one [latestVehicleLogProvider] per row.
+/// Used by surfaces that need to branch behavior on "is this vehicle
+/// out, and by whom" — Today's Quick Actions and the `/checkout` /
+/// `/checkin` slash commands.
+final fleetStatusProvider = StreamProvider<List<VehicleWithStatus>>((ref) {
+  return ref.watch(vehiclesProvider).when(
+    loading: () => const Stream<List<VehicleWithStatus>>.empty(),
+    error: (_, _) => const Stream<List<VehicleWithStatus>>.empty(),
+    data: (vehicles) async* {
+      if (vehicles.isEmpty) {
+        yield const <VehicleWithStatus>[];
+        return;
+      }
+      final db = await ref.watch(appDatabaseProvider.future);
+      // Combine each vehicle's latest-log stream into one snapshot
+      // emission. Drift's `watchLatestLogFor(...)` emits whenever
+      // that vehicle's log table changes; we re-snapshot the whole
+      // fleet on any change. Cheap — typical fleet is 1-5 vehicles.
+      final perVehicleStreams = vehicles.map((v) {
+        return db.vehiclesDao
+            .watchLatestLogFor(v.id)
+            .map((log) => VehicleWithStatus(vehicle: v, latestLog: log));
+      }).toList();
+      // Manually combine: emit the latest of every per-vehicle
+      // stream. rxdart's combineLatest would also work — open-coded
+      // here to avoid a transitive dep in this file.
+      final latestPerVehicle = <String, VehicleWithStatus>{
+        for (final v in vehicles) v.id: VehicleWithStatus(vehicle: v),
+      };
+      final controller = StreamController<List<VehicleWithStatus>>();
+      final subs = <StreamSubscription<VehicleWithStatus>>[];
+      for (var i = 0; i < perVehicleStreams.length; i++) {
+        final id = vehicles[i].id;
+        subs.add(
+          perVehicleStreams[i].listen((vws) {
+            latestPerVehicle[id] = vws;
+            controller.add(
+              vehicles
+                  .map((v) =>
+                      latestPerVehicle[v.id] ??
+                      VehicleWithStatus(vehicle: v))
+                  .toList(growable: false),
+            );
+          }),
+        );
+      }
+      ref.onDispose(() async {
+        for (final s in subs) {
+          await s.cancel();
+        }
+        await controller.close();
+      });
+      yield* controller.stream;
+    },
+  );
+});
 
 class VehicleActions {
   VehicleActions(this._ref);
