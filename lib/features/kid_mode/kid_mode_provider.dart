@@ -1,4 +1,11 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// shared_preferences is a direct dep in pubspec.yaml; the analyzer
+// sometimes warns spuriously across pub workspace boundaries.
+// ignore: depend_on_referenced_packages
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Kid-mode: when ON, the AppShell hides the omnibox composer and
 /// the drawer affordance, and gates back-navigation so a kid handed
@@ -11,21 +18,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// gesture/PIN check passes. A reusable `KidModeExitOverlay` is
 /// future work (CLAUDE.md persona "Ava" section).
 ///
+/// **Persistence**: the locked state is mirrored to SharedPreferences
+/// so backgrounding + reopening the app (or an Android Activity
+/// resurrection) doesn't silently drop the lock. The notifier reads
+/// the persisted value on `build` and writes through on every
+/// `enter` / `exit`. Without this, a kid who backgrounded the app
+/// mid-survey could reopen to a kid-mode-OFF AppShell with the
+/// survey route still on top — full staff chrome visible, omnibox
+/// composer reachable.
+///
 /// Surfaces opt INTO kid mode via:
 ///
 /// ```dart
 /// @override
 /// void initState() {
 ///   super.initState();
-///   // Defer through a microtask — initState runs DURING the
-///   // parent's build phase, and AppShell watches kidModeProvider,
-///   // so a sync write trips Riverpod's "modified during build"
-///   // assertion. Microtask fires after the build phase finishes
-///   // but BEFORE the next frame's render, so kid mode is active
-///   // by the time the kid surface paints. Don't use
-///   // `addPostFrameCallback` — that fires AFTER the next frame,
-///   // introducing a 1-frame window where staff chrome is still
-///   // visible on the kid surface.
 ///   unawaited(Future.microtask(() {
 ///     if (!mounted) return;
 ///     ref.read(kidModeProvider.notifier).enter();
@@ -34,9 +41,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///
 /// @override
 /// void dispose() {
-///   // Drop the lock when the screen pops. For surfaces a kid
-///   // might launch (kid-journal, future activity check-ins), use
-///   // a staff-only exit instead — see CLAUDE.md persona "Ava".
 ///   ref.read(kidModeProvider.notifier).exit();
 ///   super.dispose();
 /// }
@@ -46,11 +50,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// route-pop alone doesn't unlock — that's the entire point of the
 /// lockdown.
 class KidMode extends Notifier<bool> {
+  static const _kPrefsKey = 'kid_mode.locked';
+
   @override
-  bool build() => false;
+  bool build() {
+    // Restore the persisted value asynchronously. We start in
+    // `false` (the conservative default — if a kid surface needs
+    // the lock, it will call `.enter()` on mount) and flip true if
+    // the persisted value says so. This handles the
+    // background-and-reopen case: if the app was force-quit while
+    // locked, the next launch starts locked too, and the surface
+    // that originally launched kid mode is responsible for staying
+    // mounted (or re-engaging on resume — see survey_take_screen).
+    unawaited(_loadInitial());
+    return false;
+  }
+
+  Future<void> _loadInitial() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final persisted = prefs.getBool(_kPrefsKey) ?? false;
+      if (persisted && !state) {
+        state = true;
+      }
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[kid-mode] persistence load failed: $e\n$st');
+      }
+    }
+  }
 
   void enter() {
     state = true;
+    unawaited(_persist(true));
   }
 
   /// Staff-initiated exit. Called by surfaces (or a future
@@ -58,6 +90,23 @@ class KidMode extends Notifier<bool> {
   /// gesture / PIN check.
   void exit() {
     state = false;
+    unawaited(_persist(false));
+  }
+
+  Future<void> _persist(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kPrefsKey, value);
+    } on Object catch (e, st) {
+      // Persistence is best-effort — if we can't write, the lock
+      // still works for the current session. Don't crash; the
+      // failure mode is "kid backgrounds + reopens after a crash =
+      // staff chrome visible" which is no worse than the pre-
+      // persistence behavior.
+      if (kDebugMode) {
+        debugPrint('[kid-mode] persistence write failed: $e\n$st');
+      }
+    }
   }
 }
 

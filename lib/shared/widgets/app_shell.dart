@@ -319,12 +319,18 @@ class _AppShellState extends ConsumerState<AppShell> {
     final parsed = parseSlashQuery(text);
     final name = parsed.name;
     if (name == null || name.isEmpty) return;
-    // Exact match wins; otherwise pick prefix match if unique.
-    final exact = allSlashCommands.firstWhere(
+    // Resolve against the viewer-filtered list so an Enter on a
+    // hidden command (e.g. `/checkout` for a non-driver) doesn't
+    // execute. The exec handler also rejects, but filtering here
+    // also fixes the case where the user typed an alias that
+    // collides with a visible command's prefix.
+    final visible = matchSlashCommands(null, viewer: ref.read(viewerProvider));
+    if (visible.isEmpty) return;
+    final exact = visible.firstWhere(
       (c) => c.name == name || c.aliases.contains(name),
-      orElse: () => allSlashCommands.firstWhere(
+      orElse: () => visible.firstWhere(
         (c) => c.matches(name),
-        orElse: () => allSlashCommands.first,
+        orElse: () => visible.first,
       ),
     );
     // Sanity check — `firstWhere` with no match would have thrown
@@ -529,8 +535,14 @@ class _OmniboxResultsPanel extends ConsumerWidget {
     // verb-first navigation. Parsed once here so the panel + tile
     // can read it consistently.
     final parsedSlash = isSlash ? parseSlashQuery(query) : null;
+    // Pass the current viewer so commands whose `visibleTo` gate
+    // returns false (e.g. /checkout for non-drivers) don't appear in
+    // the panel. Defense in depth — the exec path also rejects.
     final slashMatches = isSlash
-        ? matchSlashCommands(parsedSlash?.name)
+        ? matchSlashCommands(
+            parsedSlash?.name,
+            viewer: ref.watch(viewerProvider),
+          )
         : const <SlashCommand>[];
 
     final nodes = (q.isEmpty || isSlash)

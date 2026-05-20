@@ -30,6 +30,7 @@ class SlashCommand {
     required this.icon,
     required this.exec,
     this.aliases = const <String>[],
+    this.visibleTo,
   });
 
   /// Canonical name. The user types `/{name} ...` to invoke.
@@ -53,6 +54,14 @@ class SlashCommand {
   /// in the typed query (e.g. "robins" from "/attendance robins").
   /// `args` is null when the user just hit enter on the name alone.
   final void Function(BuildContext ctx, WidgetRef ref, String? args) exec;
+
+  /// Optional capability gate. Called with the current Viewer; the
+  /// command is hidden from the panel + rejected on exec when it
+  /// returns false. Null means "available to anyone signed in."
+  /// Filtering at LIST time (instead of relying on the exec to
+  /// snackbar a denial) matches the omnibox catalog pattern — a
+  /// command the viewer can't run shouldn't even show up.
+  final bool Function(Viewer)? visibleTo;
 
   /// Whether `typed` matches this command's name or any alias as a
   /// prefix.
@@ -85,14 +94,25 @@ class SlashCommand {
   return (name: n, args: a.isEmpty ? null : a);
 }
 
-/// Filter [allSlashCommands] by what the user has typed so far.
-/// Empty `typedName` returns all; otherwise prefix-match name +
+/// Filter [allSlashCommands] by what the user has typed so far AND
+/// by the [viewer]'s capabilities. Empty `typedName` returns
+/// everything the viewer can run; otherwise prefix-match name +
 /// aliases.
-List<SlashCommand> matchSlashCommands(String? typedName) {
+///
+/// Filtering by capability at LIST time keeps the panel honest —
+/// a non-driver typing `/` doesn't see `/checkout` light up and
+/// then get rejected on Enter. Same pattern as the catalog's
+/// capability-gated entries.
+List<SlashCommand> matchSlashCommands(String? typedName, {Viewer? viewer}) {
+  final allowed = allSlashCommands.where((c) {
+    final gate = c.visibleTo;
+    if (gate == null || viewer == null) return true;
+    return gate(viewer);
+  });
   if (typedName == null || typedName.isEmpty) {
-    return List.unmodifiable(allSlashCommands);
+    return allowed.toList();
   }
-  return allSlashCommands.where((c) => c.matches(typedName)).toList();
+  return allowed.where((c) => c.matches(typedName)).toList();
 }
 
 /// The canonical slash command set. Keep small and tight — power
@@ -169,6 +189,7 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     hint: 'Check out a vehicle by name (or jump to the fleet list)',
     icon: Icons.key_outlined,
     aliases: ['co'],
+    visibleTo: _canTouchVehicles,
     exec: _execCheckout,
   ),
   const SlashCommand(
@@ -177,9 +198,12 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     hint: 'Check in a vehicle by name (or jump to the fleet list)',
     icon: Icons.assignment_turned_in_outlined,
     aliases: ['ci', 'return'],
+    visibleTo: _canTouchVehicles,
     exec: _execCheckin,
   ),
 ];
+
+bool _canTouchVehicles(Viewer v) => v.canDrive || v.canManageProgram;
 
 void _execAttendance(BuildContext ctx, WidgetRef ref, String? args) {
   if (args == null || args.isEmpty) {
@@ -270,13 +294,16 @@ void _execVehicleAction(
   required String kind,
 }) {
   final viewer = ref.read(viewerProvider);
-  // Gate on capability — non-drivers won't have a `checkout` flow.
-  // Directors managing the fleet still benefit from the list view.
-  if (!viewer.canDrive && !viewer.canManageProgram) {
+  // Defense in depth — the command is now hidden from the panel via
+  // `visibleTo`, but a savvy user could still type it directly and
+  // hit return. Reject with a copy that doesn't leak internal
+  // capability-key vocabulary: a user shouldn't see "you need the
+  // canDrive cap" — they should see what to DO ("ask a director").
+  if (!_canTouchVehicles(viewer)) {
     ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
       const SnackBar(
         content: Text(
-          'You need the "drive" capability to check vehicles in or out.',
+          'Only drivers can check vehicles in or out. Ask a director.',
         ),
       ),
     );

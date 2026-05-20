@@ -38,7 +38,8 @@ class SurveyTakeScreen extends ConsumerStatefulWidget {
   ConsumerState<SurveyTakeScreen> createState() => _SurveyTakeScreenState();
 }
 
-class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
+class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
+    with WidgetsBindingObserver {
   late final PageController _page;
   SurveyAnswers _answers = SurveyAnswers();
   int _index = 0;
@@ -66,24 +67,41 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
   void initState() {
     super.initState();
     _page = PageController();
+    // Watch app lifecycle so we can RE-engage kid mode if the user
+    // backgrounded the app — defends against the OS resurrecting
+    // the Activity without rebuilding the widget tree, in which
+    // case `initState` doesn't fire again on resume.
+    WidgetsBinding.instance.addObserver(this);
     // Lock the device into kid mode for the duration of this screen.
     // AppShell strips its omnibox bar + body padding + top chrome
     // so the kid sees only the survey surface and can't drift into
-    // staff-facing routes via the composer. We exit on dispose so a
-    // teacher who pops back out of the survey returns to a normal
-    // staff view — the staff-only exit gesture (PIN, multi-tap) is
-    // future work and not required while only staff can launch.
+    // staff-facing routes via the composer.
     //
     // Defer through a microtask, not addPostFrameCallback: initState
     // runs during the parent route's build phase and AppShell
     // watches kidModeProvider, so a sync write trips Riverpod's
-    // "modified during build" assertion. Microtask fires after the
-    // build phase finishes but BEFORE the next frame's render, so
-    // kid mode is already active when the survey paints.
+    // "modified during build" assertion.
     unawaited(Future.microtask(() {
       if (!mounted) return;
       ref.read(kidModeProvider.notifier).enter();
     }));
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Re-engage kid mode on resume. The persisted SharedPreferences
+    // value typically restores it, but on devices where the
+    // notifier rebuilt before persistence loaded, this is the
+    // belt + suspenders. Also resets `_staffUnlocked` so an
+    // unlocked-but-not-exited surface re-locks if backgrounded —
+    // staff has to redo the gesture after coming back.
+    if (state == AppLifecycleState.resumed && mounted) {
+      ref.read(kidModeProvider.notifier).enter();
+      if (_staffUnlocked) {
+        setState(() => _staffUnlocked = false);
+      }
+    }
   }
 
   @override
@@ -92,6 +110,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
     // intercepts system-back while still in kid mode, so this only
     // runs after the staff has unlocked (or after a programmatic
     // pop from completion).
+    WidgetsBinding.instance.removeObserver(this);
     ref.read(kidModeProvider.notifier).exit();
     _staffTapReset?.cancel();
     _staffTapReset = null;
