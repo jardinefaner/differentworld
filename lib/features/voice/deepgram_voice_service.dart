@@ -1,12 +1,13 @@
 import 'dart:async';
-
 import 'dart:convert';
+import 'dart:io' show WebSocket;
 
 import 'package:differentworld/core/env/env.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// What's currently happening with the user's voice session. Pumped
@@ -126,10 +127,20 @@ class DeepgramVoiceController {
         '&smart_format=true'
         '&endpointing=600',
       );
-      _channel = WebSocketChannel.connect(
-        uri,
-        protocols: ['token', Env.deepgramApiKey],
+      // Pass the API key via Authorization header rather than the
+      // WebSocket subprotocol. Subprotocols ride the WS upgrade in
+      // `Sec-WebSocket-Protocol`, which is plaintext in network
+      // proxies / OS diagnostic logs — credential-exposure risk.
+      // `IOWebSocketChannel.connect` accepts headers on native
+      // platforms; on web (where dart:io isn't available) Deepgram's
+      // subprotocol fallback is the only option.
+      final socket = await WebSocket.connect(
+        uri.toString(),
+        headers: <String, dynamic>{
+          'Authorization': 'Token ${Env.deepgramApiKey}',
+        },
       );
+      _channel = IOWebSocketChannel(socket);
       _wsSub = _channel!.stream.listen(
         _onWsMessage,
         onError: (Object e, StackTrace st) {
@@ -140,9 +151,13 @@ class DeepgramVoiceController {
           unawaited(_teardown());
         },
         onDone: () {
-          // Stream closed by the server (timeout, completion). Emit
-          // a final idle update so the UI clears the indicator.
-          if (_state == VoiceState.finalizing) {
+          // Stream closed. Emit a final idle update so the UI clears
+          // the indicator — whether the user explicitly stopped
+          // (state was already `finalizing`) or the server dropped
+          // mid-session (state was `listening`, network blip /
+          // Deepgram timeout). Without the unconditional return-to-
+          // idle, a mid-session drop leaves the mic icon stuck red.
+          if (isActive) {
             _setState(VoiceState.idle);
           }
         },

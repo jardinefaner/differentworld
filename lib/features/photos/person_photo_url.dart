@@ -97,19 +97,61 @@ final signedPersonPhotoUrlProvider =
       // widget fall through to its placeholder. We DO log so the
       // problem is visible during development; in production the
       // same context reaches the crash reporter via reportError.
+      //
+      // PRIVACY: the `path` segment encodes `<space_id>/<entity>/<id>/...`
+      // which is PII-adjacent. We DON'T forward the original error
+      // (whose message can echo the path back) to the crash
+      // reporter; instead we report a redacted SignedUrlFailure that
+      // carries only a coarse-grained reason. Debug builds still see
+      // the full context in logcat.
       if (kDebugMode) {
         debugPrint(
           '[signed-url] failed for path=$path · $e',
         );
       }
-      FlutterError.reportError(
-        FlutterErrorDetails(
-          exception: e,
-          stack: st,
-          library: 'person-photo signed URL',
-        ),
-      );
+      // Skip reporting altogether on expected denials (404, 401, 403)
+      // — a typical row with a missing/old photo would otherwise
+      // flood the crash reporter on every list rebuild. Heuristic:
+      // anything with `statusCode` 4xx is "expected"; everything
+      // else (network blip, decoding error) gets reported.
+      final isExpectedDenial = _isExpectedAuthOrNotFound(e);
+      if (!isExpectedDenial) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: _RedactedSignedUrlFailure(e.runtimeType.toString()),
+            stack: st,
+            library: 'person-photo signed URL',
+          ),
+        );
+      }
       return null;
     }
   },
 );
+
+/// Reported in place of the raw Storage error so the crash reporter
+/// never sees the `<space_id>/<entity>/<id>/...` path embedded in
+/// the original message.
+class _RedactedSignedUrlFailure implements Exception {
+  const _RedactedSignedUrlFailure(this.errorType);
+  final String errorType;
+  @override
+  String toString() =>
+      'Signed URL fetch failed (redacted): $errorType';
+}
+
+/// True if [error] looks like an expected RLS / not-found denial
+/// from Storage. We swallow these without crash-reporting because
+/// they fire on every list rebuild for rows with missing or
+/// inaccessible photos — flooding the reporter has no diagnostic
+/// value. Network / decode / other unexpected errors still get
+/// reported.
+bool _isExpectedAuthOrNotFound(Object error) {
+  final msg = error.toString().toLowerCase();
+  return msg.contains('404') ||
+      msg.contains('401') ||
+      msg.contains('403') ||
+      msg.contains('not found') ||
+      msg.contains('not_found') ||
+      msg.contains('unauthor');
+}

@@ -53,16 +53,23 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
     super.initState();
     _page = PageController();
     // Lock the device into kid mode for the duration of this screen.
-    // The AppShell strips its omnibox bar + body padding so the kid
-    // sees only the survey surface and can't drift into staff-facing
-    // routes via the composer. We deliberately exit on dispose so a
+    // AppShell strips its omnibox bar + body padding + top chrome
+    // so the kid sees only the survey surface and can't drift into
+    // staff-facing routes via the composer. We exit on dispose so a
     // teacher who pops back out of the survey returns to a normal
-    // staff view — the post-mortem exit flow (PIN, multi-tap) is
+    // staff view — the staff-only exit gesture (PIN, multi-tap) is
     // future work and not required while only staff can launch.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    //
+    // Defer through a microtask, not addPostFrameCallback: initState
+    // runs during the parent route's build phase and AppShell
+    // watches kidModeProvider, so a sync write trips Riverpod's
+    // "modified during build" assertion. Microtask fires after the
+    // build phase finishes but BEFORE the next frame's render, so
+    // kid mode is already active when the survey paints.
+    unawaited(Future.microtask(() {
       if (!mounted) return;
       ref.read(kidModeProvider.notifier).enter();
-    });
+    }));
   }
 
   @override

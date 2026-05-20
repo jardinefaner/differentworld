@@ -17,16 +17,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// @override
 /// void initState() {
 ///   super.initState();
-///   WidgetsBinding.instance.addPostFrameCallback((_) {
+///   // Defer through a microtask — initState runs DURING the
+///   // parent's build phase, and AppShell watches kidModeProvider,
+///   // so a sync write trips Riverpod's "modified during build"
+///   // assertion. Microtask fires after the build phase finishes
+///   // but BEFORE the next frame's render, so kid mode is active
+///   // by the time the kid surface paints. Don't use
+///   // `addPostFrameCallback` — that fires AFTER the next frame,
+///   // introducing a 1-frame window where staff chrome is still
+///   // visible on the kid surface.
+///   unawaited(Future.microtask(() {
+///     if (!mounted) return;
 ///     ref.read(kidModeProvider.notifier).enter();
-///   });
+///   }));
 /// }
 ///
 /// @override
 /// void dispose() {
-///   // Caller is responsible for exiting on the way out — kid-mode
-///   // does NOT auto-exit on pop, because a kid tapping back is the
-///   // failure mode we're locking down.
+///   // Drop the lock when the screen pops. For surfaces a kid
+///   // might launch (kid-journal, future activity check-ins), use
+///   // a staff-only exit instead — see CLAUDE.md persona "Ava".
+///   ref.read(kidModeProvider.notifier).exit();
 ///   super.dispose();
 /// }
 /// ```

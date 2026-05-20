@@ -481,6 +481,25 @@ flutter test        # all passing
 
 The ones we've already burned a turn on.
 
+### "Modified provider while the widget tree was building" — the chrome publish trap
+When `EdgeScaffold.initState` calls `routeChromeProvider.notifier.push(...)`
+synchronously, Riverpod throws the full-screen red error frame
+("Tried to modify a provider while the widget tree was building").
+Cause: initState runs DURING the parent route's build phase, and
+AppShell is watching `routeChromeProvider` — writing to a watched
+notifier mid-build is forbidden.
+
+Fix: defer the write through `Future.microtask`. Microtasks fire
+AFTER the current build phase finishes but BEFORE the next frame's
+render, so the new chrome still paints in the same visible frame as
+the new page (no 1-frame stale-chrome flicker like
+`addPostFrameCallback` would cause).
+
+Same pattern applies to any provider write triggered from a
+descendant's lifecycle when an ancestor is watching it (e.g.
+`kidModeProvider.notifier.enter()` from a kid-surface's initState
+goes through the same microtask defer).
+
 ### Drift ↔ PowerSync ambiguous `Column` import
 Both packages export a `Column` class. Importing
 `package:powersync/powersync.dart` unqualified inside any file with Drift
@@ -889,15 +908,24 @@ do / dictate. Some key invariants:
   because `resizeToAvoidBottomInset: true` shrinks the body to fit.
   Route content gets `Padding(bottom: 76)` so the last save-button
   never renders behind the bar.
-- **Chrome (back + actions) is rendered by AppShell, not by each
-  route.** `EdgeScaffold` publishes its `actions` / `showBack` /
-  `topOverlay` to `routeChromeProvider` (in
-  `lib/shared/widgets/route_chrome.dart`) in `initState` /
-  `didUpdateWidget` via a post-frame callback. AppShell watches the
-  provider and paints `FloatingBack` + `FloatingActions` over the
-  Stack. Result: navigating A→B animates only the page content;
-  back+actions stay anchored. New screens get this for free as long
-  as they go through `EdgeScaffold`.
+- **Chrome (back + hamburger + actions) is rendered by AppShell from
+  a STACK in `routeChromeProvider`** (see
+  `lib/shared/widgets/route_chrome.dart`). Each `EdgeScaffold`
+  pushes its entry on `initState` and pops on `dispose`; AppShell
+  paints the top of the stack. Writes are deferred through
+  `Future.microtask` to dodge Riverpod's "modified provider while
+  the widget tree was building" assertion (initState fires inside
+  the parent's build phase). The stack is what makes back-pop
+  restore the previous route's chrome — without it, B's
+  actions linger on A after a pop. New screens get this for free
+  through `EdgeScaffold`; don't write to the provider directly.
+- **Hamburger / drawer**: owned by AppShell, NOT per-route. The
+  drawer renders on the Scaffold when a signed-in viewer is
+  active; the hamburger pill appears in the top-left when the
+  route's chrome has `showBack: false`. Drill-in screens show
+  `FloatingBack` instead; the drawer is still openable via
+  swipe-from-left-edge. Don't pass `drawer:` to EdgeScaffold — the
+  param is accepted for source compatibility but ignored.
 - **Three chameleon modes** (`OmniboxMode`):
   - `search` — fuzzy matches the catalog (default)
   - `capture` — free text that doesn't match anything in the catalog;
