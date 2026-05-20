@@ -1,7 +1,6 @@
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,10 +64,9 @@ class _ObservationPhotosStrip extends StatelessWidget {
         onTap: () => PhotoViewer.open(context, urls: photos),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: CachedNetworkImage(
-            imageUrl: photos.first,
-            fit: BoxFit.cover,
-            errorWidget: (_, _, _) => Container(
+          child: PersonPhotoNetwork(
+            urlOrPath: photos.first,
+            errorBuilder: (_) => Container(
               height: 200,
               color: theme.colorScheme.surfaceContainerHigh,
               alignment: Alignment.center,
@@ -94,10 +92,9 @@ class _ObservationPhotosStrip extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
               width: 160,
-              child: CachedNetworkImage(
-                imageUrl: photos[i],
-                fit: BoxFit.cover,
-                errorWidget: (_, _, _) => Container(
+              child: PersonPhotoNetwork(
+                urlOrPath: photos[i],
+                errorBuilder: (_) => Container(
                   color: theme.colorScheme.surfaceContainerHigh,
                   alignment: Alignment.center,
                   child: const Icon(Icons.broken_image_outlined),

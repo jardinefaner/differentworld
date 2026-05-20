@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,12 +37,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   Widget build(BuildContext context) {
     final tasksAsync = ref.watch(openTasksProvider);
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showNewTaskSheet(context),
-        icon: const Icon(Icons.add),
-        label: const Text('New task'),
-      ),
+      actions: [
+        PrimaryActionButton(
+          tooltip: 'New task',
+          icon: Icons.add,
+          onPressed: () => showNewTaskSheet(context),
+        ),
+        const SyncStatusIndicator(),
+      ],
       body: tasksAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(

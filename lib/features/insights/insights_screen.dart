@@ -8,6 +8,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,17 +25,18 @@ class InsightsScreen extends ConsumerWidget {
     final insightsAsync = ref.watch(insightsProvider);
     final insightCount = insightsAsync.value?.length ?? 0;
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
-      floatingActionButton: insightCount >= 2
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                unawaited(HapticFeedback.selectionClick());
-                unawaited(context.push('/review'));
-              },
-              icon: const Icon(Icons.play_circle_outline),
-              label: const Text('Walk me through'),
-            )
-          : null,
+      actions: [
+        if (insightCount >= 2)
+          PrimaryActionButton(
+            tooltip: 'Walk me through',
+            icon: Icons.play_circle_outline,
+            onPressed: () {
+              unawaited(HapticFeedback.selectionClick());
+              unawaited(context.push('/review'));
+            },
+          ),
+        const SyncStatusIndicator(),
+      ],
       body: insightsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(

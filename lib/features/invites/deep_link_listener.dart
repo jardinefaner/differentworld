@@ -51,7 +51,12 @@ class DeepLinkService {
         final initial = await _appLinks.getInitialLink();
         if (initial != null) _ingest(initial);
       } on PlatformException catch (e, st) {
-        debugPrint('[deeplink] getInitialLink failed: $e\n$st');
+        // Debug-only: a deeplink error message can echo back the URI
+        // and the URI carries the invite code — sensitive in
+        // production logs.
+        if (kDebugMode) {
+          debugPrint('[deeplink] getInitialLink failed: $e\n$st');
+        }
       }
     }
 
@@ -59,16 +64,27 @@ class DeepLinkService {
     _sub ??= _appLinks.uriLinkStream.listen(
       _ingest,
       onError: (Object e, StackTrace st) {
-        debugPrint('[deeplink] uriLinkStream error: $e\n$st');
+        // Same redaction rationale as getInitialLink.
+        if (kDebugMode) {
+          debugPrint('[deeplink] uriLinkStream error: $e\n$st');
+        }
       },
     );
   }
 
   void _ingest(Uri uri) {
-    debugPrint('[deeplink] received: $uri');
+    // The URI carries an invite code which is sensitive (grants
+    // access to a specific child/guardian relationship). Never log
+    // its contents in production — log only that we received one and
+    // whether it parsed.
+    if (kDebugMode) {
+      debugPrint('[deeplink] received: $uri');
+    }
     final code = InviteCode.extractFromUri(uri);
     if (code == null) {
-      debugPrint('[deeplink] no invite code in URI; ignoring');
+      if (kDebugMode) {
+        debugPrint('[deeplink] no invite code in URI; ignoring');
+      }
       return;
     }
     _ref.read(pendingInviteCodeProvider.notifier).set(code);

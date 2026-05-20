@@ -69,21 +69,21 @@ class PhotoService {
           fileOptions: const FileOptions(contentType: 'image/jpeg'),
         );
 
-    // The path includes a fresh UUID per upload, so the public URL
-    // changes every time — cached_network_image will fetch the new
-    // bytes without any explicit cache-bust query string. Keeping the
-    // stored URL clean (no `?v=`) avoids persisting upload timestamps
-    // to the database, which would otherwise become a tiny PII leak.
-    final url = _supabase.storage.from(_bucket).getPublicUrl(path);
-
+    // We store the bucket-relative PATH (not a full URL). The bucket
+    // is private; views mint short-lived signed URLs at render time
+    // via `signedPersonPhotoUrlProvider`. The path is stable for the
+    // life of the upload (it includes a per-upload UUID); the signed
+    // URL it resolves to is short-lived. Storing the path keeps the
+    // DB columns free of upload timestamps and lets us rotate signing
+    // strategies without rewriting rows.
     final db = await _ref.read(appDatabaseProvider.future);
     switch (entity) {
       case PhotoEntity.member:
-        await db.membersDao.updateAvatarUrl(entityId, url);
+        await db.membersDao.updateAvatarUrl(entityId, path);
       case PhotoEntity.subject:
-        await db.subjectsDao.updatePhotoUrl(entityId, url);
+        await db.subjectsDao.updatePhotoUrl(entityId, path);
     }
-    return url;
+    return path;
   }
 
   /// Drop the photo from the entity row. Doesn't delete the object in
@@ -128,7 +128,10 @@ class PhotoService {
           compressed,
           fileOptions: const FileOptions(contentType: 'image/jpeg'),
         );
-    return _supabase.storage.from(_bucket).getPublicUrl(path);
+    // Same rationale as in [uploadAndPersist] — return the path. The
+    // caller writes it into whatever row needs it; render-time code
+    // mints signed URLs via `signedPersonPhotoUrlProvider`.
+    return path;
   }
 
 }

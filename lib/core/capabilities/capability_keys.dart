@@ -35,6 +35,18 @@ abstract class MemberCaps {
   static const canInviteStaff = 'can_invite_staff';
   static const canViewAuditLog = 'can_view_audit_log';
   static const canActAsDirector = 'can_act_as_director';
+
+  /// Can edit the camp schedule — create blocks, assign activities,
+  /// schedule field trips. Defaults true for all staff (set per role
+  /// in the capability defaults below); directors can revoke per
+  /// person from member detail.
+  static const canManageSchedule = 'can_manage_schedule';
+
+  /// Marks this member as a "specialist" — narrow-scope staff (yoga
+  /// instructor, swim coach, archery lead). Specialists show up in
+  /// the schedule activity lead picker; their Today screen defaults
+  /// to "what am I leading" instead of "what's the whole camp doing."
+  static const isSpecialist = 'is_specialist';
   // Certifications were previously stored as JSONB on this same caps
   // blob (keys `certifications` + `certification_expirations`). They
   // are now a first-class entity (`member_certifications` table /
@@ -131,6 +143,7 @@ abstract class RoleBundles {
           MemberCaps.canInviteStaff: true,
           MemberCaps.canViewAuditLog: true,
           MemberCaps.canActAsDirector: true,
+          MemberCaps.canManageSchedule: true,
           // Cert-gated; stays false until a cert is added.
           MemberCaps.canAdministerMedication: false,
           MemberCaps.canDrive: false,
@@ -145,6 +158,7 @@ abstract class RoleBundles {
           MemberCaps.canOpenBuilding: true,
           MemberCaps.canCloseBuilding: true,
           MemberCaps.canAuthorizePickup: true,
+          MemberCaps.canManageSchedule: true,
         };
       case 'teacher':
         return <String, dynamic>{
@@ -153,6 +167,7 @@ abstract class RoleBundles {
           MemberCaps.canRecordMeal: true,
           MemberCaps.canRecordNap: true,
           MemberCaps.canRecordDiaper: true,
+          MemberCaps.canManageSchedule: true,
         };
       case 'assistant':
         return <String, dynamic>{

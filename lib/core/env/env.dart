@@ -17,8 +17,14 @@ abstract final class Env {
   static String get powerSyncUrl => _read('POWERSYNC_URL');
   static String get sentryDsn => _read('SENTRY_DSN');
 
+  /// Deepgram API key — only needed if you want voice dictation in
+  /// the omnibox composer. Without it the mic affordance still shows
+  /// but tapping it surfaces a "voice not configured" message.
+  static String get deepgramApiKey => _read('DEEPGRAM_API_KEY');
+
   static bool get hasSupabase =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
   static bool get hasPowerSync => powerSyncUrl.isNotEmpty;
   static bool get hasSentry => sentryDsn.isNotEmpty;
+  static bool get hasDeepgram => deepgramApiKey.isNotEmpty;
 }

@@ -141,8 +141,83 @@ class _MorningChecklistScreenState
       return const EdgeScaffold(body: NoAccess());
     }
 
+    // Compute the bulk-mark state once so both the actions row and
+    // (formerly) the FAB read from the same numbers.
+    final sections = dataAsync.value;
+    final totalUnmarked = sections == null
+        ? 0
+        : sections.fold<int>(0, (acc, s) {
+            final marked = s.records.map((r) => r.subjectId).toSet();
+            return acc +
+                s.subjects
+                    .where((sub) => !marked.contains(sub.id))
+                    .length;
+          });
+    final canBulk = sections != null &&
+        sections.isNotEmpty &&
+        totalUnmarked > 0;
+    final scheme = Theme.of(context).colorScheme;
+
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        if (canBulk)
+          // 2-stage mark-all-present primary. First tap arms with the
+          // error tint + "Tap again · N kids"; second tap fires. Auto-
+          // disarms after 4 seconds via _armBulk.
+          Material(
+            color: _armed
+                ? scheme.error
+                : scheme.primaryContainer,
+            shape: const StadiumBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () async {
+                if (!_armed) {
+                  unawaited(HapticFeedback.selectionClick());
+                  _armBulk();
+                  return;
+                }
+                _armTimer?.cancel();
+                setState(() => _armed = false);
+                await _markAllPresentEverywhere(sections);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _armed
+                          ? Icons.warning_amber_rounded
+                          : Icons.check_circle_outline,
+                      size: 18,
+                      color: _armed
+                          ? scheme.onError
+                          : scheme.onPrimaryContainer,
+                    ),
+                    if (_armed) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        'Tap again · $totalUnmarked',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(
+                              color: scheme.onError,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        const SyncStatusIndicator(),
+      ],
       body: dataAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
@@ -170,43 +245,8 @@ class _MorningChecklistScreenState
           );
         },
       ),
-      floatingActionButton: dataAsync.maybeWhen(
-        data: (sections) {
-          if (sections.isEmpty) return null;
-          final totalUnmarked = sections.fold<int>(0, (acc, s) {
-            final marked = s.records.map((r) => r.subjectId).toSet();
-            return acc +
-                s.subjects.where((sub) => !marked.contains(sub.id)).length;
-          });
-          if (totalUnmarked == 0) return null;
-          final scheme = Theme.of(context).colorScheme;
-          return FloatingActionButton.extended(
-            onPressed: () async {
-              if (!_armed) {
-                unawaited(HapticFeedback.selectionClick());
-                _armBulk();
-                return;
-              }
-              _armTimer?.cancel();
-              setState(() => _armed = false);
-              await _markAllPresentEverywhere(sections);
-            },
-            backgroundColor:
-                _armed ? scheme.error : null,
-            foregroundColor:
-                _armed ? scheme.onError : null,
-            icon: Icon(_armed
-                ? Icons.warning_amber_rounded
-                : Icons.check_circle_outline),
-            label: Text(
-              _armed
-                  ? 'Tap again · $totalUnmarked kids'
-                  : 'Mark all present',
-            ),
-          );
-        },
-        orElse: () => null,
-      ),
+      // FAB removed — 2-stage Mark-all-present lives in the
+      // top-right primary action pill (see actions above).
     );
   }
 }

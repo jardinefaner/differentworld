@@ -6,6 +6,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +26,14 @@ class VehiclesListScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
+      actions: [
+        if (canEditFleet && (vehiclesAsync.value?.isNotEmpty ?? false))
+          PrimaryActionButton(
+            tooltip: 'New vehicle',
+            icon: Icons.add,
+            onPressed: () => context.push('/settings/vehicles/new'),
+          ),
+      ],
       body: vehiclesAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
@@ -67,16 +76,8 @@ class VehiclesListScreen extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: vehiclesAsync.maybeWhen(
-        data: (v) => (v.isEmpty || !canEditFleet)
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: () => context.push('/settings/vehicles/new'),
-                icon: const Icon(Icons.add),
-                label: const Text('Vehicle'),
-              ),
-        orElse: () => null,
-      ),
+      // FAB removed — "New vehicle" lives in the top-right primary
+      // action pill above.
     );
   }
 }

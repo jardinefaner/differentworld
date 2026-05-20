@@ -1,0 +1,29 @@
+-- ---------------------------------------------------------------------------
+-- Add 'guardian' to public.member_role.
+--
+-- The enum was inherited from staff_role (director / lead_teacher / teacher /
+-- assistant). When migration 20260518000007 rewrote app.accept_invite to
+-- branch on `role = 'guardian'`, it relied on the invites.role column being
+-- able to hold that value — but the enum was never extended, so PostgREST
+-- rejected every `createGuardianInvite` upload with:
+--
+--   PostgrestException(message: invalid input value for enum member_role:
+--   "guardian", code: 22P02, ...)
+--
+-- Symptom: the local PowerSync queue retries that row forever; no guardian
+-- invite ever reaches the table; the family-login flow is dead-on-arrival.
+--
+-- Semantic note: members.role still represents STAFF roles only. The enum
+-- gains 'guardian' as a value, but accept_invite never writes it into
+-- members.role — guardian invites are routed to public.guardians instead
+-- (see migration 20260518000007). The enum is shared with invites.role,
+-- which is the only column that legitimately holds 'guardian'.
+--
+-- Re: transactional safety: PG 12+ allows ALTER TYPE … ADD VALUE inside a
+-- transaction (Supabase runs PG 15). The new value cannot be referenced by
+-- other statements in the same transaction — that's fine here; no later
+-- statement in this migration uses it. PostgREST will pick up the new value
+-- on its next schema-reload tick (auto-fires after every migration).
+-- ---------------------------------------------------------------------------
+
+alter type public.member_role add value if not exists 'guardian';

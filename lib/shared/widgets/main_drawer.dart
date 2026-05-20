@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +26,6 @@ class MainDrawer extends ConsumerWidget {
     final viewer = ref.watch(viewerProvider);
     final member = viewer.member;
     final space = viewer.space;
-    final groupsAsync = ref.watch(groupsProvider);
 
     return Drawer(
       child: SafeArea(
@@ -123,7 +122,75 @@ class MainDrawer extends ConsumerWidget {
 
             const SizedBox(height: 8),
 
-            // Destinations.
+            // Hero "Search anything" tile — the canonical entry point
+            // to the omnibox spine. Lives at the top of the drawer so
+            // the affordance is the first thing a user sees. The
+            // drawer below shrinks to a 5-item top-level orientation
+            // list; everything else is in the omnibox.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+              child: Material(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).pop(); // close drawer first
+                    unawaited(showOmnibox(context));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.search,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Search anything',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                              Text(
+                                'Pages, actions, kids, vehicles · Cmd+K',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer
+                                          .withValues(alpha: 0.8),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // The five top-level orientation destinations. Everything
+            // else (Classrooms, Team, Program settings, Billing,
+            // Activities, Locations, etc.) lives in the omnibox.
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -133,67 +200,24 @@ class MainDrawer extends ConsumerWidget {
                     label: 'Today',
                     onTap: () => _go(context, '/'),
                   ),
-                  if (viewer.isDailyLogger)
-                    _DrawerTile(
-                      icon: Icons.task_alt,
-                      label: 'Morning checklist',
-                      onTap: () => _go(context, '/checklist'),
-                    ),
-
-                  const _SectionGap(),
-                  const _SectionLabel(label: 'Classrooms'),
-                  ...groupsAsync.maybeWhen(
-                    data: (groups) => groups.isEmpty
-                        ? const [
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
-                              child: Text(
-                                'No classrooms yet.',
-                                style: TextStyle(fontSize: 13),
-                              ),
-                            ),
-                          ]
-                        : groups
-                            .map(
-                              (g) => _DrawerTile(
-                                icon: Icons.meeting_room_outlined,
-                                label: g.name,
-                                subtitle: g.ageRange,
-                                onTap: () =>
-                                    _go(context, '/groups/${g.id}'),
-                              ),
-                            )
-                            .toList(),
-                    orElse: () => const [SizedBox.shrink()],
+                  _DrawerTile(
+                    icon: Icons.calendar_month_outlined,
+                    label: 'Schedule',
+                    onTap: () => _go(context, '/schedule'),
                   ),
-
-                  if (viewer.canSeeTeam ||
-                      viewer.canManageProgram ||
-                      viewer.showsBilling) ...[
-                    const _SectionGap(),
-                    const _SectionLabel(label: 'Program'),
-                  ],
-                  if (viewer.canSeeTeam)
-                    _DrawerTile(
-                      icon: Icons.groups_outlined,
-                      label: 'Team',
-                      onTap: () => _go(context, '/settings/team'),
-                    ),
-                  if (viewer.canManageProgram)
-                    _DrawerTile(
-                      icon: Icons.school_outlined,
-                      label: 'Program settings',
-                      onTap: () => _go(context, '/settings/program'),
-                    ),
-                  if (viewer.showsBilling)
-                    _DrawerTile(
-                      icon: Icons.receipt_long_outlined,
-                      label: 'Billing',
-                      onTap: () => _go(context, '/settings'),
-                    ),
+                  _DrawerTile(
+                    icon: Icons.inbox_outlined,
+                    label: 'Captures',
+                    onTap: () => _go(context, '/captures'),
+                  ),
+                  _DrawerTile(
+                    icon: Icons.check_circle_outline,
+                    label: 'Tasks',
+                    onTap: () => _go(context, '/tasks'),
+                  ),
                   _DrawerTile(
                     icon: Icons.settings_outlined,
-                    label: 'All settings',
+                    label: 'Settings',
                     onTap: () => _go(context, '/settings'),
                   ),
                 ],
@@ -218,12 +242,10 @@ class _DrawerTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.subtitle,
   });
 
   final IconData icon;
   final String label;
-  final String? subtitle;
   final VoidCallback onTap;
 
   @override
@@ -231,37 +253,8 @@ class _DrawerTile extends StatelessWidget {
     return ListTile(
       leading: Icon(icon),
       title: Text(label),
-      subtitle: subtitle == null ? null : Text(subtitle!),
-      dense: subtitle == null,
+      dense: true,
       onTap: onTap,
-    );
-  }
-}
-
-class _SectionGap extends StatelessWidget {
-  const _SectionGap();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox(height: 16);
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-      child: Text(
-        label.toUpperCase(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          letterSpacing: 0.6,
-        ),
-      ),
     );
   }
 }

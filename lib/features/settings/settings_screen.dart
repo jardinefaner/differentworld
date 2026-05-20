@@ -2,6 +2,8 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/settings/text_scale_setting.dart';
+import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -73,18 +75,37 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsGroup(
             label: 'Program',
             children: [
-              ListTile(
-                leading: const Icon(Icons.school_outlined),
-                title: const Text('Program settings'),
-                subtitle: const Text(
-                  "What's tracked program-wide, pickup window, defaults",
+              // Brianna-persona: rather than greying out silently
+              // when a teacher taps "Program settings", we explain
+              // why with the lock chip + tooltip-snackbar. The
+              // affordance stays visible so the new hire learns the
+              // permission model.
+              if (viewer.canManageProgram)
+                ListTile(
+                  leading: const Icon(Icons.school_outlined),
+                  title: const Text('Program settings'),
+                  subtitle: const Text(
+                    "What's tracked program-wide, pickup window, "
+                    'defaults',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/settings/program'),
+                )
+              else
+                const CapabilityLockedTile(
+                  tooltip:
+                      'Only directors can change program settings. '
+                      'Ask yours if something needs to update.',
+                  child: ListTile(
+                    leading: Icon(Icons.school_outlined),
+                    title: Text('Program settings'),
+                    subtitle: Text(
+                      "What's tracked program-wide, pickup window, "
+                      'defaults',
+                    ),
+                    trailing: Icon(Icons.chevron_right),
+                  ),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                enabled: viewer.canManageProgram,
-                onTap: viewer.canManageProgram
-                    ? () => context.push('/settings/program')
-                    : null,
-              ),
               const _SettingsDivider(),
               ListTile(
                 leading: const Icon(Icons.groups_outlined),
@@ -106,12 +127,23 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
 
-          // Preferences — appearance / language stubs. These don't
-          // yet have detail screens; the rows are visible so the user
-          // knows the affordance is coming and what's planned.
+          // Library management (Activities / Locations) intentionally
+          // lives in the omnibox now, not in Settings. The bottom
+          // composer is the spine for "find / open / manage" — typing
+          // "activities" or "locations" surfaces the screens. Keeping
+          // them in Settings too made the menu busier without adding
+          // a new path. Settings is now preferences-only.
+
+          // Preferences — appearance / text size / language. Appearance
+          // and language are still placeholders (their detail screens
+          // aren't built); the text-size override is live so Helen-
+          // type users can boost the UI above their OS dynamic-type
+          // slider without leaving Different World.
           _SettingsGroup(
             label: 'Preferences',
             children: [
+              const _TextSizeTile(),
+              const _SettingsDivider(),
               ListTile(
                 leading: const Icon(Icons.brightness_6_outlined),
                 title: const Text('Appearance'),
@@ -268,4 +300,82 @@ class _SettingsDivider extends StatelessWidget {
           ),
     );
   }
+}
+
+/// Text-size override picker. Default leaves the OS dynamic-type
+/// slider in charge; "Large" or "Extra large" clamps to a higher
+/// floor (1.3x / 1.5x) so users like the Helen persona can boost the
+/// Different World UI without changing their device-wide font size.
+///
+/// The shim that actually applies the override lives in
+/// `lib/app/app.dart` (AppTextScaleApplier wrapper around
+/// MaterialApp's builder). This tile just persists the user's pick.
+class _TextSizeTile extends ConsumerWidget {
+  const _TextSizeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final modeAsync = ref.watch(textScaleSettingProvider);
+    final mode = modeAsync.value ?? TextScaleMode.systemDefault;
+    return ListTile(
+      leading: const Icon(Icons.format_size_outlined),
+      title: const Text('Text size'),
+      subtitle: Text(mode.label),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () async {
+        final picked = await showModalBottomSheet<TextScaleMode>(
+          context: context,
+          showDragHandle: true,
+          builder: (sheetContext) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // RadioGroup is the supported wrapper post-3.32.0;
+                    // each RadioListTile inside it reads the group
+                    // value and reports changes up through this single
+                    // onChanged. Popping the sheet with the picked
+                    // mode lets the caller persist it.
+                    RadioGroup<TextScaleMode>(
+                      groupValue: mode,
+                      onChanged: (m) {
+                        if (m == null) return;
+                        Navigator.of(sheetContext).pop(m);
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final option in TextScaleMode.values)
+                            RadioListTile<TextScaleMode>(
+                              title: Text(option.label),
+                              subtitle: Text(_subtitle(option)),
+                              value: option,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+        if (picked != null) {
+          await ref.read(textScaleSettingProvider.notifier).set(picked);
+        }
+      },
+    );
+  }
+
+  static String _subtitle(TextScaleMode option) => switch (option) {
+        TextScaleMode.systemDefault =>
+          'Use the size from your phone / tablet settings.',
+        TextScaleMode.large => 'Boost everywhere — about 130% of the default.',
+        TextScaleMode.extraLarge =>
+          'Boost more — about 150%. Some labels may wrap.',
+      };
 }

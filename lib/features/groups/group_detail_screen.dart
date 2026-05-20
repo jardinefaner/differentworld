@@ -14,6 +14,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,8 +51,26 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     final groupId = widget.groupId;
     return EdgeScaffold(
       actions: [
-        // Attendance affordance only when the viewer can take attendance.
-        if (viewer.canTakeAttendance)
+        // Primary verb: add a student (director-only). For everyone
+        // else, take-attendance is the most frequent so it takes the
+        // primary slot.
+        if (viewer.canManageProgram &&
+            (subjectsAsync.value?.isNotEmpty ?? false))
+          PrimaryActionButton(
+            tooltip: 'Add a student',
+            icon: Icons.person_add_outlined,
+            onPressed: () =>
+                context.push('/groups/$groupId/students/new'),
+          )
+        else if (viewer.canTakeAttendance)
+          PrimaryActionButton(
+            tooltip: 'Take attendance',
+            icon: Icons.fact_check_outlined,
+            onPressed: () => context.push('/groups/$groupId/attendance'),
+          ),
+        // Secondary attendance entry when the primary is "add student"
+        // (director) — they still take attendance often enough.
+        if (viewer.canManageProgram && viewer.canTakeAttendance)
           IconButton(
             tooltip: 'Take attendance',
             icon: const Icon(Icons.fact_check_outlined),
@@ -194,19 +213,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
           );
         },
       ),
-      floatingActionButton: subjectsAsync.maybeWhen(
-        // Adding students is a program-management action; teachers
-        // record on existing rosters but don't create them.
-        data: (s) => (s.isEmpty || !viewer.canManageProgram)
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: () =>
-                    context.push('/groups/$groupId/students/new'),
-                icon: const Icon(Icons.add),
-                label: const Text('Student'),
-              ),
-        orElse: () => null,
-      ),
+      // FAB removed — "Add student" lives in the top-right primary
+      // action pill (see actions above) for directors. Take-attendance
+      // remains the primary verb for non-directors.
     );
   }
 }

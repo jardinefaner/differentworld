@@ -1,4 +1,5 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:flutter/material.dart';
@@ -68,11 +69,15 @@ class _InviteShareSheetState extends ConsumerState<InviteShareSheet> {
     final theme = Theme.of(context);
     final code = invite.code;
     final deepLink = code == null ? null : InviteCode.deepLinkFor(code);
-    // TODO(invites): wire program name from a space provider so the
-    // share text reads "Join Sunshine Preschool on Different World."
+    // Personalize the share blurb with the current program name so
+    // the recipient sees "Join Sunshine Preschool on Different World"
+    // rather than the generic fallback. `value` is intentionally
+    // nullable — on first-boot the Space row may not have synced yet;
+    // we degrade to the generic lead in that case.
+    final programName = ref.watch(currentSpaceProvider).value?.name;
     final shareText = code == null
         ? null
-        : InviteCode.shareTextFor(code: code);
+        : InviteCode.shareTextFor(code: code, programName: programName);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),

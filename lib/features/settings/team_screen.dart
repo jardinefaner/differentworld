@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -40,6 +41,14 @@ class TeamScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
+      actions: [
+        if (canInvite)
+          PrimaryActionButton(
+            tooltip: 'Invite a teammate',
+            icon: Icons.person_add_alt_1,
+            onPressed: () => InviteCreateSheet.show(context),
+          ),
+      ],
       body: teamAsync.when(
         loading: () => const LoadingSlot(),
         error: (e, _) => ErrorState(
@@ -102,13 +111,8 @@ class TeamScreen extends ConsumerWidget {
             );
         },
       ),
-      floatingActionButton: canInvite
-          ? FloatingActionButton.extended(
-              onPressed: () => InviteCreateSheet.show(context),
-              icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Invite'),
-            )
-          : null,
+      // FAB removed — "Invite a teammate" lives in the top-right
+      // primary action above.
     );
   }
 }

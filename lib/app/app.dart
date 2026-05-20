@@ -3,6 +3,8 @@ import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/env/env.dart';
 import 'package:differentworld/core/sync/power_sync_provider.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
+import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
+import 'package:differentworld/features/settings/text_scale_setting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,6 +30,19 @@ class DifferentWorldApp extends ConsumerWidget {
       darkTheme: buildDarkTheme(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      // Wrap every routed page in:
+      //   1. AppTextScaleApplier — applies the user's in-app text-size
+      //      override (Settings → Display) on top of the OS dynamic-
+      //      type setting. Layered above OmniboxShortcuts so the
+      //      shortcut chrome itself respects the user's font preference.
+      //   2. OmniboxShortcuts — Cmd+K (mac) / Ctrl+K (everything else)
+      //      summons the command palette from any screen.
+      // Both wrappers are shallow — no rebuilds on route changes.
+      builder: (context, child) => AppTextScaleApplier(
+        child: OmniboxShortcuts(
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 }

@@ -161,8 +161,48 @@ the AppDatabase root, violating the DAO pattern below.
    underscore convention.
 
 Call sites read `db.<noun>Dao.<verb>(...)` — e.g.
-`db.capturesDao.watchOpen(spaceId)`, `db.entriesDao.create(...)`. Only
-cross-table transactions (e.g. `createSpaceForMember` which writes
+`db.capturesDao.watchOpen(spaceId)`, `db.entriesDao.create(...)`.
+
+### 3a. Adding a new top-level feature touches **four more places**
+
+The six-place checklist above is for the DATA. The FEATURE also has
+discoverability surfaces that have to be wired or users can never
+find it. Every time we've forgotten one, the feature shipped as a
+"hidden page only accessible via deep link from this one card" —
+which is the same as not shipping it.
+
+When a new screen lands at a new top-level route, update:
+
+1. **Routes** (`lib/app/router.dart`): nest the route(s) so deep
+   links work + the back stack is right. Don't put a top-level page
+   under `/settings/...` unless it's actually a settings sub-page.
+2. **Omnibox** (`lib/features/omnibox/omnibox_results.dart`): add a
+   `_Suggestion` per screen / action. **Mirror existing patterns**:
+   gate by capability when the destination is gated; emit per-cohort
+   "Schedule · {Group.name}" variants where the feature has a
+   per-cohort shape; include broad keywords (`'field trip', 'pool',
+   'barn'`) so users discover via what they actually call the thing.
+3. **MainDrawer** (`lib/shared/widgets/main_drawer.dart`): if it's a
+   top-level destination (Today, Schedule, Captures, Tasks…), it
+   belongs in the drawer's main list. If it's a "library" surface
+   (Activities, Locations) it belongs under Settings, not the
+   drawer.
+4. **Settings entries** (`lib/features/settings/settings_screen.dart`):
+   any settings-section route gets a `ListTile` row in the right
+   `_SettingsGroup`. Group new rows with adjacent ones — don't add a
+   new group for one item.
+
+The omnibox file itself has a one-line reminder above
+`_computeSuggestions` calling this rule out. **Every PR that adds a
+top-level screen should grep `// UX_DECISIONS §7` to find that
+reminder and audit against it.**
+
+Anti-pattern this prevents (we've shipped it twice): adding a
+fully-built screen and forgetting one of the four surfaces, so the
+only way to reach it is a deep link from one other screen that
+already happens to know about it. Users never find it.
+
+Cross-table transactions (e.g. `createSpaceForMember` which writes
 spaces + members in one transaction) live on `AppDatabase`.
 
 ### 4. IDs are uuid server-side, text client-side
@@ -357,12 +397,21 @@ COPPA in the US) will eventually audit.
 
 - **No PII in logs.** Don't `print` student names, photos, parent
   contact info, or observation narratives. The PowerSync upload error
-  logs are an exception; redact in production builds.
-- **Photos**: Supabase Storage with **signed URLs** (short-lived). Never
-  use public buckets for student photos. Bucket name + RLS scoped to
-  program membership.
-- **Background screenshots** on iOS/Android — hide sensitive UI from
-  the app switcher. Use `secure_app_switcher` or similar when we ship.
+  logs and the deeplink-received log are exceptions — they're gated
+  on `kDebugMode` so they never reach release-build logcat. New logs
+  that could carry a path, exception payload, or URI MUST follow the
+  same pattern: `if (kDebugMode) debugPrint(...)`.
+- **Photos**: Supabase Storage **private** bucket + signed URLs
+  (1-hour TTL, minted via `signedPersonPhotoUrlProvider`). Never use
+  public buckets for student photos. The `person-photos` bucket is
+  RLS-scoped to space membership (first path segment matches caller's
+  members.space_id).
+- **Background screenshots** on iOS/Android are blocked in release
+  builds — Android sets `FLAG_SECURE` in `MainActivity.onCreate`;
+  iOS overlays a solid-colour `UIView` over the key window in
+  `SceneDelegate.sceneWillResignActive` before the OS captures its
+  task-switcher snapshot. Debug builds skip both so QA + dogfooding
+  builds can capture screenshots normally.
 - **No analytics events** that include child identifiers. If we add
   product analytics, it's event-level, never row-level.
 - **Auth tokens never logged.** Supabase access/refresh tokens stay in
@@ -827,13 +876,119 @@ For exploratory / scoping conversations: no gate, just answer.
   OAuth URL)
 - **Background photo upload + thumbnail generation** — when we wire
   observations
-- **Flip `person-photos` Storage bucket private + signed URLs** — currently
-  public-with-obscurity (UUID paths inside `<space_id>/` prefix). CLAUDE.md
-  binary-media contract requires private bucket + signed URLs for
-  student photos. Migrations
-  `20260518000003_person_photos_bucket.sql` /
-  `20260518000004_person_photos_space_gate.sql` ship the v0.1
-  compromise; flip before any external rollout.
+
+## Composer / chrome architecture (the omnibox spine)
+
+The bottom omnibox bar in AppShell is the canonical surface for find /
+do / dictate. Some key invariants:
+
+- **The bar lives INSIDE the body Stack** at `Positioned(bottom: 0)`,
+  not in `Scaffold.bottomNavigationBar`. The bottomNavigationBar slot
+  does NOT ride the keyboard inset; the body does. Routes whose forms
+  push the keyboard up still have the bar appear above the keyboard
+  because `resizeToAvoidBottomInset: true` shrinks the body to fit.
+  Route content gets `Padding(bottom: 76)` so the last save-button
+  never renders behind the bar.
+- **Chrome (back + actions) is rendered by AppShell, not by each
+  route.** `EdgeScaffold` publishes its `actions` / `showBack` /
+  `topOverlay` to `routeChromeProvider` (in
+  `lib/shared/widgets/route_chrome.dart`) in `initState` /
+  `didUpdateWidget` via a post-frame callback. AppShell watches the
+  provider and paints `FloatingBack` + `FloatingActions` over the
+  Stack. Result: navigating A→B animates only the page content;
+  back+actions stay anchored. New screens get this for free as long
+  as they go through `EdgeScaffold`.
+- **Three chameleon modes** (`OmniboxMode`):
+  - `search` — fuzzy matches the catalog (default)
+  - `capture` — free text that doesn't match anything in the catalog;
+    Enter saves a Capture
+  - `slash` — query starts with `/`; matches the slash command list
+    in `lib/features/omnibox/slash_commands.dart`. Commands are
+    `/today`, `/captures`, `/tasks`, `/insights`, `/review`,
+    `/attendance {group}`, `/log {kid}`, `/schedule`.
+- **Voice dictation** via Deepgram. `lib/features/voice/
+  deepgram_voice_service.dart` opens a WebSocket to
+  `wss://api.deepgram.com/v1/listen`, streams 16 kHz PCM from the
+  `record` plugin, and emits interim + final transcripts. The
+  omnibox mic button toggles a session; the running transcript is
+  appended to the composer's existing text (so dictation
+  complements typing rather than replacing it).
+  - **Setup**: add `DEEPGRAM_API_KEY` to your `.env`. Without it, the
+    mic button surfaces a "voice not configured" snackbar.
+  - **Permissions**: Android `RECORD_AUDIO` + iOS
+    `NSMicrophoneUsageDescription` are wired. `permission_handler`
+    requests at the moment of first use.
+  - **Privacy**: audio is streamed, not stored. We don't write the
+    PCM to disk and we don't proxy through our own backend.
+- **Kid mode** (`kidModeProvider` in
+  `lib/features/kid_mode/kid_mode_provider.dart`): when on, AppShell
+  hides the omnibox bar + zeroes the bottom padding so the route
+  fills the surface with no staff-facing affordance. Survey-take
+  enters in `initState`, exits in `dispose`. Future kid-launchable
+  surfaces (kid-journal) will need a staff-only exit gesture before
+  they can ship.
+- **DONE — `person-photos` bucket is private with signed URLs.** Migration
+  `20260519000005_person_photos_private.sql` flipped the bucket private
+  and added the space-gated read policy. Dart side: every photo render
+  mints a 1-hour signed URL via `signedPersonPhotoUrlProvider`
+  (lib/features/photos/person_photo_url.dart); new uploads store the
+  bucket-relative path (not a full URL) in the row's `photo_url` /
+  `avatar_url`. `PersonAvatar` is a `ConsumerWidget` now; gallery /
+  viewer sites use `PersonPhotoNetwork`. Legacy rows that still hold a
+  full https URL keep working — `extractPersonPhotoPath` strips the
+  prefix and re-signs.
+
+### Persona-driven UI work intentionally deferred
+
+These came out of the 10-persona audit. Smaller persona fixes (Marcus
+summary sentence, Brianna lock chip, Coach Sam pre-block brief) have
+shipped; what's below needs its own focused PR.
+
+- **Maya — tablet-first schedule grid.** Today the schedule editor is
+  per-cohort tabs (phone-friendly). A real cohorts × time matrix on
+  iPad/desktop is the right surface for a director planning the week;
+  needs a custom layout (not just a wider phone view).
+- **Jordan — voice-to-text on observation + capture.** Needs the
+  `speech_to_text` plugin + iOS / Android mic permission flow. Mic
+  icon in the textfield → press-and-hold to dictate.
+- **Jordan — high-contrast outdoor mode.** A theme toggle that boosts
+  text weight + background contrast for bright-sun legibility.
+- **Lauren — Spanish localization.** ARB infrastructure isn't wired
+  yet. Set up `flutter gen-l10n`, extract every user-facing string,
+  write the Spanish translations + the language picker in Settings.
+  Big lift; non-trivial PR.
+- **Lauren — "photo of the moment" on Family Today.** Surface the
+  most recent observation photo above the kid's card when there's
+  unseen content from today. Needs an `attachments` provider keyed
+  on (subject, last-N-hours).
+- **Helen — DONE: per-account text-size override.** Settings →
+  Preferences → "Text size" (System default / Large / Extra large,
+  1.0x / 1.3x / 1.5x floor). `textScaleSettingProvider` stores the
+  pick in SharedPreferences; `AppTextScaleApplier` wraps
+  `MaterialApp.router`'s builder and clamps the active `TextScaler`
+  to AT LEAST the chosen floor so users who already crank their OS
+  setting up don't get downscaled. The 200% audit (truncation /
+  reflow per screen) is still a manual pass to schedule.
+- **Devon — co-parent read state on messages + reports.** Schema:
+  add `read_by_member_ids jsonb[]` to messages, denote which
+  guardian has seen a row. UI: small "seen by both / seen by you"
+  badge.
+- **Pat — substitute handoff.** Director-side "make X the lead for
+  {Cohort} today" action that flips the LeadingTodayCard contents to
+  the absent counselor's blocks + cabin notes. Needs a `substitutes`
+  table or a `daily_assignments` row carrying the override.
+- **Ava — PARTIAL: locked kid-mode mechanism shipped.**
+  `kidModeProvider` (Notifier<bool>) + AppShell honors it (omnibox
+  bar + body padding strip when on). `survey_take_screen.dart`
+  auto-enters in `initState` and exits in `dispose`. STILL TO DO:
+  staff-only exit affordance (PIN dialog or hidden multi-tap area),
+  drawer suppression on kid surfaces, the kid-journal feature
+  itself, and route-pop hardening so a kid tapping system-back
+  can't break out of the locked screen.
+- **All — empty-state illustrations + wordmark-as-system.** Single
+  illustrator pass: 4-5 SVGs for the most common empty states
+  ("nothing in your inbox", "all done for today") + gradient
+  squircle used consistently across login, onboarding, exports.
 
 ---
 

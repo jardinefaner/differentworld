@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -6,6 +5,7 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -354,10 +354,9 @@ class _ObservationCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   child: AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: CachedNetworkImage(
-                      imageUrl: photoUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, _) => ColoredBox(
+                    child: PersonPhotoNetwork(
+                      urlOrPath: photoUrl,
+                      placeholderBuilder: (_) => ColoredBox(
                         color: theme.colorScheme.surfaceContainerHigh,
                       ),
                     ),

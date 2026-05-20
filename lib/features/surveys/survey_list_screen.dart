@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -178,12 +179,38 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
             (spaceId: spaceId, templateId: templateId),
           ));
 
+    // Compute the "next unsurveyed kid" so the primary action can
+    // jump straight to them. When everyone's done, pivots to "redo"
+    // for the first kid.
+    final subjectsList =
+        subjectsAsync.value ?? const <Subject>[];
+    final responsesList = responsesAsync.value ?? const <SurveyResponse>[];
+    final completedIds = <String>{
+      for (final r in responsesList)
+        if (r.status == 'completed') r.subjectId,
+    };
+    final nextSubject = subjectsList.isEmpty
+        ? null
+        : subjectsList.firstWhere(
+            (s) => !completedIds.contains(s.id),
+            orElse: () => subjectsList.first,
+          );
+    final allDone = subjectsList.isNotEmpty &&
+        completedIds.length >= subjectsList.length;
+
     return EdgeScaffold(
       backFallbackRoute: '/surveys',
       actions: [
-        // Table view is the analyst's tool — useful but secondary.
-        // Move it to an icon in the AppBar so the FAB can be the
-        // primary daily-use action (next-unsurveyed kid).
+        if (nextSubject != null)
+          PrimaryActionButton(
+            tooltip: allDone
+                ? 'Redo · ${nextSubject.firstName}'
+                : 'Survey · ${nextSubject.firstName}',
+            icon: allDone ? Icons.replay : Icons.arrow_forward,
+            onPressed: () => context.push(
+              '/surveys/$templateId/take/${nextSubject.id}',
+            ),
+          ),
         IconButton(
           tooltip: 'Table view',
           icon: const Icon(Icons.table_chart_outlined),
@@ -191,32 +218,6 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
         ),
         const SyncStatusIndicator(),
       ],
-      floatingActionButton: subjectsAsync.maybeWhen(
-        data: (subjects) {
-          if (subjects.isEmpty) return null;
-          final responses = responsesAsync.value ?? const <SurveyResponse>[];
-          final completedIds = {
-            for (final r in responses)
-              if (r.status == 'completed') r.subjectId,
-          };
-          final next = subjects.firstWhere(
-            (s) => !completedIds.contains(s.id),
-            orElse: () => subjects.first,
-          );
-          final allDone = completedIds.length >= subjects.length;
-          return FloatingActionButton.extended(
-            // When everyone's done the FAB pivots to "redo from start"
-            // — the same shape, different intent. Avoids dead UI.
-            onPressed: () =>
-                context.push('/surveys/$templateId/take/${next.id}'),
-            icon: Icon(allDone ? Icons.replay : Icons.arrow_forward),
-            label: Text(allDone
-                ? 'Redo · ${next.firstName}'
-                : 'Survey · ${next.firstName}'),
-          );
-        },
-        orElse: () => null,
-      ),
       body: subjectsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(

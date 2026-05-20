@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -6,6 +5,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
@@ -16,6 +16,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -49,14 +50,15 @@ class _ObservationsIndexScreenState
     final groupsAsync = ref.watch(groupsProvider);
 
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
-      floatingActionButton: viewer.canObserve
-          ? FloatingActionButton.extended(
-              onPressed: () => startNewObservation(context, ref),
-              icon: const Icon(Icons.edit_note_outlined),
-              label: const Text('Observation'),
-            )
-          : null,
+      actions: [
+        if (viewer.canObserve)
+          PrimaryActionButton(
+            tooltip: 'New observation',
+            icon: Icons.edit_note_outlined,
+            onPressed: () => startNewObservation(context, ref),
+          ),
+        const SyncStatusIndicator(),
+      ],
       body: entriesAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
@@ -385,10 +387,9 @@ class _IndexPhotoThumb extends StatelessWidget {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
-                child: CachedNetworkImage(
-                  imageUrl: photos.first,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, _, _) =>
+                child: PersonPhotoNetwork(
+                  urlOrPath: photos.first,
+                  errorBuilder: (_) =>
                       const Icon(Icons.broken_image_outlined),
                 ),
               ),

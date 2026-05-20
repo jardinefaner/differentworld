@@ -1603,6 +1603,51 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _dropoffWindowStartMeta =
+      const VerificationMeta('dropoffWindowStart');
+  @override
+  late final GeneratedColumn<String> dropoffWindowStart =
+      GeneratedColumn<String>(
+        'dropoff_window_start',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _dropoffWindowEndMeta = const VerificationMeta(
+    'dropoffWindowEnd',
+  );
+  @override
+  late final GeneratedColumn<String> dropoffWindowEnd = GeneratedColumn<String>(
+    'dropoff_window_end',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pickupWindowStartMeta = const VerificationMeta(
+    'pickupWindowStart',
+  );
+  @override
+  late final GeneratedColumn<String> pickupWindowStart =
+      GeneratedColumn<String>(
+        'pickup_window_start',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _pickupWindowEndMeta = const VerificationMeta(
+    'pickupWindowEnd',
+  );
+  @override
+  late final GeneratedColumn<String> pickupWindowEnd = GeneratedColumn<String>(
+    'pickup_window_end',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1637,6 +1682,10 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
     allergies,
     notes,
     capabilities,
+    dropoffWindowStart,
+    dropoffWindowEnd,
+    pickupWindowStart,
+    pickupWindowEnd,
     createdAt,
     updatedAt,
   ];
@@ -1722,6 +1771,42 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
     } else if (isInserting) {
       context.missing(_capabilitiesMeta);
     }
+    if (data.containsKey('dropoff_window_start')) {
+      context.handle(
+        _dropoffWindowStartMeta,
+        dropoffWindowStart.isAcceptableOrUnknown(
+          data['dropoff_window_start']!,
+          _dropoffWindowStartMeta,
+        ),
+      );
+    }
+    if (data.containsKey('dropoff_window_end')) {
+      context.handle(
+        _dropoffWindowEndMeta,
+        dropoffWindowEnd.isAcceptableOrUnknown(
+          data['dropoff_window_end']!,
+          _dropoffWindowEndMeta,
+        ),
+      );
+    }
+    if (data.containsKey('pickup_window_start')) {
+      context.handle(
+        _pickupWindowStartMeta,
+        pickupWindowStart.isAcceptableOrUnknown(
+          data['pickup_window_start']!,
+          _pickupWindowStartMeta,
+        ),
+      );
+    }
+    if (data.containsKey('pickup_window_end')) {
+      context.handle(
+        _pickupWindowEndMeta,
+        pickupWindowEnd.isAcceptableOrUnknown(
+          data['pickup_window_end']!,
+          _pickupWindowEndMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1787,6 +1872,22 @@ class $SubjectsTable extends Subjects with TableInfo<$SubjectsTable, Subject> {
         DriftSqlType.string,
         data['${effectivePrefix}capabilities'],
       )!,
+      dropoffWindowStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dropoff_window_start'],
+      ),
+      dropoffWindowEnd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dropoff_window_end'],
+      ),
+      pickupWindowStart: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pickup_window_start'],
+      ),
+      pickupWindowEnd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pickup_window_end'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -1815,6 +1916,10 @@ class Subject extends DataClass implements Insertable<Subject> {
   final String? allergies;
   final String? notes;
   final String capabilities;
+  final String? dropoffWindowStart;
+  final String? dropoffWindowEnd;
+  final String? pickupWindowStart;
+  final String? pickupWindowEnd;
   final String createdAt;
   final String updatedAt;
   const Subject({
@@ -1828,6 +1933,10 @@ class Subject extends DataClass implements Insertable<Subject> {
     this.allergies,
     this.notes,
     required this.capabilities,
+    this.dropoffWindowStart,
+    this.dropoffWindowEnd,
+    this.pickupWindowStart,
+    this.pickupWindowEnd,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -1854,6 +1963,18 @@ class Subject extends DataClass implements Insertable<Subject> {
       map['notes'] = Variable<String>(notes);
     }
     map['capabilities'] = Variable<String>(capabilities);
+    if (!nullToAbsent || dropoffWindowStart != null) {
+      map['dropoff_window_start'] = Variable<String>(dropoffWindowStart);
+    }
+    if (!nullToAbsent || dropoffWindowEnd != null) {
+      map['dropoff_window_end'] = Variable<String>(dropoffWindowEnd);
+    }
+    if (!nullToAbsent || pickupWindowStart != null) {
+      map['pickup_window_start'] = Variable<String>(pickupWindowStart);
+    }
+    if (!nullToAbsent || pickupWindowEnd != null) {
+      map['pickup_window_end'] = Variable<String>(pickupWindowEnd);
+    }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
@@ -1879,6 +2000,18 @@ class Subject extends DataClass implements Insertable<Subject> {
           ? const Value.absent()
           : Value(notes),
       capabilities: Value(capabilities),
+      dropoffWindowStart: dropoffWindowStart == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dropoffWindowStart),
+      dropoffWindowEnd: dropoffWindowEnd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dropoffWindowEnd),
+      pickupWindowStart: pickupWindowStart == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pickupWindowStart),
+      pickupWindowEnd: pickupWindowEnd == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pickupWindowEnd),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1900,6 +2033,14 @@ class Subject extends DataClass implements Insertable<Subject> {
       allergies: serializer.fromJson<String?>(json['allergies']),
       notes: serializer.fromJson<String?>(json['notes']),
       capabilities: serializer.fromJson<String>(json['capabilities']),
+      dropoffWindowStart: serializer.fromJson<String?>(
+        json['dropoffWindowStart'],
+      ),
+      dropoffWindowEnd: serializer.fromJson<String?>(json['dropoffWindowEnd']),
+      pickupWindowStart: serializer.fromJson<String?>(
+        json['pickupWindowStart'],
+      ),
+      pickupWindowEnd: serializer.fromJson<String?>(json['pickupWindowEnd']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -1918,6 +2059,10 @@ class Subject extends DataClass implements Insertable<Subject> {
       'allergies': serializer.toJson<String?>(allergies),
       'notes': serializer.toJson<String?>(notes),
       'capabilities': serializer.toJson<String>(capabilities),
+      'dropoffWindowStart': serializer.toJson<String?>(dropoffWindowStart),
+      'dropoffWindowEnd': serializer.toJson<String?>(dropoffWindowEnd),
+      'pickupWindowStart': serializer.toJson<String?>(pickupWindowStart),
+      'pickupWindowEnd': serializer.toJson<String?>(pickupWindowEnd),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -1934,6 +2079,10 @@ class Subject extends DataClass implements Insertable<Subject> {
     Value<String?> allergies = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     String? capabilities,
+    Value<String?> dropoffWindowStart = const Value.absent(),
+    Value<String?> dropoffWindowEnd = const Value.absent(),
+    Value<String?> pickupWindowStart = const Value.absent(),
+    Value<String?> pickupWindowEnd = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => Subject(
@@ -1947,6 +2096,18 @@ class Subject extends DataClass implements Insertable<Subject> {
     allergies: allergies.present ? allergies.value : this.allergies,
     notes: notes.present ? notes.value : this.notes,
     capabilities: capabilities ?? this.capabilities,
+    dropoffWindowStart: dropoffWindowStart.present
+        ? dropoffWindowStart.value
+        : this.dropoffWindowStart,
+    dropoffWindowEnd: dropoffWindowEnd.present
+        ? dropoffWindowEnd.value
+        : this.dropoffWindowEnd,
+    pickupWindowStart: pickupWindowStart.present
+        ? pickupWindowStart.value
+        : this.pickupWindowStart,
+    pickupWindowEnd: pickupWindowEnd.present
+        ? pickupWindowEnd.value
+        : this.pickupWindowEnd,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1964,6 +2125,18 @@ class Subject extends DataClass implements Insertable<Subject> {
       capabilities: data.capabilities.present
           ? data.capabilities.value
           : this.capabilities,
+      dropoffWindowStart: data.dropoffWindowStart.present
+          ? data.dropoffWindowStart.value
+          : this.dropoffWindowStart,
+      dropoffWindowEnd: data.dropoffWindowEnd.present
+          ? data.dropoffWindowEnd.value
+          : this.dropoffWindowEnd,
+      pickupWindowStart: data.pickupWindowStart.present
+          ? data.pickupWindowStart.value
+          : this.pickupWindowStart,
+      pickupWindowEnd: data.pickupWindowEnd.present
+          ? data.pickupWindowEnd.value
+          : this.pickupWindowEnd,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1982,6 +2155,10 @@ class Subject extends DataClass implements Insertable<Subject> {
           ..write('allergies: $allergies, ')
           ..write('notes: $notes, ')
           ..write('capabilities: $capabilities, ')
+          ..write('dropoffWindowStart: $dropoffWindowStart, ')
+          ..write('dropoffWindowEnd: $dropoffWindowEnd, ')
+          ..write('pickupWindowStart: $pickupWindowStart, ')
+          ..write('pickupWindowEnd: $pickupWindowEnd, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2000,6 +2177,10 @@ class Subject extends DataClass implements Insertable<Subject> {
     allergies,
     notes,
     capabilities,
+    dropoffWindowStart,
+    dropoffWindowEnd,
+    pickupWindowStart,
+    pickupWindowEnd,
     createdAt,
     updatedAt,
   );
@@ -2017,6 +2198,10 @@ class Subject extends DataClass implements Insertable<Subject> {
           other.allergies == this.allergies &&
           other.notes == this.notes &&
           other.capabilities == this.capabilities &&
+          other.dropoffWindowStart == this.dropoffWindowStart &&
+          other.dropoffWindowEnd == this.dropoffWindowEnd &&
+          other.pickupWindowStart == this.pickupWindowStart &&
+          other.pickupWindowEnd == this.pickupWindowEnd &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2032,6 +2217,10 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
   final Value<String?> allergies;
   final Value<String?> notes;
   final Value<String> capabilities;
+  final Value<String?> dropoffWindowStart;
+  final Value<String?> dropoffWindowEnd;
+  final Value<String?> pickupWindowStart;
+  final Value<String?> pickupWindowEnd;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -2046,6 +2235,10 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     this.allergies = const Value.absent(),
     this.notes = const Value.absent(),
     this.capabilities = const Value.absent(),
+    this.dropoffWindowStart = const Value.absent(),
+    this.dropoffWindowEnd = const Value.absent(),
+    this.pickupWindowStart = const Value.absent(),
+    this.pickupWindowEnd = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2061,6 +2254,10 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     this.allergies = const Value.absent(),
     this.notes = const Value.absent(),
     required String capabilities,
+    this.dropoffWindowStart = const Value.absent(),
+    this.dropoffWindowEnd = const Value.absent(),
+    this.pickupWindowStart = const Value.absent(),
+    this.pickupWindowEnd = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -2082,6 +2279,10 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     Expression<String>? allergies,
     Expression<String>? notes,
     Expression<String>? capabilities,
+    Expression<String>? dropoffWindowStart,
+    Expression<String>? dropoffWindowEnd,
+    Expression<String>? pickupWindowStart,
+    Expression<String>? pickupWindowEnd,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -2097,6 +2298,11 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
       if (allergies != null) 'allergies': allergies,
       if (notes != null) 'notes': notes,
       if (capabilities != null) 'capabilities': capabilities,
+      if (dropoffWindowStart != null)
+        'dropoff_window_start': dropoffWindowStart,
+      if (dropoffWindowEnd != null) 'dropoff_window_end': dropoffWindowEnd,
+      if (pickupWindowStart != null) 'pickup_window_start': pickupWindowStart,
+      if (pickupWindowEnd != null) 'pickup_window_end': pickupWindowEnd,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2114,6 +2320,10 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     Value<String?>? allergies,
     Value<String?>? notes,
     Value<String>? capabilities,
+    Value<String?>? dropoffWindowStart,
+    Value<String?>? dropoffWindowEnd,
+    Value<String?>? pickupWindowStart,
+    Value<String?>? pickupWindowEnd,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -2129,6 +2339,10 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
       allergies: allergies ?? this.allergies,
       notes: notes ?? this.notes,
       capabilities: capabilities ?? this.capabilities,
+      dropoffWindowStart: dropoffWindowStart ?? this.dropoffWindowStart,
+      dropoffWindowEnd: dropoffWindowEnd ?? this.dropoffWindowEnd,
+      pickupWindowStart: pickupWindowStart ?? this.pickupWindowStart,
+      pickupWindowEnd: pickupWindowEnd ?? this.pickupWindowEnd,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -2168,6 +2382,18 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
     if (capabilities.present) {
       map['capabilities'] = Variable<String>(capabilities.value);
     }
+    if (dropoffWindowStart.present) {
+      map['dropoff_window_start'] = Variable<String>(dropoffWindowStart.value);
+    }
+    if (dropoffWindowEnd.present) {
+      map['dropoff_window_end'] = Variable<String>(dropoffWindowEnd.value);
+    }
+    if (pickupWindowStart.present) {
+      map['pickup_window_start'] = Variable<String>(pickupWindowStart.value);
+    }
+    if (pickupWindowEnd.present) {
+      map['pickup_window_end'] = Variable<String>(pickupWindowEnd.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -2193,6 +2419,10 @@ class SubjectsCompanion extends UpdateCompanion<Subject> {
           ..write('allergies: $allergies, ')
           ..write('notes: $notes, ')
           ..write('capabilities: $capabilities, ')
+          ..write('dropoffWindowStart: $dropoffWindowStart, ')
+          ..write('dropoffWindowEnd: $dropoffWindowEnd, ')
+          ..write('pickupWindowStart: $pickupWindowStart, ')
+          ..write('pickupWindowEnd: $pickupWindowEnd, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -13376,6 +13606,4761 @@ class ExportRecipientsCompanion extends UpdateCompanion<ExportRecipient> {
   }
 }
 
+class $LocationsTable extends Locations
+    with TableInfo<$LocationsTable, Location> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _capacityMeta = const VerificationMeta(
+    'capacity',
+  );
+  @override
+  late final GeneratedColumn<int> capacity = GeneratedColumn<int>(
+    'capacity',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isOutdoorMeta = const VerificationMeta(
+    'isOutdoor',
+  );
+  @override
+  late final GeneratedColumn<int> isOutdoor = GeneratedColumn<int>(
+    'is_outdoor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    name,
+    notes,
+    capacity,
+    isOutdoor,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'locations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Location> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('capacity')) {
+      context.handle(
+        _capacityMeta,
+        capacity.isAcceptableOrUnknown(data['capacity']!, _capacityMeta),
+      );
+    }
+    if (data.containsKey('is_outdoor')) {
+      context.handle(
+        _isOutdoorMeta,
+        isOutdoor.isAcceptableOrUnknown(data['is_outdoor']!, _isOutdoorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isOutdoorMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Location map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Location(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      capacity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}capacity'],
+      ),
+      isOutdoor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_outdoor'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LocationsTable createAlias(String alias) {
+    return $LocationsTable(attachedDatabase, alias);
+  }
+}
+
+class Location extends DataClass implements Insertable<Location> {
+  final String id;
+  final String spaceId;
+  final String name;
+  final String? notes;
+  final int? capacity;
+  final int isOutdoor;
+  final String createdAt;
+  final String updatedAt;
+  const Location({
+    required this.id,
+    required this.spaceId,
+    required this.name,
+    this.notes,
+    this.capacity,
+    required this.isOutdoor,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || capacity != null) {
+      map['capacity'] = Variable<int>(capacity);
+    }
+    map['is_outdoor'] = Variable<int>(isOutdoor);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  LocationsCompanion toCompanion(bool nullToAbsent) {
+    return LocationsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      name: Value(name),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      capacity: capacity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(capacity),
+      isOutdoor: Value(isOutdoor),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Location.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Location(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      name: serializer.fromJson<String>(json['name']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      capacity: serializer.fromJson<int?>(json['capacity']),
+      isOutdoor: serializer.fromJson<int>(json['isOutdoor']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'name': serializer.toJson<String>(name),
+      'notes': serializer.toJson<String?>(notes),
+      'capacity': serializer.toJson<int?>(capacity),
+      'isOutdoor': serializer.toJson<int>(isOutdoor),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Location copyWith({
+    String? id,
+    String? spaceId,
+    String? name,
+    Value<String?> notes = const Value.absent(),
+    Value<int?> capacity = const Value.absent(),
+    int? isOutdoor,
+    String? createdAt,
+    String? updatedAt,
+  }) => Location(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    name: name ?? this.name,
+    notes: notes.present ? notes.value : this.notes,
+    capacity: capacity.present ? capacity.value : this.capacity,
+    isOutdoor: isOutdoor ?? this.isOutdoor,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Location copyWithCompanion(LocationsCompanion data) {
+    return Location(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      name: data.name.present ? data.name.value : this.name,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      capacity: data.capacity.present ? data.capacity.value : this.capacity,
+      isOutdoor: data.isOutdoor.present ? data.isOutdoor.value : this.isOutdoor,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Location(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('notes: $notes, ')
+          ..write('capacity: $capacity, ')
+          ..write('isOutdoor: $isOutdoor, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    name,
+    notes,
+    capacity,
+    isOutdoor,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Location &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.name == this.name &&
+          other.notes == this.notes &&
+          other.capacity == this.capacity &&
+          other.isOutdoor == this.isOutdoor &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class LocationsCompanion extends UpdateCompanion<Location> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> name;
+  final Value<String?> notes;
+  final Value<int?> capacity;
+  final Value<int> isOutdoor;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const LocationsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.capacity = const Value.absent(),
+    this.isOutdoor = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocationsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String name,
+    this.notes = const Value.absent(),
+    this.capacity = const Value.absent(),
+    required int isOutdoor,
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       name = Value(name),
+       isOutdoor = Value(isOutdoor),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Location> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? name,
+    Expression<String>? notes,
+    Expression<int>? capacity,
+    Expression<int>? isOutdoor,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (name != null) 'name': name,
+      if (notes != null) 'notes': notes,
+      if (capacity != null) 'capacity': capacity,
+      if (isOutdoor != null) 'is_outdoor': isOutdoor,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? name,
+    Value<String?>? notes,
+    Value<int?>? capacity,
+    Value<int>? isOutdoor,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return LocationsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      name: name ?? this.name,
+      notes: notes ?? this.notes,
+      capacity: capacity ?? this.capacity,
+      isOutdoor: isOutdoor ?? this.isOutdoor,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (capacity.present) {
+      map['capacity'] = Variable<int>(capacity.value);
+    }
+    if (isOutdoor.present) {
+      map['is_outdoor'] = Variable<int>(isOutdoor.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocationsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('notes: $notes, ')
+          ..write('capacity: $capacity, ')
+          ..write('isOutdoor: $isOutdoor, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ActivitiesTable extends Activities
+    with TableInfo<$ActivitiesTable, Activity> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActivitiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ownerMemberIdMeta = const VerificationMeta(
+    'ownerMemberId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerMemberId = GeneratedColumn<String>(
+    'owner_member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _defaultLocationIdMeta = const VerificationMeta(
+    'defaultLocationId',
+  );
+  @override
+  late final GeneratedColumn<String> defaultLocationId =
+      GeneratedColumn<String>(
+        'default_location_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _defaultDurationMinutesMeta =
+      const VerificationMeta('defaultDurationMinutes');
+  @override
+  late final GeneratedColumn<int> defaultDurationMinutes = GeneratedColumn<int>(
+    'default_duration_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _suppliesMeta = const VerificationMeta(
+    'supplies',
+  );
+  @override
+  late final GeneratedColumn<String> supplies = GeneratedColumn<String>(
+    'supplies',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ageMinMeta = const VerificationMeta('ageMin');
+  @override
+  late final GeneratedColumn<int> ageMin = GeneratedColumn<int>(
+    'age_min',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _ageMaxMeta = const VerificationMeta('ageMax');
+  @override
+  late final GeneratedColumn<int> ageMax = GeneratedColumn<int>(
+    'age_max',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _maxCapacityMeta = const VerificationMeta(
+    'maxCapacity',
+  );
+  @override
+  late final GeneratedColumn<int> maxCapacity = GeneratedColumn<int>(
+    'max_capacity',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isOutdoorMeta = const VerificationMeta(
+    'isOutdoor',
+  );
+  @override
+  late final GeneratedColumn<int> isOutdoor = GeneratedColumn<int>(
+    'is_outdoor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _indoorAltActivityIdMeta =
+      const VerificationMeta('indoorAltActivityId');
+  @override
+  late final GeneratedColumn<String> indoorAltActivityId =
+      GeneratedColumn<String>(
+        'indoor_alt_activity_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
+    'capabilities',
+  );
+  @override
+  late final GeneratedColumn<String> capabilities = GeneratedColumn<String>(
+    'capabilities',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archivedAtMeta = const VerificationMeta(
+    'archivedAt',
+  );
+  @override
+  late final GeneratedColumn<String> archivedAt = GeneratedColumn<String>(
+    'archived_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    ownerMemberId,
+    name,
+    description,
+    defaultLocationId,
+    defaultDurationMinutes,
+    supplies,
+    ageMin,
+    ageMax,
+    maxCapacity,
+    isOutdoor,
+    indoorAltActivityId,
+    capabilities,
+    archivedAt,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'activities';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Activity> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('owner_member_id')) {
+      context.handle(
+        _ownerMemberIdMeta,
+        ownerMemberId.isAcceptableOrUnknown(
+          data['owner_member_id']!,
+          _ownerMemberIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('default_location_id')) {
+      context.handle(
+        _defaultLocationIdMeta,
+        defaultLocationId.isAcceptableOrUnknown(
+          data['default_location_id']!,
+          _defaultLocationIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('default_duration_minutes')) {
+      context.handle(
+        _defaultDurationMinutesMeta,
+        defaultDurationMinutes.isAcceptableOrUnknown(
+          data['default_duration_minutes']!,
+          _defaultDurationMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('supplies')) {
+      context.handle(
+        _suppliesMeta,
+        supplies.isAcceptableOrUnknown(data['supplies']!, _suppliesMeta),
+      );
+    }
+    if (data.containsKey('age_min')) {
+      context.handle(
+        _ageMinMeta,
+        ageMin.isAcceptableOrUnknown(data['age_min']!, _ageMinMeta),
+      );
+    }
+    if (data.containsKey('age_max')) {
+      context.handle(
+        _ageMaxMeta,
+        ageMax.isAcceptableOrUnknown(data['age_max']!, _ageMaxMeta),
+      );
+    }
+    if (data.containsKey('max_capacity')) {
+      context.handle(
+        _maxCapacityMeta,
+        maxCapacity.isAcceptableOrUnknown(
+          data['max_capacity']!,
+          _maxCapacityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_outdoor')) {
+      context.handle(
+        _isOutdoorMeta,
+        isOutdoor.isAcceptableOrUnknown(data['is_outdoor']!, _isOutdoorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isOutdoorMeta);
+    }
+    if (data.containsKey('indoor_alt_activity_id')) {
+      context.handle(
+        _indoorAltActivityIdMeta,
+        indoorAltActivityId.isAcceptableOrUnknown(
+          data['indoor_alt_activity_id']!,
+          _indoorAltActivityIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('capabilities')) {
+      context.handle(
+        _capabilitiesMeta,
+        capabilities.isAcceptableOrUnknown(
+          data['capabilities']!,
+          _capabilitiesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_capabilitiesMeta);
+    }
+    if (data.containsKey('archived_at')) {
+      context.handle(
+        _archivedAtMeta,
+        archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Activity map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Activity(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      ownerMemberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_member_id'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      defaultLocationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_location_id'],
+      ),
+      defaultDurationMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}default_duration_minutes'],
+      ),
+      supplies: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supplies'],
+      ),
+      ageMin: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}age_min'],
+      ),
+      ageMax: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}age_max'],
+      ),
+      maxCapacity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_capacity'],
+      ),
+      isOutdoor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_outdoor'],
+      )!,
+      indoorAltActivityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}indoor_alt_activity_id'],
+      ),
+      capabilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capabilities'],
+      )!,
+      archivedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}archived_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ActivitiesTable createAlias(String alias) {
+    return $ActivitiesTable(attachedDatabase, alias);
+  }
+}
+
+class Activity extends DataClass implements Insertable<Activity> {
+  final String id;
+  final String spaceId;
+  final String? ownerMemberId;
+  final String name;
+  final String? description;
+  final String? defaultLocationId;
+  final int? defaultDurationMinutes;
+  final String? supplies;
+  final int? ageMin;
+  final int? ageMax;
+  final int? maxCapacity;
+  final int isOutdoor;
+  final String? indoorAltActivityId;
+  final String capabilities;
+  final String? archivedAt;
+  final String createdAt;
+  final String updatedAt;
+  const Activity({
+    required this.id,
+    required this.spaceId,
+    this.ownerMemberId,
+    required this.name,
+    this.description,
+    this.defaultLocationId,
+    this.defaultDurationMinutes,
+    this.supplies,
+    this.ageMin,
+    this.ageMax,
+    this.maxCapacity,
+    required this.isOutdoor,
+    this.indoorAltActivityId,
+    required this.capabilities,
+    this.archivedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    if (!nullToAbsent || ownerMemberId != null) {
+      map['owner_member_id'] = Variable<String>(ownerMemberId);
+    }
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    if (!nullToAbsent || defaultLocationId != null) {
+      map['default_location_id'] = Variable<String>(defaultLocationId);
+    }
+    if (!nullToAbsent || defaultDurationMinutes != null) {
+      map['default_duration_minutes'] = Variable<int>(defaultDurationMinutes);
+    }
+    if (!nullToAbsent || supplies != null) {
+      map['supplies'] = Variable<String>(supplies);
+    }
+    if (!nullToAbsent || ageMin != null) {
+      map['age_min'] = Variable<int>(ageMin);
+    }
+    if (!nullToAbsent || ageMax != null) {
+      map['age_max'] = Variable<int>(ageMax);
+    }
+    if (!nullToAbsent || maxCapacity != null) {
+      map['max_capacity'] = Variable<int>(maxCapacity);
+    }
+    map['is_outdoor'] = Variable<int>(isOutdoor);
+    if (!nullToAbsent || indoorAltActivityId != null) {
+      map['indoor_alt_activity_id'] = Variable<String>(indoorAltActivityId);
+    }
+    map['capabilities'] = Variable<String>(capabilities);
+    if (!nullToAbsent || archivedAt != null) {
+      map['archived_at'] = Variable<String>(archivedAt);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  ActivitiesCompanion toCompanion(bool nullToAbsent) {
+    return ActivitiesCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      ownerMemberId: ownerMemberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ownerMemberId),
+      name: Value(name),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      defaultLocationId: defaultLocationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultLocationId),
+      defaultDurationMinutes: defaultDurationMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultDurationMinutes),
+      supplies: supplies == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplies),
+      ageMin: ageMin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ageMin),
+      ageMax: ageMax == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ageMax),
+      maxCapacity: maxCapacity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maxCapacity),
+      isOutdoor: Value(isOutdoor),
+      indoorAltActivityId: indoorAltActivityId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(indoorAltActivityId),
+      capabilities: Value(capabilities),
+      archivedAt: archivedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(archivedAt),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Activity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Activity(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      ownerMemberId: serializer.fromJson<String?>(json['ownerMemberId']),
+      name: serializer.fromJson<String>(json['name']),
+      description: serializer.fromJson<String?>(json['description']),
+      defaultLocationId: serializer.fromJson<String?>(
+        json['defaultLocationId'],
+      ),
+      defaultDurationMinutes: serializer.fromJson<int?>(
+        json['defaultDurationMinutes'],
+      ),
+      supplies: serializer.fromJson<String?>(json['supplies']),
+      ageMin: serializer.fromJson<int?>(json['ageMin']),
+      ageMax: serializer.fromJson<int?>(json['ageMax']),
+      maxCapacity: serializer.fromJson<int?>(json['maxCapacity']),
+      isOutdoor: serializer.fromJson<int>(json['isOutdoor']),
+      indoorAltActivityId: serializer.fromJson<String?>(
+        json['indoorAltActivityId'],
+      ),
+      capabilities: serializer.fromJson<String>(json['capabilities']),
+      archivedAt: serializer.fromJson<String?>(json['archivedAt']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'ownerMemberId': serializer.toJson<String?>(ownerMemberId),
+      'name': serializer.toJson<String>(name),
+      'description': serializer.toJson<String?>(description),
+      'defaultLocationId': serializer.toJson<String?>(defaultLocationId),
+      'defaultDurationMinutes': serializer.toJson<int?>(defaultDurationMinutes),
+      'supplies': serializer.toJson<String?>(supplies),
+      'ageMin': serializer.toJson<int?>(ageMin),
+      'ageMax': serializer.toJson<int?>(ageMax),
+      'maxCapacity': serializer.toJson<int?>(maxCapacity),
+      'isOutdoor': serializer.toJson<int>(isOutdoor),
+      'indoorAltActivityId': serializer.toJson<String?>(indoorAltActivityId),
+      'capabilities': serializer.toJson<String>(capabilities),
+      'archivedAt': serializer.toJson<String?>(archivedAt),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Activity copyWith({
+    String? id,
+    String? spaceId,
+    Value<String?> ownerMemberId = const Value.absent(),
+    String? name,
+    Value<String?> description = const Value.absent(),
+    Value<String?> defaultLocationId = const Value.absent(),
+    Value<int?> defaultDurationMinutes = const Value.absent(),
+    Value<String?> supplies = const Value.absent(),
+    Value<int?> ageMin = const Value.absent(),
+    Value<int?> ageMax = const Value.absent(),
+    Value<int?> maxCapacity = const Value.absent(),
+    int? isOutdoor,
+    Value<String?> indoorAltActivityId = const Value.absent(),
+    String? capabilities,
+    Value<String?> archivedAt = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => Activity(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    ownerMemberId: ownerMemberId.present
+        ? ownerMemberId.value
+        : this.ownerMemberId,
+    name: name ?? this.name,
+    description: description.present ? description.value : this.description,
+    defaultLocationId: defaultLocationId.present
+        ? defaultLocationId.value
+        : this.defaultLocationId,
+    defaultDurationMinutes: defaultDurationMinutes.present
+        ? defaultDurationMinutes.value
+        : this.defaultDurationMinutes,
+    supplies: supplies.present ? supplies.value : this.supplies,
+    ageMin: ageMin.present ? ageMin.value : this.ageMin,
+    ageMax: ageMax.present ? ageMax.value : this.ageMax,
+    maxCapacity: maxCapacity.present ? maxCapacity.value : this.maxCapacity,
+    isOutdoor: isOutdoor ?? this.isOutdoor,
+    indoorAltActivityId: indoorAltActivityId.present
+        ? indoorAltActivityId.value
+        : this.indoorAltActivityId,
+    capabilities: capabilities ?? this.capabilities,
+    archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Activity copyWithCompanion(ActivitiesCompanion data) {
+    return Activity(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      ownerMemberId: data.ownerMemberId.present
+          ? data.ownerMemberId.value
+          : this.ownerMemberId,
+      name: data.name.present ? data.name.value : this.name,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      defaultLocationId: data.defaultLocationId.present
+          ? data.defaultLocationId.value
+          : this.defaultLocationId,
+      defaultDurationMinutes: data.defaultDurationMinutes.present
+          ? data.defaultDurationMinutes.value
+          : this.defaultDurationMinutes,
+      supplies: data.supplies.present ? data.supplies.value : this.supplies,
+      ageMin: data.ageMin.present ? data.ageMin.value : this.ageMin,
+      ageMax: data.ageMax.present ? data.ageMax.value : this.ageMax,
+      maxCapacity: data.maxCapacity.present
+          ? data.maxCapacity.value
+          : this.maxCapacity,
+      isOutdoor: data.isOutdoor.present ? data.isOutdoor.value : this.isOutdoor,
+      indoorAltActivityId: data.indoorAltActivityId.present
+          ? data.indoorAltActivityId.value
+          : this.indoorAltActivityId,
+      capabilities: data.capabilities.present
+          ? data.capabilities.value
+          : this.capabilities,
+      archivedAt: data.archivedAt.present
+          ? data.archivedAt.value
+          : this.archivedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Activity(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('ownerMemberId: $ownerMemberId, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
+          ..write('defaultLocationId: $defaultLocationId, ')
+          ..write('defaultDurationMinutes: $defaultDurationMinutes, ')
+          ..write('supplies: $supplies, ')
+          ..write('ageMin: $ageMin, ')
+          ..write('ageMax: $ageMax, ')
+          ..write('maxCapacity: $maxCapacity, ')
+          ..write('isOutdoor: $isOutdoor, ')
+          ..write('indoorAltActivityId: $indoorAltActivityId, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    ownerMemberId,
+    name,
+    description,
+    defaultLocationId,
+    defaultDurationMinutes,
+    supplies,
+    ageMin,
+    ageMax,
+    maxCapacity,
+    isOutdoor,
+    indoorAltActivityId,
+    capabilities,
+    archivedAt,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Activity &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.ownerMemberId == this.ownerMemberId &&
+          other.name == this.name &&
+          other.description == this.description &&
+          other.defaultLocationId == this.defaultLocationId &&
+          other.defaultDurationMinutes == this.defaultDurationMinutes &&
+          other.supplies == this.supplies &&
+          other.ageMin == this.ageMin &&
+          other.ageMax == this.ageMax &&
+          other.maxCapacity == this.maxCapacity &&
+          other.isOutdoor == this.isOutdoor &&
+          other.indoorAltActivityId == this.indoorAltActivityId &&
+          other.capabilities == this.capabilities &&
+          other.archivedAt == this.archivedAt &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ActivitiesCompanion extends UpdateCompanion<Activity> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String?> ownerMemberId;
+  final Value<String> name;
+  final Value<String?> description;
+  final Value<String?> defaultLocationId;
+  final Value<int?> defaultDurationMinutes;
+  final Value<String?> supplies;
+  final Value<int?> ageMin;
+  final Value<int?> ageMax;
+  final Value<int?> maxCapacity;
+  final Value<int> isOutdoor;
+  final Value<String?> indoorAltActivityId;
+  final Value<String> capabilities;
+  final Value<String?> archivedAt;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const ActivitiesCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.ownerMemberId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.description = const Value.absent(),
+    this.defaultLocationId = const Value.absent(),
+    this.defaultDurationMinutes = const Value.absent(),
+    this.supplies = const Value.absent(),
+    this.ageMin = const Value.absent(),
+    this.ageMax = const Value.absent(),
+    this.maxCapacity = const Value.absent(),
+    this.isOutdoor = const Value.absent(),
+    this.indoorAltActivityId = const Value.absent(),
+    this.capabilities = const Value.absent(),
+    this.archivedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ActivitiesCompanion.insert({
+    required String id,
+    required String spaceId,
+    this.ownerMemberId = const Value.absent(),
+    required String name,
+    this.description = const Value.absent(),
+    this.defaultLocationId = const Value.absent(),
+    this.defaultDurationMinutes = const Value.absent(),
+    this.supplies = const Value.absent(),
+    this.ageMin = const Value.absent(),
+    this.ageMax = const Value.absent(),
+    this.maxCapacity = const Value.absent(),
+    required int isOutdoor,
+    this.indoorAltActivityId = const Value.absent(),
+    required String capabilities,
+    this.archivedAt = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       name = Value(name),
+       isOutdoor = Value(isOutdoor),
+       capabilities = Value(capabilities),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Activity> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? ownerMemberId,
+    Expression<String>? name,
+    Expression<String>? description,
+    Expression<String>? defaultLocationId,
+    Expression<int>? defaultDurationMinutes,
+    Expression<String>? supplies,
+    Expression<int>? ageMin,
+    Expression<int>? ageMax,
+    Expression<int>? maxCapacity,
+    Expression<int>? isOutdoor,
+    Expression<String>? indoorAltActivityId,
+    Expression<String>? capabilities,
+    Expression<String>? archivedAt,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (ownerMemberId != null) 'owner_member_id': ownerMemberId,
+      if (name != null) 'name': name,
+      if (description != null) 'description': description,
+      if (defaultLocationId != null) 'default_location_id': defaultLocationId,
+      if (defaultDurationMinutes != null)
+        'default_duration_minutes': defaultDurationMinutes,
+      if (supplies != null) 'supplies': supplies,
+      if (ageMin != null) 'age_min': ageMin,
+      if (ageMax != null) 'age_max': ageMax,
+      if (maxCapacity != null) 'max_capacity': maxCapacity,
+      if (isOutdoor != null) 'is_outdoor': isOutdoor,
+      if (indoorAltActivityId != null)
+        'indoor_alt_activity_id': indoorAltActivityId,
+      if (capabilities != null) 'capabilities': capabilities,
+      if (archivedAt != null) 'archived_at': archivedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ActivitiesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String?>? ownerMemberId,
+    Value<String>? name,
+    Value<String?>? description,
+    Value<String?>? defaultLocationId,
+    Value<int?>? defaultDurationMinutes,
+    Value<String?>? supplies,
+    Value<int?>? ageMin,
+    Value<int?>? ageMax,
+    Value<int?>? maxCapacity,
+    Value<int>? isOutdoor,
+    Value<String?>? indoorAltActivityId,
+    Value<String>? capabilities,
+    Value<String?>? archivedAt,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ActivitiesCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      ownerMemberId: ownerMemberId ?? this.ownerMemberId,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      defaultLocationId: defaultLocationId ?? this.defaultLocationId,
+      defaultDurationMinutes:
+          defaultDurationMinutes ?? this.defaultDurationMinutes,
+      supplies: supplies ?? this.supplies,
+      ageMin: ageMin ?? this.ageMin,
+      ageMax: ageMax ?? this.ageMax,
+      maxCapacity: maxCapacity ?? this.maxCapacity,
+      isOutdoor: isOutdoor ?? this.isOutdoor,
+      indoorAltActivityId: indoorAltActivityId ?? this.indoorAltActivityId,
+      capabilities: capabilities ?? this.capabilities,
+      archivedAt: archivedAt ?? this.archivedAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (ownerMemberId.present) {
+      map['owner_member_id'] = Variable<String>(ownerMemberId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (defaultLocationId.present) {
+      map['default_location_id'] = Variable<String>(defaultLocationId.value);
+    }
+    if (defaultDurationMinutes.present) {
+      map['default_duration_minutes'] = Variable<int>(
+        defaultDurationMinutes.value,
+      );
+    }
+    if (supplies.present) {
+      map['supplies'] = Variable<String>(supplies.value);
+    }
+    if (ageMin.present) {
+      map['age_min'] = Variable<int>(ageMin.value);
+    }
+    if (ageMax.present) {
+      map['age_max'] = Variable<int>(ageMax.value);
+    }
+    if (maxCapacity.present) {
+      map['max_capacity'] = Variable<int>(maxCapacity.value);
+    }
+    if (isOutdoor.present) {
+      map['is_outdoor'] = Variable<int>(isOutdoor.value);
+    }
+    if (indoorAltActivityId.present) {
+      map['indoor_alt_activity_id'] = Variable<String>(
+        indoorAltActivityId.value,
+      );
+    }
+    if (capabilities.present) {
+      map['capabilities'] = Variable<String>(capabilities.value);
+    }
+    if (archivedAt.present) {
+      map['archived_at'] = Variable<String>(archivedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActivitiesCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('ownerMemberId: $ownerMemberId, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
+          ..write('defaultLocationId: $defaultLocationId, ')
+          ..write('defaultDurationMinutes: $defaultDurationMinutes, ')
+          ..write('supplies: $supplies, ')
+          ..write('ageMin: $ageMin, ')
+          ..write('ageMax: $ageMax, ')
+          ..write('maxCapacity: $maxCapacity, ')
+          ..write('isOutdoor: $isOutdoor, ')
+          ..write('indoorAltActivityId: $indoorAltActivityId, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ScheduleBlocksTable extends ScheduleBlocks
+    with TableInfo<$ScheduleBlocksTable, ScheduleBlock> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScheduleBlocksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<String> date = GeneratedColumn<String>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startAtMeta = const VerificationMeta(
+    'startAt',
+  );
+  @override
+  late final GeneratedColumn<String> startAt = GeneratedColumn<String>(
+    'start_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endAtMeta = const VerificationMeta('endAt');
+  @override
+  late final GeneratedColumn<String> endAt = GeneratedColumn<String>(
+    'end_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _activityIdMeta = const VerificationMeta(
+    'activityId',
+  );
+  @override
+  late final GeneratedColumn<String> activityId = GeneratedColumn<String>(
+    'activity_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _leadMemberIdMeta = const VerificationMeta(
+    'leadMemberId',
+  );
+  @override
+  late final GeneratedColumn<String> leadMemberId = GeneratedColumn<String>(
+    'lead_member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _locationOverrideIdMeta =
+      const VerificationMeta('locationOverrideId');
+  @override
+  late final GeneratedColumn<String> locationOverrideId =
+      GeneratedColumn<String>(
+        'location_override_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    groupId,
+    date,
+    startAt,
+    endAt,
+    activityId,
+    leadMemberId,
+    locationOverrideId,
+    kind,
+    notes,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'schedule_blocks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScheduleBlock> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('start_at')) {
+      context.handle(
+        _startAtMeta,
+        startAt.isAcceptableOrUnknown(data['start_at']!, _startAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startAtMeta);
+    }
+    if (data.containsKey('end_at')) {
+      context.handle(
+        _endAtMeta,
+        endAt.isAcceptableOrUnknown(data['end_at']!, _endAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endAtMeta);
+    }
+    if (data.containsKey('activity_id')) {
+      context.handle(
+        _activityIdMeta,
+        activityId.isAcceptableOrUnknown(data['activity_id']!, _activityIdMeta),
+      );
+    }
+    if (data.containsKey('lead_member_id')) {
+      context.handle(
+        _leadMemberIdMeta,
+        leadMemberId.isAcceptableOrUnknown(
+          data['lead_member_id']!,
+          _leadMemberIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('location_override_id')) {
+      context.handle(
+        _locationOverrideIdMeta,
+        locationOverrideId.isAcceptableOrUnknown(
+          data['location_override_id']!,
+          _locationOverrideIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ScheduleBlock map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScheduleBlock(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date'],
+      )!,
+      startAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}start_at'],
+      )!,
+      endAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}end_at'],
+      )!,
+      activityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}activity_id'],
+      ),
+      leadMemberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lead_member_id'],
+      ),
+      locationOverrideId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}location_override_id'],
+      ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ScheduleBlocksTable createAlias(String alias) {
+    return $ScheduleBlocksTable(attachedDatabase, alias);
+  }
+}
+
+class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
+  final String id;
+  final String spaceId;
+  final String groupId;
+  final String date;
+  final String startAt;
+  final String endAt;
+  final String? activityId;
+  final String? leadMemberId;
+  final String? locationOverrideId;
+  final String kind;
+  final String? notes;
+  final String createdAt;
+  final String updatedAt;
+  const ScheduleBlock({
+    required this.id,
+    required this.spaceId,
+    required this.groupId,
+    required this.date,
+    required this.startAt,
+    required this.endAt,
+    this.activityId,
+    this.leadMemberId,
+    this.locationOverrideId,
+    required this.kind,
+    this.notes,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['group_id'] = Variable<String>(groupId);
+    map['date'] = Variable<String>(date);
+    map['start_at'] = Variable<String>(startAt);
+    map['end_at'] = Variable<String>(endAt);
+    if (!nullToAbsent || activityId != null) {
+      map['activity_id'] = Variable<String>(activityId);
+    }
+    if (!nullToAbsent || leadMemberId != null) {
+      map['lead_member_id'] = Variable<String>(leadMemberId);
+    }
+    if (!nullToAbsent || locationOverrideId != null) {
+      map['location_override_id'] = Variable<String>(locationOverrideId);
+    }
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  ScheduleBlocksCompanion toCompanion(bool nullToAbsent) {
+    return ScheduleBlocksCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      groupId: Value(groupId),
+      date: Value(date),
+      startAt: Value(startAt),
+      endAt: Value(endAt),
+      activityId: activityId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activityId),
+      leadMemberId: leadMemberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(leadMemberId),
+      locationOverrideId: locationOverrideId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(locationOverrideId),
+      kind: Value(kind),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ScheduleBlock.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScheduleBlock(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      date: serializer.fromJson<String>(json['date']),
+      startAt: serializer.fromJson<String>(json['startAt']),
+      endAt: serializer.fromJson<String>(json['endAt']),
+      activityId: serializer.fromJson<String?>(json['activityId']),
+      leadMemberId: serializer.fromJson<String?>(json['leadMemberId']),
+      locationOverrideId: serializer.fromJson<String?>(
+        json['locationOverrideId'],
+      ),
+      kind: serializer.fromJson<String>(json['kind']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'groupId': serializer.toJson<String>(groupId),
+      'date': serializer.toJson<String>(date),
+      'startAt': serializer.toJson<String>(startAt),
+      'endAt': serializer.toJson<String>(endAt),
+      'activityId': serializer.toJson<String?>(activityId),
+      'leadMemberId': serializer.toJson<String?>(leadMemberId),
+      'locationOverrideId': serializer.toJson<String?>(locationOverrideId),
+      'kind': serializer.toJson<String>(kind),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  ScheduleBlock copyWith({
+    String? id,
+    String? spaceId,
+    String? groupId,
+    String? date,
+    String? startAt,
+    String? endAt,
+    Value<String?> activityId = const Value.absent(),
+    Value<String?> leadMemberId = const Value.absent(),
+    Value<String?> locationOverrideId = const Value.absent(),
+    String? kind,
+    Value<String?> notes = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => ScheduleBlock(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    groupId: groupId ?? this.groupId,
+    date: date ?? this.date,
+    startAt: startAt ?? this.startAt,
+    endAt: endAt ?? this.endAt,
+    activityId: activityId.present ? activityId.value : this.activityId,
+    leadMemberId: leadMemberId.present ? leadMemberId.value : this.leadMemberId,
+    locationOverrideId: locationOverrideId.present
+        ? locationOverrideId.value
+        : this.locationOverrideId,
+    kind: kind ?? this.kind,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ScheduleBlock copyWithCompanion(ScheduleBlocksCompanion data) {
+    return ScheduleBlock(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      date: data.date.present ? data.date.value : this.date,
+      startAt: data.startAt.present ? data.startAt.value : this.startAt,
+      endAt: data.endAt.present ? data.endAt.value : this.endAt,
+      activityId: data.activityId.present
+          ? data.activityId.value
+          : this.activityId,
+      leadMemberId: data.leadMemberId.present
+          ? data.leadMemberId.value
+          : this.leadMemberId,
+      locationOverrideId: data.locationOverrideId.present
+          ? data.locationOverrideId.value
+          : this.locationOverrideId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduleBlock(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('date: $date, ')
+          ..write('startAt: $startAt, ')
+          ..write('endAt: $endAt, ')
+          ..write('activityId: $activityId, ')
+          ..write('leadMemberId: $leadMemberId, ')
+          ..write('locationOverrideId: $locationOverrideId, ')
+          ..write('kind: $kind, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    groupId,
+    date,
+    startAt,
+    endAt,
+    activityId,
+    leadMemberId,
+    locationOverrideId,
+    kind,
+    notes,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScheduleBlock &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.groupId == this.groupId &&
+          other.date == this.date &&
+          other.startAt == this.startAt &&
+          other.endAt == this.endAt &&
+          other.activityId == this.activityId &&
+          other.leadMemberId == this.leadMemberId &&
+          other.locationOverrideId == this.locationOverrideId &&
+          other.kind == this.kind &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> groupId;
+  final Value<String> date;
+  final Value<String> startAt;
+  final Value<String> endAt;
+  final Value<String?> activityId;
+  final Value<String?> leadMemberId;
+  final Value<String?> locationOverrideId;
+  final Value<String> kind;
+  final Value<String?> notes;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const ScheduleBlocksCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.startAt = const Value.absent(),
+    this.endAt = const Value.absent(),
+    this.activityId = const Value.absent(),
+    this.leadMemberId = const Value.absent(),
+    this.locationOverrideId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ScheduleBlocksCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String groupId,
+    required String date,
+    required String startAt,
+    required String endAt,
+    this.activityId = const Value.absent(),
+    this.leadMemberId = const Value.absent(),
+    this.locationOverrideId = const Value.absent(),
+    required String kind,
+    this.notes = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       groupId = Value(groupId),
+       date = Value(date),
+       startAt = Value(startAt),
+       endAt = Value(endAt),
+       kind = Value(kind),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<ScheduleBlock> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? groupId,
+    Expression<String>? date,
+    Expression<String>? startAt,
+    Expression<String>? endAt,
+    Expression<String>? activityId,
+    Expression<String>? leadMemberId,
+    Expression<String>? locationOverrideId,
+    Expression<String>? kind,
+    Expression<String>? notes,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (groupId != null) 'group_id': groupId,
+      if (date != null) 'date': date,
+      if (startAt != null) 'start_at': startAt,
+      if (endAt != null) 'end_at': endAt,
+      if (activityId != null) 'activity_id': activityId,
+      if (leadMemberId != null) 'lead_member_id': leadMemberId,
+      if (locationOverrideId != null)
+        'location_override_id': locationOverrideId,
+      if (kind != null) 'kind': kind,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ScheduleBlocksCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? groupId,
+    Value<String>? date,
+    Value<String>? startAt,
+    Value<String>? endAt,
+    Value<String?>? activityId,
+    Value<String?>? leadMemberId,
+    Value<String?>? locationOverrideId,
+    Value<String>? kind,
+    Value<String?>? notes,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ScheduleBlocksCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      groupId: groupId ?? this.groupId,
+      date: date ?? this.date,
+      startAt: startAt ?? this.startAt,
+      endAt: endAt ?? this.endAt,
+      activityId: activityId ?? this.activityId,
+      leadMemberId: leadMemberId ?? this.leadMemberId,
+      locationOverrideId: locationOverrideId ?? this.locationOverrideId,
+      kind: kind ?? this.kind,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(date.value);
+    }
+    if (startAt.present) {
+      map['start_at'] = Variable<String>(startAt.value);
+    }
+    if (endAt.present) {
+      map['end_at'] = Variable<String>(endAt.value);
+    }
+    if (activityId.present) {
+      map['activity_id'] = Variable<String>(activityId.value);
+    }
+    if (leadMemberId.present) {
+      map['lead_member_id'] = Variable<String>(leadMemberId.value);
+    }
+    if (locationOverrideId.present) {
+      map['location_override_id'] = Variable<String>(locationOverrideId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduleBlocksCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('groupId: $groupId, ')
+          ..write('date: $date, ')
+          ..write('startAt: $startAt, ')
+          ..write('endAt: $endAt, ')
+          ..write('activityId: $activityId, ')
+          ..write('leadMemberId: $leadMemberId, ')
+          ..write('locationOverrideId: $locationOverrideId, ')
+          ..write('kind: $kind, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TripLogisticsTable extends TripLogistics
+    with TableInfo<$TripLogisticsTable, TripLogistic> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TripLogisticsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _scheduleBlockIdMeta = const VerificationMeta(
+    'scheduleBlockId',
+  );
+  @override
+  late final GeneratedColumn<String> scheduleBlockId = GeneratedColumn<String>(
+    'schedule_block_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _destinationMeta = const VerificationMeta(
+    'destination',
+  );
+  @override
+  late final GeneratedColumn<String> destination = GeneratedColumn<String>(
+    'destination',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _destinationAddressMeta =
+      const VerificationMeta('destinationAddress');
+  @override
+  late final GeneratedColumn<String> destinationAddress =
+      GeneratedColumn<String>(
+        'destination_address',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _departureAtMeta = const VerificationMeta(
+    'departureAt',
+  );
+  @override
+  late final GeneratedColumn<String> departureAt = GeneratedColumn<String>(
+    'departure_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _returnAtMeta = const VerificationMeta(
+    'returnAt',
+  );
+  @override
+  late final GeneratedColumn<String> returnAt = GeneratedColumn<String>(
+    'return_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _requiresPermissionSlipMeta =
+      const VerificationMeta('requiresPermissionSlip');
+  @override
+  late final GeneratedColumn<int> requiresPermissionSlip = GeneratedColumn<int>(
+    'requires_permission_slip',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    scheduleBlockId,
+    destination,
+    destinationAddress,
+    departureAt,
+    returnAt,
+    requiresPermissionSlip,
+    notes,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trip_logistics';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TripLogistic> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('schedule_block_id')) {
+      context.handle(
+        _scheduleBlockIdMeta,
+        scheduleBlockId.isAcceptableOrUnknown(
+          data['schedule_block_id']!,
+          _scheduleBlockIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_scheduleBlockIdMeta);
+    }
+    if (data.containsKey('destination')) {
+      context.handle(
+        _destinationMeta,
+        destination.isAcceptableOrUnknown(
+          data['destination']!,
+          _destinationMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_destinationMeta);
+    }
+    if (data.containsKey('destination_address')) {
+      context.handle(
+        _destinationAddressMeta,
+        destinationAddress.isAcceptableOrUnknown(
+          data['destination_address']!,
+          _destinationAddressMeta,
+        ),
+      );
+    }
+    if (data.containsKey('departure_at')) {
+      context.handle(
+        _departureAtMeta,
+        departureAt.isAcceptableOrUnknown(
+          data['departure_at']!,
+          _departureAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('return_at')) {
+      context.handle(
+        _returnAtMeta,
+        returnAt.isAcceptableOrUnknown(data['return_at']!, _returnAtMeta),
+      );
+    }
+    if (data.containsKey('requires_permission_slip')) {
+      context.handle(
+        _requiresPermissionSlipMeta,
+        requiresPermissionSlip.isAcceptableOrUnknown(
+          data['requires_permission_slip']!,
+          _requiresPermissionSlipMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_requiresPermissionSlipMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TripLogistic map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TripLogistic(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      scheduleBlockId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}schedule_block_id'],
+      )!,
+      destination: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}destination'],
+      )!,
+      destinationAddress: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}destination_address'],
+      ),
+      departureAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}departure_at'],
+      ),
+      returnAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}return_at'],
+      ),
+      requiresPermissionSlip: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}requires_permission_slip'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TripLogisticsTable createAlias(String alias) {
+    return $TripLogisticsTable(attachedDatabase, alias);
+  }
+}
+
+class TripLogistic extends DataClass implements Insertable<TripLogistic> {
+  final String id;
+  final String spaceId;
+  final String scheduleBlockId;
+  final String destination;
+  final String? destinationAddress;
+  final String? departureAt;
+  final String? returnAt;
+  final int requiresPermissionSlip;
+  final String? notes;
+  final String createdAt;
+  final String updatedAt;
+  const TripLogistic({
+    required this.id,
+    required this.spaceId,
+    required this.scheduleBlockId,
+    required this.destination,
+    this.destinationAddress,
+    this.departureAt,
+    this.returnAt,
+    required this.requiresPermissionSlip,
+    this.notes,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['schedule_block_id'] = Variable<String>(scheduleBlockId);
+    map['destination'] = Variable<String>(destination);
+    if (!nullToAbsent || destinationAddress != null) {
+      map['destination_address'] = Variable<String>(destinationAddress);
+    }
+    if (!nullToAbsent || departureAt != null) {
+      map['departure_at'] = Variable<String>(departureAt);
+    }
+    if (!nullToAbsent || returnAt != null) {
+      map['return_at'] = Variable<String>(returnAt);
+    }
+    map['requires_permission_slip'] = Variable<int>(requiresPermissionSlip);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  TripLogisticsCompanion toCompanion(bool nullToAbsent) {
+    return TripLogisticsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      scheduleBlockId: Value(scheduleBlockId),
+      destination: Value(destination),
+      destinationAddress: destinationAddress == null && nullToAbsent
+          ? const Value.absent()
+          : Value(destinationAddress),
+      departureAt: departureAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(departureAt),
+      returnAt: returnAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(returnAt),
+      requiresPermissionSlip: Value(requiresPermissionSlip),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TripLogistic.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TripLogistic(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      scheduleBlockId: serializer.fromJson<String>(json['scheduleBlockId']),
+      destination: serializer.fromJson<String>(json['destination']),
+      destinationAddress: serializer.fromJson<String?>(
+        json['destinationAddress'],
+      ),
+      departureAt: serializer.fromJson<String?>(json['departureAt']),
+      returnAt: serializer.fromJson<String?>(json['returnAt']),
+      requiresPermissionSlip: serializer.fromJson<int>(
+        json['requiresPermissionSlip'],
+      ),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'scheduleBlockId': serializer.toJson<String>(scheduleBlockId),
+      'destination': serializer.toJson<String>(destination),
+      'destinationAddress': serializer.toJson<String?>(destinationAddress),
+      'departureAt': serializer.toJson<String?>(departureAt),
+      'returnAt': serializer.toJson<String?>(returnAt),
+      'requiresPermissionSlip': serializer.toJson<int>(requiresPermissionSlip),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  TripLogistic copyWith({
+    String? id,
+    String? spaceId,
+    String? scheduleBlockId,
+    String? destination,
+    Value<String?> destinationAddress = const Value.absent(),
+    Value<String?> departureAt = const Value.absent(),
+    Value<String?> returnAt = const Value.absent(),
+    int? requiresPermissionSlip,
+    Value<String?> notes = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => TripLogistic(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    scheduleBlockId: scheduleBlockId ?? this.scheduleBlockId,
+    destination: destination ?? this.destination,
+    destinationAddress: destinationAddress.present
+        ? destinationAddress.value
+        : this.destinationAddress,
+    departureAt: departureAt.present ? departureAt.value : this.departureAt,
+    returnAt: returnAt.present ? returnAt.value : this.returnAt,
+    requiresPermissionSlip:
+        requiresPermissionSlip ?? this.requiresPermissionSlip,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  TripLogistic copyWithCompanion(TripLogisticsCompanion data) {
+    return TripLogistic(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      scheduleBlockId: data.scheduleBlockId.present
+          ? data.scheduleBlockId.value
+          : this.scheduleBlockId,
+      destination: data.destination.present
+          ? data.destination.value
+          : this.destination,
+      destinationAddress: data.destinationAddress.present
+          ? data.destinationAddress.value
+          : this.destinationAddress,
+      departureAt: data.departureAt.present
+          ? data.departureAt.value
+          : this.departureAt,
+      returnAt: data.returnAt.present ? data.returnAt.value : this.returnAt,
+      requiresPermissionSlip: data.requiresPermissionSlip.present
+          ? data.requiresPermissionSlip.value
+          : this.requiresPermissionSlip,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TripLogistic(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
+          ..write('destination: $destination, ')
+          ..write('destinationAddress: $destinationAddress, ')
+          ..write('departureAt: $departureAt, ')
+          ..write('returnAt: $returnAt, ')
+          ..write('requiresPermissionSlip: $requiresPermissionSlip, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    scheduleBlockId,
+    destination,
+    destinationAddress,
+    departureAt,
+    returnAt,
+    requiresPermissionSlip,
+    notes,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TripLogistic &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.scheduleBlockId == this.scheduleBlockId &&
+          other.destination == this.destination &&
+          other.destinationAddress == this.destinationAddress &&
+          other.departureAt == this.departureAt &&
+          other.returnAt == this.returnAt &&
+          other.requiresPermissionSlip == this.requiresPermissionSlip &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> scheduleBlockId;
+  final Value<String> destination;
+  final Value<String?> destinationAddress;
+  final Value<String?> departureAt;
+  final Value<String?> returnAt;
+  final Value<int> requiresPermissionSlip;
+  final Value<String?> notes;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const TripLogisticsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.scheduleBlockId = const Value.absent(),
+    this.destination = const Value.absent(),
+    this.destinationAddress = const Value.absent(),
+    this.departureAt = const Value.absent(),
+    this.returnAt = const Value.absent(),
+    this.requiresPermissionSlip = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TripLogisticsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String scheduleBlockId,
+    required String destination,
+    this.destinationAddress = const Value.absent(),
+    this.departureAt = const Value.absent(),
+    this.returnAt = const Value.absent(),
+    required int requiresPermissionSlip,
+    this.notes = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       scheduleBlockId = Value(scheduleBlockId),
+       destination = Value(destination),
+       requiresPermissionSlip = Value(requiresPermissionSlip),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<TripLogistic> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? scheduleBlockId,
+    Expression<String>? destination,
+    Expression<String>? destinationAddress,
+    Expression<String>? departureAt,
+    Expression<String>? returnAt,
+    Expression<int>? requiresPermissionSlip,
+    Expression<String>? notes,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (scheduleBlockId != null) 'schedule_block_id': scheduleBlockId,
+      if (destination != null) 'destination': destination,
+      if (destinationAddress != null) 'destination_address': destinationAddress,
+      if (departureAt != null) 'departure_at': departureAt,
+      if (returnAt != null) 'return_at': returnAt,
+      if (requiresPermissionSlip != null)
+        'requires_permission_slip': requiresPermissionSlip,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TripLogisticsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? scheduleBlockId,
+    Value<String>? destination,
+    Value<String?>? destinationAddress,
+    Value<String?>? departureAt,
+    Value<String?>? returnAt,
+    Value<int>? requiresPermissionSlip,
+    Value<String?>? notes,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return TripLogisticsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      scheduleBlockId: scheduleBlockId ?? this.scheduleBlockId,
+      destination: destination ?? this.destination,
+      destinationAddress: destinationAddress ?? this.destinationAddress,
+      departureAt: departureAt ?? this.departureAt,
+      returnAt: returnAt ?? this.returnAt,
+      requiresPermissionSlip:
+          requiresPermissionSlip ?? this.requiresPermissionSlip,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (scheduleBlockId.present) {
+      map['schedule_block_id'] = Variable<String>(scheduleBlockId.value);
+    }
+    if (destination.present) {
+      map['destination'] = Variable<String>(destination.value);
+    }
+    if (destinationAddress.present) {
+      map['destination_address'] = Variable<String>(destinationAddress.value);
+    }
+    if (departureAt.present) {
+      map['departure_at'] = Variable<String>(departureAt.value);
+    }
+    if (returnAt.present) {
+      map['return_at'] = Variable<String>(returnAt.value);
+    }
+    if (requiresPermissionSlip.present) {
+      map['requires_permission_slip'] = Variable<int>(
+        requiresPermissionSlip.value,
+      );
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TripLogisticsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
+          ..write('destination: $destination, ')
+          ..write('destinationAddress: $destinationAddress, ')
+          ..write('departureAt: $departureAt, ')
+          ..write('returnAt: $returnAt, ')
+          ..write('requiresPermissionSlip: $requiresPermissionSlip, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TripVehiclesTable extends TripVehicles
+    with TableInfo<$TripVehiclesTable, TripVehicle> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TripVehiclesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tripLogisticsIdMeta = const VerificationMeta(
+    'tripLogisticsId',
+  );
+  @override
+  late final GeneratedColumn<String> tripLogisticsId = GeneratedColumn<String>(
+    'trip_logistics_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vehicleIdMeta = const VerificationMeta(
+    'vehicleId',
+  );
+  @override
+  late final GeneratedColumn<String> vehicleId = GeneratedColumn<String>(
+    'vehicle_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _driverMemberIdMeta = const VerificationMeta(
+    'driverMemberId',
+  );
+  @override
+  late final GeneratedColumn<String> driverMemberId = GeneratedColumn<String>(
+    'driver_member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _manifestMeta = const VerificationMeta(
+    'manifest',
+  );
+  @override
+  late final GeneratedColumn<String> manifest = GeneratedColumn<String>(
+    'manifest',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    tripLogisticsId,
+    vehicleId,
+    driverMemberId,
+    manifest,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'trip_vehicles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TripVehicle> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('trip_logistics_id')) {
+      context.handle(
+        _tripLogisticsIdMeta,
+        tripLogisticsId.isAcceptableOrUnknown(
+          data['trip_logistics_id']!,
+          _tripLogisticsIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_tripLogisticsIdMeta);
+    }
+    if (data.containsKey('vehicle_id')) {
+      context.handle(
+        _vehicleIdMeta,
+        vehicleId.isAcceptableOrUnknown(data['vehicle_id']!, _vehicleIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_vehicleIdMeta);
+    }
+    if (data.containsKey('driver_member_id')) {
+      context.handle(
+        _driverMemberIdMeta,
+        driverMemberId.isAcceptableOrUnknown(
+          data['driver_member_id']!,
+          _driverMemberIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('manifest')) {
+      context.handle(
+        _manifestMeta,
+        manifest.isAcceptableOrUnknown(data['manifest']!, _manifestMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_manifestMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TripVehicle map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TripVehicle(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      tripLogisticsId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trip_logistics_id'],
+      )!,
+      vehicleId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle_id'],
+      )!,
+      driverMemberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}driver_member_id'],
+      ),
+      manifest: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}manifest'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TripVehiclesTable createAlias(String alias) {
+    return $TripVehiclesTable(attachedDatabase, alias);
+  }
+}
+
+class TripVehicle extends DataClass implements Insertable<TripVehicle> {
+  final String id;
+  final String spaceId;
+  final String tripLogisticsId;
+  final String vehicleId;
+  final String? driverMemberId;
+  final String manifest;
+  final String createdAt;
+  final String updatedAt;
+  const TripVehicle({
+    required this.id,
+    required this.spaceId,
+    required this.tripLogisticsId,
+    required this.vehicleId,
+    this.driverMemberId,
+    required this.manifest,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['trip_logistics_id'] = Variable<String>(tripLogisticsId);
+    map['vehicle_id'] = Variable<String>(vehicleId);
+    if (!nullToAbsent || driverMemberId != null) {
+      map['driver_member_id'] = Variable<String>(driverMemberId);
+    }
+    map['manifest'] = Variable<String>(manifest);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  TripVehiclesCompanion toCompanion(bool nullToAbsent) {
+    return TripVehiclesCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      tripLogisticsId: Value(tripLogisticsId),
+      vehicleId: Value(vehicleId),
+      driverMemberId: driverMemberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driverMemberId),
+      manifest: Value(manifest),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TripVehicle.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TripVehicle(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      tripLogisticsId: serializer.fromJson<String>(json['tripLogisticsId']),
+      vehicleId: serializer.fromJson<String>(json['vehicleId']),
+      driverMemberId: serializer.fromJson<String?>(json['driverMemberId']),
+      manifest: serializer.fromJson<String>(json['manifest']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'tripLogisticsId': serializer.toJson<String>(tripLogisticsId),
+      'vehicleId': serializer.toJson<String>(vehicleId),
+      'driverMemberId': serializer.toJson<String?>(driverMemberId),
+      'manifest': serializer.toJson<String>(manifest),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  TripVehicle copyWith({
+    String? id,
+    String? spaceId,
+    String? tripLogisticsId,
+    String? vehicleId,
+    Value<String?> driverMemberId = const Value.absent(),
+    String? manifest,
+    String? createdAt,
+    String? updatedAt,
+  }) => TripVehicle(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    tripLogisticsId: tripLogisticsId ?? this.tripLogisticsId,
+    vehicleId: vehicleId ?? this.vehicleId,
+    driverMemberId: driverMemberId.present
+        ? driverMemberId.value
+        : this.driverMemberId,
+    manifest: manifest ?? this.manifest,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  TripVehicle copyWithCompanion(TripVehiclesCompanion data) {
+    return TripVehicle(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      tripLogisticsId: data.tripLogisticsId.present
+          ? data.tripLogisticsId.value
+          : this.tripLogisticsId,
+      vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
+      driverMemberId: data.driverMemberId.present
+          ? data.driverMemberId.value
+          : this.driverMemberId,
+      manifest: data.manifest.present ? data.manifest.value : this.manifest,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TripVehicle(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('tripLogisticsId: $tripLogisticsId, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('driverMemberId: $driverMemberId, ')
+          ..write('manifest: $manifest, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    tripLogisticsId,
+    vehicleId,
+    driverMemberId,
+    manifest,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TripVehicle &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.tripLogisticsId == this.tripLogisticsId &&
+          other.vehicleId == this.vehicleId &&
+          other.driverMemberId == this.driverMemberId &&
+          other.manifest == this.manifest &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TripVehiclesCompanion extends UpdateCompanion<TripVehicle> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> tripLogisticsId;
+  final Value<String> vehicleId;
+  final Value<String?> driverMemberId;
+  final Value<String> manifest;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const TripVehiclesCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.tripLogisticsId = const Value.absent(),
+    this.vehicleId = const Value.absent(),
+    this.driverMemberId = const Value.absent(),
+    this.manifest = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TripVehiclesCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String tripLogisticsId,
+    required String vehicleId,
+    this.driverMemberId = const Value.absent(),
+    required String manifest,
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       tripLogisticsId = Value(tripLogisticsId),
+       vehicleId = Value(vehicleId),
+       manifest = Value(manifest),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<TripVehicle> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? tripLogisticsId,
+    Expression<String>? vehicleId,
+    Expression<String>? driverMemberId,
+    Expression<String>? manifest,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (tripLogisticsId != null) 'trip_logistics_id': tripLogisticsId,
+      if (vehicleId != null) 'vehicle_id': vehicleId,
+      if (driverMemberId != null) 'driver_member_id': driverMemberId,
+      if (manifest != null) 'manifest': manifest,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TripVehiclesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? tripLogisticsId,
+    Value<String>? vehicleId,
+    Value<String?>? driverMemberId,
+    Value<String>? manifest,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return TripVehiclesCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      tripLogisticsId: tripLogisticsId ?? this.tripLogisticsId,
+      vehicleId: vehicleId ?? this.vehicleId,
+      driverMemberId: driverMemberId ?? this.driverMemberId,
+      manifest: manifest ?? this.manifest,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (tripLogisticsId.present) {
+      map['trip_logistics_id'] = Variable<String>(tripLogisticsId.value);
+    }
+    if (vehicleId.present) {
+      map['vehicle_id'] = Variable<String>(vehicleId.value);
+    }
+    if (driverMemberId.present) {
+      map['driver_member_id'] = Variable<String>(driverMemberId.value);
+    }
+    if (manifest.present) {
+      map['manifest'] = Variable<String>(manifest.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TripVehiclesCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('tripLogisticsId: $tripLogisticsId, ')
+          ..write('vehicleId: $vehicleId, ')
+          ..write('driverMemberId: $driverMemberId, ')
+          ..write('manifest: $manifest, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PermissionSlipsTable extends PermissionSlips
+    with TableInfo<$PermissionSlipsTable, PermissionSlip> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PermissionSlipsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tripLogisticsIdMeta = const VerificationMeta(
+    'tripLogisticsId',
+  );
+  @override
+  late final GeneratedColumn<String> tripLogisticsId = GeneratedColumn<String>(
+    'trip_logistics_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _signerGuardianIdMeta = const VerificationMeta(
+    'signerGuardianId',
+  );
+  @override
+  late final GeneratedColumn<String> signerGuardianId = GeneratedColumn<String>(
+    'signer_guardian_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _signerNameMeta = const VerificationMeta(
+    'signerName',
+  );
+  @override
+  late final GeneratedColumn<String> signerName = GeneratedColumn<String>(
+    'signer_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _signedAtMeta = const VerificationMeta(
+    'signedAt',
+  );
+  @override
+  late final GeneratedColumn<String> signedAt = GeneratedColumn<String>(
+    'signed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceUrlMeta = const VerificationMeta(
+    'sourceUrl',
+  );
+  @override
+  late final GeneratedColumn<String> sourceUrl = GeneratedColumn<String>(
+    'source_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    subjectId,
+    tripLogisticsId,
+    signerGuardianId,
+    signerName,
+    signedAt,
+    sourceUrl,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'permission_slips';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PermissionSlip> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectIdMeta);
+    }
+    if (data.containsKey('trip_logistics_id')) {
+      context.handle(
+        _tripLogisticsIdMeta,
+        tripLogisticsId.isAcceptableOrUnknown(
+          data['trip_logistics_id']!,
+          _tripLogisticsIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_tripLogisticsIdMeta);
+    }
+    if (data.containsKey('signer_guardian_id')) {
+      context.handle(
+        _signerGuardianIdMeta,
+        signerGuardianId.isAcceptableOrUnknown(
+          data['signer_guardian_id']!,
+          _signerGuardianIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('signer_name')) {
+      context.handle(
+        _signerNameMeta,
+        signerName.isAcceptableOrUnknown(data['signer_name']!, _signerNameMeta),
+      );
+    }
+    if (data.containsKey('signed_at')) {
+      context.handle(
+        _signedAtMeta,
+        signedAt.isAcceptableOrUnknown(data['signed_at']!, _signedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_signedAtMeta);
+    }
+    if (data.containsKey('source_url')) {
+      context.handle(
+        _sourceUrlMeta,
+        sourceUrl.isAcceptableOrUnknown(data['source_url']!, _sourceUrlMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PermissionSlip map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PermissionSlip(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      )!,
+      tripLogisticsId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trip_logistics_id'],
+      )!,
+      signerGuardianId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}signer_guardian_id'],
+      ),
+      signerName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}signer_name'],
+      ),
+      signedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}signed_at'],
+      )!,
+      sourceUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_url'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PermissionSlipsTable createAlias(String alias) {
+    return $PermissionSlipsTable(attachedDatabase, alias);
+  }
+}
+
+class PermissionSlip extends DataClass implements Insertable<PermissionSlip> {
+  final String id;
+  final String spaceId;
+  final String subjectId;
+  final String tripLogisticsId;
+  final String? signerGuardianId;
+  final String? signerName;
+  final String signedAt;
+  final String? sourceUrl;
+  final String createdAt;
+  final String updatedAt;
+  const PermissionSlip({
+    required this.id,
+    required this.spaceId,
+    required this.subjectId,
+    required this.tripLogisticsId,
+    this.signerGuardianId,
+    this.signerName,
+    required this.signedAt,
+    this.sourceUrl,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['subject_id'] = Variable<String>(subjectId);
+    map['trip_logistics_id'] = Variable<String>(tripLogisticsId);
+    if (!nullToAbsent || signerGuardianId != null) {
+      map['signer_guardian_id'] = Variable<String>(signerGuardianId);
+    }
+    if (!nullToAbsent || signerName != null) {
+      map['signer_name'] = Variable<String>(signerName);
+    }
+    map['signed_at'] = Variable<String>(signedAt);
+    if (!nullToAbsent || sourceUrl != null) {
+      map['source_url'] = Variable<String>(sourceUrl);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  PermissionSlipsCompanion toCompanion(bool nullToAbsent) {
+    return PermissionSlipsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      subjectId: Value(subjectId),
+      tripLogisticsId: Value(tripLogisticsId),
+      signerGuardianId: signerGuardianId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(signerGuardianId),
+      signerName: signerName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(signerName),
+      signedAt: Value(signedAt),
+      sourceUrl: sourceUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceUrl),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory PermissionSlip.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PermissionSlip(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      subjectId: serializer.fromJson<String>(json['subjectId']),
+      tripLogisticsId: serializer.fromJson<String>(json['tripLogisticsId']),
+      signerGuardianId: serializer.fromJson<String?>(json['signerGuardianId']),
+      signerName: serializer.fromJson<String?>(json['signerName']),
+      signedAt: serializer.fromJson<String>(json['signedAt']),
+      sourceUrl: serializer.fromJson<String?>(json['sourceUrl']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'subjectId': serializer.toJson<String>(subjectId),
+      'tripLogisticsId': serializer.toJson<String>(tripLogisticsId),
+      'signerGuardianId': serializer.toJson<String?>(signerGuardianId),
+      'signerName': serializer.toJson<String?>(signerName),
+      'signedAt': serializer.toJson<String>(signedAt),
+      'sourceUrl': serializer.toJson<String?>(sourceUrl),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  PermissionSlip copyWith({
+    String? id,
+    String? spaceId,
+    String? subjectId,
+    String? tripLogisticsId,
+    Value<String?> signerGuardianId = const Value.absent(),
+    Value<String?> signerName = const Value.absent(),
+    String? signedAt,
+    Value<String?> sourceUrl = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => PermissionSlip(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    subjectId: subjectId ?? this.subjectId,
+    tripLogisticsId: tripLogisticsId ?? this.tripLogisticsId,
+    signerGuardianId: signerGuardianId.present
+        ? signerGuardianId.value
+        : this.signerGuardianId,
+    signerName: signerName.present ? signerName.value : this.signerName,
+    signedAt: signedAt ?? this.signedAt,
+    sourceUrl: sourceUrl.present ? sourceUrl.value : this.sourceUrl,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  PermissionSlip copyWithCompanion(PermissionSlipsCompanion data) {
+    return PermissionSlip(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      tripLogisticsId: data.tripLogisticsId.present
+          ? data.tripLogisticsId.value
+          : this.tripLogisticsId,
+      signerGuardianId: data.signerGuardianId.present
+          ? data.signerGuardianId.value
+          : this.signerGuardianId,
+      signerName: data.signerName.present
+          ? data.signerName.value
+          : this.signerName,
+      signedAt: data.signedAt.present ? data.signedAt.value : this.signedAt,
+      sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PermissionSlip(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('tripLogisticsId: $tripLogisticsId, ')
+          ..write('signerGuardianId: $signerGuardianId, ')
+          ..write('signerName: $signerName, ')
+          ..write('signedAt: $signedAt, ')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    subjectId,
+    tripLogisticsId,
+    signerGuardianId,
+    signerName,
+    signedAt,
+    sourceUrl,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PermissionSlip &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.subjectId == this.subjectId &&
+          other.tripLogisticsId == this.tripLogisticsId &&
+          other.signerGuardianId == this.signerGuardianId &&
+          other.signerName == this.signerName &&
+          other.signedAt == this.signedAt &&
+          other.sourceUrl == this.sourceUrl &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class PermissionSlipsCompanion extends UpdateCompanion<PermissionSlip> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> subjectId;
+  final Value<String> tripLogisticsId;
+  final Value<String?> signerGuardianId;
+  final Value<String?> signerName;
+  final Value<String> signedAt;
+  final Value<String?> sourceUrl;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const PermissionSlipsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.tripLogisticsId = const Value.absent(),
+    this.signerGuardianId = const Value.absent(),
+    this.signerName = const Value.absent(),
+    this.signedAt = const Value.absent(),
+    this.sourceUrl = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PermissionSlipsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String subjectId,
+    required String tripLogisticsId,
+    this.signerGuardianId = const Value.absent(),
+    this.signerName = const Value.absent(),
+    required String signedAt,
+    this.sourceUrl = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       subjectId = Value(subjectId),
+       tripLogisticsId = Value(tripLogisticsId),
+       signedAt = Value(signedAt),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<PermissionSlip> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? subjectId,
+    Expression<String>? tripLogisticsId,
+    Expression<String>? signerGuardianId,
+    Expression<String>? signerName,
+    Expression<String>? signedAt,
+    Expression<String>? sourceUrl,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (tripLogisticsId != null) 'trip_logistics_id': tripLogisticsId,
+      if (signerGuardianId != null) 'signer_guardian_id': signerGuardianId,
+      if (signerName != null) 'signer_name': signerName,
+      if (signedAt != null) 'signed_at': signedAt,
+      if (sourceUrl != null) 'source_url': sourceUrl,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PermissionSlipsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? subjectId,
+    Value<String>? tripLogisticsId,
+    Value<String?>? signerGuardianId,
+    Value<String?>? signerName,
+    Value<String>? signedAt,
+    Value<String?>? sourceUrl,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return PermissionSlipsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      subjectId: subjectId ?? this.subjectId,
+      tripLogisticsId: tripLogisticsId ?? this.tripLogisticsId,
+      signerGuardianId: signerGuardianId ?? this.signerGuardianId,
+      signerName: signerName ?? this.signerName,
+      signedAt: signedAt ?? this.signedAt,
+      sourceUrl: sourceUrl ?? this.sourceUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (tripLogisticsId.present) {
+      map['trip_logistics_id'] = Variable<String>(tripLogisticsId.value);
+    }
+    if (signerGuardianId.present) {
+      map['signer_guardian_id'] = Variable<String>(signerGuardianId.value);
+    }
+    if (signerName.present) {
+      map['signer_name'] = Variable<String>(signerName.value);
+    }
+    if (signedAt.present) {
+      map['signed_at'] = Variable<String>(signedAt.value);
+    }
+    if (sourceUrl.present) {
+      map['source_url'] = Variable<String>(sourceUrl.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PermissionSlipsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('tripLogisticsId: $tripLogisticsId, ')
+          ..write('signerGuardianId: $signerGuardianId, ')
+          ..write('signerName: $signerName, ')
+          ..write('signedAt: $signedAt, ')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $HeadcountsTable extends Headcounts
+    with TableInfo<$HeadcountsTable, Headcount> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HeadcountsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _scheduleBlockIdMeta = const VerificationMeta(
+    'scheduleBlockId',
+  );
+  @override
+  late final GeneratedColumn<String> scheduleBlockId = GeneratedColumn<String>(
+    'schedule_block_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _checkpointLabelMeta = const VerificationMeta(
+    'checkpointLabel',
+  );
+  @override
+  late final GeneratedColumn<String> checkpointLabel = GeneratedColumn<String>(
+    'checkpoint_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _countMeta = const VerificationMeta('count');
+  @override
+  late final GeneratedColumn<int> count = GeneratedColumn<int>(
+    'count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expectedCountMeta = const VerificationMeta(
+    'expectedCount',
+  );
+  @override
+  late final GeneratedColumn<int> expectedCount = GeneratedColumn<int>(
+    'expected_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _takenByMemberIdMeta = const VerificationMeta(
+    'takenByMemberId',
+  );
+  @override
+  late final GeneratedColumn<String> takenByMemberId = GeneratedColumn<String>(
+    'taken_by_member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _takenAtMeta = const VerificationMeta(
+    'takenAt',
+  );
+  @override
+  late final GeneratedColumn<String> takenAt = GeneratedColumn<String>(
+    'taken_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    scheduleBlockId,
+    checkpointLabel,
+    count,
+    expectedCount,
+    takenByMemberId,
+    takenAt,
+    notes,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'headcounts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Headcount> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('schedule_block_id')) {
+      context.handle(
+        _scheduleBlockIdMeta,
+        scheduleBlockId.isAcceptableOrUnknown(
+          data['schedule_block_id']!,
+          _scheduleBlockIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_scheduleBlockIdMeta);
+    }
+    if (data.containsKey('checkpoint_label')) {
+      context.handle(
+        _checkpointLabelMeta,
+        checkpointLabel.isAcceptableOrUnknown(
+          data['checkpoint_label']!,
+          _checkpointLabelMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_checkpointLabelMeta);
+    }
+    if (data.containsKey('count')) {
+      context.handle(
+        _countMeta,
+        count.isAcceptableOrUnknown(data['count']!, _countMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_countMeta);
+    }
+    if (data.containsKey('expected_count')) {
+      context.handle(
+        _expectedCountMeta,
+        expectedCount.isAcceptableOrUnknown(
+          data['expected_count']!,
+          _expectedCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('taken_by_member_id')) {
+      context.handle(
+        _takenByMemberIdMeta,
+        takenByMemberId.isAcceptableOrUnknown(
+          data['taken_by_member_id']!,
+          _takenByMemberIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('taken_at')) {
+      context.handle(
+        _takenAtMeta,
+        takenAt.isAcceptableOrUnknown(data['taken_at']!, _takenAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_takenAtMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Headcount map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Headcount(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      scheduleBlockId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}schedule_block_id'],
+      )!,
+      checkpointLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}checkpoint_label'],
+      )!,
+      count: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}count'],
+      )!,
+      expectedCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}expected_count'],
+      ),
+      takenByMemberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}taken_by_member_id'],
+      ),
+      takenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}taken_at'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $HeadcountsTable createAlias(String alias) {
+    return $HeadcountsTable(attachedDatabase, alias);
+  }
+}
+
+class Headcount extends DataClass implements Insertable<Headcount> {
+  final String id;
+  final String spaceId;
+  final String scheduleBlockId;
+  final String checkpointLabel;
+  final int count;
+  final int? expectedCount;
+  final String? takenByMemberId;
+  final String takenAt;
+  final String? notes;
+  final String createdAt;
+  const Headcount({
+    required this.id,
+    required this.spaceId,
+    required this.scheduleBlockId,
+    required this.checkpointLabel,
+    required this.count,
+    this.expectedCount,
+    this.takenByMemberId,
+    required this.takenAt,
+    this.notes,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['schedule_block_id'] = Variable<String>(scheduleBlockId);
+    map['checkpoint_label'] = Variable<String>(checkpointLabel);
+    map['count'] = Variable<int>(count);
+    if (!nullToAbsent || expectedCount != null) {
+      map['expected_count'] = Variable<int>(expectedCount);
+    }
+    if (!nullToAbsent || takenByMemberId != null) {
+      map['taken_by_member_id'] = Variable<String>(takenByMemberId);
+    }
+    map['taken_at'] = Variable<String>(takenAt);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    return map;
+  }
+
+  HeadcountsCompanion toCompanion(bool nullToAbsent) {
+    return HeadcountsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      scheduleBlockId: Value(scheduleBlockId),
+      checkpointLabel: Value(checkpointLabel),
+      count: Value(count),
+      expectedCount: expectedCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expectedCount),
+      takenByMemberId: takenByMemberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(takenByMemberId),
+      takenAt: Value(takenAt),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Headcount.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Headcount(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      scheduleBlockId: serializer.fromJson<String>(json['scheduleBlockId']),
+      checkpointLabel: serializer.fromJson<String>(json['checkpointLabel']),
+      count: serializer.fromJson<int>(json['count']),
+      expectedCount: serializer.fromJson<int?>(json['expectedCount']),
+      takenByMemberId: serializer.fromJson<String?>(json['takenByMemberId']),
+      takenAt: serializer.fromJson<String>(json['takenAt']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'scheduleBlockId': serializer.toJson<String>(scheduleBlockId),
+      'checkpointLabel': serializer.toJson<String>(checkpointLabel),
+      'count': serializer.toJson<int>(count),
+      'expectedCount': serializer.toJson<int?>(expectedCount),
+      'takenByMemberId': serializer.toJson<String?>(takenByMemberId),
+      'takenAt': serializer.toJson<String>(takenAt),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<String>(createdAt),
+    };
+  }
+
+  Headcount copyWith({
+    String? id,
+    String? spaceId,
+    String? scheduleBlockId,
+    String? checkpointLabel,
+    int? count,
+    Value<int?> expectedCount = const Value.absent(),
+    Value<String?> takenByMemberId = const Value.absent(),
+    String? takenAt,
+    Value<String?> notes = const Value.absent(),
+    String? createdAt,
+  }) => Headcount(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    scheduleBlockId: scheduleBlockId ?? this.scheduleBlockId,
+    checkpointLabel: checkpointLabel ?? this.checkpointLabel,
+    count: count ?? this.count,
+    expectedCount: expectedCount.present
+        ? expectedCount.value
+        : this.expectedCount,
+    takenByMemberId: takenByMemberId.present
+        ? takenByMemberId.value
+        : this.takenByMemberId,
+    takenAt: takenAt ?? this.takenAt,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Headcount copyWithCompanion(HeadcountsCompanion data) {
+    return Headcount(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      scheduleBlockId: data.scheduleBlockId.present
+          ? data.scheduleBlockId.value
+          : this.scheduleBlockId,
+      checkpointLabel: data.checkpointLabel.present
+          ? data.checkpointLabel.value
+          : this.checkpointLabel,
+      count: data.count.present ? data.count.value : this.count,
+      expectedCount: data.expectedCount.present
+          ? data.expectedCount.value
+          : this.expectedCount,
+      takenByMemberId: data.takenByMemberId.present
+          ? data.takenByMemberId.value
+          : this.takenByMemberId,
+      takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Headcount(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
+          ..write('checkpointLabel: $checkpointLabel, ')
+          ..write('count: $count, ')
+          ..write('expectedCount: $expectedCount, ')
+          ..write('takenByMemberId: $takenByMemberId, ')
+          ..write('takenAt: $takenAt, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    scheduleBlockId,
+    checkpointLabel,
+    count,
+    expectedCount,
+    takenByMemberId,
+    takenAt,
+    notes,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Headcount &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.scheduleBlockId == this.scheduleBlockId &&
+          other.checkpointLabel == this.checkpointLabel &&
+          other.count == this.count &&
+          other.expectedCount == this.expectedCount &&
+          other.takenByMemberId == this.takenByMemberId &&
+          other.takenAt == this.takenAt &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt);
+}
+
+class HeadcountsCompanion extends UpdateCompanion<Headcount> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> scheduleBlockId;
+  final Value<String> checkpointLabel;
+  final Value<int> count;
+  final Value<int?> expectedCount;
+  final Value<String?> takenByMemberId;
+  final Value<String> takenAt;
+  final Value<String?> notes;
+  final Value<String> createdAt;
+  final Value<int> rowid;
+  const HeadcountsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.scheduleBlockId = const Value.absent(),
+    this.checkpointLabel = const Value.absent(),
+    this.count = const Value.absent(),
+    this.expectedCount = const Value.absent(),
+    this.takenByMemberId = const Value.absent(),
+    this.takenAt = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HeadcountsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String scheduleBlockId,
+    required String checkpointLabel,
+    required int count,
+    this.expectedCount = const Value.absent(),
+    this.takenByMemberId = const Value.absent(),
+    required String takenAt,
+    this.notes = const Value.absent(),
+    required String createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       scheduleBlockId = Value(scheduleBlockId),
+       checkpointLabel = Value(checkpointLabel),
+       count = Value(count),
+       takenAt = Value(takenAt),
+       createdAt = Value(createdAt);
+  static Insertable<Headcount> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? scheduleBlockId,
+    Expression<String>? checkpointLabel,
+    Expression<int>? count,
+    Expression<int>? expectedCount,
+    Expression<String>? takenByMemberId,
+    Expression<String>? takenAt,
+    Expression<String>? notes,
+    Expression<String>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (scheduleBlockId != null) 'schedule_block_id': scheduleBlockId,
+      if (checkpointLabel != null) 'checkpoint_label': checkpointLabel,
+      if (count != null) 'count': count,
+      if (expectedCount != null) 'expected_count': expectedCount,
+      if (takenByMemberId != null) 'taken_by_member_id': takenByMemberId,
+      if (takenAt != null) 'taken_at': takenAt,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HeadcountsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? scheduleBlockId,
+    Value<String>? checkpointLabel,
+    Value<int>? count,
+    Value<int?>? expectedCount,
+    Value<String?>? takenByMemberId,
+    Value<String>? takenAt,
+    Value<String?>? notes,
+    Value<String>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return HeadcountsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      scheduleBlockId: scheduleBlockId ?? this.scheduleBlockId,
+      checkpointLabel: checkpointLabel ?? this.checkpointLabel,
+      count: count ?? this.count,
+      expectedCount: expectedCount ?? this.expectedCount,
+      takenByMemberId: takenByMemberId ?? this.takenByMemberId,
+      takenAt: takenAt ?? this.takenAt,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (scheduleBlockId.present) {
+      map['schedule_block_id'] = Variable<String>(scheduleBlockId.value);
+    }
+    if (checkpointLabel.present) {
+      map['checkpoint_label'] = Variable<String>(checkpointLabel.value);
+    }
+    if (count.present) {
+      map['count'] = Variable<int>(count.value);
+    }
+    if (expectedCount.present) {
+      map['expected_count'] = Variable<int>(expectedCount.value);
+    }
+    if (takenByMemberId.present) {
+      map['taken_by_member_id'] = Variable<String>(takenByMemberId.value);
+    }
+    if (takenAt.present) {
+      map['taken_at'] = Variable<String>(takenAt.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HeadcountsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
+          ..write('checkpointLabel: $checkpointLabel, ')
+          ..write('count: $count, ')
+          ..write('expectedCount: $expectedCount, ')
+          ..write('takenByMemberId: $takenByMemberId, ')
+          ..write('takenAt: $takenAt, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -13409,6 +18394,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ExportRecipientsTable exportRecipients = $ExportRecipientsTable(
     this,
   );
+  late final $LocationsTable locations = $LocationsTable(this);
+  late final $ActivitiesTable activities = $ActivitiesTable(this);
+  late final $ScheduleBlocksTable scheduleBlocks = $ScheduleBlocksTable(this);
+  late final $TripLogisticsTable tripLogistics = $TripLogisticsTable(this);
+  late final $TripVehiclesTable tripVehicles = $TripVehiclesTable(this);
+  late final $PermissionSlipsTable permissionSlips = $PermissionSlipsTable(
+    this,
+  );
+  late final $HeadcountsTable headcounts = $HeadcountsTable(this);
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
@@ -13435,6 +18429,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final SurveysDao surveysDao = SurveysDao(this as AppDatabase);
   late final TasksDao tasksDao = TasksDao(this as AppDatabase);
   late final VehiclesDao vehiclesDao = VehiclesDao(this as AppDatabase);
+  late final LocationsDao locationsDao = LocationsDao(this as AppDatabase);
+  late final ActivitiesDao activitiesDao = ActivitiesDao(this as AppDatabase);
+  late final ScheduleDao scheduleDao = ScheduleDao(this as AppDatabase);
+  late final TripsDao tripsDao = TripsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -13461,6 +18459,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     messages,
     exports,
     exportRecipients,
+    locations,
+    activities,
+    scheduleBlocks,
+    tripLogistics,
+    tripVehicles,
+    permissionSlips,
+    headcounts,
   ];
 }
 
@@ -14218,6 +19223,10 @@ typedef $$SubjectsTableCreateCompanionBuilder =
       Value<String?> allergies,
       Value<String?> notes,
       required String capabilities,
+      Value<String?> dropoffWindowStart,
+      Value<String?> dropoffWindowEnd,
+      Value<String?> pickupWindowStart,
+      Value<String?> pickupWindowEnd,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -14234,6 +19243,10 @@ typedef $$SubjectsTableUpdateCompanionBuilder =
       Value<String?> allergies,
       Value<String?> notes,
       Value<String> capabilities,
+      Value<String?> dropoffWindowStart,
+      Value<String?> dropoffWindowEnd,
+      Value<String?> pickupWindowStart,
+      Value<String?> pickupWindowEnd,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -14295,6 +19308,26 @@ class $$SubjectsTableFilterComposer
 
   ColumnFilters<String> get capabilities => $composableBuilder(
     column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dropoffWindowStart => $composableBuilder(
+    column: $table.dropoffWindowStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dropoffWindowEnd => $composableBuilder(
+    column: $table.dropoffWindowEnd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pickupWindowStart => $composableBuilder(
+    column: $table.pickupWindowStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pickupWindowEnd => $composableBuilder(
+    column: $table.pickupWindowEnd,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14368,6 +19401,26 @@ class $$SubjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get dropoffWindowStart => $composableBuilder(
+    column: $table.dropoffWindowStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dropoffWindowEnd => $composableBuilder(
+    column: $table.dropoffWindowEnd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pickupWindowStart => $composableBuilder(
+    column: $table.pickupWindowStart,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pickupWindowEnd => $composableBuilder(
+    column: $table.pickupWindowEnd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -14420,6 +19473,26 @@ class $$SubjectsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get dropoffWindowStart => $composableBuilder(
+    column: $table.dropoffWindowStart,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get dropoffWindowEnd => $composableBuilder(
+    column: $table.dropoffWindowEnd,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get pickupWindowStart => $composableBuilder(
+    column: $table.pickupWindowStart,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get pickupWindowEnd => $composableBuilder(
+    column: $table.pickupWindowEnd,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -14465,6 +19538,10 @@ class $$SubjectsTableTableManager
                 Value<String?> allergies = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String> capabilities = const Value.absent(),
+                Value<String?> dropoffWindowStart = const Value.absent(),
+                Value<String?> dropoffWindowEnd = const Value.absent(),
+                Value<String?> pickupWindowStart = const Value.absent(),
+                Value<String?> pickupWindowEnd = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -14479,6 +19556,10 @@ class $$SubjectsTableTableManager
                 allergies: allergies,
                 notes: notes,
                 capabilities: capabilities,
+                dropoffWindowStart: dropoffWindowStart,
+                dropoffWindowEnd: dropoffWindowEnd,
+                pickupWindowStart: pickupWindowStart,
+                pickupWindowEnd: pickupWindowEnd,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -14495,6 +19576,10 @@ class $$SubjectsTableTableManager
                 Value<String?> allergies = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required String capabilities,
+                Value<String?> dropoffWindowStart = const Value.absent(),
+                Value<String?> dropoffWindowEnd = const Value.absent(),
+                Value<String?> pickupWindowStart = const Value.absent(),
+                Value<String?> pickupWindowEnd = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -14509,6 +19594,10 @@ class $$SubjectsTableTableManager
                 allergies: allergies,
                 notes: notes,
                 capabilities: capabilities,
+                dropoffWindowStart: dropoffWindowStart,
+                dropoffWindowEnd: dropoffWindowEnd,
+                pickupWindowStart: pickupWindowStart,
+                pickupWindowEnd: pickupWindowEnd,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -19915,6 +25004,2247 @@ typedef $$ExportRecipientsTableProcessedTableManager =
       ExportRecipient,
       PrefetchHooks Function()
     >;
+typedef $$LocationsTableCreateCompanionBuilder =
+    LocationsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String name,
+      Value<String?> notes,
+      Value<int?> capacity,
+      required int isOutdoor,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$LocationsTableUpdateCompanionBuilder =
+    LocationsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> name,
+      Value<String?> notes,
+      Value<int?> capacity,
+      Value<int> isOutdoor,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$LocationsTableFilterComposer
+    extends Composer<_$AppDatabase, $LocationsTable> {
+  $$LocationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get capacity => $composableBuilder(
+    column: $table.capacity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get isOutdoor => $composableBuilder(
+    column: $table.isOutdoor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LocationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocationsTable> {
+  $$LocationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get capacity => $composableBuilder(
+    column: $table.capacity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get isOutdoor => $composableBuilder(
+    column: $table.isOutdoor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LocationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocationsTable> {
+  $$LocationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<int> get capacity =>
+      $composableBuilder(column: $table.capacity, builder: (column) => column);
+
+  GeneratedColumn<int> get isOutdoor =>
+      $composableBuilder(column: $table.isOutdoor, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$LocationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LocationsTable,
+          Location,
+          $$LocationsTableFilterComposer,
+          $$LocationsTableOrderingComposer,
+          $$LocationsTableAnnotationComposer,
+          $$LocationsTableCreateCompanionBuilder,
+          $$LocationsTableUpdateCompanionBuilder,
+          (Location, BaseReferences<_$AppDatabase, $LocationsTable, Location>),
+          Location,
+          PrefetchHooks Function()
+        > {
+  $$LocationsTableTableManager(_$AppDatabase db, $LocationsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocationsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<int?> capacity = const Value.absent(),
+                Value<int> isOutdoor = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LocationsCompanion(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                notes: notes,
+                capacity: capacity,
+                isOutdoor: isOutdoor,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String name,
+                Value<String?> notes = const Value.absent(),
+                Value<int?> capacity = const Value.absent(),
+                required int isOutdoor,
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => LocationsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                notes: notes,
+                capacity: capacity,
+                isOutdoor: isOutdoor,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LocationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LocationsTable,
+      Location,
+      $$LocationsTableFilterComposer,
+      $$LocationsTableOrderingComposer,
+      $$LocationsTableAnnotationComposer,
+      $$LocationsTableCreateCompanionBuilder,
+      $$LocationsTableUpdateCompanionBuilder,
+      (Location, BaseReferences<_$AppDatabase, $LocationsTable, Location>),
+      Location,
+      PrefetchHooks Function()
+    >;
+typedef $$ActivitiesTableCreateCompanionBuilder =
+    ActivitiesCompanion Function({
+      required String id,
+      required String spaceId,
+      Value<String?> ownerMemberId,
+      required String name,
+      Value<String?> description,
+      Value<String?> defaultLocationId,
+      Value<int?> defaultDurationMinutes,
+      Value<String?> supplies,
+      Value<int?> ageMin,
+      Value<int?> ageMax,
+      Value<int?> maxCapacity,
+      required int isOutdoor,
+      Value<String?> indoorAltActivityId,
+      required String capabilities,
+      Value<String?> archivedAt,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ActivitiesTableUpdateCompanionBuilder =
+    ActivitiesCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String?> ownerMemberId,
+      Value<String> name,
+      Value<String?> description,
+      Value<String?> defaultLocationId,
+      Value<int?> defaultDurationMinutes,
+      Value<String?> supplies,
+      Value<int?> ageMin,
+      Value<int?> ageMax,
+      Value<int?> maxCapacity,
+      Value<int> isOutdoor,
+      Value<String?> indoorAltActivityId,
+      Value<String> capabilities,
+      Value<String?> archivedAt,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ActivitiesTableFilterComposer
+    extends Composer<_$AppDatabase, $ActivitiesTable> {
+  $$ActivitiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerMemberId => $composableBuilder(
+    column: $table.ownerMemberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultLocationId => $composableBuilder(
+    column: $table.defaultLocationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get defaultDurationMinutes => $composableBuilder(
+    column: $table.defaultDurationMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplies => $composableBuilder(
+    column: $table.supplies,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ageMin => $composableBuilder(
+    column: $table.ageMin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ageMax => $composableBuilder(
+    column: $table.ageMax,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxCapacity => $composableBuilder(
+    column: $table.maxCapacity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get isOutdoor => $composableBuilder(
+    column: $table.isOutdoor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get indoorAltActivityId => $composableBuilder(
+    column: $table.indoorAltActivityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ActivitiesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ActivitiesTable> {
+  $$ActivitiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownerMemberId => $composableBuilder(
+    column: $table.ownerMemberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultLocationId => $composableBuilder(
+    column: $table.defaultLocationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get defaultDurationMinutes => $composableBuilder(
+    column: $table.defaultDurationMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplies => $composableBuilder(
+    column: $table.supplies,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get ageMin => $composableBuilder(
+    column: $table.ageMin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get ageMax => $composableBuilder(
+    column: $table.ageMax,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxCapacity => $composableBuilder(
+    column: $table.maxCapacity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get isOutdoor => $composableBuilder(
+    column: $table.isOutdoor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get indoorAltActivityId => $composableBuilder(
+    column: $table.indoorAltActivityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ActivitiesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ActivitiesTable> {
+  $$ActivitiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerMemberId => $composableBuilder(
+    column: $table.ownerMemberId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get defaultLocationId => $composableBuilder(
+    column: $table.defaultLocationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get defaultDurationMinutes => $composableBuilder(
+    column: $table.defaultDurationMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get supplies =>
+      $composableBuilder(column: $table.supplies, builder: (column) => column);
+
+  GeneratedColumn<int> get ageMin =>
+      $composableBuilder(column: $table.ageMin, builder: (column) => column);
+
+  GeneratedColumn<int> get ageMax =>
+      $composableBuilder(column: $table.ageMax, builder: (column) => column);
+
+  GeneratedColumn<int> get maxCapacity => $composableBuilder(
+    column: $table.maxCapacity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get isOutdoor =>
+      $composableBuilder(column: $table.isOutdoor, builder: (column) => column);
+
+  GeneratedColumn<String> get indoorAltActivityId => $composableBuilder(
+    column: $table.indoorAltActivityId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get archivedAt => $composableBuilder(
+    column: $table.archivedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ActivitiesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ActivitiesTable,
+          Activity,
+          $$ActivitiesTableFilterComposer,
+          $$ActivitiesTableOrderingComposer,
+          $$ActivitiesTableAnnotationComposer,
+          $$ActivitiesTableCreateCompanionBuilder,
+          $$ActivitiesTableUpdateCompanionBuilder,
+          (Activity, BaseReferences<_$AppDatabase, $ActivitiesTable, Activity>),
+          Activity,
+          PrefetchHooks Function()
+        > {
+  $$ActivitiesTableTableManager(_$AppDatabase db, $ActivitiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ActivitiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ActivitiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ActivitiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String?> ownerMemberId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<String?> defaultLocationId = const Value.absent(),
+                Value<int?> defaultDurationMinutes = const Value.absent(),
+                Value<String?> supplies = const Value.absent(),
+                Value<int?> ageMin = const Value.absent(),
+                Value<int?> ageMax = const Value.absent(),
+                Value<int?> maxCapacity = const Value.absent(),
+                Value<int> isOutdoor = const Value.absent(),
+                Value<String?> indoorAltActivityId = const Value.absent(),
+                Value<String> capabilities = const Value.absent(),
+                Value<String?> archivedAt = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ActivitiesCompanion(
+                id: id,
+                spaceId: spaceId,
+                ownerMemberId: ownerMemberId,
+                name: name,
+                description: description,
+                defaultLocationId: defaultLocationId,
+                defaultDurationMinutes: defaultDurationMinutes,
+                supplies: supplies,
+                ageMin: ageMin,
+                ageMax: ageMax,
+                maxCapacity: maxCapacity,
+                isOutdoor: isOutdoor,
+                indoorAltActivityId: indoorAltActivityId,
+                capabilities: capabilities,
+                archivedAt: archivedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                Value<String?> ownerMemberId = const Value.absent(),
+                required String name,
+                Value<String?> description = const Value.absent(),
+                Value<String?> defaultLocationId = const Value.absent(),
+                Value<int?> defaultDurationMinutes = const Value.absent(),
+                Value<String?> supplies = const Value.absent(),
+                Value<int?> ageMin = const Value.absent(),
+                Value<int?> ageMax = const Value.absent(),
+                Value<int?> maxCapacity = const Value.absent(),
+                required int isOutdoor,
+                Value<String?> indoorAltActivityId = const Value.absent(),
+                required String capabilities,
+                Value<String?> archivedAt = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ActivitiesCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                ownerMemberId: ownerMemberId,
+                name: name,
+                description: description,
+                defaultLocationId: defaultLocationId,
+                defaultDurationMinutes: defaultDurationMinutes,
+                supplies: supplies,
+                ageMin: ageMin,
+                ageMax: ageMax,
+                maxCapacity: maxCapacity,
+                isOutdoor: isOutdoor,
+                indoorAltActivityId: indoorAltActivityId,
+                capabilities: capabilities,
+                archivedAt: archivedAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ActivitiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ActivitiesTable,
+      Activity,
+      $$ActivitiesTableFilterComposer,
+      $$ActivitiesTableOrderingComposer,
+      $$ActivitiesTableAnnotationComposer,
+      $$ActivitiesTableCreateCompanionBuilder,
+      $$ActivitiesTableUpdateCompanionBuilder,
+      (Activity, BaseReferences<_$AppDatabase, $ActivitiesTable, Activity>),
+      Activity,
+      PrefetchHooks Function()
+    >;
+typedef $$ScheduleBlocksTableCreateCompanionBuilder =
+    ScheduleBlocksCompanion Function({
+      required String id,
+      required String spaceId,
+      required String groupId,
+      required String date,
+      required String startAt,
+      required String endAt,
+      Value<String?> activityId,
+      Value<String?> leadMemberId,
+      Value<String?> locationOverrideId,
+      required String kind,
+      Value<String?> notes,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ScheduleBlocksTableUpdateCompanionBuilder =
+    ScheduleBlocksCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> groupId,
+      Value<String> date,
+      Value<String> startAt,
+      Value<String> endAt,
+      Value<String?> activityId,
+      Value<String?> leadMemberId,
+      Value<String?> locationOverrideId,
+      Value<String> kind,
+      Value<String?> notes,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ScheduleBlocksTableFilterComposer
+    extends Composer<_$AppDatabase, $ScheduleBlocksTable> {
+  $$ScheduleBlocksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get startAt => $composableBuilder(
+    column: $table.startAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endAt => $composableBuilder(
+    column: $table.endAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get activityId => $composableBuilder(
+    column: $table.activityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get leadMemberId => $composableBuilder(
+    column: $table.leadMemberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get locationOverrideId => $composableBuilder(
+    column: $table.locationOverrideId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ScheduleBlocksTableOrderingComposer
+    extends Composer<_$AppDatabase, $ScheduleBlocksTable> {
+  $$ScheduleBlocksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get startAt => $composableBuilder(
+    column: $table.startAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endAt => $composableBuilder(
+    column: $table.endAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get activityId => $composableBuilder(
+    column: $table.activityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get leadMemberId => $composableBuilder(
+    column: $table.leadMemberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get locationOverrideId => $composableBuilder(
+    column: $table.locationOverrideId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ScheduleBlocksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ScheduleBlocksTable> {
+  $$ScheduleBlocksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<String> get startAt =>
+      $composableBuilder(column: $table.startAt, builder: (column) => column);
+
+  GeneratedColumn<String> get endAt =>
+      $composableBuilder(column: $table.endAt, builder: (column) => column);
+
+  GeneratedColumn<String> get activityId => $composableBuilder(
+    column: $table.activityId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get leadMemberId => $composableBuilder(
+    column: $table.leadMemberId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get locationOverrideId => $composableBuilder(
+    column: $table.locationOverrideId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ScheduleBlocksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ScheduleBlocksTable,
+          ScheduleBlock,
+          $$ScheduleBlocksTableFilterComposer,
+          $$ScheduleBlocksTableOrderingComposer,
+          $$ScheduleBlocksTableAnnotationComposer,
+          $$ScheduleBlocksTableCreateCompanionBuilder,
+          $$ScheduleBlocksTableUpdateCompanionBuilder,
+          (
+            ScheduleBlock,
+            BaseReferences<_$AppDatabase, $ScheduleBlocksTable, ScheduleBlock>,
+          ),
+          ScheduleBlock,
+          PrefetchHooks Function()
+        > {
+  $$ScheduleBlocksTableTableManager(
+    _$AppDatabase db,
+    $ScheduleBlocksTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScheduleBlocksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ScheduleBlocksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ScheduleBlocksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String> date = const Value.absent(),
+                Value<String> startAt = const Value.absent(),
+                Value<String> endAt = const Value.absent(),
+                Value<String?> activityId = const Value.absent(),
+                Value<String?> leadMemberId = const Value.absent(),
+                Value<String?> locationOverrideId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduleBlocksCompanion(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                date: date,
+                startAt: startAt,
+                endAt: endAt,
+                activityId: activityId,
+                leadMemberId: leadMemberId,
+                locationOverrideId: locationOverrideId,
+                kind: kind,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String groupId,
+                required String date,
+                required String startAt,
+                required String endAt,
+                Value<String?> activityId = const Value.absent(),
+                Value<String?> leadMemberId = const Value.absent(),
+                Value<String?> locationOverrideId = const Value.absent(),
+                required String kind,
+                Value<String?> notes = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduleBlocksCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                groupId: groupId,
+                date: date,
+                startAt: startAt,
+                endAt: endAt,
+                activityId: activityId,
+                leadMemberId: leadMemberId,
+                locationOverrideId: locationOverrideId,
+                kind: kind,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ScheduleBlocksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ScheduleBlocksTable,
+      ScheduleBlock,
+      $$ScheduleBlocksTableFilterComposer,
+      $$ScheduleBlocksTableOrderingComposer,
+      $$ScheduleBlocksTableAnnotationComposer,
+      $$ScheduleBlocksTableCreateCompanionBuilder,
+      $$ScheduleBlocksTableUpdateCompanionBuilder,
+      (
+        ScheduleBlock,
+        BaseReferences<_$AppDatabase, $ScheduleBlocksTable, ScheduleBlock>,
+      ),
+      ScheduleBlock,
+      PrefetchHooks Function()
+    >;
+typedef $$TripLogisticsTableCreateCompanionBuilder =
+    TripLogisticsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String scheduleBlockId,
+      required String destination,
+      Value<String?> destinationAddress,
+      Value<String?> departureAt,
+      Value<String?> returnAt,
+      required int requiresPermissionSlip,
+      Value<String?> notes,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$TripLogisticsTableUpdateCompanionBuilder =
+    TripLogisticsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> scheduleBlockId,
+      Value<String> destination,
+      Value<String?> destinationAddress,
+      Value<String?> departureAt,
+      Value<String?> returnAt,
+      Value<int> requiresPermissionSlip,
+      Value<String?> notes,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$TripLogisticsTableFilterComposer
+    extends Composer<_$AppDatabase, $TripLogisticsTable> {
+  $$TripLogisticsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get destination => $composableBuilder(
+    column: $table.destination,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get destinationAddress => $composableBuilder(
+    column: $table.destinationAddress,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get departureAt => $composableBuilder(
+    column: $table.departureAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get returnAt => $composableBuilder(
+    column: $table.returnAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get requiresPermissionSlip => $composableBuilder(
+    column: $table.requiresPermissionSlip,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TripLogisticsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TripLogisticsTable> {
+  $$TripLogisticsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get destination => $composableBuilder(
+    column: $table.destination,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get destinationAddress => $composableBuilder(
+    column: $table.destinationAddress,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get departureAt => $composableBuilder(
+    column: $table.departureAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get returnAt => $composableBuilder(
+    column: $table.returnAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get requiresPermissionSlip => $composableBuilder(
+    column: $table.requiresPermissionSlip,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TripLogisticsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TripLogisticsTable> {
+  $$TripLogisticsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get destination => $composableBuilder(
+    column: $table.destination,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get destinationAddress => $composableBuilder(
+    column: $table.destinationAddress,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get departureAt => $composableBuilder(
+    column: $table.departureAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get returnAt =>
+      $composableBuilder(column: $table.returnAt, builder: (column) => column);
+
+  GeneratedColumn<int> get requiresPermissionSlip => $composableBuilder(
+    column: $table.requiresPermissionSlip,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TripLogisticsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TripLogisticsTable,
+          TripLogistic,
+          $$TripLogisticsTableFilterComposer,
+          $$TripLogisticsTableOrderingComposer,
+          $$TripLogisticsTableAnnotationComposer,
+          $$TripLogisticsTableCreateCompanionBuilder,
+          $$TripLogisticsTableUpdateCompanionBuilder,
+          (
+            TripLogistic,
+            BaseReferences<_$AppDatabase, $TripLogisticsTable, TripLogistic>,
+          ),
+          TripLogistic,
+          PrefetchHooks Function()
+        > {
+  $$TripLogisticsTableTableManager(_$AppDatabase db, $TripLogisticsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TripLogisticsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TripLogisticsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TripLogisticsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> scheduleBlockId = const Value.absent(),
+                Value<String> destination = const Value.absent(),
+                Value<String?> destinationAddress = const Value.absent(),
+                Value<String?> departureAt = const Value.absent(),
+                Value<String?> returnAt = const Value.absent(),
+                Value<int> requiresPermissionSlip = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TripLogisticsCompanion(
+                id: id,
+                spaceId: spaceId,
+                scheduleBlockId: scheduleBlockId,
+                destination: destination,
+                destinationAddress: destinationAddress,
+                departureAt: departureAt,
+                returnAt: returnAt,
+                requiresPermissionSlip: requiresPermissionSlip,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String scheduleBlockId,
+                required String destination,
+                Value<String?> destinationAddress = const Value.absent(),
+                Value<String?> departureAt = const Value.absent(),
+                Value<String?> returnAt = const Value.absent(),
+                required int requiresPermissionSlip,
+                Value<String?> notes = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TripLogisticsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                scheduleBlockId: scheduleBlockId,
+                destination: destination,
+                destinationAddress: destinationAddress,
+                departureAt: departureAt,
+                returnAt: returnAt,
+                requiresPermissionSlip: requiresPermissionSlip,
+                notes: notes,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TripLogisticsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TripLogisticsTable,
+      TripLogistic,
+      $$TripLogisticsTableFilterComposer,
+      $$TripLogisticsTableOrderingComposer,
+      $$TripLogisticsTableAnnotationComposer,
+      $$TripLogisticsTableCreateCompanionBuilder,
+      $$TripLogisticsTableUpdateCompanionBuilder,
+      (
+        TripLogistic,
+        BaseReferences<_$AppDatabase, $TripLogisticsTable, TripLogistic>,
+      ),
+      TripLogistic,
+      PrefetchHooks Function()
+    >;
+typedef $$TripVehiclesTableCreateCompanionBuilder =
+    TripVehiclesCompanion Function({
+      required String id,
+      required String spaceId,
+      required String tripLogisticsId,
+      required String vehicleId,
+      Value<String?> driverMemberId,
+      required String manifest,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$TripVehiclesTableUpdateCompanionBuilder =
+    TripVehiclesCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> tripLogisticsId,
+      Value<String> vehicleId,
+      Value<String?> driverMemberId,
+      Value<String> manifest,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$TripVehiclesTableFilterComposer
+    extends Composer<_$AppDatabase, $TripVehiclesTable> {
+  $$TripVehiclesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tripLogisticsId => $composableBuilder(
+    column: $table.tripLogisticsId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get driverMemberId => $composableBuilder(
+    column: $table.driverMemberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get manifest => $composableBuilder(
+    column: $table.manifest,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TripVehiclesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TripVehiclesTable> {
+  $$TripVehiclesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tripLogisticsId => $composableBuilder(
+    column: $table.tripLogisticsId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vehicleId => $composableBuilder(
+    column: $table.vehicleId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get driverMemberId => $composableBuilder(
+    column: $table.driverMemberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get manifest => $composableBuilder(
+    column: $table.manifest,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TripVehiclesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TripVehiclesTable> {
+  $$TripVehiclesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get tripLogisticsId => $composableBuilder(
+    column: $table.tripLogisticsId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get vehicleId =>
+      $composableBuilder(column: $table.vehicleId, builder: (column) => column);
+
+  GeneratedColumn<String> get driverMemberId => $composableBuilder(
+    column: $table.driverMemberId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get manifest =>
+      $composableBuilder(column: $table.manifest, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TripVehiclesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TripVehiclesTable,
+          TripVehicle,
+          $$TripVehiclesTableFilterComposer,
+          $$TripVehiclesTableOrderingComposer,
+          $$TripVehiclesTableAnnotationComposer,
+          $$TripVehiclesTableCreateCompanionBuilder,
+          $$TripVehiclesTableUpdateCompanionBuilder,
+          (
+            TripVehicle,
+            BaseReferences<_$AppDatabase, $TripVehiclesTable, TripVehicle>,
+          ),
+          TripVehicle,
+          PrefetchHooks Function()
+        > {
+  $$TripVehiclesTableTableManager(_$AppDatabase db, $TripVehiclesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TripVehiclesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TripVehiclesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TripVehiclesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> tripLogisticsId = const Value.absent(),
+                Value<String> vehicleId = const Value.absent(),
+                Value<String?> driverMemberId = const Value.absent(),
+                Value<String> manifest = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TripVehiclesCompanion(
+                id: id,
+                spaceId: spaceId,
+                tripLogisticsId: tripLogisticsId,
+                vehicleId: vehicleId,
+                driverMemberId: driverMemberId,
+                manifest: manifest,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String tripLogisticsId,
+                required String vehicleId,
+                Value<String?> driverMemberId = const Value.absent(),
+                required String manifest,
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TripVehiclesCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                tripLogisticsId: tripLogisticsId,
+                vehicleId: vehicleId,
+                driverMemberId: driverMemberId,
+                manifest: manifest,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TripVehiclesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TripVehiclesTable,
+      TripVehicle,
+      $$TripVehiclesTableFilterComposer,
+      $$TripVehiclesTableOrderingComposer,
+      $$TripVehiclesTableAnnotationComposer,
+      $$TripVehiclesTableCreateCompanionBuilder,
+      $$TripVehiclesTableUpdateCompanionBuilder,
+      (
+        TripVehicle,
+        BaseReferences<_$AppDatabase, $TripVehiclesTable, TripVehicle>,
+      ),
+      TripVehicle,
+      PrefetchHooks Function()
+    >;
+typedef $$PermissionSlipsTableCreateCompanionBuilder =
+    PermissionSlipsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String subjectId,
+      required String tripLogisticsId,
+      Value<String?> signerGuardianId,
+      Value<String?> signerName,
+      required String signedAt,
+      Value<String?> sourceUrl,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$PermissionSlipsTableUpdateCompanionBuilder =
+    PermissionSlipsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> subjectId,
+      Value<String> tripLogisticsId,
+      Value<String?> signerGuardianId,
+      Value<String?> signerName,
+      Value<String> signedAt,
+      Value<String?> sourceUrl,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$PermissionSlipsTableFilterComposer
+    extends Composer<_$AppDatabase, $PermissionSlipsTable> {
+  $$PermissionSlipsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tripLogisticsId => $composableBuilder(
+    column: $table.tripLogisticsId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get signerGuardianId => $composableBuilder(
+    column: $table.signerGuardianId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get signerName => $composableBuilder(
+    column: $table.signerName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get signedAt => $composableBuilder(
+    column: $table.signedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceUrl => $composableBuilder(
+    column: $table.sourceUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PermissionSlipsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PermissionSlipsTable> {
+  $$PermissionSlipsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tripLogisticsId => $composableBuilder(
+    column: $table.tripLogisticsId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signerGuardianId => $composableBuilder(
+    column: $table.signerGuardianId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signerName => $composableBuilder(
+    column: $table.signerName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get signedAt => $composableBuilder(
+    column: $table.signedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceUrl => $composableBuilder(
+    column: $table.sourceUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PermissionSlipsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PermissionSlipsTable> {
+  $$PermissionSlipsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get tripLogisticsId => $composableBuilder(
+    column: $table.tripLogisticsId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get signerGuardianId => $composableBuilder(
+    column: $table.signerGuardianId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get signerName => $composableBuilder(
+    column: $table.signerName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get signedAt =>
+      $composableBuilder(column: $table.signedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceUrl =>
+      $composableBuilder(column: $table.sourceUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$PermissionSlipsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PermissionSlipsTable,
+          PermissionSlip,
+          $$PermissionSlipsTableFilterComposer,
+          $$PermissionSlipsTableOrderingComposer,
+          $$PermissionSlipsTableAnnotationComposer,
+          $$PermissionSlipsTableCreateCompanionBuilder,
+          $$PermissionSlipsTableUpdateCompanionBuilder,
+          (
+            PermissionSlip,
+            BaseReferences<
+              _$AppDatabase,
+              $PermissionSlipsTable,
+              PermissionSlip
+            >,
+          ),
+          PermissionSlip,
+          PrefetchHooks Function()
+        > {
+  $$PermissionSlipsTableTableManager(
+    _$AppDatabase db,
+    $PermissionSlipsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PermissionSlipsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PermissionSlipsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PermissionSlipsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> subjectId = const Value.absent(),
+                Value<String> tripLogisticsId = const Value.absent(),
+                Value<String?> signerGuardianId = const Value.absent(),
+                Value<String?> signerName = const Value.absent(),
+                Value<String> signedAt = const Value.absent(),
+                Value<String?> sourceUrl = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PermissionSlipsCompanion(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                tripLogisticsId: tripLogisticsId,
+                signerGuardianId: signerGuardianId,
+                signerName: signerName,
+                signedAt: signedAt,
+                sourceUrl: sourceUrl,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String subjectId,
+                required String tripLogisticsId,
+                Value<String?> signerGuardianId = const Value.absent(),
+                Value<String?> signerName = const Value.absent(),
+                required String signedAt,
+                Value<String?> sourceUrl = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => PermissionSlipsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                tripLogisticsId: tripLogisticsId,
+                signerGuardianId: signerGuardianId,
+                signerName: signerName,
+                signedAt: signedAt,
+                sourceUrl: sourceUrl,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PermissionSlipsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PermissionSlipsTable,
+      PermissionSlip,
+      $$PermissionSlipsTableFilterComposer,
+      $$PermissionSlipsTableOrderingComposer,
+      $$PermissionSlipsTableAnnotationComposer,
+      $$PermissionSlipsTableCreateCompanionBuilder,
+      $$PermissionSlipsTableUpdateCompanionBuilder,
+      (
+        PermissionSlip,
+        BaseReferences<_$AppDatabase, $PermissionSlipsTable, PermissionSlip>,
+      ),
+      PermissionSlip,
+      PrefetchHooks Function()
+    >;
+typedef $$HeadcountsTableCreateCompanionBuilder =
+    HeadcountsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String scheduleBlockId,
+      required String checkpointLabel,
+      required int count,
+      Value<int?> expectedCount,
+      Value<String?> takenByMemberId,
+      required String takenAt,
+      Value<String?> notes,
+      required String createdAt,
+      Value<int> rowid,
+    });
+typedef $$HeadcountsTableUpdateCompanionBuilder =
+    HeadcountsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> scheduleBlockId,
+      Value<String> checkpointLabel,
+      Value<int> count,
+      Value<int?> expectedCount,
+      Value<String?> takenByMemberId,
+      Value<String> takenAt,
+      Value<String?> notes,
+      Value<String> createdAt,
+      Value<int> rowid,
+    });
+
+class $$HeadcountsTableFilterComposer
+    extends Composer<_$AppDatabase, $HeadcountsTable> {
+  $$HeadcountsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get checkpointLabel => $composableBuilder(
+    column: $table.checkpointLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get expectedCount => $composableBuilder(
+    column: $table.expectedCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get takenByMemberId => $composableBuilder(
+    column: $table.takenByMemberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HeadcountsTableOrderingComposer
+    extends Composer<_$AppDatabase, $HeadcountsTable> {
+  $$HeadcountsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get checkpointLabel => $composableBuilder(
+    column: $table.checkpointLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get count => $composableBuilder(
+    column: $table.count,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get expectedCount => $composableBuilder(
+    column: $table.expectedCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get takenByMemberId => $composableBuilder(
+    column: $table.takenByMemberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HeadcountsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HeadcountsTable> {
+  $$HeadcountsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get checkpointLabel => $composableBuilder(
+    column: $table.checkpointLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get count =>
+      $composableBuilder(column: $table.count, builder: (column) => column);
+
+  GeneratedColumn<int> get expectedCount => $composableBuilder(
+    column: $table.expectedCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get takenByMemberId => $composableBuilder(
+    column: $table.takenByMemberId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get takenAt =>
+      $composableBuilder(column: $table.takenAt, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$HeadcountsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HeadcountsTable,
+          Headcount,
+          $$HeadcountsTableFilterComposer,
+          $$HeadcountsTableOrderingComposer,
+          $$HeadcountsTableAnnotationComposer,
+          $$HeadcountsTableCreateCompanionBuilder,
+          $$HeadcountsTableUpdateCompanionBuilder,
+          (
+            Headcount,
+            BaseReferences<_$AppDatabase, $HeadcountsTable, Headcount>,
+          ),
+          Headcount,
+          PrefetchHooks Function()
+        > {
+  $$HeadcountsTableTableManager(_$AppDatabase db, $HeadcountsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HeadcountsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HeadcountsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HeadcountsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> scheduleBlockId = const Value.absent(),
+                Value<String> checkpointLabel = const Value.absent(),
+                Value<int> count = const Value.absent(),
+                Value<int?> expectedCount = const Value.absent(),
+                Value<String?> takenByMemberId = const Value.absent(),
+                Value<String> takenAt = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HeadcountsCompanion(
+                id: id,
+                spaceId: spaceId,
+                scheduleBlockId: scheduleBlockId,
+                checkpointLabel: checkpointLabel,
+                count: count,
+                expectedCount: expectedCount,
+                takenByMemberId: takenByMemberId,
+                takenAt: takenAt,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String scheduleBlockId,
+                required String checkpointLabel,
+                required int count,
+                Value<int?> expectedCount = const Value.absent(),
+                Value<String?> takenByMemberId = const Value.absent(),
+                required String takenAt,
+                Value<String?> notes = const Value.absent(),
+                required String createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => HeadcountsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                scheduleBlockId: scheduleBlockId,
+                checkpointLabel: checkpointLabel,
+                count: count,
+                expectedCount: expectedCount,
+                takenByMemberId: takenByMemberId,
+                takenAt: takenAt,
+                notes: notes,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HeadcountsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HeadcountsTable,
+      Headcount,
+      $$HeadcountsTableFilterComposer,
+      $$HeadcountsTableOrderingComposer,
+      $$HeadcountsTableAnnotationComposer,
+      $$HeadcountsTableCreateCompanionBuilder,
+      $$HeadcountsTableUpdateCompanionBuilder,
+      (Headcount, BaseReferences<_$AppDatabase, $HeadcountsTable, Headcount>),
+      Headcount,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -19961,4 +27291,18 @@ class $AppDatabaseManager {
       $$ExportsTableTableManager(_db, _db.exports);
   $$ExportRecipientsTableTableManager get exportRecipients =>
       $$ExportRecipientsTableTableManager(_db, _db.exportRecipients);
+  $$LocationsTableTableManager get locations =>
+      $$LocationsTableTableManager(_db, _db.locations);
+  $$ActivitiesTableTableManager get activities =>
+      $$ActivitiesTableTableManager(_db, _db.activities);
+  $$ScheduleBlocksTableTableManager get scheduleBlocks =>
+      $$ScheduleBlocksTableTableManager(_db, _db.scheduleBlocks);
+  $$TripLogisticsTableTableManager get tripLogistics =>
+      $$TripLogisticsTableTableManager(_db, _db.tripLogistics);
+  $$TripVehiclesTableTableManager get tripVehicles =>
+      $$TripVehiclesTableTableManager(_db, _db.tripVehicles);
+  $$PermissionSlipsTableTableManager get permissionSlips =>
+      $$PermissionSlipsTableTableManager(_db, _db.permissionSlips);
+  $$HeadcountsTableTableManager get headcounts =>
+      $$HeadcountsTableTableManager(_db, _db.headcounts);
 }

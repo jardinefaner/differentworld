@@ -21,6 +21,10 @@ import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/schedule/activities_list_screen.dart';
+import 'package:differentworld/features/schedule/activity_edit_screen.dart';
+import 'package:differentworld/features/schedule/locations_list_screen.dart';
+import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
@@ -36,6 +40,7 @@ import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_inspection_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
+import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -56,6 +61,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // Persistent app shell wraps every route — the bottom omnibox
+      // bar lives in the shell, so it stays mounted across page
+      // transitions. Login + JoinOrCreate ride inside the shell too
+      // (user said the bar should be everywhere; the catalog is just
+      // empty pre-auth so the bar shows but search returns nothing).
+      ShellRoute(
+        builder: (_, _, child) => AppShell(child: child),
+        routes: [
       GoRoute(
         path: '/',
         builder: (_, _) => const _Home(),
@@ -224,6 +237,27 @@ final routerProvider = Provider<GoRouter>((ref) {
               subjectId: state.pathParameters['sid']!,
             ),
           ),
+          // Camp scheduling — staff-facing.
+          GoRoute(
+            path: 'schedule',
+            builder: (_, _) => const ScheduleScreen(),
+          ),
+          GoRoute(
+            path: 'activities',
+            builder: (_, _) => const ActivitiesListScreen(),
+            routes: [
+              GoRoute(
+                path: 'new',
+                builder: (_, _) => const ActivityEditScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => ActivityEditScreen(
+                  activityId: state.pathParameters['id'],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       GoRoute(
@@ -233,6 +267,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'program',
             builder: (_, _) => const ProgramSettingsScreen(),
+          ),
+          GoRoute(
+            path: 'locations',
+            builder: (_, _) => const LocationsListScreen(),
           ),
           GoRoute(
             path: 'team',
@@ -289,6 +327,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (_, _) => const LoginScreen(),
+      ),
+        ],
       ),
     ],
   );

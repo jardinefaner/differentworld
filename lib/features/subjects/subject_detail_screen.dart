@@ -21,6 +21,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,6 +59,18 @@ class SubjectDetailScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       actions: [
+        // Primary verb on the kid's detail screen is "Observation" —
+        // the most-frequent action a teacher does here.
+        if (viewer.canObserve && subjectAsync.value != null)
+          PrimaryActionButton(
+            tooltip: 'New observation',
+            icon: Icons.add,
+            onPressed: () => ObservationFormSheet.show(
+              context,
+              groupId: subjectAsync.value!.groupId ?? '',
+              initialSubjectId: subjectId,
+            ),
+          ),
         if (viewer.canObserve && subjectAsync.value != null)
           IconButton(
             tooltip: 'Progress report',
@@ -86,17 +99,6 @@ class SubjectDetailScreen extends ConsumerWidget {
           ),
         const SyncStatusIndicator(),
       ],
-      floatingActionButton: (viewer.canObserve && subjectAsync.value != null)
-          ? FloatingActionButton.extended(
-              onPressed: () => ObservationFormSheet.show(
-                context,
-                groupId: subjectAsync.value!.groupId ?? '',
-                initialSubjectId: subjectId,
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text('Observation'),
-            )
-          : null,
       body: subjectAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(

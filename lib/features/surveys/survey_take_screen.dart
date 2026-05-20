@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
@@ -51,10 +52,25 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
   void initState() {
     super.initState();
     _page = PageController();
+    // Lock the device into kid mode for the duration of this screen.
+    // The AppShell strips its omnibox bar + body padding so the kid
+    // sees only the survey surface and can't drift into staff-facing
+    // routes via the composer. We deliberately exit on dispose so a
+    // teacher who pops back out of the survey returns to a normal
+    // staff view — the post-mortem exit flow (PIN, multi-tap) is
+    // future work and not required while only staff can launch.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(kidModeProvider.notifier).enter();
+    });
   }
 
   @override
   void dispose() {
+    // Drop the lock when the screen pops. See initState for why this
+    // is safe here; future kid-launchable flows will skip this and
+    // require an explicit unlock instead.
+    ref.read(kidModeProvider.notifier).exit();
     _page.dispose();
     super.dispose();
   }

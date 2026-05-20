@@ -7,7 +7,8 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
-import 'package:differentworld/features/omnibox/omnibox_results.dart';
+import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
+import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/breakpoints.dart';
@@ -17,7 +18,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
-import 'package:differentworld/shared/widgets/search_bar_pill.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
@@ -40,28 +41,6 @@ class TodayScreen extends ConsumerStatefulWidget {
 }
 
 class _TodayScreenState extends ConsumerState<TodayScreen> {
-  final _searchCtrl = TextEditingController();
-  bool _searching = false;
-  String _query = '';
-
-  void _enterSearch() {
-    setState(() => _searching = true);
-  }
-
-  void _exitSearch() {
-    _searchCtrl.clear();
-    setState(() {
-      _searching = false;
-      _query = '';
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
@@ -70,94 +49,61 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final groupsAsync = ref.watch(groupsProvider);
 
     return EdgeScaffold(
-      // In search mode the hamburger pill is replaced by the search bar
-      // (drawer is still reachable via swipe-from-left). Out of search
-      // mode the hamburger is shown via the drawer presence.
+      // Today is a home page → no back button, just the hamburger.
+      // Search affordance is the global one injected by EdgeScaffold —
+      // the previous in-place inline search mode is gone; everything
+      // routes through the global omnibox now.
       showBack: false,
       drawer: const MainDrawer(),
-      topOverlay: _searching
-          ? SearchBarPill(
-              controller: _searchCtrl,
-              onChanged: (v) => setState(() => _query = v),
-              onClose: _exitSearch,
-            )
-          : null,
-      actions: _searching
-          ? const <Widget>[]
-          : [
-              IconButton(
-                tooltip: 'Search',
-                icon: const Icon(Icons.search),
-                onPressed: _enterSearch,
-              ),
-              const SyncStatusIndicator(),
-            ],
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        child: _query.isEmpty
-            ? KeyedSubtree(
-                key: const ValueKey('today-content'),
-                child: groupsAsync.when(
-                  loading: () =>
-                      const LoadingSlot(variant: LoadingVariant.cards),
-                  error: (_, _) => ErrorState(
-                    title: 'Could not load today',
-                    onRetry: () => ref.invalidate(groupsProvider),
-                  ),
-                  data: (groups) {
-                    if (groups.isEmpty) {
-                      return EmptyState(
-                        icon: Icons.meeting_room_outlined,
-                        title: 'No classrooms yet',
-                        message: viewer.canManageProgram
-                            ? 'Add your first classroom to start taking '
-                                'attendance and logging the day.'
-                            : 'Your director will set up classrooms here. '
-                                'Check back later.',
-                        action: viewer.canManageProgram
-                            ? FilledButton.icon(
-                                onPressed: () =>
-                                    context.push('/groups/new'),
-                                icon: const Icon(Icons.add),
-                                label: const Text('Add classroom'),
-                              )
-                            : null,
-                      );
-                    }
-                    return _TodayBody(
-                      member: member,
-                      groups: groups,
-                      space: space,
-                      viewer: viewer,
-                    );
-                  },
-                ),
-              )
-            : KeyedSubtree(
-                key: const ValueKey('search-results'),
-                child: OmniboxResults(query: _query),
-              ),
+      actions: [
+        // Primary verb on Today is "Capture" — what used to be the
+        // bottom-right FAB lives here so the bottom of the screen is
+        // free for the omnibox bar.
+        if (groupsAsync.value?.isNotEmpty ?? false)
+          PrimaryActionButton(
+            tooltip: 'Capture',
+            icon: Icons.bolt_outlined,
+            onPressed: () => showCaptureSheet(context),
+          ),
+        const SyncStatusIndicator(),
+      ],
+      body: groupsAsync.when(
+        loading: () =>
+            const LoadingSlot(variant: LoadingVariant.cards),
+        error: (_, _) => ErrorState(
+          title: 'Could not load today',
+          onRetry: () => ref.invalidate(groupsProvider),
+        ),
+        data: (groups) {
+          if (groups.isEmpty) {
+            return EmptyState(
+              icon: Icons.meeting_room_outlined,
+              title: 'No classrooms yet',
+              message: viewer.canManageProgram
+                  ? 'Add your first classroom to start taking '
+                      'attendance and logging the day.'
+                  : 'Your director will set up classrooms here. '
+                      'Check back later.',
+              action: viewer.canManageProgram
+                  ? FilledButton.icon(
+                      onPressed: () => context.push('/groups/new'),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add classroom'),
+                    )
+                  : null,
+            );
+          }
+          return _TodayBody(
+            member: member,
+            groups: groups,
+            space: space,
+            viewer: viewer,
+          );
+        },
       ),
-      // The daily-use FAB is "Capture" — log a quick "I noticed…" from
-      // anywhere on Today without bouncing through Capture inbox.
-      // "Add classroom" is a once-a-term setup action and has been
-      // demoted to the empty-state and Settings.
-      floatingActionButton: _searching
-          ? null
-          : groupsAsync.maybeWhen(
-              // While loading or empty: no FAB. Once data is in (any
-              // viewer), the capture action is the daily intent.
-              data: (groups) => groups.isEmpty
-                  ? null
-                  : FloatingActionButton.extended(
-                      onPressed: () => showCaptureSheet(context),
-                      icon: const Icon(Icons.bolt_outlined),
-                      label: const Text('Capture'),
-                    ),
-              orElse: () => null,
-            ),
+      // FAB removed — Capture is now the primary action in the
+      // top-right pill (see actions above). The bottom of the screen
+      // is reserved for the omnibox bar.
     );
   }
 }
@@ -283,6 +229,12 @@ class _TodayBody extends ConsumerWidget {
             // actually mark daily routines — hide for read-only viewers.
             if (viewer.isDailyLogger) const _ChecklistCallToAction(),
             if (viewer.isDailyLogger) const SizedBox(height: 16),
+            // "You're leading N blocks today" — renders nothing if
+            // the signed-in member isn't a lead on any block today.
+            // Naturally hides for non-staff and members with no
+            // assignments.
+            const LeadingTodayCard(),
+            const SizedBox(height: 16),
             // Upward loop made visible: the system surfaces one
             // question here when the data demands it; silent when
             // it doesn't. UX_DECISIONS §6 / framework upward loop.
@@ -401,6 +353,12 @@ class _GroupTodayCard extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              // "Now / Next" schedule strip — tells the staff scanner
+              // what the room is doing this very moment without having
+              // to open the schedule editor. Renders nothing if the
+              // cohort has no blocks today.
+              NowNextStrip(groupId: group.id),
               const SizedBox(height: 12),
               stateAsync.when(
                 // Shaped skeleton instead of a "Loading…" line — the

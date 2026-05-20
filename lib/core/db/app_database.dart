@@ -1,3 +1,4 @@
+import 'package:differentworld/core/db/dao/activities_dao.dart';
 import 'package:differentworld/core/db/dao/attachments_dao.dart';
 import 'package:differentworld/core/db/dao/attendance_dao.dart';
 import 'package:differentworld/core/db/dao/captures_dao.dart';
@@ -9,12 +10,15 @@ import 'package:differentworld/core/db/dao/group_members_dao.dart';
 import 'package:differentworld/core/db/dao/groups_dao.dart';
 import 'package:differentworld/core/db/dao/guardians_dao.dart';
 import 'package:differentworld/core/db/dao/invites_dao.dart';
+import 'package:differentworld/core/db/dao/locations_dao.dart';
 import 'package:differentworld/core/db/dao/members_dao.dart';
 import 'package:differentworld/core/db/dao/messages_dao.dart';
+import 'package:differentworld/core/db/dao/schedule_dao.dart';
 import 'package:differentworld/core/db/dao/spaces_dao.dart';
 import 'package:differentworld/core/db/dao/subjects_dao.dart';
 import 'package:differentworld/core/db/dao/surveys_dao.dart';
 import 'package:differentworld/core/db/dao/tasks_dao.dart';
+import 'package:differentworld/core/db/dao/trips_dao.dart';
 import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
@@ -83,6 +87,13 @@ class Subjects extends Table {
   TextColumn get allergies => text().nullable()();
   TextColumn get notes => text().nullable()();
   TextColumn get capabilities => text()();
+  // Per-kid drop-off / pickup windows. Stored as 'HH:mm' or 'HH:mm:ss'
+  // strings (no date) because PowerSync's local SQLite has no native
+  // TIME type. Time-of-day only; assumed local to the space timezone.
+  TextColumn get dropoffWindowStart => text().nullable()();
+  TextColumn get dropoffWindowEnd => text().nullable()();
+  TextColumn get pickupWindowStart => text().nullable()();
+  TextColumn get pickupWindowEnd => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 
@@ -450,12 +461,149 @@ class ExportRecipients extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Physical place an activity happens. See locations migration in
+/// supabase/migrations/20260519000003_camp_scheduling.sql.
+class Locations extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get name => text()();
+  TextColumn get notes => text().nullable()();
+  IntColumn get capacity => integer().nullable()();
+  IntColumn get isOutdoor => integer()(); // 0/1
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// A defined activity that can be scheduled. Owned by the staff member
+/// who created it. Activities are reusable across blocks.
+class Activities extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get ownerMemberId => text().nullable()();
+  TextColumn get name => text()();
+  TextColumn get description => text().nullable()();
+  TextColumn get defaultLocationId => text().nullable()();
+  IntColumn get defaultDurationMinutes => integer().nullable()();
+  TextColumn get supplies => text().nullable()();
+  IntColumn get ageMin => integer().nullable()();
+  IntColumn get ageMax => integer().nullable()();
+  IntColumn get maxCapacity => integer().nullable()();
+  IntColumn get isOutdoor => integer()(); // 0/1
+  TextColumn get indoorAltActivityId => text().nullable()();
+  TextColumn get capabilities => text()();
+  TextColumn get archivedAt => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// The day's plan, one row per (date × cohort × time block). Block
+/// boundaries are per-row, not derived from a global grid — see the
+/// migration comment for why.
+class ScheduleBlocks extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get groupId => text()();
+  TextColumn get date => text()(); // YYYY-MM-DD
+  TextColumn get startAt => text()(); // ISO 8601 timestamptz
+  TextColumn get endAt => text()();
+  TextColumn get activityId => text().nullable()();
+  TextColumn get leadMemberId => text().nullable()();
+  TextColumn get locationOverrideId => text().nullable()();
+  TextColumn get kind => text()(); // on_site / field_trip / break / closed
+  TextColumn get notes => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One-to-one with a schedule_block whose kind = 'field_trip'.
+class TripLogistics extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get scheduleBlockId => text()();
+  TextColumn get destination => text()();
+  TextColumn get destinationAddress => text().nullable()();
+  TextColumn get departureAt => text().nullable()();
+  TextColumn get returnAt => text().nullable()();
+  IntColumn get requiresPermissionSlip => integer()(); // 0/1
+  TextColumn get notes => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Vehicle assignment for a trip. `manifest` is a JSON array of
+/// subject ids (decoded server-side via the supabase_connector
+/// jsonbColumns set).
+class TripVehicles extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get tripLogisticsId => text()();
+  TextColumn get vehicleId => text()();
+  TextColumn get driverMemberId => text().nullable()();
+  TextColumn get manifest => text()(); // JSON array
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One slip per (subject, trip). Tracks whether the paper / digital
+/// permission is on file; doesn't replace the paper itself.
+class PermissionSlips extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get subjectId => text()();
+  TextColumn get tripLogisticsId => text()();
+  TextColumn get signerGuardianId => text().nullable()();
+  TextColumn get signerName => text().nullable()();
+  TextColumn get signedAt => text()();
+  TextColumn get sourceUrl => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// A counted snapshot at a transition. Audit trail for field-trip
+/// transitions and high-ratio on-site activities.
+class Headcounts extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get scheduleBlockId => text()();
+  TextColumn get checkpointLabel => text()();
+  IntColumn get count => integer()();
+  IntColumn get expectedCount => integer().nullable()();
+  TextColumn get takenByMemberId => text().nullable()();
+  TextColumn get takenAt => text()();
+  TextColumn get notes => text().nullable()();
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
           Vehicles, VehicleLogs, MemberCertifications, Attachments,
           SurveyResponses, DismissedInsights, Captures, Tasks, Messages,
-          Exports, ExportRecipients],
+          Exports, ExportRecipients,
+          // Camp scheduling.
+          Locations, Activities, ScheduleBlocks, TripLogistics,
+          TripVehicles, PermissionSlips, Headcounts],
   daos: [
     AttachmentsDao,
     AttendanceDao,
@@ -475,6 +623,11 @@ class ExportRecipients extends Table {
     SurveysDao,
     TasksDao,
     VehiclesDao,
+    // Camp scheduling.
+    LocationsDao,
+    ActivitiesDao,
+    ScheduleDao,
+    TripsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

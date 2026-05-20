@@ -73,3 +73,16 @@ streams:
       # the local table over time. The acceptance event itself reaches
       # the director by the members row being updated.
       - SELECT * FROM invites            WHERE space_id  IN (SELECT space_id FROM members WHERE id = auth.user_id()) AND accepted_at IS NULL
+      # Camp scheduling — locations, activities, schedule_blocks per
+      # day, plus the field-trip side tables. Volume is bounded by
+      # (cohorts × blocks_per_day × days) — a 90-kid camp with 5 rooms
+      # and 8 blocks/day produces ~40 schedule_blocks/day. The full
+      # season fits comfortably in a space-scoped full sync; we'll
+      # add a date-window parameter once it actually matters.
+      - SELECT * FROM locations          WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM activities         WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM schedule_blocks    WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM trip_logistics     WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM trip_vehicles      WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM permission_slips   WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM headcounts         WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())

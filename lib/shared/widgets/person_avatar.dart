@@ -1,18 +1,27 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:differentworld/features/photos/person_photo_url.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Renders a circular avatar for a person (member, subject, guardian).
 ///
-/// - If [photoUrl] is non-null and non-empty, shows the photo via
-///   [Image.network] with a graceful fallback to the initials path on
-///   load failure.
+/// - If [photoUrl] is non-null and non-empty AND can be resolved to a
+///   signed Storage URL, shows the photo via [CachedNetworkImage] with
+///   a graceful fallback to the initials path while loading or on
+///   error.
 /// - Otherwise shows initials derived from [name] on a colour-tinted
 ///   circle. The tint is deterministic per name so the same person
 ///   always gets the same colour across the app.
 ///
+/// The widget is a [ConsumerWidget] because the `person-photos`
+/// bucket is private — every render mints a short-lived signed URL
+/// via [signedPersonPhotoUrlProvider]. Riverpod caches the URL while
+/// at least one widget watches it, so a list of N avatars triggers N
+/// signed-URL fetches once per session and reuses them everywhere.
+///
 /// Sized via [radius] (default 18 — matches a `ListTile` leading
 /// CircleAvatar).
-class PersonAvatar extends StatelessWidget {
+class PersonAvatar extends ConsumerWidget {
   const PersonAvatar({
     required this.name,
     this.photoUrl,
@@ -26,10 +35,17 @@ class PersonAvatar extends StatelessWidget {
   /// if there's only one token.
   final String name;
 
-  /// Either an https URL (Supabase Storage signed/public link) or a
-  /// `pending:<local-path>` placeholder for an offline-queued upload.
-  /// We currently render an https URL; pending photos show initials
-  /// until the upload lands (Phase 2 will read the local bytes).
+  /// Either:
+  ///   - A bucket-relative Storage **path** (the new shape): e.g.
+  ///     `<space_id>/member/<id>/<uuid>.jpg`. We mint a signed URL.
+  ///   - A legacy https **URL** from before the bucket-private flip:
+  ///     the path is extracted from it via
+  ///     [extractPersonPhotoPath] and a fresh signed URL is minted
+  ///     (the old URL itself no longer resolves once the bucket is
+  ///     private).
+  ///   - A `pending:<local-path>` placeholder for an offline-queued
+  ///     upload — falls back to initials until the upload lands
+  ///     (Phase 2 reads the local bytes).
   final String? photoUrl;
 
   final double radius;
@@ -40,11 +56,7 @@ class PersonAvatar extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final hasPhoto = photoUrl != null &&
-        photoUrl!.isNotEmpty &&
-        !photoUrl!.startsWith('pending:');
-
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final tint = avatarColorFor(name, scheme);
     final fg = ThemeData.estimateBrightnessForColor(tint) == Brightness.dark
@@ -66,10 +78,21 @@ class PersonAvatar extends StatelessWidget {
       ),
     );
 
-    final avatar = hasPhoto
+    // Path-or-null gate. We don't even subscribe to the signed-URL
+    // provider when there's nothing to resolve — saves Supabase calls
+    // for the (very common) initials-only case.
+    final hasPhoto = photoUrl != null &&
+        photoUrl!.isNotEmpty &&
+        !photoUrl!.startsWith('pending:');
+    final signedAsync = hasPhoto
+        ? ref.watch(signedPersonPhotoUrlProvider(photoUrl))
+        : const AsyncValue<String?>.data(null);
+    final signedUrl = signedAsync.value;
+
+    final avatar = signedUrl != null && signedUrl.isNotEmpty
         ? ClipOval(
             child: CachedNetworkImage(
-              imageUrl: photoUrl!,
+              imageUrl: signedUrl,
               width: radius * 2,
               height: radius * 2,
               fit: BoxFit.cover,

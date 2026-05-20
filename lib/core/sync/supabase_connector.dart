@@ -100,10 +100,10 @@ class SupabaseConnector extends PowerSyncBackendConnector {
       }
     }
 
-    try {
-      for (final op in transaction.crud) {
-        final table = _supabase.from(op.table);
-        final patched = _decodeJsonbColumns(op.opData);
+    for (final op in transaction.crud) {
+      final table = _supabase.from(op.table);
+      final patched = _decodeJsonbColumns(op.opData);
+      try {
         switch (op.op) {
           case UpdateType.put:
             final payload = <String, dynamic>{'id': op.id, ...?patched};
@@ -129,14 +129,34 @@ class SupabaseConnector extends PowerSyncBackendConnector {
           case UpdateType.delete:
             await table.delete().eq('id', op.id);
         }
+      } catch (e, st) {
+        // Surface the per-op context (table + op type + id) so the
+        // logcat tail shows WHICH row PostgREST rejected. Without
+        // this, PowerSync's generic exception log doesn't tell us
+        // whether it was spaces, members, or something downstream.
+        //
+        // Debug-only — in production this same information reaches
+        // the crash reporter via FlutterError.reportError below.
+        if (kDebugMode) {
+          debugPrint(
+            '[connector] upload FAILED · op=${op.op.name} '
+            'table=${op.table} id=${op.id} · $e',
+          );
+        }
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: st,
+            library: 'powersync',
+            context: ErrorDescription(
+              'Uploading ${op.op.name} on ${op.table}/${op.id}',
+            ),
+          ),
+        );
+        rethrow;
       }
-      await transaction.complete();
-    } on Exception {
-      // Don't complete on failure — PowerSync re-queues for retry.
-      // RLS-rejected rows will spin forever; we'll add a poison-pill
-      // policy when we hit that in practice.
-      rethrow;
     }
+    await transaction.complete();
   }
 
   /// Tables where the server enforces uniqueness on something other
@@ -170,7 +190,7 @@ class SupabaseConnector extends PowerSyncBackendConnector {
   Map<String, dynamic>? _decodeJsonbColumns(Map<String, dynamic>? opData) {
     if (opData == null) return null;
     const jsonbColumns = <String>{
-      'capabilities', // spaces / members / groups / subjects / invites / vehicles
+      'capabilities', // spaces / members / groups / subjects / invites / vehicles / activities
       'settings', // spaces
       'details', // entries
       'answers', // survey_responses — missing this caused every survey
@@ -179,6 +199,7 @@ class SupabaseConnector extends PowerSyncBackendConnector {
       //           the table view rendered "—" for every cell.
       'items', // vehicle_logs (checklist payload)
       'snapshot_json', // exports (the rendered-data snapshot)
+      'manifest', // trip_vehicles (array of subject ids on this vehicle)
     };
     Map<String, dynamic>? next;
     for (final entry in opData.entries) {

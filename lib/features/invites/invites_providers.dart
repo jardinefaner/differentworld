@@ -140,9 +140,14 @@ class InviteActions {
       if (e.message.contains('No matching active invite')) {
         throw const NoMatchingInviteException();
       }
-      debugPrint(
-        '[invites] accept_invite rpc failed: ${e.message} code=${e.code}',
-      );
+      // PostgREST error messages can include row context; in production
+      // we'd rather route to crash reporting than to the OS log. The
+      // exception still bubbles up to the UI's runReported handler.
+      if (kDebugMode) {
+        debugPrint(
+          '[invites] accept_invite rpc failed: ${e.message} code=${e.code}',
+        );
+      }
       rethrow;
     }
   }

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -6,6 +5,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/multi_shot_camera.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -678,13 +678,12 @@ class _PhotoTile extends StatelessWidget {
               onTap: onTap,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: CachedNetworkImage(
-                  imageUrl: url,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => Container(
+                child: PersonPhotoNetwork(
+                  urlOrPath: url,
+                  placeholderBuilder: (_) => Container(
                     color: theme.colorScheme.surfaceContainerHighest,
                   ),
-                  errorWidget: (_, _, _) => Container(
+                  errorBuilder: (_) => Container(
                     color: theme.colorScheme.surfaceContainerHighest,
                     alignment: Alignment.center,
                     child: const Icon(Icons.broken_image_outlined, size: 20),

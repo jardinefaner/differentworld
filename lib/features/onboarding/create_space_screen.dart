@@ -50,7 +50,31 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
         spaceName: name,
         memberId: session.user.id,
       );
+      // Pop ourselves off the navigator. CreateSpaceScreen was pushed
+      // via MaterialPageRoute from JoinOrCreateScreen, so the root
+      // route ('/') is still rendering whatever _Home picks based on
+      // the current member.spaceId. Without this pop the user stays
+      // staring at the now-stale form even though the home screen is
+      // the new content underneath. The Drift currentMember stream
+      // emits a new member with spaceId set ~immediately after the
+      // local write, so by the time we pop, '/' is already
+      // _SignedInHome.
+      if (mounted) Navigator.of(context).pop();
     } on Exception catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } catch (e, st) {
+      // Catch Error (StateError, AssertionError, etc.) too — the
+      // narrower `on Exception` clause above missed Dart Errors,
+      // which silently crashed the future and left the spinner stuck.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'onboarding',
+          context: ErrorDescription('CreateSpaceScreen._submit'),
+        ),
+      );
       if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {

@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -96,14 +97,14 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
                 onPressed: _clearSelection,
               ),
             ]
-          : const [SyncStatusIndicator()],
-      floatingActionButton: _selectMode
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => showCaptureSheet(context),
-              icon: const Icon(Icons.bolt_outlined),
-              label: const Text('Capture'),
-            ),
+          : [
+              PrimaryActionButton(
+                tooltip: 'Capture',
+                icon: Icons.bolt_outlined,
+                onPressed: () => showCaptureSheet(context),
+              ),
+              const SyncStatusIndicator(),
+            ],
       body: capturesAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(

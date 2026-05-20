@@ -80,3 +80,16 @@ final memberByIdProvider =
   final db = await ref.watch(appDatabaseProvider.future);
   yield* db.membersDao.watchById(id);
 });
+
+/// Every Member in the signed-in user's space — drives the "lead"
+/// dropdown on a schedule block, the team page, and other places that
+/// need to enumerate staff. Excludes guardian-only viewers; returns
+/// `[]` if the user hasn't joined a space yet.
+final membersInSpaceProvider = StreamProvider<List<Member>>((ref) {
+  final spaceId = ref.watch(currentMemberProvider).value?.spaceId;
+  final db = ref.watch(appDatabaseProvider).value;
+  if (spaceId == null || db == null) {
+    return Stream<List<Member>>.value(const []);
+  }
+  return db.membersDao.watchInSpace(spaceId);
+});

@@ -14,6 +14,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,7 +143,16 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     }
 
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        if (subjectsAsync.value?.isNotEmpty ?? false)
+          PrimaryActionButton(
+            tooltip: 'Mark all present',
+            icon: Icons.check_circle_outline,
+            onPressed: () =>
+                _markAllPresent(subjectsAsync.value!, recordsAsync),
+          ),
+        const SyncStatusIndicator(),
+      ],
       body: Column(
         children: [
           Padding(
@@ -206,16 +216,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           ),
         ],
       ),
-      floatingActionButton: subjectsAsync.maybeWhen(
-        data: (subjects) => subjects.isEmpty
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: () => _markAllPresent(subjects, recordsAsync),
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Mark all present'),
-              ),
-        orElse: () => null,
-      ),
+      // FAB removed — "Mark all present" lives in the top-right
+      // primary action pill (see actions above).
     );
   }
 }

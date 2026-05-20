@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:differentworld/features/photos/person_photo_url.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Fullscreen photo viewer. Swipe horizontally between photos in a
 /// list; pinch / double-tap to zoom each one.
@@ -104,16 +106,22 @@ class _PhotoViewerState extends State<PhotoViewer> {
 
 /// A single photo wrapped in [InteractiveViewer] so pinch and double-
 /// tap zoom work. Double-tap toggles between fit-to-screen and 2.5×.
-class _ZoomablePhoto extends StatefulWidget {
+///
+/// The constructor takes the stored value (Storage path going forward;
+/// legacy public URL on older rows) — this widget resolves it to a
+/// signed URL via [signedPersonPhotoUrlProvider]. The signed URL is
+/// cached for an hour, so the same photo doesn't get re-signed on
+/// swipe-back-and-forth.
+class _ZoomablePhoto extends ConsumerStatefulWidget {
   const _ZoomablePhoto({required this.url});
 
   final String url;
 
   @override
-  State<_ZoomablePhoto> createState() => _ZoomablePhotoState();
+  ConsumerState<_ZoomablePhoto> createState() => _ZoomablePhotoState();
 }
 
-class _ZoomablePhotoState extends State<_ZoomablePhoto>
+class _ZoomablePhotoState extends ConsumerState<_ZoomablePhoto>
     with SingleTickerProviderStateMixin {
   final _controller = TransformationController();
   late final AnimationController _anim;
@@ -162,6 +170,7 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto>
 
   @override
   Widget build(BuildContext context) {
+    final asyncUrl = ref.watch(signedPersonPhotoUrlProvider(widget.url));
     return GestureDetector(
       onDoubleTapDown: _handleDoubleTap,
       onDoubleTap: () {}, // need both for the gesture detector to arm
@@ -171,17 +180,36 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto>
         maxScale: 6,
         clipBehavior: Clip.none,
         child: Center(
-          child: CachedNetworkImage(
-            imageUrl: widget.url,
-            fit: BoxFit.contain,
-            placeholder: (_, _) => const Center(
+          child: asyncUrl.when(
+            loading: () => const Center(
               child: CircularProgressIndicator(color: Colors.white70),
             ),
-            errorWidget: (_, _, _) => const Icon(
+            error: (_, _) => const Icon(
               Icons.broken_image_outlined,
               color: Colors.white54,
               size: 64,
             ),
+            data: (signed) {
+              if (signed == null || signed.isEmpty) {
+                return const Icon(
+                  Icons.broken_image_outlined,
+                  color: Colors.white54,
+                  size: 64,
+                );
+              }
+              return CachedNetworkImage(
+                imageUrl: signed,
+                fit: BoxFit.contain,
+                placeholder: (_, _) => const Center(
+                  child: CircularProgressIndicator(color: Colors.white70),
+                ),
+                errorWidget: (_, _, _) => const Icon(
+                  Icons.broken_image_outlined,
+                  color: Colors.white54,
+                  size: 64,
+                ),
+              );
+            },
           ),
         ),
       ),

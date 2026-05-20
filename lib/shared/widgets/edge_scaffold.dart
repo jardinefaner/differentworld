@@ -1,15 +1,18 @@
-import 'package:differentworld/shared/widgets/floating_actions.dart';
-import 'package:differentworld/shared/widgets/floating_back.dart';
-import 'package:differentworld/shared/widgets/floating_hamburger.dart';
+import 'dart:async';
+
+import 'package:differentworld/shared/widgets/route_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The replacement for `Scaffold` + `AppBar` across the app.
 ///
-/// - No persistent top chrome. Content fills the screen edge-to-edge.
-/// - Optional floating back button in the top-left (auto-shown when
-///   the navigator can pop; pass `showBack: false` for the home page).
-/// - Optional floating action pill in the top-right ([actions]).
+/// - No persistent top chrome rendered inside the route — chrome
+///   (back button, action pill, top overlay) is hoisted into the
+///   AppShell layer via [routeChromeProvider]. EdgeScaffold's job is
+///   just to publish its chrome props to that provider so AppShell
+///   can paint them over the page transition without sliding them.
+/// - Content fills the screen edge-to-edge.
 /// - The [body] is wrapped in a `SafeArea` so first-row content sits
 ///   below the status bar; the bottom is intentionally NOT wrapped so
 ///   content can scroll under the gesture indicator.
@@ -19,7 +22,7 @@ import 'package:flutter/services.dart';
 /// Title / subtitle live INSIDE [body] as the first scrollable
 /// content via `ContentHeader` — not in chrome. That's the whole
 /// point of the redesign.
-class EdgeScaffold extends StatelessWidget {
+class EdgeScaffold extends ConsumerStatefulWidget {
   const EdgeScaffold({
     required this.body,
     this.actions = const <Widget>[],
@@ -30,28 +33,37 @@ class EdgeScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.bottomSheet,
     this.resizeToAvoidBottomInset,
+    this.includeSearchAction = false,
     super.key,
   });
 
   final Widget body;
+
+  /// Screen-specific actions for the top-right pill. Published to
+  /// [routeChromeProvider] in initState; AppShell renders them.
   final List<Widget> actions;
 
-  /// When true (default), the top-left shows a FloatingBack pill.
-  /// When false AND [drawer] is non-null, the top-left shows a
-  /// FloatingHamburger that opens the drawer.
+  /// **Deprecated** — the persistent bottom omnibox bar in AppShell
+  /// is now the canonical search affordance. Defaults to false. Kept
+  /// in the API for source compatibility while the call sites are
+  /// audited; it no longer renders anything.
+  final bool includeSearchAction;
+
+  /// When true (default), the top-left shows the FloatingBack pill.
+  /// When false, no back button (home screens).
   final bool showBack;
   final String backFallbackRoute;
 
-  /// Optional left-side drawer. When provided, the top-left renders a
-  /// hamburger pill on home pages (showBack: false). On drill-in pages
-  /// the FloatingBack stays visible and the drawer is still openable
-  /// via swipe-from-left-edge.
+  /// Optional left-side drawer. Drawer ownership stays on the route's
+  /// Scaffold (not the AppShell's), because Flutter's drawer requires
+  /// a Scaffold ancestor and the drawer scrim should cover JUST this
+  /// route's body, not the AppShell's omnibox bar.
   final Widget? drawer;
 
-  /// When non-null, replaces BOTH the left chrome (back / hamburger)
-  /// AND the right chrome (action pill) with a single full-width
-  /// overlay. Used by the inline search bar on Today — the chrome
-  /// transforms into a search input in place.
+  /// When non-null, replaces both the left and right chrome with a
+  /// single full-width overlay. Published to the chrome provider so
+  /// AppShell paints it at the same Y-position as the floating
+  /// back/actions would be.
   final Widget? topOverlay;
 
   final Widget? floatingActionButton;
@@ -59,8 +71,55 @@ class EdgeScaffold extends StatelessWidget {
   final bool? resizeToAvoidBottomInset;
 
   @override
+  ConsumerState<EdgeScaffold> createState() => _EdgeScaffoldState();
+}
+
+class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
+  @override
+  void initState() {
+    super.initState();
+    // Publish chrome synchronously — this is the ONLY way to avoid
+    // the 1-frame stale-chrome blip during route transitions (the
+    // old route's actions visible while the new page is already
+    // painting). We're safe here because AppShell finished its
+    // build BEFORE this child route's initState fires; Riverpod
+    // accepts the write and schedules AppShell's next rebuild.
+    _publishChrome();
+  }
+
+  @override
+  void didUpdateWidget(EdgeScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only republish when something the chrome cares about actually
+    // changed. Avoids gratuitous notifier writes on every parent
+    // rebuild. The diff guard means the synchronous write doesn't
+    // cause a rebuild storm.
+    if (!identical(widget.actions, oldWidget.actions) ||
+        widget.showBack != oldWidget.showBack ||
+        widget.backFallbackRoute != oldWidget.backFallbackRoute ||
+        !identical(widget.topOverlay, oldWidget.topOverlay)) {
+      // didUpdateWidget CAN fire during a frame in which the parent
+      // is rebuilding the same provider's watchers — defer one
+      // microtask so we don't get the "modified provider during
+      // build" assertion.
+      unawaited(Future.microtask(_publishChrome));
+    }
+  }
+
+  void _publishChrome() {
+    if (!mounted) return;
+    ref.read(routeChromeProvider.notifier).set(
+          RouteChrome(
+            showBack: widget.showBack,
+            backFallbackRoute: widget.backFallbackRoute,
+            actions: widget.actions,
+            topOverlay: widget.topOverlay,
+          ),
+        );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final topInset = MediaQuery.paddingOf(context).top;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // System UI icons: dark icons over light scaffold, light over dark.
     // Per-screen AnnotatedRegion so each screen gets the right contrast
@@ -82,55 +141,17 @@ class EdgeScaffold extends StatelessWidget {
       child: Scaffold(
         extendBodyBehindAppBar: true,
         extendBody: true,
-        resizeToAvoidBottomInset: resizeToAvoidBottomInset,
-        drawer: drawer,
-        body: Stack(
-          children: [
-            // Content. SafeArea only top — bottom flows under gesture nav.
-            // Each screen owns its own bottom padding for FAB clearance.
-            Positioned.fill(
-              child: SafeArea(
-                bottom: false,
-                child: body,
-              ),
-            ),
-            // Chrome row. topOverlay wins over the default left+right
-            // floating pills when provided — the search bar uses this
-            // to replace the whole top in place without restructuring
-            // the scaffold.
-            if (topOverlay != null)
-              Positioned(
-                top: topInset + 8,
-                left: 8,
-                right: 8,
-                child: topOverlay!,
-              )
-            else ...[
-              // Top-left: back arrow on drill-ins, hamburger on home pages.
-              if (showBack)
-                Positioned(
-                  top: topInset + 8,
-                  left: 8,
-                  child: FloatingBack(fallbackRoute: backFallbackRoute),
-                )
-              else if (drawer != null)
-                Positioned(
-                  top: topInset + 8,
-                  left: 8,
-                  child: const FloatingHamburger(),
-                ),
-              // Top-right: action pill.
-              if (actions.isNotEmpty)
-                Positioned(
-                  top: topInset + 8,
-                  right: 8,
-                  child: FloatingActions(children: actions),
-                ),
-            ],
-          ],
+        resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
+        drawer: widget.drawer,
+        // Body is just the page content now. Chrome (back, actions,
+        // topOverlay) is painted by AppShell over the route, so we
+        // don't render any Positioned widgets here.
+        body: SafeArea(
+          bottom: false,
+          child: widget.body,
         ),
-        floatingActionButton: floatingActionButton,
-        bottomSheet: bottomSheet,
+        floatingActionButton: widget.floatingActionButton,
+        bottomSheet: widget.bottomSheet,
       ),
     );
   }

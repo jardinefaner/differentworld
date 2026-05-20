@@ -4,6 +4,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -122,6 +123,12 @@ class _FamilyTodayList extends ConsumerWidget {
                   ? null
                   : Theme.of(context).colorScheme.error,
             ),
+            // Marcus-persona "30-second check" summary — one sentence
+            // that closes the loop without parsing each card. Reads
+            // either "All accounted for · Pickup in 3h" (calm) or
+            // "{kid} needs your attention" (action-mode).
+            _SummarySentence(children: children, flagged: flagged),
+            const SizedBox(height: 12),
             for (final child in children) ...[
               _ChildCard(child: child),
               const SizedBox(height: 12),
@@ -220,55 +227,68 @@ class _ChildCard extends ConsumerWidget {
         onTap: () => context.push('/children/${child.id}'),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Traffic-light scan affordance — same vocabulary as
-              // staff Today so the family lens reads consistently.
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: StatusDot(kind: dotKind),
-              ),
-              PersonAvatar(
-                name: '${child.firstName} ${child.lastName}',
-                photoUrl: child.photoUrl,
-                radius: 26,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${child.firstName} ${child.lastName}',
-                      style: theme.textTheme.titleMedium,
+              Row(
+                children: [
+                  // Traffic-light scan affordance — same vocabulary as
+                  // staff Today so the family lens reads consistently.
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: StatusDot(kind: dotKind),
+                  ),
+                  PersonAvatar(
+                    name: '${child.firstName} ${child.lastName}',
+                    photoUrl: child.photoUrl,
+                    radius: 26,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${child.firstName} ${child.lastName}',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _statusLabel(status),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: status == null
+                                ? scheme.onSurfaceVariant
+                                : status.color(scheme),
+                            fontWeight: flagged ? FontWeight.w600 : null,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _statusLabel(status),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: status == null
-                            ? scheme.onSurfaceVariant
-                            : status.color(scheme),
-                        fontWeight: flagged ? FontWeight.w600 : null,
-                      ),
+                  ),
+                  // Message-staff shortcut: one tap from the family lens
+                  // to the per-child thread. The kid detail screen also
+                  // exposes Messages, but for "quick ping" the friction-
+                  // free path is the card itself.
+                  IconButton.filledTonal(
+                    tooltip: 'Message staff',
+                    icon: const Icon(Icons.forum_outlined),
+                    onPressed: () => context.push(
+                      '/messages?subjectId=${child.id}',
                     ),
+                  ),
+                  if (status != null) ...[
+                    const SizedBox(width: 4),
+                    Icon(status.icon, color: status.color(scheme)),
                   ],
-                ),
+                ],
               ),
-              // Message-staff shortcut: one tap from the family lens
-              // to the per-child thread. The kid detail screen also
-              // exposes Messages, but for "quick ping" the friction-
-              // free path is the card itself.
-              IconButton.filledTonal(
-                tooltip: 'Message staff',
-                icon: const Icon(Icons.forum_outlined),
-                onPressed: () => context.push(
-                  '/messages?subjectId=${child.id}',
-                ),
-              ),
-              if (status != null) ...[
-                const SizedBox(width: 4),
-                Icon(status.icon, color: status.color(scheme)),
+              // Compact schedule peek — "what's my kid doing right
+              // now / next?" Renders nothing if the child's cohort
+              // doesn't have a schedule for today, so the card stays
+              // tight when there's nothing to show.
+              if (child.groupId != null) ...[
+                const SizedBox(height: 10),
+                NowNextStrip(groupId: child.groupId!, compact: true),
               ],
             ],
           ),
@@ -283,5 +303,130 @@ class _ChildCard extends ConsumerWidget {
   static String _statusLabel(AttendanceStatus? s) {
     if (s == null) return 'Check-in pending — usually before 9 AM';
     return s.label;
+  }
+}
+
+/// The "30-second check" summary band at the top of Family Today —
+/// answers "is everything fine?" in one sentence so a parent in a
+/// meeting can close the app in 4 seconds without parsing each kid's
+/// card. Renders error-tinted when something needs attention.
+class _SummarySentence extends ConsumerWidget {
+  const _SummarySentence({
+    required this.children,
+    required this.flagged,
+  });
+
+  final List<Subject> children;
+  final List<Subject> flagged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    // Pickup-soon heuristic: surface the nearest upcoming pickup window
+    // when we're within ~4 hours of it. Reads each kid's window;
+    // picks the earliest still-future end_time.
+    final now = DateTime.now();
+    DateTime? nearestPickup;
+    Subject? nearestKid;
+    for (final c in children) {
+      final raw = c.pickupWindowEnd ?? c.pickupWindowStart;
+      if (raw == null || raw.isEmpty) continue;
+      final parts = raw.split(':');
+      if (parts.length < 2) continue;
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h == null || m == null) continue;
+      final candidate =
+          DateTime(now.year, now.month, now.day, h, m);
+      if (candidate.isBefore(now)) continue;
+      if (nearestPickup == null || candidate.isBefore(nearestPickup)) {
+        nearestPickup = candidate;
+        nearestKid = c;
+      }
+    }
+
+    final sentence = _composeSentence(
+      flagged: flagged,
+      children: children,
+      nearestPickup: nearestPickup,
+      nearestKid: nearestKid,
+      now: now,
+    );
+
+    final hasFlag = flagged.isNotEmpty;
+    final container = hasFlag
+        ? scheme.errorContainer
+        : scheme.surfaceContainerHighest;
+    final onContainer = hasFlag
+        ? scheme.onErrorContainer
+        : scheme.onSurface;
+    final icon = hasFlag
+        ? Icons.priority_high_rounded
+        : Icons.check_circle_outline;
+
+    return Material(
+      color: container,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Row(
+          children: [
+            Icon(icon, color: onContainer),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                sentence,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: onContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _composeSentence({
+    required List<Subject> flagged,
+    required List<Subject> children,
+    required DateTime? nearestPickup,
+    required Subject? nearestKid,
+    required DateTime now,
+  }) {
+    if (flagged.isNotEmpty) {
+      if (flagged.length == 1) {
+        return '${flagged.first.firstName} needs your attention.';
+      }
+      final names = flagged.map((c) => c.firstName).join(' & ');
+      return '$names need your attention.';
+    }
+    // Calm path — quantify accountability + nearest pickup.
+    final countLabel = children.length == 1
+        ? 'Your child is'
+        : 'All ${children.length} are';
+    if (nearestPickup != null && nearestKid != null) {
+      final diff = nearestPickup.difference(now);
+      String when;
+      if (diff.inMinutes < 60) {
+        when = '${diff.inMinutes} min';
+      } else if (diff.inHours < 6) {
+        final h = diff.inHours;
+        final m = diff.inMinutes - h * 60;
+        when = m == 0 ? '${h}h' : '${h}h ${m}m';
+      } else {
+        when = '${nearestPickup.hour.toString().padLeft(2, '0')}:'
+            '${nearestPickup.minute.toString().padLeft(2, '0')}';
+      }
+      if (children.length == 1) {
+        return '$countLabel accounted for · pickup in $when';
+      }
+      return '$countLabel accounted for · ${nearestKid.firstName} pickup '
+          'in $when';
+    }
+    return '$countLabel accounted for.';
   }
 }
