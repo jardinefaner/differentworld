@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,24 +21,94 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// the triage options (promote to observation / dismiss); the floating
 /// action button opens the capture sheet so you can drop a new one in
 /// from this screen without bouncing back to Today.
-class CaptureInboxScreen extends ConsumerWidget {
+///
+/// Visual: each row carries a colored age bar on its left edge — warm
+/// for today's captures (act now), neutral for older items (drift),
+/// muted for stale ones (you've been avoiding this).
+///
+/// Bulk dismiss: long-press any row → checkbox mode appears. Tap rows
+/// to select, then "Dismiss N" in the AppBar wipes them in one go
+/// (with undo). For inboxes that have piled up over a vacation.
+class CaptureInboxScreen extends ConsumerStatefulWidget {
   const CaptureInboxScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CaptureInboxScreen> createState() =>
+      _CaptureInboxScreenState();
+}
+
+class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
+  final Set<String> _selected = <String>{};
+
+  bool get _selectMode => _selected.isNotEmpty;
+
+  void _toggle(String id) {
+    setState(() {
+      if (_selected.contains(id)) {
+        _selected.remove(id);
+      } else {
+        _selected.add(id);
+      }
+    });
+  }
+
+  void _clearSelection() => setState(_selected.clear);
+
+  Future<void> _dismissSelected() async {
+    final ids = _selected.toList();
+    if (ids.isEmpty) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final actions = ref.read(captureActionsProvider);
+    _clearSelection();
+    for (final id in ids) {
+      await runReported(
+        library: 'captures',
+        action: () => actions.discard(id),
+      );
+    }
+    if (!mounted) return;
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text('Dismissed ${ids.length} captures.'),
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final capturesAsync = ref.watch(openCapturesProvider);
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showCaptureSheet(context),
-        icon: const Icon(Icons.bolt_outlined),
-        label: const Text('Capture'),
-      ),
+      showBack: !_selectMode,
+      actions: _selectMode
+          ? [
+              TextButton.icon(
+                onPressed: _dismissSelected,
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: Text('Dismiss ${_selected.length}'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Cancel',
+                icon: const Icon(Icons.close),
+                onPressed: _clearSelection,
+              ),
+            ]
+          : const [SyncStatusIndicator()],
+      floatingActionButton: _selectMode
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => showCaptureSheet(context),
+              icon: const Icon(Icons.bolt_outlined),
+              label: const Text('Capture'),
+            ),
       body: capturesAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load captures',
+          onRetry: () => ref.invalidate(openCapturesProvider),
         ),
         data: (rows) {
           if (rows.isEmpty) {
@@ -70,7 +141,13 @@ class CaptureInboxScreen extends ConsumerWidget {
               for (final c in rows)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                  child: _CaptureCard(capture: c),
+                  child: _CaptureCard(
+                    capture: c,
+                    selectMode: _selectMode,
+                    selected: _selected.contains(c.id),
+                    onLongPress: () => _toggle(c.id),
+                    onTapInSelectMode: () => _toggle(c.id),
+                  ),
                 ),
             ],
           );
@@ -82,56 +159,113 @@ class CaptureInboxScreen extends ConsumerWidget {
 
 /// One row in the inbox. Tap → action sheet (promote / dismiss).
 class _CaptureCard extends ConsumerWidget {
-  const _CaptureCard({required this.capture});
+  const _CaptureCard({
+    required this.capture,
+    this.selectMode = false,
+    this.selected = false,
+    this.onLongPress,
+    this.onTapInSelectMode,
+  });
 
   final Capture capture;
+  final bool selectMode;
+  final bool selected;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onTapInSelectMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final created = DateTime.tryParse(capture.createdAt)?.toLocal();
+    final ageDays = created == null
+        ? 0
+        : DateTime.now().difference(created).inDays;
+    // Age bar tone: warm for today, drifting to neutral over a week.
+    final ageColor = ageDays == 0
+        ? scheme.primary
+        : ageDays < 3
+            ? scheme.tertiary
+            : ageDays < 7
+                ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
+                : scheme.error.withValues(alpha: 0.65);
+
     return Material(
-      color: theme.colorScheme.surfaceContainerHighest,
+      color: selected
+          ? scheme.primaryContainer
+          : scheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () => _openTriage(context, ref, capture),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+        onTap: selectMode
+            ? onTapInSelectMode
+            : () => _openTriage(context, ref, capture),
+        onLongPress: onLongPress,
+        child: IntrinsicHeight(
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2, right: 10),
-                child: Icon(
-                  Icons.bolt_outlined,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
+              // Vertical age bar — the at-a-glance temporal cue.
+              Container(width: 4, color: ageColor),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      capture.body,
-                      style: theme.textTheme.bodyMedium,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      relativeTimeAgo(created),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2, right: 10),
+                        child: selectMode
+                            ? Icon(
+                                selected
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                color: selected
+                                    ? scheme.primary
+                                    : scheme.onSurfaceVariant,
+                              )
+                            : Icon(
+                                Icons.bolt_outlined,
+                                color: scheme.primary,
+                              ),
                       ),
-                    ),
-                  ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minHeight: 40,
+                                maxHeight: 96,
+                              ),
+                              child: Text(
+                                capture.body,
+                                style: theme.textTheme.bodyMedium,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              relativeTimeAgo(created),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!selectMode)
+                        IconButton(
+                          tooltip: 'Triage',
+                          icon: const Icon(Icons.more_vert),
+                          onPressed: () =>
+                              _openTriage(context, ref, capture),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Triage',
-                icon: const Icon(Icons.more_vert),
-                onPressed: () => _openTriage(context, ref, capture),
               ),
             ],
           ),
@@ -153,12 +287,11 @@ Future<void> _openTriage(
   // mutation) has to use these captured references instead.
   final actions = ref.read(captureActionsProvider);
   final messenger = ScaffoldMessenger.maybeOf(context);
-  // The card's context survives sheet dismissal; use it for any
-  // follow-up navigators (e.g. opening the subject picker).
   final parentContext = context;
   await showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
+    isScrollControlled: true,
     builder: (sheetCtx) => _TriageSheet(
       capture: capture,
       onDismiss: () async {
@@ -209,47 +342,122 @@ class _TriageSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              capture.body,
-              style: theme.textTheme.bodyLarge,
-              maxLines: 6,
-              overflow: TextOverflow.ellipsis,
+            // The captured text up top so the triage decision has the
+            // full context visible (no scroll to refresh memory).
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                capture.body,
+                style: theme.textTheme.bodyLarge,
+                maxLines: 8,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 16),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.menu_book_outlined),
-              title: const Text('Make this an observation'),
-              subtitle: const Text('Pick a child to attach it to'),
+            // Three large M3-tinted action cards. Bigger affordances
+            // for weightier decisions; color tells you the destination.
+            _TriageActionCard(
+              icon: Icons.menu_book_outlined,
+              title: 'Make this an observation',
+              subtitle: 'Pick a child to attach it to',
+              container: scheme.primaryContainer,
+              onContainer: scheme.onPrimaryContainer,
               onTap: () => unawaited(onMakeObservation()),
             ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Make this a task'),
-              subtitle: const Text(
-                'A to-do that lives in /tasks until done.',
-              ),
+            const SizedBox(height: 8),
+            _TriageActionCard(
+              icon: Icons.check_circle_outline,
+              title: 'Make this a task',
+              subtitle: 'A to-do that lives in /tasks until done',
+              container: scheme.tertiaryContainer,
+              onContainer: scheme.onTertiaryContainer,
               onTap: () => unawaited(onMakeTask()),
             ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.delete_outline),
-              title: const Text('Dismiss'),
-              subtitle: const Text(
-                'Not going to act on this. Hide from inbox.',
-              ),
+            const SizedBox(height: 8),
+            _TriageActionCard(
+              icon: Icons.delete_outline,
+              title: 'Dismiss',
+              subtitle: 'Not going to act on this. Hide from inbox.',
+              container: scheme.errorContainer,
+              onContainer: scheme.onErrorContainer,
               onTap: () => unawaited(onDismiss()),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TriageActionCard extends StatelessWidget {
+  const _TriageActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.container,
+    required this.onContainer,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color container;
+  final Color onContainer;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: container,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Row(
+            children: [
+              Icon(icon, color: onContainer, size: 26),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: onContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: onContainer.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: onContainer),
+            ],
+          ),
         ),
       ),
     );

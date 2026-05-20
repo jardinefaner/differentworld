@@ -7,6 +7,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,9 +37,9 @@ class InsightsScreen extends ConsumerWidget {
           : null,
       body: insightsAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not compute insights',
+          onRetry: () => ref.invalidate(insightsProvider),
         ),
         data: (insights) {
           if (insights.isEmpty) {

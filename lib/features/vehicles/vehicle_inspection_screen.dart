@@ -142,19 +142,6 @@ class _VehicleInspectionScreenState
       isDirty: _isDirty,
       child: EdgeScaffold(
         backFallbackRoute: '/settings/vehicles/${widget.vehicleId}',
-        actions: [
-          IconButton(
-            tooltip: widget.isCheckout ? 'Check out' : 'Check in',
-            onPressed: _saving ? null : _submit,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check),
-          ),
-        ],
         body: vehicleAsync.when(
           loading: () => const LoadingSlot(),
           error: (_, _) =>
@@ -163,159 +150,290 @@ class _VehicleInspectionScreenState
             if (v == null) {
               return const Center(child: Text('Vehicle not found.'));
             }
-            return Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 56, 16, 32),
-                children: [
-                  ContentHeader(
-                    title: widget.isCheckout ? 'Check out' : 'Check in',
-                    subtitle: '${v.name} · pre-trip safety check',
-                  ),
-                  // Trip header — odometer + fuel
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _odometer,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(7),
-                          ],
-                          textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: 'Odometer',
-                            suffixText: 'mi',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            final t = value?.trim() ?? '';
-                            if (t.isEmpty) return 'Required';
-                            final n = int.tryParse(t);
-                            if (n == null) return 'Numbers only';
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _fuelLevel,
-                          textCapitalization: TextCapitalization.characters,
-                          textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            labelText: 'Fuel level',
-                            hintText: '3/4, F, 1/2 tank',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Inspection checklist
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(8),
-                      border:
-                          Border.all(color: theme.colorScheme.outlineVariant),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            // The "Unsafe" status anywhere in the checklist surfaces a
+            // confirm banner above the bottom submit; the driver can
+            // still complete (the incident gets logged with the row)
+            // but the urgency is hard to miss.
+            final hasUnsafe = InspectionChecklist.items.any(
+              (item) =>
+                  _results.statusFor(item) == InspectionStatus.unsafe,
+            );
+            return Column(
+              children: [
+                Expanded(
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
                       children: [
-                        Text(
-                          'Inspection checklist',
-                          style: theme.textTheme.titleSmall,
+                        ContentHeader(
+                          title:
+                              widget.isCheckout ? 'Check out' : 'Check in',
+                          subtitle: '${v.name} · pre-trip safety check',
+                          bottomGap: 12,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Mark each item OK, Needs repair, or Unsafe.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        for (final section in InspectionChecklist.sections) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            InspectionChecklist.sectionLabels[section] ??
-                                section,
-                            style: theme.textTheme.labelLarge,
-                          ),
-                          const SizedBox(height: 4),
-                          for (final item
-                              in InspectionChecklist.itemsForSection(section))
-                            _InspectionRow(
-                              item: item,
-                              status: _results.statusFor(item),
-                              onChanged: (s) {
-                                setState(() => _results.setStatus(item, s));
-                              },
+                        // Trip header — odometer + fuel
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _odometer,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(7),
+                                ],
+                                textInputAction: TextInputAction.next,
+                                decoration: const InputDecoration(
+                                  labelText: 'Odometer',
+                                  suffixText: 'mi',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  final t = value?.trim() ?? '';
+                                  if (t.isEmpty) return 'Required';
+                                  final n = int.tryParse(t);
+                                  if (n == null) return 'Numbers only';
+                                  return null;
+                                },
+                              ),
                             ),
-                          const SizedBox(height: 8),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _fuelLevel,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                textInputAction: TextInputAction.next,
+                                decoration: const InputDecoration(
+                                  labelText: 'Fuel level',
+                                  hintText: '3/4, F, 1/2 tank',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Inspection checklist',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              const Spacer(),
+                              Text(
+                                'Mark each item OK / Repair / Unsafe',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // One card per section. Each card carries its
+                        // own progress count so the driver can pace
+                        // through ("Lights 4/4 · Tires 1/2 …").
+                        for (final section in InspectionChecklist.sections)
+                          _SectionCard(
+                            label:
+                                InspectionChecklist.sectionLabels[section] ??
+                                    section,
+                            items:
+                                InspectionChecklist.itemsForSection(section),
+                            results: _results,
+                            onChanged: (item, st) {
+                              setState(() => _results.setStatus(item, st));
+                            },
+                          ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _bodyDamage,
+                          minLines: 2,
+                          maxLines: 3,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: const InputDecoration(
+                            labelText: 'Body damage (optional)',
+                            hintText:
+                                'Describe any scratches, dents, etc.',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _notes,
+                          minLines: 2,
+                          maxLines: 4,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: const InputDecoration(
+                            labelText: 'Notes (optional)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.error,
+                            ),
+                          ),
                         ],
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _bodyDamage,
-                    minLines: 2,
-                    maxLines: 3,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Body damage (optional)',
-                      hintText: 'Describe any scratches, dents, etc.',
-                      border: OutlineInputBorder(),
+                ),
+                if (hasUnsafe)
+                  Container(
+                    width: double.infinity,
+                    color: theme.colorScheme.errorContainer,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.dangerous_outlined,
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You marked at least one item Unsafe. '
+                            'The director will be notified after you '
+                            'complete this report.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _notes,
-                    minLines: 2,
-                    maxLines: 4,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes (optional)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _error!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
+                // Bottom-sticky submit: always reachable while
+                // scrolling the checklist. Mirrors the M3 BottomAppBar
+                // pattern but lighter.
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _saving ? null : _submit,
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(widget.isCheckout
+                                ? Icons.key_outlined
+                                : Icons.assignment_turned_in_outlined),
+                        label: Text(
+                          widget.isCheckout
+                              ? 'Complete check-out'
+                              : 'Complete check-in',
+                        ),
+                        style: FilledButton.styleFrom(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 16),
+                        ),
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 16),
-                  // Big submit button at the bottom too, mirroring the
-                  // FACES form's design (action live at the end).
-                  FilledButton.icon(
-                    onPressed: _saving ? null : _submit,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(widget.isCheckout
-                            ? Icons.key_outlined
-                            : Icons.assignment_turned_in_outlined),
-                    label: Text(
-                      widget.isCheckout ? 'Complete check-out' : 'Complete check-in',
-                    ),
                   ),
-                  const SizedBox(height: 64),
-                ],
-              ),
+                ),
+              ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.label,
+    required this.items,
+    required this.results,
+    required this.onChanged,
+  });
+
+  final String label;
+  final List<InspectionItem> items;
+  final InspectionResults results;
+  final void Function(InspectionItem item, InspectionStatus? next) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final marked =
+        items.where((i) => results.statusFor(i) != null).length;
+    final total = items.length;
+    final hasUnsafe = items.any(
+      (i) => results.statusFor(i) == InspectionStatus.unsafe,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasUnsafe
+                ? scheme.error.withValues(alpha: 0.6)
+                : scheme.outlineVariant,
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(label, style: theme.textTheme.titleSmall),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: marked == total
+                        ? scheme.primaryContainer
+                        : scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$marked / $total',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: marked == total
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            for (final item in items)
+              _InspectionRow(
+                item: item,
+                status: results.statusFor(item),
+                onChanged: (s) => onChanged(item, s),
+              ),
+          ],
         ),
       ),
     );
@@ -426,14 +544,24 @@ class _StatusButton extends StatelessWidget {
       label: label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
+        // 48×48 hit target is the M3 floor for accessibility. The
+        // visual chip sits inside a transparent border the user can't
+        // see but the hit region honours.
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(6),
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          child: Container(
+            width: 40,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: fg, size: 20),
           ),
-          child: Icon(icon, color: fg, size: 18),
         ),
       ),
     );

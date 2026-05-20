@@ -8,6 +8,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,9 +48,9 @@ class FamilyMessagesScreen extends ConsumerWidget {
       actions: const [SyncStatusIndicator()],
       body: childrenAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load',
+          onRetry: () => ref.invalidate(myChildrenProvider),
         ),
         data: (children) {
           if (children.isEmpty) {

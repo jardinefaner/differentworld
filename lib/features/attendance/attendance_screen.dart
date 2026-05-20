@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -104,10 +105,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       );
       return;
     }
+    // Longer window with a clear visible affordance — bulk operations
+    // are easy to fat-finger; an 8-second window gives the user time
+    // to react. The actual countdown ring lives on the FAB during the
+    // window so the affordance is unmissable.
     messenger.showSnackBar(
       SnackBar(
         content: Text('Marked ${marked.length} present.'),
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 8),
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () async {
@@ -160,9 +165,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             child: subjectsAsync.when(
                 loading: () =>
                     const LoadingSlot(),
-                error: (e, _) => const EmptyState(
-                  icon: Icons.error_outline,
+                error: (e, _) => ErrorState(
                   title: 'Could not load students',
+                  onRetry: () =>
+                      ref.invalidate(subjectsInGroupProvider(widget.groupId)),
                 ),
                 data: (subjects) {
                   if (subjects.isEmpty) {
@@ -176,9 +182,13 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                   return recordsAsync.when(
                     loading: () =>
                         const LoadingSlot(),
-                    error: (e, _) => const EmptyState(
-                      icon: Icons.error_outline,
+                    error: (e, _) => ErrorState(
                       title: 'Could not load attendance',
+                      onRetry: () => ref.invalidate(
+                        attendanceForDayProvider(
+                          (groupId: widget.groupId, date: _isoDate),
+                        ),
+                      ),
                     ),
                     data: (records) => _AttendanceList(
                       groupId: widget.groupId,
@@ -219,6 +229,10 @@ final _groupDetailProvider = StreamProvider.family<Group?, String>(
   },
 );
 
+/// Thicker, more legible scrubber: chevron buttons on the sides and a
+/// large central pill showing the day label. The pill is tappable to
+/// open a date picker, mirroring the iOS Calendar pattern. Replaces
+/// the IconButton + TextButton row that read as a thin nav strip.
 class _DateScrubber extends StatelessWidget {
   const _DateScrubber({
     required this.label,
@@ -236,23 +250,50 @@ class _DateScrubber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
       child: Row(
         children: [
-          IconButton(
+          IconButton.filledTonal(
             icon: const Icon(Icons.chevron_left),
             onPressed: onPrev,
             tooltip: 'Previous day',
           ),
+          const SizedBox(width: 8),
           Expanded(
-            child: TextButton(
-              onPressed: onTapLabel,
-              child:
-                  Text(label, style: Theme.of(context).textTheme.titleMedium),
+            child: Material(
+              color: scheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: onTapLabel,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        label,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          IconButton(
+          const SizedBox(width: 8),
+          IconButton.filledTonal(
             icon: const Icon(Icons.chevron_right),
             onPressed: canGoForward ? onNext : null,
             tooltip: canGoForward ? 'Next day' : 'No future days',
@@ -291,24 +332,92 @@ class _AttendanceList extends ConsumerWidget {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final subject = subjects[i];
-        return AttendanceRow(
-          subject: subject,
-          status: bySubject[subject.id],
-          onChangeStatus: (next) async {
-            if (next == null) {
-              await ref.read(attendanceActionsProvider).clearStatus(
-                    subjectId: subject.id,
-                    date: date,
-                  );
-            } else {
-              await ref.read(attendanceActionsProvider).setStatus(
-                    groupId: groupId,
-                    subjectId: subject.id,
-                    date: date,
-                    status: next,
-                  );
-            }
+        final scheme = Theme.of(context).colorScheme;
+        Future<void> apply(AttendanceStatus? next) async {
+          if (next == null) {
+            await ref.read(attendanceActionsProvider).clearStatus(
+                  subjectId: subject.id,
+                  date: date,
+                );
+          } else {
+            await ref.read(attendanceActionsProvider).setStatus(
+                  groupId: groupId,
+                  subjectId: subject.id,
+                  date: date,
+                  status: next,
+                );
+          }
+        }
+
+        // Swipe accelerator: → marks Present, ← marks Absent. Both
+        // return `false` from confirmDismiss so the row doesn't
+        // animate off — we just want the gesture as a faster way to
+        // hit the two most common statuses. The inline icons in
+        // AttendanceRow remain the canonical control for everything
+        // else.
+        return Dismissible(
+          key: ValueKey('att-${subject.id}-$date'),
+          background: Container(
+            alignment: Alignment.centerLeft,
+            color: AttendanceStatus.present.color(scheme).withValues(
+                  alpha: 0.20,
+                ),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Icon(
+                  AttendanceStatus.present.icon,
+                  color: AttendanceStatus.present.color(scheme),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Mark present',
+                  style: TextStyle(
+                    color: AttendanceStatus.present.color(scheme),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          secondaryBackground: Container(
+            alignment: Alignment.centerRight,
+            color: AttendanceStatus.absent.color(scheme).withValues(
+                  alpha: 0.20,
+                ),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Mark absent',
+                  style: TextStyle(
+                    color: AttendanceStatus.absent.color(scheme),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  AttendanceStatus.absent.icon,
+                  color: AttendanceStatus.absent.color(scheme),
+                ),
+              ],
+            ),
+          ),
+          confirmDismiss: (dir) async {
+            unawaited(HapticFeedback.mediumImpact());
+            await apply(
+              dir == DismissDirection.startToEnd
+                  ? AttendanceStatus.present
+                  : AttendanceStatus.absent,
+            );
+            return false; // never actually dismiss the row
           },
+          child: AttendanceRow(
+            subject: subject,
+            status: bySubject[subject.id],
+            onChangeStatus: apply,
+          ),
         );
       },
     );

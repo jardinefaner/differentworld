@@ -92,6 +92,17 @@ class TasksDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Update the due date for an open task (snooze / reschedule).
+  Future<void> updateDueAt({
+    required String id,
+    required String? dueAt,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(tasks)..where((t) => t.id.equals(id))).write(
+      TasksCompanion(dueAt: Value(dueAt), updatedAt: Value(now)),
+    );
+  }
+
   Future<void> markDone({
     required String id,
     required String completedBy,

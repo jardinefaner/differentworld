@@ -14,7 +14,7 @@ import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
-import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,9 +64,9 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
       actions: const [SyncStatusIndicator()],
       body: subjectsAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load',
+          onRetry: () => ref.invalidate(subjectsInSpaceProvider),
         ),
         data: (allSubjects) {
           final responses =

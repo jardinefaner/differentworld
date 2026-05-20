@@ -8,6 +8,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,6 +51,7 @@ class _SurveyTemplateCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final viewer = ref.watch(viewerProvider);
     final spaceId = viewer.spaceId;
     final responsesAsync = spaceId == null
@@ -73,8 +75,8 @@ class _SurveyTemplateCard extends ConsumerWidget {
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                  backgroundColor: scheme.primaryContainer,
+                  foregroundColor: scheme.onPrimaryContainer,
                   child: const Icon(Icons.poll_outlined),
                 ),
                 const SizedBox(width: 12),
@@ -87,20 +89,60 @@ class _SurveyTemplateCard extends ConsumerWidget {
                       Text(
                         '${template.year} · ${template.scored.length} questions',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$completed completed'
-                        '${inProgress > 0 ? ' · $inProgress in progress' : ''}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
+                // Progress chip: state lives on the right, separated
+                // from the "what" on the left. Tabular figures so the
+                // counts don't jitter as data lands.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: completed > 0
+                        ? scheme.primaryContainer.withValues(alpha: 0.7)
+                        : scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        '$completed',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: scheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      if (inProgress > 0) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 1,
+                          height: 12,
+                          color: scheme.onSurfaceVariant
+                              .withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$inProgress…',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: scheme.tertiary,
+                            fontWeight: FontWeight.w700,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures()
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
                 const Icon(Icons.chevron_right),
               ],
             ),
@@ -138,18 +180,48 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       backFallbackRoute: '/surveys',
-      actions: const [SyncStatusIndicator()],
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () =>
-            context.push('/surveys/$templateId/table'),
-        icon: const Icon(Icons.table_chart_outlined),
-        label: const Text('Table view'),
+      actions: [
+        // Table view is the analyst's tool — useful but secondary.
+        // Move it to an icon in the AppBar so the FAB can be the
+        // primary daily-use action (next-unsurveyed kid).
+        IconButton(
+          tooltip: 'Table view',
+          icon: const Icon(Icons.table_chart_outlined),
+          onPressed: () => context.push('/surveys/$templateId/table'),
+        ),
+        const SyncStatusIndicator(),
+      ],
+      floatingActionButton: subjectsAsync.maybeWhen(
+        data: (subjects) {
+          if (subjects.isEmpty) return null;
+          final responses = responsesAsync.value ?? const <SurveyResponse>[];
+          final completedIds = {
+            for (final r in responses)
+              if (r.status == 'completed') r.subjectId,
+          };
+          final next = subjects.firstWhere(
+            (s) => !completedIds.contains(s.id),
+            orElse: () => subjects.first,
+          );
+          final allDone = completedIds.length >= subjects.length;
+          return FloatingActionButton.extended(
+            // When everyone's done the FAB pivots to "redo from start"
+            // — the same shape, different intent. Avoids dead UI.
+            onPressed: () =>
+                context.push('/surveys/$templateId/take/${next.id}'),
+            icon: Icon(allDone ? Icons.replay : Icons.arrow_forward),
+            label: Text(allDone
+                ? 'Redo · ${next.firstName}'
+                : 'Survey · ${next.firstName}'),
+          );
+        },
+        orElse: () => null,
       ),
       body: subjectsAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load students',
+          onRetry: () => ref.invalidate(subjectsInSpaceProvider),
         ),
         data: (subjects) {
           if (subjects.isEmpty) {

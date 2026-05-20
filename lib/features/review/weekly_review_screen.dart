@@ -6,6 +6,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/progress_dots.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,7 +61,6 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final insightsAsync = ref.watch(insightsProvider);
     final liveInsights = insightsAsync.value ?? const <Insight>[];
     _seed(liveInsights);
@@ -117,8 +117,12 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
           ),
           const SizedBox(height: 8),
           // Progress dots — small visual anchor so the user feels the
-          // shape of the review without a percentage bar.
-          _Dots(count: pageCount, current: _index.clamp(0, pageCount - 1)),
+          // shape of the review without a percentage bar. Shared widget
+          // also used by Surveys (one vocabulary, less learning cost).
+          ProgressDots(
+            count: pageCount,
+            current: _index.clamp(0, pageCount - 1),
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: PageView.builder(
@@ -157,13 +161,6 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
                     label: const Text('Back'),
                   ),
                   const Spacer(),
-                  Text(
-                    atEnd ? '' : 'Swipe to continue',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   if (!atEnd)
                     TextButton.icon(
                       onPressed: () {
@@ -258,6 +255,10 @@ class _CloseoutPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The PageView's parent state knows the page count but doesn't
+    // pass it down; the user already saw the dots, so we lean on the
+    // "this week" framing rather than a numeric stat. The yearly link
+    // is reframed with timing so it doesn't read as "do another now."
     final theme = Theme.of(context);
     return Center(
       child: Padding(
@@ -272,7 +273,7 @@ class _CloseoutPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Review complete.',
+              "That's a week.",
               style: theme.textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
@@ -291,43 +292,13 @@ class _CloseoutPage extends StatelessWidget {
             TextButton.icon(
               onPressed: () => context.push('/review/year'),
               icon: const Icon(Icons.event_note_outlined),
-              label: const Text('Open the yearly review'),
+              label: const Text(
+                'Open the yearly review (once per academic year)',
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _Dots extends StatelessWidget {
-  const _Dots({required this.count, required this.current});
-
-  final int count;
-  final int current;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (count <= 1) return const SizedBox.shrink();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < count; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            width: i == current ? 24 : 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: i <= current
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

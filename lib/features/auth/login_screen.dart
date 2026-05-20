@@ -45,23 +45,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 380),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.school_outlined,
-                    size: 64,
-                    color: theme.colorScheme.primary,
+                  // Wordmark — gradient-tinted "DW" initials in a soft
+                  // squircle, sized as the hero focal point. Replaces
+                  // the generic school icon that read as "scaffolded."
+                  Center(
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            scheme.primary,
+                            scheme.tertiary,
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                scheme.primary.withValues(alpha: 0.18),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'dw',
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            color: scheme.onPrimary,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -1,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   Text(
                     'Different World',
                     style: theme.textTheme.headlineMedium,
@@ -69,11 +104,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Plan and log your classroom — offline-first.',
-                    style: theme.textTheme.bodyMedium,
+                    'The classroom day, organized.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 40),
                   FilledButton.icon(
                     onPressed: _signingIn ? null : _signInWithGoogle,
                     icon: _signingIn
@@ -93,11 +130,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Text(
                       _error!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
+                        color: scheme.error,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ],
+                  const SizedBox(height: 24),
+                  // Guardian path is real (matched by email or invite
+                  // code), but invisible from the staff login unless
+                  // we surface it. Same button under the hood — the
+                  // server matches the account to a guardian record
+                  // and the router lands them on Family Today.
+                  Text(
+                    'Parent or guardian? Sign in with the email your\n'
+                    "child's program has on file — same button above.",
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             ),

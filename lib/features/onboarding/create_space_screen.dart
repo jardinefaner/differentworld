@@ -88,12 +88,32 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.cottage_outlined,
-                      size: 64,
-                      color: theme.colorScheme.primary,
+                    // Softer hero — gradient squircle keeps the same
+                    // visual family as the login wordmark so the
+                    // onboarding flow reads as one piece.
+                    Center(
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              theme.colorScheme.primary,
+                              theme.colorScheme.tertiary,
+                            ],
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.cottage_outlined,
+                          size: 36,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Text(
                       "What's your program called?",
                       style: theme.textTheme.headlineSmall,
@@ -103,13 +123,17 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
                     Text(
                       'This is the program your classrooms, students, and '
                       'team will live under. You can edit it later in Settings.',
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
                     TextFormField(
                       controller: _nameController,
-                      autofocus: true,
+                      // Do NOT autofocus — the keyboard popping up
+                      // immediately covers the explanatory copy. The
+                      // user taps when they're ready.
                       textCapitalization: TextCapitalization.words,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
@@ -121,8 +145,11 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
                       ),
                       validator: (value) {
                         final v = value?.trim() ?? '';
-                        if (v.isEmpty) return 'Required';
-                        if (v.length < 2) return 'Too short';
+                        if (v.isEmpty) {
+                          return 'Your program needs a name — what do '
+                              'families call you?';
+                        }
+                        if (v.length < 2) return 'A little longer, please.';
                         return null;
                       },
                     ),

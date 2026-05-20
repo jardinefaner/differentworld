@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
@@ -212,19 +213,61 @@ class _JoinOrCreateScreenState extends ConsumerState<JoinOrCreateScreen> {
   }
 }
 
-class _AutoMatchScaffold extends StatelessWidget {
+class _AutoMatchScaffold extends StatefulWidget {
   const _AutoMatchScaffold();
 
   @override
+  State<_AutoMatchScaffold> createState() => _AutoMatchScaffoldState();
+}
+
+class _AutoMatchScaffoldState extends State<_AutoMatchScaffold> {
+  late final Stopwatch _watch;
+  Timer? _tick;
+  int _elapsedSec = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _watch = Stopwatch()..start();
+    // Periodic UI tick to upgrade the helper copy after 3s ("might be
+    // slow offline") and not surprise the user when nothing happens.
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSec = _watch.elapsed.inSeconds);
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final theme = Theme.of(context);
+    final helper = _elapsedSec >= 3
+        ? "This can take a moment offline. We'll keep looking…"
+        : '';
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Looking for your invite…'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            const Text('Looking for your invite…'),
+            const SizedBox(height: 8),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              opacity: helper.isEmpty ? 0 : 1,
+              child: Text(
+                helper,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -293,8 +336,8 @@ class _ChoosingScaffold extends StatelessWidget {
                     icon: Icons.add_business_outlined,
                     title: 'Start a new program',
                     subtitle:
-                        'Create your own program — you become its director '
-                        'and can invite your team.',
+                        'About 3 questions, takes a minute. You become its '
+                        'director and can invite your team.',
                     onTap: () {
                       unawaited(
                         Navigator.of(context).push(
@@ -305,6 +348,24 @@ class _ChoosingScaffold extends StatelessWidget {
                       );
                     },
                   ),
+                  const SizedBox(height: 24),
+                  // Escape hatch: signed in with the wrong Google
+                  // account? Sign out and start over without quitting
+                  // the app.
+                  Consumer(builder: (context, ref, _) {
+                    return Center(
+                      child: TextButton(
+                        onPressed: () async {
+                          await ref
+                              .read(authActionsProvider)
+                              .signOut();
+                        },
+                        child: const Text(
+                          'Use a different Google account',
+                        ),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -423,31 +484,17 @@ class _CodeEntryScaffold extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  TextField(
+                  // 6-cell PIN-style input. Each cell is a Material 3
+                  // outlined box; typing into any one auto-advances to
+                  // the next. The hidden underlying TextField holds
+                  // the canonical value the rest of the screen reads.
+                  _PinInput(
                     controller: controller,
-                    autofocus: true,
                     enabled: !submitting,
-                    textCapitalization: TextCapitalization.characters,
-                    autocorrect: false,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'[A-Za-z0-9 \-_]'),
-                      ),
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      letterSpacing: 4,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      hintText: 'ABC-DEF',
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => onSubmit(),
+                    onCompleted: onSubmit,
                   ),
                   if (error != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Text(
                       error!,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -456,7 +503,7 @@ class _CodeEntryScaffold extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ],
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: submitting ? null : onSubmit,
                     icon: submitting
@@ -474,6 +521,172 @@ class _CodeEntryScaffold extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 6-cell PIN-style input. Uses a single offstage [TextField] (so
+/// platform paste / autofill / soft-keyboard all behave normally) and
+/// six visual cells. The visible cells reflect the underlying value
+/// character by character and the cursor sits on the next empty cell.
+class _PinInput extends StatefulWidget {
+  const _PinInput({
+    required this.controller,
+    required this.enabled,
+    required this.onCompleted,
+  });
+
+  final TextEditingController controller;
+  final bool enabled;
+  final VoidCallback onCompleted;
+
+  @override
+  State<_PinInput> createState() => _PinInputState();
+}
+
+class _PinInputState extends State<_PinInput> {
+  final FocusNode _focus = FocusNode();
+  // Whether the controller already has 6 characters — drives the
+  // "auto-submit on completion" behavior.
+  bool _wasComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.enabled) _focus.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onChanged);
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _onChanged() {
+    final v = InviteCode.normalize(widget.controller.text);
+    // Reflect the normalized value back so paste of "abc-def" lands as
+    // "ABCDEF" in both the underlying value and the visible cells.
+    if (v != widget.controller.text) {
+      widget.controller.value = widget.controller.value.copyWith(
+        text: v,
+        selection: TextSelection.collapsed(offset: v.length),
+      );
+    }
+    final complete = v.length >= 6;
+    if (complete && !_wasComplete) {
+      _wasComplete = true;
+      // Slight delay so the user sees the last cell fill before we
+      // navigate. Submitting on completion is a UX accelerator —
+      // no need to also tap the button.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        widget.onCompleted();
+      });
+    } else if (!complete) {
+      _wasComplete = false;
+    }
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final value = widget.controller.text;
+    return GestureDetector(
+      onTap: () {
+        if (widget.enabled) _focus.requestFocus();
+      },
+      child: Stack(
+        children: [
+          // Offstage real input — handles keyboard, paste, autofill.
+          // We position it 1×1 so it remains hit-testable for IME.
+          Positioned(
+            left: 0,
+            top: 0,
+            width: 1,
+            height: 1,
+            child: TextField(
+              controller: widget.controller,
+              focusNode: _focus,
+              enabled: widget.enabled,
+              autocorrect: false,
+              enableSuggestions: false,
+              textCapitalization: TextCapitalization.characters,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                  RegExp(r'[A-Za-z0-9 \-_]'),
+                ),
+                LengthLimitingTextInputFormatter(10),
+              ],
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              style: const TextStyle(color: Colors.transparent),
+              cursorColor: Colors.transparent,
+              onSubmitted: (_) => widget.onCompleted(),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (var i = 0; i < 6; i++)
+                _PinCell(
+                  char: i < value.length ? value[i] : null,
+                  active: widget.enabled && i == value.length && _focus.hasFocus,
+                  scheme: scheme,
+                  textStyle: theme.textTheme.headlineMedium,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PinCell extends StatelessWidget {
+  const _PinCell({
+    required this.char,
+    required this.active,
+    required this.scheme,
+    required this.textStyle,
+  });
+
+  final String? char;
+  final bool active;
+  final ColorScheme scheme;
+  final TextStyle? textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active
+        ? scheme.primary
+        : (char != null ? scheme.outline : scheme.outlineVariant);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      width: 44,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color, width: active ? 2 : 1),
+        color: scheme.surface,
+      ),
+      child: Center(
+        child: Text(
+          char ?? '',
+          style: textStyle?.copyWith(
+            color: scheme.onSurface,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ),

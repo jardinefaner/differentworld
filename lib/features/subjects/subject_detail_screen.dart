@@ -18,6 +18,7 @@ import 'package:differentworld/features/subjects/widgets/today_status_card.dart'
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -98,9 +99,9 @@ class SubjectDetailScreen extends ConsumerWidget {
           : null,
       body: subjectAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load',
+          onRetry: () => ref.invalidate(subjectByIdProvider(subjectId)),
         ),
         data: (subject) {
           if (subject == null) {
@@ -138,12 +139,26 @@ class _SubjectBody extends ConsumerWidget {
       ),
     );
 
+    final entries = entriesAsync.value ?? const <Entry>[];
+    final totalObservations = entries.length;
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 96),
       children: [
-        // Header (custom — bigger avatar than ContentHeader).
+        // Today's status is hoisted ABOVE the identity row — emotional
+        // context (what happened today?) first, identity (who am I
+        // looking at) second. The back-button breadcrumb supplies the
+        // name context until the eye reaches the bigger header.
+        const SizedBox(height: 56),
+        if (groupId != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TodayStatusCard(subjectId: subject.id, groupId: groupId),
+          ),
+
+        // Identity row.
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           child: Row(
             children: [
               PersonAvatar(
@@ -182,17 +197,29 @@ class _SubjectBody extends ConsumerWidget {
           ),
         ),
 
-        // Today's status row
-        if (groupId != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TodayStatusCard(subjectId: subject.id, groupId: groupId),
-          ),
+        // Section index chips: scroll-anchored quick links. Tap to
+        // jump to a section. Lightweight; doesn't introduce slivers.
+        const _SectionChips(),
+        const SizedBox(height: 8),
 
         // Alerts (allergies / IEP / meds)
         AlertsSection(subject: subject, caps: caps),
 
         const _SectionGap(),
+        // Quick-observation entry — a frictionless way to log a
+        // one-line "how was Jane today?" without opening the heavier
+        // observation form sheet. Only shown when the viewer can
+        // observe.
+        if (viewer.canObserve && groupId != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _QuickObservation(
+              groupId: groupId,
+              subjectId: subject.id,
+            ),
+          ),
+        if (viewer.canObserve && groupId != null) const _SectionGap(),
+
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Row(
@@ -202,7 +229,7 @@ class _SubjectBody extends ConsumerWidget {
               Text(
                 entriesAsync.value == null
                     ? ''
-                    : '${entriesAsync.value!.length}',
+                    : '$totalObservations',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -238,6 +265,22 @@ class _SubjectBody extends ConsumerWidget {
               children: [
                 for (final e in entries.take(10))
                   SubjectObservationItem(entry: e),
+                if (entries.length > 10)
+                  Padding(
+                    padding:
+                        const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            context.push('/observations'),
+                        icon: const Icon(Icons.unfold_more, size: 16),
+                        label: Text(
+                          'View all ${entries.length}',
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -280,20 +323,30 @@ class _SubjectBody extends ConsumerWidget {
         ),
         ExportsListForSubject(subjectId: subject.id),
 
-        if ((subject.notes ?? '').isNotEmpty) ...[
-          const _SectionGap(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Text('Notes', style: theme.textTheme.titleSmall),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Text(
-              subject.notes!,
-              style: theme.textTheme.bodyMedium,
+        // Notes always visible — placeholder when empty so the
+        // director discovers the affordance instead of forgetting it
+        // exists.
+        const _SectionGap(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Text('Notes', style: theme.textTheme.titleSmall),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Text(
+            (subject.notes ?? '').isEmpty
+                ? 'Anything to remember about ${subject.firstName}?'
+                : subject.notes!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: (subject.notes ?? '').isEmpty
+                  ? theme.colorScheme.onSurfaceVariant
+                  : null,
+              fontStyle: (subject.notes ?? '').isEmpty
+                  ? FontStyle.italic
+                  : null,
             ),
           ),
-        ],
+        ),
       ],
     );
   }
@@ -330,7 +383,144 @@ class _SectionGap extends StatelessWidget {
   const _SectionGap();
 
   @override
-  Widget build(BuildContext context) => const SizedBox(height: 24);
+  Widget build(BuildContext context) => const SizedBox(height: 32);
+}
+
+/// Horizontal scroller of section anchors at the top of the detail
+/// screen. We don't scroll-snap (that would require turning the body
+/// into a sliver-with-keys); instead the chips serve as a visual TOC
+/// and an affordance reminder of what's below.
+class _SectionChips extends StatelessWidget {
+  const _SectionChips();
+
+  static const List<(String, IconData)> _items = [
+    ('Alerts', Icons.health_and_safety_outlined),
+    ('Observations', Icons.menu_book_outlined),
+    ('Attendance', Icons.fact_check_outlined),
+    ('Family', Icons.family_restroom_outlined),
+    ('Pickup', Icons.directions_walk_outlined),
+    ('Reports', Icons.picture_as_pdf_outlined),
+    ('Notes', Icons.sticky_note_2_outlined),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          for (final (label, icon) in _items)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Chip(
+                avatar: Icon(icon, size: 16),
+                label: Text(label, style: theme.textTheme.labelSmall),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Friction-killer for observations. A single TextField that creates
+/// an observation when submitted — no sheet, no photo upload, just a
+/// fast text capture. Empty state nudges with the kid's first name.
+class _QuickObservation extends ConsumerStatefulWidget {
+  const _QuickObservation({required this.groupId, required this.subjectId});
+
+  final String groupId;
+  final String subjectId;
+
+  @override
+  ConsumerState<_QuickObservation> createState() =>
+      _QuickObservationState();
+}
+
+class _QuickObservationState extends ConsumerState<_QuickObservation> {
+  final _ctl = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final body = _ctl.text.trim();
+    if (body.isEmpty || _saving) return;
+    setState(() => _saving = true);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      await ref.read(entryActionsProvider).createObservation(
+            groupId: widget.groupId,
+            subjectId: widget.subjectId,
+            text: body,
+          );
+      if (!mounted) return;
+      _ctl.clear();
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Observation saved.')),
+      );
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'subjects'),
+      );
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Could not save.')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _ctl,
+              minLines: 1,
+              maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Quick observation…',
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              onSubmitted: (_) => _save(),
+            ),
+          ),
+          IconButton.filled(
+            onPressed: _saving ? null : _save,
+            icon: _saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.send),
+            tooltip: 'Save observation',
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// In-card photo strip for the per-child timeline. One photo →

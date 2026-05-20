@@ -136,11 +136,12 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           final hasMatCert = activeCerts.isValid(Certifications.mat.key);
           final hasDriverCert = activeCerts.isValid(Certifications.driver.key);
 
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 32),
-            children: [
-              const SizedBox(height: 56),
-              Center(
+          return DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                const SizedBox(height: 56),
+                Center(
                   child: PersonAvatar(
                     name: member.displayName,
                     photoUrl: member.avatarUrl,
@@ -165,166 +166,293 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-                const SizedBox(height: 24),
-                const _SectionLabel(label: 'Role'),
-                if (canManage)
-                  _RoleSelector(
-                    selected: currentRole,
-                    onChanged: _setRole,
-                  )
-                else
-                  ListTile(
-                    leading: const Icon(Icons.shield_outlined),
-                    title: Text(_roleLabel(currentRole)),
-                    subtitle: const Text(
-                      'Only a director can change roles.',
-                    ),
+                const SizedBox(height: 4),
+                Center(
+                  child: Text(
+                    _roleLabel(currentRole),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                        ),
                   ),
-                const Divider(),
-                const _SectionLabel(label: 'Abilities'),
-                CapSwitch(
-                  label: 'Observe',
-                  subtitle: 'Record developmental observations',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canObserve),
-                  onChanged: (v) => _setCap(MemberCaps.canObserve, v),
                 ),
-                CapSwitch(
-                  label: 'Take attendance',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canTakeAttendance),
-                  onChanged: (v) => _setCap(MemberCaps.canTakeAttendance, v),
+                const SizedBox(height: 12),
+                const TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.center,
+                  tabs: [
+                    Tab(text: 'Profile'),
+                    Tab(text: 'Permissions'),
+                    Tab(text: 'Assignments'),
+                  ],
                 ),
-                CapSwitch(
-                  label: 'Record meals',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canRecordMeal),
-                  onChanged: (v) => _setCap(MemberCaps.canRecordMeal, v),
-                ),
-                CapSwitch(
-                  label: 'Record naps',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canRecordNap),
-                  onChanged: (v) => _setCap(MemberCaps.canRecordNap, v),
-                ),
-                CapSwitch(
-                  label: 'Record diaper changes',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canRecordDiaper),
-                  onChanged: (v) => _setCap(MemberCaps.canRecordDiaper, v),
-                ),
-                CapSwitch(
-                  label: 'Administer medication',
-                  subtitle: hasMatCert
-                      ? 'MAT certification on file'
-                      : (activeCerts.holds(Certifications.mat.key)
-                          ? 'MAT certification has expired'
-                          : 'Add the MAT certification below to enable'),
-                  enabled: canManage && hasMatCert,
-                  value: caps.getBool(MemberCaps.canAdministerMedication),
-                  onChanged: (v) => _setCap(MemberCaps.canAdministerMedication, v),
-                ),
-                CapSwitch(
-                  label: 'Drive (field trips)',
-                  subtitle: hasDriverCert
-                      ? 'Driver record on file'
-                      : (activeCerts.holds(Certifications.driver.key)
-                          ? 'Driver certification has expired'
-                          : 'Add the Driver certification below to enable'),
-                  enabled: canManage && hasDriverCert,
-                  value: caps.getBool(MemberCaps.canDrive),
-                  onChanged: (v) => _setCap(MemberCaps.canDrive, v),
-                ),
-                CapSwitch(
-                  label: 'Open the building',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canOpenBuilding),
-                  onChanged: (v) => _setCap(MemberCaps.canOpenBuilding, v),
-                ),
-                CapSwitch(
-                  label: 'Close the building',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canCloseBuilding),
-                  onChanged: (v) => _setCap(MemberCaps.canCloseBuilding, v),
-                ),
-                CapSwitch(
-                  label: 'Authorize pickup changes',
-                  subtitle: 'Add or remove guardians for a child',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canAuthorizePickup),
-                  onChanged: (v) => _setCap(MemberCaps.canAuthorizePickup, v),
-                ),
-                CapSwitch(
-                  label: 'Invite staff',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canInviteStaff),
-                  onChanged: (v) => _setCap(MemberCaps.canInviteStaff, v),
-                ),
-                CapSwitch(
-                  label: 'View billing',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canViewBilling),
-                  onChanged: (v) => _setCap(MemberCaps.canViewBilling, v),
-                ),
-                CapSwitch(
-                  label: 'Act as director',
-                  subtitle: 'Full admin when the director is offsite',
-                  enabled: canManage,
-                  value: caps.getBool(MemberCaps.canActAsDirector),
-                  onChanged: (v) => _setCap(MemberCaps.canActAsDirector, v),
-                ),
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Text(
-                      _error!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      // -- Tab 1: Profile ----------------------------
+                      ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                        children: [
+                          const _SectionLabel(label: 'Role'),
+                          if (canManage)
+                            _RoleSelector(
+                              selected: currentRole,
+                              onChanged: _setRole,
+                            )
+                          else
+                            ListTile(
+                              leading: const Icon(Icons.shield_outlined),
+                              title: Text(_roleLabel(currentRole)),
+                              subtitle: const Text(
+                                'Only a director can change roles.',
+                              ),
+                            ),
+                          if (_error != null)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                16,
+                                16,
+                                0,
+                              ),
+                              child: Text(
+                                _error!,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .error,
+                                    ),
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
-                  ),
 
-                // Certifications — list of credentials on file. Some
-                // (MAT, Driver) gate specific capabilities above; an
-                // expired cert auto-disables its gated capability.
-                const SizedBox(height: 24),
-                const _SectionLabel(label: 'Certifications'),
-                _CertificationsSection(
-                  active: activeCerts,
-                  onToggle: canManage ? _toggleCert : null,
-                  onSetExpiry: canManage ? _setCertExpiry : null,
+                      // -- Tab 2: Permissions ------------------------
+                      ListView(
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                        children: [
+                          const _SectionLabel(label: 'Abilities'),
+                          CapSwitch(
+                            label: 'Observe',
+                            subtitle:
+                                'Record developmental observations',
+                            enabled: canManage,
+                            value: caps.getBool(MemberCaps.canObserve),
+                            onChanged: (v) =>
+                                _setCap(MemberCaps.canObserve, v),
+                          ),
+                          CapSwitch(
+                            label: 'Take attendance',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canTakeAttendance,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canTakeAttendance,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Record meals',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canRecordMeal,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canRecordMeal,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Record naps',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canRecordNap,
+                            ),
+                            onChanged: (v) =>
+                                _setCap(MemberCaps.canRecordNap, v),
+                          ),
+                          CapSwitch(
+                            label: 'Record diaper changes',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canRecordDiaper,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canRecordDiaper,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Administer medication',
+                            subtitle: hasMatCert
+                                ? 'MAT certification on file'
+                                : (activeCerts.holds(
+                                        Certifications.mat.key)
+                                    ? 'MAT certification has expired'
+                                    : 'Add the MAT certification below to enable'),
+                            enabled: canManage && hasMatCert,
+                            value: caps.getBool(
+                              MemberCaps.canAdministerMedication,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canAdministerMedication,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Drive (field trips)',
+                            subtitle: hasDriverCert
+                                ? 'Driver record on file'
+                                : (activeCerts.holds(
+                                        Certifications.driver.key)
+                                    ? 'Driver certification has expired'
+                                    : 'Add the Driver certification below to enable'),
+                            enabled: canManage && hasDriverCert,
+                            value: caps.getBool(MemberCaps.canDrive),
+                            onChanged: (v) =>
+                                _setCap(MemberCaps.canDrive, v),
+                          ),
+                          CapSwitch(
+                            label: 'Open the building',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canOpenBuilding,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canOpenBuilding,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Close the building',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canCloseBuilding,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canCloseBuilding,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Authorize pickup changes',
+                            subtitle: 'Add or remove guardians for a child',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canAuthorizePickup,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canAuthorizePickup,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Invite staff',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canInviteStaff,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canInviteStaff,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'View billing',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canViewBilling,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canViewBilling,
+                              v,
+                            ),
+                          ),
+                          CapSwitch(
+                            label: 'Act as director',
+                            subtitle:
+                                'Full admin when the director is offsite',
+                            enabled: canManage,
+                            value: caps.getBool(
+                              MemberCaps.canActAsDirector,
+                            ),
+                            onChanged: (v) => _setCap(
+                              MemberCaps.canActAsDirector,
+                              v,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const _SectionLabel(label: 'Certifications'),
+                          _CertificationsSection(
+                            active: activeCerts,
+                            onToggle: canManage ? _toggleCert : null,
+                            onSetExpiry:
+                                canManage ? _setCertExpiry : null,
+                          ),
+                        ],
+                      ),
+
+                      // -- Tab 3: Assignments ------------------------
+                      ListView(
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                        children: [
+                          if (member.role != 'director') ...[
+                            const _SectionLabel(
+                              label: 'Assigned classrooms',
+                            ),
+                            _AssignmentsList(
+                              member: member,
+                              canEdit: canManage,
+                            ),
+                          ] else
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'Directors see every classroom — no '
+                                'specific assignments needed.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                              ),
+                            ),
+                          if (canManage && me?.id != member.id) ...[
+                            const SizedBox(height: 32),
+                            const Divider(),
+                            const _SectionLabel(label: 'Danger zone'),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              child: DestructiveButton(
+                                label: 'Remove from team',
+                                icon:
+                                    Icons.person_remove_alt_1_outlined,
+                                onPressed: _removing
+                                    ? null
+                                    : () => _removeFromTeam(member),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-
-                // Classroom assignments — director assigns this member
-                // to specific rooms. Director themselves doesn't need
-                // assignments (they see all rooms).
-                if (member.role != 'director') ...[
-                  const SizedBox(height: 24),
-                  const _SectionLabel(label: 'Assigned classrooms'),
-                  _AssignmentsList(
-                    member: member,
-                    canEdit: canManage,
-                  ),
-                ],
-
-                const SizedBox(height: 24),
-                // Director-only "Remove from team" — can't remove yourself.
-                if (canManage && me?.id != member.id) ...[
-                  const Divider(),
-                  const _SectionLabel(label: 'Danger zone'),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: DestructiveButton(
-                      label: 'Remove from team',
-                      icon: Icons.person_remove_alt_1_outlined,
-                      onPressed:
-                          _removing ? null : () => _removeFromTeam(member),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 32),
               ],
-            );
+            ),
+          );
         },
       ),
     );

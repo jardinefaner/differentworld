@@ -243,143 +243,213 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
             if (widget.isEdit && subject == null) {
               return const Center(child: Text('Student not found.'));
             }
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 56, 16, 32),
-              children: [
-                ContentHeader(
-                  title: widget.isEdit ? 'Edit student' : 'New student',
-                  subtitle:
-                      widget.isEdit ? null : "Add to this classroom's roster",
-                ),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Photo only when we have an id to attach it to.
-                      if (widget.isEdit && subject != null) ...[
-                        Center(
-                          child: PersonAvatar(
-                            name: '${_firstName.text} ${_lastName.text}',
-                            photoUrl: subject.photoUrl,
-                            radius: 40,
-                            onTap: () => PhotoSourceSheet.show(
-                              context,
-                              entity: PhotoEntity.subject,
-                              entityId: subject.id,
-                              hasExisting: subject.photoUrl != null,
-                              displayName:
-                                  '${subject.firstName} ${subject.lastName}',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+            // The form key + controllers persist across tab switches —
+            // wrapping the TabBarView in a single Form means validation
+            // runs across every tab on save (no "field on another tab
+            // missing required value" surprises).
+            final canRemove = widget.isEdit &&
+                ref.watch(viewerProvider).canManageProgram;
+            return Form(
+              key: _formKey,
+              child: DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 56),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ContentHeader(
+                        title: widget.isEdit ? 'Edit student' : 'New student',
+                        subtitle: widget.isEdit
+                            ? null
+                            : "Add to this classroom's roster",
+                        topGap: 0,
+                        bottomGap: 8,
+                      ),
+                    ),
+                    const TabBar(
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.start,
+                      tabs: [
+                        Tab(text: 'Basics'),
+                        Tab(text: 'Family'),
+                        Tab(text: 'Alerts & notes'),
                       ],
-                      Row(
+                    ),
+                    Expanded(
+                      child: TabBarView(
                         children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _firstName,
-                              autofocus: !widget.isEdit,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'First name',
-                                border: OutlineInputBorder(),
+                          // -- Tab 1: Basics ---------------------------
+                          ListView(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                            children: [
+                              if (widget.isEdit && subject != null) ...[
+                                Center(
+                                  child: PersonAvatar(
+                                    name: '${_firstName.text} '
+                                        '${_lastName.text}',
+                                    photoUrl: subject.photoUrl,
+                                    radius: 48,
+                                    onTap: () => PhotoSourceSheet.show(
+                                      context,
+                                      entity: PhotoEntity.subject,
+                                      entityId: subject.id,
+                                      hasExisting:
+                                          subject.photoUrl != null,
+                                      displayName:
+                                          '${subject.firstName} '
+                                          '${subject.lastName}',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _firstName,
+                                      autofocus: !widget.isEdit,
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                      textInputAction:
+                                          TextInputAction.next,
+                                      decoration: const InputDecoration(
+                                        labelText: 'First name',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (v) =>
+                                          (v == null || v.trim().isEmpty)
+                                              ? 'Required'
+                                              : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _lastName,
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                      textInputAction:
+                                          TextInputAction.next,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Last name',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (v) =>
+                                          (v == null || v.trim().isEmpty)
+                                              ? 'Required'
+                                              : null,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? 'Required'
-                                      : null,
-                            ),
+                              const SizedBox(height: 12),
+                              InkWell(
+                                onTap: _pickDob,
+                                borderRadius: BorderRadius.circular(4),
+                                child: InputDecorator(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Date of birth (optional)',
+                                    border: OutlineInputBorder(),
+                                    suffixIcon: Icon(
+                                      Icons.calendar_today_outlined,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _dob == null
+                                        ? 'Tap to choose'
+                                        : _formatDob(_dob!),
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ),
+                              if (_error != null) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  _error!,
+                                  style: theme.textTheme.bodySmall
+                                      ?.copyWith(
+                                    color: theme.colorScheme.error,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _lastName,
-                              textCapitalization: TextCapitalization.words,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Last name',
-                                border: OutlineInputBorder(),
+                          // -- Tab 2: Family ---------------------------
+                          ListView(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                            children: [
+                              if (widget.isEdit && subject != null)
+                                _GuardiansSection(subjectId: subject.id)
+                              else
+                                Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Text(
+                                    'Save the basics first, then add '
+                                    'guardians here.',
+                                    style: theme.textTheme.bodyMedium
+                                        ?.copyWith(
+                                      color: theme
+                                          .colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          // -- Tab 3: Alerts & notes -------------------
+                          ListView(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                            children: [
+                              TextFormField(
+                                controller: _allergies,
+                                textInputAction: TextInputAction.next,
+                                decoration: const InputDecoration(
+                                  labelText: 'Allergies (optional)',
+                                  hintText: 'e.g. Peanuts, dairy',
+                                  border: OutlineInputBorder(),
+                                ),
                               ),
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty)
-                                      ? 'Required'
-                                      : null,
-                            ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _notes,
+                                minLines: 4,
+                                maxLines: 10,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                decoration: const InputDecoration(
+                                  labelText: 'Notes (optional)',
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                              if (canRemove) ...[
+                                const SizedBox(height: 24),
+                                const Divider(),
+                                const SizedBox(height: 12),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: DestructiveButton(
+                                    label: 'Remove student',
+                                    icon: Icons
+                                        .person_remove_alt_1_outlined,
+                                    onPressed:
+                                        _saving ? null : _delete,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      InkWell(
-                        onTap: _pickDob,
-                        borderRadius: BorderRadius.circular(4),
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Date of birth (optional)',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.calendar_today_outlined),
-                          ),
-                          child: Text(
-                            _dob == null ? 'Tap to choose' : _formatDob(_dob!),
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _allergies,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Allergies (optional)',
-                          hintText: 'e.g. Peanuts, dairy',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _notes,
-                        minLines: 2,
-                        maxLines: 4,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Notes (optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                if (widget.isEdit && subject != null) ...[
-                  const SizedBox(height: 24),
-                  _GuardiansSection(subjectId: subject.id),
-                ],
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                if (widget.isEdit &&
-                    ref.watch(viewerProvider).canManageProgram) ...[
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: DestructiveButton(
-                      label: 'Remove student',
-                      icon: Icons.person_remove_alt_1_outlined,
-                      onPressed: _saving ? null : _delete,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 64),
-              ],
+              ),
             );
           },
         ),

@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_results.dart';
@@ -14,8 +15,11 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:differentworld/shared/widgets/search_bar_pill.dart';
+import 'package:differentworld/shared/widgets/skeleton.dart';
+import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,10 +101,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 key: const ValueKey('today-content'),
                 child: groupsAsync.when(
                   loading: () =>
-                      const LoadingSlot(),
-                  error: (_, _) => const EmptyState(
-                    icon: Icons.error_outline,
+                      const LoadingSlot(variant: LoadingVariant.cards),
+                  error: (_, _) => ErrorState(
                     title: 'Could not load today',
+                    onRetry: () => ref.invalidate(groupsProvider),
                   ),
                   data: (groups) {
                     if (groups.isEmpty) {
@@ -136,15 +140,21 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 child: OmniboxResults(query: _query),
               ),
       ),
-      floatingActionButton: (_searching || !viewer.canManageProgram)
+      // The daily-use FAB is "Capture" — log a quick "I noticed…" from
+      // anywhere on Today without bouncing through Capture inbox.
+      // "Add classroom" is a once-a-term setup action and has been
+      // demoted to the empty-state and Settings.
+      floatingActionButton: _searching
           ? null
           : groupsAsync.maybeWhen(
+              // While loading or empty: no FAB. Once data is in (any
+              // viewer), the capture action is the daily intent.
               data: (groups) => groups.isEmpty
                   ? null
                   : FloatingActionButton.extended(
-                      onPressed: () => context.push('/groups/new'),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Classroom'),
+                      onPressed: () => showCaptureSheet(context),
+                      icon: const Icon(Icons.bolt_outlined),
+                      label: const Text('Capture'),
                     ),
               orElse: () => null,
             ),
@@ -219,7 +229,7 @@ class _ChecklistCallToAction extends StatelessWidget {
   }
 }
 
-class _TodayBody extends StatelessWidget {
+class _TodayBody extends ConsumerWidget {
   const _TodayBody({
     required this.member,
     required this.groups,
@@ -233,7 +243,20 @@ class _TodayBody extends StatelessWidget {
   final Viewer viewer;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Flag-first subtitle: if any classroom has at least one flagged
+    // student, pivot the greeting line to the action-state instead of
+    // a cheery hello. Calmer mornings still get the warm greeting.
+    var totalFlags = 0;
+    var roomsWithFlags = 0;
+    for (final g in groups) {
+      final state = ref.watch(groupDayStateProvider(g)).value;
+      if (state != null && state.hasFlag) {
+        totalFlags += state.flagCount;
+        roomsWithFlags += 1;
+      }
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final formFactor = FormFactor.fromWidth(constraints.maxWidth);
@@ -247,7 +270,14 @@ class _TodayBody extends StatelessWidget {
           children: [
             ContentHeader(
               title: space?.name ?? 'Today',
-              subtitle: _greetingLine(member),
+              subtitle: _subtitleLine(
+                member: member,
+                totalFlags: totalFlags,
+                roomsWithFlags: roomsWithFlags,
+              ),
+              subtitleColor: totalFlags > 0
+                  ? Theme.of(context).colorScheme.error
+                  : null,
             ),
             // Morning Checklist is only useful to staff who can
             // actually mark daily routines — hide for read-only viewers.
@@ -261,12 +291,7 @@ class _TodayBody extends StatelessWidget {
             // Capability-aware one-tap launchpad. Hides itself when the
             // viewer has nothing to launch.
             const QuickActions(),
-            const SizedBox(height: 16),
-            _SectionHeader(
-              label: 'Your classrooms',
-              count: groups.length,
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
             ...groups.map((g) => Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   // RepaintBoundary so an InkWell ripple / re-watch
@@ -280,7 +305,18 @@ class _TodayBody extends StatelessWidget {
     );
   }
 
-  static String _greetingLine(Member? member) {
+  static String _subtitleLine({
+    required Member? member,
+    required int totalFlags,
+    required int roomsWithFlags,
+  }) {
+    if (totalFlags > 0) {
+      final s = totalFlags == 1 ? 'student needs' : 'students need';
+      if (roomsWithFlags == 1) {
+        return '$totalFlags $s your attention';
+      }
+      return '$totalFlags $s your attention · across $roomsWithFlags rooms';
+    }
     final greeting = greetingForTime(DateTime.now());
     final dayLabel = DateFormat.yMMMMEEEEd().format(DateTime.now());
     final name = member?.displayName ?? '';
@@ -289,40 +325,14 @@ class _TodayBody extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.label, required this.count});
-
-  final String label;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            '$count',
-            style: theme.textTheme.labelSmall,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 /// Per-group card on the Today screen: name, today's attendance state,
 /// quick action.
+///
+/// At-a-glance language is a *status dot* on the left: green (done),
+/// amber (in progress), red (untouched / flag), neutral (empty). The
+/// pills underneath act as the act-on detail; the dot alone is enough
+/// to scan a 6-room list in a glance.
 class _GroupTodayCard extends ConsumerWidget {
   const _GroupTodayCard({required this.group});
 
@@ -332,6 +342,10 @@ class _GroupTodayCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final stateAsync = ref.watch(groupDayStateProvider(group));
+
+    final dotKind = stateAsync.value == null
+        ? StatusDotKind.neutral
+        : _dotKindFor(stateAsync.value!);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -347,6 +361,13 @@ class _GroupTodayCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
+                  // Traffic-light scan affordance — the eye lands here
+                  // first, before the room name. Glow ring when a kid
+                  // is flagged so you find that one row in a list of N.
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: StatusDot(kind: dotKind),
+                  ),
                   CircleAvatar(
                     backgroundColor: theme.colorScheme.primaryContainer,
                     foregroundColor: theme.colorScheme.onPrimaryContainer,
@@ -358,28 +379,11 @@ class _GroupTodayCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                group.name,
-                                style: theme.textTheme.titleMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            // Flag badge: there's at least one late /
-                            // absent student today in this room.
-                            stateAsync.maybeWhen(
-                              data: (s) => s.hasFlag
-                                  ? Padding(
-                                      padding: const EdgeInsets.only(left: 6),
-                                      child: _FlagBadge(count: s.flagCount),
-                                    )
-                                  : const SizedBox.shrink(),
-                              orElse: () => const SizedBox.shrink(),
-                            ),
-                          ],
+                        Text(
+                          group.name,
+                          style: theme.textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         if (group.ageRange != null)
                           Text(
@@ -399,13 +403,20 @@ class _GroupTodayCard extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               stateAsync.when(
-                loading: () => const _StateLine(
-                  text: 'Loading attendance…',
-                  color: null,
+                // Shaped skeleton instead of a "Loading…" line — the
+                // layout doesn't jump when the data lands.
+                loading: () => const SkeletonShimmer(
+                  child: Row(
+                    children: [
+                      SkeletonBox(width: 84, height: 22, radius: 11),
+                      SizedBox(width: 8),
+                      SkeletonBox(width: 64, height: 22, radius: 11),
+                    ],
+                  ),
                 ),
-                error: (_, _) => const _StateLine(
-                  text: 'Could not load attendance.',
-                  color: null,
+                error: (_, _) => _StateLine(
+                  text: 'Tap to retry.',
+                  color: theme.colorScheme.error,
                 ),
                 data: (state) =>
                     _DayStateRow(state: state, groupId: group.id),
@@ -415,6 +426,14 @@ class _GroupTodayCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static StatusDotKind _dotKindFor(GroupDayState s) {
+    if (s.hasFlag) return StatusDotKind.needsAttention;
+    if (s.totalSubjects == 0) return StatusDotKind.neutral;
+    if (s.isComplete) return StatusDotKind.calm;
+    if (s.markedCount == 0) return StatusDotKind.needsAttention;
+    return StatusDotKind.progress;
   }
 }
 
@@ -542,45 +561,6 @@ class _StateLine extends StatelessWidget {
       text,
       style: theme.textTheme.bodyMedium?.copyWith(
         color: color ?? theme.colorScheme.onSurfaceVariant,
-      ),
-    );
-  }
-}
-
-/// Small amber capsule shown next to a classroom name when there's at
-/// least one late / absent student today. Draws the eye for the
-/// staff Today scan.
-class _FlagBadge extends StatelessWidget {
-  const _FlagBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final tint = scheme.error;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: tint.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.flag, size: 12, color: tint),
-          const SizedBox(width: 3),
-          Text(
-            '$count',
-            style: TextStyle(
-              color: tint,
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
       ),
     );
   }

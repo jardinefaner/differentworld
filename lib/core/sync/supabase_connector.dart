@@ -170,9 +170,15 @@ class SupabaseConnector extends PowerSyncBackendConnector {
   Map<String, dynamic>? _decodeJsonbColumns(Map<String, dynamic>? opData) {
     if (opData == null) return null;
     const jsonbColumns = <String>{
-      'capabilities', // spaces / members / groups / subjects / invites
+      'capabilities', // spaces / members / groups / subjects / invites / vehicles
       'settings', // spaces
       'details', // entries
+      'answers', // survey_responses — missing this caused every survey
+      //           response to round-trip as a stringified JSON literal,
+      //           so SurveyAnswers.fromJson saw a String not a Map and
+      //           the table view rendered "—" for every cell.
+      'items', // vehicle_logs (checklist payload)
+      'snapshot_json', // exports (the rendered-data snapshot)
     };
     Map<String, dynamic>? next;
     for (final entry in opData.entries) {

@@ -34,6 +34,16 @@ class _MessageThreadScreenState
   final ScrollController _scroll = ScrollController();
   bool _sending = false;
 
+  /// We only auto-jump to the bottom on the FIRST frame the messages
+  /// list resolves with data — after that, the user might be scrolling
+  /// back through history and we mustn't yank them away.
+  bool _didInitialScroll = false;
+
+  /// User toggles the privacy preamble open / closed. It's important
+  /// (legal/PII reminder) but it takes a chunk of the viewport — let
+  /// the user collapse it after reading.
+  bool _showPreamble = true;
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +58,15 @@ class _MessageThreadScreenState
           guardianId: widget.guardianId,
         ),
       );
+    });
+  }
+
+  void _scheduleInitialScrollToBottom() {
+    if (_didInitialScroll) return;
+    _didInitialScroll = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
     });
   }
 
@@ -104,21 +123,73 @@ class _MessageThreadScreenState
       body: Column(
         children: [
           const SizedBox(height: 56),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: ContentHeader(
-              title: 'Messages',
-              subtitle:
-                  'A direct line between family and staff for this '
-                  "child. Don't share medical specifics or anything you "
-                  "wouldn't put in writing.",
-            ),
+          // Privacy preamble — collapsible to a single tap-to-expand
+          // pill once the user has acknowledged it.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _showPreamble
+                ? Stack(
+                    children: [
+                      const ContentHeader(
+                        title: 'Messages',
+                        subtitle:
+                            'A direct line between family and staff for '
+                            "this child. Don't share medical specifics "
+                            "or anything you wouldn't put in writing.",
+                        bottomGap: 8,
+                      ),
+                      Positioned(
+                        top: 56,
+                        right: 0,
+                        child: IconButton(
+                          tooltip: 'Hide reminder',
+                          icon: const Icon(
+                            Icons.keyboard_arrow_up,
+                            size: 20,
+                          ),
+                          onPressed: () =>
+                              setState(() => _showPreamble = false),
+                        ),
+                      ),
+                    ],
+                  )
+                : Padding(
+                    padding: const EdgeInsets.only(top: 56, bottom: 4),
+                    child: Row(
+                      children: [
+                        Text('Messages', style: theme.textTheme.titleLarge),
+                        const Spacer(),
+                        IconButton(
+                          tooltip: 'Show reminder',
+                          icon: const Icon(Icons.info_outline, size: 20),
+                          onPressed: () =>
+                              setState(() => _showPreamble = true),
+                        ),
+                      ],
+                    ),
+                  ),
           ),
           Expanded(
             child: messagesAsync.when(
               loading: () => const LoadingSlot(),
-              error: (_, _) => const Center(
-                child: Text('Could not load this thread.'),
+              error: (_, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Could not load this thread.'),
+                      const SizedBox(height: 12),
+                      FilledButton.tonalIcon(
+                        onPressed: () => ref.invalidate(
+                          messageThreadProvider(threadKey),
+                        ),
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('Try again'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               data: (messages) {
                 if (messages.isEmpty) {
@@ -136,6 +207,9 @@ class _MessageThreadScreenState
                     ),
                   );
                 }
+                // First frame after data lands: jump to the bottom so
+                // the user sees the latest message immediately.
+                _scheduleInitialScrollToBottom();
                 return ListView.builder(
                   controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -269,10 +343,28 @@ class _Composer extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            // Attach affordance — stubbed until photo capture is
+            // wired through the same Supabase Storage path the rest
+            // of the app uses. The button is visible so users learn
+            // the path exists; the actual upload comes next.
+            IconButton(
+              tooltip: 'Attach a photo',
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Photo attachments are coming soon — for now '
+                      'send the photo via email or text.',
+                    ),
+                  ),
+                );
+              },
+            ),
             Expanded(
               child: TextField(
                 controller: controller,
@@ -286,7 +378,7 @@ class _Composer extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             FilledButton.icon(
               onPressed: sending ? null : () => unawaited(onSend()),
               icon: sending

@@ -205,19 +205,6 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
         backFallbackRoute: widget.isEdit
             ? '/settings/vehicles/${widget.vehicleId}'
             : '/settings/vehicles',
-        actions: [
-          IconButton(
-            tooltip: 'Save',
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check),
-          ),
-        ],
         body: vehicleAsync.when(
           loading: () => const LoadingSlot(),
           error: (_, _) =>
@@ -226,7 +213,9 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
             if (widget.isEdit && v == null) {
               return const Center(child: Text('Vehicle not found.'));
             }
-            return ListView(
+            return Stack(
+              children: [
+                ListView(
               padding: const EdgeInsets.fromLTRB(16, 56, 16, 32),
               children: [
                 ContentHeader(
@@ -382,9 +371,45 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 64),
+                const SizedBox(height: 88), // clearance for sticky bar
               ],
-            );
+            ),
+            // Bottom-sticky save bar: always reachable on long forms.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: Container(
+                  color: theme.colorScheme.surface,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _saving ? null : _save,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.check),
+                      label: Text(
+                        widget.isEdit ? 'Save changes' : 'Create vehicle',
+                      ),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
           },
         ),
       ),

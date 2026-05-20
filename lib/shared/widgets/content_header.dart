@@ -16,6 +16,7 @@ class ContentHeader extends StatelessWidget {
     this.bottomGap = 16,
     this.titleStyle,
     this.subtitleStyle,
+    this.subtitleColor,
     this.trailing,
     super.key,
   });
@@ -33,6 +34,11 @@ class ContentHeader extends StatelessWidget {
   final TextStyle? titleStyle;
   final TextStyle? subtitleStyle;
 
+  /// Convenience override for just the subtitle color — useful for the
+  /// flag-first voice on Today / Family Today where the subtitle pivots
+  /// to errorContainer-tone when something needs attention.
+  final Color? subtitleColor;
+
   /// Optional widget rendered to the right of the title (e.g. a
   /// status pill or count chip).
   final Widget? trailing;
@@ -41,10 +47,15 @@ class ContentHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = titleStyle ?? theme.textTheme.headlineSmall;
-    final s = subtitleStyle ??
+    final baseS = subtitleStyle ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         );
+    // Only stomp the color when the caller supplied one — otherwise
+    // copyWith(color: null) erases the inherited onSurfaceVariant.
+    final s = subtitleColor == null
+        ? baseS
+        : baseS?.copyWith(color: subtitleColor);
     return Padding(
       padding: EdgeInsets.only(top: topGap, bottom: bottomGap),
       child: Row(

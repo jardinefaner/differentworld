@@ -5,6 +5,8 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,9 +27,9 @@ class VehiclesListScreen extends ConsumerWidget {
       backFallbackRoute: '/settings',
       body: vehiclesAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load vehicles',
+          onRetry: () => ref.invalidate(vehiclesProvider),
         ),
         data: (vehicles) {
           if (vehicles.isEmpty) {
@@ -87,56 +89,100 @@ class _VehicleTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final latestAsync = ref.watch(latestVehicleLogProvider(vehicle.id));
     final isOut = latestAsync.value?.isCheckout ?? false;
+    final stateUnknown =
+        latestAsync.isLoading && latestAsync.value == null;
 
-    final subtitleParts = <String>[
-      if (vehicle.year != null) vehicle.year!.toString(),
-      if (vehicle.make != null && vehicle.make!.isNotEmpty) vehicle.make!,
-      if (vehicle.model != null && vehicle.model!.isNotEmpty) vehicle.model!,
+    // Subtitle as compact chips — year / make / model / plate. The
+    // plate gets its own chip so a driver eyeballing for "TX-1234"
+    // finds it without parsing a dot-separated sentence.
+    final chips = <Widget>[
+      if (vehicle.year != null) _MetaChip(label: vehicle.year!.toString()),
+      if (vehicle.make != null && vehicle.make!.isNotEmpty)
+        _MetaChip(label: vehicle.make!),
+      if (vehicle.model != null && vehicle.model!.isNotEmpty)
+        _MetaChip(label: vehicle.model!),
       if (vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty)
-        vehicle.licensePlate!.toUpperCase(),
+        _MetaChip(label: vehicle.licensePlate!.toUpperCase(), emphasis: true),
     ];
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      isThreeLine: chips.isNotEmpty,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: CircleAvatar(
         backgroundColor: isOut
-            ? theme.colorScheme.tertiaryContainer
-            : theme.colorScheme.surfaceContainerHighest,
+            ? scheme.tertiaryContainer
+            : scheme.surfaceContainerHighest,
         child: Icon(
           isOut
               ? Icons.local_shipping_outlined
               : Icons.directions_bus_outlined,
           color: isOut
-              ? theme.colorScheme.onTertiaryContainer
-              : theme.colorScheme.onSurfaceVariant,
+              ? scheme.onTertiaryContainer
+              : scheme.onSurfaceVariant,
         ),
       ),
       title: Text(vehicle.name),
-      subtitle: Text(
-        subtitleParts.isEmpty ? '—' : subtitleParts.join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: isOut
-          ? Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Out',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onTertiaryContainer,
-                ),
-              ),
+      subtitle: chips.isEmpty
+          ? const Text('—')
+          : Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Wrap(spacing: 4, runSpacing: 4, children: chips),
+            ),
+      trailing: stateUnknown
+          ? const SkeletonShimmer(
+              child: SkeletonBox(width: 36, height: 22, radius: 11),
             )
-          : const Icon(Icons.chevron_right),
+          : isOut
+              ? Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: scheme.tertiaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Out',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onTertiaryContainer,
+                    ),
+                  ),
+                )
+              : const Icon(Icons.chevron_right),
       onTap: () =>
           context.push('/settings/vehicles/${vehicle.id}'),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label, this.emphasis = false});
+
+  final String label;
+  final bool emphasis;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: emphasis
+            ? scheme.primaryContainer.withValues(alpha: 0.55)
+            : scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: emphasis ? scheme.onPrimaryContainer : scheme.onSurface,
+          fontFeatures: const [FontFeature.tabularFigures()],
+          fontWeight: emphasis ? FontWeight.w700 : null,
+        ),
+      ),
     );
   }
 }

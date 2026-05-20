@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/features/exports/templates/progress_report.dart';
+import 'package:differentworld/features/exports/widgets/send_export_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
@@ -16,6 +18,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
@@ -52,9 +55,10 @@ class _ProgressReportScreenState
       actions: const [SyncStatusIndicator()],
       body: subjectAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load',
+          onRetry: () =>
+              ref.invalidate(subjectByIdProvider(widget.subjectId)),
         ),
         data: (subject) {
           if (subject == null) {
@@ -117,46 +121,44 @@ class _ProgressReportScreenState
             generatedAt: DateTime.now(),
           );
 
+          // Quick stat row: tells the director WHAT'S in the report
+          // before they generate / send. Saves the "send empty report
+          // on a kid who was absent all week" mistake.
+          final observationCount = recentObs.length;
+          final attendanceDays = summary.present +
+              summary.absent +
+              summary.late +
+              summary.earlyPickup +
+              summary.excused;
+          final surveysCount = surveys.length;
+
           return Column(
             children: [
-              const SizedBox(height: 56),
+              const SizedBox(height: 48),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                 child: ContentHeader(
                   title: 'Progress report',
                   subtitle:
                       '${subject.firstName} ${subject.lastName} · '
-                      'last $_windowDays days',
+                      'last $_windowDays days · $observationCount '
+                      'observations · $attendanceDays attendance days · '
+                      '$surveysCount surveys',
+                  topGap: 0,
+                  bottomGap: 8,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _WindowSelect(
-                        days: _windowDays,
-                        onChanged: (d) =>
-                            setState(() => _windowDays = d),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: () => _shareOrPrint(data),
-                      icon: const Icon(Icons.ios_share),
-                      label: const Text('Share / Print'),
-                    ),
-                  ],
-                ),
-              ),
+              // Preview takes the lion's share — controls live in a
+              // bottom bar so the director SEES what's about to leave
+              // their device.
               Expanded(
                 child: PdfPreview(
                   build: (format) async {
                     final doc = await buildProgressReportPdf(data);
                     return doc.save();
                   },
-                  // Hide the built-in toolbar — the Share button above
-                  // is the canonical entry point so we don't have two
+                  // Hide the built-in toolbar — the bottom bar holds
+                  // the canonical entry points so we don't have two
                   // affordances doing the same thing.
                   allowPrinting: false,
                   allowSharing: false,
@@ -165,10 +167,90 @@ class _ProgressReportScreenState
                   canDebug: false,
                 ),
               ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Column(
+                    children: [
+                      // Segmented window selector — faster than a
+                      // dropdown, all four options visible at once.
+                      _WindowSegmented(
+                        days: _windowDays,
+                        onChanged: (d) =>
+                            setState(() => _windowDays = d),
+                      ),
+                      const SizedBox(height: 10),
+                      // Two actions: the canonical "OS share / print"
+                      // path AND an explicit "email guardian directly"
+                      // shortcut. Both create the audit row server-
+                      // side; only one of them actually involves the
+                      // family inbox.
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _shareOrPrint(data),
+                              icon: const Icon(Icons.ios_share),
+                              label: const Text('Share / Print'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () =>
+                                  _emailGuardiansDirectly(data),
+                              icon: const Icon(Icons.mail_outline),
+                              label: const Text('Email guardian'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           );
         },
       ),
+    );
+  }
+
+  /// Generate + persist the PDF, then open the recipient-picker
+  /// sheet — same `send-export` Edge Function pipeline used elsewhere,
+  /// just initiated inline from the preview screen so the director
+  /// doesn't have to bounce out to /exports.
+  Future<void> _emailGuardiansDirectly(ProgressReportData data) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final navigatorCtx = context;
+    final actions = ref.read(exportActionsProvider);
+    final db = await ref.read(appDatabaseProvider.future);
+    await runReported(
+      library: 'exports',
+      messenger: messenger,
+      onError: 'Could not prepare the report for email.',
+      action: () async {
+        final doc = await buildProgressReportPdf(data);
+        final bytes = await doc.save();
+        final exportId = await actions.createAndStore(
+          templateId: 'progress_report',
+          templateVersion: 'v1',
+          format: 'pdf',
+          bytes: bytes,
+          snapshot: {
+            'subjectId': data.subject.id,
+            'windowDays': data.attendanceSummary.windowDays,
+            'generatedAt': data.generatedAt.toIso8601String(),
+          },
+          subjectId: data.subject.id,
+          groupId: data.subject.groupId,
+        );
+        final row = await db.exportsDao.findById(exportId);
+        if (row == null) return;
+        if (!navigatorCtx.mounted) return;
+        await showSendExportSheet(navigatorCtx, export: row);
+      },
     );
   }
 
@@ -267,30 +349,30 @@ class _ProgressReportScreenState
   }
 }
 
-class _WindowSelect extends StatelessWidget {
-  const _WindowSelect({required this.days, required this.onChanged});
+/// Segmented buttons for the time window — all 4 options visible at
+/// once, no modal, single tap to switch. Replaces the old
+/// [DropdownButtonFormField] which buried the same options behind a
+/// menu.
+class _WindowSegmented extends StatelessWidget {
+  const _WindowSegmented({required this.days, required this.onChanged});
 
   final int days;
   final ValueChanged<int> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<int>(
-      initialValue: days,
-      decoration: const InputDecoration(
-        labelText: 'Time window',
-        border: OutlineInputBorder(),
-        isDense: true,
-      ),
-      items: const [
-        DropdownMenuItem(value: 7, child: Text('Last 7 days')),
-        DropdownMenuItem(value: 30, child: Text('Last 30 days')),
-        DropdownMenuItem(value: 90, child: Text('Last 90 days')),
-        DropdownMenuItem(value: 365, child: Text('Last year')),
+    return SegmentedButton<int>(
+      segments: const [
+        ButtonSegment(value: 7, label: Text('7d')),
+        ButtonSegment(value: 30, label: Text('30d')),
+        ButtonSegment(value: 90, label: Text('90d')),
+        ButtonSegment(value: 365, label: Text('1y')),
       ],
-      onChanged: (v) {
-        if (v != null) onChanged(v);
+      selected: {days},
+      onSelectionChanged: (s) {
+        if (s.isNotEmpty) onChanged(s.first);
       },
+      showSelectedIcon: false,
     );
   }
 }

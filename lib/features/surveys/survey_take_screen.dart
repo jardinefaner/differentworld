@@ -9,6 +9,7 @@ import 'package:differentworld/features/surveys/widgets/chibi_smiley.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/progress_dots.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -165,6 +166,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen> {
               answeredScored: answeredScored,
               scoredTotal: t.scored.length,
               atCloseout: atCloseout,
+              saving: _saving,
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -286,7 +288,7 @@ class _ForwardButton extends StatelessWidget {
   }
 }
 
-class _SurveyHeader extends StatelessWidget {
+class _SurveyHeader extends StatefulWidget {
   const _SurveyHeader({
     required this.template,
     required this.subject,
@@ -295,6 +297,7 @@ class _SurveyHeader extends StatelessWidget {
     required this.answeredScored,
     required this.scoredTotal,
     required this.atCloseout,
+    required this.saving,
   });
 
   final SurveyTemplate template;
@@ -305,12 +308,36 @@ class _SurveyHeader extends StatelessWidget {
   final int scoredTotal;
   final bool atCloseout;
 
+  /// When the parent's autosave is in flight, we briefly pulse a cloud
+  /// icon next to the count so the user feels the save commit. Subtle,
+  /// not a snackbar.
+  final bool saving;
+
+  @override
+  State<_SurveyHeader> createState() => _SurveyHeaderState();
+}
+
+class _SurveyHeaderState extends State<_SurveyHeader> {
+  bool _pulseCloud = false;
+
+  @override
+  void didUpdateWidget(covariant _SurveyHeader old) {
+    super.didUpdateWidget(old);
+    if (widget.saving && !old.saving) {
+      setState(() => _pulseCloud = true);
+      Future<void>.delayed(const Duration(milliseconds: 850), () {
+        if (!mounted) return;
+        setState(() => _pulseCloud = false);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final name = subject == null
+    final name = widget.subject == null
         ? 'Survey'
-        : '${subject!.firstName} ${subject!.lastName}';
+        : '${widget.subject!.firstName} ${widget.subject!.lastName}';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -318,16 +345,19 @@ class _SurveyHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (subject != null)
-                PersonAvatar(name: name, photoUrl: subject!.photoUrl),
-              if (subject != null) const SizedBox(width: 12),
+              if (widget.subject != null)
+                PersonAvatar(
+                  name: name,
+                  photoUrl: widget.subject!.photoUrl,
+                ),
+              if (widget.subject != null) const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name, style: theme.textTheme.titleMedium),
                     Text(
-                      '${template.title} · ${template.year}',
+                      '${widget.template.title} · ${widget.template.year}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -335,8 +365,23 @@ class _SurveyHeader extends StatelessWidget {
                   ],
                 ),
               ),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: _pulseCloud
+                    ? Icon(
+                        Icons.cloud_done_outlined,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                        key: const ValueKey('saving'),
+                      )
+                    : const SizedBox(
+                        width: 16,
+                        key: ValueKey('idle'),
+                      ),
+              ),
+              const SizedBox(width: 6),
               Text(
-                '$answeredScored / $scoredTotal',
+                '${widget.answeredScored} / ${widget.scoredTotal}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -344,14 +389,12 @@ class _SurveyHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: atCloseout ? 1 : progressIndex / progressTotal,
-              minHeight: 6,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            ),
+          const SizedBox(height: 10),
+          ProgressDots(
+            count: widget.progressTotal,
+            current: widget.atCloseout
+                ? widget.progressTotal - 1
+                : widget.progressIndex - 1,
           ),
         ],
       ),

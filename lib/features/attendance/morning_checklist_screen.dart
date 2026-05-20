@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,12 +43,32 @@ class _MorningChecklistScreenState
     extends ConsumerState<MorningChecklistScreen> {
   late _Filter _filter;
 
+  /// Bulk-mark gating: the first tap arms; the second tap (within ~3
+  /// seconds) actually fires. Avoids accidental sweeps across N rooms.
+  bool _armed = false;
+  Timer? _armTimer;
+
   @override
   void initState() {
     super.initState();
     _filter = widget.initialFilter == 'unmarked'
         ? _Filter.unmarked
         : _Filter.everyone;
+  }
+
+  @override
+  void dispose() {
+    _armTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armBulk() {
+    _armTimer?.cancel();
+    setState(() => _armed = true);
+    _armTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      setState(() => _armed = false);
+    });
   }
 
   String get _isoDate {
@@ -121,35 +142,12 @@ class _MorningChecklistScreenState
     }
 
     return EdgeScaffold(
-      actions: [
-        PopupMenuButton<_Filter>(
-          tooltip: 'Filter',
-          icon: Icon(
-            _filter == _Filter.everyone
-                ? Icons.filter_list
-                : Icons.filter_alt,
-          ),
-          onSelected: (f) => setState(() => _filter = f),
-          itemBuilder: (_) => [
-            CheckedPopupMenuItem(
-              value: _Filter.everyone,
-              checked: _filter == _Filter.everyone,
-              child: const Text('Everyone'),
-            ),
-            CheckedPopupMenuItem(
-              value: _Filter.unmarked,
-              checked: _filter == _Filter.unmarked,
-              child: const Text('Only unmarked'),
-            ),
-          ],
-        ),
-        const SyncStatusIndicator(),
-      ],
+      actions: const [SyncStatusIndicator()],
       body: dataAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load the checklist',
+          onRetry: () => ref.invalidate(_morningChecklistProvider(_isoDate)),
         ),
         data: (sections) {
           if (sections.isEmpty) {
@@ -168,17 +166,45 @@ class _MorningChecklistScreenState
             subtitle: _filter == _Filter.unmarked
                 ? 'Only students with no status yet'
                 : 'Every student, every classroom',
+            onFilterChanged: (f) => setState(() => _filter = f),
           );
         },
       ),
       floatingActionButton: dataAsync.maybeWhen(
-        data: (sections) => sections.isEmpty
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: () => _markAllPresentEverywhere(sections),
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Mark all present'),
-              ),
+        data: (sections) {
+          if (sections.isEmpty) return null;
+          final totalUnmarked = sections.fold<int>(0, (acc, s) {
+            final marked = s.records.map((r) => r.subjectId).toSet();
+            return acc +
+                s.subjects.where((sub) => !marked.contains(sub.id)).length;
+          });
+          if (totalUnmarked == 0) return null;
+          final scheme = Theme.of(context).colorScheme;
+          return FloatingActionButton.extended(
+            onPressed: () async {
+              if (!_armed) {
+                unawaited(HapticFeedback.selectionClick());
+                _armBulk();
+                return;
+              }
+              _armTimer?.cancel();
+              setState(() => _armed = false);
+              await _markAllPresentEverywhere(sections);
+            },
+            backgroundColor:
+                _armed ? scheme.error : null,
+            foregroundColor:
+                _armed ? scheme.onError : null,
+            icon: Icon(_armed
+                ? Icons.warning_amber_rounded
+                : Icons.check_circle_outline),
+            label: Text(
+              _armed
+                  ? 'Tap again · $totalUnmarked kids'
+                  : 'Mark all present',
+            ),
+          );
+        },
         orElse: () => null,
       ),
     );
@@ -240,77 +266,175 @@ class _ChecklistList extends ConsumerWidget {
     required this.filter,
     required this.date,
     required this.subtitle,
+    required this.onFilterChanged,
   });
 
   final List<_Section> sections;
   final _Filter filter;
   final String date;
   final String subtitle;
+  final ValueChanged<_Filter> onFilterChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = <Widget>[
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: ContentHeader(
-          title: 'Morning checklist',
-          subtitle: subtitle,
-          bottomGap: 8,
-        ),
-      ),
-    ];
-
+    // Aggregate counts for the filter chips so the user knows what's
+    // hiding behind each option before they switch.
+    var totalKids = 0;
+    var totalUnmarked = 0;
+    final filteredSections = <_Section>[];
     for (final s in sections) {
-      final byId = <String, AttendanceStatus>{};
-      for (final r in s.records) {
-        final st = AttendanceStatus.fromDb(r.status);
-        if (st != null) byId[r.subjectId] = st;
-      }
-      final filtered = filter == _Filter.unmarked
-          ? s.subjects.where((sub) => byId[sub.id] == null).toList()
-          : s.subjects;
-      if (filtered.isEmpty) continue;
-
-      final marked = byId.length;
-      final total = s.subjects.length;
-      items.add(_SectionHeader(
-        title: s.group.name,
-        ageRange: s.group.ageRange,
-        marked: marked,
-        total: total,
-      ));
-      for (final sub in filtered) {
-        items.add(_ChecklistRow(
-          groupId: s.group.id,
-          subject: sub,
-          status: byId[sub.id],
-          date: date,
-        ));
-      }
+      final markedIds = <String>{
+        for (final r in s.records)
+          if (AttendanceStatus.fromDb(r.status) != null) r.subjectId,
+      };
+      totalKids += s.subjects.length;
+      totalUnmarked +=
+          s.subjects.where((sub) => !markedIds.contains(sub.id)).length;
+      final keep = filter == _Filter.unmarked
+          ? s.subjects.any((sub) => !markedIds.contains(sub.id))
+          : s.subjects.isNotEmpty;
+      if (keep) filteredSections.add(s);
     }
 
-    if (items.isEmpty) {
-      return EmptyState(
+    if (filteredSections.isEmpty) {
+      if (filter == _Filter.unmarked) {
+        // Celebration: this is the rare feel-good moment in the daily
+        // slog; give it pixels. Bigger icon, a single concrete stat
+        // ("4 classrooms · 23 kids") so the win feels quantified.
+        final rooms = sections.length;
+        final kids = totalKids;
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  size: 96,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Done for today.',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$rooms ${rooms == 1 ? 'classroom' : 'classrooms'} · '
+                  '$kids ${kids == 1 ? 'kid' : 'kids'} accounted for.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Nice work.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      return const EmptyState(
         icon: Icons.task_alt,
-        title: filter == _Filter.unmarked
-            ? 'Nothing left to mark'
-            : 'No students to show',
-        message: filter == _Filter.unmarked
-            ? 'Everyone has a status for today. Great work.'
-            : null,
+        title: 'No students to show',
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 96), // FAB clearance
-      itemCount: items.length,
-      itemBuilder: (_, i) => items[i],
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ContentHeader(
+              title: 'Morning checklist',
+              subtitle: subtitle,
+              bottomGap: 8,
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SegmentedButton<_Filter>(
+              segments: [
+                ButtonSegment(
+                  value: _Filter.everyone,
+                  label: Text('Everyone · $totalKids'),
+                ),
+                ButtonSegment(
+                  value: _Filter.unmarked,
+                  label: Text('Unmarked · $totalUnmarked'),
+                ),
+              ],
+              selected: {filter},
+              onSelectionChanged: (s) {
+                if (s.isNotEmpty) onFilterChanged(s.first);
+              },
+              showSelectedIcon: false,
+            ),
+          ),
+        ),
+        for (final s in filteredSections)
+          _buildSectionSliver(context, ref, s),
+        const SliverToBoxAdapter(child: SizedBox(height: 96)),
+      ],
+    );
+  }
+
+  Widget _buildSectionSliver(
+    BuildContext context,
+    WidgetRef ref,
+    _Section s,
+  ) {
+    final byId = <String, AttendanceStatus>{};
+    for (final r in s.records) {
+      final st = AttendanceStatus.fromDb(r.status);
+      if (st != null) byId[r.subjectId] = st;
+    }
+    final filtered = filter == _Filter.unmarked
+        ? s.subjects.where((sub) => byId[sub.id] == null).toList()
+        : s.subjects;
+    final marked = byId.length;
+    final total = s.subjects.length;
+
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _PinnedSectionHeader(
+            title: s.group.name,
+            ageRange: s.group.ageRange,
+            marked: marked,
+            total: total,
+          ),
+        ),
+        SliverList.builder(
+          itemCount: filtered.length,
+          itemBuilder: (_, i) => _ChecklistRow(
+            groupId: s.group.id,
+            subject: filtered[i],
+            status: byId[filtered[i].id],
+            date: date,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
+class _PinnedSectionHeader extends SliverPersistentHeaderDelegate {
+  _PinnedSectionHeader({
     required this.title,
     required this.ageRange,
     required this.marked,
@@ -323,23 +447,38 @@ class _SectionHeader extends StatelessWidget {
   final int total;
 
   @override
-  Widget build(BuildContext context) {
+  double get minExtent => 44;
+
+  @override
+  double get maxExtent => 44;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+    final scheme = theme.colorScheme;
+    // Tint slightly when pinned and content scrolled underneath so
+    // the header reads as a header, not a free-floating row.
+    return Container(
+      color: scheme.surface,
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(title, style: theme.textTheme.titleMedium),
                 if (ageRange != null && ageRange!.isNotEmpty)
                   Text(
                     ageRange!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
               ],
@@ -348,7 +487,7 @@ class _SectionHeader extends StatelessWidget {
           Text(
             '$marked / $total',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: scheme.onSurfaceVariant,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -356,6 +495,13 @@ class _SectionHeader extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  bool shouldRebuild(_PinnedSectionHeader old) =>
+      old.title != title ||
+      old.ageRange != ageRange ||
+      old.marked != marked ||
+      old.total != total;
 }
 
 class _ChecklistRow extends ConsumerWidget {

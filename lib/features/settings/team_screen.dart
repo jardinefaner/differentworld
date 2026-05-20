@@ -8,7 +8,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
-import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,9 +42,9 @@ class TeamScreen extends ConsumerWidget {
       backFallbackRoute: '/settings',
       body: teamAsync.when(
         loading: () => const LoadingSlot(),
-        error: (e, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (e, _) => ErrorState(
           title: 'Could not load team',
+          onRetry: () => ref.invalidate(_teamProvider(spaceId)),
         ),
         data: (members) {
           return ListView(

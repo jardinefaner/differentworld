@@ -47,7 +47,18 @@ class SurveyAnswers {
   factory SurveyAnswers.fromJson(String? json) {
     if (json == null || json.isEmpty) return SurveyAnswers();
     try {
-      final decoded = jsonDecode(json);
+      var decoded = jsonDecode(json);
+      // Heal rows that landed on the server before the connector
+      // started jsonDecoding 'answers' (pre-fix): jsonb stored a
+      // string literal, so the first jsonDecode returns a String.
+      // Decode once more and accept the result if it's a Map.
+      if (decoded is String) {
+        try {
+          decoded = jsonDecode(decoded);
+        } on FormatException {
+          // Genuine string blob — fall through to empty.
+        }
+      }
       if (decoded is Map<String, dynamic>) return SurveyAnswers(decoded);
       if (decoded is Map) {
         return SurveyAnswers({

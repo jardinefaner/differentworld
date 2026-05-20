@@ -9,14 +9,15 @@ import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
+import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 /// `/observations` — every observation across the program, newest
 /// first, filterable by classroom.
@@ -48,17 +49,7 @@ class _ObservationsIndexScreenState
     final groupsAsync = ref.watch(groupsProvider);
 
     return EdgeScaffold(
-      actions: [
-        if ((groupsAsync.value ?? []).length > 1)
-          IconButton(
-            tooltip: 'Filter classroom',
-            icon: Icon(
-              _groupFilter == null ? Icons.filter_list : Icons.filter_alt,
-            ),
-            onPressed: () => _pickClassroomFilter(groupsAsync.value ?? []),
-          ),
-        const SyncStatusIndicator(),
-      ],
+      actions: const [SyncStatusIndicator()],
       floatingActionButton: viewer.canObserve
           ? FloatingActionButton.extended(
               onPressed: () => startNewObservation(context, ref),
@@ -68,25 +59,23 @@ class _ObservationsIndexScreenState
           : null,
       body: entriesAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => const EmptyState(
-          icon: Icons.error_outline,
+        error: (_, _) => ErrorState(
           title: 'Could not load observations',
+          onRetry: () => ref.invalidate(observationsInSpaceProvider),
         ),
         data: (entries) {
+          final groups = groupsAsync.value ?? const <Group>[];
           final filtered = _groupFilter == null
               ? entries
               : entries.where((e) => e.groupId == _groupFilter).toList();
-          if (filtered.isEmpty) {
+          if (entries.isEmpty) {
             return EmptyState(
               icon: Icons.menu_book_outlined,
-              title: entries.isEmpty
-                  ? 'No observations yet'
-                  : 'No observations match this filter',
-              message: entries.isEmpty
-                  ? 'Logged observations land here so you can scan the whole '
-                      "program's narrative in one place."
-                  : null,
-              action: viewer.canObserve && _groupFilter == null
+              title: 'No observations yet',
+              message:
+                  'Logged observations land here so you can scan the whole '
+                  "program's narrative in one place.",
+              action: viewer.canObserve
                   ? FilledButton.icon(
                       onPressed: () => startNewObservation(context, ref),
                       icon: const Icon(Icons.edit_note_outlined),
@@ -95,79 +84,213 @@ class _ObservationsIndexScreenState
                   : null,
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.only(bottom: 96),
-            itemCount: filtered.length + 1,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: 'Observations',
-                    subtitle: _subtitleFor(
-                      filtered.length,
-                      _groupFilter,
-                      groupsAsync.value ?? const [],
-                    ),
-                  ),
-                );
-              }
-              return _ObservationListItem(entry: filtered[i - 1]);
-            },
+          return _ObservationsFeed(
+            entries: filtered,
+            allCount: entries.length,
+            groups: groups,
+            groupFilter: _groupFilter,
+            onFilterChanged: (g) => setState(() => _groupFilter = g),
           );
         },
       ),
     );
   }
+}
 
-  Future<void> _pickClassroomFilter(List<Group> groups) async {
-    final picked = await showModalBottomSheet<String?>(
-      context: context,
-      useSafeArea: true,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.filter_list_off),
-                title: const Text('All classrooms'),
-                trailing: _groupFilter == null
-                    ? const Icon(Icons.check)
-                    : null,
-                onTap: () => Navigator.of(ctx).pop<String>(),
-              ),
-              const Divider(),
-              for (final g in groups)
-                ListTile(
-                  leading: const Icon(Icons.meeting_room_outlined),
-                  title: Text(g.name),
-                  trailing:
-                      _groupFilter == g.id ? const Icon(Icons.check) : null,
-                  onTap: () => Navigator.of(ctx).pop(g.id),
-                ),
-            ],
+class _ObservationsFeed extends StatelessWidget {
+  const _ObservationsFeed({
+    required this.entries,
+    required this.allCount,
+    required this.groups,
+    required this.groupFilter,
+    required this.onFilterChanged,
+  });
+
+  final List<Entry> entries;
+  final int allCount;
+  final List<Group> groups;
+  final String? groupFilter;
+  final ValueChanged<String?> onFilterChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    // Bucket entries by local day so we can pin a "Today / Yesterday /
+    // Tuesday May 19" header between groups.
+    final byDay = <String, List<Entry>>{};
+    final dayOrder = <String>[];
+    for (final e in entries) {
+      final dt = DateTime.tryParse(e.recordedAt)?.toLocal();
+      if (dt == null) continue;
+      final key = '${dt.year}-${dt.month}-${dt.day}';
+      if (!byDay.containsKey(key)) {
+        dayOrder.add(key);
+        byDay[key] = [];
+      }
+      byDay[key]!.add(e);
+    }
+
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ContentHeader(
+              title: 'Observations',
+              subtitle: _subtitleFor(entries.length, groupFilter, groups),
+              bottomGap: 8,
+            ),
           ),
         ),
-      ),
+        // Classroom chip row — horizontal scroll, single-tap toggle.
+        if (groups.length > 1)
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 44,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _ClassroomChip(
+                    label: 'All',
+                    selected: groupFilter == null,
+                    onTap: () => onFilterChanged(null),
+                  ),
+                  for (final g in groups)
+                    _ClassroomChip(
+                      label: g.name,
+                      selected: groupFilter == g.id,
+                      onTap: () => onFilterChanged(g.id),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        if (entries.isEmpty && allCount > 0)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: Text('No observations match this filter.')),
+            ),
+          ),
+        for (final key in dayOrder) ...[
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _DayHeader(label: _dayLabel(key)),
+          ),
+          SliverList.builder(
+            itemCount: byDay[key]!.length,
+            itemBuilder: (_, i) => _ObservationListItem(
+              entry: byDay[key]![i],
+            ),
+          ),
+        ],
+        const SliverToBoxAdapter(child: SizedBox(height: 96)),
+      ],
     );
-    if (!mounted) return;
-    // Distinguish "user picked null (all classrooms)" from "user
-    // dismissed the sheet." Sheet dismissal returns null too, so we
-    // need a sentinel.
-    setState(() => _groupFilter = picked);
   }
 
-  String _subtitleFor(int count, String? groupId, List<Group> groups) {
+  static String _dayLabel(String key) {
+    final parts = key.split('-').map(int.tryParse).toList();
+    if (parts.length != 3 || parts.any((p) => p == null)) return key;
+    final d = DateTime(parts[0]!, parts[1]!, parts[2]!);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final delta = today.difference(d).inDays;
+    if (delta == 0) return 'Today';
+    if (delta == 1) return 'Yesterday';
+    if (delta < 7) {
+      const dayNames = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ];
+      return dayNames[d.weekday - 1];
+    }
+    return '${d.month}/${d.day}/${d.year % 100}';
+  }
+
+  static String _subtitleFor(int count, String? groupId, List<Group> groups) {
     final base = count == 1 ? '1 entry' : '$count entries';
     if (groupId == null) return '$base · all classrooms';
     final match = groups.where((g) => g.id == groupId).firstOrNull;
     final name = match?.name ?? '—';
     return '$base · $name';
   }
+}
+
+class _ClassroomChip extends StatelessWidget {
+  const _ClassroomChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: selected ? scheme.primary : scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 8,
+            ),
+            child: Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: selected ? scheme.onPrimary : scheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DayHeader extends SliverPersistentHeaderDelegate {
+  _DayHeader({required this.label});
+  final String label;
+
+  @override
+  double get minExtent => 36;
+  @override
+  double get maxExtent => 36;
+
+  @override
+  Widget build(BuildContext context, double shrink, bool overlaps) {
+    final theme = Theme.of(context);
+    return Container(
+      color: theme.colorScheme.surface,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      child: Text(
+        label.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          letterSpacing: 0.6,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_DayHeader old) => old.label != label;
 }
 
 /// Index row — avatar (child) + name + classroom + body + time + photo.
@@ -184,9 +307,8 @@ class _ObservationListItem extends ConsumerWidget {
       attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
     );
     final photos = attachmentsAsync.value?.urls ?? const <String>[];
-    final when = DateTime.tryParse(entry.recordedAt);
-    final whenLabel =
-        when == null ? '' : DateFormat.MMMd().add_jm().format(when.toLocal());
+    final when = DateTime.tryParse(entry.recordedAt)?.toLocal();
+    final whenLabel = relativeTimeAgo(when);
 
     final subjectAsync = entry.subjectId == null
         ? const AsyncValue<Subject?>.data(null)
@@ -215,7 +337,7 @@ class _ObservationListItem extends ConsumerWidget {
         children: [
           Text(
             entry.body ?? '',
-            maxLines: 2,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
@@ -255,8 +377,8 @@ class _IndexPhotoThumb extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 44,
-        height: 44,
+        width: 56,
+        height: 56,
         child: Stack(
           clipBehavior: Clip.none,
           children: [

@@ -79,6 +79,19 @@ class TaskActions {
     await db.tasksDao.updateBody(id: id, body: body);
   }
 
+  /// Bump the due date forward by [days]. If the task had no due date,
+  /// snooze sets one for `today + days`. Used by the swipe-right
+  /// gesture on the Tasks list — "I'll deal with this tomorrow."
+  Future<void> snooze({required String id, int days = 1}) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final base = DateTime.now();
+    final next = DateTime(base.year, base.month, base.day + days);
+    await db.tasksDao.updateDueAt(
+      id: id,
+      dueAt: next.toUtc().toIso8601String(),
+    );
+  }
+
   /// Mark the task done. Stamps `completed_by` with the current
   /// viewer's memberId so the audit trail is preserved.
   Future<void> markDone(String id) async {
