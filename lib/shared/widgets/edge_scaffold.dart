@@ -75,9 +75,25 @@ class EdgeScaffold extends ConsumerStatefulWidget {
 }
 
 class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
+  /// Per-instance opaque key. Identifies THIS EdgeScaffold's chrome
+  /// entry on the stack so pop() in dispose removes the right one
+  /// (and push() in didUpdateWidget updates in place rather than
+  /// stacking duplicates).
+  ///
+  /// `identityHashCode(this)` is unique-per-instance for the life
+  /// of the State object, which matches our lifecycle exactly.
+  late final Object _chromeKey = identityHashCode(this);
+
+  /// Cached notifier handle. We grab it in initState because
+  /// `ref.read` is unsafe in dispose (the element is deactivated by
+  /// then) — having a non-null handle here lets pop() run after
+  /// dispose without touching the ref.
+  RouteChromeNotifier? _notifier;
+
   @override
   void initState() {
     super.initState();
+    _notifier = ref.read(routeChromeProvider.notifier);
     // Defer the first publish — initState fires DURING the widget
     // tree's build phase (the parent route's build is what mounts
     // this widget). Writing to a Riverpod notifier that AppShell is
@@ -106,16 +122,29 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
     }
   }
 
+  @override
+  void dispose() {
+    // Pop our entry off the chrome stack so the previous route's
+    // chrome (still on the stack under us) becomes visible again.
+    // Safe to call synchronously here — the notifier's mutation
+    // schedules AppShell's rebuild for the NEXT frame, after this
+    // dispose has completed.
+    _notifier?.pop(_chromeKey);
+    _notifier = null;
+    super.dispose();
+  }
+
   void _publishChrome() {
     if (!mounted) return;
-    ref.read(routeChromeProvider.notifier).set(
-          RouteChrome(
-            showBack: widget.showBack,
-            backFallbackRoute: widget.backFallbackRoute,
-            actions: widget.actions,
-            topOverlay: widget.topOverlay,
-          ),
-        );
+    _notifier?.push(
+      _chromeKey,
+      RouteChrome(
+        showBack: widget.showBack,
+        backFallbackRoute: widget.backFallbackRoute,
+        actions: widget.actions,
+        topOverlay: widget.topOverlay,
+      ),
+    );
   }
 
   @override

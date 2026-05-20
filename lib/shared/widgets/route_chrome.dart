@@ -7,13 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// built on top of) in initState / didUpdateWidget, and read by
 /// AppShell to paint the chrome layer over the page transition.
 ///
-/// The point of this indirection: when the user pushes a new route,
-/// the page-content slides/fades but the back button and action pill
-/// remain visually anchored. That's the LLM-style "persistent chrome,
-/// transitioning conversation" feel. Without this, the back button
-/// + actions slide with each new screen as part of its scaffold,
-/// which makes the app read as a stack of pages instead of a fluid
-/// surface.
+/// The provider is a STACK underneath — each `push(key, ...)` adds a
+/// new entry; each `pop(key)` removes one; the active chrome is
+/// always the top of the stack. That's the load-bearing trick that
+/// lets back-pop restore the previous route's chrome automatically —
+/// when EdgeScaffold's dispose fires, it pops its own entry, and the
+/// previous route's entry (still on the stack from its earlier push)
+/// becomes the visible chrome again.
 class RouteChrome {
   const RouteChrome({
     this.showBack = false,
@@ -42,26 +42,57 @@ class RouteChrome {
   final Widget? topOverlay;
 }
 
-/// Notifier that holds the active route's chrome. Routes call
-/// `.set(...)` from inside `EdgeScaffold`'s initState /
-/// didUpdateWidget; AppShell watches and paints the chrome at the
-/// top of every frame.
+class _StackEntry {
+  const _StackEntry(this.key, this.chrome);
+  final Object key;
+  final RouteChrome chrome;
+}
+
+/// Notifier that holds the active route's chrome AS A STACK. Each
+/// `EdgeScaffold` push'es its own entry on mount and pop's it on
+/// dispose. The exposed `state` is always the top of the stack (or
+/// default when empty). Watchers (AppShell) read `state` and re-
+/// paint as the top changes.
+///
+/// Why a stack and not a single slot:
+/// - Route A mounts → push A → state = A. AppShell paints A's chrome.
+/// - Route B pushed onto A → push B → stack [A, B], state = B. Paint B.
+/// - Route B popped → pop B → stack `[A]`, state = A. Paint A.
+///
+/// Without the stack, B's chrome would linger on the screen after
+/// popping back to A because A's EdgeScaffold doesn't re-mount and
+/// has no reason to republish its own chrome.
 class RouteChromeNotifier extends Notifier<RouteChrome> {
+  /// Mutable stack — last entry is the active chrome.
+  final List<_StackEntry> _stack = <_StackEntry>[];
+
   @override
   RouteChrome build() => const RouteChrome();
 
-  /// Replace the active chrome wholesale. Diffing happens at the
-  /// caller (EdgeScaffold only writes when its incoming props change),
-  /// not here.
-  // ignore: use_setters_to_change_properties
-  void set(RouteChrome chrome) {
-    state = chrome;
+  /// Add or update the entry for [key]. If [key] is already in the
+  /// stack (typical for didUpdateWidget on the active route), update
+  /// in place — don't reorder.
+  void push(Object key, RouteChrome chrome) {
+    final i = _stack.indexWhere((e) => e.key == key);
+    if (i >= 0) {
+      _stack[i] = _StackEntry(key, chrome);
+    } else {
+      _stack.add(_StackEntry(key, chrome));
+    }
+    state = _stack.isEmpty ? const RouteChrome() : _stack.last.chrome;
   }
 
-  /// Reset to defaults — used when the active route is one that
-  /// doesn't use EdgeScaffold (raw modal, fullscreen photo viewer)
-  /// and the previous route's chrome would otherwise linger.
-  void reset() {
+  /// Remove the entry for [key]. State falls back to whatever entry
+  /// is now at the top (or default when the stack is empty).
+  void pop(Object key) {
+    _stack.removeWhere((e) => e.key == key);
+    state = _stack.isEmpty ? const RouteChrome() : _stack.last.chrome;
+  }
+
+  /// Drop everything — used when the AppShell wants a clean slate
+  /// (e.g. sign-out flushing residual chrome from staff screens).
+  void clear() {
+    _stack.clear();
     state = const RouteChrome();
   }
 }

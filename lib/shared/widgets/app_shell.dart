@@ -6,6 +6,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
@@ -18,6 +19,8 @@ import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/floating_actions.dart';
 import 'package:differentworld/shared/widgets/floating_back.dart';
+import 'package:differentworld/shared/widgets/floating_hamburger.dart';
+import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:differentworld/shared/widgets/route_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -118,14 +121,24 @@ class _AppShellState extends ConsumerState<AppShell> {
     _focus.unfocus();
   }
 
-  /// Paint the active route's chrome (back button + actions OR a
-  /// full-width top overlay) as floating Positioned widgets at the
-  /// top of the AppShell's body Stack. Returns a flat list so the
-  /// caller can spread it directly into Stack.children.
+  /// Paint the active route's chrome (back button / hamburger +
+  /// actions OR a full-width top overlay) as floating Positioned
+  /// widgets at the top of the AppShell's body Stack. Returns a
+  /// flat list so the caller can spread it directly into
+  /// Stack.children.
   ///
-  /// Returns an empty list when the chrome is "nothing" (the default
-  /// pre-EdgeScaffold-mount state, or the home page).
-  List<Widget> _buildTopChrome(RouteChrome chrome, double topInset) {
+  /// Top-left slot logic:
+  /// - chrome.showBack == true → FloatingBack (drill-in)
+  /// - chrome.showBack == false AND drawer available → FloatingHamburger
+  ///   (the drawer is owned by AppShell, so the hamburger calls
+  ///   Scaffold.of(context).openDrawer() and lands on AppShell's
+  ///   Scaffold — no per-route drawer plumbing needed)
+  /// - chrome.showBack == false AND no drawer → nothing
+  List<Widget> _buildTopChrome(
+    RouteChrome chrome,
+    double topInset, {
+    required bool showDrawer,
+  }) {
     // The top overlay (Today's inline search bar) takes over the
     // whole top row.
     if (chrome.topOverlay != null) {
@@ -145,6 +158,14 @@ class _AppShellState extends ConsumerState<AppShell> {
           top: topInset + 8,
           left: 8,
           child: FloatingBack(fallbackRoute: chrome.backFallbackRoute),
+        ),
+      );
+    } else if (showDrawer) {
+      widgets.add(
+        Positioned(
+          top: topInset + 8,
+          left: 8,
+          child: const FloatingHamburger(),
         ),
       );
     }
@@ -350,7 +371,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     required double topInset,
     required bool inKidMode,
   }) {
+    // Drawer ownership lives on AppShell now — every signed-in route
+    // shares the same MainDrawer. The drawer is omitted when the
+    // viewer isn't signed in (login surface) and when kid mode is
+    // locked, so neither path exposes the staff menu.
+    final viewer = ref.watch(viewerProvider);
+    final showDrawer = viewer.isSignedIn && !inKidMode;
     return Scaffold(
+      drawer: showDrawer ? const MainDrawer() : null,
       // `resizeToAvoidBottomInset: true` is the load-bearing piece —
       // it shrinks the body so the keyboard occupies its own space
       // BELOW the body. The omnibox bar lives at the bottom of that
@@ -415,7 +443,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           // the page slides under static chrome — gives the app the
           // single-surface LLM feel (back + actions look anchored;
           // only the conversation/content moves).
-          if (!inKidMode) ..._buildTopChrome(chrome, topInset),
+          if (!inKidMode)
+            ..._buildTopChrome(
+              chrome,
+              topInset,
+              showDrawer: showDrawer,
+            ),
           // Composer at the bottom of the body — sits flush above the
           // keyboard whenever it's up, flush above the home-indicator
           // safe area otherwise. Hidden entirely in kid mode so the
