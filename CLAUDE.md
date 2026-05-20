@@ -877,6 +877,51 @@ empty when you query them, step 7 is the culprit 99% of the time.
 
 ---
 
+## Review pipeline — the council pattern
+
+Single-reviewer agents have correlated blind spots. The review
+pipeline runs THREE perspectives in parallel and a synthesizer
+that catches what they all missed:
+
+1. **Flutter Preflight** — code-correctness via 9 specialist
+   guards (lifecycle, state, async, platform, performance,
+   security, build, flame, sync). Pattern-based.
+2. **Red Team** — adversarial review. SCENARIO-based: "what if a
+   user spams this? what if they're offline mid-flow? what if a
+   kid taps the gesture wrong?" Finds privilege drift, race
+   conditions, edge data, kid-tap exploits, sync edge cases that
+   pattern-matching alone misses.
+3. **UX Critic** — fresh-user review: IA, copy, discoverability,
+   flow, density, empty/loading/error states. Finds buried
+   features (vehicles-off-screen), confusing copy, friction.
+
+Above all three: **Review Council** — orchestrator that spawns
+the three in parallel and synthesizes. The synthesizer looks for
+CROSS-CUTTING findings — things no single reviewer flagged but
+that emerge from combining perspectives (e.g. UX says "user can
+re-tap fast" + Preflight finds no idempotency guard = real
+double-fire bug). It also names coverage gaps when the diff
+touches a domain none of the reviewers cover.
+
+When to invoke:
+- `/ship` runs the Council automatically (step 3 of the checklist)
+- For substantive non-ship changes, run Council explicitly before
+  committing the work that touches user-facing surface, sync, or
+  permissions
+- For small, pure-internal refactors, Preflight alone is fine —
+  Red Team and UX Critic correctly report "nothing for me" on
+  those
+
+The agents live in `~/.claude/agents/`:
+- `red-team.md`
+- `ux-critic.md`
+- `review-council.md`
+- `flutter-preflight.md` (plus 9 specialist guards)
+
+Adding more reviewers later (e.g. a SQL-policy critic, a
+performance-budget critic) — define them in the same dir, then
+wire them into the Council orchestrator's parallel-spawn step.
+
 ## "Done" means
 
 For substantive changes:
