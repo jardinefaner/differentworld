@@ -11,11 +11,16 @@ Individual screens no longer pass `drawer:` to EdgeScaffold.
 
 ## What renders where
 
-- **Top-left, home pages** (chrome.showBack == false, viewer.isSignedIn,
-  not kid mode): **FloatingHamburger** — taps call
-  `Scaffold.of(context).openDrawer()` and land on AppShell's scaffold.
-- **Top-left, drill-in pages** (chrome.showBack == true): **FloatingBack**.
-  The drawer is still accessible via swipe-from-left-edge.
+The hamburger is the GROUND for the app — visible on every signed-in
+route except kid mode, so a user is never more than one tap from the
+top-level destinations.
+
+- **Top-left, home pages** (chrome.showBack == false): **FloatingHamburger**
+  alone in the corner.
+- **Top-left, drill-in pages** (chrome.showBack == true):
+  **FloatingHamburger + FloatingBack in a Row**, hamburger left,
+  back to its right. Both visible, both tappable. The drawer is
+  also accessible via swipe-from-left-edge as a redundant gesture.
 - **Login surface** (viewer.isSignedIn == false): no hamburger, no
   drawer.
 - **Kid mode** (kidModeProvider == true): no hamburger, no drawer, no

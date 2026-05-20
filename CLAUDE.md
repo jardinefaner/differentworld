@@ -937,11 +937,14 @@ do / dictate. Some key invariants:
   through `EdgeScaffold`; don't write to the provider directly.
 - **Hamburger / drawer**: owned by AppShell, NOT per-route. The
   drawer renders on the Scaffold when a signed-in viewer is
-  active; the hamburger pill appears in the top-left when the
-  route's chrome has `showBack: false`. Drill-in screens show
-  `FloatingBack` instead; the drawer is still openable via
-  swipe-from-left-edge. Don't pass `drawer:` to EdgeScaffold — the
-  param is accepted for source compatibility but ignored.
+  active; the hamburger pill is the GROUND — it shows in the
+  top-left on every signed-in route (NOT just home). On drill-in
+  pages, the back arrow renders to the right of the hamburger as
+  a second pill. The intent is "user is never more than one tap
+  from the top-level destinations regardless of how deep they
+  drilled in." Swipe-from-left-edge still works as a redundant
+  drawer gesture. Don't pass `drawer:` to EdgeScaffold — the param
+  is accepted for source compatibility but ignored.
 - **Three chameleon modes** (`OmniboxMode`):
   - `search` — fuzzy matches the catalog (default)
   - `capture` — free text that doesn't match anything in the catalog;

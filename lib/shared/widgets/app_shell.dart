@@ -152,20 +152,34 @@ class _AppShellState extends ConsumerState<AppShell> {
       ];
     }
     final widgets = <Widget>[];
+    // Top-left: drawer hamburger is the ANCHOR — always rendered
+    // for signed-in users so the menu is one tap away from any
+    // route. The back arrow sits to its RIGHT when the navigator
+    // can pop, so drill-ins have both affordances without making
+    // the user choose. (Without this, the drawer was discoverable
+    // only on home pages, and a teacher deep in a drill-in had no
+    // visible way back to top-level destinations.)
+    final leftChrome = <Widget>[];
+    if (showDrawer) {
+      leftChrome.add(const FloatingHamburger());
+    }
     if (chrome.showBack) {
-      widgets.add(
-        Positioned(
-          top: topInset + 8,
-          left: 8,
-          child: FloatingBack(fallbackRoute: chrome.backFallbackRoute),
-        ),
+      if (leftChrome.isNotEmpty) {
+        leftChrome.add(const SizedBox(width: 8));
+      }
+      leftChrome.add(
+        FloatingBack(fallbackRoute: chrome.backFallbackRoute),
       );
-    } else if (showDrawer) {
+    }
+    if (leftChrome.isNotEmpty) {
       widgets.add(
         Positioned(
           top: topInset + 8,
           left: 8,
-          child: const FloatingHamburger(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: leftChrome,
+          ),
         ),
       );
     }

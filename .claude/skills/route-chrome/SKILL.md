@@ -64,14 +64,21 @@ build a new list each time if you want to force republish.
 
 ## Top-left slot logic in AppShell
 
+The hamburger is the GROUND — it shows on every signed-in route so
+the user is never more than one tap from top-level destinations.
+
 ```
 chrome.topOverlay != null   → topOverlay covers left + right
-chrome.showBack == true     → FloatingBack
-chrome.showBack == false &&
-  viewer.isSignedIn &&
-  !inKidMode                → FloatingHamburger
-otherwise                   → nothing
+otherwise the top-left is a Row of (in order):
+  [if showDrawer]   FloatingHamburger
+  [if chrome.showBack] FloatingBack
 ```
+
+So:
+
+- Home pages (showBack: false, signed in, not kid mode): hamburger
+- Drill-in pages (showBack: true): hamburger + back, side-by-side
+- Login / kid mode: nothing in this slot
 
 The hamburger opens AppShell's `Scaffold.drawer` (which is
 `MainDrawer` when signed in). See `hamburger-menu` skill.
