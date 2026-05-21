@@ -100,14 +100,27 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// we're not already on `/search`, push. When the bar loses focus
   /// while we ARE on search, leave the route alone — the user can
   /// re-tap to re-focus without bouncing in and out.
+  ///
+  /// Deferred via `Future.microtask` because focus listeners can
+  /// fire during the widget tree's build phase (route transitions
+  /// re-attach `TextField`s, which can synchronously re-notify
+  /// focus listeners). Calling `context.push()` synchronously from
+  /// inside a build trips Riverpod's
+  /// "modify provider while widget tree was building" assertion
+  /// (same pattern documented for `EdgeScaffold`'s chrome publish
+  /// in CLAUDE.md). The microtask runs after the current sync tick
+  /// but before the next frame, so the navigation still lands in
+  /// the same visible frame.
   void _onFocusChanged() {
     if (!mounted) return;
-    if (_focus.hasFocus) {
+    if (!_focus.hasFocus) return;
+    unawaited(Future.microtask(() {
+      if (!mounted) return;
       final loc = GoRouterState.of(context).matchedLocation;
       if (loc != '/search') {
         unawaited(context.push('/search'));
       }
-    }
+    }));
   }
 
   /// Bar value change. Two writes: keep the controller (already
