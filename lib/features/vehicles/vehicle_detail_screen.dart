@@ -24,7 +24,7 @@ class VehicleDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final viewer = ref.watch(viewerProvider);
-    final canEdit = viewer.canManageProgram;
+    final canEdit = viewer.canManageSpace;
     final canDrive = viewer.canDrive;
     final vehicleAsync = ref.watch(vehicleByIdProvider(vehicleId));
     final latestAsync = ref.watch(latestVehicleLogProvider(vehicleId));

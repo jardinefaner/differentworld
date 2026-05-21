@@ -83,7 +83,7 @@ class QuickActions extends ConsumerWidget {
       // teacher about to leave for a field trip). Director-only
       // "Fleet" sticks here too — admin-side use is OK to surface
       // alongside the operational ones.
-      if (viewer.canDrive || viewer.canManageProgram)
+      if (viewer.canDrive || viewer.canManageSpace)
         _VehicleQuickTile(viewer: viewer),
       // The triage destinations — only surface when there's actually
       // something to triage. Count badge makes the pressure visible.
@@ -121,13 +121,13 @@ class QuickActions extends ConsumerWidget {
       ),
       // Admin / aggregate surfaces — later in the row since they're
       // not daily destinations. Director-only.
-      if (viewer.canManageProgram)
+      if (viewer.canManageSpace)
         _Tile(
           icon: Icons.lightbulb_outline,
           label: 'Insights',
           onTap: () => context.push('/insights'),
         ),
-      if (viewer.canManageProgram || viewer.canInviteStaff)
+      if (viewer.canManageSpace || viewer.canInviteStaff)
         _Tile(
           icon: Icons.groups_outlined,
           label: 'Team',

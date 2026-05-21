@@ -54,7 +54,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
         // Primary verb: add a student (director-only). For everyone
         // else, take-attendance is the most frequent so it takes the
         // primary slot.
-        if (viewer.canManageProgram &&
+        if (viewer.canManageSpace &&
             (subjectsAsync.value?.isNotEmpty ?? false))
           PrimaryActionButton(
             tooltip: 'Add a student',
@@ -70,7 +70,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
           ),
         // Secondary attendance entry when the primary is "add student"
         // (director) — they still take attendance often enough.
-        if (viewer.canManageProgram && viewer.canTakeAttendance)
+        if (viewer.canManageSpace && viewer.canTakeAttendance)
           IconButton(
             tooltip: 'Take attendance',
             icon: const Icon(Icons.fact_check_outlined),
@@ -89,7 +89,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             }
           },
           itemBuilder: (_) => [
-            if (viewer.canObserve || viewer.canManageProgram)
+            if (viewer.canObserve || viewer.canManageSpace)
               const PopupMenuItem(
                 value: 'observations',
                 child: ListTile(
@@ -98,7 +98,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
-            if (group != null && viewer.canManageProgram)
+            if (group != null && viewer.canManageSpace)
               const PopupMenuItem(
                 value: 'edit',
                 child: ListTile(
@@ -123,7 +123,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             // otherwise. Surface the team directory as the next-step
             // affordance so the assistant can ping whoever runs the
             // program.
-            if (viewer.canManageProgram) {
+            if (viewer.canManageSpace) {
               return EmptyState(
                 icon: Icons.child_care_outlined,
                 title: 'No students yet',

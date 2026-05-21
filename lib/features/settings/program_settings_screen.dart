@@ -42,7 +42,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
-    if (!viewer.canManageProgram) {
+    if (!viewer.canManageSpace) {
       return const EdgeScaffold(
         backFallbackRoute: '/settings',
         body: NoAccess(

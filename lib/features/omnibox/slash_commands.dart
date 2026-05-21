@@ -203,7 +203,7 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
   ),
 ];
 
-bool _canTouchVehicles(Viewer v) => v.canDrive || v.canManageProgram;
+bool _canTouchVehicles(Viewer v) => v.canDrive || v.canManageSpace;
 
 void _execAttendance(BuildContext ctx, WidgetRef ref, String? args) {
   if (args == null || args.isEmpty) {

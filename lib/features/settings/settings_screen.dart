@@ -1,4 +1,5 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
@@ -80,7 +81,7 @@ class SettingsScreen extends ConsumerWidget {
               // why with the lock chip + tooltip-snackbar. The
               // affordance stays visible so the new hire learns the
               // permission model.
-              if (viewer.canManageProgram)
+              if (viewer.canManageSpace)
                 ListTile(
                   leading: const Icon(Icons.school_outlined),
                   title: const Text('Program settings'),
@@ -211,13 +212,11 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  String _roleLabel(String? role) => switch (role) {
-    'director' => 'Director',
-    'lead_teacher' => 'Lead teacher',
-    'teacher' => 'Teacher',
-    'assistant' => 'Assistant',
-    _ => '—',
-  };
+  // Use the single RoleLabels source. The "—" empty fallback that
+  // this previously used differs from RoleLabels.of's default
+  // ("Signed in") — but the only call site uses this to subtitle a
+  // member tile, where "Signed in" is the saner default for null.
+  String _roleLabel(String? role) => RoleLabels.of(role);
 
   /// Sign-out is a one-way action that wipes the user's view; a small
   /// confirm step prevents fat-finger accidents on the avatar row.

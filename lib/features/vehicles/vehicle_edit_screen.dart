@@ -143,7 +143,7 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
 
   Future<void> _delete() async {
     if (!widget.isEdit) return;
-    if (!ref.read(viewerProvider).canManageProgram) return;
+    if (!ref.read(viewerProvider).canManageSpace) return;
     final v = ref.read(vehicleByIdProvider(widget.vehicleId!)).value;
     if (v == null) return;
     final confirmed = await confirmDestructive(
@@ -182,7 +182,7 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
-    if (!viewer.canManageProgram) {
+    if (!viewer.canManageSpace) {
       return const EdgeScaffold(
         backFallbackRoute: '/settings/vehicles',
         body: NoAccess(

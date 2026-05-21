@@ -167,7 +167,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
   }
 
   Future<void> _delete() async {
-    if (!ref.read(viewerProvider).canManageProgram) return;
+    if (!ref.read(viewerProvider).canManageSpace) return;
     if (!widget.isEdit) return;
     final s = ref.read(subjectByIdProvider(widget.subjectId!)).value;
     if (s == null) return;
@@ -248,7 +248,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
             // runs across every tab on save (no "field on another tab
             // missing required value" surprises).
             final canRemove = widget.isEdit &&
-                ref.watch(viewerProvider).canManageProgram;
+                ref.watch(viewerProvider).canManageSpace;
             return Form(
               key: _formKey,
               child: DefaultTabController(

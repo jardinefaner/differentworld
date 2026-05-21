@@ -141,7 +141,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   }
 
   Future<void> _delete() async {
-    if (!ref.read(viewerProvider).canManageProgram) return;
+    if (!ref.read(viewerProvider).canManageSpace) return;
     if (!widget.isEdit) return;
     final g = ref.read(_groupByIdProvider(widget.groupId!)).value;
     if (g == null) return;
@@ -337,7 +337,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                 ],
                 const SizedBox(height: 24),
                 if (widget.isEdit &&
-                    ref.watch(viewerProvider).canManageProgram) ...[
+                    ref.watch(viewerProvider).canManageSpace) ...[
                   const Divider(),
                   const SizedBox(height: 12),
                   Padding(

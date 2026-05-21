@@ -40,7 +40,7 @@ class ObservationsScreen extends ConsumerWidget {
       ),
     );
 
-    if (!viewer.canObserve && !viewer.canManageProgram) {
+    if (!viewer.canObserve && !viewer.canManageSpace) {
       return const EdgeScaffold(body: NoAccess());
     }
 

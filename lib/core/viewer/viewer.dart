@@ -1,5 +1,6 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,14 +45,10 @@ class Viewer {
   String get displayName => member?.displayName ?? '';
   String get roleKey => member?.role ?? '';
 
-  /// Localized label for the role. Default-safe.
-  String get roleLabel => switch (roleKey) {
-        'director' => 'Director',
-        'lead_teacher' => 'Lead teacher',
-        'teacher' => 'Teacher',
-        'assistant' => 'Assistant',
-        _ => 'Signed in',
-      };
+  /// Localized label for the role. Routes through the single
+  /// [RoleLabels.of] source (consolidated from 5 duplicate
+  /// switches per the Council audit).
+  String get roleLabel => RoleLabels.of(roleKey);
 
   // ---------------------------------------------------------------------
   // Capability accessors
@@ -95,7 +92,7 @@ class Viewer {
   /// Can change anyone's role / caps, can revoke invites, can change
   /// program-level toggles. Currently == isDirector but kept as its own
   /// name so screens read intent, not impl.
-  bool get canManageProgram => isDirector;
+  bool get canManageSpace => isDirector;
 
   /// True when this viewer sees every classroom in the space implicitly
   /// (directors), regardless of group_members assignment. Non-directors
@@ -217,7 +214,7 @@ class GuardianViewer extends Viewer {
   @override
   bool get isDirector => false;
   @override
-  bool get canManageProgram => false;
+  bool get canManageSpace => false;
   @override
   bool get canInviteStaff => false;
   @override

@@ -478,7 +478,7 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
                   Row(
                     children: [
                       if (_isEdit &&
-                          ref.watch(viewerProvider).canManageProgram)
+                          ref.watch(viewerProvider).canManageSpace)
                         DestructiveButton(
                           label: 'Delete',
                           onPressed: _saving ? null : _delete,

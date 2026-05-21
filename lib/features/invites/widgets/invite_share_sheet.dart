@@ -1,3 +1,4 @@
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
@@ -268,13 +269,7 @@ class _InviteShareSheetState extends ConsumerState<InviteShareSheet> {
     return code;
   }
 
-  static String _roleLabel(String role) => switch (role) {
-        'director' => 'Director',
-        'lead_teacher' => 'Lead teacher',
-        'teacher' => 'Teacher',
-        'assistant' => 'Assistant',
-        _ => role,
-      };
+  static String _roleLabel(String role) => RoleLabels.of(role);
 
   static String _expiresLabel(String? iso) {
     if (iso == null) return 'Never';

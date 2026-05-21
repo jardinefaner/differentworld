@@ -1,3 +1,4 @@
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -145,13 +146,7 @@ class _MemberTile extends StatelessWidget {
     );
   }
 
-  static String _roleLabel(String role) => switch (role) {
-        'director' => 'Director',
-        'lead_teacher' => 'Lead teacher',
-        'teacher' => 'Teacher',
-        'assistant' => 'Assistant',
-        _ => role,
-      };
+  static String _roleLabel(String role) => RoleLabels.of(role);
 }
 
 class _PendingInvitesHeader extends StatelessWidget {

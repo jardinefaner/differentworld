@@ -79,12 +79,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             return EmptyState(
               icon: Icons.meeting_room_outlined,
               title: 'No classrooms yet',
-              message: viewer.canManageProgram
+              message: viewer.canManageSpace
                   ? 'Add your first classroom to start taking '
                       'attendance and logging the day.'
                   : 'Your director will set up classrooms here. '
                       'Check back later.',
-              action: viewer.canManageProgram
+              action: viewer.canManageSpace
                   ? FilledButton.icon(
                       onPressed: () => context.push('/groups/new'),
                       icon: const Icon(Icons.add),

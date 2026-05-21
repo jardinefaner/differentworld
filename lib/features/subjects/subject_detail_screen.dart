@@ -85,7 +85,7 @@ class SubjectDetailScreen extends ConsumerWidget {
               );
             },
           ),
-        if (viewer.canManageProgram && subjectAsync.value != null)
+        if (viewer.canManageSpace && subjectAsync.value != null)
           IconButton(
             tooltip: 'Edit',
             icon: const Icon(Icons.edit_outlined),

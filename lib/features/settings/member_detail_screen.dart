@@ -1,6 +1,7 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/capabilities/certifications.dart';
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -111,7 +112,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     // Editing this screen requires Manage Program rights — director,
     // or a member with canActAsDirector. Renamed from `canManage` for
     // semantic clarity; the gate is the cap, not the role string.
-    final canManage = viewer.canManageProgram;
+    final canManage = viewer.canManageSpace;
     final memberAsync = ref.watch(_memberProvider(widget.memberId));
 
     // No save action — toggles auto-save (UX_DECISIONS §1).
@@ -490,13 +491,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     }
   }
 
-  static String _roleLabel(String role) => switch (role) {
-    'director' => 'Director',
-    'lead_teacher' => 'Lead teacher',
-    'teacher' => 'Teacher',
-    'assistant' => 'Assistant',
-    _ => role,
-  };
+  static String _roleLabel(String role) => RoleLabels.of(role);
 }
 
 // Riverpod 3 family providers don't have a stable public-typed name.

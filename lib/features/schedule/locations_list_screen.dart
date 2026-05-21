@@ -23,7 +23,7 @@ class LocationsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locationsAsync = ref.watch(locationsProvider);
-    final canEdit = ref.watch(viewerProvider).canManageProgram;
+    final canEdit = ref.watch(viewerProvider).canManageSpace;
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       actions: [

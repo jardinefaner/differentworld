@@ -21,7 +21,7 @@ class VehiclesListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
-    final canEditFleet = viewer.canManageProgram;
+    final canEditFleet = viewer.canManageSpace;
     final vehiclesAsync = ref.watch(vehiclesProvider);
 
     return EdgeScaffold(

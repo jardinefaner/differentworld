@@ -6,6 +6,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -203,7 +204,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       keywords: const ['preferences', 'admin', 'config'],
       onSelect: (ctx, _) => ctx.push('/settings'),
     ),
-    if (viewer.canManageProgram)
+    if (viewer.canManageSpace)
       OmniboxEntry(
         id: 'page.program',
         label: 'Program settings',
@@ -234,7 +235,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           unawaited(startNewObservation(ctx, ref));
         },
       ),
-    if (viewer.canManageProgram)
+    if (viewer.canManageSpace)
       OmniboxEntry(
         id: 'action.classroom.new',
         label: 'Add a classroom',
@@ -245,7 +246,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           unawaited(ctx.push('/groups/new'));
         },
       ),
-    if (viewer.canManageProgram)
+    if (viewer.canManageSpace)
       OmniboxEntry(
         id: 'action.vehicle.new',
         label: 'Add a vehicle',
@@ -329,7 +330,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       groupId: 'classroom:${g.id}',
       onSelect: (ctx, _) => ctx.push('/schedule'),
     ));
-    if (viewer.canManageProgram) {
+    if (viewer.canManageSpace) {
       entries.add(OmniboxEntry(
         id: 'classroom:${g.id}:student.new',
         label: 'Add a student · ${g.name}',
@@ -471,10 +472,4 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   return entries;
 });
 
-String _roleLabel(String? role) => switch (role) {
-      'director' => 'Director',
-      'lead_teacher' => 'Lead teacher',
-      'teacher' => 'Teacher',
-      'assistant' => 'Assistant',
-      _ => '—',
-    };
+String _roleLabel(String? role) => RoleLabels.of(role);
