@@ -9,6 +9,7 @@ The fastest path to "where do I look for X." Every other file in
 |---|---|
 | **[PROJECT.md](PROJECT.md)** | One-sentence pitch + what this app IS. Read first if you've never seen the project. |
 | **[APP_GUIDE.md](APP_GUIDE.md)** | The five ways to navigate, the chrome layer, omnibox modes, slash commands, voice, kid mode, feature index by VERB, and how this generalizes to other verticals (construction, healthcare, etc.) |
+| **[ROADMAP.md](ROADMAP.md)** | What's still on the table + the prioritized order to ship things in. The inheritance file for future sessions — check here BEFORE asking "what's next?" |
 | **[PERSONAS.md](PERSONAS.md)** | The three people we're building for — real names, real workflows, real friction. |
 
 ## Roles, abilities, and feature flags
@@ -78,6 +79,7 @@ Triage:
 | Question | First open |
 |---|---|
 | "What does this app do?" | PROJECT.md, then APP_GUIDE.md |
+| "What's next? What should I ship?" | ROADMAP.md |
 | "Who am I building for?" | PERSONAS.md |
 | "What can a {role} do? What does {capability} gate?" | CAPABILITIES.md |
 | "Where does feature X live in the UI?" | APP_GUIDE.md → Feature index |
