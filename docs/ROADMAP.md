@@ -106,7 +106,7 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **Wave 14** — Vertical-aware capability editor. The Member detail
+- **b77a48b** — Vertical-aware capability editor. The Member detail
   Permissions tab now splits "Core abilities" (CoreCaps — vertical-
   agnostic verbs every vertical uses: Observe, Take attendance,
   Drive, Open/Close building, Manage schedule, Invite staff, View
