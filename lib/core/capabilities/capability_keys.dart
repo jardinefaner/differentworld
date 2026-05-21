@@ -20,39 +20,82 @@ abstract class SpaceCaps {
   static const photoDefaultConsent = 'photo_default_consent';
 }
 
-abstract class MemberCaps {
+/// Vertical-agnostic member capabilities. Every vertical we
+/// target (childcare, construction, healthcare, hospitality,
+/// manufacturing) has analogs of these.
+///
+/// **DO NOT add childcare-specific verbs here** (no "diaper" /
+/// "nap" / "pickup" — those belong in [ChildcareCaps]). Per the
+/// Council audit's vertical-readiness blocker #3, the global
+/// capability catalog should split into:
+///
+///   - [CoreCaps] (this class, alias `MemberCaps`) — every vertical
+///   - [ChildcareCaps] — childcare-only
+///   - future: `ConstructionCaps`, `HealthcareCaps`, etc.
+///
+/// MemberCaps is kept as an alias so existing call sites compile
+/// unchanged. New code should reference `CoreCaps.foo` or
+/// `ChildcareCaps.foo` directly; the alias is for migration
+/// convenience only.
+abstract class CoreCaps {
   static const canObserve = 'can_observe';
   static const canTakeAttendance = 'can_take_attendance';
-  static const canRecordMeal = 'can_record_meal';
-  static const canRecordNap = 'can_record_nap';
-  static const canRecordDiaper = 'can_record_diaper';
-  static const canAdministerMedication = 'can_administer_medication';
   static const canDrive = 'can_drive';
   static const canOpenBuilding = 'can_open_building';
   static const canCloseBuilding = 'can_close_building';
-  static const canAuthorizePickup = 'can_authorize_pickup';
   static const canViewBilling = 'can_view_billing';
   static const canInviteStaff = 'can_invite_staff';
   static const canViewAuditLog = 'can_view_audit_log';
   static const canActAsDirector = 'can_act_as_director';
-
-  /// Can edit the camp schedule — create blocks, assign activities,
-  /// schedule field trips. Defaults true for all staff (set per role
-  /// in the capability defaults below); directors can revoke per
-  /// person from member detail.
   static const canManageSchedule = 'can_manage_schedule';
-
-  /// Marks this member as a "specialist" — narrow-scope staff (yoga
-  /// instructor, swim coach, archery lead). Specialists show up in
-  /// the schedule activity lead picker; their Today screen defaults
-  /// to "what am I leading" instead of "what's the whole camp doing."
   static const isSpecialist = 'is_specialist';
-  // Certifications were previously stored as JSONB on this same caps
-  // blob (keys `certifications` + `certification_expirations`). They
-  // are now a first-class entity (`member_certifications` table /
-  // CertActions). See UX_DECISIONS §8 and migration
-  // 20260518000010_member_certifications.sql which backfilled the
-  // existing rows + dropped both keys.
+}
+
+/// Childcare-specific verbs. A construction app would never set
+/// these; a healthcare app would replace `canAuthorizePickup` with
+/// `canSignRelease`, replace `canRecord{Meal,Nap,Diaper}` with
+/// chart-note kinds, etc.
+abstract class ChildcareCaps {
+  static const canRecordMeal = 'can_record_meal';
+  static const canRecordNap = 'can_record_nap';
+  static const canRecordDiaper = 'can_record_diaper';
+  static const canAdministerMedication = 'can_administer_medication';
+  static const canAuthorizePickup = 'can_authorize_pickup';
+}
+
+/// Alias for backward compatibility. Lets the existing call sites
+/// (`MemberCaps.canObserve`, `MemberCaps.canRecordDiaper`, etc.)
+/// keep working while new code migrates to `CoreCaps` / `ChildcareCaps`.
+/// All keys forward to the same string values — no runtime change.
+///
+/// Certifications were previously stored as JSONB on this same caps
+/// blob (keys `certifications` + `certification_expirations`). They
+/// are now a first-class entity (`member_certifications` table /
+/// CertActions). See UX_DECISIONS §8 and migration
+/// 20260518000010_member_certifications.sql which backfilled the
+/// existing rows + dropped both keys.
+abstract class MemberCaps {
+  // Core (vertical-agnostic)
+  static const String canObserve = CoreCaps.canObserve;
+  static const String canTakeAttendance = CoreCaps.canTakeAttendance;
+  static const String canDrive = CoreCaps.canDrive;
+  static const String canOpenBuilding = CoreCaps.canOpenBuilding;
+  static const String canCloseBuilding = CoreCaps.canCloseBuilding;
+  static const String canViewBilling = CoreCaps.canViewBilling;
+  static const String canInviteStaff = CoreCaps.canInviteStaff;
+  static const String canViewAuditLog = CoreCaps.canViewAuditLog;
+  static const String canActAsDirector = CoreCaps.canActAsDirector;
+  static const String canManageSchedule = CoreCaps.canManageSchedule;
+  static const String isSpecialist = CoreCaps.isSpecialist;
+
+  // Childcare-specific (kept here for compat; prefer ChildcareCaps
+  // in new code so it's grep-able by vertical)
+  static const String canRecordMeal = ChildcareCaps.canRecordMeal;
+  static const String canRecordNap = ChildcareCaps.canRecordNap;
+  static const String canRecordDiaper = ChildcareCaps.canRecordDiaper;
+  static const String canAdministerMedication =
+      ChildcareCaps.canAdministerMedication;
+  static const String canAuthorizePickup = ChildcareCaps.canAuthorizePickup;
 }
 
 abstract class GroupCaps {
