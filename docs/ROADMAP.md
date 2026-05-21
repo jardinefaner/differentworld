@@ -107,7 +107,7 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **Wave 13** — Per-vertical RoleBundles. `RoleBundles.defaultsFor`
+- **5dc98c4** — Per-vertical RoleBundles. `RoleBundles.defaultsFor`
   now takes a `vertical:` named param and looks up the bundle from
   per-vertical maps (`_childcare`, `_construction`, `_healthcare`,
   `_hospitality`, `_manufacturing`). Each vertical's bundles use
