@@ -2,6 +2,7 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -176,6 +177,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final labels = ref.watch(verticalLabelsProvider);
     final groupAsync = widget.isEdit
         ? ref.watch(_groupByIdProvider(widget.groupId!))
         : const AsyncValue<Group?>.data(null);
@@ -202,18 +204,26 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
         ],
         body: groupAsync.when(
           loading: () => const LoadingSlot(),
-          error: (_, _) =>
-              const Center(child: Text('Could not load classroom.')),
+          error: (_, _) => Center(
+            child: Text('Could not load ${labels.group.toLowerCase()}.'),
+          ),
           data: (group) {
             if (widget.isEdit && group == null) {
-              return const Center(child: Text('Classroom not found.'));
+              return Center(
+                child: Text('${labels.group} not found.'),
+              );
             }
+            final groupLower = labels.group.toLowerCase();
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 56, 16, 32),
               children: [
                 ContentHeader(
-                  title: widget.isEdit ? 'Edit classroom' : 'New classroom',
-                  subtitle: widget.isEdit ? null : 'Add a room to this program',
+                  title: widget.isEdit
+                      ? 'Edit $groupLower'
+                      : 'New $groupLower',
+                  subtitle: widget.isEdit
+                      ? null
+                      : 'Add a $groupLower to this ${labels.space.toLowerCase()}',
                 ),
                 Form(
                   key: _formKey,
@@ -225,10 +235,10 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
                         autofocus: !widget.isEdit,
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Classroom name',
+                        decoration: InputDecoration(
+                          labelText: '${labels.group} name',
                           hintText: 'e.g. Sunshine Room',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (value) {
                           final v = value?.trim() ?? '';

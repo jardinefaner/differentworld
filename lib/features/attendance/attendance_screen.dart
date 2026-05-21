@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
@@ -127,6 +128,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
+    final labels = ref.watch(verticalLabelsProvider);
     final groupAsync = ref.watch(_groupDetailProvider(widget.groupId));
     final subjectsAsync = ref.watch(subjectsInGroupProvider(widget.groupId));
     final recordsAsync = ref.watch(
@@ -182,11 +184,15 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                 ),
                 data: (subjects) {
                   if (subjects.isEmpty) {
-                    return const EmptyState(
+                    return EmptyState(
                       icon: Icons.child_care_outlined,
-                      title: 'No students in this classroom',
+                      title:
+                          'No ${labels.subjectPlural.toLowerCase()} '
+                          'in this ${labels.group.toLowerCase()}',
                       message:
-                          'Add students first, then come back to take attendance.',
+                          'Add ${labels.subjectPlural.toLowerCase()} '
+                          'first, then come back to take '
+                          '${labels.attendanceNoun.toLowerCase()}.',
                     );
                   }
                   return recordsAsync.when(

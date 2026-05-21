@@ -19,7 +19,7 @@ section headers / stats (Waves 5-6) are in. What's left:
 
 | Item | Effort | Why |
 |---|---|---|
-| Migrate remaining ~50 hardcoded labels in lower-traffic screens (form labels, empty-state copy) | L | Mechanical per-screen, do in batches as touched |
+| Migrate remaining ~30 hardcoded labels in lower-traffic screens (form labels, empty-state copy) | M | Mechanical per-screen, do in batches as touched. Major roster surfaces (group detail / group edit / subject edit / attendance / member detail / settings / drawer) shipped in Waves 14-15. |
 | Per-vertical `ConstructionCaps`/`HealthcareCaps`/etc. classes | M | Needs concrete pilot to justify writing the verbs |
 | `staff_role` Postgres enum overhaul (or drop to text + per-space role catalog) | M | Required for non-childcare role names; schema migration |
 | Schema audit doc — catalog childcare-specific columns (`tracks_diapers`, `pickup_strict`, `student_guardians`, `age_band`) | S | Captures what's left for the actual multi-vertical migration design |
@@ -106,6 +106,20 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **Wave 15** — Roster screens routed through `VerticalLabels`.
+  Group detail (empty state, primary action tooltip, content header
+  title, attendance secondary), group edit (header title, name
+  field label, form chrome), subject edit (header title + subtitle),
+  attendance screen (empty roster state) all now consume
+  `verticalLabelsProvider` and render `labels.group` /
+  `labels.subject` / `labels.subjectPlural` / `labels.space` /
+  `labels.attendanceNoun` instead of hardcoded "Classroom" /
+  "Student" / "Students" / "Program" / "attendance". A
+  hospitality-vertical space sees "Add a Guest" / "No Sections yet";
+  construction sees "Add a Project" / "New Crew"; etc. Lower-
+  traffic screens (omnibox catalog tooltips, exports templates,
+  insights copy) still hardcoded — left for a future incremental
+  pass per the SCHEMA_AUDIT-style approach of "route as touched."
 - **b77a48b** — Vertical-aware capability editor. The Member detail
   Permissions tab now splits "Core abilities" (CoreCaps — vertical-
   agnostic verbs every vertical uses: Observe, Take attendance,

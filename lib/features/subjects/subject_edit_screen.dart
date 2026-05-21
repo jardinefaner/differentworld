@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
@@ -206,6 +207,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final labels = ref.watch(verticalLabelsProvider);
     final subjectAsync = widget.isEdit
         ? ref.watch(subjectByIdProvider(widget.subjectId!))
         : const AsyncValue<Subject?>.data(null);
@@ -259,10 +261,12 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: ContentHeader(
-                        title: widget.isEdit ? 'Edit student' : 'New student',
+                        title: widget.isEdit
+                            ? 'Edit ${labels.subject.toLowerCase()}'
+                            : 'New ${labels.subject.toLowerCase()}',
                         subtitle: widget.isEdit
                             ? null
-                            : "Add to this classroom's roster",
+                            : "Add to this ${labels.group.toLowerCase()}'s roster",
                         topGap: 0,
                         bottomGap: 8,
                       ),

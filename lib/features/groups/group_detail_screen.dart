@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
@@ -43,6 +45,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
+    final labels = ref.watch(verticalLabelsProvider);
     final groupAsync = ref.watch(_groupProvider(widget.groupId));
     final subjectsAsync =
         ref.watch(subjectsInGroupProvider(widget.groupId));
@@ -51,28 +54,28 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     final groupId = widget.groupId;
     return EdgeScaffold(
       actions: [
-        // Primary verb: add a student (director-only). For everyone
+        // Primary verb: add a subject (director-only). For everyone
         // else, take-attendance is the most frequent so it takes the
         // primary slot.
         if (viewer.canManageSpace &&
             (subjectsAsync.value?.isNotEmpty ?? false))
           PrimaryActionButton(
-            tooltip: 'Add a student',
+            tooltip: 'Add a ${labels.subject.toLowerCase()}',
             icon: Icons.person_add_outlined,
             onPressed: () =>
                 context.push('/groups/$groupId/students/new'),
           )
         else if (viewer.canTakeAttendance)
           PrimaryActionButton(
-            tooltip: 'Take attendance',
+            tooltip: 'Take ${labels.attendanceNoun.toLowerCase()}',
             icon: Icons.fact_check_outlined,
             onPressed: () => context.push('/groups/$groupId/attendance'),
           ),
-        // Secondary attendance entry when the primary is "add student"
+        // Secondary attendance entry when the primary is "add subject"
         // (director) — they still take attendance often enough.
         if (viewer.canManageSpace && viewer.canTakeAttendance)
           IconButton(
-            tooltip: 'Take attendance',
+            tooltip: 'Take ${labels.attendanceNoun.toLowerCase()}',
             icon: const Icon(Icons.fact_check_outlined),
             onPressed: () => context.push('/groups/$groupId/attendance'),
           ),
@@ -126,23 +129,25 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             if (viewer.canManageSpace) {
               return EmptyState(
                 icon: Icons.child_care_outlined,
-                title: 'No students yet',
+                title: 'No ${labels.subjectPlural.toLowerCase()} yet',
                 message:
-                    'Add your first student to start taking attendance '
-                    'and logging observations.',
+                    'Add your first ${labels.subject.toLowerCase()} to '
+                    'start taking ${labels.attendanceNoun.toLowerCase()} '
+                    'and logging ${labels.entryPlural.toLowerCase()}.',
                 action: FilledButton.icon(
                   onPressed: () =>
                       context.push('/groups/$groupId/students/new'),
                   icon: const Icon(Icons.add),
-                  label: const Text('Add student'),
+                  label: Text('Add ${labels.subject.toLowerCase()}'),
                 ),
               );
             }
             return EmptyState(
               icon: Icons.child_care_outlined,
-              title: 'No students yet',
+              title: 'No ${labels.subjectPlural.toLowerCase()} yet',
               message:
-                  "Your director will set up this classroom's roster. "
+                  "Your ${RoleLabels.of('director', vertical: labels.vertical).toLowerCase()} "
+                  "will set up this ${labels.group.toLowerCase()}'s roster. "
                   'Need to follow up? Open the team directory.',
               action: FilledButton.tonalIcon(
                 onPressed: () => context.push('/settings/team'),
@@ -173,7 +178,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ContentHeader(
-                    title: group?.name ?? 'Classroom',
+                    title: group?.name ?? labels.group,
                     subtitle: group?.ageRange,
                     bottomGap: 8,
                   ),
