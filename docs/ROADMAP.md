@@ -106,7 +106,7 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **Wave 15** — Roster screens routed through `VerticalLabels`.
+- **938bf14** — Roster screens routed through `VerticalLabels`.
   Group detail (empty state, primary action tooltip, content header
   title, attendance secondary), group edit (header title, name
   field label, form chrome), subject edit (header title + subtitle),
