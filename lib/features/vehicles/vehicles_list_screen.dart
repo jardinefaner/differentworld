@@ -26,8 +26,12 @@ class VehiclesListScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
+      // Chrome '+' is the consistent "add" affordance — always visible
+      // when the viewer can edit, matching locations / activities /
+      // team / etc. Empty state has its own CTA too; that's fine, the
+      // chrome '+' is the GROUND for the verb.
       actions: [
-        if (canEditFleet && (vehiclesAsync.value?.isNotEmpty ?? false))
+        if (canEditFleet)
           PrimaryActionButton(
             tooltip: 'New vehicle',
             icon: Icons.add,

@@ -18,6 +18,7 @@ import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
+import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
@@ -327,6 +328,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (_, _) => const LoginScreen(),
+      ),
+      // The omnibox search screen — pushed when the user taps the
+      // bottom composer. Lives inside the ShellRoute so the persistent
+      // omnibox bar + chrome stay mounted across the push. See Wave 17.
+      GoRoute(
+        path: '/search',
+        builder: (_, _) => const OmniboxSearchScreen(),
       ),
         ],
       ),
