@@ -112,7 +112,19 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **(this commit)** — Schema audit doc (`docs/SCHEMA_AUDIT.md`).
+- **7170cc0** — Lauren "photo of the moment" on Family Today.
+  New `_PhotoOfTheMomentPeek` widget in the child card surfaces
+  today's most recent observation photo at 16:9 with caption + +N
+  badge. Renders nothing when there's nothing to show.
+- **37f664a** — Auto-retry photo queue on connectivity. Added
+  `connectivity_plus: ^7.0.0`; `PhotoUploadQueue.startConnectivityListener()`
+  drains the queue on any transition to wifi / cellular / ethernet
+  / vpn. Cancels on provider dispose.
+- **019ff05** — Jordan outdoor mode. High-contrast theme variant
+  (black background, safety-yellow primary) for bright-sun /
+  outdoor use. New `outdoorModeProvider` + `outdoorTheme()` +
+  Preferences tile.
+- **afd7f51** — Schema audit doc (`docs/SCHEMA_AUDIT.md`).
   Catalogs the childcare-specific bits at the Postgres layer
   (member_role enum, guardians + subject_guardians tables, JSONB
   capability vocabulary) and writes the migration design for
