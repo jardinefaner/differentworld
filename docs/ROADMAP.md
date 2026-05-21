@@ -111,3 +111,10 @@ the inheritance file for future Claude sessions.
 ## Shipped
 
 (Move done items here with their commit hash. Most-recent first.)
+
+- **7d9f6d1** — Sentry wiring. `sentry_flutter: ^9.6.0` added,
+  `main.dart` initializes when `Env.hasSentry` is true (else
+  no-ops). `sendDefaultPii = false`, crash-only sampling,
+  debug/release environment tags. Pre-existing
+  `FlutterError.reportError` calls now route through Sentry
+  automatically.
