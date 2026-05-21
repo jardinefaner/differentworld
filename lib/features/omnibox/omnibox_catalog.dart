@@ -9,6 +9,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
@@ -34,6 +35,7 @@ import 'package:go_router/go_router.dart';
 /// from seeing "Permission denied" snackbars after tapping.
 final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final viewer = ref.watch(viewerProvider);
+  final labels = ref.watch(verticalLabelsProvider);
   final groups = ref.watch(groupsProvider).value ?? const <Group>[];
   final subjects =
       ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
@@ -227,10 +229,17 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     if (viewer.canObserve)
       OmniboxEntry(
         id: 'action.observation.new',
-        label: 'New observation',
+        label: 'New ${labels.entry.toLowerCase()}',
         category: OmniboxCategory.action,
         icon: Icons.edit_note_outlined,
-        keywords: const ['note', 'log', 'observe', 'observation'],
+        keywords: const [
+          'note',
+          'log',
+          'observe',
+          'observation',
+          'chart',
+          'daily update',
+        ],
         onSelect: (ctx, ref) {
           unawaited(startNewObservation(ctx, ref));
         },
@@ -238,10 +247,14 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     if (viewer.canManageSpace)
       OmniboxEntry(
         id: 'action.classroom.new',
-        label: 'Add a classroom',
+        label: 'Add a ${labels.group.toLowerCase()}',
         category: OmniboxCategory.action,
         icon: Icons.add_business_outlined,
-        keywords: const ['new group', 'create room', 'classroom'],
+        // Keep keywords broad — these are SEARCH terms, not display
+        // labels. A construction user might still type "classroom"
+        // out of habit if they came from childcare; we don't want
+        // omnibox to miss them.
+        keywords: const ['new group', 'create room', 'classroom', 'crew'],
         onSelect: (ctx, _) {
           unawaited(ctx.push('/groups/new'));
         },
@@ -333,10 +346,18 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     if (viewer.canManageSpace) {
       entries.add(OmniboxEntry(
         id: 'classroom:${g.id}:student.new',
-        label: 'Add a student · ${g.name}',
+        label: 'Add a ${labels.subject.toLowerCase()} · ${g.name}',
         category: OmniboxCategory.action,
         icon: Icons.person_add_outlined,
-        keywords: const ['new student', 'enroll', 'add kid'],
+        keywords: const [
+          'new student',
+          'new patient',
+          'new project',
+          'new guest',
+          'enroll',
+          'add kid',
+          'add child',
+        ],
         groupId: 'classroom:${g.id}',
         onSelect: (ctx, _) =>
             ctx.push('/groups/${g.id}/students/new'),
@@ -344,7 +365,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     }
   }
 
-  // -- Dynamic: subjects (kids) ----------------------------------------
+  // -- Dynamic: subjects (kids in childcare, patients in healthcare, etc.)
   for (final s in subjects) {
     final fullName = '${s.firstName} ${s.lastName}'.trim();
     final gid = s.groupId;
@@ -354,7 +375,9 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       subtitle: 'Open profile',
       category: OmniboxCategory.person,
       icon: Icons.child_care_outlined,
-      keywords: const ['kid', 'child', 'student'],
+      // Broad search terms so omnibox finds people regardless of
+      // which vertical-noun the user types.
+      keywords: const ['kid', 'child', 'student', 'patient', 'guest'],
       groupId: 'subject:${s.id}',
       onSelect: (ctx, _) {
         if (gid == null) return;
