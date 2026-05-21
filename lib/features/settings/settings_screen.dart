@@ -4,6 +4,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/text_scale_setting.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -143,28 +144,12 @@ class SettingsScreen extends ConsumerWidget {
           // aren't built); the text-size override is live so Helen-
           // type users can boost the UI above their OS dynamic-type
           // slider without leaving Different World.
-          _SettingsGroup(
+          const _SettingsGroup(
             label: 'Preferences',
             children: [
-              const _TextSizeTile(),
-              const _SettingsDivider(),
-              ListTile(
-                leading: const Icon(Icons.brightness_6_outlined),
-                title: const Text('Appearance'),
-                subtitle: const Text(
-                  'Light / Dark / Match the system — coming soon',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Appearance settings are coming soon.',
-                      ),
-                    ),
-                  );
-                },
-              ),
+              _TextSizeTile(),
+              _SettingsDivider(),
+              _OutdoorModeTile(),
             ],
           ),
 
@@ -380,4 +365,69 @@ class _TextSizeTile extends ConsumerWidget {
         TextScaleMode.extraLarge =>
           'Boost more — about 150%. Some labels may wrap.',
       };
+}
+
+/// Outdoor (high-contrast) mode picker. Jordan persona's daily
+/// reality is glare + clipboard + a phone-in-one-hand; the
+/// pastel Material 3 surface tones get washed out. ON forces a
+/// black-background safety-yellow theme regardless of OS
+/// brightness.
+class _OutdoorModeTile extends ConsumerWidget {
+  const _OutdoorModeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final modeAsync = ref.watch(outdoorModeProvider);
+    final mode = modeAsync.value ?? OutdoorMode.systemDefault;
+    return ListTile(
+      leading: const Icon(Icons.wb_sunny_outlined),
+      title: const Text('Outdoor mode'),
+      subtitle: Text(mode.label),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () async {
+        final picked = await showModalBottomSheet<OutdoorMode>(
+          context: context,
+          showDragHandle: true,
+          builder: (sheetContext) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Same RadioGroup pattern as _TextSizeTile —
+                    // post-3.32 supported wrapper, single
+                    // onChanged.
+                    RadioGroup<OutdoorMode>(
+                      groupValue: mode,
+                      onChanged: (m) {
+                        if (m == null) return;
+                        Navigator.of(sheetContext).pop(m);
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final option in OutdoorMode.values)
+                            RadioListTile<OutdoorMode>(
+                              title: Text(option.label),
+                              subtitle: Text(option.description),
+                              value: option,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+        if (picked != null) {
+          await ref.read(outdoorModeProvider.notifier).set(picked);
+        }
+      },
+    );
+  }
 }

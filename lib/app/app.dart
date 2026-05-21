@@ -7,6 +7,7 @@ import 'package:differentworld/core/sync/power_sync_provider.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/features/photos/photo_upload_queue.dart';
+import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/text_scale_setting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,10 +35,18 @@ class DifferentWorldApp extends ConsumerWidget {
     // first frame.
     unawaited(ref.read(photoUploadQueueProvider).processQueue());
     final router = ref.watch(routerProvider);
+    // Outdoor mode (Jordan persona): when on, the high-contrast
+    // theme replaces both the light AND dark slots so the active
+    // theme is the outdoor variant regardless of OS brightness
+    // setting. When off, normal light/dark theme behavior.
+    final outdoorAsync = ref.watch(outdoorModeProvider);
+    final isOutdoor =
+        outdoorAsync.value == OutdoorMode.on;
+    final outdoor = isOutdoor ? outdoorTheme() : null;
     return MaterialApp.router(
       title: 'Different World',
-      theme: buildLightTheme(),
-      darkTheme: buildDarkTheme(),
+      theme: outdoor ?? buildLightTheme(),
+      darkTheme: outdoor ?? buildDarkTheme(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       // Wrap every routed page in:
