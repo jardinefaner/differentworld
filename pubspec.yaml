@@ -61,6 +61,12 @@ dependencies:
   web_socket_channel: ^3.0.3
   permission_handler: ^12.0.1
 
+  # Crash + error reporting. SENTRY_DSN in .env enables; without it,
+  # the init no-ops and errors stay local (FlutterError.reportError
+  # still prints in debug, just doesn't ship anywhere). See docs/
+  # SECRETS.md for the spend-cap + scrubbing posture.
+  sentry_flutter: ^9.6.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
