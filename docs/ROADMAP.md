@@ -110,7 +110,7 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **Wave 10** — Pat substitute handoff. New nullable
+- **e837441** — Pat substitute handoff. New nullable
   `lead_substitute_member_id` column on `public.schedule_blocks`
   (migration `20260520000002_lead_substitutes.sql`); Drift +
   PowerSync schema mirror; `ScheduleDao.watchDayForLead` now
