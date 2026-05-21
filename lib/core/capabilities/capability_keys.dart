@@ -32,6 +32,16 @@ abstract class SpaceCaps {
   /// PIN stored encrypted; for now the program-wide PIN is fine
   /// for the "hand the tablet to a kid" use case.
   static const staffPin = 'staff_pin';
+
+  /// Vertical key for this Space — drives `verticalLabelsProvider`.
+  /// One of: `childcare` / `construction` / `healthcare` /
+  /// `hospitality` / `manufacturing`. Missing or unknown values
+  /// fall back to `childcare` (the current install base).
+  ///
+  /// Stored on the JSONB blob (rather than a dedicated column) so a
+  /// vertical flip is a single capability write, no schema
+  /// migration. The provider re-reads on every Space row update.
+  static const vertical = 'vertical';
 }
 
 /// Vertical-agnostic member capabilities. Every vertical we

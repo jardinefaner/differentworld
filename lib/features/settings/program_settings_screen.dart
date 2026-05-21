@@ -2,6 +2,7 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -36,6 +37,25 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
       messenger: messenger,
       onError: "Couldn't save that change. Try again.",
       action: () => actions.setCap(spaceId, key, value),
+    );
+  }
+
+  /// Vertical picker — flips the entire label system in one write.
+  /// Childcare maps to `null` (the implicit default) so a fresh
+  /// space without the cap stays on childcare.
+  Future<void> _setVertical(String spaceId, String key) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final actions = ref.read(spaceCapActionsProvider);
+    final value = key == 'childcare' ? null : key;
+    await runReported(
+      library: 'settings',
+      messenger: messenger,
+      onError: "Couldn't change the vertical. Try again.",
+      action: () => actions.setStringCap(
+        spaceId,
+        SpaceCaps.vertical,
+        value,
+      ),
     );
   }
 
@@ -80,6 +100,12 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                   subtitle: 'Program settings',
                   bottomGap: 8,
                 ),
+              ),
+              const _SectionLabel(label: 'Vertical'),
+              _VerticalPickerTile(
+                currentKey:
+                    caps.getString(SpaceCaps.vertical) ?? 'childcare',
+                onChanged: (key) => _setVertical(spaceId, key),
               ),
               const _SectionLabel(label: "What's tracked"),
                 CapSwitch(
@@ -195,5 +221,226 @@ class _SectionLabel extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// One-tap vertical switcher. Flipping this re-labels Space / Member /
+/// Group / Subject / Entry across the entire app on the next rebuild.
+///
+/// Renders a single tile so the picker is consistent with the other
+/// settings rows (CapSwitch is the design language). Tapping the
+/// trailing chevron opens a bottom sheet listing the five presets
+/// with their full label preview — picking one auto-saves.
+class _VerticalPickerTile extends StatelessWidget {
+  const _VerticalPickerTile({
+    required this.currentKey,
+    required this.onChanged,
+  });
+
+  final String currentKey;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final current = labelsForVerticalKey(currentKey);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () async {
+            final picked = await showModalBottomSheet<String>(
+              context: context,
+              showDragHandle: true,
+              builder: (_) => _VerticalPickerSheet(currentKey: currentKey),
+            );
+            if (picked != null && picked != currentKey) {
+              onChanged(picked);
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _verticalLabel(currentKey),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        // Mini preview of the engine-noun mapping so
+                        // the director sees what they'd be switching
+                        // to (or already see today).
+                        '${current.space} · ${current.group} · '
+                        '${current.subjectPlural}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _verticalLabel(String key) {
+    switch (key) {
+      case 'construction':
+        return 'Construction';
+      case 'healthcare':
+        return 'Healthcare';
+      case 'hospitality':
+        return 'Hospitality';
+      case 'manufacturing':
+        return 'Manufacturing';
+      case 'childcare':
+      default:
+        return 'Childcare';
+    }
+  }
+}
+
+/// Bottom sheet body for the vertical picker — one row per preset
+/// with its preview line. Tapping pops with the vertical key.
+class _VerticalPickerSheet extends StatelessWidget {
+  const _VerticalPickerSheet({required this.currentKey});
+
+  final String currentKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pick the vertical',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Re-labels Space, Member, Group, Subject, Entry across '
+              'the app. Existing data stays in place; only labels '
+              'change.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final preset in allVerticalPresets)
+              _VerticalPickerRow(
+                preset: preset,
+                selected: preset.vertical == currentKey,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VerticalPickerRow extends StatelessWidget {
+  const _VerticalPickerRow({
+    required this.preset,
+    required this.selected,
+  });
+
+  final VerticalLabels preset;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: selected ? scheme.primaryContainer : scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => Navigator.of(context).pop(preset.vertical),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _label(preset.vertical),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: selected
+                              ? scheme.onPrimaryContainer
+                              : scheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${preset.space} · ${preset.group} · '
+                        '${preset.subjectPlural} · ${preset.entry}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: selected
+                              ? scheme.onPrimaryContainer
+                                  .withValues(alpha: 0.85)
+                              : scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (selected)
+                  Icon(
+                    Icons.check_circle,
+                    color: scheme.onPrimaryContainer,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _label(String key) {
+    switch (key) {
+      case 'construction':
+        return 'Construction';
+      case 'healthcare':
+        return 'Healthcare';
+      case 'hospitality':
+        return 'Hospitality';
+      case 'manufacturing':
+        return 'Manufacturing';
+      case 'childcare':
+      default:
+        return 'Childcare';
+    }
   }
 }

@@ -1,3 +1,6 @@
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Per-vertical UI labels — childcare today, construction / healthcare /
@@ -174,24 +177,41 @@ abstract class _VerticalLabelPresets {
         return childcare;
     }
   }
+
+  /// All vertical keys + their default labels — drives the picker in
+  /// program settings and any catalog UI. Order is "most-built-out
+  /// first" so new installs see childcare on top (the install base
+  /// it's actually shipped against today).
+  static const List<VerticalLabels> allPresets = [
+    childcare,
+    construction,
+    healthcare,
+    hospitality,
+    manufacturing,
+  ];
 }
 
-/// The active vertical's label set. Reads off the signed-in Space's
-/// capabilities (when the vertical column lands; today returns the
-/// childcare default unconditionally).
+/// Convenience accessor for the catalog of vertical presets — used
+/// by the program-settings vertical picker.
+List<VerticalLabels> get allVerticalPresets =>
+    _VerticalLabelPresets.allPresets;
+
+/// The active vertical's label set. Reads
+/// `space.capabilities['vertical']` off the signed-in Space row and
+/// returns the matching preset; missing or unknown keys fall back
+/// to childcare.
 ///
 /// Widgets do `ref.watch(verticalLabelsProvider).subject` instead of
-/// the literal string "Child". When the multi-vertical config lands
-/// on `public.spaces`, this provider is the single hook to swap —
-/// every widget flips together.
+/// the literal string "Child". A director flipping the vertical in
+/// program settings re-emits this provider through `currentSpace
+/// Provider`, and every consuming widget flips together on the next
+/// rebuild.
 final Provider<VerticalLabels> verticalLabelsProvider =
     Provider<VerticalLabels>((ref) {
-  // TODO(vertical): when `space.capabilities['vertical']` is a column, read
-  // it via `ref.watch(currentSpaceProvider).value?.caps['vertical']`
-  // and route through `_VerticalLabelPresets.forKey(key)`. For now
-  // we ship the childcare default — the indirection itself is the
-  // value, so future-me only changes this one line.
-  return _VerticalLabelPresets.childcare;
+  final space = ref.watch(currentSpaceProvider).value;
+  if (space == null) return _VerticalLabelPresets.childcare;
+  final key = space.caps.getString(SpaceCaps.vertical);
+  return _VerticalLabelPresets.forKey(key ?? 'childcare');
 });
 
 /// Cheap accessor for when you don't want the full provider plumbing —

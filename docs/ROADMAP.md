@@ -19,7 +19,6 @@ section headers / stats (Waves 5-6) are in. What's left:
 
 | Item | Effort | Why |
 |---|---|---|
-| Add `vertical text` column to `public.spaces` + read it in `verticalLabelsProvider` | M | Today the provider returns childcare default unconditionally; this completes the story so a multi-vertical install actually swaps labels |
 | Per-vertical `RoleBundles.defaultsFor(vertical, role)` | M | Construction's `foreman/PM/apprentice` needs different cap seeds |
 | Migrate remaining ~50 hardcoded labels in lower-traffic screens (form labels, empty-state copy) | L | Mechanical per-screen, do in batches as touched |
 | Per-vertical `ConstructionCaps`/`HealthcareCaps`/etc. classes | M | Needs concrete pilot to justify writing the verbs |
@@ -110,6 +109,21 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **Wave 11** — Vertical picker on program settings. New `vertical`
+  string capability on `SpaceCaps` (no schema migration — rides
+  the existing `spaces.capabilities` jsonb). `verticalLabelsProvider`
+  now reads `currentSpaceProvider.value.caps.getString('vertical')`
+  and routes through `_VerticalLabelPresets.forKey`, with childcare
+  as the fallback. New `_VerticalPickerTile` + `_VerticalPickerSheet`
+  on Program settings render the 5 presets (Childcare / Construction
+  / Healthcare / Hospitality / Manufacturing) with a preview line
+  showing the Space / Group / Subject / Entry mapping for each.
+  Director taps a row → auto-save → every consuming widget re-labels
+  on the next rebuild. `SpaceCapActions.setStringCap` is the new
+  read-merge-write generic setter for non-boolean cap keys
+  (childcare maps to `null` so a fresh space without the cap stays
+  on the implicit default). Closes the vertical-readiness blocker
+  noted in Council audit.
 - **e837441** — Pat substitute handoff. New nullable
   `lead_substitute_member_id` column on `public.schedule_blocks`
   (migration `20260520000002_lead_substitutes.sql`); Drift +

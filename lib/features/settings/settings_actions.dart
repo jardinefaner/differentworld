@@ -66,6 +66,22 @@ class SpaceCapActions {
     final caps = s.caps.setting(key, value);
     await db.spacesDao.updateCapabilities(spaceId, caps.toJson());
   }
+
+  /// Set or clear a string cap on this Space's caps JSONB. Pass
+  /// `value: null` to remove the key. Used for non-boolean settings
+  /// like the vertical picker (childcare / construction / …) and
+  /// the kid-mode unlock PIN.
+  Future<void> setStringCap(
+    String spaceId,
+    String key,
+    String? value,
+  ) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final s = await db.spacesDao.findById(spaceId);
+    if (s == null) return;
+    final caps = s.caps.setting(key, value);
+    await db.spacesDao.updateCapabilities(spaceId, caps.toJson());
+  }
 }
 
 final spaceCapActionsProvider =
