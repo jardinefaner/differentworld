@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/capabilities/role_labels.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -26,6 +28,9 @@ class MainDrawer extends ConsumerWidget {
     final viewer = ref.watch(viewerProvider);
     final member = viewer.member;
     final space = viewer.space;
+    // Vertical-aware role label so a construction PM doesn't read as
+    // "Project manager" in childcare strings or vice versa.
+    final vertical = ref.watch(verticalLabelsProvider).vertical;
 
     return Drawer(
       child: SafeArea(
@@ -87,7 +92,12 @@ class MainDrawer extends ConsumerWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   Text(
-                                    viewer.roleLabel,
+                                    viewer is GuardianViewer
+                                        ? 'Family'
+                                        : RoleLabels.of(
+                                            viewer.roleKey,
+                                            vertical: vertical,
+                                          ),
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color:
                                           theme.colorScheme.onSurfaceVariant,

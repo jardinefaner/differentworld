@@ -59,7 +59,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 title: Text(member?.displayName ?? '—'),
                 subtitle: Text(
-                  _roleLabel(member?.role),
+                  RoleLabels.of(member?.role, vertical: labels.vertical),
                   style: theme.textTheme.bodySmall,
                 ),
                 trailing: TextButton.icon(
@@ -199,12 +199,6 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
-
-  // Use the single RoleLabels source. The "—" empty fallback that
-  // this previously used differs from RoleLabels.of's default
-  // ("Signed in") — but the only call site uses this to subtitle a
-  // member tile, where "Signed in" is the saner default for null.
-  String _roleLabel(String? role) => RoleLabels.of(role);
 
   /// Sign-out is a one-way action that wipes the user's view; a small
   /// confirm step prevents fat-finger accidents on the avatar row.

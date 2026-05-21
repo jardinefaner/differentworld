@@ -4,6 +4,7 @@ import 'package:differentworld/core/capabilities/certifications.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/groups/group_assignments_providers.dart';
@@ -114,6 +115,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     // semantic clarity; the gate is the cap, not the role string.
     final canManage = viewer.canManageSpace;
     final memberAsync = ref.watch(_memberProvider(widget.memberId));
+    // Pull the active vertical so the role picker + labels render
+    // per-vertical options (childcare's director vs construction's pm
+    // vs healthcare's physician, etc.).
+    final vertical = ref.watch(verticalLabelsProvider).vertical;
 
     // No save action — toggles auto-save (UX_DECISIONS §1).
     return EdgeScaffold(
@@ -170,7 +175,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 const SizedBox(height: 4),
                 Center(
                   child: Text(
-                    _roleLabel(currentRole),
+                    RoleLabels.of(currentRole, vertical: vertical),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context)
                               .colorScheme
@@ -198,13 +203,16 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                           const _SectionLabel(label: 'Role'),
                           if (canManage)
                             _RoleSelector(
+                              vertical: vertical,
                               selected: currentRole,
                               onChanged: _setRole,
                             )
                           else
                             ListTile(
                               leading: const Icon(Icons.shield_outlined),
-                              title: Text(_roleLabel(currentRole)),
+                              title: Text(
+                                RoleLabels.of(currentRole, vertical: vertical),
+                              ),
                               subtitle: const Text(
                                 'Only a director can change roles.',
                               ),
@@ -233,81 +241,38 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       ),
 
                       // -- Tab 2: Permissions ------------------------
+                      // Two sections: vertical-agnostic core verbs
+                      // (observe / take attendance / open-close /
+                      // billing / etc.) and vertical-specific extras
+                      // (childcare-only meal/nap/diaper/pickup; future
+                      // verticals add their own block here).
                       ListView(
                         padding:
                             const EdgeInsets.fromLTRB(16, 8, 16, 32),
                         children: [
-                          const _SectionLabel(label: 'Abilities'),
+                          const _SectionLabel(label: 'Core abilities'),
                           CapSwitch(
                             label: 'Observe',
                             subtitle:
                                 'Record developmental observations',
                             enabled: canManage,
-                            value: caps.getBool(MemberCaps.canObserve),
+                            value: caps.getBool(CoreCaps.canObserve),
                             onChanged: (v) =>
-                                _setCap(MemberCaps.canObserve, v),
+                                _setCap(CoreCaps.canObserve, v),
                           ),
                           CapSwitch(
                             label: 'Take attendance',
                             enabled: canManage,
                             value: caps.getBool(
-                              MemberCaps.canTakeAttendance,
+                              CoreCaps.canTakeAttendance,
                             ),
                             onChanged: (v) => _setCap(
-                              MemberCaps.canTakeAttendance,
+                              CoreCaps.canTakeAttendance,
                               v,
                             ),
                           ),
                           CapSwitch(
-                            label: 'Record meals',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              MemberCaps.canRecordMeal,
-                            ),
-                            onChanged: (v) => _setCap(
-                              MemberCaps.canRecordMeal,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Record naps',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              MemberCaps.canRecordNap,
-                            ),
-                            onChanged: (v) =>
-                                _setCap(MemberCaps.canRecordNap, v),
-                          ),
-                          CapSwitch(
-                            label: 'Record diaper changes',
-                            enabled: canManage,
-                            value: caps.getBool(
-                              MemberCaps.canRecordDiaper,
-                            ),
-                            onChanged: (v) => _setCap(
-                              MemberCaps.canRecordDiaper,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Administer medication',
-                            subtitle: hasMatCert
-                                ? 'MAT certification on file'
-                                : (activeCerts.holds(
-                                        Certifications.mat.key)
-                                    ? 'MAT certification has expired'
-                                    : 'Add the MAT certification below to enable'),
-                            enabled: canManage && hasMatCert,
-                            value: caps.getBool(
-                              MemberCaps.canAdministerMedication,
-                            ),
-                            onChanged: (v) => _setCap(
-                              MemberCaps.canAdministerMedication,
-                              v,
-                            ),
-                          ),
-                          CapSwitch(
-                            label: 'Drive (field trips)',
+                            label: 'Drive',
                             subtitle: hasDriverCert
                                 ? 'Driver record on file'
                                 : (activeCerts.holds(
@@ -315,18 +280,18 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                                     ? 'Driver certification has expired'
                                     : 'Add the Driver certification below to enable'),
                             enabled: canManage && hasDriverCert,
-                            value: caps.getBool(MemberCaps.canDrive),
+                            value: caps.getBool(CoreCaps.canDrive),
                             onChanged: (v) =>
-                                _setCap(MemberCaps.canDrive, v),
+                                _setCap(CoreCaps.canDrive, v),
                           ),
                           CapSwitch(
                             label: 'Open the building',
                             enabled: canManage,
                             value: caps.getBool(
-                              MemberCaps.canOpenBuilding,
+                              CoreCaps.canOpenBuilding,
                             ),
                             onChanged: (v) => _setCap(
-                              MemberCaps.canOpenBuilding,
+                              CoreCaps.canOpenBuilding,
                               v,
                             ),
                           ),
@@ -334,22 +299,21 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             label: 'Close the building',
                             enabled: canManage,
                             value: caps.getBool(
-                              MemberCaps.canCloseBuilding,
+                              CoreCaps.canCloseBuilding,
                             ),
                             onChanged: (v) => _setCap(
-                              MemberCaps.canCloseBuilding,
+                              CoreCaps.canCloseBuilding,
                               v,
                             ),
                           ),
                           CapSwitch(
-                            label: 'Authorize pickup changes',
-                            subtitle: 'Add or remove guardians for a child',
+                            label: 'Manage schedule',
                             enabled: canManage,
                             value: caps.getBool(
-                              MemberCaps.canAuthorizePickup,
+                              CoreCaps.canManageSchedule,
                             ),
                             onChanged: (v) => _setCap(
-                              MemberCaps.canAuthorizePickup,
+                              CoreCaps.canManageSchedule,
                               v,
                             ),
                           ),
@@ -357,10 +321,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             label: 'Invite staff',
                             enabled: canManage,
                             value: caps.getBool(
-                              MemberCaps.canInviteStaff,
+                              CoreCaps.canInviteStaff,
                             ),
                             onChanged: (v) => _setCap(
-                              MemberCaps.canInviteStaff,
+                              CoreCaps.canInviteStaff,
                               v,
                             ),
                           ),
@@ -368,10 +332,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             label: 'View billing',
                             enabled: canManage,
                             value: caps.getBool(
-                              MemberCaps.canViewBilling,
+                              CoreCaps.canViewBilling,
                             ),
                             onChanged: (v) => _setCap(
-                              MemberCaps.canViewBilling,
+                              CoreCaps.canViewBilling,
                               v,
                             ),
                           ),
@@ -381,13 +345,81 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                                 'Full admin when the director is offsite',
                             enabled: canManage,
                             value: caps.getBool(
-                              MemberCaps.canActAsDirector,
+                              CoreCaps.canActAsDirector,
                             ),
                             onChanged: (v) => _setCap(
-                              MemberCaps.canActAsDirector,
+                              CoreCaps.canActAsDirector,
                               v,
                             ),
                           ),
+                          // Vertical-specific extras. Today only
+                          // childcare has a hand-written set; future
+                          // verticals add their own block here.
+                          if (vertical == 'childcare') ...[
+                            const SizedBox(height: 16),
+                            const _SectionLabel(label: 'Childcare verbs'),
+                            CapSwitch(
+                              label: 'Record meals',
+                              enabled: canManage,
+                              value: caps.getBool(
+                                ChildcareCaps.canRecordMeal,
+                              ),
+                              onChanged: (v) => _setCap(
+                                ChildcareCaps.canRecordMeal,
+                                v,
+                              ),
+                            ),
+                            CapSwitch(
+                              label: 'Record naps',
+                              enabled: canManage,
+                              value: caps.getBool(
+                                ChildcareCaps.canRecordNap,
+                              ),
+                              onChanged: (v) =>
+                                  _setCap(ChildcareCaps.canRecordNap, v),
+                            ),
+                            CapSwitch(
+                              label: 'Record diaper changes',
+                              enabled: canManage,
+                              value: caps.getBool(
+                                ChildcareCaps.canRecordDiaper,
+                              ),
+                              onChanged: (v) => _setCap(
+                                ChildcareCaps.canRecordDiaper,
+                                v,
+                              ),
+                            ),
+                            CapSwitch(
+                              label: 'Administer medication',
+                              subtitle: hasMatCert
+                                  ? 'MAT certification on file'
+                                  : (activeCerts.holds(
+                                          Certifications.mat.key)
+                                      ? 'MAT certification has expired'
+                                      : 'Add the MAT certification below to enable'),
+                              enabled: canManage && hasMatCert,
+                              value: caps.getBool(
+                                ChildcareCaps.canAdministerMedication,
+                              ),
+                              onChanged: (v) => _setCap(
+                                ChildcareCaps.canAdministerMedication,
+                                v,
+                              ),
+                            ),
+                            CapSwitch(
+                              label: 'Authorize pickup changes',
+                              subtitle:
+                                  'Add or remove guardians for a child',
+                              enabled: canManage,
+                              value: caps.getBool(
+                                ChildcareCaps.canAuthorizePickup,
+                              ),
+                              onChanged: (v) => _setCap(
+                                ChildcareCaps.canAuthorizePickup,
+                                v,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
                           const _SectionLabel(label: 'Certifications'),
                           _CertificationsSection(
@@ -491,7 +523,6 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     }
   }
 
-  static String _roleLabel(String role) => RoleLabels.of(role);
 }
 
 // Riverpod 3 family providers don't have a stable public-typed name.
@@ -503,31 +534,41 @@ final _memberProvider = StreamProvider.autoDispose.family<Member?, String>(
   },
 );
 
+/// Vertical-aware role picker. Reads the role-key list from
+/// `RoleBundles.rolesFor(vertical)` and labels each chip via
+/// `RoleLabels.of`. Construction sees PM / foreman / etc.;
+/// childcare sees director / lead_teacher / etc.; no hardcoded
+/// role list anywhere in this widget.
+///
+/// Selecting a chip flips the member's role AND re-applies the
+/// per-vertical default cap bundle on top of their existing caps
+/// (`settings_actions.setRole`).
 class _RoleSelector extends StatelessWidget {
-  const _RoleSelector({required this.selected, required this.onChanged});
+  const _RoleSelector({
+    required this.vertical,
+    required this.selected,
+    required this.onChanged,
+  });
 
+  final String vertical;
   final String selected;
   final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    const roles = [
-      ('director', 'Director'),
-      ('lead_teacher', 'Lead teacher'),
-      ('teacher', 'Teacher'),
-      ('assistant', 'Assistant'),
-    ];
+    final roles = RoleBundles.rolesFor(vertical);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Wrap(
         spacing: 8,
+        runSpacing: 4,
         children: [
-          for (final (value, label) in roles)
+          for (final key in roles)
             ChoiceChip(
-              label: Text(label),
-              selected: selected == value,
+              label: Text(RoleLabels.of(key, vertical: vertical)),
+              selected: selected == key,
               onSelected: (s) {
-                if (s) onChanged(value);
+                if (s) onChanged(key);
               },
             ),
         ],

@@ -1,6 +1,7 @@
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/invites/widgets/invite_create_sheet.dart';
@@ -127,26 +128,25 @@ final _teamProvider = StreamProvider.autoDispose.family<List<Member>, String>(
   },
 );
 
-class _MemberTile extends StatelessWidget {
+class _MemberTile extends ConsumerWidget {
   const _MemberTile({required this.member});
 
   final Member member;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vertical = ref.watch(verticalLabelsProvider).vertical;
     return ListTile(
       leading: PersonAvatar(
         name: member.displayName,
         photoUrl: member.avatarUrl,
       ),
       title: Text(member.displayName),
-      subtitle: Text(_roleLabel(member.role)),
+      subtitle: Text(RoleLabels.of(member.role, vertical: vertical)),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/settings/team/${member.id}'),
     );
   }
-
-  static String _roleLabel(String role) => RoleLabels.of(role);
 }
 
 class _PendingInvitesHeader extends StatelessWidget {

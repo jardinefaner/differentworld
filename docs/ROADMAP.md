@@ -65,7 +65,6 @@ work that doesn't need a feature decision.
 
 | Item | Effort | Why |
 |---|---|---|
-| Capability editor UI (per-Member overrides) | M | Schema exists; UI partial |
 | Field trip flow polish (permission slips + headcounts) | M | Schema shipped; UX end-to-end test needed |
 | Multi-program switcher in drawer | M (mis-classified as S earlier) | Single-program design today; needs schema migration to support a user belonging to multiple spaces (today `members.id = auth.uid()`, so one user = one member = one space). New table `user_spaces (user_id, space_id, role, caps)` would unblock it. Defer until a real multi-program use case lands. |
 | Family-side UI polish (`FamilyTodayScreen` outlined but partial) | M | Family-login model is in; UI bare |
@@ -107,6 +106,28 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **Wave 14** — Vertical-aware capability editor. The Member detail
+  Permissions tab now splits "Core abilities" (CoreCaps — vertical-
+  agnostic verbs every vertical uses: Observe, Take attendance,
+  Drive, Open/Close building, Manage schedule, Invite staff, View
+  billing, Act as director) from "Childcare verbs" (gated by
+  `verticalLabelsProvider.vertical == 'childcare'`). When a
+  director flips the space to construction / healthcare / etc.,
+  the childcare block hides automatically and only the agnostic
+  switches remain — no nonsense "Record diaper changes" toggle on
+  a construction crew member.
+  `_RoleSelector` reads role keys from `RoleBundles.rolesFor
+  (vertical)` instead of hardcoding childcare's four roles, so a
+  construction-vertical space shows pm/foreman/journeyman/
+  apprentice/subcontractor chips; healthcare shows
+  physician/np/rn/tech/admin; etc.
+  `RoleLabels.of(roleKey, {vertical: 'childcare'})` is the new
+  per-vertical label lookup. Threaded through four prominent
+  surfaces (member_detail header + role picker, settings_screen
+  current-user tile, main_drawer current-user role, team_screen
+  member tiles). Other callers (omnibox_catalog, invite_share_sheet,
+  viewer.roleLabel getter) keep the childcare default — they
+  haven't been threaded yet but degrade gracefully.
 - **5dc98c4** — Per-vertical RoleBundles. `RoleBundles.defaultsFor`
   now takes a `vertical:` named param and looks up the bundle from
   per-vertical maps (`_childcare`, `_construction`, `_healthcare`,
