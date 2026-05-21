@@ -370,21 +370,31 @@ safety-briefing-acknowledge surface; staff PIN unlocks.
 The work is bounded. Three layers:
 
 1. **UI labels** — every string that says "Children" / "Classrooms"
-   / "Program" / etc. Today these are hard-coded; for a multi-
-   vertical product they'd resolve through a `VerticalLabels`
-   provider keyed off `Space.vertical` (a column to be added).
-   Implementation: a `Map<VerticalKey, Labels>` constant +
-   `labelsProvider`; widgets read `labels.subjectPlural` instead
-   of "Children".
+   / "Program" / etc. **The `VerticalLabels` infrastructure is in
+   place as of the council-audit batches** —
+   `lib/core/vertical/labels.dart` defines the data class +
+   per-vertical preset constants (childcare / construction /
+   healthcare / hospitality / manufacturing) + the
+   `verticalLabelsProvider`. Widget call sites that read
+   `ref.watch(verticalLabelsProvider).subjectPlural` instead of
+   hardcoding "Children" are migrated as needed. Already
+   migrated: omnibox section headers, yearly-review stats,
+   settings "Program" group header. Remaining: form labels,
+   empty-state copy, lower-traffic screens — migrate in batches
+   as they're touched.
 2. **Capability vocabulary** — the keys + role bundles in
-   `capability_keys.dart`. Construction needs `canAuthorizePO`,
-   not `canRecordDiaper`. Make these vertical-conditional too —
-   a `MemberCaps.bundleFor(vertical, role)`.
+   `capability_keys.dart`. **Done as of the council-audit
+   batches**: `CoreCaps` for vertical-agnostic verbs,
+   `ChildcareCaps` for the childcare-specific bunch (diaper /
+   nap / meal / pickup / medication). `MemberCaps` kept as an
+   alias for backward compat. New verticals add their own caps
+   class (`ConstructionCaps.canAuthorizePO` etc.).
 3. **Per-vertical screens** — most ops surfaces (omnibox,
    captures, observations, schedule, vehicles, attendance, surveys,
    insights, exports) are domain-agnostic and need no per-vertical
    build. The exceptions:
-   - Childcare-specific: meal / nap / diaper logs, age-band caps
+   - Childcare-specific: meal / nap / diaper logs, age-band caps,
+     `lib/features/pickup/`
    - Construction-specific: PO approval, RFI tracker, photo log
      with location metadata
    - Healthcare-specific: med admin, chart, vitals
@@ -394,6 +404,12 @@ The work is bounded. Three layers:
 The engine — Drift schema, PowerSync sync rules, RLS policies,
 omnibox infrastructure, chrome stack, kid mode, voice — **does not
 change**. That's the load-bearing point.
+
+**What's left**: the `vertical` column on `public.spaces` (so the
+provider can READ which preset to return) + per-vertical role
+bundles in `RoleBundles.defaultsFor`. Both are M-effort schema /
+catalog changes; do them when an actual non-childcare deployment
+is committed to.
 
 ### Why this matters as a product
 
