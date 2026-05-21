@@ -218,63 +218,265 @@ abstract class AgeBands {
   };
 }
 
-/// Member role default capability bundles (per docs/CAPABILITIES.md).
-/// Used when creating a new Member or applying an Invite — the caller's
-/// chosen role seeds the capabilities map.
+/// Default capability bundle for a (vertical, role) pair.
+///
+/// Used when creating a Member or accepting an Invite — the chosen
+/// role seeds the caps map. Per-vertical so a "manager" in
+/// hospitality and a "lead_teacher" in childcare can default to
+/// different verbs even though they overlap on `CoreCaps`.
+///
+/// The bundles live in code (not a per-space `role_catalog` table)
+/// because the agnostic-engine principle is "don't add tables to
+/// hold what code constants can express." When a customer needs to
+/// override a role bundle for their space, the existing per-Member
+/// capability overrides on `members.capabilities` are the escape
+/// hatch.
+///
+/// Verticals that don't have a hand-written bundle for a role
+/// degrade to an empty map — callers should still merge over the
+/// member's existing caps so legacy values survive.
 abstract class RoleBundles {
-  static Map<String, dynamic> defaultsFor(String role) {
-    switch (role) {
-      case 'director':
-        return <String, dynamic>{
-          MemberCaps.canObserve: true,
-          MemberCaps.canTakeAttendance: true,
-          MemberCaps.canRecordMeal: true,
-          MemberCaps.canRecordNap: true,
-          MemberCaps.canRecordDiaper: true,
-          MemberCaps.canOpenBuilding: true,
-          MemberCaps.canCloseBuilding: true,
-          MemberCaps.canAuthorizePickup: true,
-          MemberCaps.canViewBilling: true,
-          MemberCaps.canInviteStaff: true,
-          MemberCaps.canViewAuditLog: true,
-          MemberCaps.canActAsDirector: true,
-          MemberCaps.canManageSchedule: true,
-          // Cert-gated; stays false until a cert is added.
-          MemberCaps.canAdministerMedication: false,
-          MemberCaps.canDrive: false,
-        };
-      case 'lead_teacher':
-        return <String, dynamic>{
-          MemberCaps.canObserve: true,
-          MemberCaps.canTakeAttendance: true,
-          MemberCaps.canRecordMeal: true,
-          MemberCaps.canRecordNap: true,
-          MemberCaps.canRecordDiaper: true,
-          MemberCaps.canOpenBuilding: true,
-          MemberCaps.canCloseBuilding: true,
-          MemberCaps.canAuthorizePickup: true,
-          MemberCaps.canManageSchedule: true,
-        };
-      case 'teacher':
-        return <String, dynamic>{
-          MemberCaps.canObserve: true,
-          MemberCaps.canTakeAttendance: true,
-          MemberCaps.canRecordMeal: true,
-          MemberCaps.canRecordNap: true,
-          MemberCaps.canRecordDiaper: true,
-          MemberCaps.canManageSchedule: true,
-        };
-      case 'assistant':
-        return <String, dynamic>{
-          MemberCaps.canTakeAttendance: true,
-          MemberCaps.canRecordMeal: true,
-          MemberCaps.canRecordNap: true,
-          MemberCaps.canRecordDiaper: true,
-        };
-      default:
-        return const <String, dynamic>{};
-    }
+  /// Bundle for [role] in [vertical]. Pass the vertical key from
+  /// `verticalLabelsProvider`. Defaults to `'childcare'` for the
+  /// many existing call sites that haven't been threaded through
+  /// yet.
+  static Map<String, dynamic> defaultsFor(
+    String role, {
+    String vertical = 'childcare',
+  }) {
+    return switch (vertical) {
+      'construction' => _construction[role] ?? const <String, dynamic>{},
+      'healthcare' => _healthcare[role] ?? const <String, dynamic>{},
+      'hospitality' => _hospitality[role] ?? const <String, dynamic>{},
+      'manufacturing' => _manufacturing[role] ?? const <String, dynamic>{},
+      _ => _childcare[role] ?? const <String, dynamic>{},
+    };
   }
+
+  /// Role keys this vertical offers — the role picker uses this to
+  /// scope its dropdown to vertical-appropriate options. Childcare
+  /// surfaces director / lead_teacher / teacher / assistant;
+  /// construction surfaces pm / foreman / journeyman / apprentice /
+  /// subcontractor; etc. Order is "most senior first" so the
+  /// dropdown reads top-down by authority.
+  static List<String> rolesFor(String vertical) {
+    return switch (vertical) {
+      'construction' => const [
+          'pm',
+          'foreman',
+          'journeyman',
+          'apprentice',
+          'subcontractor',
+        ],
+      'healthcare' => const [
+          'physician',
+          'np',
+          'rn',
+          'tech',
+          'admin',
+        ],
+      'hospitality' => const [
+          'gm',
+          'manager',
+          'server',
+          'cook',
+          'host',
+        ],
+      'manufacturing' => const [
+          'production_manager',
+          'line_lead',
+          'operator',
+          'qa',
+          'maintenance',
+        ],
+      _ => const ['director', 'lead_teacher', 'teacher', 'assistant'],
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Per-vertical bundle maps. Each one is `roleKey → cap bundle`.
+  // Childcare bundles can include `ChildcareCaps`; other verticals stick
+  // to `CoreCaps` (vertical-agnostic verbs) until they have their own
+  // domain caps catalog (`ConstructionCaps`, `HealthcareCaps`, ...).
+  // ---------------------------------------------------------------------------
+
+  static const Map<String, Map<String, dynamic>> _childcare = {
+    'director': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      ChildcareCaps.canRecordMeal: true,
+      ChildcareCaps.canRecordNap: true,
+      ChildcareCaps.canRecordDiaper: true,
+      CoreCaps.canOpenBuilding: true,
+      CoreCaps.canCloseBuilding: true,
+      ChildcareCaps.canAuthorizePickup: true,
+      CoreCaps.canViewBilling: true,
+      CoreCaps.canInviteStaff: true,
+      CoreCaps.canViewAuditLog: true,
+      CoreCaps.canActAsDirector: true,
+      CoreCaps.canManageSchedule: true,
+      // Cert-gated; stays false until a cert is added.
+      ChildcareCaps.canAdministerMedication: false,
+      CoreCaps.canDrive: false,
+    },
+    'lead_teacher': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      ChildcareCaps.canRecordMeal: true,
+      ChildcareCaps.canRecordNap: true,
+      ChildcareCaps.canRecordDiaper: true,
+      CoreCaps.canOpenBuilding: true,
+      CoreCaps.canCloseBuilding: true,
+      ChildcareCaps.canAuthorizePickup: true,
+      CoreCaps.canManageSchedule: true,
+    },
+    'teacher': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      ChildcareCaps.canRecordMeal: true,
+      ChildcareCaps.canRecordNap: true,
+      ChildcareCaps.canRecordDiaper: true,
+      CoreCaps.canManageSchedule: true,
+    },
+    'assistant': {
+      CoreCaps.canTakeAttendance: true,
+      ChildcareCaps.canRecordMeal: true,
+      ChildcareCaps.canRecordNap: true,
+      ChildcareCaps.canRecordDiaper: true,
+    },
+  };
+
+  /// Construction: PM owns the project + finances; foreman runs the
+  /// site day-to-day; journeyman / apprentice are field workers;
+  /// subcontractor is an external party with read-mostly access.
+  static const Map<String, Map<String, dynamic>> _construction = {
+    'pm': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canViewBilling: true,
+      CoreCaps.canInviteStaff: true,
+      CoreCaps.canViewAuditLog: true,
+      CoreCaps.canActAsDirector: true,
+      CoreCaps.canManageSchedule: true,
+      CoreCaps.canOpenBuilding: true,
+      CoreCaps.canCloseBuilding: true,
+      CoreCaps.canDrive: false,
+    },
+    'foreman': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canManageSchedule: true,
+      CoreCaps.canOpenBuilding: true,
+      CoreCaps.canCloseBuilding: true,
+      CoreCaps.canDrive: false,
+    },
+    'journeyman': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+    },
+    'apprentice': {
+      CoreCaps.canObserve: true,
+    },
+    'subcontractor': {
+      CoreCaps.canObserve: true,
+    },
+  };
+
+  /// Healthcare: physician has clinical authority; NP/RN cover most
+  /// of the day-to-day; tech / admin are the support roles.
+  static const Map<String, Map<String, dynamic>> _healthcare = {
+    'physician': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canActAsDirector: true,
+      CoreCaps.canManageSchedule: true,
+      CoreCaps.canViewAuditLog: true,
+      CoreCaps.canInviteStaff: true,
+    },
+    'np': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canManageSchedule: true,
+    },
+    'rn': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canManageSchedule: true,
+    },
+    'tech': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+    },
+    'admin': {
+      CoreCaps.canViewBilling: true,
+      CoreCaps.canInviteStaff: true,
+      CoreCaps.canManageSchedule: true,
+    },
+  };
+
+  /// Hospitality: GM has full authority; manager covers shifts;
+  /// server / cook / host are the floor roles.
+  static const Map<String, Map<String, dynamic>> _hospitality = {
+    'gm': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canViewBilling: true,
+      CoreCaps.canInviteStaff: true,
+      CoreCaps.canViewAuditLog: true,
+      CoreCaps.canActAsDirector: true,
+      CoreCaps.canManageSchedule: true,
+      CoreCaps.canOpenBuilding: true,
+      CoreCaps.canCloseBuilding: true,
+    },
+    'manager': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canManageSchedule: true,
+      CoreCaps.canOpenBuilding: true,
+      CoreCaps.canCloseBuilding: true,
+    },
+    'server': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+    },
+    'cook': {
+      CoreCaps.canObserve: true,
+    },
+    'host': {
+      CoreCaps.canTakeAttendance: true,
+    },
+  };
+
+  /// Manufacturing: production manager runs the floor; line leads
+  /// supervise; operator / QA / maintenance are the workers.
+  static const Map<String, Map<String, dynamic>> _manufacturing = {
+    'production_manager': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canActAsDirector: true,
+      CoreCaps.canManageSchedule: true,
+      CoreCaps.canViewBilling: true,
+      CoreCaps.canInviteStaff: true,
+      CoreCaps.canViewAuditLog: true,
+      CoreCaps.canOpenBuilding: true,
+      CoreCaps.canCloseBuilding: true,
+    },
+    'line_lead': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      CoreCaps.canManageSchedule: true,
+    },
+    'operator': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+    },
+    'qa': {
+      CoreCaps.canObserve: true,
+    },
+    'maintenance': {
+      CoreCaps.canObserve: true,
+    },
+  };
 }
 
 /// Default Group caps derived from age band — used as fallback when

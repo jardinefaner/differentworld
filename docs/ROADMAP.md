@@ -19,7 +19,6 @@ section headers / stats (Waves 5-6) are in. What's left:
 
 | Item | Effort | Why |
 |---|---|---|
-| Per-vertical `RoleBundles.defaultsFor(vertical, role)` | M | Construction's `foreman/PM/apprentice` needs different cap seeds |
 | Migrate remaining ~50 hardcoded labels in lower-traffic screens (form labels, empty-state copy) | L | Mechanical per-screen, do in batches as touched |
 | Per-vertical `ConstructionCaps`/`HealthcareCaps`/etc. classes | M | Needs concrete pilot to justify writing the verbs |
 | `staff_role` Postgres enum overhaul (or drop to text + per-space role catalog) | M | Required for non-childcare role names; schema migration |
@@ -108,6 +107,25 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **Wave 13** — Per-vertical RoleBundles. `RoleBundles.defaultsFor`
+  now takes a `vertical:` named param and looks up the bundle from
+  per-vertical maps (`_childcare`, `_construction`, `_healthcare`,
+  `_hospitality`, `_manufacturing`). Each vertical's bundles use
+  `CoreCaps` (vertical-agnostic verbs) — only childcare uses
+  `ChildcareCaps` keys today. Default is `'childcare'` so
+  unupdated call sites still work. New `RoleBundles.rolesFor
+  (vertical)` returns the role-key list per vertical, ready for a
+  vertical-scoped role picker. `settings_actions.setRole` reads
+  the active vertical from `verticalLabelsProvider` and threads it
+  through. Construction's `pm/foreman/journeyman/apprentice/
+  subcontractor`, healthcare's `physician/np/rn/tech/admin`,
+  hospitality's `gm/manager/server/cook/host`, manufacturing's
+  `production_manager/line_lead/operator/qa/maintenance` all have
+  hand-written cap defaults. ZERO schema (no `role_catalog` table)
+  — the SCHEMA_AUDIT doc suggested one, but the agnostic engine
+  principle says "don't add tables for what code constants
+  express." Per-Member overrides on `members.capabilities` stay the
+  escape hatch for customer customization.
 - **63fc829** — Subject health profile (childcare). Structured
   fields for medications, medical conditions, IEP/504 summary,
   primary physician (name + phone), and emergency instructions —

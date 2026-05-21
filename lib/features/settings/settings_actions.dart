@@ -1,6 +1,7 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Auto-saving mutators for the per-member detail screen.
@@ -29,12 +30,20 @@ class MemberCapActions {
   /// Change role AND apply the role's default cap bundle on top of the
   /// existing caps. Both writes go through Drift's transaction so
   /// PowerSync picks them up as a single CRUD batch.
+  ///
+  /// The bundle is per-vertical — a "manager" in hospitality has a
+  /// different default cap set than a "lead_teacher" in childcare.
+  /// Vertical comes from the active `verticalLabelsProvider` (which
+  /// reads it off the Space's caps); falls back to childcare if the
+  /// space row hasn't synced yet.
   Future<void> setRole(String memberId, String role) async {
     final db = await _ref.read(appDatabaseProvider.future);
     final m = await db.membersDao.findById(memberId);
     if (m == null) return;
-    final mergedCaps =
-        m.caps.mergedWith(RoleBundles.defaultsFor(role)).toJson();
+    final vertical = _ref.read(verticalLabelsProvider).vertical;
+    final mergedCaps = m.caps
+        .mergedWith(RoleBundles.defaultsFor(role, vertical: vertical))
+        .toJson();
     await db.transaction(() async {
       await db.membersDao.updateRole(memberId, role);
       await db.membersDao.updateCapabilities(memberId, mergedCaps);
