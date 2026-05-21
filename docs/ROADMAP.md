@@ -111,7 +111,7 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **Wave 9** — Devon co-parent read-state badges. New
+- **49d4e18** — Devon co-parent read-state badges. New
   `read_by_guardian_ids jsonb` column on `public.messages`
   (migration `20260520000001_message_read_by.sql`); Drift mirror +
   PowerSync schema bumped; `MessagesDao.markThreadReadByGuardian`
