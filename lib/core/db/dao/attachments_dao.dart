@@ -103,6 +103,20 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Replace the attachment's url. Used by `PhotoUploadQueue` when
+  /// a deferred upload finally lands — we wrote `pending:<id>` into
+  /// the row at enqueue time; this method swaps it for the real
+  /// bucket path.
+  Future<void> updateUrl(String id, String url) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(attachments)..where((a) => a.id.equals(id))).write(
+      AttachmentsCompanion(
+        url: Value(url),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   Future<void> deleteById(String id) async {
     await (delete(attachments)..where((a) => a.id.equals(id))).go();
   }

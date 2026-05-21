@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/features/photos/photo_upload_queue.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
@@ -63,27 +64,48 @@ class PhotoService {
     final compressed = await Isolate.run(() => _compressSync(bytes));
     final path = '$spaceId/${entity.name}/$entityId/${_uuid.v4()}.jpg';
 
-    await _supabase.storage.from(_bucket).uploadBinary(
-          path,
-          compressed,
-          fileOptions: const FileOptions(contentType: 'image/jpeg'),
-        );
-
-    // We store the bucket-relative PATH (not a full URL). The bucket
-    // is private; views mint short-lived signed URLs at render time
-    // via `signedPersonPhotoUrlProvider`. The path is stable for the
-    // life of the upload (it includes a per-upload UUID); the signed
-    // URL it resolves to is short-lived. Storing the path keeps the
-    // DB columns free of upload timestamps and lets us rotate signing
-    // strategies without rewriting rows.
+    // Online-first attempt. If Storage upload fails (network out,
+    // tower switch, captive portal), fall back to the offline queue:
+    // bytes go to disk, a queue entry is registered, and the row
+    // gets a `pending:<id>` token so the UI knows it's deferred.
+    // The queue retries on app boot (and on manual retry from
+    // Settings).
     final db = await _ref.read(appDatabaseProvider.future);
+    String storedValue;
+    try {
+      await _supabase.storage.from(_bucket).uploadBinary(
+            path,
+            compressed,
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
+      storedValue = path;
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[photo] upload deferred (offline?) — $e');
+      }
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'photos'),
+      );
+      storedValue = await _ref.read(photoUploadQueueProvider).enqueue(
+            bucket: _bucket,
+            bucketPath: path,
+            entityKind: entity.name,
+            entityId: entityId,
+            bytes: compressed,
+          );
+    }
+
+    // Either the real path or the `pending:<id>` token — both are
+    // accepted by PersonAvatar / PersonPhotoNetwork. Once the
+    // deferred upload lands, the queue worker rewrites the row to
+    // the real path.
     switch (entity) {
       case PhotoEntity.member:
-        await db.membersDao.updateAvatarUrl(entityId, path);
+        await db.membersDao.updateAvatarUrl(entityId, storedValue);
       case PhotoEntity.subject:
-        await db.subjectsDao.updatePhotoUrl(entityId, path);
+        await db.subjectsDao.updatePhotoUrl(entityId, storedValue);
     }
-    return path;
+    return storedValue;
   }
 
   /// Drop the photo from the entity row. Doesn't delete the object in
@@ -123,15 +145,39 @@ class PhotoService {
     final bytes = await picked.readAsBytes();
     final compressed = await Isolate.run(() => _compressSync(bytes));
     final path = '$spaceId/$entityKind/$entityId/${_uuid.v4()}.jpg';
-    await _supabase.storage.from(_bucket).uploadBinary(
-          path,
-          compressed,
-          fileOptions: const FileOptions(contentType: 'image/jpeg'),
-        );
-    // Same rationale as in [uploadAndPersist] — return the path. The
-    // caller writes it into whatever row needs it; render-time code
-    // mints signed URLs via `signedPersonPhotoUrlProvider`.
-    return path;
+    try {
+      await _supabase.storage.from(_bucket).uploadBinary(
+            path,
+            compressed,
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
+      // Same rationale as in [uploadAndPersist] — return the path.
+      // The caller writes it into whatever row needs it; render-
+      // time code mints signed URLs via
+      // `signedPersonPhotoUrlProvider`.
+      return path;
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[photo] uploadOnly deferred (offline?) — $e');
+      }
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'photos'),
+      );
+      // Caller (e.g. AttachmentActions.add) writes this token into
+      // the row's url. The queue worker rewrites it to the real
+      // path when the upload eventually lands. Caller passes
+      // `entityKind: 'attachment'` so the worker knows which DAO
+      // method to invoke; for `entityKind: 'observation'` (legacy)
+      // the worker silently skips the row update (the original
+      // entry photo is held in widget state until save).
+      return _ref.read(photoUploadQueueProvider).enqueue(
+            bucket: _bucket,
+            bucketPath: path,
+            entityKind: entityKind,
+            entityId: entityId,
+            bytes: compressed,
+          );
+    }
   }
 
 }
