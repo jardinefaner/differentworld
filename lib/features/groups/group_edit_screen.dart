@@ -215,7 +215,9 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
             }
             final groupLower = labels.group.toLowerCase();
             return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 56, 16, 32),
+              // Shell reserves top + bottom chrome; this padding is
+              // lateral + breathing room.
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
                 ContentHeader(
                   title: widget.isEdit

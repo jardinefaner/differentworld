@@ -124,7 +124,8 @@ class _MessageThreadScreenState
     return EdgeScaffold(
       body: Column(
         children: [
-          const SizedBox(height: 56),
+          // Shell now reserves the top chrome height; no per-screen
+          // SizedBox needed.
           // Privacy preamble — collapsible to a single tap-to-expand
           // pill once the user has acknowledged it.
           Padding(
@@ -141,7 +142,7 @@ class _MessageThreadScreenState
                         bottomGap: 8,
                       ),
                       Positioned(
-                        top: 56,
+                        top: 8,
                         right: 0,
                         child: IconButton(
                           tooltip: 'Hide reminder',
@@ -156,7 +157,7 @@ class _MessageThreadScreenState
                     ],
                   )
                 : Padding(
-                    padding: const EdgeInsets.only(top: 56, bottom: 4),
+                    padding: const EdgeInsets.only(top: 8, bottom: 4),
                     child: Row(
                       children: [
                         Text('Messages', style: theme.textTheme.titleLarge),

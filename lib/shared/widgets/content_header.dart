@@ -4,15 +4,16 @@ import 'package:flutter/material.dart';
 /// scrollable body. Scrolls away with the rest of the content — no
 /// persistent top chrome.
 ///
-/// Sized so the title sits below the floating back / actions pills
-/// (which live ~48 dp into the safe area) without colliding visually.
-/// The [topGap] adds vertical space above the title so there's
-/// breathing room between the floating chrome and the first text.
+/// **Chrome clearance is the shell's job, not this widget's.**
+/// AppShell now pads the route content by `ShellMetrics.topChromeHeight`
+/// at the top, so the title doesn't need to leave room for the
+/// floating chrome itself — [topGap] is just breathing room
+/// between the chrome boundary and the first text.
 class ContentHeader extends StatelessWidget {
   const ContentHeader({
     required this.title,
     this.subtitle,
-    this.topGap = 56,
+    this.topGap = 8,
     this.bottomGap = 16,
     this.titleStyle,
     this.subtitleStyle,
@@ -24,8 +25,10 @@ class ContentHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
 
-  /// Space above the title. Defaults to 56 dp — enough to clear the
-  /// floating back / actions row that sits ~8 dp into the safe area.
+  /// Breathing room above the title. Default 8 dp — the shell already
+  /// reserves the chrome height; this is just visual gap. Set to 0 if
+  /// a screen explicitly wants the title flush against the chrome
+  /// boundary.
   final double topGap;
 
   /// Space below the subtitle (or title if no subtitle).

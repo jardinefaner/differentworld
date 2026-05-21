@@ -293,7 +293,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
             Positioned.fill(
               child: Column(
           children: [
-            const SizedBox(height: 56),
+            // Survey-take is a KID-MODE surface — the shell drops its
+            // chrome insets to 0, so the body fills from the top. A
+            // small spacer keeps the header off the status bar.
+            const SizedBox(height: 16),
             _SurveyHeader(
               template: t,
               subject: subject,

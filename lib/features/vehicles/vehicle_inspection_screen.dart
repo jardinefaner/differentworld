@@ -164,7 +164,8 @@ class _VehicleInspectionScreenState
                   child: Form(
                     key: _formKey,
                     child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
+                      // Shell reserves top + bottom chrome.
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       children: [
                         ContentHeader(
                           title:

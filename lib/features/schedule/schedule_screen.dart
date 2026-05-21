@@ -161,13 +161,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
           }
           return Column(
             children: [
-              const SizedBox(height: 56),
+              // Shell reserves the top chrome height; ContentHeader's
+              // own topGap (default 8) is just breathing room.
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(
                   title: 'Schedule',
                   subtitle: _dateLabel(),
-                  topGap: 0,
                   bottomGap: 8,
                 ),
               ),

@@ -134,7 +134,7 @@ class _ProgressReportScreenState
 
           return Column(
             children: [
-              const SizedBox(height: 48),
+              // Shell reserves the top chrome height.
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                 child: ContentHeader(
@@ -144,7 +144,6 @@ class _ProgressReportScreenState
                       'last $_windowDays days · $observationCount '
                       'observations · $attendanceDays attendance days · '
                       '$surveysCount surveys',
-                  topGap: 0,
                   bottomGap: 8,
                 ),
               ),

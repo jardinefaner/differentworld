@@ -64,7 +64,8 @@ class VehicleDetailScreen extends ConsumerWidget {
             return const Center(child: Text('Vehicle not found.'));
           }
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 56, 16, 96),
+            // Shell reserves top + bottom chrome.
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               ContentHeader(
                 title: v.name,

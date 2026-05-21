@@ -153,7 +153,8 @@ class _SubjectBody extends ConsumerWidget {
         // context (what happened today?) first, identity (who am I
         // looking at) second. The back-button breadcrumb supplies the
         // name context until the eye reaches the bigger header.
-        const SizedBox(height: 56),
+        // (Shell reserves the chrome height; just breathing room here.)
+        const SizedBox(height: 8),
         if (groupId != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

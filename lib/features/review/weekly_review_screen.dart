@@ -105,7 +105,7 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
     return EdgeScaffold(
       body: Column(
         children: [
-          const SizedBox(height: 56),
+          // Shell reserves the top chrome height.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ContentHeader(

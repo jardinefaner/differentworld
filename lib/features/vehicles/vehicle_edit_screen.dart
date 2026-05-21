@@ -216,7 +216,8 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
             return Stack(
               children: [
                 ListView(
-              padding: const EdgeInsets.fromLTRB(16, 56, 16, 32),
+              // Shell reserves top + bottom chrome.
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
                 ContentHeader(
                   title: widget.isEdit ? 'Edit vehicle' : 'New vehicle',

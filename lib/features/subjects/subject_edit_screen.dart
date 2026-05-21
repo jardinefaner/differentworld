@@ -257,7 +257,8 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                 length: 3,
                 child: Column(
                   children: [
-                    const SizedBox(height: 56),
+                    // Shell reserves the top chrome height; ContentHeader's
+                    // default topGap (8) is just breathing room.
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: ContentHeader(
@@ -267,7 +268,6 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                         subtitle: widget.isEdit
                             ? null
                             : "Add to this ${labels.group.toLowerCase()}'s roster",
-                        topGap: 0,
                         bottomGap: 8,
                       ),
                     ),

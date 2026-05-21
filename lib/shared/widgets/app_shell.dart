@@ -23,6 +23,7 @@ import 'package:differentworld/shared/widgets/floating_back.dart';
 import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:differentworld/shared/widgets/route_chrome.dart';
+import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -416,14 +417,28 @@ class _AppShellState extends ConsumerState<AppShell> {
           // The route's content. Always mounted; visually covered by
           // the results panel when the omnibox is expanded.
           //
-          // Padding-bottom = 76 reserves space for the persistent
-          // omnibox bar that sits inside this Stack via the
-          // Positioned widget below. Without this, the bottom 76 px
-          // of every page (last list item, save button, etc.) would
-          // render BEHIND the bar. In kid mode the bar is hidden, so
-          // the route content fills the whole body.
+          // The shell reserves space at BOTH ends:
+          //   - top  → [ShellMetrics.topChromeHeight] keeps the first
+          //     pixel of body content below the chrome pills, so
+          //     loading spinners, empty states, error banners, and
+          //     populated lists all start in the visible slot rather
+          //     than under the hamburger / back / actions row.
+          //   - bottom → [ShellMetrics.bottomOmniboxHeight] keeps the
+          //     last pixel above the persistent omnibox bar, so the
+          //     last list item / save button never renders behind it.
+          //
+          // In kid mode both insets drop to 0 so the kid surface
+          // fills the viewport (no staff chrome, no omnibox).
+          //
+          // Centralizing these here means every screen gets the
+          // "layout law" for free — no per-screen `SizedBox(height:
+          // 56)` workarounds, no `ListView` callers that forget to
+          // pad the bottom.
           Padding(
-            padding: EdgeInsets.only(bottom: inKidMode ? 0 : 76),
+            padding: EdgeInsets.only(
+              top: inKidMode ? 0 : ShellMetrics.topChromeHeight,
+              bottom: inKidMode ? 0 : ShellMetrics.bottomOmniboxHeight,
+            ),
             child: widget.child,
           ),
           // Subtle scrim when expanded — the underlying route is
@@ -444,11 +459,15 @@ class _AppShellState extends ConsumerState<AppShell> {
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  // Leave room at the bottom equal to the bar so the
-                  // panel never paints over it. The body's vertical
-                  // extent already excludes the keyboard (see
-                  // resizeToAvoidBottomInset above).
-                  padding: const EdgeInsets.only(bottom: 76),
+                  // Same insets as the route content — the suggestion
+                  // list never extends under the chrome pills at the
+                  // top OR behind the omnibox bar at the bottom. If
+                  // the matches would naturally extend taller, the
+                  // panel caps + scrolls internally instead.
+                  padding: const EdgeInsets.only(
+                    top: ShellMetrics.topChromeHeight,
+                    bottom: ShellMetrics.bottomOmniboxHeight,
+                  ),
                   child: _OmniboxResultsPanel(
                     query: _query,
                     mode: _mode,

@@ -146,7 +146,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
             length: 3,
             child: Column(
               children: [
-                const SizedBox(height: 56),
+                // Shell reserves the top chrome height — avatar sits
+                // immediately below the chrome boundary.
+                const SizedBox(height: 8),
                 Center(
                   child: PersonAvatar(
                     name: member.displayName,

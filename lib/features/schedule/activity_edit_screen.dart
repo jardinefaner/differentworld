@@ -219,7 +219,8 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                 Form(
                   key: _formKey,
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 56, 16, 96),
+                    // Shell reserves top + bottom chrome.
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     children: [
                       ContentHeader(
                         title:
