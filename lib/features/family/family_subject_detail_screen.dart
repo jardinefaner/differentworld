@@ -409,6 +409,8 @@ class _MessagesCard extends ConsumerWidget {
         guardianId: '',
         senderKind: '',
         body: '',
+        // Empty JSON array — no guardian has read this placeholder.
+        readByGuardianIds: '[]',
         createdAt: '',
       ),
     );

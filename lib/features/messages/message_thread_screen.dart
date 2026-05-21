@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -292,27 +294,19 @@ class _MessageBubble extends ConsumerWidget {
                       // Read receipt: only on messages YOU sent. The
                       // other side never sees their own "you read this"
                       // marker — useless noise on incoming bubbles.
-                      if (mine && message.readAt != null) ...[
+                      if (mine) ...[
                         const SizedBox(width: 6),
-                        Icon(
-                          Icons.done_all,
-                          size: 14,
-                          color: fg.withValues(alpha: 0.7),
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          'Seen',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: fg.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ] else if (mine) ...[
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.done,
-                          size: 14,
-                          color: fg.withValues(alpha: 0.5),
+                        _ReadReceipt(
+                          message: message,
+                          // Per-guardian read-state only matters for
+                          // staff looking at their own outgoing
+                          // messages — that's when "Seen by Mom only"
+                          // vs "Seen by both" is the useful signal.
+                          // Guardians looking at their own outgoing
+                          // messages just see the staff-side first-
+                          // read timestamp.
+                          showPerGuardianBreakdown: !iAmGuardian,
+                          textColor: fg,
                         ),
                       ],
                     ],
@@ -324,6 +318,139 @@ class _MessageBubble extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Read-state badge on the sender's own bubble.
+///
+/// Two code paths:
+///
+/// * **Guardian-side (showPerGuardianBreakdown=false)** — falls back
+///   to the legacy `read_at` semantics. Two glyphs: single check
+///   (sent, not yet read) or double check + "Seen" (staff opened
+///   the thread). This is all a parent needs to know.
+///
+/// * **Staff-side (showPerGuardianBreakdown=true)** — Devon persona.
+///   On a single-guardian thread, falls back to the legacy
+///   `read_at` semantics. On a multi-guardian thread (divorced
+///   parents share a kid), parses `read_by_guardian_ids` and
+///   compares against the guardians attached to the subject, so
+///   the bubble reads "Seen by Mom" / "Seen by Mom & Dad" /
+///   "Seen by 2 of 3" instead of a misleading "Seen" the moment
+///   one parent opens it.
+class _ReadReceipt extends ConsumerWidget {
+  const _ReadReceipt({
+    required this.message,
+    required this.showPerGuardianBreakdown,
+    required this.textColor,
+  });
+
+  final Message message;
+  final bool showPerGuardianBreakdown;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final softFg = textColor.withValues(alpha: 0.7);
+    final dimFg = textColor.withValues(alpha: 0.5);
+
+    Widget sentOnly() => Icon(Icons.done, size: 14, color: dimFg);
+
+    Widget seenLabel(String label) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.done_all, size: 14, color: softFg),
+        const SizedBox(width: 2),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: softFg,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+
+    // Guardian-side reading is single-recipient (the staff) — no
+    // breakdown to show. Same fallback when the per-guardian list
+    // is empty (older messages from before the migration).
+    if (!showPerGuardianBreakdown) {
+      return message.readAt != null ? seenLabel('Seen') : sentOnly();
+    }
+
+    final guardiansAsync = ref.watch(
+      guardiansForSubjectProvider(message.subjectId),
+    );
+    final guardians = guardiansAsync.value;
+    if (guardians == null) {
+      // Still loading the guardian list. Fall back to the legacy
+      // single-bit indicator rather than blocking the bubble paint.
+      return message.readAt != null ? seenLabel('Seen') : sentOnly();
+    }
+
+    final readIds = _parseReadByIds(message.readByGuardianIds);
+    final readGuardians = guardians
+        .where((g) => readIds.contains(g.id))
+        .toList(growable: false);
+    final total = guardians.length;
+    final readCount = readGuardians.length;
+
+    if (readCount == 0) {
+      // Legacy `read_at` may still be set by older messages; respect
+      // it so we don't regress to "Sent" on a row that used to say
+      // "Seen" before the schema bump.
+      return message.readAt != null ? seenLabel('Seen') : sentOnly();
+    }
+
+    if (total <= 1) {
+      // Single-guardian thread — "Seen by Mom" is overkill; the
+      // simple "Seen" reads cleaner.
+      return seenLabel('Seen');
+    }
+
+    if (readCount >= total) {
+      return seenLabel('Seen by all');
+    }
+
+    // Multi-guardian thread with partial reads. Use names if we
+    // can fit two; otherwise a count.
+    if (readCount == 1) {
+      final name = _shortName(readGuardians.single.name);
+      return seenLabel('Seen by $name');
+    }
+    if (readCount == 2) {
+      final a = _shortName(readGuardians[0].name);
+      final b = _shortName(readGuardians[1].name);
+      return seenLabel('Seen by $a & $b');
+    }
+    return seenLabel('Seen by $readCount of $total');
+  }
+
+  /// `read_by_guardian_ids` is stored as a JSON-encoded string. Empty
+  /// or malformed values are treated as no-one-has-read-yet — never
+  /// throw from a bubble paint.
+  static Set<String> _parseReadByIds(String raw) {
+    if (raw.isEmpty) return const <String>{};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.whereType<String>().toSet();
+      }
+    } on FormatException {
+      // Corrupt cell — pretend it's empty.
+    }
+    return const <String>{};
+  }
+
+  /// First word of a guardian name keeps the bubble narrow: "Sarah J"
+  /// → "Sarah". Falls back to "Parent" if the field is empty.
+  static String _shortName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return 'Parent';
+    final firstSpace = trimmed.indexOf(' ');
+    if (firstSpace <= 0) return trimmed;
+    return trimmed.substring(0, firstSpace);
   }
 }
 

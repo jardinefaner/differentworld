@@ -226,6 +226,9 @@ const appSchema = Schema([
     Column.text('sender_guardian_id'),
     Column.text('body'),
     Column.text('read_at'),
+    // JSONB on the server side; stored as raw JSON string locally.
+    // Per-guardian read-state for co-parent / multi-guardian threads.
+    Column.text('read_by_guardian_ids'),
     Column.text('created_at'),
   ]),
   Table('exports', [

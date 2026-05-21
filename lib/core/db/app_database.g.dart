@@ -11296,6 +11296,19 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _readByGuardianIdsMeta = const VerificationMeta(
+    'readByGuardianIds',
+  );
+  @override
+  late final GeneratedColumn<String> readByGuardianIds =
+      GeneratedColumn<String>(
+        'read_by_guardian_ids',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -11318,6 +11331,7 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     senderGuardianId,
     body,
     readAt,
+    readByGuardianIds,
     createdAt,
   ];
   @override
@@ -11401,6 +11415,15 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
         readAt.isAcceptableOrUnknown(data['read_at']!, _readAtMeta),
       );
     }
+    if (data.containsKey('read_by_guardian_ids')) {
+      context.handle(
+        _readByGuardianIdsMeta,
+        readByGuardianIds.isAcceptableOrUnknown(
+          data['read_by_guardian_ids']!,
+          _readByGuardianIdsMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -11454,6 +11477,10 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
         DriftSqlType.string,
         data['${effectivePrefix}read_at'],
       ),
+      readByGuardianIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}read_by_guardian_ids'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -11477,6 +11504,12 @@ class Message extends DataClass implements Insertable<Message> {
   final String? senderGuardianId;
   final String body;
   final String? readAt;
+
+  /// JSON-array of guardian UUIDs who've read past this message.
+  /// Devon-persona: divorced parents share a kid; per-guardian
+  /// read-state lets staff see "Seen by Mom only" vs "Seen by both."
+  /// Empty string / null is treated as `'[]'`.
+  final String readByGuardianIds;
   final String createdAt;
   const Message({
     required this.id,
@@ -11488,6 +11521,7 @@ class Message extends DataClass implements Insertable<Message> {
     this.senderGuardianId,
     required this.body,
     this.readAt,
+    required this.readByGuardianIds,
     required this.createdAt,
   });
   @override
@@ -11508,6 +11542,7 @@ class Message extends DataClass implements Insertable<Message> {
     if (!nullToAbsent || readAt != null) {
       map['read_at'] = Variable<String>(readAt);
     }
+    map['read_by_guardian_ids'] = Variable<String>(readByGuardianIds);
     map['created_at'] = Variable<String>(createdAt);
     return map;
   }
@@ -11529,6 +11564,7 @@ class Message extends DataClass implements Insertable<Message> {
       readAt: readAt == null && nullToAbsent
           ? const Value.absent()
           : Value(readAt),
+      readByGuardianIds: Value(readByGuardianIds),
       createdAt: Value(createdAt),
     );
   }
@@ -11548,6 +11584,7 @@ class Message extends DataClass implements Insertable<Message> {
       senderGuardianId: serializer.fromJson<String?>(json['senderGuardianId']),
       body: serializer.fromJson<String>(json['body']),
       readAt: serializer.fromJson<String?>(json['readAt']),
+      readByGuardianIds: serializer.fromJson<String>(json['readByGuardianIds']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
     );
   }
@@ -11564,6 +11601,7 @@ class Message extends DataClass implements Insertable<Message> {
       'senderGuardianId': serializer.toJson<String?>(senderGuardianId),
       'body': serializer.toJson<String>(body),
       'readAt': serializer.toJson<String?>(readAt),
+      'readByGuardianIds': serializer.toJson<String>(readByGuardianIds),
       'createdAt': serializer.toJson<String>(createdAt),
     };
   }
@@ -11578,6 +11616,7 @@ class Message extends DataClass implements Insertable<Message> {
     Value<String?> senderGuardianId = const Value.absent(),
     String? body,
     Value<String?> readAt = const Value.absent(),
+    String? readByGuardianIds,
     String? createdAt,
   }) => Message(
     id: id ?? this.id,
@@ -11593,6 +11632,7 @@ class Message extends DataClass implements Insertable<Message> {
         : this.senderGuardianId,
     body: body ?? this.body,
     readAt: readAt.present ? readAt.value : this.readAt,
+    readByGuardianIds: readByGuardianIds ?? this.readByGuardianIds,
     createdAt: createdAt ?? this.createdAt,
   );
   Message copyWithCompanion(MessagesCompanion data) {
@@ -11614,6 +11654,9 @@ class Message extends DataClass implements Insertable<Message> {
           : this.senderGuardianId,
       body: data.body.present ? data.body.value : this.body,
       readAt: data.readAt.present ? data.readAt.value : this.readAt,
+      readByGuardianIds: data.readByGuardianIds.present
+          ? data.readByGuardianIds.value
+          : this.readByGuardianIds,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -11630,6 +11673,7 @@ class Message extends DataClass implements Insertable<Message> {
           ..write('senderGuardianId: $senderGuardianId, ')
           ..write('body: $body, ')
           ..write('readAt: $readAt, ')
+          ..write('readByGuardianIds: $readByGuardianIds, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -11646,6 +11690,7 @@ class Message extends DataClass implements Insertable<Message> {
     senderGuardianId,
     body,
     readAt,
+    readByGuardianIds,
     createdAt,
   );
   @override
@@ -11661,6 +11706,7 @@ class Message extends DataClass implements Insertable<Message> {
           other.senderGuardianId == this.senderGuardianId &&
           other.body == this.body &&
           other.readAt == this.readAt &&
+          other.readByGuardianIds == this.readByGuardianIds &&
           other.createdAt == this.createdAt);
 }
 
@@ -11674,6 +11720,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   final Value<String?> senderGuardianId;
   final Value<String> body;
   final Value<String?> readAt;
+  final Value<String> readByGuardianIds;
   final Value<String> createdAt;
   final Value<int> rowid;
   const MessagesCompanion({
@@ -11686,6 +11733,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.senderGuardianId = const Value.absent(),
     this.body = const Value.absent(),
     this.readAt = const Value.absent(),
+    this.readByGuardianIds = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -11699,6 +11747,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.senderGuardianId = const Value.absent(),
     required String body,
     this.readAt = const Value.absent(),
+    this.readByGuardianIds = const Value.absent(),
     required String createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -11718,6 +11767,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Expression<String>? senderGuardianId,
     Expression<String>? body,
     Expression<String>? readAt,
+    Expression<String>? readByGuardianIds,
     Expression<String>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -11731,6 +11781,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       if (senderGuardianId != null) 'sender_guardian_id': senderGuardianId,
       if (body != null) 'body': body,
       if (readAt != null) 'read_at': readAt,
+      if (readByGuardianIds != null) 'read_by_guardian_ids': readByGuardianIds,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -11746,6 +11797,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Value<String?>? senderGuardianId,
     Value<String>? body,
     Value<String?>? readAt,
+    Value<String>? readByGuardianIds,
     Value<String>? createdAt,
     Value<int>? rowid,
   }) {
@@ -11759,6 +11811,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       senderGuardianId: senderGuardianId ?? this.senderGuardianId,
       body: body ?? this.body,
       readAt: readAt ?? this.readAt,
+      readByGuardianIds: readByGuardianIds ?? this.readByGuardianIds,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -11794,6 +11847,9 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     if (readAt.present) {
       map['read_at'] = Variable<String>(readAt.value);
     }
+    if (readByGuardianIds.present) {
+      map['read_by_guardian_ids'] = Variable<String>(readByGuardianIds.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -11815,6 +11871,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
           ..write('senderGuardianId: $senderGuardianId, ')
           ..write('body: $body, ')
           ..write('readAt: $readAt, ')
+          ..write('readByGuardianIds: $readByGuardianIds, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -23899,6 +23956,7 @@ typedef $$MessagesTableCreateCompanionBuilder =
       Value<String?> senderGuardianId,
       required String body,
       Value<String?> readAt,
+      Value<String> readByGuardianIds,
       required String createdAt,
       Value<int> rowid,
     });
@@ -23913,6 +23971,7 @@ typedef $$MessagesTableUpdateCompanionBuilder =
       Value<String?> senderGuardianId,
       Value<String> body,
       Value<String?> readAt,
+      Value<String> readByGuardianIds,
       Value<String> createdAt,
       Value<int> rowid,
     });
@@ -23968,6 +24027,11 @@ class $$MessagesTableFilterComposer
 
   ColumnFilters<String> get readAt => $composableBuilder(
     column: $table.readAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get readByGuardianIds => $composableBuilder(
+    column: $table.readByGuardianIds,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -24031,6 +24095,11 @@ class $$MessagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get readByGuardianIds => $composableBuilder(
+    column: $table.readByGuardianIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -24081,6 +24150,11 @@ class $$MessagesTableAnnotationComposer
   GeneratedColumn<String> get readAt =>
       $composableBuilder(column: $table.readAt, builder: (column) => column);
 
+  GeneratedColumn<String> get readByGuardianIds => $composableBuilder(
+    column: $table.readByGuardianIds,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
@@ -24122,6 +24196,7 @@ class $$MessagesTableTableManager
                 Value<String?> senderGuardianId = const Value.absent(),
                 Value<String> body = const Value.absent(),
                 Value<String?> readAt = const Value.absent(),
+                Value<String> readByGuardianIds = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MessagesCompanion(
@@ -24134,6 +24209,7 @@ class $$MessagesTableTableManager
                 senderGuardianId: senderGuardianId,
                 body: body,
                 readAt: readAt,
+                readByGuardianIds: readByGuardianIds,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -24148,6 +24224,7 @@ class $$MessagesTableTableManager
                 Value<String?> senderGuardianId = const Value.absent(),
                 required String body,
                 Value<String?> readAt = const Value.absent(),
+                Value<String> readByGuardianIds = const Value.absent(),
                 required String createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => MessagesCompanion.insert(
@@ -24160,6 +24237,7 @@ class $$MessagesTableTableManager
                 senderGuardianId: senderGuardianId,
                 body: body,
                 readAt: readAt,
+                readByGuardianIds: readByGuardianIds,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

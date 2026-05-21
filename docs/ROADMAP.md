@@ -48,7 +48,6 @@ work that doesn't need a feature decision.
 |---|---|---|
 | **Ava** | Staff PIN exit dialog (replaces/supplements the 5-tap gesture) | S |
 | **Lauren** | "Photo of the moment" on Family Today | S |
-| **Devon** | Co-parent read-state badges on messages + reports | M |
 | **Jordan** | Outdoor mode toggle (high-contrast, bigger glyphs) | S |
 | **Pat** | Substitute handoff (director flips an absent counselor's cohort lead) | M |
 | **Maya** | Tablet schedule grid (cohorts × time matrix) | L |
@@ -72,7 +71,7 @@ work that doesn't need a feature decision.
 | Capability editor UI (per-Member overrides) | M | Schema exists; UI partial |
 | Subject medical fields form (allergies, meds, IEP) | M | Schema exists; form may be incomplete |
 | Field trip flow polish (permission slips + headcounts) | M | Schema shipped; UX end-to-end test needed |
-| Multi-program switcher in drawer | S | Single-program design today |
+| Multi-program switcher in drawer | M (mis-classified as S earlier) | Single-program design today; needs schema migration to support a user belonging to multiple spaces (today `members.id = auth.uid()`, so one user = one member = one space). New table `user_spaces (user_id, space_id, role, caps)` would unblock it. Defer until a real multi-program use case lands. |
 | Family-side UI polish (`FamilyTodayScreen` outlined but partial) | M | Family-login model is in; UI bare |
 | Reports / exports depth (richer PDF templates) | M | Basic works |
 
@@ -112,6 +111,17 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **Wave 9** — Devon co-parent read-state badges. New
+  `read_by_guardian_ids jsonb` column on `public.messages`
+  (migration `20260520000001_message_read_by.sql`); Drift mirror +
+  PowerSync schema bumped; `MessagesDao.markThreadReadByGuardian`
+  appends the viewing guardian's id idempotently; `MessageActions
+  .markThreadRead` calls it on guardian-side opens; new
+  `_ReadReceipt` widget on staff-side bubbles renders "Seen by
+  Mom" / "Seen by Mom & Dad" / "Seen by 2 of 3" / "Seen by all"
+  using the per-guardian list when the thread has multiple
+  guardians, falling back to legacy `read_at` semantics on
+  single-guardian threads + guardian-side bubbles.
 - **7170cc0** — Lauren "photo of the moment" on Family Today.
   New `_PhotoOfTheMomentPeek` widget in the child card surfaces
   today's most recent observation photo at 16:9 with caption + +N

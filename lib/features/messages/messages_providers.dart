@@ -106,6 +106,17 @@ class MessageActions {
 
   /// Marks all unread messages in a thread as read by the current
   /// viewer. Call when the thread is opened.
+  ///
+  /// Two layers:
+  /// * `markThreadRead` (legacy) sets `read_at` on the other side's
+  ///   messages — the "first read by anybody" timestamp.
+  /// * `markThreadReadByGuardian` (Devon persona) appends THIS
+  ///   guardian's id to each staff-sent message's
+  ///   `read_by_guardian_ids` list, so the staff side can render
+  ///   "Seen by Mom only" vs "Seen by both" on co-parented threads.
+  ///
+  /// Staff viewers only update `read_at`; the per-guardian list is
+  /// only meaningful when a guardian is the reader.
   Future<void> markThreadRead({
     required String subjectId,
     required String guardianId,
@@ -118,6 +129,12 @@ class MessageActions {
       guardianId: guardianId,
       recipientKind: recipientKind,
     );
+    if (viewer is GuardianViewer) {
+      await db.messagesDao.markThreadReadByGuardian(
+        subjectId: subjectId,
+        guardianId: viewer.guardian.id,
+      );
+    }
   }
 }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:drift/drift.dart';
 
@@ -109,6 +111,58 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
                 m.readAt.isNull(),
           ))
         .write(MessagesCompanion(readAt: Value(now)));
+  }
+
+  /// Mark every staff-authored message in this thread as having
+  /// been read by THIS guardian. Devon-persona: divorced parents
+  /// share a kid; each guardian opening the thread appends their
+  /// id to the message's `readByGuardianIds` list. Staff side then
+  /// renders "Seen by both" / "Seen by Mom only" / "Unread" based
+  /// on the list size + the thread's known guardian count.
+  ///
+  /// Idempotent — re-running for the same guardian is a no-op
+  /// because we check the list before appending. The JSONB merge
+  /// happens server-side; locally we read + JSON-parse + append +
+  /// JSON-encode + write.
+  Future<void> markThreadReadByGuardian({
+    required String subjectId,
+    required String guardianId,
+  }) async {
+    final rows = await (select(messages)
+          ..where(
+            (m) =>
+                m.subjectId.equals(subjectId) &
+                m.guardianId.equals(guardianId) &
+                m.senderKind.equals('staff'),
+          ))
+        .get();
+    final now = DateTime.now().toUtc().toIso8601String();
+    for (final row in rows) {
+      // Parse existing list, append if missing, write back.
+      final raw = row.readByGuardianIds;
+      final List<dynamic> ids;
+      try {
+        ids = jsonDecode(raw) as List<dynamic>;
+      } on Object {
+        // Corrupt — replace.
+        await (update(messages)..where((m) => m.id.equals(row.id))).write(
+          MessagesCompanion(
+            readByGuardianIds: Value(jsonEncode([guardianId])),
+            readAt: Value(now),
+          ),
+        );
+        continue;
+      }
+      if (ids.contains(guardianId)) continue;
+      ids.add(guardianId);
+      await (update(messages)..where((m) => m.id.equals(row.id))).write(
+        MessagesCompanion(
+          readByGuardianIds: Value(jsonEncode(ids)),
+          // Keep `readAt` as the first-read-by-anybody timestamp.
+          readAt: row.readAt == null ? Value(now) : const Value.absent(),
+        ),
+      );
+    }
   }
 
   Future<void> deleteById(String id) async {

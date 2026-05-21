@@ -405,6 +405,12 @@ class Messages extends Table {
   TextColumn get senderGuardianId => text().nullable()();
   TextColumn get body => text()();
   TextColumn get readAt => text().nullable()();
+
+  /// JSON-array of guardian UUIDs who've read past this message.
+  /// Devon-persona: divorced parents share a kid; per-guardian
+  /// read-state lets staff see "Seen by Mom only" vs "Seen by both."
+  /// Empty string / null is treated as `'[]'`.
+  TextColumn get readByGuardianIds => text().withDefault(const Constant('[]'))();
   TextColumn get createdAt => text()();
 
   @override
