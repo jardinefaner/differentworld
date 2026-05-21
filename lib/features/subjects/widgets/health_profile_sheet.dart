@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
@@ -8,26 +7,25 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Editor for a Subject's health profile. One form, five sections,
-/// auto-save on tap of "Done."
+/// Editor for a Subject's health profile.
 ///
-/// **Storage shape.** Everything except `allergies` lives under
-/// `subjects.capabilities` JSONB keys in the `ChildcareSubjectCaps`
-/// namespace — no new schema columns, no new tables. `allergies`
-/// continues to use the existing dedicated text column (kept for
-/// backwards compatibility with the existing edit screen + the
-/// subject roster's quick allergy display).
+/// **Storage shape.** Writes to the existing `SubjectCaps` keys on
+/// `subjects.capabilities` JSONB — same keys the `AlertsSection`
+/// above the card reads from. Allergies still rides its own
+/// `subjects.allergies` text column for backward compat with the
+/// roster and other call sites that touch the column directly. No
+/// new schema; no new tables.
 ///
 /// **Vertical scope.** Only mounted on childcare-vertical Spaces;
 /// the storage layer itself is agnostic — other verticals would
-/// register their own intake editors (construction project specs,
-/// healthcare patient history, etc.) reading their own caps
+/// register their own intake editors reading their own caps
 /// namespace.
 ///
-/// **Lists.** Medications + conditions are stored as JSON-encoded
-/// `List<String>`. The form lets the user type comma-separated
-/// values for ergonomic input; the splitter trims + drops empties
-/// before JSON-encoding.
+/// **IEP behaviour.** When the user types IEP notes, `hasIep` is
+/// auto-set to `true` so the AlertsSection picks it up. Clearing
+/// the notes resets `hasIep` to `false`. The "On an IEP" toggle is
+/// thus an emergent property of "did you write notes?" — one less
+/// switch for staff to remember.
 class HealthProfileSheet extends ConsumerStatefulWidget {
   const HealthProfileSheet({required this.subject, super.key});
 
@@ -67,25 +65,22 @@ class _HealthProfileSheetState extends ConsumerState<HealthProfileSheet> {
     final caps = widget.subject.caps;
     _allergies = TextEditingController(text: widget.subject.allergies ?? '');
     _medications = TextEditingController(
-      text: _decodeList(caps.getString(ChildcareSubjectCaps.medications))
-          .join(', '),
+      text: caps.getString(SubjectCaps.medications) ?? '',
     );
     _conditions = TextEditingController(
-      text:
-          _decodeList(caps.getString(ChildcareSubjectCaps.medicalConditions))
-              .join(', '),
+      text: caps.getString(SubjectCaps.medicalConditions) ?? '',
     );
     _iep = TextEditingController(
-      text: caps.getString(ChildcareSubjectCaps.iepSummary) ?? '',
+      text: caps.getString(SubjectCaps.iepNotes) ?? '',
     );
     _docName = TextEditingController(
-      text: caps.getString(ChildcareSubjectCaps.physicianName) ?? '',
+      text: caps.getString(SubjectCaps.physicianName) ?? '',
     );
     _docPhone = TextEditingController(
-      text: caps.getString(ChildcareSubjectCaps.physicianPhone) ?? '',
+      text: caps.getString(SubjectCaps.physicianPhone) ?? '',
     );
     _emergency = TextEditingController(
-      text: caps.getString(ChildcareSubjectCaps.emergencyInstructions) ?? '',
+      text: caps.getString(SubjectCaps.emergencyInstructions) ?? '',
     );
   }
 
@@ -101,32 +96,6 @@ class _HealthProfileSheetState extends ConsumerState<HealthProfileSheet> {
     super.dispose();
   }
 
-  /// Parse a comma-separated input into a list of trimmed,
-  /// non-empty values. Returns `''` (treated as clear) when the
-  /// resulting list is empty so the cap key gets removed.
-  String? _encodeList(String raw) {
-    final parts = raw
-        .split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList(growable: false);
-    if (parts.isEmpty) return null;
-    return jsonEncode(parts);
-  }
-
-  static List<String> _decodeList(String? raw) {
-    if (raw == null || raw.isEmpty) return const <String>[];
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is List) {
-        return decoded.whereType<String>().toList(growable: false);
-      }
-    } on FormatException {
-      // Corrupt — treat as empty.
-    }
-    return const <String>[];
-  }
-
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
@@ -135,46 +104,54 @@ class _HealthProfileSheetState extends ConsumerState<HealthProfileSheet> {
     final subjectActions = ref.read(subjectActionsProvider);
     final capActions = ref.read(subjectCapActionsProvider);
     try {
-      // Allergies still lives on its own column. Update via the
-      // existing SubjectActions path so the field renders identically
-      // wherever else the column is read directly.
+      // Allergies stays on its own column path.
       final allergiesText = _allergies.text.trim();
       await subjectActions.update(
         id: widget.subject.id,
         allergies: allergiesText.isEmpty ? null : allergiesText,
       );
 
-      // Everything else goes into the JSONB bag, one key at a time
-      // (the action layer reads-merges-writes so concurrent edits to
-      // other keys aren't clobbered).
+      // Everything else: one read-merge-write per key. Slower than a
+      // single blob write but keeps concurrent edits to other keys
+      // safe.
       await capActions.setStringCap(
         widget.subject.id,
-        ChildcareSubjectCaps.medications,
-        _encodeList(_medications.text),
+        SubjectCaps.medications,
+        _medications.text.trim(),
       );
       await capActions.setStringCap(
         widget.subject.id,
-        ChildcareSubjectCaps.medicalConditions,
-        _encodeList(_conditions.text),
+        SubjectCaps.medicalConditions,
+        _conditions.text.trim(),
       );
+
+      // IEP notes: auto-link the boolean toggle to whether notes
+      // exist. Avoids a second switch the user has to remember.
+      final iepText = _iep.text.trim();
       await capActions.setStringCap(
         widget.subject.id,
-        ChildcareSubjectCaps.iepSummary,
-        _iep.text.trim(),
+        SubjectCaps.iepNotes,
+        iepText,
       );
+      await capActions.setBoolCap(
+        subjectId: widget.subject.id,
+        key: SubjectCaps.hasIep,
+        value: iepText.isNotEmpty,
+      );
+
       await capActions.setStringCap(
         widget.subject.id,
-        ChildcareSubjectCaps.physicianName,
+        SubjectCaps.physicianName,
         _docName.text.trim(),
       );
       await capActions.setStringCap(
         widget.subject.id,
-        ChildcareSubjectCaps.physicianPhone,
+        SubjectCaps.physicianPhone,
         _docPhone.text.trim(),
       );
       await capActions.setStringCap(
         widget.subject.id,
-        ChildcareSubjectCaps.emergencyInstructions,
+        SubjectCaps.emergencyInstructions,
         _emergency.text.trim(),
       );
 
@@ -245,7 +222,7 @@ class _HealthProfileSheetState extends ConsumerState<HealthProfileSheet> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Medications',
-                  hintText: 'Comma-separated. e.g. Albuterol, EpiPen Jr',
+                  hintText: 'e.g. Albuterol (as needed), EpiPen Jr',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -255,7 +232,7 @@ class _HealthProfileSheetState extends ConsumerState<HealthProfileSheet> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   labelText: 'Medical conditions',
-                  hintText: 'Comma-separated. e.g. Asthma, type 1 diabetes',
+                  hintText: 'e.g. Asthma, type 1 diabetes',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -266,8 +243,9 @@ class _HealthProfileSheetState extends ConsumerState<HealthProfileSheet> {
                 maxLines: 4,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                  labelText: 'IEP / 504 summary',
-                  hintText: 'What staff should know day-to-day.',
+                  labelText: 'IEP / 504 notes',
+                  hintText: 'What staff should know day-to-day. Adds an '
+                      'alert badge automatically.',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -308,7 +286,7 @@ class _HealthProfileSheetState extends ConsumerState<HealthProfileSheet> {
                 decoration: const InputDecoration(
                   labelText: 'Emergency instructions',
                   hintText:
-                      'What to do if something happens — different from '
+                      'What to do if something happens. Different from '
                       'general notes.',
                   border: OutlineInputBorder(),
                 ),

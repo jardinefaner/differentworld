@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
@@ -10,17 +8,16 @@ import 'package:flutter/material.dart';
 /// medications, medical conditions, IEP/504 summary, primary
 /// physician, emergency instructions.
 ///
-/// **Vertical scope.** The fields it reads live on
-/// `subjects.capabilities` under the `ChildcareSubjectCaps`
-/// namespace. Other verticals (construction "project", healthcare
-/// "patient", etc.) get their own namespaces under the same JSONB
-/// bag — no new tables. The CALLER is responsible for only
-/// mounting this card on a childcare-vertical Space; nothing in
-/// the storage layer is childcare-only.
+/// **Storage shape.** Reads from the existing `SubjectCaps` keys on
+/// `subjects.capabilities` JSONB. No schema columns of its own; same
+/// bag the AlertsSection above reads from. Other verticals (a
+/// construction project's intake, a healthcare patient's history)
+/// register their own card here reading their own namespace — no
+/// new tables.
 ///
-/// Renders an empty placeholder + "Add details" button when every
-/// field is empty, so a fresh subject has a discoverable entry
-/// point rather than just blank space.
+/// Renders an empty-state placeholder + "Add details" button when
+/// every field is empty, so a fresh subject has a discoverable
+/// entry point rather than just blank space.
 class HealthProfileCard extends StatelessWidget {
   const HealthProfileCard({required this.subject, super.key});
 
@@ -33,27 +30,23 @@ class HealthProfileCard extends StatelessWidget {
     final caps = subject.caps;
 
     final allergies = subject.allergies?.trim();
-    final medications = _decodeList(
-      caps.getString(ChildcareSubjectCaps.medications),
-    );
-    final conditions = _decodeList(
-      caps.getString(ChildcareSubjectCaps.medicalConditions),
-    );
-    final iep = caps.getString(ChildcareSubjectCaps.iepSummary)?.trim();
-    final docName = caps
-        .getString(ChildcareSubjectCaps.physicianName)
-        ?.trim();
-    final docPhone = caps
-        .getString(ChildcareSubjectCaps.physicianPhone)
-        ?.trim();
-    final emergency = caps
-        .getString(ChildcareSubjectCaps.emergencyInstructions)
-        ?.trim();
+    final medications = caps.getString(SubjectCaps.medications)?.trim();
+    final conditions =
+        caps.getString(SubjectCaps.medicalConditions)?.trim();
+    final hasIep = caps.getBool(SubjectCaps.hasIep);
+    final iepNotes = caps.getString(SubjectCaps.iepNotes)?.trim();
+    final needsOneOnOne = caps.getBool(SubjectCaps.requiresOneOnOne);
+    final docName = caps.getString(SubjectCaps.physicianName)?.trim();
+    final docPhone = caps.getString(SubjectCaps.physicianPhone)?.trim();
+    final emergency =
+        caps.getString(SubjectCaps.emergencyInstructions)?.trim();
 
     final empty = (allergies == null || allergies.isEmpty) &&
-        medications.isEmpty &&
-        conditions.isEmpty &&
-        (iep == null || iep.isEmpty) &&
+        (medications == null || medications.isEmpty) &&
+        (conditions == null || conditions.isEmpty) &&
+        !hasIep &&
+        (iepNotes == null || iepNotes.isEmpty) &&
+        !needsOneOnOne &&
         (docName == null || docName.isEmpty) &&
         (docPhone == null || docPhone.isEmpty) &&
         (emergency == null || emergency.isEmpty);
@@ -98,31 +91,25 @@ class HealthProfileCard extends StatelessWidget {
                 if (empty)
                   Text(
                     'No health details on file yet. Tap to add '
-                    'allergies, medications, conditions, IEP/504 '
-                    'summary, or physician contact.',
+                    'medications, conditions, IEP/504 plan, physician '
+                    'contact, or emergency instructions.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
                   )
                 else ...[
-                  if (allergies != null && allergies.isNotEmpty)
-                    _Field(
-                      label: 'Allergies',
-                      value: allergies,
-                      emphasised: true,
-                    ),
-                  if (medications.isNotEmpty)
-                    _Field(
-                      label: 'Medications',
-                      value: medications.join(', '),
-                    ),
-                  if (conditions.isNotEmpty)
-                    _Field(
-                      label: 'Conditions',
-                      value: conditions.join(', '),
-                    ),
-                  if (iep != null && iep.isNotEmpty)
-                    _Field(label: 'IEP / 504', value: iep),
+                  // The AlertsSection above already shows allergies +
+                  // medications + IEP toggle as warm pills, so we
+                  // don't duplicate them here. This card focuses on
+                  // the EXTRA structured fields the sheet captures.
+                  if (conditions != null && conditions.isNotEmpty)
+                    _Field(label: 'Conditions', value: conditions),
+                  if (iepNotes != null && iepNotes.isNotEmpty && !hasIep)
+                    // IEP notes typed but the toggle's off — surface
+                    // the notes anyway so the user sees them; the
+                    // alert at the top won't render them in this
+                    // case.
+                    _Field(label: 'IEP / 504', value: iepNotes),
                   if ((docName != null && docName.isNotEmpty) ||
                       (docPhone != null && docPhone.isNotEmpty))
                     _Field(
@@ -138,6 +125,22 @@ class HealthProfileCard extends StatelessWidget {
                       value: emergency,
                       emphasised: true,
                     ),
+                  // If only allergies / medications / IEP are set
+                  // (everything that AlertsSection already shows),
+                  // tell the user the card itself has nothing extra
+                  // rather than rendering empty.
+                  if ((conditions == null || conditions.isEmpty) &&
+                      ((iepNotes == null || iepNotes.isEmpty) || hasIep) &&
+                      (docName == null || docName.isEmpty) &&
+                      (docPhone == null || docPhone.isEmpty) &&
+                      (emergency == null || emergency.isEmpty))
+                    Text(
+                      'Tap to add conditions, physician, or '
+                      'emergency instructions.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
                 ],
               ],
             ),
@@ -145,22 +148,6 @@ class HealthProfileCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  /// JSON-decode a list-of-strings cap. Returns empty list on null,
-  /// empty string, or any parse failure — the card UI must never
-  /// throw because the JSONB blob is malformed.
-  static List<String> _decodeList(String? raw) {
-    if (raw == null || raw.isEmpty) return const <String>[];
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is List) {
-        return decoded.whereType<String>().toList(growable: false);
-      }
-    } on FormatException {
-      // Corrupt — treat as empty.
-    }
-    return const <String>[];
   }
 }
 
@@ -174,9 +161,8 @@ class _Field extends StatelessWidget {
   final String label;
   final String value;
 
-  /// Allergies + emergency rows get a warm tint to distinguish them
-  /// from the merely-informational ones — staff scan for those
-  /// first when someone hurts themselves.
+  /// Emergency rows get a warm tint to distinguish them from the
+  /// merely-informational ones — staff scan for those first.
   final bool emphasised;
 
   @override
@@ -186,7 +172,7 @@ class _Field extends StatelessWidget {
     final labelColor = emphasised
         ? scheme.error.withValues(alpha: 0.95)
         : scheme.onSurfaceVariant;
-    final valueColor = emphasised ? scheme.onSurface : scheme.onSurface;
+    final valueColor = scheme.onSurface;
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: RichText(

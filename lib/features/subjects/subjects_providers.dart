@@ -135,10 +135,8 @@ class SubjectCapActions {
 
   final Ref _ref;
 
-  /// Set or clear a single string-shaped cap. Pass `value: null` to
-  /// remove the key. List-shaped fields (medications, conditions)
-  /// pass JSON-encoded strings here; the form is the only thing that
-  /// knows the list-vs-string shape.
+  /// Set or clear a single string-shaped cap. Pass `value: null` or
+  /// an empty string to remove the key (keeps the JSONB bag tidy).
   Future<void> setStringCap(
     String subjectId,
     String key,
@@ -153,6 +151,23 @@ class SubjectCapActions {
     // accumulating `"": ""` rows when the form is wiped.
     final normalized = (value == null || value.isEmpty) ? null : value;
     final caps = s.caps.setting(key, normalized);
+    await db.subjectsDao.updateCapabilities(subjectId, caps.toJson());
+  }
+
+  /// Set a boolean cap. Always writes a literal `true` or `false`
+  /// (rather than removing the key when false) so consumers can
+  /// `.getBool` with a known default without ambiguity.
+  Future<void> setBoolCap({
+    required String subjectId,
+    required String key,
+    required bool value,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final s = await (db.select(db.subjects)
+          ..where((row) => row.id.equals(subjectId)))
+        .getSingleOrNull();
+    if (s == null) return;
+    final caps = s.caps.setting(key, value);
     await db.subjectsDao.updateCapabilities(subjectId, caps.toJson());
   }
 }
