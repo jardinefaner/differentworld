@@ -28,12 +28,17 @@ class DifferentWorldApp extends ConsumerWidget {
     // app continues fine if deep-link plumbing fails on a given platform.
     ref.watch(deepLinkBootProvider);
 
-    // Process any deferred photo uploads queued from previous offline
-    // sessions. Fire-and-forget — the worker logs internally and the
-    // entity rows still hold the `pending:<id>` token until a retry
-    // succeeds, so the UI doesn't depend on this completing before
-    // first frame.
-    unawaited(ref.read(photoUploadQueueProvider).processQueue());
+    // Photo upload queue:
+    //   1. Drain any uploads queued from previous offline sessions
+    //      (cold-start case where the device is already online).
+    //   2. Start the connectivity listener so future offline-to-
+    //      online transitions auto-drain.
+    // Both fire-and-forget — the worker logs internally and entity
+    // rows hold the `pending:<id>` token until retries succeed, so
+    // the UI doesn't depend on these completing before first frame.
+    final photoQueue = ref.read(photoUploadQueueProvider);
+    unawaited(photoQueue.processQueue());
+    photoQueue.startConnectivityListener();
     final router = ref.watch(routerProvider);
     // Outdoor mode (Jordan persona): when on, the high-contrast
     // theme replaces both the light AND dark slots so the active

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -89,9 +90,11 @@ class PendingPhotoUpload {
 ///      passes — surface to the user via a banner so they can
 ///      investigate.
 ///
-/// Auto-retry on connectivity change is NOT wired yet — we rely
-/// on app-boot processing + user actions. Adding it later is one
-/// `connectivity_plus` listener that calls `processQueue()`.
+/// Auto-retry on connectivity change is wired via
+/// [startConnectivityListener] — called once from app boot. Any
+/// transition from offline to online (wifi / cellular / etc.) drains
+/// the queue. App-boot `processQueue()` covers the cold-start case
+/// where the device was already online.
 class PhotoUploadQueue {
   PhotoUploadQueue(this._ref);
 
@@ -101,6 +104,41 @@ class PhotoUploadQueue {
   static const _maxAttempts = 12;
 
   bool _processing = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+
+  /// Subscribe to connectivity changes so we drain the queue as
+  /// soon as the device gets back online. Called once at app boot
+  /// from `lib/app/app.dart`. Idempotent — re-subscribing on a
+  /// hot-reload no-ops because we keep the existing subscription.
+  void startConnectivityListener() {
+    if (_connectivitySub != null) return;
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      (results) {
+        // Any "online" result fires a drain. `none` is the only
+        // value that means truly offline; everything else (wifi,
+        // mobile, ethernet, vpn, …) means we can try.
+        final hasConnection = results.any(
+          (r) => r != ConnectivityResult.none,
+        );
+        if (!hasConnection) return;
+        if (kDebugMode) {
+          debugPrint(
+            '[photo-queue] connectivity online ($results) — processing queue',
+          );
+        }
+        unawaited(processQueue());
+      },
+      onError: (Object e, StackTrace st) {
+        if (kDebugMode) {
+          debugPrint('[photo-queue] connectivity listener error: $e');
+        }
+      },
+    );
+    _ref.onDispose(() {
+      unawaited(_connectivitySub?.cancel());
+      _connectivitySub = null;
+    });
+  }
 
   SupabaseClient get _supabase => Supabase.instance.client;
 

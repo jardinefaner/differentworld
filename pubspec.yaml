@@ -67,6 +67,10 @@ dependencies:
   # SECRETS.md for the spend-cap + scrubbing posture.
   sentry_flutter: ^9.6.0
 
+  # Connectivity changes — drives the photo upload queue's auto-
+  # retry. When wifi or cellular returns, we drain the queue.
+  connectivity_plus: ^7.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
