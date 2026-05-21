@@ -1,5 +1,15 @@
 # Different World — what is here, how to find it, why it generalizes
 
+> **Looking for something specific?** [docs/README.md](README.md) is
+> the index of every doc in this folder + a "if you're asking X, open
+> Y" lookup. Open it first if you don't know what to read.
+>
+> **Looking for roles, capabilities, abilities?** Jump to the
+> [Quick reference: roles + bundle defaults](#quick-reference-roles--bundle-defaults)
+> section below, or open the full catalog at
+> [CAPABILITIES.md](CAPABILITIES.md). Typed string constants live in
+> `lib/core/capabilities/capability_keys.dart`.
+
 Two-part doc:
 
 1. **What everything is, and how to find it** — a non-buried map of
@@ -206,26 +216,89 @@ in code — see `MemberCaps` / `GroupCaps` / etc. in
 `lib/core/capabilities/capability_keys.dart`).
 
 A role is just a SEED for capabilities. The same member can lose
-or gain individual caps without changing role. Examples from the
-current childcare model:
+or gain individual caps without changing role.
 
-- `canObserve` — log a structured note about a Subject
-- `canTakeAttendance` — check kids in/out
-- `canRecordMeal` / `canRecordNap` / `canRecordDiaper` — age-band-
-  specific verbs
-- `canOpenBuilding` / `canCloseBuilding` — daily ops
-- `canAuthorizePickup` — sensitive gating
-- `canDrive` — vehicles surface only shows when this is set
-- `canActAsDirector` — admin gate
-- `canInviteStaff` — Team screen gate
-- `canAdministerMedication` — cert-gated
-- `canManageSchedule` — schedule editor gate
-- `canViewBilling` / `canViewAuditLog` — admin reads
+#### Quick reference: roles + bundle defaults
+
+| Role | Caps seeded on invite |
+|---|---|
+| **director** | Every staff capability EXCEPT cert-gated ones (`canAdministerMedication`, `canDrive` stay false until a certification is added) |
+| **lead_teacher** | `canObserve`, `canTakeAttendance`, all `canRecord*`, `canOpenBuilding`, `canCloseBuilding`, `canAuthorizePickup`, `canManageSchedule` |
+| **teacher** | `canObserve`, `canTakeAttendance`, all `canRecord*`, `canManageSchedule` |
+| **assistant** | `canTakeAttendance`, all `canRecord*` (no `canObserve`) |
+| **guardian** | None of the staff caps. Family-side reads only. |
+
+Roles live in the `public.member_role` enum (added via
+migration `20260518000001_universal_rename.sql` + extended with
+`'guardian'` in `20260519000004_member_role_guardian.sql`). The
+bundle map is `RoleBundles.defaultsFor(role)` in
+`lib/core/capabilities/capability_keys.dart`.
+
+#### Quick reference: capability keys
+
+##### Member (what a staff user can DO)
+
+| Key | Gates |
+|---|---|
+| `canObserve` | Create observation entries |
+| `canTakeAttendance` | Check kids in / out |
+| `canRecordMeal` / `canRecordNap` / `canRecordDiaper` | Per-routine entry forms |
+| `canAdministerMedication` | Medication-administered entries (cert-gated; stays false until member has a CPR/MAT certification on file) |
+| `canDrive` | Vehicle check-in / check-out, slash commands `/checkout` `/checkin`, Today vehicle tile (cert-gated) |
+| `canOpenBuilding` / `canCloseBuilding` | Building-access ops (key holders) |
+| `canAuthorizePickup` | Edit a child's authorized pickup list |
+| `canViewBilling` / `canViewAuditLog` | Director-only reads |
+| `canInviteStaff` | Team screen + "Invite" action |
+| `canActAsDirector` | Backup admin role (used when director is offsite) |
+| `canManageSchedule` | Schedule editor (create/edit blocks) |
+| `isSpecialist` | Narrow-scope staff (yoga, swim, archery); their Today screen defaults to "what am I leading" |
+
+##### Group (what's tracked in this room / cohort)
+
+| Key | Drives |
+|---|---|
+| `ageBand` | `infant` / `toddler` / `preschool` / `prek` / `mixed` — auto-derives the other GroupCaps |
+| `tracksDiapers` / `tracksNaps` / `tracksMealsDetailed` / `tracksBottleFeeds` | Which logging forms appear for this group |
+| `napSchedule` | `{start, end}` for nap-time prompts |
+| `hasOutdoorTime` | Sun-safety reminders, weather card on Today |
+| `hasFieldTrips` | Trips module toggle |
+| `bilingualLanguages` | e.g. `['en', 'es']` for immersion rooms |
+
+##### Subject (what's tracked for this individual child)
+
+Mostly overrides Group defaults plus per-child fields. See
+[CAPABILITIES.md](CAPABILITIES.md) for the full table — allergies,
+medications, IEP notes, pickup-strict, photo consent, photo
+visibility, comfort items, nap routine, transition notes.
+
+##### Space (program-wide feature toggles)
+
+| Key | Default | Controls |
+|---|---|---|
+| `feature_observations` | true | Observation capture UI + sync rule for observations |
+| `feature_medication_log` | false | Medication entries + `canAdministerMedication` |
+| `feature_field_trips` | false | Trips module + permission slips + `canDrive` |
+| `feature_meal_logging` / `feature_nap_logging` / `feature_diaper_logging` | varies | Per-routine logging |
+| `feature_incident_reports` | true | Incident-report entries + parent notification |
+| `feature_family_login` | false | Family-facing UI for guardians (v2+) |
+| `feature_billing` | false | Billing module (later) |
+| `pickup_window_start` / `pickup_window_end` | `15:00` / `18:00` | "Pickup soon" / "Late pickup" prompts |
+| `state_compliance` | `'none'` | One of `none` / `CA` / `NY` / `TX` / … — drives state-specific reports |
+| `photo_default_consent` | false | Default for `Subject.photo_consent` on new enrollments |
+
+#### How the gates compose
 
 For each cap, the UI gates by `viewer.can(MemberCaps.foo)`. The
 viewer abstraction (`viewerProvider`) makes screens never compare
 `member.role == 'director'` directly — instead they check the cap
-that the role would seed.
+that the role would seed. **Any layer can veto**: Space → Member →
+Group → Subject. If `Space.feature_medication_log == false`, no
+member sees the medication UI even with `canAdministerMedication`.
+
+Full catalog with defaults + per-key UI surface + runtime check
+patterns: [CAPABILITIES.md](CAPABILITIES.md). The typed string
+constants for every key live in
+`lib/core/capabilities/capability_keys.dart`.
 
 ### Maps to other verticals
 
