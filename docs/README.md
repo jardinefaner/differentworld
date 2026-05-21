@@ -68,8 +68,8 @@ Key skills for the categories users ask about most:
 - **"How do I navigate / find things"** → `omnibox-modes`, `hamburger-menu`, `route-chrome`, `no-bottom-nav`
 - **"How do roles / abilities work"** → `capabilities`, `viewer-lens`, `new-capability`
 - **"How do I add a screen"** → `new-screen`, `new-route`, `golden-test`
-- **"How do I add a feature that syncs"** → `new-table`, `architecture`, `local-first-reads`, `optimistic-writes`, `sync-add-table`
-- **"What's not allowed"** → `no-app-bar`, `no-bottom-nav`, `no-direct-supabase`, `no-pii-in-logs`, `no-magic-strings`, `no-print-statements`, `no-color-only`, `dont-git-add-dot`
+- **"How do I add a feature that syncs"** → `new-table`, `architecture`, `offline-first`, `sync-add-table`
+- **"What's not allowed"** → `no-app-bar`, `no-bottom-nav`, `offline-first` (covers no-direct-supabase), `no-pii-in-logs`, `no-magic-strings`, `no-print-statements`, `no-color-only`, `dont-git-add-dot`
 
 ## When you don't know what to read
 

@@ -46,8 +46,8 @@ final exportRecipientsProvider =
 
 /// All the writes that touch the `exports` table + the Storage
 /// bucket. Storage upload is one of the few places this app talks
-/// to Supabase directly — see `no-direct-supabase` skill, which
-/// lists binary-media uploads as a documented exception.
+/// to Supabase directly — see `offline-first` skill, which lists
+/// binary-media uploads as a documented exception.
 class ExportActions {
   ExportActions(this._ref);
 

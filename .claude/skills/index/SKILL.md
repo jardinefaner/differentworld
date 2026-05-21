@@ -3,7 +3,7 @@ name: index
 description: Catalog of every skill in this repo grouped by category. Use to discover what's available before starting work.
 ---
 
-# Skill index — 87 skills
+# Skill index — 84 skills (4 offline-first merged → 1)
 
 ## Workflow / dev commands (13)
 
@@ -55,10 +55,7 @@ description: Catalog of every skill in this repo grouped by category. Use to dis
 
 ### Data / sync
 - `typed-drift-only` — no customStatement for mutations
-- `local-first-reads` — Drift streams, never Supabase from UI
-- `no-direct-supabase` — three documented exceptions only
-- `optimistic-writes` — local commit, async upload
-- `never-await-network-handler` — same rule, restated
+- `offline-first` — the FOUR-rule contract: local reads / optimistic writes / no direct Supabase from UI / no awaits on network in handlers. (Replaced the old `local-first-reads` / `no-direct-supabase` / `optimistic-writes` / `never-await-network-handler` skills — same rules, one skill.)
 - `space-id-everywhere` — every synced table carries space_id
 - `uuid-clientside` — IDs generated in Dart via Uuid().v4()
 - `photo-via-storage` — binary media bypasses PowerSync; private bucket + signed URLs
