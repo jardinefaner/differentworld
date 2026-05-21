@@ -17,7 +17,8 @@ The fastest path to "where do I look for X." Every other file in
 | Doc | What's inside |
 |---|---|
 | **[CAPABILITIES.md](CAPABILITIES.md)** | The master catalog. Every capability key on Space / Member / Group / Subject, what each gates, defaults per role, and how runtime checks compose (Space → Member → Group → Subject; any layer can veto). |
-| Source of truth (code) | `lib/core/capabilities/capability_keys.dart` — typed string constants for every key + `RoleBundles.defaultsFor(role)` |
+| **[SCHEMA_AUDIT.md](SCHEMA_AUDIT.md)** | What's still childcare-specific at the Postgres layer + the migration design for multi-vertical readiness. Read before designing a non-childcare pilot. |
+| Source of truth (code) | `lib/core/capabilities/capability_keys.dart` — typed string constants for every key + `RoleBundles.defaultsFor(role)`; `lib/core/vertical/labels.dart` — per-vertical UI labels |
 
 ## Architecture / data model
 

@@ -112,9 +112,33 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **(this commit)** — Schema audit doc (`docs/SCHEMA_AUDIT.md`).
+  Catalogs the childcare-specific bits at the Postgres layer
+  (member_role enum, guardians + subject_guardians tables, JSONB
+  capability vocabulary) and writes the migration design for
+  multi-vertical readiness. Recommendation: drop the enum to text +
+  per-Space role catalog; add `vertical` column to `public.spaces`;
+  gate childcare-specific feature folders. Roadmap item #5 closed.
+- **76bbf5f** — Background photo upload queue. `PhotoUploadQueue`
+  service: bytes-to-disk + SharedPreferences-backed pending list +
+  `processQueue()` on app boot. Both `PhotoService.uploadAndPersist`
+  and `uploadOnly` fall back to the queue on Storage failure.
+  Entity row gets `pending:<id>` token; PowerSync syncs it so other
+  devices show a placeholder; worker rewrites the row on success.
+  Auto-retry-on-connectivity deferred. Roadmap item #4 closed.
+- **7a4f052** — Ava staff PIN dialog. `SpaceCaps.staffPin` + new
+  `kid_mode_exit_dialog.dart` + `survey_take_screen` uses it after
+  the 5-tap-corner gesture. PIN-less spaces fall back to gesture-
+  alone. Persona Ava promoted from PARTIAL to shipped. Roadmap
+  item #3 closed.
+- **bb951ec** — Goldens for Insights, Captures, Tasks (empty
+  states, 4 breakpoints each). 16 golden tests now passing across
+  4 screens. Top-8 batch first half. Roadmap item #2 half-done;
+  remaining 5 (Today, Schedule, GroupDetail, SubjectDetail,
+  ObservationsList) are larger provider-mock surface.
 - **7d9f6d1** — Sentry wiring. `sentry_flutter: ^9.6.0` added,
   `main.dart` initializes when `Env.hasSentry` is true (else
   no-ops). `sendDefaultPii = false`, crash-only sampling,
   debug/release environment tags. Pre-existing
   `FlutterError.reportError` calls now route through Sentry
-  automatically.
+  automatically. Roadmap item #1 closed.
