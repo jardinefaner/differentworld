@@ -109,7 +109,7 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **Wave 11** — Vertical picker on program settings. New `vertical`
+- **29b870e** — Vertical picker on program settings. New `vertical`
   string capability on `SpaceCaps` (no schema migration — rides
   the existing `spaces.capabilities` jsonb). `verticalLabelsProvider`
   now reads `currentSpaceProvider.value.caps.getString('vertical')`
