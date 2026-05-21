@@ -5,12 +5,16 @@ import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-/// Open tasks in the signed-in user's space, due-first then oldest
-/// open first. Empty when no space.
-// Riverpod 3 family providers don't have a stable public-typed name.
+/// Filter shape for [tasksProvider]. `open` is the daily list;
+/// `all` includes done + dismissed and is used by audit / "this
+/// week" views.
+enum TaskFilter { open, all }
+
+/// All tasks matching the given filter in the signed-in user's
+/// space, due-first then oldest open first. Empty when no space.
 // ignore: specify_nonobvious_property_types
-final openTasksProvider =
-    StreamProvider.autoDispose<List<Task>>((ref) async* {
+final tasksProvider = StreamProvider.autoDispose
+    .family<List<Task>, TaskFilter>((ref, filter) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
   if (spaceId == null) {
@@ -18,22 +22,19 @@ final openTasksProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.tasksDao.watchOpen(spaceId);
+  yield* switch (filter) {
+    TaskFilter.open => db.tasksDao.watchOpen(spaceId),
+    TaskFilter.all => db.tasksDao.watchAll(spaceId),
+  };
 });
 
-/// All tasks in the space (any status) — for audit / "this week" views.
+/// Open tasks only. Drives the Today launchpad badge + task list.
 // ignore: specify_nonobvious_property_types
-final allTasksProvider =
-    StreamProvider.autoDispose<List<Task>>((ref) async* {
-  final viewer = ref.watch(viewerProvider);
-  final spaceId = viewer.spaceId;
-  if (spaceId == null) {
-    yield const <Task>[];
-    return;
-  }
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.tasksDao.watchAll(spaceId);
-});
+final openTasksProvider = tasksProvider(TaskFilter.open);
+
+/// All tasks (any status). Audit + "this week" views.
+// ignore: specify_nonobvious_property_types
+final allTasksProvider = tasksProvider(TaskFilter.all);
 
 /// Tasks attached to a specific kid — surfaces on family / staff
 /// per-subject screens.

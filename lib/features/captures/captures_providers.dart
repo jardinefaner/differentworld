@@ -5,13 +5,23 @@ import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-/// All open captures in the signed-in user's space, newest first.
-/// Empty when no space (signed out / pre-onboarding) — the inbox
-/// quietly disappears rather than asserting.
+/// Filter shape for [capturesProvider]. `open` is the daily inbox
+/// view; `all` includes discarded + promoted rows and is used by
+/// the "show everything" toggle + audit views.
+enum CaptureFilter { open, all }
+
+/// All captures matching the given filter in the signed-in user's
+/// space, newest first. Empty when no space (signed out /
+/// pre-onboarding) — the inbox quietly disappears rather than
+/// asserting.
+///
+/// Family parameter is the filter; the two named accessors
+/// [openCapturesProvider] / [allCapturesProvider] are aliases so
+/// existing call sites keep working without typing the family key.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final openCapturesProvider =
-    StreamProvider.autoDispose<List<Capture>>((ref) async* {
+final capturesProvider = StreamProvider.autoDispose
+    .family<List<Capture>, CaptureFilter>((ref, filter) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
   if (spaceId == null) {
@@ -19,23 +29,20 @@ final openCapturesProvider =
     return;
   }
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.capturesDao.watchOpen(spaceId);
+  yield* switch (filter) {
+    CaptureFilter.open => db.capturesDao.watchOpen(spaceId),
+    CaptureFilter.all => db.capturesDao.watchAll(spaceId),
+  };
 });
 
-/// Includes discarded + promoted rows. Used by the inbox's "show
-/// everything" toggle and any future audit view.
+/// Open captures only. Drives the inbox + Today launchpad badge.
 // ignore: specify_nonobvious_property_types
-final allCapturesProvider =
-    StreamProvider.autoDispose<List<Capture>>((ref) async* {
-  final viewer = ref.watch(viewerProvider);
-  final spaceId = viewer.spaceId;
-  if (spaceId == null) {
-    yield const <Capture>[];
-    return;
-  }
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.capturesDao.watchAll(spaceId);
-});
+final openCapturesProvider = capturesProvider(CaptureFilter.open);
+
+/// All captures (any status). Drives the "show everything" toggle
+/// + future audit views.
+// ignore: specify_nonobvious_property_types
+final allCapturesProvider = capturesProvider(CaptureFilter.all);
 
 /// Mutations on the capture inbox. The sheet UI calls `start` once on
 /// first non-empty keystroke and `updateBody` thereafter (debounced),
