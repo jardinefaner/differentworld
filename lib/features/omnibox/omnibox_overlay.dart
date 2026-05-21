@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/omnibox/omnibox_history.dart';
@@ -220,6 +221,9 @@ class _OmniboxResultsView extends ConsumerWidget {
         ref.watch(pinnedOmniboxIdsProvider).value ?? const <String>[];
 
     final q = query.trim().toLowerCase();
+    // Active vertical's labels drive "Classrooms" header text per
+    // vertical (Crews / Departments / Sections / Lines).
+    final labels = ref.watch(verticalLabelsProvider);
     final theBuilder = q.isEmpty
         ? _buildIdleSections(
             context: context,
@@ -227,8 +231,13 @@ class _OmniboxResultsView extends ConsumerWidget {
             byId: byId,
             recentIds: recentIds,
             pinnedIds: pinnedIds,
+            labels: labels,
           )
-        : _buildSearchSections(catalog: catalog, query: q);
+        : _buildSearchSections(
+            catalog: catalog,
+            query: q,
+            labels: labels,
+          );
 
     if (theBuilder.isEmpty) {
       return Padding(
@@ -278,6 +287,7 @@ class _OmniboxResultsView extends ConsumerWidget {
     required Map<String, OmniboxEntry> byId,
     required List<String> recentIds,
     required List<String> pinnedIds,
+    required VerticalLabels labels,
   }) {
     final nodes = <_Node>[];
 
@@ -331,7 +341,7 @@ class _OmniboxResultsView extends ConsumerWidget {
     for (final cat in OmniboxCategory.values) {
       final list = byCategory[cat];
       if (list == null || list.isEmpty) continue;
-      nodes.add(_SectionHeader(_pluralLabel(cat)));
+      nodes.add(_SectionHeader(cat.pluralLabel(labels)));
       nodes.addAll(list.take(5).map(_Entry.new));
     }
 
@@ -343,6 +353,7 @@ class _OmniboxResultsView extends ConsumerWidget {
   List<_Node> _buildSearchSections({
     required List<OmniboxEntry> catalog,
     required String query,
+    required VerticalLabels labels,
   }) {
     final scored = <(OmniboxEntry, int)>[];
     for (final e in catalog) {
@@ -393,7 +404,7 @@ class _OmniboxResultsView extends ConsumerWidget {
     for (final cat in OmniboxCategory.values) {
       final list = byCategory[cat];
       if (list == null || list.isEmpty) continue;
-      nodes.add(_SectionHeader(_pluralLabel(cat)));
+      nodes.add(_SectionHeader(cat.pluralLabel(labels)));
       // Cap per-section to keep the list scannable.
       for (final p in list.take(8)) {
         nodes.add(_Entry(p.$1));
@@ -402,16 +413,9 @@ class _OmniboxResultsView extends ConsumerWidget {
     return nodes;
   }
 
-  static String _pluralLabel(OmniboxCategory cat) => switch (cat) {
-        OmniboxCategory.action => 'Actions',
-        OmniboxCategory.page => 'Pages',
-        OmniboxCategory.person => 'People',
-        OmniboxCategory.classroom => 'Classrooms',
-        OmniboxCategory.place => 'Locations',
-        OmniboxCategory.activity => 'Activities',
-        OmniboxCategory.vehicle => 'Vehicles',
-        OmniboxCategory.setting => 'Settings',
-      };
+  // _pluralLabel moved into OmniboxCategoryX.pluralLabel — see
+  // lib/features/omnibox/omnibox_entries.dart. The extension reads
+  // VerticalLabels so the "Classrooms" header swaps per vertical.
 }
 
 sealed class _Node {

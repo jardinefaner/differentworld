@@ -1,3 +1,4 @@
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Order matters — results are grouped in this enum order so the user
 /// sees Actions ahead of Pages ahead of People (roughly: verbs first,
 /// then destinations, then nouns).
+///
+/// The `classroom` value here is the engine-level group concept; the
+/// user-facing label is resolved through [OmniboxCategoryX.label]
+/// against the active [VerticalLabels] so a construction install
+/// reads "Crew" instead of "Classroom".
 enum OmniboxCategory {
   action('Action', Icons.bolt_outlined),
   page('Page', Icons.tab_outlined),
@@ -18,8 +24,45 @@ enum OmniboxCategory {
   setting('Setting', Icons.settings_outlined);
 
   const OmniboxCategory(this.label, this.icon);
+
+  /// Default childcare-language label. Visual chip decoration uses
+  /// this directly because the chip is a tiny secondary affordance
+  /// where vertical-label drift is OK. For SECTION HEADERS in the
+  /// results panel — where the label is the primary affordance —
+  /// use [OmniboxCategoryX.pluralLabel] which reads from the active
+  /// vertical's labels.
   final String label;
   final IconData icon;
+}
+
+/// Display labels for [OmniboxCategory] — resolved through the
+/// active [VerticalLabels] so the group label (Classroom →
+/// Crew → Department → Section → Line) swaps per vertical. The
+/// rest stay the same.
+extension OmniboxCategoryX on OmniboxCategory {
+  /// Singular label for a category chip.
+  String label(VerticalLabels labels) => switch (this) {
+        OmniboxCategory.action => 'Action',
+        OmniboxCategory.page => 'Page',
+        OmniboxCategory.person => 'Person',
+        OmniboxCategory.classroom => labels.group,
+        OmniboxCategory.place => 'Location',
+        OmniboxCategory.activity => 'Activity',
+        OmniboxCategory.vehicle => 'Vehicle',
+        OmniboxCategory.setting => 'Setting',
+      };
+
+  /// Plural label for a section header in the results panel.
+  String pluralLabel(VerticalLabels labels) => switch (this) {
+        OmniboxCategory.action => 'Actions',
+        OmniboxCategory.page => 'Pages',
+        OmniboxCategory.person => 'People',
+        OmniboxCategory.classroom => labels.groupPlural,
+        OmniboxCategory.place => 'Locations',
+        OmniboxCategory.activity => 'Activities',
+        OmniboxCategory.vehicle => 'Vehicles',
+        OmniboxCategory.setting => 'Settings',
+      };
 }
 
 /// One indexable entry in the omnibox. Replaces the inline
