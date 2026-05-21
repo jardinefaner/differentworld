@@ -118,7 +118,8 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     // Pull the active vertical so the role picker + labels render
     // per-vertical options (childcare's director vs construction's pm
     // vs healthcare's physician, etc.).
-    final vertical = ref.watch(verticalLabelsProvider).vertical;
+    final labels = ref.watch(verticalLabelsProvider);
+    final vertical = labels.vertical;
 
     // No save action — toggles auto-save (UX_DECISIONS §1).
     return EdgeScaffold(
@@ -439,8 +440,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             const EdgeInsets.fromLTRB(16, 8, 16, 32),
                         children: [
                           if (member.role != 'director') ...[
-                            const _SectionLabel(
-                              label: 'Assigned classrooms',
+                            _SectionLabel(
+                              label:
+                                  'Assigned ${labels.groupPlural.toLowerCase()}',
                             ),
                             _AssignmentsList(
                               member: member,
@@ -450,7 +452,8 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             Padding(
                               padding: const EdgeInsets.all(16),
                               child: Text(
-                                'Directors see every classroom — no '
+                                'Directors see every '
+                                '${labels.group.toLowerCase()} — no '
                                 'specific assignments needed.',
                                 style: Theme.of(context)
                                     .textTheme

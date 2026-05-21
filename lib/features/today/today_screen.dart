@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
@@ -44,6 +45,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
+    final labels = ref.watch(verticalLabelsProvider);
     final member = viewer.member;
     final space = viewer.space;
     final groupsAsync = ref.watch(groupsProvider);
@@ -76,19 +78,22 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         ),
         data: (groups) {
           if (groups.isEmpty) {
+            final groupLower = labels.group.toLowerCase();
+            final groupsLower = labels.groupPlural.toLowerCase();
             return EmptyState(
               icon: Icons.meeting_room_outlined,
-              title: 'No classrooms yet',
+              title: 'No $groupsLower yet',
               message: viewer.canManageSpace
-                  ? 'Add your first classroom to start taking '
-                      'attendance and logging the day.'
-                  : 'Your director will set up classrooms here. '
+                  ? 'Add your first $groupLower to start taking '
+                      '${labels.attendanceNoun.toLowerCase()} and '
+                      'logging the day.'
+                  : 'Your director will set up $groupsLower here. '
                       'Check back later.',
               action: viewer.canManageSpace
                   ? FilledButton.icon(
                       onPressed: () => context.push('/groups/new'),
                       icon: const Icon(Icons.add),
-                      label: const Text('Add classroom'),
+                      label: Text('Add $groupLower'),
                     )
                   : null,
             );
@@ -110,12 +115,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
 /// Top-of-Today card that launches the Morning Checklist. This is the
 /// primary daily-use entry point — one scroll across every classroom.
-class _ChecklistCallToAction extends StatelessWidget {
+class _ChecklistCallToAction extends ConsumerWidget {
   const _ChecklistCallToAction();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final labels = ref.watch(verticalLabelsProvider);
     return Card(
       clipBehavior: Clip.antiAlias,
       color: theme.colorScheme.primaryContainer,
@@ -154,7 +160,8 @@ class _ChecklistCallToAction extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'One scroll, every classroom, mark everyone in.',
+                      'One scroll, every ${labels.group.toLowerCase()}, '
+                      'mark everyone in.',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onPrimaryContainer
                             .withValues(alpha: 0.8),
@@ -190,8 +197,9 @@ class _TodayBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Flag-first subtitle: if any classroom has at least one flagged
-    // student, pivot the greeting line to the action-state instead of
+    final labels = ref.watch(verticalLabelsProvider);
+    // Flag-first subtitle: if any cohort has at least one flagged
+    // subject, pivot the greeting line to the action-state instead of
     // a cheery hello. Calmer mornings still get the warm greeting.
     var totalFlags = 0;
     var roomsWithFlags = 0;
@@ -209,10 +217,9 @@ class _TodayBody extends ConsumerWidget {
         final horiz = formFactor.isExpanded ? 48.0 : 16.0;
 
         return ListView(
-          // Horizontal-only padding; vertical comes from ContentHeader
-          // (which builds in clearance for the floating chrome) and a
-          // generous bottom slot so FAB doesn't cover the last card.
-          padding: EdgeInsets.fromLTRB(horiz, 0, horiz, 96),
+          // Horizontal-only padding; shell handles top + bottom chrome
+          // reservation so the list ends above the omnibox naturally.
+          padding: EdgeInsets.fromLTRB(horiz, 0, horiz, 24),
           children: [
             ContentHeader(
               title: space?.name ?? 'Today',
@@ -220,6 +227,7 @@ class _TodayBody extends ConsumerWidget {
                 member: member,
                 totalFlags: totalFlags,
                 roomsWithFlags: roomsWithFlags,
+                labels: labels,
               ),
               subtitleColor: totalFlags > 0
                   ? Theme.of(context).colorScheme.error
@@ -261,13 +269,17 @@ class _TodayBody extends ConsumerWidget {
     required Member? member,
     required int totalFlags,
     required int roomsWithFlags,
+    required VerticalLabels labels,
   }) {
     if (totalFlags > 0) {
-      final s = totalFlags == 1 ? 'student needs' : 'students need';
+      final subj =
+          totalFlags == 1 ? labels.subject.toLowerCase() : labels.subjectPlural.toLowerCase();
+      final verb = totalFlags == 1 ? 'needs' : 'need';
       if (roomsWithFlags == 1) {
-        return '$totalFlags $s your attention';
+        return '$totalFlags $subj $verb your attention';
       }
-      return '$totalFlags $s your attention · across $roomsWithFlags rooms';
+      return '$totalFlags $subj $verb your attention · across '
+          '$roomsWithFlags ${labels.groupPlural.toLowerCase()}';
     }
     final greeting = greetingForTime(DateTime.now());
     final dayLabel = DateFormat.yMMMMEEEEd().format(DateTime.now());

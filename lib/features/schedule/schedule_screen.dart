@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/block_edit_sheet.dart';
@@ -151,12 +152,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
         ),
         data: (gs) {
           if (gs.isEmpty) {
-            return const EmptyState(
+            final labels = ref.read(verticalLabelsProvider);
+            final groupLower = labels.group.toLowerCase();
+            return EmptyState(
               icon: Icons.meeting_room_outlined,
-              title: 'No classrooms yet',
+              title: 'No ${labels.groupPlural.toLowerCase()} yet',
               message:
-                  'Add a classroom (cohort) first; schedule blocks belong '
-                  'to a specific room.',
+                  'Add a $groupLower first; schedule blocks belong '
+                  'to a specific $groupLower.',
             );
           }
           return Column(
