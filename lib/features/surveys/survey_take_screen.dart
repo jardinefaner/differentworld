@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
@@ -185,22 +186,36 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     ));
   }
 
-  /// Five quick taps on the hidden top-right corner unlocks kid
-  /// mode so a teacher can navigate away. Window resets after 1.5 s
-  /// of silence so a kid tapping randomly can't accumulate.
-  void _onStaffCornerTap() {
+  /// Five quick taps on the hidden top-right corner BEGINS the
+  /// exit dance. If a staff PIN is configured for this Space
+  /// (`SpaceCaps.staffPin`), a PIN dialog opens; the wrong PIN
+  /// keeps the lock. If no PIN is configured, the gesture itself
+  /// unlocks (the previous behavior).
+  ///
+  /// Window resets after 1.5 s of silence so a kid tapping
+  /// randomly can't accumulate.
+  Future<void> _onStaffCornerTap() async {
     _staffTapCount += 1;
     _staffTapReset?.cancel();
     if (_staffTapCount >= _staffTapTarget) {
       _staffTapCount = 0;
       _staffTapReset = null;
-      setState(() => _staffUnlocked = true);
-      // Confirmation so the staff knows the gesture took.
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(
-          content: Text('Unlocked. Press back to exit.'),
-        ),
-      );
+      final result = await showKidModeExitDialog(context, ref);
+      if (!mounted) return;
+      switch (result) {
+        case KidModeExitResult.unlocked:
+        case KidModeExitResult.noPinConfigured:
+          setState(() => _staffUnlocked = true);
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text('Unlocked. Press back to exit.'),
+            ),
+          );
+        case KidModeExitResult.cancelled:
+          // Staff dismissed the dialog (or kid tapped wrong) —
+          // the lock stays. Silent.
+          break;
+      }
       return;
     }
     _staffTapReset = Timer(_staffTapWindow, () {

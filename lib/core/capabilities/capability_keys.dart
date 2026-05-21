@@ -18,6 +18,20 @@ abstract class SpaceCaps {
   static const pickupWindowEnd = 'pickup_window_end';
   static const defaultClassSize = 'default_class_size';
   static const photoDefaultConsent = 'photo_default_consent';
+
+  /// PIN that unlocks the kid-mode lock. Stored as a string on the
+  /// Space's capabilities JSONB so a director can change it from
+  /// program settings. Default is `null` — kid-mode unlock falls
+  /// back to the 5-tap-corner gesture without a PIN check.
+  ///
+  /// SECURITY POSTURE: this is "device-level" lockdown — a kid
+  /// physically holding the device can't escape without staff
+  /// help. It's NOT a security boundary against an adversary with
+  /// access to the local SQLite (the PIN ships with the synced
+  /// space row). Future versions may move this to a per-Member
+  /// PIN stored encrypted; for now the program-wide PIN is fine
+  /// for the "hand the tablet to a kid" use case.
+  static const staffPin = 'staff_pin';
 }
 
 /// Vertical-agnostic member capabilities. Every vertical we
