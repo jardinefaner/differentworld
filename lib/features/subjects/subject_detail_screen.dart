@@ -4,6 +4,7 @@ import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
@@ -12,6 +13,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/alerts_section.dart';
 import 'package:differentworld/features/subjects/widgets/attendance_strip.dart';
 import 'package:differentworld/features/subjects/widgets/guardians_list.dart';
+import 'package:differentworld/features/subjects/widgets/health_profile_card.dart';
 import 'package:differentworld/features/subjects/widgets/observation_item.dart';
 import 'package:differentworld/features/subjects/widgets/pickup_list.dart';
 import 'package:differentworld/features/subjects/widgets/today_status_card.dart';
@@ -206,6 +208,13 @@ class _SubjectBody extends ConsumerWidget {
 
         // Alerts (allergies / IEP / meds)
         AlertsSection(subject: subject, caps: caps),
+
+        // Structured health profile — childcare-vertical only.
+        // Storage layer is agnostic (subjects.capabilities JSONB);
+        // other verticals would register their own intake card
+        // here reading their own caps namespace.
+        if (ref.watch(verticalLabelsProvider).vertical == 'childcare')
+          HealthProfileCard(subject: subject),
 
         const _SectionGap(),
         // Quick-observation entry — a frictionless way to log a

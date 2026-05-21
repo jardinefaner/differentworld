@@ -44,6 +44,48 @@ abstract class SpaceCaps {
   static const vertical = 'vertical';
 }
 
+/// Childcare-specific keys that live on **Subject** `capabilities`
+/// JSONB. Holds the structured "health & medical" intake that
+/// supplements the existing `subjects.allergies` text column.
+///
+/// Stored on the JSONB bag (no new schema columns) so other verticals
+/// can add their own intake namespaces here without ever touching
+/// these keys. A construction "subject" (project) would register
+/// `ConstructionSubjectCaps.specSheetUrl` etc. under its own
+/// namespace; the medical keys below stay NULL for non-childcare
+/// rows.
+///
+/// List-shaped values (medications, conditions) are serialized as
+/// JSON-encoded list-of-strings (`'["Albuterol","EpiPen Jr"]'`).
+/// Empty list = no value. The form deserializes on read,
+/// re-encodes on write.
+abstract class ChildcareSubjectCaps {
+  /// JSON-encoded `List<String>` of medication names. Free-form
+  /// strings (the form lets staff type names; this is not a coded
+  /// drug catalog — that would require its own database).
+  static const medications = 'childcare_medications';
+
+  /// JSON-encoded `List<String>` of medical conditions ("asthma",
+  /// "type 1 diabetes", "mild ADHD"). Free-form per above.
+  static const medicalConditions = 'childcare_medical_conditions';
+
+  /// Plain text — short summary of an IEP or 504 plan, what staff
+  /// need to know day-to-day. Full document goes in `attachments`
+  /// when we wire that surface.
+  static const iepSummary = 'childcare_iep_summary';
+
+  /// Primary care physician's name + phone. Two separate keys so
+  /// the form can validate phone formatting independently.
+  static const physicianName = 'childcare_physician_name';
+  static const physicianPhone = 'childcare_physician_phone';
+
+  /// Free-text "in an emergency, do this" guidance from the
+  /// guardians. Different from the generic Subject.notes — that's
+  /// general staff notes; this is specifically the emergency
+  /// playbook.
+  static const emergencyInstructions = 'childcare_emergency_instructions';
+}
+
 /// Vertical-agnostic member capabilities. Every vertical we
 /// target (childcare, construction, healthcare, hospitality,
 /// manufacturing) has analogs of these.

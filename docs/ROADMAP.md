@@ -67,7 +67,6 @@ work that doesn't need a feature decision.
 | Item | Effort | Why |
 |---|---|---|
 | Capability editor UI (per-Member overrides) | M | Schema exists; UI partial |
-| Subject medical fields form (allergies, meds, IEP) | M | Schema exists; form may be incomplete |
 | Field trip flow polish (permission slips + headcounts) | M | Schema shipped; UX end-to-end test needed |
 | Multi-program switcher in drawer | M (mis-classified as S earlier) | Single-program design today; needs schema migration to support a user belonging to multiple spaces (today `members.id = auth.uid()`, so one user = one member = one space). New table `user_spaces (user_id, space_id, role, caps)` would unblock it. Defer until a real multi-program use case lands. |
 | Family-side UI polish (`FamilyTodayScreen` outlined but partial) | M | Family-login model is in; UI bare |
@@ -109,6 +108,24 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **Wave 12** — Subject health profile (childcare). Structured
+  fields for medications, medical conditions, IEP/504 summary,
+  primary physician (name + phone), and emergency instructions —
+  stored agnostically. ZERO schema migration: all new keys ride
+  the existing `subjects.capabilities` JSONB under a
+  `ChildcareSubjectCaps` namespace. New `SubjectCapActions
+  .setStringCap(subjectId, key, value)` is the read-merge-write
+  setter (mirrors `SpaceCapActions.setStringCap`); empty / null
+  values clear the key so the JSONB bag stays tidy. UI: new
+  `HealthProfileCard` on subject detail (gated by
+  `verticalLabelsProvider.vertical == 'childcare'`) renders a
+  warm-tinted allergies + emergency row plus list-flavored
+  medications & conditions; tapping opens `HealthProfileSheet`
+  with all fields in one form. Lists use comma-separated text
+  input + JSON-encoded `List<String>` storage. Other verticals
+  add their own intake namespace + card without touching this
+  one. Demonstrates the "agnostic storage, vertical-shaped JSON
+  payload" pattern the SCHEMA_AUDIT doc recommended.
 - **29b870e** — Vertical picker on program settings. New `vertical`
   string capability on `SpaceCaps` (no schema migration — rides
   the existing `spaces.capabilities` jsonb). `verticalLabelsProvider`

@@ -1,3 +1,4 @@
+import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -118,3 +119,43 @@ class SubjectActions {
 }
 
 final subjectActionsProvider = Provider<SubjectActions>(SubjectActions.new);
+
+/// Read-merge-write mutator for `subjects.capabilities` JSONB.
+///
+/// Same shape as `SpaceCapActions` / `MemberCapActions`: pulls the
+/// latest row, merges one key, writes the encoded blob back. That
+/// way concurrent edits to *other* keys (e.g. childcare medical
+/// fields vs a hypothetical construction-vertical intake field on
+/// the same row) don't clobber each other.
+///
+/// Used by the health profile editor today; reusable by any future
+/// per-vertical intake form that needs to write into the JSONB bag.
+class SubjectCapActions {
+  SubjectCapActions(this._ref);
+
+  final Ref _ref;
+
+  /// Set or clear a single string-shaped cap. Pass `value: null` to
+  /// remove the key. List-shaped fields (medications, conditions)
+  /// pass JSON-encoded strings here; the form is the only thing that
+  /// knows the list-vs-string shape.
+  Future<void> setStringCap(
+    String subjectId,
+    String key,
+    String? value,
+  ) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final s = await (db.select(db.subjects)
+          ..where((row) => row.id.equals(subjectId)))
+        .getSingleOrNull();
+    if (s == null) return;
+    // Empty string = clear, same as null. Stops the JSONB bag from
+    // accumulating `"": ""` rows when the form is wiped.
+    final normalized = (value == null || value.isEmpty) ? null : value;
+    final caps = s.caps.setting(key, normalized);
+    await db.subjectsDao.updateCapabilities(subjectId, caps.toJson());
+  }
+}
+
+final subjectCapActionsProvider =
+    Provider<SubjectCapActions>(SubjectCapActions.new);
