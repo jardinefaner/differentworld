@@ -130,6 +130,25 @@ class ScheduleActions {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.scheduleDao.delete_(id);
   }
+
+  /// Pat persona — Director sets [substituteMemberId] as today's
+  /// cover for [absentMemberId]'s blocks in [groupId]. Returns the
+  /// count of blocks affected. Pass `substituteMemberId: null` to
+  /// restore the original lead.
+  Future<int> coverLeadForDay({
+    required String groupId,
+    required String date,
+    required String absentMemberId,
+    required String? substituteMemberId,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    return db.scheduleDao.assignDailySubstitute(
+      groupId: groupId,
+      date: date,
+      absentMemberId: absentMemberId,
+      substituteMemberId: substituteMemberId,
+    );
+  }
 }
 
 final scheduleActionsProvider =

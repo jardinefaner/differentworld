@@ -302,6 +302,10 @@ const appSchema = Schema([
     Column.text('end_at'),
     Column.text('activity_id'),
     Column.text('lead_member_id'),
+    // Per-day override — when the originally-planned lead is out, the
+    // director sets this to the cover member. See migration
+    // 20260520000002_lead_substitutes.sql.
+    Column.text('lead_substitute_member_id'),
     Column.text('location_override_id'),
     Column.text('kind'),
     Column.text('notes'),

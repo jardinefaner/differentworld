@@ -15267,6 +15267,17 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _leadSubstituteMemberIdMeta =
+      const VerificationMeta('leadSubstituteMemberId');
+  @override
+  late final GeneratedColumn<String> leadSubstituteMemberId =
+      GeneratedColumn<String>(
+        'lead_substitute_member_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _locationOverrideIdMeta =
       const VerificationMeta('locationOverrideId');
   @override
@@ -15328,6 +15339,7 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     endAt,
     activityId,
     leadMemberId,
+    leadSubstituteMemberId,
     locationOverrideId,
     kind,
     notes,
@@ -15403,6 +15415,15 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         leadMemberId.isAcceptableOrUnknown(
           data['lead_member_id']!,
           _leadMemberIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('lead_substitute_member_id')) {
+      context.handle(
+        _leadSubstituteMemberIdMeta,
+        leadSubstituteMemberId.isAcceptableOrUnknown(
+          data['lead_substitute_member_id']!,
+          _leadSubstituteMemberIdMeta,
         ),
       );
     }
@@ -15486,6 +15507,10 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         DriftSqlType.string,
         data['${effectivePrefix}lead_member_id'],
       ),
+      leadSubstituteMemberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lead_substitute_member_id'],
+      ),
       locationOverrideId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}location_override_id'],
@@ -15524,6 +15549,12 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
   final String endAt;
   final String? activityId;
   final String? leadMemberId;
+
+  /// Pat persona — director-set substitute when the planned lead is
+  /// absent today. Reads use `COALESCE(substitute, lead)` so the
+  /// substitute sees the block in their LeadingTodayCard and the
+  /// absent person's card no longer shows it.
+  final String? leadSubstituteMemberId;
   final String? locationOverrideId;
   final String kind;
   final String? notes;
@@ -15538,6 +15569,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     required this.endAt,
     this.activityId,
     this.leadMemberId,
+    this.leadSubstituteMemberId,
     this.locationOverrideId,
     required this.kind,
     this.notes,
@@ -15558,6 +15590,11 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     }
     if (!nullToAbsent || leadMemberId != null) {
       map['lead_member_id'] = Variable<String>(leadMemberId);
+    }
+    if (!nullToAbsent || leadSubstituteMemberId != null) {
+      map['lead_substitute_member_id'] = Variable<String>(
+        leadSubstituteMemberId,
+      );
     }
     if (!nullToAbsent || locationOverrideId != null) {
       map['location_override_id'] = Variable<String>(locationOverrideId);
@@ -15585,6 +15622,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       leadMemberId: leadMemberId == null && nullToAbsent
           ? const Value.absent()
           : Value(leadMemberId),
+      leadSubstituteMemberId: leadSubstituteMemberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(leadSubstituteMemberId),
       locationOverrideId: locationOverrideId == null && nullToAbsent
           ? const Value.absent()
           : Value(locationOverrideId),
@@ -15611,6 +15651,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       endAt: serializer.fromJson<String>(json['endAt']),
       activityId: serializer.fromJson<String?>(json['activityId']),
       leadMemberId: serializer.fromJson<String?>(json['leadMemberId']),
+      leadSubstituteMemberId: serializer.fromJson<String?>(
+        json['leadSubstituteMemberId'],
+      ),
       locationOverrideId: serializer.fromJson<String?>(
         json['locationOverrideId'],
       ),
@@ -15632,6 +15675,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       'endAt': serializer.toJson<String>(endAt),
       'activityId': serializer.toJson<String?>(activityId),
       'leadMemberId': serializer.toJson<String?>(leadMemberId),
+      'leadSubstituteMemberId': serializer.toJson<String?>(
+        leadSubstituteMemberId,
+      ),
       'locationOverrideId': serializer.toJson<String?>(locationOverrideId),
       'kind': serializer.toJson<String>(kind),
       'notes': serializer.toJson<String?>(notes),
@@ -15649,6 +15695,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     String? endAt,
     Value<String?> activityId = const Value.absent(),
     Value<String?> leadMemberId = const Value.absent(),
+    Value<String?> leadSubstituteMemberId = const Value.absent(),
     Value<String?> locationOverrideId = const Value.absent(),
     String? kind,
     Value<String?> notes = const Value.absent(),
@@ -15663,6 +15710,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     endAt: endAt ?? this.endAt,
     activityId: activityId.present ? activityId.value : this.activityId,
     leadMemberId: leadMemberId.present ? leadMemberId.value : this.leadMemberId,
+    leadSubstituteMemberId: leadSubstituteMemberId.present
+        ? leadSubstituteMemberId.value
+        : this.leadSubstituteMemberId,
     locationOverrideId: locationOverrideId.present
         ? locationOverrideId.value
         : this.locationOverrideId,
@@ -15685,6 +15735,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       leadMemberId: data.leadMemberId.present
           ? data.leadMemberId.value
           : this.leadMemberId,
+      leadSubstituteMemberId: data.leadSubstituteMemberId.present
+          ? data.leadSubstituteMemberId.value
+          : this.leadSubstituteMemberId,
       locationOverrideId: data.locationOverrideId.present
           ? data.locationOverrideId.value
           : this.locationOverrideId,
@@ -15706,6 +15759,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           ..write('endAt: $endAt, ')
           ..write('activityId: $activityId, ')
           ..write('leadMemberId: $leadMemberId, ')
+          ..write('leadSubstituteMemberId: $leadSubstituteMemberId, ')
           ..write('locationOverrideId: $locationOverrideId, ')
           ..write('kind: $kind, ')
           ..write('notes: $notes, ')
@@ -15725,6 +15779,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     endAt,
     activityId,
     leadMemberId,
+    leadSubstituteMemberId,
     locationOverrideId,
     kind,
     notes,
@@ -15743,6 +15798,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           other.endAt == this.endAt &&
           other.activityId == this.activityId &&
           other.leadMemberId == this.leadMemberId &&
+          other.leadSubstituteMemberId == this.leadSubstituteMemberId &&
           other.locationOverrideId == this.locationOverrideId &&
           other.kind == this.kind &&
           other.notes == this.notes &&
@@ -15759,6 +15815,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
   final Value<String> endAt;
   final Value<String?> activityId;
   final Value<String?> leadMemberId;
+  final Value<String?> leadSubstituteMemberId;
   final Value<String?> locationOverrideId;
   final Value<String> kind;
   final Value<String?> notes;
@@ -15774,6 +15831,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.endAt = const Value.absent(),
     this.activityId = const Value.absent(),
     this.leadMemberId = const Value.absent(),
+    this.leadSubstituteMemberId = const Value.absent(),
     this.locationOverrideId = const Value.absent(),
     this.kind = const Value.absent(),
     this.notes = const Value.absent(),
@@ -15790,6 +15848,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     required String endAt,
     this.activityId = const Value.absent(),
     this.leadMemberId = const Value.absent(),
+    this.leadSubstituteMemberId = const Value.absent(),
     this.locationOverrideId = const Value.absent(),
     required String kind,
     this.notes = const Value.absent(),
@@ -15814,6 +15873,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Expression<String>? endAt,
     Expression<String>? activityId,
     Expression<String>? leadMemberId,
+    Expression<String>? leadSubstituteMemberId,
     Expression<String>? locationOverrideId,
     Expression<String>? kind,
     Expression<String>? notes,
@@ -15830,6 +15890,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       if (endAt != null) 'end_at': endAt,
       if (activityId != null) 'activity_id': activityId,
       if (leadMemberId != null) 'lead_member_id': leadMemberId,
+      if (leadSubstituteMemberId != null)
+        'lead_substitute_member_id': leadSubstituteMemberId,
       if (locationOverrideId != null)
         'location_override_id': locationOverrideId,
       if (kind != null) 'kind': kind,
@@ -15849,6 +15911,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Value<String>? endAt,
     Value<String?>? activityId,
     Value<String?>? leadMemberId,
+    Value<String?>? leadSubstituteMemberId,
     Value<String?>? locationOverrideId,
     Value<String>? kind,
     Value<String?>? notes,
@@ -15865,6 +15928,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       endAt: endAt ?? this.endAt,
       activityId: activityId ?? this.activityId,
       leadMemberId: leadMemberId ?? this.leadMemberId,
+      leadSubstituteMemberId:
+          leadSubstituteMemberId ?? this.leadSubstituteMemberId,
       locationOverrideId: locationOverrideId ?? this.locationOverrideId,
       kind: kind ?? this.kind,
       notes: notes ?? this.notes,
@@ -15901,6 +15966,11 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     if (leadMemberId.present) {
       map['lead_member_id'] = Variable<String>(leadMemberId.value);
     }
+    if (leadSubstituteMemberId.present) {
+      map['lead_substitute_member_id'] = Variable<String>(
+        leadSubstituteMemberId.value,
+      );
+    }
     if (locationOverrideId.present) {
       map['location_override_id'] = Variable<String>(locationOverrideId.value);
     }
@@ -15933,6 +16003,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
           ..write('endAt: $endAt, ')
           ..write('activityId: $activityId, ')
           ..write('leadMemberId: $leadMemberId, ')
+          ..write('leadSubstituteMemberId: $leadSubstituteMemberId, ')
           ..write('locationOverrideId: $locationOverrideId, ')
           ..write('kind: $kind, ')
           ..write('notes: $notes, ')
@@ -25781,6 +25852,7 @@ typedef $$ScheduleBlocksTableCreateCompanionBuilder =
       required String endAt,
       Value<String?> activityId,
       Value<String?> leadMemberId,
+      Value<String?> leadSubstituteMemberId,
       Value<String?> locationOverrideId,
       required String kind,
       Value<String?> notes,
@@ -25798,6 +25870,7 @@ typedef $$ScheduleBlocksTableUpdateCompanionBuilder =
       Value<String> endAt,
       Value<String?> activityId,
       Value<String?> leadMemberId,
+      Value<String?> leadSubstituteMemberId,
       Value<String?> locationOverrideId,
       Value<String> kind,
       Value<String?> notes,
@@ -25852,6 +25925,11 @@ class $$ScheduleBlocksTableFilterComposer
 
   ColumnFilters<String> get leadMemberId => $composableBuilder(
     column: $table.leadMemberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get leadSubstituteMemberId => $composableBuilder(
+    column: $table.leadSubstituteMemberId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -25930,6 +26008,11 @@ class $$ScheduleBlocksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get leadSubstituteMemberId => $composableBuilder(
+    column: $table.leadSubstituteMemberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get locationOverrideId => $composableBuilder(
     column: $table.locationOverrideId,
     builder: (column) => ColumnOrderings(column),
@@ -25993,6 +26076,11 @@ class $$ScheduleBlocksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get leadSubstituteMemberId => $composableBuilder(
+    column: $table.leadSubstituteMemberId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get locationOverrideId => $composableBuilder(
     column: $table.locationOverrideId,
     builder: (column) => column,
@@ -26052,6 +26140,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String> endAt = const Value.absent(),
                 Value<String?> activityId = const Value.absent(),
                 Value<String?> leadMemberId = const Value.absent(),
+                Value<String?> leadSubstituteMemberId = const Value.absent(),
                 Value<String?> locationOverrideId = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -26067,6 +26156,7 @@ class $$ScheduleBlocksTableTableManager
                 endAt: endAt,
                 activityId: activityId,
                 leadMemberId: leadMemberId,
+                leadSubstituteMemberId: leadSubstituteMemberId,
                 locationOverrideId: locationOverrideId,
                 kind: kind,
                 notes: notes,
@@ -26084,6 +26174,7 @@ class $$ScheduleBlocksTableTableManager
                 required String endAt,
                 Value<String?> activityId = const Value.absent(),
                 Value<String?> leadMemberId = const Value.absent(),
+                Value<String?> leadSubstituteMemberId = const Value.absent(),
                 Value<String?> locationOverrideId = const Value.absent(),
                 required String kind,
                 Value<String?> notes = const Value.absent(),
@@ -26099,6 +26190,7 @@ class $$ScheduleBlocksTableTableManager
                 endAt: endAt,
                 activityId: activityId,
                 leadMemberId: leadMemberId,
+                leadSubstituteMemberId: leadSubstituteMemberId,
                 locationOverrideId: locationOverrideId,
                 kind: kind,
                 notes: notes,

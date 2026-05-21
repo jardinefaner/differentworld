@@ -6,6 +6,7 @@ import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/block_edit_sheet.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -319,6 +320,11 @@ class _CohortDay extends ConsumerWidget {
   final Group group;
   final String date;
 
+  /// We only surface the "Cover lead" action when the viewed date is
+  /// TODAY — covering yesterday or a future day is nonsense (those
+  /// blocks are either past or get re-edited at the block level).
+  bool get _isToday => date == todayIsoLocal();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final blocksAsync = ref.watch(
@@ -346,38 +352,143 @@ class _CohortDay extends ConsumerWidget {
                 "range — there's no fixed grid.",
           );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 96),
-          itemCount: blocks.length,
-          itemBuilder: (_, i) {
-            final b = blocks[i];
-            final activity = b.activityId == null
-                ? null
-                : activities
-                    .where((a) => a.id == b.activityId)
-                    .firstOrNull;
-            final loc = b.locationOverrideId == null
-                ? null
-                : locations
-                    .where((l) => l.id == b.locationOverrideId)
-                    .firstOrNull;
-            return _BlockTile(
-              block: b,
-              activity: activity,
-              location: loc,
-              onTap: () => _openBlockSheet(
-                context,
-                ref,
+        // Show the "Cover lead" strip when there's at least one
+        // block with a planned lead (otherwise there's nothing to
+        // cover, and the affordance is just noise).
+        final hasAnyLead = blocks.any(
+          (b) => b.leadMemberId != null && b.leadMemberId!.isNotEmpty,
+        );
+        final showCover = _isToday && hasAnyLead;
+        return Column(
+          children: [
+            if (showCover)
+              _CoverLeadStrip(
                 groupId: group.id,
-                date: DateTime.parse(b.startAt).toLocal(),
-                defaultStart: DateTime.parse(b.startAt).toLocal(),
-                existingBlocks: blocks,
-                existing: b,
+                groupName: group.name,
+                date: date,
+                anyCovered: blocks
+                    .any((b) => b.leadSubstituteMemberId != null),
               ),
-            );
-          },
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 96),
+                itemCount: blocks.length,
+                itemBuilder: (_, i) {
+                  final b = blocks[i];
+                  final activity = b.activityId == null
+                      ? null
+                      : activities
+                          .where((a) => a.id == b.activityId)
+                          .firstOrNull;
+                  final loc = b.locationOverrideId == null
+                      ? null
+                      : locations
+                          .where((l) => l.id == b.locationOverrideId)
+                          .firstOrNull;
+                  return _BlockTile(
+                    block: b,
+                    activity: activity,
+                    location: loc,
+                    onTap: () => _openBlockSheet(
+                      context,
+                      ref,
+                      groupId: group.id,
+                      date: DateTime.parse(b.startAt).toLocal(),
+                      defaultStart: DateTime.parse(b.startAt).toLocal(),
+                      existingBlocks: blocks,
+                      existing: b,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+}
+
+/// "Someone called out — pick a sub" entry point. Lives above the
+/// blocks list on today's tab only. The bottom sheet does the
+/// heavy lifting (one row per planned lead, with a count badge and
+/// either a Cover or Restore button).
+class _CoverLeadStrip extends StatelessWidget {
+  const _CoverLeadStrip({
+    required this.groupId,
+    required this.groupName,
+    required this.date,
+    required this.anyCovered,
+  });
+
+  final String groupId;
+  final String groupName;
+  final String date;
+
+  /// When at least one lead is already covered, the strip swaps
+  /// to a slightly louder colour so the director can see at a
+  /// glance that today is mid-handoff.
+  final bool anyCovered;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Material(
+        color: anyCovered
+            ? scheme.tertiaryContainer
+            : scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => SubstituteLeadSheet.show(
+            context,
+            groupId: groupId,
+            groupName: groupName,
+            date: date,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Row(
+              children: [
+                Icon(
+                  anyCovered
+                      ? Icons.swap_horiz
+                      : Icons.person_off_outlined,
+                  size: 18,
+                  color: anyCovered
+                      ? scheme.onTertiaryContainer
+                      : scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    anyCovered
+                        ? "Someone's covering a lead today"
+                        : "Cover today's lead",
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: anyCovered
+                          ? scheme.onTertiaryContainer
+                          : scheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: anyCovered
+                      ? scheme.onTertiaryContainer
+                          .withValues(alpha: 0.7)
+                      : scheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

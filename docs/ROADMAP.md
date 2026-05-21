@@ -49,7 +49,6 @@ work that doesn't need a feature decision.
 | **Ava** | Staff PIN exit dialog (replaces/supplements the 5-tap gesture) | S |
 | **Lauren** | "Photo of the moment" on Family Today | S |
 | **Jordan** | Outdoor mode toggle (high-contrast, bigger glyphs) | S |
-| **Pat** | Substitute handoff (director flips an absent counselor's cohort lead) | M |
 | **Maya** | Tablet schedule grid (cohorts × time matrix) | L |
 | **Lauren** | Spanish localization (`flutter gen-l10n` + ARB extraction) | L |
 | **All** | Empty-state illustrations + wordmark system | L (needs illustrator) |
@@ -111,6 +110,22 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **Wave 10** — Pat substitute handoff. New nullable
+  `lead_substitute_member_id` column on `public.schedule_blocks`
+  (migration `20260520000002_lead_substitutes.sql`); Drift +
+  PowerSync schema mirror; `ScheduleDao.watchDayForLead` now
+  matches `COALESCE(substitute, lead) = me` so an absent person's
+  blocks vanish from their own LeadingTodayCard and surface in the
+  cover's instead. New `ScheduleDao.assignDailySubstitute` does a
+  bulk update across one cohort's blocks for a single date. New
+  `SubstituteLeadSheet` (`lib/features/schedule/widgets/`) lists
+  each planned lead with a block count + Cover/Restore action;
+  picker shows every other member in the space with their role
+  label. `_CoverLeadStrip` on today's per-cohort tab is the entry
+  point; appears only when today and at least one block has a
+  planned lead. `_CoveringBadge` on `LeadingTodayCard` rows labels
+  blocks the viewer is on only because they're covering for
+  someone, with the original lead's name.
 - **49d4e18** — Devon co-parent read-state badges. New
   `read_by_guardian_ids jsonb` column on `public.messages`
   (migration `20260520000001_message_read_by.sql`); Drift mirror +

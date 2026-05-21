@@ -8,6 +8,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+/// Pat persona — when the viewer is leading a block only because
+/// they're covering for someone, surface "Covering for {name}" so
+/// they walk into the block knowing whose plan they're picking up.
+class _CoveringBadge extends ConsumerWidget {
+  const _CoveringBadge({required this.originalLeadId, required this.color});
+
+  final String originalLeadId;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final originalAsync = ref.watch(memberByIdProvider(originalLeadId));
+    final name = originalAsync.value?.displayName;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.swap_horiz, size: 12, color: color),
+          const SizedBox(width: 2),
+          Text(
+            name == null ? 'Covering' : 'Covering for $name',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// "Today I'm leading…" — surfaces the schedule blocks where the
 /// signed-in member is the lead. Renders nothing when the member has
 /// no blocks for today (i.e., they're not assigned to lead anything).
@@ -99,7 +134,7 @@ class LeadingTodayCard extends ConsumerWidget {
   }
 }
 
-class _LeadingRow extends StatelessWidget {
+class _LeadingRow extends ConsumerWidget {
   const _LeadingRow({
     required this.block,
     required this.activities,
@@ -113,7 +148,7 @@ class _LeadingRow extends StatelessWidget {
   final DateTime now;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final start = DateTime.parse(block.startAt).toLocal();
@@ -186,19 +221,35 @@ class _LeadingRow extends StatelessWidget {
             const SizedBox(width: 6),
           ],
           Expanded(
-            child: Text(
-              loc == null
-                  ? (activity?.name ??
-                      (block.kind == 'break' ? 'Break' : '—'))
-                  : '${activity?.name ?? "—"} · ${loc.name}',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: fg,
-                fontWeight: FontWeight.w600,
-                decoration: isPast ? TextDecoration.lineThrough : null,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  loc == null
+                      ? (activity?.name ??
+                          (block.kind == 'break' ? 'Break' : '—'))
+                      : '${activity?.name ?? "—"} · ${loc.name}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: fg,
+                    fontWeight: FontWeight.w600,
+                    decoration: isPast ? TextDecoration.lineThrough : null,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                // Pat persona — when the viewer is on this block only
+                // because they're covering, label the row so they
+                // know they're picking up someone else's plan.
+                if (block.leadSubstituteMemberId != null &&
+                    block.leadMemberId != null &&
+                    block.leadMemberId != block.leadSubstituteMemberId)
+                  _CoveringBadge(
+                    originalLeadId: block.leadMemberId!,
+                    color: timeFg,
+                  ),
+              ],
+            ),
               ),
             ],
           ),

@@ -520,6 +520,12 @@ class ScheduleBlocks extends Table {
   TextColumn get endAt => text()();
   TextColumn get activityId => text().nullable()();
   TextColumn get leadMemberId => text().nullable()();
+
+  /// Pat persona — director-set substitute when the planned lead is
+  /// absent today. Reads use `COALESCE(substitute, lead)` so the
+  /// substitute sees the block in their LeadingTodayCard and the
+  /// absent person's card no longer shows it.
+  TextColumn get leadSubstituteMemberId => text().nullable()();
   TextColumn get locationOverrideId => text().nullable()();
   TextColumn get kind => text()(); // on_site / field_trip / break / closed
   TextColumn get notes => text().nullable()();

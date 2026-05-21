@@ -45,13 +45,30 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
 
   /// The blocks a specific staff member is leading on this date —
   /// powers the "what am I leading today" specialist brief.
+  ///
+  /// Honours the Pat-persona substitute handoff: a block whose
+  /// `lead_substitute_member_id` is set surfaces in the substitute's
+  /// card (not the original lead's). The query is essentially
+  /// `COALESCE(substitute, lead) = me`:
+  ///
+  /// * If `substitute IS NULL`, match when `lead = me`.
+  /// * If `substitute IS NOT NULL`, match when `substitute = me`.
+  ///
+  /// This way the absent person's blocks disappear from their own
+  /// LeadingTodayCard automatically, and the cover sees them with a
+  /// "Covering for …" badge.
   Stream<List<ScheduleBlock>> watchDayForLead({
     required String memberId,
     required String date,
   }) {
     return (select(scheduleBlocks)
-          ..where((b) =>
-              b.leadMemberId.equals(memberId) & b.date.equals(date))
+          ..where(
+            (b) =>
+                b.date.equals(date) &
+                ((b.leadSubstituteMemberId.isNull() &
+                        b.leadMemberId.equals(memberId)) |
+                    b.leadSubstituteMemberId.equals(memberId)),
+          )
           ..orderBy([(b) => OrderingTerm(expression: b.startAt)]))
         .watch();
   }
@@ -131,5 +148,44 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> delete_(String id) async {
     await (delete(scheduleBlocks)..where((b) => b.id.equals(id))).go();
+  }
+
+  /// Pat persona: director-set substitute for one cohort's blocks on
+  /// a given date.
+  ///
+  /// Updates every block matching `(groupId, date)` whose planned
+  /// lead is `absentMemberId`, setting `lead_substitute_member_id`
+  /// to `substituteMemberId`. Pass `substituteMemberId = null` to
+  /// clear the substitute (the absent person reclaims their blocks
+  /// — useful for "they're back, undo the cover").
+  ///
+  /// Returns the number of blocks affected so the UI can confirm
+  /// "Covered 6 blocks for Sam today" instead of a silent action.
+  ///
+  /// Restricting to the absent person's planned blocks (rather than
+  /// every block in the group) avoids stepping on co-led blocks
+  /// where a different counselor was already the planned lead.
+  Future<int> assignDailySubstitute({
+    required String groupId,
+    required String date,
+    required String absentMemberId,
+    required String? substituteMemberId,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    return (update(scheduleBlocks)
+          ..where(
+            (b) =>
+                b.groupId.equals(groupId) &
+                b.date.equals(date) &
+                b.leadMemberId.equals(absentMemberId),
+          ))
+        .write(
+      ScheduleBlocksCompanion(
+        leadSubstituteMemberId: substituteMemberId == null
+            ? const Value<String?>(null)
+            : Value(substituteMemberId),
+        updatedAt: Value(now),
+      ),
+    );
   }
 }
