@@ -4,6 +4,9 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -282,6 +285,11 @@ class _ChildCard extends ConsumerWidget {
                   ],
                 ],
               ),
+              // Photo of the moment — Lauren persona's most-
+              // anticipated surface. Shows the most recent
+              // observation photo from today (if any) so the
+              // family sees the kid's day before reading anything.
+              _PhotoOfTheMomentPeek(subjectId: child.id),
               // Compact schedule peek — "what's my kid doing right
               // now / next?" Renders nothing if the child's cohort
               // doesn't have a schedule for today, so the card stays
@@ -428,5 +436,149 @@ class _SummarySentence extends ConsumerWidget {
           'in $when';
     }
     return '$countLabel accounted for.';
+  }
+}
+
+/// "Photo of the moment" peek inside the child card. Surfaces the
+/// most recent observation photo from TODAY so a parent checking
+/// the family Today screen sees their kid's day before they read
+/// any text.
+///
+/// Renders nothing when:
+///   - There's no observation for this child today
+///   - The most-recent observation has no attached photos
+///
+/// Lauren persona — opens the app at 11 AM during a coffee break,
+/// wants the warmest possible "what's my kid up to" signal in one
+/// glance.
+class _PhotoOfTheMomentPeek extends ConsumerWidget {
+  const _PhotoOfTheMomentPeek({required this.subjectId});
+
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entriesAsync = ref.watch(
+      entriesForSubjectProvider(
+        (subjectId: subjectId, kind: EntryKind.observation),
+      ),
+    );
+    final entries = entriesAsync.value ?? const <Entry>[];
+    if (entries.isEmpty) return const SizedBox.shrink();
+    // entriesForSubject returns newest-first per Drift's order-by
+    // recorded_at desc. Find the first one from today.
+    Entry? todayEntry;
+    final todayStart = DateTime.now().copyWith(
+      hour: 0,
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+      microsecond: 0,
+    );
+    for (final e in entries) {
+      final ts = DateTime.tryParse(e.recordedAt);
+      if (ts == null) continue;
+      if (ts.isAfter(todayStart)) {
+        todayEntry = e;
+        break;
+      }
+    }
+    if (todayEntry == null) return const SizedBox.shrink();
+    final attachmentsAsync = ref.watch(
+      attachmentsForEntityProvider(
+        (kind: 'entry', id: todayEntry.id),
+      ),
+    );
+    final urls = attachmentsAsync.value?.urls ?? const <String>[];
+    if (urls.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final ts = DateTime.tryParse(todayEntry.recordedAt);
+    final timeLabel = ts == null
+        ? 'today'
+        : DateFormat.jm().format(ts.toLocal());
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: PersonPhotoNetwork(
+                urlOrPath: urls.first,
+                placeholderBuilder: (_) => Container(
+                  color: scheme.surfaceContainerHigh,
+                ),
+              ),
+            ),
+            // Caption strip — translucent bar with the time + first
+            // line of the observation body so the photo isn't
+            // context-less.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.55),
+                    ],
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.camera_alt_outlined,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '$timeLabel · ${(todayEntry.body ?? '').split('\n').first}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (urls.length > 1)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '+${urls.length - 1}',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
