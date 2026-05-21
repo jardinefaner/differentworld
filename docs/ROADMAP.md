@@ -108,7 +108,7 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
-- **Wave 12** — Subject health profile (childcare). Structured
+- **63fc829** — Subject health profile (childcare). Structured
   fields for medications, medical conditions, IEP/504 summary,
   primary physician (name + phone), and emergency instructions —
   stored agnostically. ZERO schema migration: all new keys ride
