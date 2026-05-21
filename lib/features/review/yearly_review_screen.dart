@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
@@ -35,6 +36,7 @@ class YearlyReviewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final viewer = ref.watch(viewerProvider);
+    final labels = ref.watch(verticalLabelsProvider);
     final spaceId = viewer.spaceId;
     if (spaceId == null) {
       return const EdgeScaffold(body: LoadingSlot());
@@ -86,8 +88,8 @@ class YearlyReviewScreen extends ConsumerWidget {
           const _SectionHeader('Right now'),
           _StatGrid(
             stats: [
-              _Stat(label: 'Children', value: subjects.length),
-              _Stat(label: 'Classrooms', value: groups.length),
+              _Stat(label: labels.subjectPlural, value: subjects.length),
+              _Stat(label: labels.groupPlural, value: groups.length),
               _Stat(label: 'Vehicles', value: vehicles.length),
               _Stat(label: 'Open captures', value: captures.length),
             ],

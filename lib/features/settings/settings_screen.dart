@@ -1,5 +1,6 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
@@ -25,6 +26,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final viewer = ref.watch(viewerProvider);
+    final labels = ref.watch(verticalLabelsProvider);
     final member = viewer.member;
 
     return EdgeScaffold(
@@ -72,9 +74,10 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
 
-          // Program
+          // Space-level settings (label is vertical-aware — "Program"
+          // for childcare, "Company" for construction, etc.)
           _SettingsGroup(
-            label: 'Program',
+            label: labels.space,
             children: [
               // Brianna-persona: rather than greying out silently
               // when a teacher taps "Program settings", we explain
