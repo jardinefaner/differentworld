@@ -226,7 +226,10 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       keywords: const ['note', 'jot', 'noticed', 'quick', 'thought'],
       onSelect: (ctx, _) => showCaptureSheet(ctx),
     ),
-    if (viewer.canObserve)
+    // Same gate as the QuickActions tile — needs both `canObserve`
+    // AND at least one visible group. Hide on runtime precondition
+    // failure rather than letting the user tap into a snackbar.
+    if (viewer.canObserve && groups.isNotEmpty)
       OmniboxEntry(
         id: 'action.observation.new',
         label: 'New ${labels.entry.toLowerCase()}',

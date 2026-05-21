@@ -42,9 +42,13 @@ Future<void> startNewObservation(BuildContext context, WidgetRef ref) async {
 
 /// Capability-aware row of one-tap action tiles on the Today screen.
 ///
-/// Each tile renders only when the signed-in viewer has the matching
-/// capability — so a teacher with `canObserve` sees "New observation",
-/// a driver sees "Vehicles", a director sees "Team", etc.
+/// **Hide, don't disable.** Each tile renders only when tapping it
+/// would succeed — both the permission cap AND the runtime
+/// preconditions (assignments / data) have to be satisfied. A
+/// teacher with `canObserve` but no assigned classrooms sees no
+/// "New observation" tile (instead of seeing one that taps to a
+/// "You're not assigned" snackbar — which is the disable-by-error
+/// anti-pattern this widget exists to avoid).
 ///
 /// The whole row hides when there's nothing to show (e.g. a strict
 /// read-only role) so we don't render an empty band.
@@ -54,6 +58,8 @@ class QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
+    final visibleGroups =
+        ref.watch(groupsProvider).value ?? const <Group>[];
     final openCaptureCount =
         ref.watch(openCapturesProvider).value?.length ?? 0;
     final openTaskCount = ref.watch(openTasksProvider).value?.length ?? 0;
@@ -101,14 +107,18 @@ class QuickActions extends ConsumerWidget {
           badge: '$openTaskCount',
           onTap: () => context.push('/tasks'),
         ),
-      // Everyday actions — verbs the user reaches for daily.
-      if (viewer.canObserve)
+      // Everyday actions — verbs the user reaches for daily. The
+      // observation tiles require BOTH the cap AND at least one
+      // visible group, since the form sheet can't open without a
+      // groupId. Hiding the tiles for a teacher with `canObserve`
+      // but no assignments avoids the tap-to-snackbar dead end.
+      if (viewer.canObserve && visibleGroups.isNotEmpty)
         _Tile(
           icon: Icons.edit_note_outlined,
           label: 'New observation',
           onTap: () => startNewObservation(context, ref),
         ),
-      if (viewer.canObserve)
+      if (viewer.canObserve && visibleGroups.isNotEmpty)
         _Tile(
           icon: Icons.menu_book_outlined,
           label: 'Observations',

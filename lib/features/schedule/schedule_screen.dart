@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/block_edit_sheet.dart';
@@ -119,9 +120,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     final groups = groupsAsync.value ?? const <Group>[];
     final tabs = groups.isEmpty ? null : _ensureTabController(groups.length);
 
+    // '+ Block' is a write — only viewers with canManageSchedule can
+    // author blocks. Hide the chrome action for everyone else
+    // (matches the hide-don't-disable rule) so a teacher without the
+    // cap doesn't tap into a sheet they can't save from.
+    final viewer = ref.watch(viewerProvider);
+    final canEditSchedule = viewer.canManageSchedule || viewer.canManageSpace;
     return EdgeScaffold(
       showBack: false,
-      actions: groups.isEmpty
+      actions: (groups.isEmpty || !canEditSchedule)
           ? const <Widget>[]
           : [
               PrimaryActionButton(

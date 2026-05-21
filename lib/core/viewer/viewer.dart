@@ -84,6 +84,11 @@ class Viewer {
   bool get canInviteStaff => memberCaps.getBool(MemberCaps.canInviteStaff);
   bool get canViewAuditLog => memberCaps.getBool(MemberCaps.canViewAuditLog);
 
+  /// Can author / edit / delete schedule blocks. Used to hide the
+  /// schedule '+' affordance for staff without the cap.
+  bool get canManageSchedule =>
+      memberCaps.getBool(MemberCaps.canManageSchedule);
+
   /// "Act as director" cap OR actual director role. The cap is the
   /// graceful path; the role is the seeded default.
   bool get isDirector =>
