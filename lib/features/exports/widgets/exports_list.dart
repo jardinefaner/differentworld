@@ -1,10 +1,10 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
-import 'package:differentworld/features/exports/widgets/send_export_sheet.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// "Sent reports" — list of exports tied to one subject. Drops into
@@ -86,8 +86,10 @@ class _ExportRow extends ConsumerWidget {
           IconButton(
             tooltip: 'Send',
             icon: const Icon(Icons.send_outlined),
-            onPressed: () =>
-                showSendExportSheet(context, export: export),
+            onPressed: () => context.push(
+              '/exports/${export.id}/send',
+              extra: export,
+            ),
           ),
           IconButton(
             tooltip: 'Open',

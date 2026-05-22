@@ -8,7 +8,6 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/features/exports/templates/progress_report.dart';
-import 'package:differentworld/features/exports/widgets/send_export_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
@@ -21,6 +20,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 
 /// `/subjects/:subjectId/progress-report` — assembles a per-kid
@@ -248,7 +248,7 @@ class _ProgressReportScreenState
         final row = await db.exportsDao.findById(exportId);
         if (row == null) return;
         if (!navigatorCtx.mounted) return;
-        await showSendExportSheet(navigatorCtx, export: row);
+        unawaited(navigatorCtx.push('/exports/${row.id}/send', extra: row));
       },
     );
   }

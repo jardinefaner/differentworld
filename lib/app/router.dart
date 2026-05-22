@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
-import 'package:differentworld/core/db/app_database.dart' show Entry, Invite;
+import 'package:differentworld/core/db/app_database.dart' show Entry, Export, Invite;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
@@ -13,6 +13,7 @@ import 'package:differentworld/features/entries/observation_form_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/exports/progress_report_screen.dart';
+import 'package:differentworld/features/exports/send_export_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
@@ -292,6 +293,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'schedule',
             builder: (_, _) => const ScheduleScreen(),
           ),
+          // Send-export route (Wave 25, replaces
+          // `showSendExportSheet`). Export passed via `extra`;
+          // missing-extra falls back to a small error screen.
+          GoRoute(
+            path: 'exports/:id/send',
+            builder: (_, state) {
+              final export = state.extra;
+              if (export is! Export) {
+                return const _MissingExportScreen();
+              }
+              return SendExportScreen(export: export);
+            },
+          ),
           GoRoute(
             path: 'activities',
             builder: (_, _) => const ActivitiesListScreen(),
@@ -435,6 +449,32 @@ class _MissingInviteScreen extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Text(
               'Open this invite from the Team screen — direct links '
+              'are not supported yet.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Fallback when `/exports/:id/send` is opened without the `extra`
+/// payload — happens if a deep link is pasted cold. Future: an
+/// `exportByIdProvider` would let us fetch + render properly.
+class _MissingExportScreen extends StatelessWidget {
+  const _MissingExportScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Open this export from the report screen — direct links '
               'are not supported yet.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
