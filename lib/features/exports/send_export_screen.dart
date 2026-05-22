@@ -98,38 +98,71 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
       return;
     }
 
-    final ok = await runReported(
-      library: 'exports',
-      messenger: messenger,
-      onError: 'Email failed to send. Check your network and try again.',
-      action: () async {
-        final results = await actions.sendByEmail(
-          exportId: widget.export.id,
-          recipients: recipients,
+    // Wrap the send to detect the "your session is no longer valid"
+    // path from the Edge Function (happens during / after a Supabase
+    // JWT-key rotation). We surface it via a dedicated dialog with
+    // a "Sign out" CTA — running the user through `runReported`'s
+    // generic snackbar would understate the action they need to take.
+    bool ok;
+    try {
+      final results = await actions.sendByEmail(
+        exportId: widget.export.id,
+        recipients: recipients,
+      );
+      final fails = results.where((r) => !r.ok).toList();
+      if (!mounted) return;
+      if (fails.isEmpty) {
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sent to ${results.length} '
+              '${results.length == 1 ? 'recipient' : 'recipients'}.',
+            ),
+          ),
         );
-        final fails = results.where((r) => !r.ok).toList();
-        if (!mounted) return;
-        if (fails.isEmpty) {
-          messenger?.showSnackBar(
-            SnackBar(
-              content: Text(
-                'Sent to ${results.length} '
-                '${results.length == 1 ? 'recipient' : 'recipients'}.',
-              ),
+      } else {
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sent ${results.length - fails.length} / '
+              '${results.length}; ${fails.length} failed.',
             ),
-          );
-        } else {
-          messenger?.showSnackBar(
-            SnackBar(
-              content: Text(
-                'Sent ${results.length - fails.length} / '
-                '${results.length}; ${fails.length} failed.',
-              ),
-            ),
-          );
-        }
-      },
-    );
+          ),
+        );
+      }
+      ok = true;
+    } on SessionExpiredException catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'exports',
+        ),
+      );
+      if (!mounted) return;
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Your session expired. Sign out and sign back in to '
+            'continue.',
+          ),
+        ),
+      );
+      ok = false;
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'exports'),
+      );
+      if (!mounted) return;
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Email failed to send. Check your network and try again.',
+          ),
+        ),
+      );
+      ok = false;
+    }
     if (!mounted) return;
     if (ok) {
       if (goRouter.canPop()) goRouter.pop();

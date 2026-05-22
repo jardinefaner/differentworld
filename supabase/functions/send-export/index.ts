@@ -95,6 +95,28 @@ serve(async (req) => {
     { global: { headers: { Authorization: authHeader } } },
   );
 
+  // Explicit JWT-validity probe before doing real work. The function
+  // is deployed with `verify_jwt: true`, but during a Supabase project
+  // JWT-key rotation there's a window where the standby key hasn't
+  // fully propagated and `verify_jwt` rejects opaquely. We do a
+  // cheap `auth.getUser()` ourselves so we can return a STRUCTURED
+  // 401 ({ code: 'JWT_INVALID' }) the client can react to — signing
+  // the user out + prompting re-auth — instead of bubbling a generic
+  // failure.
+  //
+  // This also catches the case where an old (pre-rotation) token is
+  // still in the client and the OLD key has already been revoked —
+  // those tokens fail signature verification + we tell the client to
+  // re-auth.
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData?.user) {
+    return json(401, {
+      error: 'auth invalid; please sign out and sign back in',
+      code: 'JWT_INVALID',
+      detail: userErr?.message ?? 'no user from token',
+    });
+  }
+
   let body: Body;
   try {
     body = (await req.json()) as Body;

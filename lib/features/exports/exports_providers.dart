@@ -196,34 +196,67 @@ class ExportActions {
     })> recipients,
   }) async {
     final supabase = Supabase.instance.client;
-    final resp = await supabase.functions.invoke(
-      'send-export',
-      body: {
-        'exportId': exportId,
-        'recipients': [
-          for (final r in recipients)
-            {
-              'email': r.email,
-              if (r.label != null) 'label': r.label,
-              if (r.guardianId != null) 'guardianId': r.guardianId,
-              'kind': r.kind,
-            },
-        ],
-      },
-    );
-    final results = (resp.data as Map?)?['results'] as List? ?? const [];
-    return [
-      for (final raw in results)
-        () {
-          final r = raw as Map;
-          final recipient = (r['recipient'] as Map?) ?? const {};
-          return (
-            email: (recipient['email'] as String?) ?? '',
-            ok: (r['ok'] as bool?) ?? false,
+    try {
+      final resp = await supabase.functions.invoke(
+        'send-export',
+        body: {
+          'exportId': exportId,
+          'recipients': [
+            for (final r in recipients)
+              {
+                'email': r.email,
+                if (r.label != null) 'label': r.label,
+                if (r.guardianId != null) 'guardianId': r.guardianId,
+                'kind': r.kind,
+              },
+          ],
+        },
+      );
+      final results = (resp.data as Map?)?['results'] as List? ?? const [];
+      return [
+        for (final raw in results)
+          () {
+            final r = raw as Map;
+            final recipient = (r['recipient'] as Map?) ?? const {};
+            return (
+              email: (recipient['email'] as String?) ?? '',
+              ok: (r['ok'] as bool?) ?? false,
+            );
+          }(),
+      ];
+    } on FunctionException catch (e) {
+      // The function returns 401 + `{ code: 'JWT_INVALID' }` when
+      // the caller's JWT can't be validated — happens during a
+      // Supabase JWT-key rotation while the standby key hasn't
+      // propagated, or after the old key has been revoked while
+      // the client still holds a token signed with it. We surface
+      // a typed `SessionExpiredException` so the UI can show a
+      // clear "sign out + back in" path.
+      if (e.status == 401) {
+        final details = e.details;
+        if (details is Map && details['code'] == 'JWT_INVALID') {
+          throw SessionExpiredException(
+            details['error']?.toString() ??
+                'auth invalid; please sign out and sign back in',
           );
-        }(),
-    ];
+        }
+      }
+      rethrow;
+    }
   }
+}
+
+/// Thrown by long-running surfaces (export send, …) when the
+/// Supabase Edge Function reports `JWT_INVALID`. Happens during JWT-
+/// key rotation windows and after the old key is revoked. UI catches
+/// this specifically and prompts the user to sign out + back in;
+/// other `FunctionException`s remain generic.
+class SessionExpiredException implements Exception {
+  SessionExpiredException(this.message);
+  final String message;
+
+  @override
+  String toString() => 'SessionExpiredException: $message';
 }
 
 String _contentTypeFor(String format) => switch (format) {
