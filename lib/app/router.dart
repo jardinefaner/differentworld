@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
-import 'package:differentworld/core/db/app_database.dart' show Entry, Export, Invite;
+import 'package:differentworld/core/db/app_database.dart'
+    show Entry, Export, Invite, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
@@ -37,6 +38,7 @@ import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
+import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
@@ -325,6 +327,18 @@ final routerProvider = Provider<GoRouter>((ref) {
               return SendExportScreen(export: export);
             },
           ),
+          // Subject health profile (Wave 27, replaces
+          // `HealthProfileSheet`). Subject passed via `extra`.
+          GoRoute(
+            path: 'subjects/:id/health',
+            builder: (_, state) {
+              final subject = state.extra;
+              if (subject is! Subject) {
+                return const _MissingSubjectScreen();
+              }
+              return HealthProfileScreen(subject: subject);
+            },
+          ),
           GoRoute(
             path: 'activities',
             builder: (_, _) => const ActivitiesListScreen(),
@@ -495,6 +509,33 @@ class _MissingExportScreen extends StatelessWidget {
             child: Text(
               'Open this export from the report screen — direct links '
               'are not supported yet.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Fallback when `/subjects/:id/health` is opened without the
+/// `extra` payload — same pattern as the other "missing extra"
+/// fallbacks. Future: a `subjectByIdProvider` lookup would let us
+/// fetch + render.
+class _MissingSubjectScreen extends StatelessWidget {
+  const _MissingSubjectScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              "Open the child's profile from the roster — direct "
+              'links are not supported yet.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),

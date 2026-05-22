@@ -1,8 +1,8 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/features/subjects/widgets/health_profile_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// Read-only display of a Subject's structured health profile —
 /// medications, medical conditions, IEP/504 summary, primary
@@ -58,7 +58,10 @@ class HealthProfileCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => HealthProfileSheet.show(context, subject: subject),
+          onTap: () => context.push(
+            '/subjects/${subject.id}/health',
+            extra: subject,
+          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
             child: Column(
