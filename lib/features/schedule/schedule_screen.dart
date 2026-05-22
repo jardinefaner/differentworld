@@ -5,7 +5,6 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
-import 'package:differentworld/features/schedule/block_edit_sheet.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
@@ -18,6 +17,7 @@ import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 /// `/schedule` — staff-side schedule for one date. Cohort tabs across
@@ -635,12 +635,13 @@ Future<void> _openBlockSheet(
   required List<ScheduleBlock> existingBlocks,
   ScheduleBlock? existing,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    useSafeArea: true,
-    builder: (_) => BlockEditSheet(
+  // Push the block-edit route (Wave 26). Args ride via go_router
+  // `extra`. Helper signature kept for source compat with the
+  // pre-route call sites — `date` + `existingBlocks` are unused
+  // by the screen itself.
+  return context.push<void>(
+    '/schedule/block',
+    extra: (
       groupId: groupId,
       defaultStart: defaultStart,
       existing: existing,

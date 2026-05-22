@@ -8,21 +8,36 @@ import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-/// Sentinel value used as the dropdown value for "+ New …" rows. A
-/// real uuid will never collide. The dropdowns intercept this and
-/// push the relevant edit screen inline, then auto-select the new
-/// entity's id when the user returns.
+/// Sentinel used as the dropdown value for "+ New …" rows. A real
+/// uuid never collides. Dropdowns intercept this and push the
+/// relevant edit screen inline, then auto-select the new id when
+/// the user returns.
 const String _kSentinelNew = '__new__';
 
-/// Bottom sheet to create or edit a single schedule block. Holds the
-/// canonical authoring controls — kind, time range, activity, lead,
-/// location override, notes. Saving routes through
-/// [ScheduleActions.create] / [ScheduleActions.update_].
-class BlockEditSheet extends ConsumerStatefulWidget {
-  const BlockEditSheet({
+/// Args passed to the create/edit block route via go_router `extra`.
+typedef BlockEditArgs = ({
+  String groupId,
+  DateTime defaultStart,
+  ScheduleBlock? existing,
+});
+
+/// Create or edit a single schedule block — kind, time range,
+/// activity, lead, location override, notes. Saves through
+/// `ScheduleActions.create` / `update_`.
+///
+/// Promoted from `block_edit_sheet.dart` to the
+/// `/schedule/block` route in Wave 26. Args passed via go_router
+/// `extra` so the user can deep-link into a fresh create flow
+/// (with groupId + defaultStart) or an edit flow (with the
+/// existing ScheduleBlock).
+class BlockEditScreen extends ConsumerStatefulWidget {
+  const BlockEditScreen({
     required this.groupId,
     required this.defaultStart,
     this.existing,
@@ -36,10 +51,10 @@ class BlockEditSheet extends ConsumerStatefulWidget {
   bool get isEdit => existing != null;
 
   @override
-  ConsumerState<BlockEditSheet> createState() => _BlockEditSheetState();
+  ConsumerState<BlockEditScreen> createState() => _BlockEditScreenState();
 }
 
-class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
+class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   late String _kind;
   late DateTime _startAt;
   late DateTime _endAt;
@@ -74,9 +89,9 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
     super.dispose();
   }
 
-  /// When the user picks a new activity, copy that activity's defaults
-  /// into the unset fields (location, end_at via default duration) —
-  /// but never stomp values the user explicitly set.
+  /// When the user picks an activity, copy that activity's defaults
+  /// into unset fields (location, end_at via default duration) —
+  /// without stomping values the user explicitly set.
   void _applyActivityDefaults(String? activityId, List<Activity> all) {
     if (activityId == null) return;
     final a = all.where((x) => x.id == activityId).firstOrNull;
@@ -88,8 +103,6 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
       }
       final dur = a.defaultDurationMinutes;
       if (dur != null) {
-        // Only auto-stretch the end time if the user hasn't customized
-        // it beyond the seed default we set on init.
         final wasDefault = _endAt.difference(_startAt).inMinutes == 60 ||
             (widget.existing != null &&
                 widget.existing!.activityId == null);
@@ -116,7 +129,6 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
       );
       final delta = _endAt.difference(_startAt);
       _startAt = newStart;
-      // Slide the end with the start so the duration is preserved.
       _endAt = newStart.add(delta);
     });
   }
@@ -135,8 +147,6 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
         picked.hour,
         picked.minute,
       );
-      // Guard: if the user picks an end before the start, clamp to
-      // start + 15 min.
       if (!_endAt.isAfter(_startAt)) {
         _endAt = _startAt.add(const Duration(minutes: 15));
       }
@@ -147,7 +157,7 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
     if (_saving) return;
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.maybeOf(context);
-    final navigator = Navigator.of(context);
+    final goRouter = GoRouter.of(context);
     final actions = ref.read(scheduleActionsProvider);
 
     final ok = await runReported(
@@ -185,7 +195,7 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    if (ok) navigator.pop();
+    if (ok && goRouter.canPop()) goRouter.pop();
   }
 
   Future<void> _delete() async {
@@ -212,64 +222,49 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
       ),
     );
     if (confirm != true || !mounted) return;
-    final navigator = Navigator.of(context);
+    final goRouter = GoRouter.of(context);
     await ref.read(scheduleActionsProvider).delete_(id);
-    if (mounted) navigator.pop();
+    if (!mounted) return;
+    if (goRouter.canPop()) goRouter.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final insets = MediaQuery.of(context).viewInsets;
-    final activities = ref.watch(allActivitiesProvider).value ??
-        const <Activity>[];
-    final locations = ref.watch(locationsProvider).value ?? const <Location>[];
-    final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+    final activities =
+        ref.watch(allActivitiesProvider).value ?? const <Activity>[];
+    final locations =
+        ref.watch(locationsProvider).value ?? const <Location>[];
+    final members =
+        ref.watch(membersInSpaceProvider).value ?? const <Member>[];
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + insets.bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Text(
-                widget.isEdit ? 'Edit block' : 'New block',
-                style: theme.textTheme.titleMedium,
-              ),
-              const Spacer(),
-              if (widget.isEdit)
-                IconButton(
-                  tooltip: 'Delete',
-                  icon: Icon(Icons.delete_outline, color: scheme.error),
-                  onPressed: _saving ? null : _delete,
-                ),
-            ],
+    return EdgeScaffold(
+      backFallbackRoute: '/schedule',
+      actions: [
+        if (widget.isEdit)
+          IconButton(
+            tooltip: 'Delete',
+            icon: Icon(Icons.delete_outline, color: scheme.error),
+            onPressed: _saving ? null : _delete,
           ),
-          const SizedBox(height: 8),
-          // Kind segmented control: on_site / field_trip / break /
-          // closed. Drives which fields below are relevant.
+      ],
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          ContentHeader(
+            title: widget.isEdit ? 'Edit block' : 'New block',
+          ),
           SegmentedButton<String>(
             segments: const [
-              ButtonSegment(
-                value: 'on_site',
-                label: Text('Activity'),
-              ),
+              ButtonSegment(value: 'on_site', label: Text('Activity')),
               ButtonSegment(
                 value: 'field_trip',
                 label: Text('Trip'),
                 icon: Icon(Icons.directions_bus_outlined),
               ),
-              ButtonSegment(
-                value: 'break',
-                label: Text('Break'),
-              ),
-              ButtonSegment(
-                value: 'closed',
-                label: Text('Closed'),
-              ),
+              ButtonSegment(value: 'break', label: Text('Break')),
+              ButtonSegment(value: 'closed', label: Text('Closed')),
             ],
             selected: {_kind},
             onSelectionChanged: (s) {
@@ -278,7 +273,6 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
             showSelectedIcon: false,
           ),
           const SizedBox(height: 16),
-          // Time range — two tappable pills.
           Row(
             children: [
               Expanded(
@@ -328,10 +322,6 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
                       a.archivedAt == null ? a.name : '${a.name} (archived)',
                     ),
                   ),
-                // "+ New activity" sentinel — picking it pushes the
-                // activity edit screen inline, then auto-selects the
-                // returned id. The user never has to leave the block
-                // sheet to add a new activity to the catalog.
                 DropdownMenuItem<String?>(
                   value: _kSentinelNew,
                   child: Row(
@@ -348,16 +338,12 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
               ],
               onChanged: (v) async {
                 if (v == _kSentinelNew) {
-                  // Push the activity edit screen, await the new id,
-                  // then re-apply defaults to slide end-time etc.
                   final newId = await Navigator.of(context).push<String?>(
                     MaterialPageRoute(
                       builder: (_) => const ActivityEditScreen(),
                     ),
                   );
                   if (!mounted || newId == null) return;
-                  // The activities stream may not have emitted the new
-                  // row yet — give it one frame.
                   await Future<void>.delayed(
                     const Duration(milliseconds: 50),
                   );
@@ -407,8 +393,6 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
                     value: l.id,
                     child: Text(l.name),
                   ),
-                // "+ New location" sentinel — same pattern as the
-                // activity dropdown above.
                 DropdownMenuItem<String?>(
                   value: _kSentinelNew,
                   child: Row(
@@ -454,7 +438,7 @@ class _BlockEditSheetState extends ConsumerState<BlockEditSheet> {
               border: const OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _saving ? null : _save,
             icon: _saving

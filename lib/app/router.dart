@@ -30,6 +30,7 @@ import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
+import 'package:differentworld/features/schedule/block_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
@@ -292,6 +293,24 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'schedule',
             builder: (_, _) => const ScheduleScreen(),
+          ),
+          // Block create/edit route (Wave 26, replaces
+          // `BlockEditSheet`). Args ride via go_router `extra` as
+          // a `BlockEditArgs` record; missing-extra falls back to
+          // the schedule screen (the only valid entry path).
+          GoRoute(
+            path: 'schedule/block',
+            builder: (_, state) {
+              final args = state.extra;
+              if (args is! BlockEditArgs) {
+                return const ScheduleScreen();
+              }
+              return BlockEditScreen(
+                groupId: args.groupId,
+                defaultStart: args.defaultStart,
+                existing: args.existing,
+              );
+            },
           ),
           // Send-export route (Wave 25, replaces
           // `showSendExportSheet`). Export passed via `extra`;
