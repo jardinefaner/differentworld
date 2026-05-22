@@ -7,6 +7,7 @@ import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
+import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/exports/progress_report_screen.dart';
@@ -35,6 +36,7 @@ import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
 import 'package:differentworld/features/surveys/survey_table_screen.dart';
 import 'package:differentworld/features/surveys/survey_take_screen.dart';
+import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
@@ -158,12 +160,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'captures',
             builder: (_, _) => const CaptureInboxScreen(),
+            routes: [
+              // New-capture surface as a real route (Wave 21,
+              // replaces the old `showCaptureSheet` bottom-sheet).
+              GoRoute(
+                path: 'new',
+                builder: (_, _) => const CaptureScreen(),
+              ),
+            ],
           ),
           // Tasks — the third capture-promotion destination, and a
           // standalone to-do list for the program.
           GoRoute(
             path: 'tasks',
             builder: (_, _) => const TasksScreen(),
+            routes: [
+              // New-task surface as a real route (Wave 21,
+              // replaces the old `showNewTaskSheet` bottom-sheet).
+              GoRoute(
+                path: 'new',
+                builder: (_, _) => const TaskScreen(),
+              ),
+            ],
           ),
           // Messages — `/messages` is the family-side index (one row
           // per linked child). Threads themselves are reached at

@@ -11,7 +11,6 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
@@ -224,7 +223,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       category: OmniboxCategory.action,
       icon: Icons.bolt_outlined,
       keywords: const ['note', 'jot', 'noticed', 'quick', 'thought'],
-      onSelect: (ctx, _) => showCaptureSheet(ctx),
+      onSelect: (ctx, _) => ctx.push('/captures/new'),
     ),
     // Same gate as the QuickActions tile — needs both `canObserve`
     // AND at least one visible group. Hide on runtime precondition

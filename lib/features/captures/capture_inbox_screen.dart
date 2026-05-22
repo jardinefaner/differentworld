@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
-import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -17,6 +16,7 @@ import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/captures` — the upward loop's input inbox. Open thoughts the team
 /// has captured but not yet decided what to do with. Each row offers
@@ -102,7 +102,7 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
               PrimaryActionButton(
                 tooltip: 'Capture',
                 icon: Icons.bolt_outlined,
-                onPressed: () => showCaptureSheet(context),
+                onPressed: () => context.push('/captures/new'),
               ),
               const SyncStatusIndicator(),
             ],
@@ -122,7 +122,7 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
                   'quick "I noticed…" — you can decide what to do with '
                   'it later.',
               action: FilledButton.icon(
-                onPressed: () => showCaptureSheet(context),
+                onPressed: () => context.push('/captures/new'),
                 icon: const Icon(Icons.bolt_outlined),
                 label: const Text('Capture'),
               ),

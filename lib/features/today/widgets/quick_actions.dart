@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
-import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
@@ -79,7 +78,7 @@ class QuickActions extends ConsumerWidget {
       _Tile(
         icon: Icons.bolt_outlined,
         label: 'Capture',
-        onTap: () => showCaptureSheet(context),
+        onTap: () => context.push('/captures/new'),
       ),
       // The vehicle tile is a ConsumerWidget that watches
       // fleetStatusProvider; when the viewer has a vehicle out it

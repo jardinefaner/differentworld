@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
-import 'package:differentworld/features/tasks/widgets/task_sheet.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -14,6 +13,7 @@ import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/tasks` — open to-dos for the program. Filter chips pick a horizon
 /// (Today / Week / Overdue / All); the body is grouped into Overdue →
@@ -41,7 +41,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         PrimaryActionButton(
           tooltip: 'New task',
           icon: Icons.add,
-          onPressed: () => showNewTaskSheet(context),
+          onPressed: () => context.push('/tasks/new'),
         ),
         const SyncStatusIndicator(),
       ],
@@ -61,7 +61,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   'a capture from /captures into a task instead of an '
                   'observation.',
               action: FilledButton.icon(
-                onPressed: () => showNewTaskSheet(context),
+                onPressed: () => context.push('/tasks/new'),
                 icon: const Icon(Icons.add),
                 label: const Text('New task'),
               ),

@@ -3,7 +3,6 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
-import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/insights/insights_providers.dart';
@@ -194,7 +193,7 @@ class YearlyReviewScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: FilledButton.icon(
-              onPressed: () => showCaptureSheet(context),
+              onPressed: () => context.push('/captures/new'),
               icon: const Icon(Icons.bolt_outlined),
               label: const Text('Capture a reflection'),
             ),

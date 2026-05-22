@@ -5,7 +5,6 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
-import 'package:differentworld/features/captures/widgets/capture_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
@@ -65,7 +64,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           PrimaryActionButton(
             tooltip: 'Capture',
             icon: Icons.bolt_outlined,
-            onPressed: () => showCaptureSheet(context),
+            onPressed: () => context.push('/captures/new'),
           ),
         const SyncStatusIndicator(),
       ],
