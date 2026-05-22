@@ -206,6 +206,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                           const _SectionLabel(label: 'Role'),
                           if (canManage)
                             _RoleSelector(
+                              memberId: member.id,
                               vertical: vertical,
                               selected: currentRole,
                               onChanged: _setRole,
@@ -548,33 +549,100 @@ final _memberProvider = StreamProvider.autoDispose.family<Member?, String>(
 /// Selecting a chip flips the member's role AND re-applies the
 /// per-vertical default cap bundle on top of their existing caps
 /// (`settings_actions.setRole`).
-class _RoleSelector extends StatelessWidget {
+/// Role picker chips. **Last-director protection**: if THIS member is
+/// the only person in the space with director-level privilege (by
+/// role OR by `canActAsDirector` cap), the non-director chips are
+/// disabled with an inline explanation. Without this gate, a single
+/// director could demote themselves and orphan the space — no one
+/// would be able to change anyone's role back.
+///
+/// (Recovery for spaces already orphaned by this bug lives in
+/// migration 20260521000001_recover_orphan_director.sql.)
+class _RoleSelector extends ConsumerWidget {
   const _RoleSelector({
+    required this.memberId,
     required this.vertical,
     required this.selected,
     required this.onChanged,
   });
 
+  final String memberId;
   final String vertical;
   final String selected;
   final ValueChanged<String> onChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final labels = ref.watch(verticalLabelsProvider);
     final roles = RoleBundles.rolesFor(vertical);
+    final directorRole = RoleBundles.directorRoleFor(vertical);
+
+    // Count members in the space who are admin-level right now —
+    // either via the literal director-equivalent role OR via the
+    // `canActAsDirector` cap (a non-director member who's been
+    // explicitly promoted).
+    final members =
+        ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+    final admins = members.where((m) {
+      if (m.role == directorRole) return true;
+      return m.caps.getBool(CoreCaps.canActAsDirector);
+    }).toList(growable: false);
+    final iAmLastDirector = selected == directorRole &&
+        admins.length == 1 &&
+        admins.first.id == memberId;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final key in roles)
-            ChoiceChip(
-              label: Text(RoleLabels.of(key, vertical: vertical)),
-              selected: selected == key,
-              onSelected: (s) {
-                if (s) onChanged(key);
-              },
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final key in roles)
+                ChoiceChip(
+                  label: Text(RoleLabels.of(key, vertical: vertical)),
+                  selected: selected == key,
+                  // Block demotion when this is the last admin: only
+                  // the currently-selected (director) chip stays
+                  // tappable so the user can re-confirm but can't
+                  // switch away.
+                  onSelected: (iAmLastDirector && key != directorRole)
+                      ? null
+                      : (s) {
+                          if (s) onChanged(key);
+                        },
+                ),
+            ],
+          ),
+          if (iAmLastDirector)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    size: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      "You're the only "
+                      '${RoleLabels.of(directorRole, vertical: vertical).toLowerCase()} '
+                      'in this ${labels.space.toLowerCase()}. Promote '
+                      'another teammate first, then come back here to '
+                      'change your own role.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
         ],
       ),

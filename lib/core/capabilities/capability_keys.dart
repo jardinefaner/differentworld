@@ -253,6 +253,21 @@ abstract class RoleBundles {
     };
   }
 
+  /// The "director-equivalent" role key in this vertical — the role
+  /// whose default bundle sets `CoreCaps.canActAsDirector: true`.
+  /// Used by safety gates (e.g. last-director-protection in the role
+  /// picker) that need to know "who's the admin in this space?"
+  /// without hard-coding 'director' across verticals.
+  static String directorRoleFor(String vertical) {
+    return switch (vertical) {
+      'construction' => 'pm',
+      'healthcare' => 'physician',
+      'hospitality' => 'gm',
+      'manufacturing' => 'production_manager',
+      _ => 'director',
+    };
+  }
+
   /// Role keys this vertical offers — the role picker uses this to
   /// scope its dropdown to vertical-appropriate options. Childcare
   /// surfaces director / lead_teacher / teacher / assistant;
