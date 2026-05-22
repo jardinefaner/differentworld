@@ -126,11 +126,43 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
   void dispose() {
     // Pop our entry off the chrome stack so the previous route's
     // chrome (still on the stack under us) becomes visible again.
-    // Safe to call synchronously here — the notifier's mutation
-    // schedules AppShell's rebuild for the NEXT frame, after this
-    // dispose has completed.
-    _notifier?.pop(_chromeKey);
+    //
+    // **Why deferred.** An older comment here claimed it was safe to
+    // pop synchronously because "AppShell's rebuild is scheduled for
+    // the next frame, after dispose completes." That was wrong:
+    // during a route pop, the disposing widget's `dispose()` is
+    // called DURING the widget tree's finalize phase, which is
+    // itself a build-phase for the assertion's purposes. Writing
+    // `state = …` synchronously here trips Riverpod's
+    // "modify provider while widget tree was building" assertion,
+    // and the assertion firing leaves the chrome stack in an
+    // inconsistent state so subsequent routes show no chrome or bar.
+    //
+    // Defer the pop into a microtask — same pattern the push side
+    // already uses. The microtask runs after the current sync tick
+    // (so this dispose has fully finalized) but before the next
+    // frame's render, so the chrome visually flips on the same frame
+    // the new route paints.
+    //
+    // Capture the notifier handle locally so the microtask doesn't
+    // touch `_notifier` after we've nulled it; the element is
+    // deactivated by then and any field reads would crash anyway.
+    final notifier = _notifier;
     _notifier = null;
+    final key = _chromeKey;
+    if (notifier != null) {
+      unawaited(Future.microtask(() {
+        try {
+          notifier.pop(key);
+        } on Object {
+          // Notifier may already be disposed (e.g. the ProviderScope
+          // tore down before the microtask ran — happens during test
+          // teardown and on app-shutdown). Chrome stack cleanup is
+          // best-effort housekeeping; if the provider's already gone,
+          // there's nothing to clean.
+        }
+      }));
+    }
     super.dispose();
   }
 
