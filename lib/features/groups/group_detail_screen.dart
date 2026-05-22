@@ -17,6 +17,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,9 +75,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
         // Secondary attendance entry when the primary is "add subject"
         // (director) — they still take attendance often enough.
         if (viewer.canManageSpace && viewer.canTakeAttendance)
-          IconButton(
+          SecondaryActionButton(
             tooltip: 'Take ${labels.attendanceNoun.toLowerCase()}',
-            icon: const Icon(Icons.fact_check_outlined),
+            icon: Icons.fact_check_outlined,
             onPressed: () => context.push('/groups/$groupId/attendance'),
           ),
         // Secondary actions live in an overflow menu — the AppBar is

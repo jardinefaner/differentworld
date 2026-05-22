@@ -7,6 +7,7 @@ import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,9 +37,9 @@ class VehicleDetailScreen extends ConsumerWidget {
       backFallbackRoute: '/settings/vehicles',
       actions: [
         if (canEdit && vehicleAsync.value != null)
-          IconButton(
+          SecondaryActionButton(
             tooltip: 'Edit',
-            icon: const Icon(Icons.edit_outlined),
+            icon: Icons.edit_outlined,
             onPressed: () =>
                 context.push('/settings/vehicles/$vehicleId/edit'),
           ),

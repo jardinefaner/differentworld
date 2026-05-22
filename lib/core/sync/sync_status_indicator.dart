@@ -1,8 +1,13 @@
 import 'package:differentworld/core/sync/power_sync_provider.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Sync state surfaced in the chrome pill — connected / syncing /
+/// offline / error. Rendered as a [SecondaryActionButton] so it
+/// matches the height of the primary action in the same row (Wave 18
+/// chrome-size normalization).
 class SyncStatusIndicator extends ConsumerWidget {
   const SyncStatusIndicator({super.key});
 
@@ -36,16 +41,18 @@ class SyncStatusIndicator extends ConsumerWidget {
           color = theme.colorScheme.primary;
         }
 
-        return IconButton(
+        return SecondaryActionButton(
           tooltip: tooltip,
-          icon: Icon(icon, color: color),
+          icon: icon,
+          iconColor: color,
           onPressed: null,
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, _) => IconButton(
+      error: (_, _) => SecondaryActionButton(
         tooltip: 'Sync error',
-        icon: Icon(Icons.error_outline, color: theme.colorScheme.error),
+        icon: Icons.error_outline,
+        iconColor: theme.colorScheme.error,
         onPressed: null,
       ),
     );

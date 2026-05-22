@@ -24,6 +24,7 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -74,9 +75,9 @@ class SubjectDetailScreen extends ConsumerWidget {
             ),
           ),
         if (viewer.canObserve && subjectAsync.value != null)
-          IconButton(
+          SecondaryActionButton(
             tooltip: 'Progress report',
-            icon: const Icon(Icons.description_outlined),
+            icon: Icons.description_outlined,
             onPressed: () {
               final gid = subjectAsync.value!.groupId ?? '';
               if (gid.isEmpty) return;
@@ -88,9 +89,9 @@ class SubjectDetailScreen extends ConsumerWidget {
             },
           ),
         if (viewer.canManageSpace && subjectAsync.value != null)
-          IconButton(
+          SecondaryActionButton(
             tooltip: 'Edit',
-            icon: const Icon(Icons.edit_outlined),
+            icon: Icons.edit_outlined,
             onPressed: () {
               final gid = subjectAsync.value!.groupId ?? '';
               if (gid.isEmpty) return;

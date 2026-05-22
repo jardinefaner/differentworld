@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -211,9 +212,9 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
               '/surveys/$templateId/take/${nextSubject.id}',
             ),
           ),
-        IconButton(
+        SecondaryActionButton(
           tooltip: 'Table view',
-          icon: const Icon(Icons.table_chart_outlined),
+          icon: Icons.table_chart_outlined,
           onPressed: () => context.push('/surveys/$templateId/table'),
         ),
         const SyncStatusIndicator(),

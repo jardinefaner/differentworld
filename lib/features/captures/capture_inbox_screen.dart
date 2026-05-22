@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -91,9 +92,9 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
                   foregroundColor: Theme.of(context).colorScheme.error,
                 ),
               ),
-              IconButton(
+              SecondaryActionButton(
                 tooltip: 'Cancel',
-                icon: const Icon(Icons.close),
+                icon: Icons.close,
                 onPressed: _clearSelection,
               ),
             ]
