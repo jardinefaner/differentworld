@@ -8,30 +8,44 @@ import 'package:differentworld/features/photos/widgets/multi_shot_camera.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
-import 'package:differentworld/shared/widgets/dismiss_guard.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
-/// Modal bottom sheet for creating or editing an observation.
+/// Create / edit observation as a real route.
 ///
-/// On create: needs a groupId (the classroom context). Subject is
-/// picked from the room's roster via a chip row at the top. Note text
-/// is required. Photo capture is deferred to a follow-up.
+/// Promoted from `observation_form_sheet.dart` (bottom-sheet) to
+/// `/observations/new` and `/observations/:id/edit` in Wave 21. This
+/// is the heaviest of the heavy forms — text, multi-photo upload,
+/// subject picker, attachment diffing, delete affordance. As a
+/// route it gets full chrome [☰] [←] (back doubles as cancel), the
+/// layout law, and the keyboard inset for free.
 ///
-/// On edit: subject + group are locked; only the note text is mutable.
-class ObservationFormSheet extends ConsumerStatefulWidget {
-  const ObservationFormSheet({
+/// **Modes**:
+/// - Create: needs `groupId`; optional `initialSubjectId`.
+/// - Edit: pass the `Entry` via go_router's `extra` (no extra DB
+///   fetch — the entry is already loaded wherever the user came
+///   from). `groupId` and `subjectId` are locked in edit mode.
+///
+/// **Dirty-state guard**: hitting back when there are unsaved
+/// changes pops a confirm dialog so swipe-back / system-back
+/// doesn't silently throw away typed text or unselected photos.
+class ObservationFormScreen extends ConsumerStatefulWidget {
+  const ObservationFormScreen({
     this.groupId,
     this.initialSubjectId,
     this.existing,
     super.key,
   });
 
-  /// Required when creating. Optional when editing (uses existing.groupId).
+  /// Required when creating. Optional when editing (uses
+  /// `existing.groupId`).
   final String? groupId;
 
   /// Pre-select a subject when creating (e.g. tapped from a roster).
@@ -40,30 +54,13 @@ class ObservationFormSheet extends ConsumerStatefulWidget {
   /// Edit mode: pass the existing entry.
   final Entry? existing;
 
-  static Future<void> show(
-    BuildContext context, {
-    String? groupId,
-    String? initialSubjectId,
-    Entry? existing,
-  }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => ObservationFormSheet(
-        groupId: groupId,
-        initialSubjectId: initialSubjectId,
-        existing: existing,
-      ),
-    );
-  }
-
   @override
-  ConsumerState<ObservationFormSheet> createState() =>
-      _ObservationFormSheetState();
+  ConsumerState<ObservationFormScreen> createState() =>
+      _ObservationFormScreenState();
 }
 
-class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
+class _ObservationFormScreenState
+    extends ConsumerState<ObservationFormScreen> {
   late final TextEditingController _textCtrl;
   String? _subjectId;
   bool _saving = false;
@@ -71,9 +68,9 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   String? _error;
 
   /// Pre-generated entry id when creating. Photo uploads use this in
-  /// the storage path so the path is stable even if the form is
-  /// re-mounted (e.g. on rebuild from a draft). For edit mode it's
-  /// just the existing entry id.
+  /// the storage path so the path is stable even if the form is re-
+  /// mounted (e.g. on rebuild from a draft). For edit mode it's the
+  /// existing entry id.
   late final String _entryId;
 
   /// Local working copy of attachment URLs in display order. On open
@@ -115,8 +112,8 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   }
 
   /// Seeded once per form-open from the `attachmentsForEntityProvider`
-  /// stream. After this, the stream can refresh independently but
-  /// the form holds local state until save.
+  /// stream. After this, the stream can refresh independently but the
+  /// form holds local state until save.
   void _seedAttachments(List<Attachment> rows) {
     if (_seededAttachments) return;
     _photos = rows.map((a) => a.url).toList(growable: false);
@@ -132,8 +129,7 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
           _subjectId != null ||
           _photos.isNotEmpty;
     }
-    final samePhotos =
-        _photos.length == _originalPhotos.length &&
+    final samePhotos = _photos.length == _originalPhotos.length &&
         List.generate(
           _photos.length,
           (i) => _photos[i] == _originalPhotos[i],
@@ -143,8 +139,32 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
         !samePhotos;
   }
 
+  Future<bool> _confirmDiscard() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Discard changes?'),
+        content: const Text(
+          "You haven't saved this observation. Leaving will drop "
+          'what you typed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Keep editing'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   /// Library / single-image picker path. Camera goes through
-  /// [_takeBurstFromCamera] below so the user can stay in the camera
+  /// [_takeBurstFromCamera] so the user can stay in the camera
   /// across multiple shots.
   Future<void> _addPhotoFromLibrary() async {
     if (_photoUploading) return;
@@ -154,7 +174,11 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
       picked = await picker.pickPhoto(ImageSource.gallery);
     } on Exception catch (e, st) {
       FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'observations'),
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'observations',
+        ),
       );
       if (!mounted) return;
       setState(() => _error = 'Could not open the picker.');
@@ -174,16 +198,7 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   }
 
   /// Compress+upload each XFile in parallel, appending URLs to
-  /// `_photos` as they finish. The form's `_photoUploading` flag is
-  /// set for the whole batch.
-  ///
-  /// Parallelism: a 5-shot burst at ~600ms per photo (compress in
-  /// isolate + upload) would take 3s sequentially. `Future.wait`
-  /// drops that to roughly one photo's worth (Storage is happy to
-  /// handle parallel uploads from one client; the isolate work
-  /// pipelines too). We preserve the user-facing order by awaiting
-  /// the wait + appending each URL to _photos in the same order the
-  /// shots were taken.
+  /// `_photos` as they finish.
   Future<void> _uploadAll(PhotoService service, List<XFile> picks) async {
     setState(() {
       _photoUploading = true;
@@ -203,7 +218,11 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
       setState(() => _photos = [..._photos, ...urls]);
     } on Exception catch (e, st) {
       FlutterError.reportError(
-        FlutterErrorDetails(exception: e, stack: st, library: 'observations'),
+        FlutterErrorDetails(
+          exception: e,
+          stack: st,
+          library: 'observations',
+        ),
       );
       if (!mounted) return;
       setState(() => _error = picks.length == 1
@@ -282,8 +301,6 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
           final id = _attachmentIdByUrl[url];
           if (id != null) await attachments.remove(id);
         }
-        // For order changes / new uploads, walk in order and reorder
-        // existing rows / create rows for new URLs.
         for (var i = 0; i < _photos.length; i++) {
           final url = _photos[i];
           final existingId = _attachmentIdByUrl[url];
@@ -310,7 +327,7 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
         );
       }
       if (!mounted) return;
-      Navigator.of(context).pop();
+      if (context.canPop()) context.pop();
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'entries'),
@@ -335,7 +352,7 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
     try {
       await ref.read(entryActionsProvider).delete(existing.id);
       if (!mounted) return;
-      Navigator.of(context).pop();
+      if (context.canPop()) context.pop();
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'entries'),
@@ -351,163 +368,144 @@ class _ObservationFormSheetState extends ConsumerState<ObservationFormSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
     final subjectsAsync = _effectiveGroupId.isEmpty
         ? const AsyncValue<List<Subject>>.data([])
         : ref.watch(subjectsInGroupProvider(_effectiveGroupId));
 
-    // Seed the photos working-copy on first arrival of the attachments
-    // stream (edit mode). For new-observation mode `_seededAttachments`
-    // was set in initState so we never enter this branch.
+    // Seed the photos working-copy on first arrival of the
+    // attachments stream (edit mode). For new-observation mode
+    // `_seededAttachments` was set in initState so we never enter
+    // this branch.
     if (_isEdit && !_seededAttachments) {
       ref
           .watch(attachmentsForEntityProvider((kind: 'entry', id: _entryId)))
           .whenData(_seedAttachments);
     }
 
-    return DismissGuard(
-      isDirty: _isDirty,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: keyboardInset),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    _isEdit ? 'Edit observation' : 'New observation',
-                    style: theme.textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
+    return PopScope(
+      canPop: !_isDirty(),
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        if (!_isDirty()) {
+          if (context.mounted && context.canPop()) context.pop();
+          return;
+        }
+        final ok = await _confirmDiscard();
+        if (ok && context.mounted && context.canPop()) context.pop();
+      },
+      child: EdgeScaffold(
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          children: [
+            ContentHeader(
+              title: _isEdit ? 'Edit observation' : 'New observation',
+              subtitle: _isEdit
+                  ? null
+                  : 'A short narrative — what the child did, said, '
+                      'learned, struggled with.',
+            ),
 
-                  // Subject picker — read-only chip on edit, scrollable
-                  // row of avatars on create.
-                  if (_isEdit)
-                    _SelectedSubjectChip(subjectId: _subjectId)
-                  else
-                    subjectsAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: LinearProgressIndicator(),
-                      ),
-                      error: (_, _) => Text(
-                        'Could not load students.',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      data: (subjects) {
-                        if (subjects.isEmpty) {
-                          return Text(
-                            'No students in this classroom yet.',
-                            style: theme.textTheme.bodySmall,
-                          );
-                        }
-                        return SizedBox(
-                          height: 86,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: subjects.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (_, i) {
-                              final s = subjects[i];
-                              final selected = s.id == _subjectId;
-                              return _SubjectPick(
-                                subject: s,
-                                selected: selected,
-                                onTap: () =>
-                                    setState(() => _subjectId = s.id),
-                              );
-                            },
-                          ),
+            // Subject picker — read-only chip on edit, scrollable
+            // row of avatars on create.
+            if (_isEdit)
+              _SelectedSubjectChip(subjectId: _subjectId)
+            else
+              subjectsAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: LinearProgressIndicator(),
+                ),
+                error: (_, _) => Text(
+                  'Could not load students.',
+                  style: theme.textTheme.bodySmall,
+                ),
+                data: (subjects) {
+                  if (subjects.isEmpty) {
+                    return Text(
+                      'No students in this classroom yet.',
+                      style: theme.textTheme.bodySmall,
+                    );
+                  }
+                  return SizedBox(
+                    height: 86,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: subjects.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
+                      itemBuilder: (_, i) {
+                        final s = subjects[i];
+                        final selected = s.id == _subjectId;
+                        return _SubjectPick(
+                          subject: s,
+                          selected: selected,
+                          onTap: () => setState(() => _subjectId = s.id),
                         );
                       },
                     ),
+                  );
+                },
+              ),
 
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _textCtrl,
-                    autofocus: !_isEdit && _subjectId != null,
-                    minLines: 4,
-                    maxLines: 10,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'What happened?',
-                      hintText: 'A short narrative — what the child did, '
-                          'said, learned, struggled with.',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _PhotosGrid(
-                    photos: _photos,
-                    uploading: _photoUploading,
-                    onAdd: _showAddPhotoSheet,
-                    onView: (i) => PhotoViewer.open(
-                      context,
-                      urls: _photos,
-                      initialIndex: i,
-                    ),
-                    onRemove: _removePhotoAt,
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _error!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      if (_isEdit &&
-                          ref.watch(viewerProvider).canManageSpace)
-                        DestructiveButton(
-                          label: 'Delete',
-                          onPressed: _saving ? null : _delete,
-                        ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed:
-                            _saving ? null : () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.icon(
-                        onPressed: _saving ? null : _save,
-                        icon: _saving
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.check),
-                        label: Text(_isEdit ? 'Save' : 'Add observation'),
-                      ),
-                    ],
-                  ),
-                ],
+            const SizedBox(height: 16),
+            TextField(
+              controller: _textCtrl,
+              autofocus: !_isEdit && _subjectId != null,
+              minLines: 4,
+              maxLines: 10,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'What happened?',
+                border: OutlineInputBorder(),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+            _PhotosGrid(
+              photos: _photos,
+              uploading: _photoUploading,
+              onAdd: _showAddPhotoSheet,
+              onView: (i) => PhotoViewer.open(
+                context,
+                urls: _photos,
+                initialIndex: i,
+              ),
+              onRemove: _removePhotoAt,
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _error!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                if (_isEdit && ref.watch(viewerProvider).canManageSpace)
+                  DestructiveButton(
+                    label: 'Delete',
+                    onPressed: _saving ? null : _delete,
+                  ),
+                const Spacer(),
+                FilledButton.icon(
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
+                  label: Text(
+                    _saving
+                        ? 'Saving…'
+                        : (_isEdit ? 'Save' : 'Add observation'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -570,7 +568,7 @@ class _SelectedSubjectChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (subjectId == null) return const SizedBox.shrink();
-    // We don't have a single-subject provider yet — read once via DB.
+    // No single-subject provider; one-shot read via DB.
     return FutureBuilder<Subject?>(
       future: () async {
         final db = await ref.read(appDatabaseProvider.future);
@@ -581,9 +579,7 @@ class _SelectedSubjectChip extends ConsumerWidget {
       builder: (context, snap) {
         final theme = Theme.of(context);
         final s = snap.data;
-        if (s == null) {
-          return const SizedBox.shrink();
-        }
+        if (s == null) return const SizedBox.shrink();
         final name = '${s.firstName} ${s.lastName}';
         return Row(
           children: [
@@ -598,9 +594,10 @@ class _SelectedSubjectChip extends ConsumerWidget {
 }
 
 /// Multi-photo grid for the observation form. Horizontal scroll of
-/// 72dp thumbs followed by a "+" tile. Each thumb has an X in the
+/// 72-dp thumbs followed by a "+" tile. Each thumb has an X in the
 /// corner; tap the thumb itself to open the fullscreen [PhotoViewer]
-/// for pinch-zoom. Upload state shows as a 72dp shimmer tile inline.
+/// for pinch-zoom. Upload state shows as a 72-dp shimmer tile
+/// inline.
 class _PhotosGrid extends StatelessWidget {
   const _PhotosGrid({
     required this.photos,

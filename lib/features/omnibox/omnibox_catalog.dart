@@ -11,7 +11,6 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
@@ -406,11 +405,9 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         keywords: const ['note', 'log', 'observe'],
         groupId: 'subject:${s.id}',
         onSelect: (ctx, _) {
-          unawaited(ObservationFormSheet.show(
-            ctx,
-            groupId: gid,
-            initialSubjectId: s.id,
-          ));
+          unawaited(
+            ctx.push('/observations/new?groupId=$gid&subjectId=${s.id}'),
+          );
         },
       ));
     }

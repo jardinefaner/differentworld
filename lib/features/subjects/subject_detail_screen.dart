@@ -7,7 +7,6 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/exports/widgets/exports_list.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/alerts_section.dart';
@@ -68,10 +67,10 @@ class SubjectDetailScreen extends ConsumerWidget {
           PrimaryActionButton(
             tooltip: 'New observation',
             icon: Icons.add,
-            onPressed: () => ObservationFormSheet.show(
-              context,
-              groupId: subjectAsync.value!.groupId ?? '',
-              initialSubjectId: subjectId,
+            onPressed: () => context.push(
+              '/observations/new'
+              '?groupId=${subjectAsync.value!.groupId ?? ''}'
+              '&subjectId=$subjectId',
             ),
           ),
         if (viewer.canObserve && subjectAsync.value != null)

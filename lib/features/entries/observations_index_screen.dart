@@ -2,7 +2,6 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
@@ -19,6 +18,7 @@ import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/observations` — every observation across the program, newest
 /// first, filterable by classroom.
@@ -358,7 +358,10 @@ class _ObservationListItem extends ConsumerWidget {
               onTap: () => PhotoViewer.open(context, urls: photos),
             ),
       isThreeLine: true,
-      onTap: () => ObservationFormSheet.show(context, existing: entry),
+      onTap: () => context.push(
+        '/observations/${entry.id}/edit',
+        extra: entry,
+      ),
     );
   }
 }

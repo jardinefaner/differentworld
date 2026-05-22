@@ -5,7 +5,6 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
@@ -20,6 +19,7 @@ import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 /// Per-classroom observations feed — narrative + photo entries
@@ -67,9 +67,8 @@ class ObservationsScreen extends ConsumerWidget {
                   : 'Observations from teachers will appear here.',
               action: viewer.canObserve
                   ? FilledButton.icon(
-                      onPressed: () => ObservationFormSheet.show(
-                        context,
-                        groupId: groupId,
+                      onPressed: () => context.push(
+                        '/observations/new?groupId=$groupId',
                       ),
                       icon: const Icon(Icons.add),
                       label: const Text('Add observation'),
@@ -102,7 +101,9 @@ class ObservationsScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () {
                 unawaited(HapticFeedback.mediumImpact());
-                unawaited(ObservationFormSheet.show(context, groupId: groupId));
+                unawaited(
+                  context.push('/observations/new?groupId=$groupId'),
+                );
               },
               icon: const Icon(Icons.add),
               label: const Text('Observation'),
@@ -181,9 +182,9 @@ class _ObservationRow extends ConsumerWidget {
               onTap: () => PhotoViewer.open(context, urls: photos),
             ),
       isThreeLine: true,
-      onTap: () => ObservationFormSheet.show(
-        context,
-        existing: entry,
+      onTap: () => context.push(
+        '/observations/${entry.id}/edit',
+        extra: entry,
       ),
     );
   }

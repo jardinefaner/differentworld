@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
-import 'package:differentworld/features/entries/widgets/observation_form_sheet.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
@@ -31,12 +30,14 @@ Future<void> startNewObservation(BuildContext context, WidgetRef ref) async {
     return;
   }
   if (groups.length == 1) {
-    await ObservationFormSheet.show(context, groupId: groups.first.id);
+    unawaited(
+      context.push('/observations/new?groupId=${groups.first.id}'),
+    );
     return;
   }
   final picked = await _ClassroomPickerSheet.show(context, groups: groups);
   if (picked == null || !context.mounted) return;
-  await ObservationFormSheet.show(context, groupId: picked.id);
+  unawaited(context.push('/observations/new?groupId=${picked.id}'));
 }
 
 /// Capability-aware row of one-tap action tiles on the Today screen.

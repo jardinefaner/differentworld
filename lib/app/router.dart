@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/db/app_database.dart' show Entry;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
@@ -8,6 +9,7 @@ import 'package:differentworld/features/attendance/morning_checklist_screen.dart
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
+import 'package:differentworld/features/entries/observation_form_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/exports/progress_report_screen.dart';
@@ -146,6 +148,33 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'observations',
             builder: (_, _) => const ObservationsIndexScreen(),
+            routes: [
+              // Create-observation route (Wave 21, replaces the old
+              // `ObservationFormSheet.show`). Query params let the
+              // caller pre-fill groupId + subjectId.
+              GoRoute(
+                path: 'new',
+                builder: (_, state) {
+                  final q = state.uri.queryParameters;
+                  return ObservationFormScreen(
+                    groupId: q['groupId'],
+                    initialSubjectId: q['subjectId'],
+                  );
+                },
+              ),
+              // Edit-observation route. The Entry is passed via
+              // go_router `extra` so we don't re-fetch by id (the
+              // caller already has the row in memory).
+              GoRoute(
+                path: ':id/edit',
+                builder: (_, state) {
+                  final entry = state.extra;
+                  return ObservationFormScreen(
+                    existing: entry is Entry ? entry : null,
+                  );
+                },
+              ),
+            ],
           ),
           // Insights — questions surfaced by the upward loop from
           // patterns in existing data (attendance / certs / vehicles
