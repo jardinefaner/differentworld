@@ -101,16 +101,22 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// while we ARE on search, leave the route alone — the user can
   /// re-tap to re-focus without bouncing in and out.
   ///
-  /// Deferred via `Future.microtask` because focus listeners can
-  /// fire during the widget tree's build phase (route transitions
-  /// re-attach `TextField`s, which can synchronously re-notify
-  /// focus listeners). Calling `context.push()` synchronously from
-  /// inside a build trips Riverpod's
-  /// "modify provider while widget tree was building" assertion
-  /// (same pattern documented for `EdgeScaffold`'s chrome publish
-  /// in CLAUDE.md). The microtask runs after the current sync tick
-  /// but before the next frame, so the navigation still lands in
-  /// the same visible frame.
+  /// Two defenses:
+  /// * **Microtask defer** for the push. Focus listeners can fire
+  ///   during the widget tree's build phase (route transitions re-
+  ///   attach TextFields, which can synchronously re-notify focus
+  ///   listeners). Calling `context.push()` from inside a build
+  ///   trips Riverpod's "modify provider while widget tree was
+  ///   building" assertion (same pattern documented in CLAUDE.md
+  ///   for `EdgeScaffold`'s chrome publish).
+  /// * **Post-frame re-focus** after the push. Even with
+  ///   `NoTransitionPage` on the search route (no slide animation),
+  ///   the route push still rotates the active focus scope, which
+  ///   can drop the bar's focus mid-frame. Re-requesting focus on
+  ///   the post-frame callback ensures the keyboard stays up after
+  ///   the push lands — tap-to-search opens the route AND the
+  ///   keyboard in one step. (Wave 20 — fixes the "keep clicking,
+  ///   keyboard never opens" symptom.)
   void _onFocusChanged() {
     if (!mounted) return;
     if (!_focus.hasFocus) return;
@@ -119,6 +125,14 @@ class _AppShellState extends ConsumerState<AppShell> {
       final loc = GoRouterState.of(context).matchedLocation;
       if (loc != '/search') {
         unawaited(context.push('/search'));
+        // Re-grant focus once the new route has mounted so the
+        // keyboard the user raised by tapping the bar stays up.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (!_focus.hasFocus) {
+            _focus.requestFocus();
+          }
+        });
       }
     }));
   }

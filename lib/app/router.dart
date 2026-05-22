@@ -332,9 +332,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       // The omnibox search screen — pushed when the user taps the
       // bottom composer. Lives inside the ShellRoute so the persistent
       // omnibox bar + chrome stay mounted across the push. See Wave 17.
+      //
+      // **NoTransitionPage is load-bearing.** A standard MaterialPage
+      // slide-in transition rotates focus scope mid-flight, which
+      // dismisses the keyboard the user just raised by tapping the
+      // bar. With no transition, focus stays put and the keyboard
+      // stays up — tap-to-search opens the route AND the keyboard
+      // in one step. (Wave 20.)
       GoRoute(
         path: '/search',
-        builder: (_, _) => const OmniboxSearchScreen(),
+        pageBuilder: (_, _) => const NoTransitionPage<void>(
+          child: OmniboxSearchScreen(),
+        ),
       ),
         ],
       ),
