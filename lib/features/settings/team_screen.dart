@@ -4,8 +4,6 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
-import 'package:differentworld/features/invites/widgets/invite_create_sheet.dart';
-import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -48,7 +46,7 @@ class TeamScreen extends ConsumerWidget {
           PrimaryActionButton(
             tooltip: 'Invite a teammate',
             icon: Icons.person_add_alt_1,
-            onPressed: () => InviteCreateSheet.show(context),
+            onPressed: () => context.push('/settings/team/invite/new'),
           ),
       ],
       body: teamAsync.when(
@@ -208,7 +206,10 @@ class _InviteTile extends ConsumerWidget {
           ? const Icon(Icons.chevron_right)
           : null,
       onTap: viewerCanInvite
-          ? () => InviteShareSheet.show(context, invite: invite)
+          ? () => context.push(
+                '/settings/team/invite/${invite.id}',
+                extra: invite,
+              )
           : null,
     );
 

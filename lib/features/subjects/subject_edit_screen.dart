@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
-import 'package:differentworld/features/invites/widgets/invite_share_sheet.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -503,7 +504,9 @@ Future<void> _sendGuardianInvite(
     },
   );
   if (!ok || created == null || !context.mounted) return;
-  await InviteShareSheet.show(context, invite: created!);
+  unawaited(
+    context.push('/settings/team/invite/${created!.id}', extra: created),
+  );
 }
 
 /// Inline guardians editor — lists existing guardians and offers an

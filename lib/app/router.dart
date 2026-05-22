@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
-import 'package:differentworld/core/db/app_database.dart' show Entry;
+import 'package:differentworld/core/db/app_database.dart' show Entry, Invite;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
@@ -20,6 +20,8 @@ import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
+import 'package:differentworld/features/invites/invite_create_screen.dart';
+import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
@@ -324,6 +326,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'team',
             builder: (_, _) => const TeamScreen(),
             routes: [
+              // Invite flow (Wave 24, replaces InviteCreateSheet +
+              // InviteShareSheet bottom-sheets). Create → push-replace
+              // to share so back from share returns to Team, not to
+              // the create form.
+              GoRoute(
+                path: 'invite/new',
+                builder: (_, _) => const InviteCreateScreen(),
+              ),
+              GoRoute(
+                path: 'invite/:id',
+                builder: (_, state) {
+                  final invite = state.extra;
+                  if (invite is! Invite) {
+                    return const _MissingInviteScreen();
+                  }
+                  return InviteShareScreen(invite: invite);
+                },
+              ),
               GoRoute(
                 path: ':id',
                 builder: (_, state) => MemberDetailScreen(
@@ -397,6 +417,34 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Fallback when `/settings/team/invite/:id` is deep-linked without
+/// the `extra` payload — happens on cold launch + paste-URL. We can't
+/// reconstitute the Invite without a fetch, so degrade to a clear
+/// error rather than crash. Future: an `inviteByIdProvider` would
+/// let us fetch + render properly.
+class _MissingInviteScreen extends StatelessWidget {
+  const _MissingInviteScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Open this invite from the Team screen — direct links '
+              'are not supported yet.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _RouterAuthRefresh extends ChangeNotifier {
   _RouterAuthRefresh(Stream<dynamic> stream) {

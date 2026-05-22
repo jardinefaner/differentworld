@@ -1,0 +1,176 @@
+import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/invites/invites_providers.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+/// Create a new staff invite — role + optional email + expiration.
+/// Promoted from `invite_create_sheet.dart` to the
+/// `/settings/team/invite/new` route in Wave 24. After creation we
+/// `pushReplacement` to `/settings/team/invite/:id` so back from the
+/// share screen returns to Team, not to this create form.
+class InviteCreateScreen extends ConsumerStatefulWidget {
+  const InviteCreateScreen({super.key});
+
+  @override
+  ConsumerState<InviteCreateScreen> createState() =>
+      _InviteCreateScreenState();
+}
+
+class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
+  final _emailController = TextEditingController();
+
+  String _role = 'teacher';
+  InviteExpiry _expiry = InviteExpiry.sevenDays;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _create() async {
+    if (_saving) return;
+    final me = ref.read(currentMemberProvider).value;
+    final spaceId = me?.spaceId;
+    if (spaceId == null) {
+      setState(() => _error = 'No program selected.');
+      return;
+    }
+    if (!ref.read(viewerProvider).canInviteStaff) {
+      setState(() => _error = "You don't have permission to invite.");
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+
+    try {
+      final actions = ref.read(inviteActionsProvider);
+      final invite = await actions.create(
+        spaceId: spaceId,
+        role: _role,
+        expiry: _expiry,
+        email: _emailController.text,
+        createdBy: me!.id,
+      );
+      if (!mounted) return;
+      // Swap this screen for the share view so back from share goes
+      // back to Team, not into the create form.
+      context.pushReplacement(
+        '/settings/team/invite/${invite.id}',
+        extra: invite,
+      );
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'invites'),
+      );
+      if (!mounted) return;
+      setState(() => _error = 'Could not create invite. Please try again.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return EdgeScaffold(
+      backFallbackRoute: '/settings/team',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        children: [
+          const ContentHeader(
+            title: 'Invite a teammate',
+            subtitle: 'Pick their role. They join by code or by signing in '
+                'with the email below.',
+          ),
+          Text('Role', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final (value, label) in const [
+                ('director', 'Director'),
+                ('lead_teacher', 'Lead teacher'),
+                ('teacher', 'Teacher'),
+                ('assistant', 'Assistant'),
+              ])
+                ChoiceChip(
+                  label: Text(label),
+                  selected: _role == value,
+                  onSelected: (s) {
+                    if (s) setState(() => _role = value);
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              labelText: 'Their email (optional)',
+              hintText: 'jane@example.com',
+              helperText: 'If they sign in with this email, they join '
+                  'automatically — no code needed.',
+              helperMaxLines: 3,
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('Expires after', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final option in InviteExpiry.values)
+                ChoiceChip(
+                  label: Text(option.label),
+                  selected: _expiry == option,
+                  onSelected: (s) {
+                    if (s) setState(() => _expiry = option);
+                  },
+                ),
+            ],
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              _error!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: _saving ? null : _create,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send_outlined),
+                label: const Text('Create invite'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
