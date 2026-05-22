@@ -1,0 +1,304 @@
+-- ---------------------------------------------------------------------------
+-- WAVE 30 — Tighten RLS writes. **DRAFT — do not push until JWT rotation
+-- to HS256 is confirmed in the Supabase dashboard.**
+--
+-- This migration replaces every `to authenticated using (true) with check
+-- (true)` policy with a proper space-scoped / actor-scoped predicate.
+-- Both `auth.uid()` and `app.current_space_id()` are wrapped in subselects
+-- (`(select auth.uid())`, `(select app.current_space_id())`) — that's the
+-- Supabase advisor's "RLS init plan" optimization: Postgres evaluates the
+-- function ONCE per query instead of ONCE per row.
+--
+-- **Why this is gated on JWT rotation**: the existing `using (true)`
+-- policies are a workaround for the documented gotcha where `auth.uid()`
+-- returns null on ES256-keyed projects (see CLAUDE.md "Known gotchas").
+-- The moment we tighten predicates to `space_id = app.current_space_id()`
+-- — which internally calls auth.uid() — every write fails 42501. The
+-- HS256 rotation fixes auth.uid(); this migration assumes that fix.
+--
+-- **Rollback plan**: if the rotation didn't actually fix auth.uid(), this
+-- migration locks writes for everyone. Run
+-- `supabase/migrations/20260517000003_simplest_authenticated_policies.sql`
+-- to restore the relaxed policies. (Or apply the inverse policies below
+-- under `-- ROLLBACK PATH`.)
+--
+-- Touches every table with RLS. Tables without `space_id` (members,
+-- spaces) get bespoke per-row rules. Tables with guardian-side access
+-- (messages, guardians, subject_guardians, exports, export_recipients,
+-- permission_slips) carry a UNION'd guardian predicate so the family
+-- viewer still reaches their child's rows.
+-- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- spaces — directors read/update their own space; everyone reads their
+-- own. No anon access.
+-- ---------------------------------------------------------------------------
+drop policy if exists "programs_authenticated_write" on public.spaces;
+drop policy if exists "spaces_authenticated_all" on public.spaces;
+drop policy if exists "spaces_select_authenticated" on public.spaces;
+
+create policy "spaces_select_member" on public.spaces
+  for select to authenticated
+  using (id = (select app.current_space_id()));
+
+create policy "spaces_update_director" on public.spaces
+  for update to authenticated
+  using (id = (select app.current_space_id()) and (select app.is_director()))
+  with check (id = (select app.current_space_id()));
+
+-- Insert is the create-space flow — anyone can create their own.
+create policy "spaces_insert_self" on public.spaces
+  for insert to authenticated
+  with check (true);
+
+-- ---------------------------------------------------------------------------
+-- members — anyone in a space sees other members of that space.
+-- Self-updates always allowed; director updates anyone in the space.
+-- INSERT is handled by the `handle_new_user` trigger (security definer);
+-- a normal client should never INSERT directly.
+-- ---------------------------------------------------------------------------
+drop policy if exists "profiles_authenticated_write" on public.members;
+drop policy if exists "members_authenticated_all" on public.members;
+drop policy if exists "members_select_same_space" on public.members;
+
+create policy "members_select_same_space" on public.members
+  for select to authenticated
+  using (
+    space_id = (select app.current_space_id())
+    or id = (select auth.uid())
+  );
+
+create policy "members_update_self_or_director" on public.members
+  for update to authenticated
+  using (
+    id = (select auth.uid())
+    or (space_id = (select app.current_space_id()) and (select app.is_director()))
+  )
+  with check (
+    id = (select auth.uid())
+    or (space_id = (select app.current_space_id()) and (select app.is_director()))
+  );
+
+create policy "members_delete_director" on public.members
+  for delete to authenticated
+  using (
+    space_id = (select app.current_space_id()) and (select app.is_director())
+  );
+
+-- ---------------------------------------------------------------------------
+-- Standard space-scoped tables — read AND write gated on
+-- `space_id = app.current_space_id()`. The pattern is identical; only
+-- the table name changes.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  tbl text;
+  tables text[] := array[
+    'groups',
+    'enrollments',
+    'subjects',
+    'attendance_records',
+    'entries',
+    'captures',
+    'tasks',
+    'survey_responses',
+    'group_members',
+    'attachments',
+    'vehicles',
+    'vehicle_logs',
+    'member_certifications',
+    'dismissed_insights',
+    'invites',
+    'locations',
+    'activities',
+    'schedule_blocks',
+    'trip_logistics',
+    'trip_vehicles',
+    'headcounts'
+  ];
+begin
+  foreach tbl in array tables loop
+    -- Drop every old policy on the table — relaxed and otherwise.
+    execute format(
+      'drop policy if exists "%s_authenticated_write" on public.%I',
+      tbl, tbl
+    );
+    execute format(
+      'drop policy if exists "%s_authenticated_all" on public.%I',
+      tbl, tbl
+    );
+    execute format(
+      'drop policy if exists "%s_program_all" on public.%I',
+      tbl, tbl
+    );
+    -- Tight policy.
+    execute format(
+      'create policy "%s_space_scoped_all" on public.%I '
+      'for all to authenticated '
+      'using (space_id = (select app.current_space_id())) '
+      'with check (space_id = (select app.current_space_id()))',
+      tbl, tbl
+    );
+  end loop;
+end$$;
+
+-- ---------------------------------------------------------------------------
+-- guardians + subject_guardians — staff reach via space_id; guardians
+-- reach their own row (and the join row that links them to their child).
+-- ---------------------------------------------------------------------------
+drop policy if exists "guardians_authenticated_write" on public.guardians;
+drop policy if exists "guardians_program_all" on public.guardians;
+drop policy if exists "guardians_authenticated_all" on public.guardians;
+
+create policy "guardians_staff_or_self" on public.guardians
+  for all to authenticated
+  using (
+    space_id = (select app.current_space_id())
+    or user_id = (select auth.uid())
+  )
+  with check (
+    space_id = (select app.current_space_id())
+    or user_id = (select auth.uid())
+  );
+
+drop policy if exists "student_guardians_authenticated_write"
+  on public.subject_guardians;
+drop policy if exists "student_guardians_program_all" on public.subject_guardians;
+drop policy if exists "subject_guardians_authenticated_all"
+  on public.subject_guardians;
+
+create policy "subject_guardians_staff_or_guardian" on public.subject_guardians
+  for all to authenticated
+  using (
+    space_id = (select app.current_space_id())
+    or guardian_id in (
+      select id from public.guardians where user_id = (select auth.uid())
+    )
+  )
+  with check (
+    space_id = (select app.current_space_id())
+    or guardian_id in (
+      select id from public.guardians where user_id = (select auth.uid())
+    )
+  );
+
+-- ---------------------------------------------------------------------------
+-- messages — staff in the space OR the guardian on the thread. The
+-- existing migration already has this pattern; we replace whatever's
+-- there with the init-plan-optimized version.
+-- ---------------------------------------------------------------------------
+drop policy if exists "messages_authenticated_all" on public.messages;
+drop policy if exists "messages_program_all" on public.messages;
+drop policy if exists "messages_staff_or_thread_guardian" on public.messages;
+
+create policy "messages_staff_or_thread_guardian" on public.messages
+  for all to authenticated
+  using (
+    space_id = (select app.current_space_id())
+    or guardian_id in (
+      select id from public.guardians where user_id = (select auth.uid())
+    )
+  )
+  with check (
+    space_id = (select app.current_space_id())
+    or guardian_id in (
+      select id from public.guardians where user_id = (select auth.uid())
+    )
+  );
+
+-- ---------------------------------------------------------------------------
+-- exports + export_recipients — staff reach by space_id; the recipient
+-- guardian reaches by their own guardian_id.
+-- ---------------------------------------------------------------------------
+drop policy if exists "exports_authenticated_all" on public.exports;
+drop policy if exists "exports_program_all" on public.exports;
+
+create policy "exports_staff_or_recipient" on public.exports
+  for all to authenticated
+  using (
+    space_id = (select app.current_space_id())
+    or id in (
+      select export_id from public.export_recipients
+      where guardian_id in (
+        select id from public.guardians where user_id = (select auth.uid())
+      )
+    )
+  )
+  with check (
+    space_id = (select app.current_space_id())
+  );
+
+drop policy if exists "export_recipients_authenticated_all"
+  on public.export_recipients;
+drop policy if exists "export_recipients_program_all"
+  on public.export_recipients;
+
+create policy "export_recipients_staff_or_self" on public.export_recipients
+  for all to authenticated
+  using (
+    space_id = (select app.current_space_id())
+    or guardian_id in (
+      select id from public.guardians where user_id = (select auth.uid())
+    )
+  )
+  with check (
+    space_id = (select app.current_space_id())
+  );
+
+-- ---------------------------------------------------------------------------
+-- permission_slips — staff reach by space_id; the signing guardian
+-- reaches by their guardian_id.
+-- ---------------------------------------------------------------------------
+drop policy if exists "permission_slips_authenticated_all"
+  on public.permission_slips;
+drop policy if exists "permission_slips_program_all" on public.permission_slips;
+
+create policy "permission_slips_staff_or_signer" on public.permission_slips
+  for all to authenticated
+  using (
+    space_id = (select app.current_space_id())
+    or signer_guardian_id in (
+      select id from public.guardians where user_id = (select auth.uid())
+    )
+  )
+  with check (
+    space_id = (select app.current_space_id())
+  );
+
+-- ---------------------------------------------------------------------------
+-- ROLLBACK PATH — if `auth.uid()` is STILL null after JWT rotation,
+-- every write above fails 42501 and the app is unusable. Apply this
+-- block (uncomment + run) to restore the relaxed `using (true)`
+-- policies.
+--
+-- do $$
+-- declare
+--   tbl text;
+--   tables text[] := array[
+--     'spaces', 'members', 'groups', 'enrollments', 'subjects',
+--     'guardians', 'subject_guardians', 'attendance_records',
+--     'entries', 'captures', 'tasks', 'messages', 'survey_responses',
+--     'group_members', 'attachments', 'vehicles', 'vehicle_logs',
+--     'member_certifications', 'dismissed_insights', 'invites',
+--     'locations', 'activities', 'schedule_blocks', 'trip_logistics',
+--     'trip_vehicles', 'headcounts', 'exports', 'export_recipients',
+--     'permission_slips'
+--   ];
+--   pol record;
+-- begin
+--   foreach tbl in array tables loop
+--     for pol in
+--       select policyname from pg_policies
+--         where schemaname = 'public' and tablename = tbl
+--     loop
+--       execute format(
+--         'drop policy if exists "%s" on public.%I', pol.policyname, tbl
+--       );
+--     end loop;
+--     execute format(
+--       'create policy "%s_authenticated_write" on public.%I '
+--       'for all to authenticated using (true) with check (true)',
+--       tbl, tbl
+--     );
+--   end loop;
+-- end$$;
