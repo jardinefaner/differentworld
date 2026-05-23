@@ -871,11 +871,20 @@ through direct PostgREST in `lib/features/family/family_providers.dart`:
 - `familyEntriesForSubjectProvider`
 - `familyAttachmentsForEntityProvider`
 
-RLS on these tables is loose-via-`for all using (true)` (see
-migration 20260517000003) so PostgREST returns rows for any
-authenticated caller; each provider re-checks `viewer.canSeeSubject(id)`
-as a defensive layer. Trade-off: these reads are NOT offline-first
-— a cold launch without network shows empty until the round-trip
+RLS on these tables is `for select to authenticated using (true)`
+so PostgREST returns rows for any authenticated caller; each
+provider re-checks `viewer.canSeeSubject(id)` as a defensive layer.
+Pedigree of the relax — the universal-rename migration narrowed
+several of these to `space_id = app.current_space_id()`, which
+silently broke guardian-side reads (the ES256 `auth.uid()`-null
+gotcha makes `current_space_id()` return null). Two follow-up
+migrations restored the broad SELECT so the family lens works:
+`20260523000001_relax_exports_read.sql` (exports + export_recipients)
+and `20260523000002_relax_family_reads.sql` (subjects +
+subject_guardians + attendance_records). `entries` and
+`attachments` were never narrowed by the rename and stayed broad
+the whole time. Trade-off: these reads are NOT offline-first — a
+cold launch without network shows empty until the round-trip
 lands. Acceptable for the per-child timeline; messages stay
 offline-first because they go through the new stream.
 

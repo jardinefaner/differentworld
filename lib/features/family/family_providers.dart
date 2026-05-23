@@ -22,11 +22,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 2-level subquery (subject_id → subject_guardians → guardian →
 /// user_id) which PowerSync's SQL subset hasn't been verified to
 /// accept. Until we settle that, the family screens read those tables
-/// here via direct PostgREST. RLS is already loose-via-`for all`
-/// on these tables (see migration 20260517000003) so the queries
-/// resolve correctly for any authenticated user; the
-/// `viewer.canSeeSubject(...)` guards inside each provider keep one
-/// guardian from peeking at another family's data.
+/// here via direct PostgREST. SELECT is relaxed to
+/// `to authenticated using (true)` on each table involved
+/// (`entries`/`attachments` via the original loose-writes migration
+/// 20260517000003 + 20260518000006/11; `subjects`/`subject_guardians`/
+/// `attendance_records` via 20260523000002 after the universal-rename
+/// migration narrowed them and broke guardian reads). The
+/// `.eq(...)` filters and the `viewer.canSeeSubject(...)` guards
+/// inside each provider keep one guardian from peeking at another
+/// family's data.
 ///
 /// Trade-off: family-lens per-subject reads are NOT offline-first.
 /// Cold launch without network shows empty until the round-trip lands.
@@ -137,9 +141,10 @@ final familyEntriesForSubjectProvider =
 ///
 /// Carries the **owning subject_id** alongside the (kind, id) pair so
 /// we can gate on `viewer.canSeeSubject(...)` BEFORE issuing the
-/// query. RLS on `attachments` is wide-open (per migration
-/// 20260517000003's `for all using (true)` pattern) so without this
-/// guard a guardian who guessed an entry/subject id could pull
+/// query. RLS on `attachments` is `for all to authenticated using
+/// (true)` (per migration 20260518000011 — never narrowed by the
+/// universal rename because attachments came after it), so without
+/// this guard a guardian who guessed an entry/subject id could pull
 /// attachments belonging to another family's child. The viewer-side
 /// check enforces the principle the other family providers establish.
 typedef FamilyAttachmentsKey = ({
