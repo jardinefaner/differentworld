@@ -34,6 +34,71 @@ final exportsForSubjectProvider =
   },
 );
 
+/// Minimal record carrying just what the Family Today "Recent
+/// reports" card needs to render + open a PDF. We don't reconstruct
+/// the full Drift `Export` here because (a) PowerSync's `by_space`
+/// doesn't reach guardian devices — see DAO comment in
+/// `lib/core/db/dao/exports_dao.dart` — and (b) the card only reads
+/// id / sent_at / subject_id / storage_path. Direct PostgREST round-
+/// trip every time, gated by RLS on `export_recipients`.
+typedef ReceivedExport = ({
+  String id,
+  String? subjectId,
+  String? sentAt,
+  String? storagePath,
+});
+
+/// Every progress report the current GuardianViewer is a recipient
+/// on — the Family Today "Recent reports" card. **Direct PostgREST**:
+/// the local Drift mirror is empty for guardians because they have a
+/// `members.space_id = null` row (handle_new_user trigger), so the
+/// `by_space` sync stream's `space_id IN (...)` subquery yields NULL
+/// and PowerSync delivers no `exports` / `export_recipients` rows.
+///
+/// RLS on `export_recipients` already gates by recipient identity
+/// (guardian linked to the signed-in user), so the SELECT below
+/// returns only this guardian's rows even though the query has no
+/// `space_id` filter.
+///
+/// Always empty for staff viewers — the family lens never renders
+/// for them anyway. Capped at 10 rows to keep the round-trip tight;
+/// the card itself only shows the first three.
+///
+/// Closes the last Tier-B item from the 2026-05-23 persona-audit —
+/// Lauren / Devon / Helen / Marcus finally see what the director
+/// has sent them inside the app instead of only via email.
+// ignore: specify_nonobvious_property_types
+final myReceivedExportsProvider =
+    FutureProvider.autoDispose<List<ReceivedExport>>((ref) async {
+  final viewer = ref.watch(viewerProvider);
+  if (viewer is! GuardianViewer) {
+    return const <ReceivedExport>[];
+  }
+  final supabase = Supabase.instance.client;
+  // PostgREST `!inner` filters on a related table while still
+  // selecting the parent. The nested column filter ensures the join
+  // is gated by the recipient row's guardian_id — exactly the rows
+  // RLS would have permitted anyway, but the explicit filter keeps
+  // the planner happy and the response small.
+  final rows = await supabase
+      .from('exports')
+      .select('id, subject_id, sent_at, storage_path, '
+          'export_recipients!inner(guardian_id)')
+      .eq('export_recipients.guardian_id', viewer.guardian.id)
+      .eq('status', 'sent')
+      .order('sent_at', ascending: false)
+      .limit(10);
+  return [
+    for (final r in rows)
+      (
+        id: r['id'] as String,
+        subjectId: r['subject_id'] as String?,
+        sentAt: r['sent_at'] as String?,
+        storagePath: r['storage_path'] as String?,
+      ),
+  ];
+});
+
 /// One export's recipient list (for an audit detail view).
 // ignore: specify_nonobvious_property_types
 final exportRecipientsProvider =

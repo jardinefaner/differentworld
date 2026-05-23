@@ -40,6 +40,46 @@ class ExportsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Every export this guardian appears on as a recipient. Drives the
+  /// staff-side audit lens — "which exports went to this guardian."
+  /// Returns rows from the LOCAL Drift mirror, which is populated for
+  /// staff via the `by_space` sync stream.
+  ///
+  /// **Not used by the guardian-side Family Today card.** Guardians'
+  /// `members.space_id` is NULL (handle_new_user trigger), so the
+  /// `by_space` query `space_id IN (SELECT space_id FROM members
+  /// WHERE id = auth.user_id())` evaluates to `space_id IN (NULL)`
+  /// which is false — no `exports` or `export_recipients` rows ever
+  /// reach a guardian's device. The Family Today `_ReceivedReportsCard`
+  /// reads via direct PostgREST instead (see `myReceivedExportsProvider`).
+  /// We can switch the family card to this DAO method later once a
+  /// `by_guardian` sync stream is added.
+  ///
+  /// Joins `export_recipients` (one row per recipient) back to
+  /// `exports`. Filters to `status = 'sent'` so drafts don't leak;
+  /// `sent_at` descending so the most recent report comes first.
+  /// External-email-only recipients have `guardian_id IS NULL` and
+  /// are excluded.
+  Stream<List<Export>> watchReceivedByGuardian(String guardianId) {
+    final query = select(exports).join([
+      innerJoin(
+        exportRecipients,
+        exportRecipients.exportId.equalsExp(exports.id),
+      ),
+    ])
+      ..where(exportRecipients.guardianId.equals(guardianId))
+      ..where(exports.status.equals('sent'))
+      ..orderBy([
+        OrderingTerm(
+          expression: exports.sentAt,
+          mode: OrderingMode.desc,
+        ),
+      ]);
+    return query.watch().map(
+          (rows) => rows.map((r) => r.readTable(exports)).toList(),
+        );
+  }
+
   Future<Export?> findById(String id) {
     return (select(exports)..where((e) => e.id.equals(id))).getSingleOrNull();
   }

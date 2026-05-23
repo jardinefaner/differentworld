@@ -174,7 +174,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Progress report screen* — `lib/features/exports/progress_report_screen.dart`. Preview the compiled PDF; Send → push to `/exports/:id/send`.
 - *Send export screen* — `lib/features/exports/send_export_screen.dart`. Pick recipients (guardian checkboxes preloaded with their email + manual-entry email) and send via Edge Function, or copy a 7-day signed URL.
 **Depends on**: Entries, Subjects, Guardians, Photos (signed-URL preview of attachments).
-**Consumed by**: Family Today (Lauren / Devon / Helen / Marcus see received reports — not yet wired; flagged by persona-audit 2026-05-23 as the last Tier-B item).
+**Consumed by**: Family Today (Lauren / Devon / Helen / Marcus see received reports via the `_ReceivedReportsCard`, shipped 2026-05-23 in Wave 39). Direct-PostgREST read (`myReceivedExportsProvider` queries Supabase directly), NOT the local Drift mirror — guardians' `members.space_id = null` means `by_space` never delivers `exports` / `export_recipients` to them. RLS on `export_recipients` gates by recipient identity. Tap → mint a 10-min signed Storage URL → `url_launcher` → OS PDF viewer.
 **Last verified**: 2026-05-23
 
 ---
@@ -192,11 +192,11 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: Guardian role (`member.role == 'guardian'` AND `guardians.user_id == auth.uid()`).
 **Data**: [messages](SCHEMA.md#messages), [subjects](SCHEMA.md#subjects) (read-only via direct PostgREST — not in `by_space` stream), [subject_guardians](SCHEMA.md#subject_guardians)
 **Surfaces**:
-- *Family today* — `lib/features/family/family_today_screen.dart`. Each linked child's card; recent observation count, today's activity. Header carries a Display action that opens the shared text-size sheet (Helen-persona; guardians never reach `/settings`). Photo-of-the-moment shipped 2026-05-22.
+- *Family today* — `lib/features/family/family_today_screen.dart`. Each linked child's card; recent observation count, today's activity. Header carries a Display action that opens the shared text-size sheet (Helen-persona; guardians never reach `/settings`). Photo-of-the-moment shipped 2026-05-22. Wave 39 added a `_ReceivedReportsCard` above the kid list that surfaces the most recent progress-report PDFs the staff have sent the guardian (closes the last Tier-B audit item). The card reads via **direct PostgREST**, not the local Drift mirror — guardians' `members.space_id = null` so the `by_space` sync stream delivers nothing to them. Same constraint applies to the rest of the family lens (messages, subject detail), where the providers currently still read from Drift — a latent bug worth fixing with a `by_guardian` PowerSync stream or migrating to the same direct-PostgREST pattern.
 - *Family subject detail* — `lib/features/family/family_subject_detail_screen.dart`. Read-only child profile + photo gallery.
 - *Family messages index* — `lib/features/family/family_messages_screen.dart`. Per-child thread list.
 - *Message thread screen* — `lib/features/messages/message_thread_screen.dart` (cross-feature — see Messages).
-**Depends on**: Subjects (direct PostgREST), Guardians, Messages, Settings (shared text-size sheet).
+**Depends on**: Subjects (direct PostgREST), Guardians, Messages, Settings (shared text-size sheet), Exports (received-reports card reads `myReceivedExportsProvider`).
 **Consumed by**: Nothing — this is a leaf lens.
 **Last verified**: 2026-05-23
 
