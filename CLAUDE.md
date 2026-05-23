@@ -1272,14 +1272,21 @@ shipped; what's below needs its own focused PR.
   most recent observation photo above the kid's card when there's
   unseen content from today. Needs an `attachments` provider keyed
   on (subject, last-N-hours).
-- **Helen — DONE: per-account text-size override.** Settings →
-  Preferences → "Text size" (System default / Large / Extra large,
-  1.0x / 1.3x / 1.5x floor). `textScaleSettingProvider` stores the
-  pick in SharedPreferences; `AppTextScaleApplier` wraps
+- **Helen — DONE: per-account text-size override, staff + family.**
+  Settings → Preferences → "Text size" (System default / Large /
+  Extra large, 1.0x / 1.3x / 1.5x floor). `textScaleSettingProvider`
+  stores the pick in SharedPreferences; `AppTextScaleApplier` wraps
   `MaterialApp.router`'s builder and clamps the active `TextScaler`
   to AT LEAST the chosen floor so users who already crank their OS
-  setting up don't get downscaled. The 200% audit (truncation /
-  reflow per screen) is still a manual pass to schedule.
+  setting up don't get downscaled. **Wave 38** lifted the picker out
+  of the private `_TextSizeTile` into a public widget at
+  `lib/features/settings/widgets/text_size_tile.dart` (exports
+  `TextSizeTile` + `showTextSizePicker(context, ref)`); the Family
+  Today header now carries a Display action that opens the same
+  sheet, so guardian-side Helen accounts can set their floor
+  without ever reaching the staff `/settings` screen. The 200%
+  audit (truncation / reflow per screen) is still a manual pass
+  to schedule.
 - **Devon — co-parent read state on messages + reports.** Schema:
   add `read_by_member_ids jsonb[]` to messages, denote which
   guardian has seen a row. UI: small "seen by both / seen by you"

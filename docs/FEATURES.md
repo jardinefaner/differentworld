@@ -161,7 +161,7 @@ surface — preferences + roster + fleet, not primary workflows.
 ## Exports
 **Path**: `lib/features/exports/`
 **Purpose**: Compile a child's observations into a shareable PDF and send to family via email or copy-link.
-**Personas served**: Maya (creates), All staff with `can_observe` (creates for their subjects), Lauren (recipient), Marcus (recipient).
+**Personas served**: Maya (creates), Jordan / Coach Sam / Brianna (all have `can_observe`, can create for their own subjects), Lauren / Devon / Helen / Marcus (recipients).
 **Discovery surfaces**:
 - Routes: `/groups/:id/students/:sid/progress-report`, `/exports/:id/send`
 - Omnibox: yes — "Progress report · {Name}" (per subject, action)
@@ -174,8 +174,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Progress report screen* — `lib/features/exports/progress_report_screen.dart`. Preview the compiled PDF; Send → push to `/exports/:id/send`.
 - *Send export screen* — `lib/features/exports/send_export_screen.dart`. Pick recipients (guardian checkboxes preloaded with their email + manual-entry email) and send via Edge Function, or copy a 7-day signed URL.
 **Depends on**: Entries, Subjects, Guardians, Photos (signed-URL preview of attachments).
-**Consumed by**: Family Today (Lauren sees received reports — not yet wired).
-**Last verified**: 2026-05-21
+**Consumed by**: Family Today (Lauren / Devon / Helen / Marcus see received reports — not yet wired; flagged by persona-audit 2026-05-23 as the last Tier-B item).
+**Last verified**: 2026-05-23
 
 ---
 
