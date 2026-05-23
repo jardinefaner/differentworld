@@ -42,7 +42,23 @@ import 'package:go_router/go_router.dart';
 /// fires the entry's `onSelect` so the destination route lands on a
 /// clean shell, not on top of the search route.
 class OmniboxSearchScreen extends ConsumerWidget {
-  const OmniboxSearchScreen({super.key});
+  const OmniboxSearchScreen({this.onClose, super.key});
+
+  /// **Wave 25 (2026-05-22)**: when non-null, the screen is being
+  /// used as an IN-SHELL OVERLAY mounted inside AppShell's Stack —
+  /// NOT pushed as a go_router route. The screen renders without its
+  /// `EdgeScaffold` chrome and uses this callback to dismiss instead
+  /// of `context.pop()`.
+  ///
+  /// This is the structural fix for the "keyboard appears then
+  /// disappears" bug. Pushing `/search` as a route triggered a
+  /// FocusScope rotation that closed the soft keyboard on Android.
+  /// Rendering inline avoids the rotation entirely — the bar's
+  /// TextField keeps primary focus, IME stays up.
+  ///
+  /// Null = route mode (legacy path, kept for direct linking + the
+  /// drawer's "Search anything" tile).
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,16 +111,36 @@ class OmniboxSearchScreen extends ConsumerWidget {
 
     final activeNodes = q.isEmpty ? idleNodes : nodes;
 
+    // Stable dispatch context — the OmniboxSearchScreen's own
+    // BuildContext deactivates the instant we close (route pop or
+    // overlay setState false), so any post-frame attempt to use it
+    // short-circuits via `mounted == false` and the entry's action
+    // never fires. The root navigator's context lives for the
+    // lifetime of the app, so we grab it BEFORE closing and use it
+    // post-close.
+    final dispatchCtx =
+        Navigator.of(context, rootNavigator: true).context;
+
+    // Close the panel — overlay onClose if provided, else route pop.
+    // Both flavors return the user to the previous surface and the
+    // dispatchCtx outlives both.
+    void close() {
+      final cb = onClose;
+      if (cb != null) {
+        cb();
+      } else {
+        context.pop();
+      }
+    }
+
     void selectEntry(OmniboxEntry entry) {
-      // Bump recent, leave the route, THEN fire the entry's action.
-      // Pop first so the destination lands on a clean shell.
       bumpRecent(ref, entry.id);
       // Clear the query so reopening search starts fresh next time.
       ref.read(omniboxQueryProvider.notifier).clear();
-      context.pop();
+      close();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) return;
-        entry.onSelect(context, ref);
+        if (!dispatchCtx.mounted) return;
+        entry.onSelect(dispatchCtx, ref);
       });
     }
 
@@ -114,7 +150,7 @@ class OmniboxSearchScreen extends ConsumerWidget {
       final messenger = ScaffoldMessenger.maybeOf(context);
       final actions = ref.read(captureActionsProvider);
       ref.read(omniboxQueryProvider.notifier).clear();
-      context.pop();
+      close();
       await runReported(
         library: 'captures',
         messenger: messenger,
@@ -126,20 +162,15 @@ class OmniboxSearchScreen extends ConsumerWidget {
 
     void runSlash(SlashCommand cmd) {
       ref.read(omniboxQueryProvider.notifier).clear();
-      context.pop();
+      close();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) return;
-        cmd.exec(context, ref, parsedSlash?.args);
+        if (!dispatchCtx.mounted) return;
+        cmd.exec(dispatchCtx, ref, parsedSlash?.args);
       });
     }
 
-    return EdgeScaffold(
-      // The chrome [☰] [←] is rendered by AppShell — back pops this
-      // route and the user lands back on whichever page they were on.
-      // No custom dismiss handling needed: that's the whole point of
-      // turning search into a route.
-      body: Center(
-        child: ConstrainedBox(
+    final body = Center(
+      child: ConstrainedBox(
           // Same max width the bar uses — keeps the line lengths
           // readable on tablet / desktop.
           constraints: const BoxConstraints(maxWidth: 720),
@@ -153,10 +184,10 @@ class OmniboxSearchScreen extends ConsumerWidget {
                   captures: recentCaptures,
                   onOpenInbox: () {
                     ref.read(omniboxQueryProvider.notifier).clear();
-                    context.pop();
+                    close();
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!context.mounted) return;
-                      unawaited(context.push('/captures'));
+                      if (!dispatchCtx.mounted) return;
+                      unawaited(dispatchCtx.push('/captures'));
                     });
                   },
                 ),
@@ -211,8 +242,13 @@ class OmniboxSearchScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
     );
+
+    // Route-mode wraps in EdgeScaffold for the layout law + chrome.
+    // Overlay-mode skips it (AppShell already provides the
+    // chrome/insets, and EdgeScaffold inside a Stack creates
+    // nested-Scaffold weirdness).
+    return onClose == null ? EdgeScaffold(body: body) : body;
   }
 }
 

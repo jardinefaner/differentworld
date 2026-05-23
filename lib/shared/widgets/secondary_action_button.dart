@@ -53,14 +53,13 @@ class SecondaryActionButton extends StatelessWidget {
           onTap: onPressed,
           child: Padding(
             // Match PrimaryActionButton exactly so heights line up
-            // in the GlassPill row.
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
+            // in the GlassPill row — AND match the IconButton-based
+            // chrome pills (hamburger/back) so left + right chrome
+            // align visually. 12dp + 24dp icon = 48dp footprint.
+            padding: const EdgeInsets.all(12),
             child: Icon(
               icon,
-              size: 20,
+              size: 24,
               color: tint,
             ),
           ),

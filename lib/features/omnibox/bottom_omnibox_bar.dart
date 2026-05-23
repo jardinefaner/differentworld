@@ -79,17 +79,28 @@ class BottomOmniboxBar extends StatelessWidget {
     String hint;
     if (isCapture) {
       containerColor = scheme.primaryContainer.withValues(alpha: 0.45);
-      leadingIcon = Icons.bolt_outlined;
+      // Solid bolt — matches the icon-weight vocabulary of the rest
+      // of the bar (close, arrow_back) and the chrome pills.
+      leadingIcon = Icons.bolt;
       leadingTint = scheme.primary;
       hint = 'Save a quick note — press return';
     } else if (isSlash) {
       containerColor = scheme.tertiaryContainer.withValues(alpha: 0.55);
-      leadingIcon = Icons.chevron_right;
+      // Terminal (solid, command-line semantic) — chevron_right was
+      // the lone outlined/navigation-style outlier among the bar's
+      // otherwise-solid icon vocabulary. Terminal also reads "slash
+      // command" more clearly than a directional chevron.
+      leadingIcon = Icons.terminal;
       leadingTint = scheme.tertiary;
       hint = 'Slash command — type /today, /log, /attendance…';
     } else {
       containerColor = scheme.surfaceContainerHighest;
       leadingIcon = Icons.search;
+      // `onSurfaceVariant` (not `onSurface`) by design — the
+      // unfocused bar glyph is a de-emphasized placeholder, NOT a
+      // foregrounded action like the chrome pills' `arrow_back`
+      // (which uses `onSurface`). Same M3 vocabulary, different
+      // roles.
       leadingTint = scheme.onSurfaceVariant;
       hint = 'Search anything — pages, actions, kids…';
     }
@@ -138,21 +149,44 @@ class BottomOmniboxBar extends StatelessWidget {
                   // into a back-arrow so tapping it closes the panel
                   // and returns to the page. Otherwise it shows the
                   // mode glyph (search / bolt / chevron).
+                  //
+                  // Both branches occupy the same 48×48 footprint so
+                  // the bar's leading slot doesn't visibly resize as
+                  // focus toggles. The unfocused branch uses a plain
+                  // `SizedBox` (not `IconButton(onPressed: null)`)
+                  // because Material 3 dims disabled IconButtons to
+                  // 38% opacity — that made the unfocused leading
+                  // glyph visibly weaker than the focused back-arrow.
                   if (isFocused)
                     IconButton(
-                      tooltip: 'Back to page',
-                      icon: const Icon(Icons.arrow_back),
+                      tooltip: 'Hide suggestions',
+                      // `keyboard_hide` (not `arrow_back`) — this
+                      // button collapses the open suggestion panel +
+                      // dismisses the keyboard. `arrow_back` reads
+                      // as "navigate back in the app stack," which
+                      // this button does NOT do — the underlying
+                      // page hasn't changed. Using the literal
+                      // dismiss-keyboard glyph removes the semantic
+                      // mismatch a fresh user would otherwise hit.
+                      //
+                      // Same `leadingTint` as the unfocused mode-
+                      // glyph so there's no hue flip on focus
+                      // toggle.
+                      icon: Icon(Icons.keyboard_hide, color: leadingTint),
                       onPressed: onCollapse,
                     )
                   else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 160),
-                        child: Icon(
-                          leadingIcon,
-                          key: ValueKey(leadingIcon),
-                          color: leadingTint,
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Center(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 160),
+                          child: Icon(
+                            leadingIcon,
+                            key: ValueKey(leadingIcon),
+                            color: leadingTint,
+                          ),
                         ),
                       ),
                     ),
@@ -171,9 +205,18 @@ class BottomOmniboxBar extends StatelessWidget {
                           : TextCapitalization.none,
                       decoration: InputDecoration(
                         border: InputBorder.none,
+                        // `isCollapsed: true` makes the TextField
+                        // size to its content height (the text line
+                        // height). With `contentPadding: zero`, the
+                        // surrounding Row's `crossAxisAlignment:
+                        // center` (Row's default) puts the text
+                        // baseline at the vertical center of the
+                        // 48dp icon row. Previously a `vertical: 14`
+                        // contentPadding offset the baseline below
+                        // the icon centers — looked misaligned even
+                        // though every icon was the same size.
                         isCollapsed: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                        contentPadding: EdgeInsets.zero,
                         hintText: hint,
                         hintStyle: theme.textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
@@ -185,7 +228,14 @@ class BottomOmniboxBar extends StatelessWidget {
                   if (hasText && !voiceActive)
                     IconButton(
                       tooltip: 'Clear',
-                      icon: const Icon(Icons.close, size: 20),
+                      // Subordinate to the mic — clear is a
+                      // destructive secondary action that shouldn't
+                      // visually compete with the primary mode
+                      // toggle next to it.
+                      icon: Icon(
+                        Icons.close,
+                        color: scheme.onSurfaceVariant,
+                      ),
                       onPressed: onClear,
                     ),
                   // Voice mic — toggles a live Deepgram dictation
@@ -196,8 +246,11 @@ class BottomOmniboxBar extends StatelessWidget {
                     tooltip: voiceActive
                         ? 'Stop dictation'
                         : 'Dictate by voice',
+                    // Solid mic matches the rest of the bar's
+                    // weight vocabulary (the outlined variant read
+                    // ~15% lighter than its sibling icons).
                     icon: Icon(
-                      voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
+                      voiceActive ? Icons.stop_circle : Icons.mic,
                       color: voiceActive ? scheme.error : null,
                     ),
                     onPressed: onMicTap,

@@ -8,6 +8,7 @@ import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/omnibox/omnibox_history.dart';
 import 'package:differentworld/features/omnibox/omnibox_mode.dart';
+import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_state.dart';
 import 'package:differentworld/features/omnibox/slash_commands.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
@@ -18,7 +19,9 @@ import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:differentworld/shared/widgets/route_chrome.dart';
 import 'package:differentworld/shared/widgets/shell_metrics.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemChannels, SystemNavigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -78,6 +81,22 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// touching `ref` (which is unsafe once the element is deactivated).
   DeepgramVoiceController? _voice;
 
+  /// Whether the omnibox suggestion panel is mounted inline (as an
+  /// overlay inside this shell's Stack). True while the bar has
+  /// focus.
+  ///
+  /// **Wave 25 (2026-05-22)** — replaces the previous "push `/search`
+  /// as a go_router route on focus" approach. The route push triggered
+  /// a FocusScope rotation that closed the soft keyboard on Android
+  /// reliably (the "keyboard appears and disappears" bug). Rendering
+  /// inline keeps the bar's TextField in the same FocusScope, so the
+  /// IME never tears down across the panel mount.
+  ///
+  /// The `/search` route still exists in the router for direct linking
+  /// (drawer "Search anything" tile) but the bar-tap path uses this
+  /// flag instead.
+  bool _searchOverlayOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -96,52 +115,51 @@ class _AppShellState extends ConsumerState<AppShell> {
     super.dispose();
   }
 
-  /// Focus drives the search route. When the bar gains focus and
-  /// we're not already on `/search`, push. When the bar loses focus
-  /// while we ARE on search, leave the route alone — the user can
-  /// re-tap to re-focus without bouncing in and out.
+  /// Bar focus listener.
   ///
-  /// Two defenses:
-  /// * **Microtask defer** for the push. Focus listeners can fire
-  ///   during the widget tree's build phase (route transitions re-
-  ///   attach TextFields, which can synchronously re-notify focus
-  ///   listeners). Calling `context.push()` from inside a build
-  ///   trips Riverpod's "modify provider while widget tree was
-  ///   building" assertion (same pattern documented in CLAUDE.md
-  ///   for `EdgeScaffold`'s chrome publish).
-  /// * **Post-frame re-focus** after the push. Even with
-  ///   `NoTransitionPage` on the search route (no slide animation),
-  ///   the route push still rotates the active focus scope, which
-  ///   can drop the bar's focus mid-frame. Re-requesting focus on
-  ///   the post-frame callback ensures the keyboard stays up after
-  ///   the push lands — tap-to-search opens the route AND the
-  ///   keyboard in one step. (Wave 20 — fixes the "keep clicking,
-  ///   keyboard never opens" symptom.)
+  /// **Wave 25 (2026-05-22)**: open / close the in-shell suggestion
+  /// overlay based on bar focus. No route push, no FocusScope
+  /// rotation, no IME teardown. The bar's TextField stays primary
+  /// focused the entire time the overlay is mounted.
+  ///
+  /// * **On focus gain**: open the overlay.
+  /// * **On focus loss**: close the overlay. Unlike the route-push
+  ///   approach, focus loss here is genuine (user tapped outside,
+  ///   navigated away) — we never artificially steal focus, so we
+  ///   don't need a rescue path.
   void _onFocusChanged() {
+    if (kDebugMode) {
+      debugPrint(
+        '[omnibox] focus=${_focus.hasFocus} '
+        'primary=${FocusManager.instance.primaryFocus == _focus}',
+      );
+    }
     if (!mounted) return;
-    if (!_focus.hasFocus) return;
-    unawaited(Future.microtask(() {
-      if (!mounted) return;
-      final loc = GoRouterState.of(context).matchedLocation;
-      if (loc != '/search') {
-        unawaited(context.push('/search'));
-        // Re-grant focus once the new route has mounted so the
-        // keyboard the user raised by tapping the bar stays up.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          if (!_focus.hasFocus) {
-            _focus.requestFocus();
-          }
-        });
-      }
-    }));
+    final shouldOpen = _focus.hasFocus;
+    if (shouldOpen == _searchOverlayOpen) return;
+    setState(() => _searchOverlayOpen = shouldOpen);
   }
 
-  /// Bar value change. Two writes: keep the controller (already
-  /// done by TextField), mirror into the provider so the search
-  /// screen re-renders.
+  /// Bar value change. The TextField already updated its own
+  /// controller; mirror the value into [omniboxQueryProvider] so the
+  /// overlay's suggestion list filters as the user types.
   void _onQueryChanged(String value) {
+    if (kDebugMode) {
+      debugPrint('[omnibox] queryChanged len=${value.length}');
+    }
     ref.read(omniboxQueryProvider.notifier).set(value);
+  }
+
+  /// Close the overlay programmatically (called by OmniboxSearchScreen
+  /// when the user selects a suggestion / runs a slash / saves a
+  /// capture). The overlay-as-overlay needs an explicit close path
+  /// because there's no Navigator to pop.
+  void _closeSearchOverlay() {
+    if (!mounted) return;
+    _focus.unfocus();
+    if (_searchOverlayOpen) {
+      setState(() => _searchOverlayOpen = false);
+    }
   }
 
   void _clear() {
@@ -168,9 +186,16 @@ class _AppShellState extends ConsumerState<AppShell> {
     double topInset, {
     required bool showDrawer,
   }) {
+    // Stable keys on every emitted Positioned so the Stack's
+    // reconciliation stays predictable when sibling Stack children
+    // (the omnibox overlay, the bar) come and go. Without keys,
+    // Flutter would shuffle Element-to-Widget matches on every
+    // build and the bar's TextField would rebuild, dropping its
+    // input connection → keyboard close.
     if (chrome.topOverlay != null) {
       return [
         Positioned(
+          key: const ValueKey('shell-chrome-overlay'),
           top: topInset + 8,
           left: 8,
           right: 8,
@@ -194,6 +219,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (leftChrome.isNotEmpty) {
       widgets.add(
         Positioned(
+          key: const ValueKey('shell-chrome-left'),
           top: topInset + 8,
           left: 8,
           child: Row(
@@ -206,6 +232,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (chrome.actions.isNotEmpty) {
       widgets.add(
         Positioned(
+          key: const ValueKey('shell-chrome-actions'),
           top: topInset + 8,
           right: 8,
           child: FloatingActions(children: chrome.actions),
@@ -234,7 +261,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   /// User hit return. Mode decides behavior: capture / slash / open
-  /// the top-ranked search result.
+  /// the top-ranked search result. Every silent-return path is paired
+  /// with a snackbar — return must NEVER feel like a dead key.
   void _onComposerSubmit(String text) {
     final catalog = ref.read(omniboxCatalogProvider);
     final mode = detectMode(query: text, catalog: catalog);
@@ -248,7 +276,15 @@ class _AppShellState extends ConsumerState<AppShell> {
       return;
     }
     final q = text.toLowerCase().trim();
-    if (q.isEmpty) return;
+    if (q.isEmpty) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Type something first, or tap a suggestion.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     OmniboxEntry? best;
     var bestScore = 0;
     for (final e in catalog) {
@@ -258,7 +294,15 @@ class _AppShellState extends ConsumerState<AppShell> {
         best = e;
       }
     }
-    if (best == null) return;
+    if (best == null) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text('No match for "$text". Try fewer words.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     bumpRecent(ref, best.id);
     final entry = best;
     _collapse();
@@ -286,6 +330,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     _voicePrefix = _ctrl.text;
     setState(() => _voiceActive = true);
     _focus.requestFocus();
+    // Force the IME up even if Flutter thinks focus never moved.
+    // `requestFocus()` alone is a no-op for the keyboard on Android
+    // if the framework treats focus as already-held. The user
+    // started dictation — they may also want to type alongside,
+    // so the keyboard belongs on screen.
+    unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
     _voiceSub = voice.updates.listen(_onVoiceUpdate);
     unawaited(voice.start());
   }
@@ -322,12 +372,30 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   /// Resolve the typed slash query to a SlashCommand and run it.
+  /// Every silent-return path is paired with a snackbar so return
+  /// never feels like a dead key.
   void _execSlash(String text) {
     final parsed = parseSlashQuery(text);
     final name = parsed.name;
-    if (name == null || name.isEmpty) return;
+    if (name == null || name.isEmpty) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Type a command after the slash — e.g. /today.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     final visible = matchSlashCommands(null, viewer: ref.read(viewerProvider));
-    if (visible.isEmpty) return;
+    if (visible.isEmpty) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('No slash commands available here.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
     final exact = visible.firstWhere(
       (c) => c.name == name || c.aliases.contains(name),
       orElse: () => visible.firstWhere(
@@ -338,6 +406,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (exact.name != name &&
         !exact.aliases.contains(name) &&
         !exact.matches(name)) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text('Unknown command "/$name".'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
       return;
     }
     _collapse();
@@ -359,10 +433,60 @@ class _AppShellState extends ConsumerState<AppShell> {
     final inKidMode = ref.watch(kidModeProvider);
     final chrome = ref.watch(routeChromeProvider);
     final topInset = MediaQuery.paddingOf(context).top;
+    final scheme = Theme.of(context).colorScheme;
 
     final viewer = ref.watch(viewerProvider);
     final showDrawer = viewer.isSignedIn && !inKidMode;
-    return Scaffold(
+
+    // Compute whether the current route is at the root — if so,
+    // a back gesture would exit the app entirely. We intercept
+    // those gestures and show a confirmation dialog so the user
+    // knows what they're about to do.
+    //
+    // For non-root routes (e.g. /groups/abc), let the back propagate
+    // normally (no intercept) — PopScope.canPop=true means default
+    // pop happens as usual.
+    //
+    // In kid mode the shell delegates to the kid-mode handler; don't
+    // double-intercept.
+    final atRoot =
+        GoRouterState.of(context).matchedLocation == '/' && !inKidMode;
+
+    return PopScope(
+      canPop: !atRoot,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        // Only fires when canPop was false (we're at /) and the user
+        // tried to back out. Confirm before exiting.
+        if (!mounted) return;
+        final shouldExit = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Close Different World?'),
+            content: const Text(
+              'You can come back anytime — your work is saved.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Stay'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+        if (shouldExit ?? false) {
+          // `SystemNavigator.pop()` finishes the activity on Android
+          // (returns to launcher) and is a no-op on iOS (Apple HIG
+          // forbids programmatic exit). That's fine — iOS users
+          // background via the home gesture.
+          await SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
       drawer: showDrawer ? const MainDrawer() : null,
       // `resizeToAvoidBottomInset: true` is load-bearing — it shrinks
       // the body so the keyboard occupies its own space below the
@@ -370,18 +494,51 @@ class _AppShellState extends ConsumerState<AppShell> {
       // it sits flush above the keyboard with no extra math.
       resizeToAvoidBottomInset: true,
       body: Stack(
+        // Every child is keyed so Flutter's reconciliation matches
+        // them ACROSS overlay toggles. Without keys, inserting the
+        // overlay child shifts the rest of the children's positions
+        // in the list; Flutter then matches existing Elements to
+        // wrong slots, rebuilds the bar's TextField, and the IME
+        // connection tears down — the user sees the keyboard close.
+        // (This was the actual root cause of "keyboard disappears
+        // on first tap" — not FocusScope rotation, the prior theory.)
         children: [
           // Route content. Inset on both ends by the shell so the
           // layout law (chrome top, omnibox bottom, body in the
           // visible slot) applies to every route uniformly. See
           // ShellMetrics for the constants + rationale.
           Padding(
+            key: const ValueKey('shell-route-content'),
             padding: EdgeInsets.only(
               top: inKidMode ? 0 : ShellMetrics.topChromeHeight,
               bottom: inKidMode ? 0 : ShellMetrics.bottomOmniboxHeight,
             ),
             child: widget.child,
           ),
+          // Omnibox suggestion panel — rendered inline as an overlay
+          // when the bar has focus. NOT a pushed route (see Wave 25
+          // notes on _searchOverlayOpen). Sits in the same slot as
+          // the route content, opaque to taps so the page underneath
+          // doesn't receive them. The bar's TextField stays in this
+          // shell's FocusScope across the mount, so the IME stays up.
+          //
+          // `top: topInset + topChromeHeight` clears the floating
+          // chrome pills (which render at `topInset + 8` + ~48dp
+          // pill height ≈ `topInset + topChromeHeight`).
+          if (!inKidMode && _searchOverlayOpen)
+            Positioned(
+              key: const ValueKey('shell-omnibox-overlay'),
+              top: topInset + ShellMetrics.topChromeHeight,
+              left: 0,
+              right: 0,
+              bottom: ShellMetrics.bottomOmniboxHeight,
+              child: Material(
+                color: scheme.surface,
+                child: OmniboxSearchScreen(
+                  onClose: _closeSearchOverlay,
+                ),
+              ),
+            ),
           // Persistent top chrome (hamburger + back + per-route
           // actions). Hidden in kid mode.
           if (!inKidMode)
@@ -396,6 +553,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           // staff-facing affordance.
           if (!inKidMode)
             Positioned(
+              key: const ValueKey('shell-omnibox-bar'),
               left: 0,
               right: 0,
               bottom: 0,
@@ -412,6 +570,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
             ),
         ],
+      ),
       ),
     );
   }

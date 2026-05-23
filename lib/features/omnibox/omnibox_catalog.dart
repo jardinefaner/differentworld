@@ -15,6 +15,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
+import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart'
     show startNewObservation;
@@ -344,6 +345,35 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       groupId: 'classroom:${g.id}',
       onSelect: (ctx, _) => ctx.push('/schedule'),
     ));
+    // Pat persona — one-tap "X is out today, Y is covering." Opens the
+    // substitute-lead sheet directly without first navigating into the
+    // schedule editor (the persona-audit recommendation, 2026-05-22).
+    // Gated by canManageSchedule because the sheet writes
+    // lead_substitute_member_id, same write the editor uses.
+    if (viewer.canManageSchedule) {
+      entries.add(OmniboxEntry(
+        id: 'classroom:${g.id}:cover',
+        label: 'Cover today · ${g.name}',
+        category: OmniboxCategory.action,
+        icon: Icons.person_add_alt_1,
+        keywords: const [
+          'cover',
+          'substitute',
+          'sub',
+          'absent',
+          'out today',
+          'lead out',
+          'callout',
+        ],
+        groupId: 'classroom:${g.id}',
+        onSelect: (ctx, _) => unawaited(SubstituteLeadSheet.show(
+          ctx,
+          groupId: g.id,
+          groupName: g.name,
+          date: _todayIsoLocal(),
+        )),
+      ));
+    }
     if (viewer.canManageSpace) {
       entries.add(OmniboxEntry(
         id: 'classroom:${g.id}:student.new',
@@ -367,9 +397,16 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   }
 
   // -- Dynamic: subjects (kids in childcare, patients in healthcare, etc.)
+  //
+  // Subjects without a `groupId` can't navigate anywhere — the profile
+  // route is nested under the cohort (`/groups/:gid/students/:sid`).
+  // Per the "if the user isn't able to do it, do not show it" rule
+  // (2026-05-22), we drop those entries entirely instead of showing
+  // them with a silent-noop tap.
   for (final s in subjects) {
-    final fullName = '${s.firstName} ${s.lastName}'.trim();
     final gid = s.groupId;
+    if (gid == null) continue;
+    final fullName = '${s.firstName} ${s.lastName}'.trim();
     entries.add(OmniboxEntry(
       id: 'subject:${s.id}',
       label: fullName,
@@ -380,12 +417,11 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       // which vertical-noun the user types.
       keywords: const ['kid', 'child', 'student', 'patient', 'guest'],
       groupId: 'subject:${s.id}',
-      onSelect: (ctx, _) {
-        if (gid == null) return;
-        unawaited(ctx.push('/groups/$gid/students/${s.id}'));
-      },
+      onSelect: (ctx, _) =>
+          unawaited(ctx.push('/groups/$gid/students/${s.id}')),
     ));
-    if (gid != null && viewer.canObserve) {
+    // `gid` is guaranteed non-null here (we `continue`d above).
+    if (viewer.canObserve) {
       entries.add(OmniboxEntry(
         id: 'subject:${s.id}:progress-report',
         label: 'Progress report · $fullName',
@@ -495,3 +531,14 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
 });
 
 String _roleLabel(String? role) => RoleLabels.of(role);
+
+/// Today's date as `YYYY-MM-DD` in the device's local zone. The
+/// schedule DAO expects this exact shape — it indexes blocks by the
+/// `date` column (date type) without any zone conversion.
+String _todayIsoLocal() {
+  final now = DateTime.now();
+  final y = now.year.toString().padLeft(4, '0');
+  final m = now.month.toString().padLeft(2, '0');
+  final d = now.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
+}

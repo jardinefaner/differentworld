@@ -67,27 +67,51 @@ class Viewer {
   // Member-level abilities (UI gates)
   // ---------------------------------------------------------------------
 
-  bool get canObserve => memberCaps.getBool(MemberCaps.canObserve);
+  // Director-tier abilities fall back to `isDirector` so a director
+  // can do basic director things by virtue of being a director — even
+  // if their `capabilities` JSONB is missing the field (old member
+  // row created before the bundle existed, partial seed, etc.).
+  // The principle: don't make a director manually toggle a flag to
+  // unlock the work the role implies. Non-directors still need the
+  // explicit cap; the role doesn't grant them anything.
+  //
+  // Cert-gated caps (`canDrive`, `canAdministerMedication`) STAY
+  // strict — those require active certifications, regardless of
+  // role.
+
+  bool get canObserve =>
+      isDirector || memberCaps.getBool(MemberCaps.canObserve);
   bool get canTakeAttendance =>
-      memberCaps.getBool(MemberCaps.canTakeAttendance);
-  bool get canRecordMeal => memberCaps.getBool(MemberCaps.canRecordMeal);
-  bool get canRecordNap => memberCaps.getBool(MemberCaps.canRecordNap);
-  bool get canRecordDiaper => memberCaps.getBool(MemberCaps.canRecordDiaper);
+      isDirector || memberCaps.getBool(MemberCaps.canTakeAttendance);
+  bool get canRecordMeal =>
+      isDirector || memberCaps.getBool(MemberCaps.canRecordMeal);
+  bool get canRecordNap =>
+      isDirector || memberCaps.getBool(MemberCaps.canRecordNap);
+  bool get canRecordDiaper =>
+      isDirector || memberCaps.getBool(MemberCaps.canRecordDiaper);
+
+  // Cert-gated — director role alone is not enough.
   bool get canAdministerMedication =>
       memberCaps.getBool(MemberCaps.canAdministerMedication);
   bool get canDrive => memberCaps.getBool(MemberCaps.canDrive);
-  bool get canOpenBuilding => memberCaps.getBool(MemberCaps.canOpenBuilding);
-  bool get canCloseBuilding => memberCaps.getBool(MemberCaps.canCloseBuilding);
+
+  bool get canOpenBuilding =>
+      isDirector || memberCaps.getBool(MemberCaps.canOpenBuilding);
+  bool get canCloseBuilding =>
+      isDirector || memberCaps.getBool(MemberCaps.canCloseBuilding);
   bool get canAuthorizePickup =>
-      memberCaps.getBool(MemberCaps.canAuthorizePickup);
-  bool get canViewBilling => memberCaps.getBool(MemberCaps.canViewBilling);
-  bool get canInviteStaff => memberCaps.getBool(MemberCaps.canInviteStaff);
-  bool get canViewAuditLog => memberCaps.getBool(MemberCaps.canViewAuditLog);
+      isDirector || memberCaps.getBool(MemberCaps.canAuthorizePickup);
+  bool get canViewBilling =>
+      isDirector || memberCaps.getBool(MemberCaps.canViewBilling);
+  bool get canInviteStaff =>
+      isDirector || memberCaps.getBool(MemberCaps.canInviteStaff);
+  bool get canViewAuditLog =>
+      isDirector || memberCaps.getBool(MemberCaps.canViewAuditLog);
 
   /// Can author / edit / delete schedule blocks. Used to hide the
   /// schedule '+' affordance for staff without the cap.
   bool get canManageSchedule =>
-      memberCaps.getBool(MemberCaps.canManageSchedule);
+      isDirector || memberCaps.getBool(MemberCaps.canManageSchedule);
 
   /// "Act as director" cap OR actual director role. The cap is the
   /// graceful path; the role is the seeded default.

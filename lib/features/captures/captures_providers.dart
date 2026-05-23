@@ -89,12 +89,10 @@ class CaptureActions {
   }
 
   /// Promote a capture to a standalone observation on a chosen subject.
-  /// Atomic-ish: creates the entry first, then flips the capture's
-  /// status. If the entry write succeeds and the status update fails,
-  /// the user sees a duplicate entry without the capture being marked
-  /// processed — they can re-promote and we'd silently dedupe. Worth
-  /// tightening if we ever observe it; until then, the chance is small
-  /// (both writes are local and same-DB).
+  /// Both writes (create entry + mark capture promoted) run inside a
+  /// single Drift transaction so a mid-flight failure leaves no
+  /// orphan entry and no half-flipped capture. Blast-radius flagged
+  /// the previous "atomic-ish" two-write path 2026-05-22.
   Future<String> promoteToObservation({
     required String captureId,
     required String subjectId,
@@ -104,36 +102,41 @@ class CaptureActions {
     final (:spaceId, :memberId) =
         viewer.requireSpaceAndMember(action: 'promote a capture');
     final db = await _ref.read(appDatabaseProvider.future);
+    // Read the source rows outside the transaction — they're read-only
+    // and not part of the atomicity contract. Pulling the subject's
+    // group so the new entry shows up in the per-classroom observation
+    // feeds too.
     final cap = await db.capturesDao.findById(captureId);
     if (cap == null) {
       throw StateError('Capture $captureId not found.');
     }
-    // Pull the subject's group so the new entry shows up in
-    // the per-classroom observation feeds too.
     final subj = await db.subjectsDao.findById(subjectId);
     final entryId = _uuid.v4();
-    await db.entriesDao.create(
-      id: entryId,
-      spaceId: spaceId,
-      kind: kind,
-      recordedBy: memberId,
-      groupId: subj?.groupId,
-      subjectId: subjectId,
-      body: cap.body,
-    );
-    await db.capturesDao.markPromoted(
-      id: captureId,
-      promotedToKind: 'entry',
-      promotedToId: entryId,
-      promotedSubjectId: subjectId,
-    );
+    await db.transaction(() async {
+      await db.entriesDao.create(
+        id: entryId,
+        spaceId: spaceId,
+        kind: kind,
+        recordedBy: memberId,
+        groupId: subj?.groupId,
+        subjectId: subjectId,
+        body: cap.body,
+      );
+      await db.capturesDao.markPromoted(
+        id: captureId,
+        promotedToKind: 'entry',
+        promotedToId: entryId,
+        promotedSubjectId: subjectId,
+      );
+    });
     return entryId;
   }
 
   /// Promote a capture to a standalone task. Subject is optional —
   /// the user can attach the task to a kid or leave it program-level.
-  /// Same two-step pattern as promoteToObservation: create the task,
-  /// then flip the capture's status to 'promoted'.
+  /// Both writes (create task + mark capture promoted) run inside a
+  /// single Drift transaction; same atomicity guarantee as
+  /// promoteToObservation.
   Future<String> promoteToTask({
     required String captureId,
     String? subjectId,
@@ -148,21 +151,23 @@ class CaptureActions {
       throw StateError('Capture $captureId not found.');
     }
     final taskId = _uuid.v4();
-    await db.tasksDao.insert(
-      id: taskId,
-      spaceId: spaceId,
-      body: cap.body,
-      authorId: viewer.memberId,
-      subjectId: subjectId,
-      dueAt: dueAt,
-      createdFromCaptureId: captureId,
-    );
-    await db.capturesDao.markPromoted(
-      id: captureId,
-      promotedToKind: 'task',
-      promotedToId: taskId,
-      promotedSubjectId: subjectId,
-    );
+    await db.transaction(() async {
+      await db.tasksDao.insert(
+        id: taskId,
+        spaceId: spaceId,
+        body: cap.body,
+        authorId: viewer.memberId,
+        subjectId: subjectId,
+        dueAt: dueAt,
+        createdFromCaptureId: captureId,
+      );
+      await db.capturesDao.markPromoted(
+        id: captureId,
+        promotedToKind: 'task',
+        promotedToId: taskId,
+        promotedSubjectId: subjectId,
+      );
+    });
     return taskId;
   }
 

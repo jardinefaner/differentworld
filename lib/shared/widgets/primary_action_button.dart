@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 
 /// The screen's primary verb — what used to be a FAB. Renders inside
 /// the `actions:` row of an EdgeScaffold (top-right pill) with filled
-/// emphasis so the user finds it without scanning. Secondary actions
-/// stay as plain IconButtons next to it.
+/// emphasis so the user finds it without scanning.
 ///
-/// Why this exists rather than a plain `IconButton.filled`:
-///
-///   - Padding tuned for the GlassPill row (filled icon buttons
-///     default to 8 dp padding; we want them snug so the pill stays
-///     compact).
-///   - Tooltip is mandatory — primary verbs without a label depend
-///     on iconography alone, which fails for new users.
-///   - One consistent visual across every screen, so the user learns
-///     "the filled button is the main thing" once.
+/// **Sized to match `IconButton` defaults so it visually aligns with
+/// the left-chrome pills (FloatingHamburger / FloatingBack) on the
+/// same page**: 24-dp icon + 12-dp padding all sides = 48×48 footprint.
+/// Prior versions were intentionally compact (~40×32, 20-dp icon) for
+/// internal uniformity within the actions row, but that broke
+/// alignment with the hamburger/back chrome on the OTHER side of the
+/// page. Wave 26 (2026-05-22) standardized to 48×48 across all chrome.
 class PrimaryActionButton extends StatelessWidget {
   const PrimaryActionButton({
     required this.tooltip,
@@ -40,13 +37,12 @@ class PrimaryActionButton extends StatelessWidget {
         child: InkWell(
           onTap: onPressed,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
+            // 12dp all sides + 24dp icon = 48dp footprint, matching
+            // IconButton default (which the chrome pills use).
+            padding: const EdgeInsets.all(12),
             child: Icon(
               icon,
-              size: 20,
+              size: 24,
               color: onPressed == null
                   ? scheme.onSurfaceVariant
                   : scheme.onPrimaryContainer,

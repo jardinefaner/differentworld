@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -364,7 +366,7 @@ class _LeadRow extends StatelessWidget {
       n == 1 ? '1 $one' : '$n $many';
 }
 
-class _SubstitutePickerSheet extends StatelessWidget {
+class _SubstitutePickerSheet extends ConsumerWidget {
   const _SubstitutePickerSheet({
     required this.absentName,
     required this.candidates,
@@ -374,9 +376,10 @@ class _SubstitutePickerSheet extends StatelessWidget {
   final List<Member> candidates;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final vertical = ref.watch(verticalLabelsProvider).vertical;
     return SafeArea(
       top: false,
       child: Padding(
@@ -412,7 +415,7 @@ class _SubstitutePickerSheet extends StatelessWidget {
                     final m = candidates[i];
                     return ListTile(
                       title: Text(m.displayName),
-                      subtitle: Text(_roleLabel(m.role)),
+                      subtitle: Text(_roleLabel(m.role, vertical: vertical)),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => Navigator.of(context).pop(m),
                     );
@@ -426,22 +429,9 @@ class _SubstitutePickerSheet extends StatelessWidget {
   }
 
   /// Short label so the row doesn't shout role keys at users.
-  static String _roleLabel(String role) {
-    switch (role) {
-      case 'director':
-        return 'Director';
-      case 'lead_teacher':
-        return 'Lead teacher';
-      case 'teacher':
-        return 'Teacher';
-      case 'assistant':
-        return 'Assistant';
-      case 'specialist':
-        return 'Specialist';
-      case 'guardian':
-        return 'Guardian';
-      default:
-        return role;
-    }
+  /// Routes through `RoleLabels.of` so non-childcare verticals get
+  /// their own labels (construction "Foreman", healthcare "RN", …).
+  static String _roleLabel(String role, {required String vertical}) {
+    return RoleLabels.of(role, vertical: vertical);
   }
 }

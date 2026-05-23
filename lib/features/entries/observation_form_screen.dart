@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -8,6 +10,7 @@ import 'package:differentworld/features/photos/widgets/multi_shot_camera.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -91,6 +94,28 @@ class _ObservationFormScreenState
   /// New-observation mode flips this true immediately in initState.
   bool _seededAttachments = false;
 
+  // -- Voice dictation (Jordan persona; persona-audit 2026-05-22) --
+  //
+  // The form owns its OWN DeepgramVoiceController instance (NOT the
+  // shared `deepgramVoiceProvider` singleton AppShell uses) so the
+  // form's transcript stream is isolated from any concurrent voice
+  // session on the omnibox bar. Otherwise both screens listen to the
+  // same broadcast stream — `voice.start()` no-ops on the second
+  // caller because `isActive` is already true, but BOTH listeners
+  // receive every update and write the transcript into both fields
+  // simultaneously. Preflight flagged this as a Stop-ship-WARNING
+  // (lib/shared/widgets/app_shell.dart:309 + this file). Local
+  // instance = clean encapsulation per the form's lifecycle.
+  //
+  // Constructed in initState, disposed in dispose. dispose() (not
+  // cancel()) is the right teardown — it closes the broadcast stream
+  // and disposes the underlying AudioRecorder; this instance won't
+  // be reused after the form closes.
+  late final DeepgramVoiceController _voice;
+  StreamSubscription<VoiceUpdate>? _voiceSub;
+  bool _voiceActive = false;
+  String _voicePrefix = '';
+
   bool get _isEdit => widget.existing != null;
 
   String get _effectiveGroupId =>
@@ -103,12 +128,66 @@ class _ObservationFormScreenState
     _subjectId = widget.existing?.subjectId ?? widget.initialSubjectId;
     _entryId = widget.existing?.id ?? const Uuid().v4();
     if (!_isEdit) _seededAttachments = true;
+    // Form-local voice controller (see field comment for rationale).
+    _voice = DeepgramVoiceController();
   }
 
   @override
   void dispose() {
+    // Order matters: tear down the voice subscription first (so no
+    // late transcript can land in `_textCtrl` after dispose), then
+    // fully dispose the local voice controller (closes the broadcast
+    // stream + the underlying AudioRecorder — this instance won't be
+    // reused), then the text controller. All unawaited; the WS /
+    // recorder shut themselves down promptly anyway.
+    unawaited(_voiceSub?.cancel());
+    _voiceSub = null;
+    unawaited(_voice.dispose());
     _textCtrl.dispose();
     super.dispose();
+  }
+
+  /// Toggle Deepgram dictation for the body field. Uses the FORM-
+  /// LOCAL `_voice` controller (NOT the AppShell singleton) so the
+  /// transcript stream is isolated. Same prefix-preservation pattern
+  /// as the omnibox bar: snapshot whatever the user typed before the
+  /// session starts, append the live transcript as it streams in.
+  void _toggleVoice() {
+    if (_voiceActive) {
+      unawaited(_voice.stop());
+      return;
+    }
+    _voicePrefix = _textCtrl.text;
+    setState(() => _voiceActive = true);
+    _voiceSub = _voice.updates.listen(_onVoiceUpdate);
+    unawaited(_voice.start());
+  }
+
+  void _onVoiceUpdate(VoiceUpdate update) {
+    if (!mounted) return;
+    if (update.state == VoiceState.error) {
+      _voiceActive = false;
+      unawaited(_voiceSub?.cancel());
+      _voiceSub = null;
+      final msg = update.errorMessage ?? 'Voice dictation failed.';
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+      setState(() {});
+      return;
+    }
+    final transcript = update.transcript.trim();
+    final glue = (_voicePrefix.isEmpty || transcript.isEmpty) ? '' : ' ';
+    final combined = '$_voicePrefix$glue$transcript';
+    _textCtrl
+      ..text = combined
+      ..selection = TextSelection.collapsed(offset: combined.length);
+    if (update.state == VoiceState.idle) {
+      _voiceActive = false;
+      unawaited(_voiceSub?.cancel());
+      _voiceSub = null;
+      setState(() {});
+    }
   }
 
   /// Seeded once per form-open from the `attachmentsForEntityProvider`
@@ -453,9 +532,28 @@ class _ObservationFormScreenState
               minLines: 4,
               maxLines: 10,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'What happened?',
-                border: OutlineInputBorder(),
+                helperText: _voiceActive ? 'Listening…' : null,
+                border: const OutlineInputBorder(),
+                // Mic lives as the suffix so it sits adjacent to the
+                // text the user is dictating into. Tap toggles a live
+                // Deepgram session; the transcript appends to the
+                // existing prefix so typed-then-dictated works.
+                suffixIcon: IconButton(
+                  tooltip: _voiceActive
+                      ? 'Stop dictation'
+                      : 'Dictate by voice',
+                  icon: Icon(
+                    _voiceActive
+                        ? Icons.stop_circle
+                        : Icons.mic_none_outlined,
+                    color: _voiceActive
+                        ? Theme.of(context).colorScheme.error
+                        : null,
+                  ),
+                  onPressed: _toggleVoice,
+                ),
               ),
             ),
             const SizedBox(height: 16),

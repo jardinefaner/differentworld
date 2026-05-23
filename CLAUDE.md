@@ -20,6 +20,13 @@ runs one program with many classrooms, shared automatically with every
 teacher on the team. Children's data is sensitive PII — every decision
 that touches it should reflect that.
 
+**Primary product context (2026-05): afterschool program for ages 4-12.**
+Decisions about labels, age bands, default group capabilities, activity
+catalogs, and pickup rules should optimize for this segment first. Other
+segments (infant care, full-day preschool, K-12 enrichment) are
+supported by the same vertical-agnostic engine, but the defaults should
+feel right for an afterschool director on day one.
+
 Targets: **mobile-first** (iOS/iPad/Android), plus web + macOS/Windows/Linux.
 A single codebase serves all six.
 
@@ -171,6 +178,14 @@ find it. Every time we've forgotten one, the feature shipped as a
 "hidden page only accessible via deep link from this one card" —
 which is the same as not shipping it.
 
+**This is now enforced by the `feature-mapper` agent (see the Feature
+registry section below).** The agent watches the four places listed
+below and emits a "Discovery drift" warning when a feature's claimed
+surfaces in `docs/FEATURES.md` don't match what's actually wired in
+code. The rule used to live in your head; now it's an automated
+check. Keep reading for what the four places are — you still need to
+wire them — but the **audit is no longer manual**.
+
 When a new screen lands at a new top-level route, update:
 
 1. **Routes** (`lib/app/router.dart`): nest the route(s) so deep
@@ -192,10 +207,10 @@ When a new screen lands at a new top-level route, update:
    `_SettingsGroup`. Group new rows with adjacent ones — don't add a
    new group for one item.
 
-The omnibox file itself has a one-line reminder above
-`_computeSuggestions` calling this rule out. **Every PR that adds a
-top-level screen should grep `// UX_DECISIONS §7` to find that
-reminder and audit against it.**
+Then **claim those surfaces in `docs/FEATURES.md`** under the feature's
+section (Routes / Omnibox / Slash / Drawer / Settings fields). The
+`feature-mapper` agent will verify the wiring on its next run; if you
+claim a drawer entry that doesn't exist, the agent flags it as drift.
 
 Anti-pattern this prevents (we've shipped it twice): adding a
 fully-built screen and forgetting one of the four surfaces, so the
@@ -223,6 +238,80 @@ PowerSync's local SQLite only has TEXT, INTEGER, REAL.
 | `date` / `timestamptz` | `Column.text` | ISO 8601 string |
 | `jsonb` | `Column.text` | raw JSON string; parse client-side |
 | `int` / `float` | `Column.integer` / `Column.real` | |
+
+---
+
+## Feature registry
+
+The app is bigger than a single mental model can hold. Two living docs
+keep the map fresh, and three agents maintain + query them.
+
+### The docs
+
+- **[docs/FEATURES.md](docs/FEATURES.md)** — folder-grained list of
+  every feature in `lib/features/`. Each entry has a fixed shape:
+  purpose, personas served, discovery surfaces (routes / omnibox /
+  slash / drawer / settings), capabilities required, data tables
+  touched, surface sublist, depends-on / consumed-by, last-verified
+  date. **Authoritative for what the user can see.**
+- **[docs/SCHEMA.md](docs/SCHEMA.md)** — table-grained list of every
+  synced Drift table. Each entry: purpose, key columns, RLS gist,
+  sync rule, consumer features. **Authoritative for what the data
+  layer looks like.** Cross-linked bidirectionally with FEATURES.md
+  (the `**Data:**` field in FEATURES = the `**Consumers:**` field in
+  SCHEMA).
+
+Both docs are written in a fixed schema (see headers in each file).
+Don't invent new fields — propose them if you need them.
+
+### The agents
+
+- **`feature-mapper`** — maintains both docs. Auto-invoke when files
+  under `lib/features/`, `lib/app/router.dart`,
+  `omnibox_results.dart`, `omnibox_catalog.dart`, `main_drawer.dart`,
+  `settings_screen.dart`, or `supabase/migrations/` change. Includes
+  the **teeth-bearing check**: it verifies a feature's CLAIMED
+  discovery surfaces (omnibox / drawer / settings / routes) match
+  what the code wires; mismatches surface as "Discovery drift"
+  warnings. Replaces the manual "four-places-to-wire" audit (the
+  rule still applies; the check is now automated).
+- **`blast-radius`** — on-demand. Takes a feature name, file path,
+  table, column, capability, persona, or route, and returns the
+  impact zone: upstream dependencies, downstream consumers, discovery
+  surfaces touched, data graph, personas affected, what to test
+  before shipping a change. Run BEFORE non-trivial edits.
+- **`persona-audit`** — on-demand. Reads FEATURES.md and reports
+  coverage by persona. Surfaces gaps the feature-by-feature view
+  can't see (e.g., "Lauren has no entry point to today's photos").
+  Run weekly or after major feature waves.
+
+### The workflow
+
+When you ADD a feature:
+1. Wire the four discovery surfaces (router / omnibox / drawer /
+   settings) as before. The rule above hasn't changed.
+2. Claim those surfaces in `docs/FEATURES.md` under the new feature's
+   section. If you skip this, the next `feature-mapper` run will add
+   a stub that says `**Purpose**: TODO — please describe.` and flag
+   it in the report.
+3. Run `Agent feature-mapper` (or wait for the stop-hook to do it).
+
+When you CHANGE a feature:
+1. Run `Agent blast-radius <feature-or-file>` to see what else moves.
+2. Make the change.
+3. The `feature-mapper` will pick up the change on the next run.
+
+When you ASK "is X served":
+- Run `Agent persona-audit`.
+
+### What the rule changes
+
+- The old four-places audit was manual: `grep // UX_DECISIONS §7`
+  and check by hand. **That's gone.** The teeth-bearing check is now
+  in `feature-mapper`.
+- `docs/FEATURES.md` is the single source of truth for "what exists."
+  Drawer / omnibox / settings entries are derived facts the agent
+  reconciles against.
 
 ---
 
@@ -488,6 +577,40 @@ flutter test        # all passing
 ## Known gotchas
 
 The ones we've already burned a turn on.
+
+### Stack children without keys → IME closes when sibling is added (the "keyboard disappears on tap" bug)
+
+If a `Stack` has multiple `Positioned` children of the same widget
+type, Flutter's reconciliation matches them by **position-in-list +
+type**, not by purpose. Inserting a new `Positioned` in the middle
+shifts the matching of all later siblings — and the Elements those
+siblings used to be attached to now belong to the wrong widgets. The
+visible result: any child carrying state (an `EditableText`'s input
+connection, a Hero, an AnimationController) **silently rebuilds**
+when an unrelated sibling appears.
+
+Symptom we hit (May 2026): AppShell's body Stack had `[route content,
+chrome pills, omnibox bar]`. Tapping the bar set `_searchOverlayOpen
+= true`, which inserted a new overlay Positioned at index 1. After
+the rebuild Flutter matched the bar's Element to the chrome's slot,
+the `BottomOmniboxBar` widget rebuilt, the inner `TextField`'s
+`TextInputConnection` tore down, Android closed the soft keyboard.
+The Flutter side still reported "focus on bar = true" — that's why
+the bug was so hard to find from focus logs alone.
+
+**Rule**: ANY `Stack` whose children list can grow/shrink at
+runtime — feature toggles, overlays, conditional pills — must give
+each child a stable `Key`. `ValueKey('shell-omnibox-bar')`,
+`ValueKey('shell-omnibox-overlay')`, etc. Flutter then matches by
+key + type, not position; siblings can come and go without
+poisoning each other's Elements.
+
+The same rule applies to `Column`, `Row`, `Wrap`, `ListView`,
+`CustomScrollView` — any multi-child widget that doesn't already
+key its children for you.
+
+If you see "a widget unexpectedly rebuilds when an unrelated sibling
+appears," check for missing keys first.
 
 ### "Modified provider while the widget tree was building" — the chrome publish trap
 When `EdgeScaffold.initState` calls `routeChromeProvider.notifier.push(...)`
@@ -957,6 +1080,92 @@ For exploratory / scoping conversations: no gate, just answer.
 - **Background photo upload + thumbnail generation** — when we wire
   observations
 
+## Interaction invariants — input surfaces
+
+The omnibox, the observation form, and every TextField-bearing screen
+have to honor a small set of rules to feel right on a real device.
+We've broken these enough times to write them down. The
+**`Interaction Guard` agent** enforces them by pattern; this section
+documents them as testable assertions.
+
+### The rules
+
+1. **Bar focus survives route pushes triggered by typing.** If a
+   keystroke causes a `context.push(...)` (e.g. `/search` pops up
+   because the user typed), the originating TextField MUST still own
+   primary focus after the push lands. Mechanism: the route push
+   rotates the active FocusScope; the bar lives outside the pushed
+   route's scope chain, so its focus drops; a focus listener
+   reacting INSIDE the push window (~500ms) must re-request focus +
+   call `SystemChannels.textInput.invokeMethod('TextInput.show')` to
+   keep the Android IME up.
+2. **Suggestion taps must dispatch.** Tapping a list item / chip /
+   suggestion MUST result in either navigation, a visible UI
+   response, or a snackbar. NO silent no-op `onTap` handlers. The
+   classic break: `onTap: (ctx, _) { if (foo == null) return;
+   ctx.push(...); }` — drop the entry from the catalog entirely if
+   `foo` can be null, OR show a fallback.
+3. **Post-pop dispatch needs a stable context.** Any handler that
+   does `context.pop()` and then `addPostFrameCallback` to fire an
+   action MUST capture a long-lived context (e.g.
+   `Navigator.of(context, rootNavigator: true).context`) BEFORE the
+   pop. The popped route's context deactivates the moment pop runs;
+   `context.mounted` becomes false; the action silently never fires.
+4. **`requestFocus` alone doesn't show the IME on Android.** Any
+   programmatic focus restoration MUST be followed by an explicit
+   `SystemChannels.textInput.invokeMethod('TextInput.show')`. Flutter's
+   framework treats focus-restoration as a focus-already-held event
+   and skips the implicit show.
+5. **Modal sheets during active text input lose focus.** Avoid
+   `showModalBottomSheet` / `showDialog` from a TextField's
+   `onChanged` — defer to `onSubmitted` or pre-dismiss the keyboard
+   with `_focus.unfocus()` first.
+6. **No hardcoded delays for focus / keyboard timing.** No
+   `Future.delayed(Duration(milliseconds: 100), ...)` to "let the
+   keyboard finish." Use `addPostFrameCallback`, listen to the focus
+   event, or use a completion signal.
+7. **Multi-child layout widgets with conditional children require
+   stable `Key`s.** `Stack`, `Column`, `Row`, `Wrap`, etc. — if any
+   child is conditional (`if (...) widget`) or the children list
+   grows / shrinks at runtime, every child MUST carry a stable
+   `ValueKey`. Otherwise inserting a child shifts Flutter's
+   position-based Element matching, and a `TextField` sibling will
+   silently rebuild and lose its `TextInputConnection` → the soft
+   keyboard closes mid-interaction. See "Stack children without
+   keys" in Known gotchas.
+
+### What to test
+
+Every input-surface widget should have a widget test (or contribute
+to one) that asserts:
+
+- `tester.tap(find.byType(TextField))` → focus arrives within one
+  pump.
+- `tester.enterText(find.byType(TextField), 'a')` → if this triggers
+  a route push, after `tester.pumpAndSettle()` the same TextField
+  still holds primary focus.
+- Tapping a suggestion / item that depends on optional data — when
+  the data is null, the entry must NOT render (don't assert that the
+  tap does nothing — assert the entry isn't in the tree).
+
+`test/widget/omnibox_interaction_test.dart` is the canonical
+example.
+
+### When to run the Interaction Guard
+
+Auto-invoke (via the `feature-registry-stop-gate.sh` sibling hook)
+on any change to:
+- `lib/shared/widgets/app_shell.dart`
+- `lib/features/omnibox/**`
+- Any file containing a `TextField`, `FocusNode`, `GestureDetector`,
+  `onTap`, or that calls `showModalBottomSheet` / `context.push`
+  from a UI-event callback.
+
+You can also invoke it manually: `Agent interaction-guard` against
+the diff or a file path.
+
+---
+
 ## Composer / chrome architecture (the omnibox spine)
 
 The bottom omnibox bar in AppShell is the canonical surface for find /
@@ -1040,11 +1249,21 @@ shipped; what's below needs its own focused PR.
   per-cohort tabs (phone-friendly). A real cohorts × time matrix on
   iPad/desktop is the right surface for a director planning the week;
   needs a custom layout (not just a wider phone view).
-- **Jordan — voice-to-text on observation + capture.** Needs the
-  `speech_to_text` plugin + iOS / Android mic permission flow. Mic
-  icon in the textfield → press-and-hold to dictate.
-- **Jordan — high-contrast outdoor mode.** A theme toggle that boosts
-  text weight + background contrast for bright-sun legibility.
+- **Jordan — PARTIAL: voice-to-text on observation + omnibox.**
+  Deepgram-powered mic is wired in the omnibox composer bar
+  (`bottom_omnibox_bar.dart`) AND the observation form body field
+  (`observation_form_screen.dart`, suffix-icon). The observation form
+  uses its own local `DeepgramVoiceController` instance (not the
+  shared singleton) so AppShell + form can't double-listen. STILL
+  TO DO: mic on the standalone capture screen (`capture_screen.dart`)
+  and any future free-text fields that would benefit from dictation.
+- **Jordan — DONE: high-contrast outdoor mode.** Settings →
+  Preferences → "Outdoor mode" (System default / High contrast).
+  `outdoorModeSettingProvider` (`outdoor_mode_setting.dart`)
+  persists the pick; `app.dart` applies the theme override on top of
+  the OS dark/light theme. The 200% audit for layout / truncation
+  reflow per screen is still a manual pass to schedule (shared with
+  Helen).
 - **Lauren — Spanish localization.** ARB infrastructure isn't wired
   yet. Set up `flutter gen-l10n`, extract every user-facing string,
   write the Spanish translations + the language picker in Settings.

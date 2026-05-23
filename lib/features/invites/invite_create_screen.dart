@@ -1,4 +1,7 @@
+import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -23,7 +26,12 @@ class InviteCreateScreen extends ConsumerStatefulWidget {
 class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
   final _emailController = TextEditingController();
 
-  String _role = 'teacher';
+  /// Default role for a new invite. Initialised in `build` from the
+  /// active vertical's role list (first non-admin role — e.g. childcare
+  /// 'teacher', construction 'foreman', healthcare 'rn'). Stays `null`
+  /// until the first build so the picker doesn't seed with a value
+  /// that's wrong for the current vertical.
+  String? _role;
   InviteExpiry _expiry = InviteExpiry.sevenDays;
   bool _saving = false;
   String? _error;
@@ -56,7 +64,7 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
       final actions = ref.read(inviteActionsProvider);
       final invite = await actions.create(
         spaceId: spaceId,
-        role: _role,
+        role: _role ?? 'teacher',
         expiry: _expiry,
         email: _emailController.text,
         createdBy: me!.id,
@@ -82,6 +90,21 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Roles offered per active vertical — childcare's director /
+    // lead_teacher / teacher / assistant, construction's pm / foreman
+    // / etc. Drives both the chip labels and the role key written
+    // into the invite row.
+    final labels = ref.watch(verticalLabelsProvider);
+    final roles = RoleBundles.rolesFor(labels.vertical);
+    // Seed the picker with the most "common-staff" role for this
+    // vertical (last in the rolesFor list = least-senior). Could be
+    // configurable; for now it's "the role you most often invite."
+    final defaultRole = roles.isEmpty
+        ? 'teacher'
+        : roles.length > 2
+            ? roles[roles.length - 2]
+            : roles.last;
+    final selected = _role ?? defaultRole;
     return EdgeScaffold(
       backFallbackRoute: '/settings/team',
       body: ListView(
@@ -97,17 +120,14 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
           Wrap(
             spacing: 8,
             children: [
-              for (final (value, label) in const [
-                ('director', 'Director'),
-                ('lead_teacher', 'Lead teacher'),
-                ('teacher', 'Teacher'),
-                ('assistant', 'Assistant'),
-              ])
+              for (final key in roles)
                 ChoiceChip(
-                  label: Text(label),
-                  selected: _role == value,
+                  label: Text(
+                    RoleLabels.of(key, vertical: labels.vertical),
+                  ),
+                  selected: selected == key,
                   onSelected: (s) {
-                    if (s) setState(() => _role = value);
+                    if (s) setState(() => _role = key);
                   },
                 ),
             ],

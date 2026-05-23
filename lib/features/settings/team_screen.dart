@@ -84,24 +84,39 @@ class TeamScreen extends ConsumerWidget {
                     child: Text('Could not load pending invites.'),
                   ),
                   data: (invites) {
-                    if (invites.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        child: Text(
-                          canInvite
-                              ? 'No pending invites. Tap the button below '
-                                  'to invite a teammate.'
-                              : 'No pending invites.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      );
-                    }
+                    final theme = Theme.of(context);
                     return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        for (final inv in invites)
-                          _InviteTile(invite: inv, viewerCanInvite: canInvite),
+                        if (invites.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                            child: Text(
+                              'No pending invites.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          )
+                        else
+                          for (final inv in invites)
+                            _InviteTile(invite: inv, viewerCanInvite: canInvite),
+                        // Explicit in-body invite affordance for
+                        // directors. The same action lives in the
+                        // top-right chrome (PrimaryActionButton), but
+                        // the chrome icon is easy to miss as a primary
+                        // verb — surface it where users are reading.
+                        if (canInvite)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                            child: FilledButton.icon(
+                              onPressed: () => context.push(
+                                '/settings/team/invite/new',
+                              ),
+                              icon: const Icon(Icons.person_add_alt_1),
+                              label: const Text('Invite a teammate'),
+                            ),
+                          ),
                       ],
                     );
                   },
@@ -192,7 +207,8 @@ class _InviteTile extends ConsumerWidget {
     final code = invite.code;
     final email = invite.email;
     final primary = email ?? (code == null ? 'Invite' : _formatCode(code));
-    final subtitle = _subtitleFor(invite);
+    final vertical = ref.watch(verticalLabelsProvider).vertical;
+    final subtitle = _subtitleFor(invite, vertical: vertical);
 
     final tile = ListTile(
       leading: CircleAvatar(
@@ -258,14 +274,11 @@ class _InviteTile extends ConsumerWidget {
     return code;
   }
 
-  static String _subtitleFor(Invite invite) {
-    final role = switch (invite.role) {
-      'director' => 'Director',
-      'lead_teacher' => 'Lead teacher',
-      'teacher' => 'Teacher',
-      'assistant' => 'Assistant',
-      _ => invite.role,
-    };
+  static String _subtitleFor(Invite invite, {required String vertical}) {
+    // Route through the agnostic RoleLabels so a hospitality
+    // invite reads "Manager" not the previous hardcoded "Lead
+    // teacher" etc.
+    final role = RoleLabels.of(invite.role, vertical: vertical);
     final expiresLabel = _expiresLabel(invite.expiresAt);
     return '$role · $expiresLabel';
   }

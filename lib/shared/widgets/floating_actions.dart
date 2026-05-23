@@ -16,6 +16,12 @@ class FloatingActions extends StatelessWidget {
   Widget build(BuildContext context) {
     if (children.isEmpty) return const SizedBox.shrink();
     return GlassPill(
+      // Zero outer padding so the pill's outer dimensions equal the
+      // action buttons' dimensions (48dp tall, since
+      // PrimaryActionButton + SecondaryActionButton are now 48×48).
+      // Matches the hamburger/back pills on the left chrome
+      // (which also use GlassPill(padding: EdgeInsets.zero)).
+      padding: EdgeInsets.zero,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
