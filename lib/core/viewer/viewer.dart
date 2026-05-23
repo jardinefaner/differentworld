@@ -118,6 +118,37 @@ class Viewer {
   bool get isDirector =>
       roleKey == 'director' || memberCaps.getBool(MemberCaps.canActAsDirector);
 
+  /// True for any specialist staff — role + cap parity, like
+  /// [isDirector]. The cap is what scheduling / pickup logic checks;
+  /// the role is what the director set when inviting. Either route
+  /// makes the chrome say "Specialist."
+  bool get isSpecialist =>
+      roleKey == 'specialist' || memberCaps.getBool(CoreCaps.isSpecialist);
+
+  /// True for substitutes. Substitutes have a narrower default bundle
+  /// (observe + attendance, no schedule write, no pickup auth) so
+  /// surfaces that distinguish "you're temporary today" read this.
+  bool get isSubstitute => roleKey == 'substitute';
+
+  /// The free-text specialty key on `member.capabilities.specialty`,
+  /// or null when the role is non-specialist or the director hasn't
+  /// chosen one yet. Values come from [SpecialtyKeys]; render through
+  /// [specialtyLabel] for the human-readable form.
+  String? get specialty {
+    final raw = memberCaps.getString(ChildcareCaps.specialty);
+    return (raw == null || raw.isEmpty) ? null : raw;
+  }
+
+  /// Human-readable specialty for the current viewer. Returns null if
+  /// they're not a specialist; "Specialist" (generic) if they're a
+  /// specialist with no specialty chosen yet; otherwise the catalog
+  /// label (e.g. "Coach", "Reading Specialist").
+  String? get specialtyLabel {
+    if (!isSpecialist) return null;
+    final key = specialty;
+    return SpecialtyKeys.labelOf(key);
+  }
+
   /// Can change anyone's role / caps, can revoke invites, can change
   /// program-level toggles. Currently == isDirector but kept as its own
   /// name so screens read intent, not impl.

@@ -560,7 +560,7 @@ surface — preferences + roster + fleet, not primary workflows.
 ## Today
 **Path**: `lib/features/today/`
 **Purpose**: The daily launchpad. Root destination. Context-driven cards: morning (attendance, leading-today, captures); afternoon (pickup, end-of-day capture); director pulse (oversight signals).
-**Personas served**: All staff (Jordan + Coach Sam's home base), Maya / Pat (oversight cards).
+**Personas served**: All staff (Jordan + Coach Sam's home base), Maya / Pat (oversight cards), Coach Sam / Brianna (identity strip surfaces "Specialist · Coach" / "Substitute today" so Sam and Brianna orient at a glance).
 **Discovery surfaces**:
 - Routes: `/` (TodayScreen)
 - Omnibox: yes — "Today"
@@ -573,6 +573,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Today screen* — `lib/features/today/today_screen.dart`. Card list, refresh on pull.
 - *Embedded cards* — leading-today (from Schedule), morning-checklist (from Attendance), recent-captures (from Captures), open-tasks (from Tasks), insights (from Insights), unread-messages (deferred).
 - *Director pulse card* — `_DirectorPulseCard` inside `today_screen.dart`. Director-only proactive pulse: surfaces today's absent kids (from group day state), cohorts running on substitute coverage (from schedule), and certs expiring within 30 days (from certs-in-space). Renders nothing on "all clear" so it never adds noise. Shipped 2026-05-22 (Wave 36).
+- *Identity strip* — `_IdentityStrip` inside `today_screen.dart`. Renders only for specialists ("You are: Specialist · Coach") and substitutes ("You are: Substitute today"); silent for director / lead_teacher / teacher / guardian / kitchen because their context makes the role obvious. Tap → `/settings/roles`. Specialist without a specialty assigned gets a tertiary-tinted hint matching the team-list pattern. Closes the Coach Sam identity gap surfaced by persona-audit 2026-05-23. Shipped Wave 40.
 **Depends on**: nearly everything.
 **Consumed by**: Nothing — Today is a leaf.
 **Last verified**: 2026-05-23

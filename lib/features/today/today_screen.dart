@@ -234,6 +234,13 @@ class _TodayBody extends ConsumerWidget {
                   ? Theme.of(context).colorScheme.error
                   : null,
             ),
+            // Specialist / substitute identity strip — answers the
+            // Coach Sam audit finding ("no UI surface tells Sam what
+            // they are"). Renders nothing for director / lead_teacher
+            // / teacher / guardian because context already makes the
+            // role obvious. Tap → Roles page so Sam can see what their
+            // role can do.
+            const _IdentityStrip(),
             // Morning Checklist is only useful to staff who can
             // actually mark daily routines — hide for read-only viewers.
             if (viewer.isDailyLogger) const _ChecklistCallToAction(),
@@ -693,6 +700,94 @@ class _PulseRow extends StatelessWidget {
             child: Text(label, style: theme.textTheme.bodyMedium),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "You are: …" strip on the Today header — answers the Coach Sam
+/// audit finding from 2026-05-23. Renders only for the roles where
+/// the position isn't obvious from the rest of the chrome:
+///
+///   * **Specialist** — Coach / Tutor / Reading Specialist, etc.
+///     Their cohort scope is determined by group assignments, not
+///     role label, so they need an explicit signal that "specialist"
+///     is what they are.
+///   * **Substitute** — limited default bundle (observe + attendance,
+///     no schedule write, no pickup auth). Saying it on Today helps
+///     Brianna understand why some affordances aren't there for her.
+///
+/// Directors / lead teachers / counselors / kitchen / guardians get
+/// nothing — their context (the data they're looking at, the actions
+/// they have access to) already implies their role. Adding a strip
+/// for them would be chrome noise.
+///
+/// Tap → `/settings/roles` so the user can read what their role can
+/// and can't do. The page is read-only; this is just helping them
+/// orient.
+class _IdentityStrip extends ConsumerWidget {
+  const _IdentityStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    if (!viewer.isSpecialist && !viewer.isSubstitute) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isSpecialist = viewer.isSpecialist;
+    final hasSpecialty = isSpecialist && viewer.specialty != null;
+    // Specialist with no specialty set → director hasn't picked one yet.
+    // Soft-tinted "Tap to set" hint mirrors the team-list flag from
+    // Wave 35 (specialist without specialty shown in tertiary tint).
+    final needsSpecialty = isSpecialist && !hasSpecialty;
+    final icon = isSpecialist
+        ? Icons.school_outlined
+        : Icons.event_busy_outlined;
+    final label = isSpecialist
+        ? (hasSpecialty
+            ? 'You are: Specialist · ${viewer.specialtyLabel}'
+            : 'You are: Specialist · specialty not set')
+        : 'You are: Substitute today';
+    final background = needsSpecialty
+        ? scheme.tertiaryContainer.withValues(alpha: 0.45)
+        : scheme.surfaceContainerHigh;
+    final foreground = needsSpecialty
+        ? scheme.onTertiaryContainer
+        : scheme.onSurface;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push('/settings/roles'),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: foreground),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: foreground.withValues(alpha: 0.7),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
