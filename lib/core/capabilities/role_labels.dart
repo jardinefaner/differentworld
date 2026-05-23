@@ -43,11 +43,23 @@ abstract class RoleLabels {
   // capability_keys.dart — same keys, here just with the human labels.
   // ---------------------------------------------------------------------------
 
+  // Afterschool 4-12 vocabulary (Wave 32). Keys stay generic
+  // (`director`, `lead_teacher`, `teacher`) for backwards-compat
+  // with existing member rows + the engine's vertical-agnostic
+  // contract; the LABELS shift to the afterschool lexicon. If you
+  // ever support a school-day daycare in the same install, swap
+  // these via a settings-level override rather than renaming keys.
+  //
+  // `assistant` label kept for legacy rows; the role is no longer
+  // offered for new members (see `RoleBundles.rolesFor`).
   static const Map<String, String> _childcare = {
-    'director': 'Director',
-    'lead_teacher': 'Lead teacher',
-    'teacher': 'Teacher',
-    'assistant': 'Assistant',
+    'director': 'Program Manager',
+    'lead_teacher': 'Group Leader',
+    'teacher': 'Counselor',
+    'assistant': 'Aide',
+    'substitute': 'Substitute',
+    'specialist': 'Specialist',
+    'kitchen': 'Kitchen Staff',
   };
 
   static const Map<String, String> _construction = {

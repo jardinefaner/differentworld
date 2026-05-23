@@ -86,6 +86,62 @@ abstract class ChildcareCaps {
   static const canRecordDiaper = 'can_record_diaper';
   static const canAdministerMedication = 'can_administer_medication';
   static const canAuthorizePickup = 'can_authorize_pickup';
+
+  /// Free-text specialty key for `role: specialist` members
+  /// (afterschool 4-12). Values come from [SpecialtyKeys]. Stored on
+  /// `member.capabilities.specialty`; null/missing for non-specialists.
+  ///
+  /// Composable: a Group Leader who ALSO coaches doesn't need a
+  /// `lead_coach` role — they're `role: lead_teacher` with their
+  /// specialty stored on the capabilities blob. (Today the UI only
+  /// surfaces specialty for `role: specialist`; future enhancement
+  /// could show it as a secondary tag for any role.)
+  static const specialty = 'specialty';
+}
+
+/// Closed catalog of specialty values for `role: specialist` members.
+/// Keys are stable (used in DB); labels are human-readable.
+abstract class SpecialtyKeys {
+  static const coach = 'coach';
+  static const tutor = 'tutor';
+  static const healthAide = 'health_aide';
+  static const behavior = 'behavior';
+  static const inclusion = 'inclusion';
+  static const reading = 'reading';
+  static const bilingual = 'bilingual';
+
+  /// All known specialties in canonical UI order. Picker chips render
+  /// in this order; doesn't include "Other" — if a program needs a
+  /// novel specialty, add it here rather than typing free-text.
+  static const all = <String>[
+    coach,
+    tutor,
+    healthAide,
+    behavior,
+    inclusion,
+    reading,
+    bilingual,
+  ];
+
+  /// Human label for a specialty key. Unknown keys degrade to a
+  /// title-cased echo of the key so unfamiliar values still render.
+  static String labelOf(String? key) {
+    return switch (key) {
+      coach => 'Coach',
+      tutor => 'Tutor',
+      healthAide => 'Health Aide',
+      behavior => 'Behavior Specialist',
+      inclusion => 'Inclusion Aide',
+      reading => 'Reading Specialist',
+      bilingual => 'Bilingual / ESL Specialist',
+      _ => (key ?? '').isEmpty
+          ? 'Specialist'
+          : key!.replaceAll('_', ' ').split(' ').map((w) {
+              if (w.isEmpty) return w;
+              return w[0].toUpperCase() + w.substring(1);
+            }).join(' '),
+    };
+  }
 }
 
 /// Alias for backward compatibility. Lets the existing call sites
@@ -304,7 +360,14 @@ abstract class RoleBundles {
           'qa',
           'maintenance',
         ],
-      _ => const ['director', 'lead_teacher', 'teacher', 'assistant'],
+      _ => const [
+          'director',
+          'lead_teacher',
+          'teacher',
+          'substitute',
+          'specialist',
+          'kitchen',
+        ],
     };
   }
 
@@ -353,11 +416,33 @@ abstract class RoleBundles {
       ChildcareCaps.canRecordDiaper: true,
       CoreCaps.canManageSchedule: true,
     },
-    'assistant': {
+    // Substitute: temporary coverage (filling in for the day / shift).
+    // Low default trust — can mark attendance + observe, but no
+    // building access, no pickup authorization, no schedule edits.
+    // The hiring director can promote individual caps per substitute
+    // if the substitute is well-known to the program.
+    'substitute': {
+      CoreCaps.canObserve: true,
       CoreCaps.canTakeAttendance: true,
       ChildcareCaps.canRecordMeal: true,
-      ChildcareCaps.canRecordNap: true,
-      ChildcareCaps.canRecordDiaper: true,
+    },
+    // Specialist: subject-matter staff (coach / tutor / health aide /
+    // behavior / inclusion / reading / bilingual). Sees assigned
+    // cohorts only — scoping handled by `group_members` row, not by
+    // the bundle. Their specific area is on member.capabilities
+    // under `ChildcareCaps.specialty` (see catalog there).
+    'specialist': {
+      CoreCaps.canObserve: true,
+      CoreCaps.canTakeAttendance: true,
+      ChildcareCaps.canRecordMeal: true,
+      CoreCaps.canManageSchedule: false,
+      ChildcareCaps.canAuthorizePickup: false,
+    },
+    // Kitchen staff: meals only. Doesn't observe, doesn't take
+    // attendance, doesn't see family contacts. The narrowest staff
+    // role in the childcare bundle.
+    'kitchen': {
+      ChildcareCaps.canRecordMeal: true,
     },
   };
 
