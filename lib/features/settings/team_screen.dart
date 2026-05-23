@@ -150,25 +150,50 @@ class _MemberTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final vertical = ref.watch(verticalLabelsProvider).vertical;
     final roleLabel = RoleLabels.of(member.role, vertical: vertical);
     // For specialists, append the specialty if one is set —
     // "Specialist · Coach" reads more usefully than the bare role.
-    // Falls back to the bare role when specialty is missing
-    // (a specialist whose specialty hasn't been picked yet).
+    // If none is set yet, render "Specialist · choose specialty" in
+    // the warning tint so a director can spot incomplete profiles
+    // from the list, no per-tile drill-in required.
     final specialty = member.role == 'specialist'
         ? member.caps.getString(ChildcareCaps.specialty)
         : null;
-    final subtitle = (specialty != null && specialty.isNotEmpty)
-        ? '$roleLabel · ${SpecialtyKeys.labelOf(specialty)}'
-        : roleLabel;
+    final hasSpecialty = specialty != null && specialty.isNotEmpty;
+    final isSpecialistMissingSpecialty =
+        member.role == 'specialist' && !hasSpecialty;
+
+    final Widget subtitle;
+    if (isSpecialistMissingSpecialty) {
+      // Two-segment subtitle: role in normal tone, "choose specialty"
+      // hint in tertiary so it reads as a soft "please complete."
+      subtitle = Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: roleLabel),
+            const TextSpan(text: ' · '),
+            TextSpan(
+              text: 'choose specialty',
+              style: TextStyle(color: scheme.tertiary),
+            ),
+          ],
+        ),
+      );
+    } else if (hasSpecialty) {
+      subtitle = Text('$roleLabel · ${SpecialtyKeys.labelOf(specialty)}');
+    } else {
+      subtitle = Text(roleLabel);
+    }
     return ListTile(
       leading: PersonAvatar(
         name: member.displayName,
         photoUrl: member.avatarUrl,
       ),
       title: Text(member.displayName),
-      subtitle: Text(subtitle),
+      subtitle: subtitle,
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/settings/team/${member.id}'),
     );
