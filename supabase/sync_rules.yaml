@@ -17,6 +17,46 @@ streams:
     auto_subscribe: true
     query: SELECT * FROM members WHERE id = auth.user_id()
 
+  # Guardian-facing data. Guardians have a `members` row with
+  # `space_id = null` (the `handle_new_user` trigger creates the row
+  # before they accept any family invite), so the `by_space` queries
+  # below evaluate to `IN (NULL)` for them and deliver no rows. This
+  # stream is the family-side counterpart — keyed on
+  # `guardians.user_id = auth.user_id()` so guardian devices get the
+  # data their screens read from Drift.
+  #
+  # Scope is intentionally NARROW: rows keyed DIRECTLY on a single
+  # guardian id, which fit PowerSync's single-level-subquery shape
+  # (the same shape `by_space` already uses).
+  #
+  # Per-subject tables (subjects, attendance_records, entries,
+  # attachments) need a 2-level subquery (subject_id → subject_guardians
+  # → guardian → user_id) which PowerSync's SQL subset may or may not
+  # accept; until we settle that, the family-side providers fetch those
+  # rows via direct PostgREST (see `lib/features/family/family_providers.dart`).
+  by_guardian:
+    auto_subscribe: true
+    queries:
+      # The guardian's own row — drives `currentGuardianProvider` and
+      # the `GuardianViewer` resolution in `viewerProvider`.
+      - SELECT * FROM guardians WHERE user_id = auth.user_id()
+      # The guardian's space — drives `currentSpaceProvider` (which
+      # falls back to `guardian.space_id` when no member row carries it).
+      - SELECT * FROM spaces WHERE id IN (SELECT space_id FROM guardians WHERE user_id = auth.user_id())
+      # Subject ↔ guardian links — drives the per-child fan-out. The
+      # subjects themselves aren't synced here (per-subject 2-level
+      # filter, deferred); family screens fetch them via PostgREST.
+      - SELECT * FROM subject_guardians WHERE guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.user_id())
+      # Messages — staff↔guardian threads. Each row carries the
+      # guardian_id directly, so the same single-level pattern works.
+      # Replaces the RLS-only gate noted in the messages.sql header.
+      - SELECT * FROM messages WHERE guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.user_id())
+      # Export recipient rows — drives the staff-side "Seen by …"
+      # tracker on a guardian's device. The parent `exports` row is
+      # fetched via PostgREST in `myReceivedExportsProvider` because
+      # it needs a 2-level filter (export.id ← export_recipients.guardian_id).
+      - SELECT * FROM export_recipients WHERE guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.user_id())
+
   by_space:
     auto_subscribe: true
     queries:

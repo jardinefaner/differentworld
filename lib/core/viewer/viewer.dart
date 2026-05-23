@@ -227,10 +227,15 @@ final viewerProvider = Provider<Viewer>((ref) {
   final guardian = ref.watch(currentGuardianProvider).value;
   final space = ref.watch(currentSpaceProvider).value;
   if (guardian != null) {
-    final children = ref.watch(myChildrenProvider).value ?? const <Subject>[];
+    // childSubjectIds comes from the local `subject_guardians` mirror
+    // — the `by_guardian` PowerSync stream keeps it warm. Full
+    // `Subject` rows for these IDs are fetched per-screen via
+    // `familyChildrenProvider` (PostgREST) in family_providers.dart.
+    final ids =
+        ref.watch(myChildSubjectIdsProvider).value ?? const <String>[];
     return GuardianViewer(
       guardian: guardian,
-      childSubjectIds: children.map((s) => s.id).toList(),
+      childSubjectIds: ids,
       space: space,
     );
   }

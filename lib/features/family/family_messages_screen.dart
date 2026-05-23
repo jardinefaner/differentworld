@@ -1,7 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -40,7 +40,7 @@ class FamilyMessagesScreen extends ConsumerWidget {
         ),
       );
     }
-    final childrenAsync = ref.watch(myChildrenProvider);
+    final childrenAsync = ref.watch(familyChildrenProvider);
     final allMessages =
         ref.watch(myGuardianMessagesProvider).value ?? const <Message>[];
 
@@ -50,7 +50,7 @@ class FamilyMessagesScreen extends ConsumerWidget {
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
           title: 'Could not load',
-          onRetry: () => ref.invalidate(myChildrenProvider),
+          onRetry: () => ref.invalidate(familyChildrenProvider),
         ),
         data: (children) {
           if (children.isEmpty) {

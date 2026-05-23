@@ -1,11 +1,16 @@
 import 'package:differentworld/core/db/app_database.dart';
-import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+// `entries_providers.dart` is imported for `EntryKind` constants only —
+// the per-subject reads route through `family_providers.dart` because
+// the local Drift mirror is empty for guardians (see file header there).
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
+import 'package:differentworld/features/family/family_providers.dart';
+// `attachments_providers.dart` is imported for the `AttachmentsX`
+// `.urls` / `.thumbUrls` extension; the read itself goes via
+// `familyAttachmentsForEntityProvider`.
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
@@ -42,7 +47,7 @@ class FamilyTodayScreen extends ConsumerWidget {
       return const EdgeScaffold(body: SizedBox.shrink());
     }
     final space = viewer.space;
-    final childrenAsync = ref.watch(myChildrenProvider);
+    final childrenAsync = ref.watch(familyChildrenProvider);
 
     return EdgeScaffold(
       showBack: false,
@@ -66,7 +71,7 @@ class FamilyTodayScreen extends ConsumerWidget {
         loading: () => const LoadingSlot(variant: LoadingVariant.cards),
         error: (_, _) => ErrorState(
           title: 'Could not load',
-          onRetry: () => ref.invalidate(myChildrenProvider),
+          onRetry: () => ref.invalidate(familyChildrenProvider),
         ),
         data: (children) {
           if (children.isEmpty) {
@@ -112,23 +117,20 @@ class _FamilyTodayList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Flag-first subtitle: warmer voice when everyone's accounted for,
     // an actionable line when at least one of "your kids" is flagged.
+    // Reads each kid's row via the family per-subject PostgREST provider
+    // (the staff-side `attendanceForDayProvider` is per-group + reads
+    // local Drift, which is empty for guardians).
     final flagged = <Subject>[];
     for (final c in children) {
-      final groupId = c.groupId;
-      if (groupId == null) continue;
-      final records = ref
-              .watch(attendanceForDayProvider(
-                (groupId: groupId, date: _todayIso),
-              ))
-              .value ??
-          const <AttendanceRecord>[];
-      for (final r in records) {
-        if (r.subjectId != c.id) continue;
-        final s = AttendanceStatus.fromDb(r.status);
-        if (s == AttendanceStatus.late || s == AttendanceStatus.absent) {
-          flagged.add(c);
-        }
-        break;
+      final myRecord = ref
+          .watch(familyAttendanceForSubjectProvider(
+            (subjectId: c.id, dateIso: _todayIso),
+          ))
+          .value;
+      if (myRecord == null) continue;
+      final s = AttendanceStatus.fromDb(myRecord.status);
+      if (s == AttendanceStatus.late || s == AttendanceStatus.absent) {
+        flagged.add(c);
       }
     }
 
@@ -209,22 +211,11 @@ class _ChildCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final groupId = child.groupId;
-    final recordsAsync = groupId == null
-        ? const AsyncValue<List<AttendanceRecord>>.data([])
-        : ref.watch(
-            attendanceForDayProvider(
-              (groupId: groupId, date: _todayIso),
-            ),
-          );
-    AttendanceRecord? myRecord;
-    final all = recordsAsync.value ?? const <AttendanceRecord>[];
-    for (final r in all) {
-      if (r.subjectId == child.id) {
-        myRecord = r;
-        break;
-      }
-    }
+    final myRecord = ref
+        .watch(familyAttendanceForSubjectProvider(
+          (subjectId: child.id, dateIso: _todayIso),
+        ))
+        .value;
     final status = myRecord == null
         ? null
         : AttendanceStatus.fromDb(myRecord.status);
@@ -487,7 +478,7 @@ class _PhotoOfTheMomentPeek extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final entriesAsync = ref.watch(
-      entriesForSubjectProvider(
+      familyEntriesForSubjectProvider(
         (subjectId: subjectId, kind: EntryKind.observation),
       ),
     );
@@ -513,8 +504,8 @@ class _PhotoOfTheMomentPeek extends ConsumerWidget {
     }
     if (todayEntry == null) return const SizedBox.shrink();
     final attachmentsAsync = ref.watch(
-      attachmentsForEntityProvider(
-        (kind: 'entry', id: todayEntry.id),
+      familyAttachmentsForEntityProvider(
+        (kind: 'entry', id: todayEntry.id, subjectId: subjectId),
       ),
     );
     final urls = attachmentsAsync.value?.urls ?? const <String>[];

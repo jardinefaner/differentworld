@@ -190,13 +190,14 @@ surface — preferences + roster + fleet, not primary workflows.
 - Drawer: no — guardian sees a different drawer (TBD); today drawer is staff-only
 - Settings: no
 **Capabilities**: Guardian role (`member.role == 'guardian'` AND `guardians.user_id == auth.uid()`).
-**Data**: [messages](SCHEMA.md#messages), [subjects](SCHEMA.md#subjects) (read-only via direct PostgREST — not in `by_space` stream), [subject_guardians](SCHEMA.md#subject_guardians)
+**Data**: [guardians](SCHEMA.md#guardians) (offline-first via `by_guardian` stream), [spaces](SCHEMA.md#spaces) (offline-first via `by_guardian` stream), [subject_guardians](SCHEMA.md#subject_guardians) (offline-first via `by_guardian` stream), [messages](SCHEMA.md#messages) (offline-first via `by_guardian` stream), [export_recipients](SCHEMA.md#export_recipients) (offline-first via `by_guardian` stream), [subjects](SCHEMA.md#subjects) (direct PostgREST — 2-level subquery deferred), [attendance_records](SCHEMA.md#attendance_records) (direct PostgREST — 2-level subquery deferred), [entries](SCHEMA.md#entries) (direct PostgREST — 2-level subquery deferred), [attachments](SCHEMA.md#attachments) (direct PostgREST — 2-level subquery deferred), [exports](SCHEMA.md#exports) (direct PostgREST via `myReceivedExportsProvider`)
 **Surfaces**:
-- *Family today* — `lib/features/family/family_today_screen.dart`. Each linked child's card; recent observation count, today's activity. Header carries a Display action that opens the shared text-size sheet (Helen-persona; guardians never reach `/settings`). Photo-of-the-moment shipped 2026-05-22. Wave 39 added a `_ReceivedReportsCard` above the kid list that surfaces the most recent progress-report PDFs the staff have sent the guardian (closes the last Tier-B audit item). The card reads via **direct PostgREST**, not the local Drift mirror — guardians' `members.space_id = null` so the `by_space` sync stream delivers nothing to them. Same constraint applies to the rest of the family lens (messages, subject detail), where the providers currently still read from Drift — a latent bug worth fixing with a `by_guardian` PowerSync stream or migrating to the same direct-PostgREST pattern.
-- *Family subject detail* — `lib/features/family/family_subject_detail_screen.dart`. Read-only child profile + photo gallery.
-- *Family messages index* — `lib/features/family/family_messages_screen.dart`. Per-child thread list.
+- *Family today* — `lib/features/family/family_today_screen.dart`. Each linked child's card; recent observation count, today's activity. Header carries a Display action that opens the shared text-size sheet (Helen-persona; guardians never reach `/settings`). Photo-of-the-moment shipped 2026-05-22. Wave 39 added a `_ReceivedReportsCard` above the kid list that surfaces the most recent progress-report PDFs the staff have sent the guardian. Per-child reads (subjects, attendance, entries, attachments) route through `family_providers.dart` via direct PostgREST — the 2-level subquery needed for PowerSync's `by_guardian` stream is deferred. Row-keyed tables (guardians, spaces, subject_guardians, messages, export_recipients) are now offline-first via the `by_guardian` stream.
+- *Family subject detail* — `lib/features/family/family_subject_detail_screen.dart`. Read-only child profile + photo gallery. Reads subjects + attachments via `familySubjectByIdProvider` / `familyAttachmentsForEntityProvider` (PostgREST, gated by `viewer.canSeeSubject`).
+- *Family messages index* — `lib/features/family/family_messages_screen.dart`. Per-child thread list. Messages now offline-first via `by_guardian` stream.
 - *Message thread screen* — `lib/features/messages/message_thread_screen.dart` (cross-feature — see Messages).
-**Depends on**: Subjects (direct PostgREST), Guardians, Messages, Settings (shared text-size sheet), Exports (received-reports card reads `myReceivedExportsProvider`).
+- *Family providers* — `lib/features/family/family_providers.dart`. Five `FutureProvider.autoDispose` PostgREST-backed providers: `familyChildrenProvider`, `familySubjectByIdProvider`, `familyAttendanceForSubjectProvider`, `familyEntriesForSubjectProvider`, `familyAttachmentsForEntityProvider`. All gate on `viewer is GuardianViewer` + `viewer.canSeeSubject(subjectId)`. Replaces the prior Drift reads for per-subject data that the `by_space` stream never delivers to guardian devices.
+**Depends on**: Subjects (PostgREST), Guardians, Messages (offline-first via `by_guardian`), Settings (shared text-size sheet), Exports (received-reports card reads `myReceivedExportsProvider`).
 **Consumed by**: Nothing — this is a leaf lens.
 **Last verified**: 2026-05-23
 
@@ -633,6 +634,13 @@ in. Run `Agent persona-audit` to refresh.
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
 
+_Run 2026-05-23 (family-lens sync fix)_ — no unresolved discovery drift; no route, omnibox, slash, drawer, or settings claims changed. Updates applied this run:
+- **Family** — `**Data**` field rewritten to distinguish offline-first tables (guardians, spaces, subject_guardians, messages, export_recipients — served by the new `by_guardian` PowerSync stream) from direct-PostgREST reads (subjects, attendance_records, entries, attachments — 2-level subquery deferred — and exports via `myReceivedExportsProvider`). The prior "latent bug" note removed; the `by_guardian` stream resolves it for the row-keyed tables. Per-subject tables remain PostgREST-only pending 2-level subquery verification.
+- **Family** — Surfaces sublist expanded: `family_providers.dart` entry added; subject-detail and messages-index surface descriptions updated to name the backing providers and their offline-first status.
+- **Family** — Depends-on updated: Messages now noted as offline-first via `by_guardian`.
+- SCHEMA.md — `by_guardian` stream added to sync-rule fields for guardians, spaces, subject_guardians, messages, and export_recipients. Family added to Consumers of all five tables where not already present.
+- Cross-link reconcile: all (Family → table) claims in FEATURES.md verified bidirectional in SCHEMA.md. No drift found.
+
 _Run 2026-05-22 (Wave 24 omnibox interaction hardening)_ — no
 unresolved discovery drift; routes, omnibox catalog, slash
 commands, drawer, and settings claims all verified against
@@ -724,7 +732,7 @@ All other discovery claims verified against `router.dart`,
 
 ---
 
-_Last full registry verification: 2026-05-22 (Wave 24 omnibox interaction hardening)._
+_Last full registry verification: 2026-05-23 (family-lens sync fix)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._

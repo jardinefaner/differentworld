@@ -60,15 +60,46 @@ final currentGuardianProvider = StreamProvider<Guardian?>((ref) {
   return db.guardiansDao.watchForUser(session.user.id);
 });
 
-/// The list of children the signed-in guardian is linked to. Empty
-/// for anyone but a guardian. Re-emits when subject_guardians changes.
-final myChildrenProvider = StreamProvider<List<Subject>>((ref) {
+/// IDs of the children the signed-in guardian is linked to. Offline-
+/// first: reads the local `subject_guardians` mirror (delivered by
+/// the `by_guardian` PowerSync stream — see `supabase/sync_rules.yaml`).
+///
+/// Used by `viewerProvider` to seed `GuardianViewer.childSubjectIds`
+/// without a PostgREST round-trip. Full `Subject` rows for these IDs
+/// come from `familyChildrenProvider` (PostgREST) in
+/// `lib/features/family/family_providers.dart` — `subjects` themselves
+/// don't sync to a guardian's device under the current narrow
+/// `by_guardian` scope.
+///
+/// Empty for staff viewers — they have no guardian row.
+final myChildSubjectIdsProvider = StreamProvider<List<String>>((ref) {
   final guardian = ref.watch(currentGuardianProvider).value;
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
-  if (guardian == null || db == null) return Stream<List<Subject>>.value([]);
-  return db.guardiansDao.watchChildrenFor(guardian.id);
+  if (guardian == null || db == null) {
+    return Stream<List<String>>.value(const []);
+  }
+  // `viewerProvider` watches this stream, so every emission rebuilds
+  // the viewer and re-fires every family provider that depends on it.
+  // Drift watches re-emit on ANY column write to a matching row — so
+  // a touch to `is_primary` or a `created_at` re-stamp would cascade
+  // a full PostgREST refetch storm. Dedupe to id-set equality:
+  // emit only when the visible kid roster actually changes.
+  return (db.select(db.subjectGuardians)
+        ..where((sg) => sg.guardianId.equals(guardian.id)))
+      .watch()
+      .map((rows) => rows.map((r) => r.subjectId).toList())
+      .distinct(_listEquals);
 });
+
+bool _listEquals(List<String> a, List<String> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
 
 /// Live view of any Member by ID. Drives "who's driving" labels and
 /// similar callsites. Cheap because each Member row is small; safe to

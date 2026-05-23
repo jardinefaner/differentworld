@@ -829,27 +829,73 @@ migration `20260517000001_restore_role_grants.sql`. Any time you `drop
 schema public cascade` for any reason in dev, re-run that GRANT block
 or all subsequent CRUD breaks silently.
 
-### Guardians don't sync space-scoped tables via `by_space`
+### Family lens — what reaches a guardian device, and what doesn't
 The `by_space` stream gates every query on
 `space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`.
-A guardian doesn't have a `members` row (they're in `guardians`), so
-the membership subquery is empty and **no rows from `by_space` reach
-their device via the live stream.** This is intentional: most of
-`by_space` is staff-only data (attendance, observations, vehicle
-logs).
+A guardian has a `members` row (the `handle_new_user` trigger creates
+one for every auth identity) but its `space_id` is null — they live
+in `guardians`, keyed by `user_id`. So `by_space`'s membership
+subquery evaluates to `IN (NULL)` and **no rows from `by_space` ever
+reach a guardian's device.** Intentional for the heavy staff-only
+data (vehicle logs, observation feed for every kid in the program),
+but it leaves the family lens with an empty mirror.
 
-The exception is anything a guardian explicitly needs to see:
-`messages` already has a per-thread RLS branch on
-`guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.uid())`
-so the family lens reads via direct PostgREST queries rather than
-the PowerSync mirror. Same for `exports` + `export_recipients` —
-RLS gates by recipient, but the PowerSync mirror never populates
-locally on the guardian side.
+The fix has two pieces:
 
-**If you build a guardian-facing list of *anything*** (My reports,
-My captures, etc.), wire it to a dedicated stream or fall back to
-direct Supabase reads — don't expect the local Drift mirror to
-have the data.
+**1. `by_guardian` PowerSync stream** (in `supabase/sync_rules.yaml`).
+Mirrors the per-guardian rows the family lens reads, keyed on
+`guardians.user_id = auth.user_id()`. Five single-level subqueries
+— the same shape `by_space` uses — so we know the PowerSync SQL
+subset accepts them:
+- `guardians` — the guardian's own row (drives `currentGuardianProvider`)
+- `spaces` — the guardian's program (drives `currentSpaceProvider`)
+- `subject_guardians` — child links (drives `myChildSubjectIdsProvider`)
+- `messages` — staff↔guardian threads (drives every messages provider)
+- `export_recipients` — recipient rows (audit-side; the parent
+  `exports` row still comes via PostgREST because it'd need a 2-level
+  subquery)
+
+These reads are **offline-first** for guardians — Drift watches keep
+the UI live, mutations queue locally just like staff.
+
+**2. PostgREST stopgap for per-subject reads.** Subjects, attendance
+records, entries, attachments are keyed on `subject_id` and need a
+2-level subquery (`subject_id → subject_guardians → guardian →
+user_id`) which PowerSync's SQL subset hasn't been verified to
+accept. Until we settle that, family-side reads of those tables go
+through direct PostgREST in `lib/features/family/family_providers.dart`:
+- `familyChildrenProvider` (replaces `myChildrenProvider` for the
+  family path)
+- `familySubjectByIdProvider`
+- `familyAttendanceForSubjectProvider`
+- `familyEntriesForSubjectProvider`
+- `familyAttachmentsForEntityProvider`
+
+RLS on these tables is loose-via-`for all using (true)` (see
+migration 20260517000003) so PostgREST returns rows for any
+authenticated caller; each provider re-checks `viewer.canSeeSubject(id)`
+as a defensive layer. Trade-off: these reads are NOT offline-first
+— a cold launch without network shows empty until the round-trip
+lands. Acceptable for the per-child timeline; messages stay
+offline-first because they go through the new stream.
+
+**When adding new family-facing data:**
+- If the row is keyed directly on a single guardian id → add it to
+  `by_guardian` with the existing 1-level-subquery pattern. Stays
+  offline-first.
+- If the row is per-subject → add a `familyXProvider` PostgREST
+  fetcher next to the others. Document the same trade-off.
+- A future improvement is to test whether PowerSync accepts the
+  2-level subquery for `subjects` / per-subject rows. If yes, the
+  family lens becomes fully offline-first. If not, denorm
+  `guardian_user_ids jsonb` on each per-subject table (populated by
+  triggers from `subject_guardians`).
+
+**Adding to or changing `by_guardian` requires a PowerSync dashboard
+deploy** — the YAML in the repo is the source of truth; the dashboard
+is the runtime. After deploy, every signed-in guardian device needs a
+local-storage wipe (uninstall on mobile; "Clear site data" on web)
+to recreate the local SQLite with the new tables.
 
 ---
 

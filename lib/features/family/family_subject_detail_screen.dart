@@ -1,13 +1,11 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
-import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -34,7 +32,7 @@ class FamilySubjectDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
-    final subjectAsync = ref.watch(subjectByIdProvider(subjectId));
+    final subjectAsync = ref.watch(familySubjectByIdProvider(subjectId));
 
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
@@ -42,7 +40,8 @@ class FamilySubjectDetailScreen extends ConsumerWidget {
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
           title: 'Could not load',
-          onRetry: () => ref.invalidate(subjectByIdProvider(subjectId)),
+          onRetry: () =>
+              ref.invalidate(familySubjectByIdProvider(subjectId)),
         ),
         data: (subject) {
           if (subject == null) {
@@ -173,21 +172,11 @@ class _TodayCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final groupId = subject.groupId;
-    final recordsAsync = groupId == null
-        ? const AsyncValue<List<AttendanceRecord>>.data([])
-        : ref.watch(
-            attendanceForDayProvider(
-              (groupId: groupId, date: _todayIso),
-            ),
-          );
-    AttendanceRecord? myRecord;
-    for (final r in recordsAsync.value ?? const <AttendanceRecord>[]) {
-      if (r.subjectId == subject.id) {
-        myRecord = r;
-        break;
-      }
-    }
+    final myRecord = ref
+        .watch(familyAttendanceForSubjectProvider(
+          (subjectId: subject.id, dateIso: _todayIso),
+        ))
+        .value;
     final status =
         myRecord == null ? null : AttendanceStatus.fromDb(myRecord.status);
 
@@ -245,7 +234,7 @@ class _TodayObservations extends ConsumerWidget {
     final theme = Theme.of(context);
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    final entriesAsync = ref.watch(entriesForSubjectProvider(
+    final entriesAsync = ref.watch(familyEntriesForSubjectProvider(
       (subjectId: subjectId, kind: 'observation'),
     ));
     final todays = (entriesAsync.value ?? const <Entry>[])
@@ -289,7 +278,7 @@ class _RecentObservations extends ConsumerWidget {
     final now = DateTime.now();
     final cutoff =
         DateTime(now.year, now.month, now.day - 7);
-    final entriesAsync = ref.watch(entriesForSubjectProvider(
+    final entriesAsync = ref.watch(familyEntriesForSubjectProvider(
       (subjectId: subjectId, kind: 'observation'),
     ));
     final today = DateTime(now.year, now.month, now.day);
