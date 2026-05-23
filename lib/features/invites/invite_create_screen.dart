@@ -91,9 +91,9 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // Roles offered per active vertical — childcare's director /
-    // lead_teacher / teacher / assistant, construction's pm / foreman
-    // / etc. Drives both the chip labels and the role key written
-    // into the invite row.
+    // lead_teacher / teacher / substitute / specialist / kitchen,
+    // construction's pm / foreman / etc. Drives both the chip labels
+    // and the role key written into the invite row.
     final labels = ref.watch(verticalLabelsProvider);
     final roles = RoleBundles.rolesFor(labels.vertical);
     // Seed the picker with the most "common-staff" role for this
@@ -119,6 +119,7 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [
               for (final key in roles)
                 ChoiceChip(
@@ -132,6 +133,44 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
                 ),
             ],
           ),
+          // Specialist hint — invite carries the role only; the
+          // specialty (coach / tutor / etc.) is set per-member on the
+          // Team detail screen after they accept. Surfacing the hint
+          // here so the director knows what to do next instead of
+          // hunting for a specialty field that isn't on the invite.
+          if (selected == 'specialist') ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.tertiaryContainer.withValues(
+                  alpha: 0.4,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.school_outlined,
+                    size: 18,
+                    color: theme.colorScheme.tertiary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'After they accept, open their profile in Team to '
+                      'set their specialty (coach, tutor, health aide, '
+                      'and others).',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onTertiaryContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           TextField(
             controller: _emailController,

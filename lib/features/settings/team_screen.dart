@@ -1,3 +1,5 @@
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
@@ -149,13 +151,24 @@ class _MemberTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vertical = ref.watch(verticalLabelsProvider).vertical;
+    final roleLabel = RoleLabels.of(member.role, vertical: vertical);
+    // For specialists, append the specialty if one is set —
+    // "Specialist · Coach" reads more usefully than the bare role.
+    // Falls back to the bare role when specialty is missing
+    // (a specialist whose specialty hasn't been picked yet).
+    final specialty = member.role == 'specialist'
+        ? member.caps.getString(ChildcareCaps.specialty)
+        : null;
+    final subtitle = (specialty != null && specialty.isNotEmpty)
+        ? '$roleLabel · ${SpecialtyKeys.labelOf(specialty)}'
+        : roleLabel;
     return ListTile(
       leading: PersonAvatar(
         name: member.displayName,
         photoUrl: member.avatarUrl,
       ),
       title: Text(member.displayName),
-      subtitle: Text(RoleLabels.of(member.role, vertical: vertical)),
+      subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/settings/team/${member.id}'),
     );

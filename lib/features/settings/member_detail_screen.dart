@@ -67,6 +67,16 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     }
   }
 
+  Future<void> _setSpecialty(String? specialty) async {
+    try {
+      await ref
+          .read(memberCapActionsProvider)
+          .setSpecialty(widget.memberId, specialty);
+    } on Exception catch (e, st) {
+      _onSaveError(e, st);
+    }
+  }
+
   Future<void> _toggleCert(String certKey, bool add) async {
     try {
       final actions = ref.read(certActionsProvider);
@@ -221,6 +231,34 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                                 'Only a director can change roles.',
                               ),
                             ),
+                          // Specialty picker — only relevant for
+                          // `role: specialist`. Directors edit it;
+                          // others see it as a read-only label inline
+                          // with the role above.
+                          if (currentRole == 'specialist') ...[
+                            const SizedBox(height: 16),
+                            const _SectionLabel(label: 'Specialty'),
+                            if (canManage)
+                              _SpecialtySelector(
+                                selected:
+                                    member.caps.getString(ChildcareCaps.specialty),
+                                onChanged: _setSpecialty,
+                              )
+                            else
+                              ListTile(
+                                leading: const Icon(Icons.school_outlined),
+                                title: Text(
+                                  SpecialtyKeys.labelOf(
+                                    member.caps.getString(
+                                      ChildcareCaps.specialty,
+                                    ),
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Only a director can change specialty.',
+                                ),
+                              ),
+                          ],
                           if (_error != null)
                             Padding(
                               padding: const EdgeInsets.fromLTRB(
@@ -643,6 +681,48 @@ class _RoleSelector extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Specialty picker for `role: specialist` members (afterschool 4-12).
+/// Reads / writes `member.capabilities.specialty`. The 7 catalog
+/// values come from [SpecialtyKeys.all]; null means "no specialty
+/// chosen yet" — the picker shows nothing selected and the team-list
+/// row reads "Specialist" without a suffix.
+class _SpecialtySelector extends StatelessWidget {
+  const _SpecialtySelector({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  /// Current specialty key (null if unset).
+  final String? selected;
+
+  /// Receives the new key, or null when the user re-taps the
+  /// currently-selected chip to clear it.
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          for (final key in SpecialtyKeys.all)
+            ChoiceChip(
+              label: Text(SpecialtyKeys.labelOf(key)),
+              selected: selected == key,
+              onSelected: (s) {
+                // Re-tapping the selected chip clears the choice; any
+                // other tap sets that chip as the new specialty.
+                onChanged(s ? key : null);
+              },
             ),
         ],
       ),

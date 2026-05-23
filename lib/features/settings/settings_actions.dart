@@ -50,6 +50,21 @@ class MemberCapActions {
     });
   }
 
+  /// Set the specialty for `role: specialist` members
+  /// (afterschool 4-12 — coach / tutor / health_aide / etc.). Stored
+  /// on `member.capabilities.specialty`. Pass null to clear.
+  ///
+  /// Idempotent: writes through the same `caps.setting()` shape as
+  /// boolean caps; `Capabilities` is a JSONB-backed bag and accepts
+  /// any `Object?` value.
+  Future<void> setSpecialty(String memberId, String? specialty) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final m = await db.membersDao.findById(memberId);
+    if (m == null) return;
+    final caps = m.caps.setting(ChildcareCaps.specialty, specialty);
+    await db.membersDao.updateCapabilities(memberId, caps.toJson());
+  }
+
   // Cert add/remove + expiry moved to CertActions in
   // lib/features/certifications/certifications_providers.dart now that
   // certifications are a first-class entity (UX_DECISIONS §8).
