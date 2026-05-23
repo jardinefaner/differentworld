@@ -48,11 +48,19 @@ class MembersDao extends DatabaseAccessor<AppDatabase>
   /// like `'guardian'` would queue locally, get rejected by PostgREST
   /// during upload with `22P02 / invalid input value for enum`, and
   /// then retry forever — blocking every later op behind it.
+  /// Mirrors the Postgres `member_role` enum. Updated in Wave 33 to
+  /// the afterschool 4-12 catalog (substitute / specialist / kitchen
+  /// replaced the old `assistant`). Keep in sync with migration
+  /// `20260522000001_afterschool_role_catalog.sql` and `guardian`
+  /// stays for the family lens.
   static const _allowedRoles = {
     'director',
     'lead_teacher',
     'teacher',
-    'assistant',
+    'substitute',
+    'specialist',
+    'kitchen',
+    'guardian',
   };
 
   /// Updates a member's role using the typed Drift API so PowerSync's

@@ -43,20 +43,19 @@ abstract class RoleLabels {
   // capability_keys.dart — same keys, here just with the human labels.
   // ---------------------------------------------------------------------------
 
-  // Afterschool 4-12 vocabulary (Wave 32). Keys stay generic
-  // (`director`, `lead_teacher`, `teacher`) for backwards-compat
-  // with existing member rows + the engine's vertical-agnostic
-  // contract; the LABELS shift to the afterschool lexicon. If you
-  // ever support a school-day daycare in the same install, swap
-  // these via a settings-level override rather than renaming keys.
+  // Afterschool 4-12 vocabulary. Keys stay generic (`director`,
+  // `lead_teacher`, `teacher`) for backwards-compat with existing
+  // member rows + the engine's vertical-agnostic contract; the
+  // LABELS shift to the afterschool lexicon.
   //
-  // `assistant` label kept for legacy rows; the role is no longer
-  // offered for new members (see `RoleBundles.rolesFor`).
+  // `assistant` is intentionally absent — the role was retired and
+  // replaced by `substitute`. Any legacy `role='assistant'` rows
+  // will fall back to the default "Signed in" label, which is the
+  // intended cue to migrate them.
   static const Map<String, String> _childcare = {
     'director': 'Program Manager',
     'lead_teacher': 'Group Leader',
     'teacher': 'Counselor',
-    'assistant': 'Aide',
     'substitute': 'Substitute',
     'specialist': 'Specialist',
     'kitchen': 'Kitchen Staff',

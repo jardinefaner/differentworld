@@ -1,0 +1,41 @@
+-- ---------------------------------------------------------------------------
+-- Afterschool 4-12 role catalog — extend public.member_role.
+--
+-- Wave 32 reshaped the childcare role bundle for afterschool programs:
+--
+--   OFFERED ROLES (post-Wave-32):
+--     director       → "Program Manager"   (label change)
+--     lead_teacher   → "Group Leader"      (label change)
+--     teacher        → "Counselor"         (label change)
+--     substitute     → "Substitute"        (NEW)
+--     specialist     → "Specialist"        (NEW; specialty key on caps)
+--     kitchen        → "Kitchen Staff"     (NEW)
+--
+--   RETIRED:
+--     assistant      — no longer offered for new members. Existing rows
+--                      with role='assistant' (if any) continue to read; the
+--                      app shows "Signed in" as a fallback label, which is
+--                      the intended cue to migrate them.
+--
+-- Why three migrations-worth of new enum values in one file? Postgres'
+-- `ALTER TYPE … ADD VALUE` is cheap (no table rewrite) and each value is
+-- idempotent via `IF NOT EXISTS`. Bundling them keeps the wave a single
+-- DB checkpoint.
+--
+-- Why NOT remove 'assistant'? Postgres has no `DROP VALUE` — removing an
+-- enum member requires creating a new type, swapping the column, dropping
+-- the old type. The Dart side stops offering 'assistant' (see
+-- `MembersDao._allowedRoles`); leaving the enum value in place means any
+-- legacy row keeps loading fine, just without a label. Drop it for real
+-- in a later wave once we've confirmed no rows hold it.
+--
+-- Re: transactional safety — PG 12+ permits ALTER TYPE ADD VALUE inside a
+-- transaction (Supabase runs PG 15). The new values can't be referenced by
+-- other statements in the same transaction; that's fine here, nothing else
+-- in this migration uses them. PostgREST reloads its schema cache on the
+-- next tick after the migration commits.
+-- ---------------------------------------------------------------------------
+
+alter type public.member_role add value if not exists 'substitute';
+alter type public.member_role add value if not exists 'specialist';
+alter type public.member_role add value if not exists 'kitchen';
