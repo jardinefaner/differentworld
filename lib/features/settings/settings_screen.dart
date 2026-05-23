@@ -5,7 +5,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
-import 'package:differentworld/features/settings/text_scale_setting.dart';
+import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -157,7 +157,7 @@ class SettingsScreen extends ConsumerWidget {
           const _SettingsGroup(
             label: 'Preferences',
             children: [
-              _TextSizeTile(),
+              TextSizeTile(),
               _SettingsDivider(),
               _OutdoorModeTile(),
             ],
@@ -291,84 +291,6 @@ class _SettingsDivider extends StatelessWidget {
           ),
     );
   }
-}
-
-/// Text-size override picker. Default leaves the OS dynamic-type
-/// slider in charge; "Large" or "Extra large" clamps to a higher
-/// floor (1.3x / 1.5x) so users like the Helen persona can boost the
-/// Different World UI without changing their device-wide font size.
-///
-/// The shim that actually applies the override lives in
-/// `lib/app/app.dart` (AppTextScaleApplier wrapper around
-/// MaterialApp's builder). This tile just persists the user's pick.
-class _TextSizeTile extends ConsumerWidget {
-  const _TextSizeTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final modeAsync = ref.watch(textScaleSettingProvider);
-    final mode = modeAsync.value ?? TextScaleMode.systemDefault;
-    return ListTile(
-      leading: const Icon(Icons.format_size_outlined),
-      title: const Text('Text size'),
-      subtitle: Text(mode.label),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () async {
-        final picked = await showModalBottomSheet<TextScaleMode>(
-          context: context,
-          showDragHandle: true,
-          builder: (sheetContext) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // RadioGroup is the supported wrapper post-3.32.0;
-                    // each RadioListTile inside it reads the group
-                    // value and reports changes up through this single
-                    // onChanged. Popping the sheet with the picked
-                    // mode lets the caller persist it.
-                    RadioGroup<TextScaleMode>(
-                      groupValue: mode,
-                      onChanged: (m) {
-                        if (m == null) return;
-                        Navigator.of(sheetContext).pop(m);
-                      },
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final option in TextScaleMode.values)
-                            RadioListTile<TextScaleMode>(
-                              title: Text(option.label),
-                              subtitle: Text(_subtitle(option)),
-                              value: option,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-        if (picked != null) {
-          await ref.read(textScaleSettingProvider.notifier).set(picked);
-        }
-      },
-    );
-  }
-
-  static String _subtitle(TextScaleMode option) => switch (option) {
-        TextScaleMode.systemDefault =>
-          'Use the size from your phone / tablet settings.',
-        TextScaleMode.large => 'Boost everywhere — about 130% of the default.',
-        TextScaleMode.extraLarge =>
-          'Boost more — about 150%. Some labels may wrap.',
-      };
 }
 
 /// Outdoor (high-contrast) mode picker. Jordan persona's daily

@@ -192,13 +192,13 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: Guardian role (`member.role == 'guardian'` AND `guardians.user_id == auth.uid()`).
 **Data**: [messages](SCHEMA.md#messages), [subjects](SCHEMA.md#subjects) (read-only via direct PostgREST — not in `by_space` stream), [subject_guardians](SCHEMA.md#subject_guardians)
 **Surfaces**:
-- *Family today* — `lib/features/family/family_today_screen.dart`. Each linked child's card; recent observation count, today's activity. Photo-of-the-moment deferred for Lauren.
+- *Family today* — `lib/features/family/family_today_screen.dart`. Each linked child's card; recent observation count, today's activity. Header carries a Display action that opens the shared text-size sheet (Helen-persona; guardians never reach `/settings`). Photo-of-the-moment shipped 2026-05-22.
 - *Family subject detail* — `lib/features/family/family_subject_detail_screen.dart`. Read-only child profile + photo gallery.
 - *Family messages index* — `lib/features/family/family_messages_screen.dart`. Per-child thread list.
 - *Message thread screen* — `lib/features/messages/message_thread_screen.dart` (cross-feature — see Messages).
-**Depends on**: Subjects (direct PostgREST), Guardians, Messages.
+**Depends on**: Subjects (direct PostgREST), Guardians, Messages, Settings (shared text-size sheet).
 **Consumed by**: Nothing — this is a leaf lens.
-**Last verified**: 2026-05-21
+**Last verified**: 2026-05-23
 
 ---
 
@@ -468,24 +468,26 @@ surface — preferences + roster + fleet, not primary workflows.
 ## Settings
 **Path**: `lib/features/settings/`
 **Purpose**: Library / admin surfaces — program config, team, fleet, locations, activities, member detail, plus device preferences.
-**Personas served**: Maya (all of it), All staff (preferences + read-only team / vehicles), Helen (text-size override), Jordan (outdoor-mode toggle).
+**Personas served**: Maya (all of it), All staff (preferences + read-only team / vehicles), Helen (text-size override, also reachable from Family Today header), Jordan (outdoor-mode toggle).
 **Discovery surfaces**:
-- Routes: `/settings`, `/settings/program`, `/settings/team`, `/settings/team/:id`, `/settings/vehicles`, `/settings/locations`. (Activities lives at `/activities`, not under settings, because it's used more often than configured.)
-- Omnibox: yes — "Settings", "Program settings", "Team", "Vehicles", "Locations", "Activities"
+- Routes: `/settings`, `/settings/program`, `/settings/team`, `/settings/team/:id`, `/settings/roles`, `/settings/vehicles`, `/settings/locations`. (Activities lives at `/activities`, not under settings, because it's used more often than configured.)
+- Omnibox: yes — "Settings", "Program settings", "Team", "Roles & permissions", "Vehicles", "Locations", "Activities"
 - Slash: none directly; sub-features may add some later
 - Drawer: yes — "Settings" (main destinations, position 5)
 - Settings: this IS the settings screen
-**Capabilities**: Read: all members. Program settings: `can_manage_space`. Team write / vehicles write: `can_manage_space`.
-**Data**: [spaces](SCHEMA.md#spaces), [members](SCHEMA.md#members), [locations](SCHEMA.md#locations) plus what each sub-screen owns.
+**Capabilities**: Read: all members. Program settings: `can_manage_space`. Team write / vehicles write: `can_manage_space`. Roles screen is read-only for everyone (the catalog itself is a code constant).
+**Data**: [spaces](SCHEMA.md#spaces), [members](SCHEMA.md#members), [locations](SCHEMA.md#locations) plus what each sub-screen owns. Roles screen reads no DB — the role catalog is `RoleBundles.rolesFor(vertical)` / `defaultsFor()` in `lib/core/capabilities/`.
 **Surfaces**:
 - *Settings screen* — `lib/features/settings/settings_screen.dart`. Grouped list (Account / Space / Preferences / About).
 - *Program settings* — `lib/features/settings/program_settings_screen.dart`. Per-space capability flags + pickup window.
 - *Team screen* — `lib/features/settings/team_screen.dart`. Members + pending invites.
 - *Member detail* — `lib/features/settings/member_detail_screen.dart`. Per-staff profile + certifications.
+- *Roles & permissions* — `lib/features/settings/roles_screen.dart`. Read-only directory of every role offered in the active vertical + the default capabilities each one ships with. Surfaces cert-gated caps in a separate group so directors don't think "the bundle says false; I'll flip it" without realizing the cert is the actual gate. Shipped 2026-05-22 (Wave 36).
 - *Locations list* — `lib/features/settings/locations_list_screen.dart`. Place catalog for scheduling.
-**Depends on**: Members, Spaces, Vehicles, Locations, Activities, Invites, Certifications.
-**Consumed by**: Most features (config), Helen (text scale), Jordan (outdoor mode).
-**Last verified**: 2026-05-21
+- *Shared text-size tile / picker* — `lib/features/settings/widgets/text_size_tile.dart`. Public `TextSizeTile` + `showTextSizePicker(context, ref)` helper, reused by Family Today so guardians can reach the override without a Settings screen.
+**Depends on**: Members, Spaces, Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog.
+**Consumed by**: Most features (config), Helen (text scale — staff AND family-side via shared picker), Jordan (outdoor mode), Family Today (text-size picker).
+**Last verified**: 2026-05-23
 
 ---
 
@@ -557,22 +559,23 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Today
 **Path**: `lib/features/today/`
-**Purpose**: The daily launchpad. Root destination. Context-driven cards: morning (attendance, leading-today, captures); afternoon (pickup, end-of-day capture).
-**Personas served**: All staff (Jordan + Coach Sam's home base), Maya (oversight cards).
+**Purpose**: The daily launchpad. Root destination. Context-driven cards: morning (attendance, leading-today, captures); afternoon (pickup, end-of-day capture); director pulse (oversight signals).
+**Personas served**: All staff (Jordan + Coach Sam's home base), Maya / Pat (oversight cards).
 **Discovery surfaces**:
 - Routes: `/` (TodayScreen)
 - Omnibox: yes — "Today"
 - Slash: `/today` (alias `/home`)
 - Drawer: yes — "Today" (main destinations, position 1)
 - Settings: no
-**Capabilities**: None — open to all signed-in staff. Cards self-gate by capability.
-**Data**: Aggregates from Attendance, Schedule, Captures, Tasks, Insights, Messages, Entries.
+**Capabilities**: None — open to all signed-in staff. Cards self-gate by capability (DirectorPulseCard renders only when `viewer.isDirector` AND there's a signal to flag).
+**Data**: Aggregates from Attendance, Schedule, Captures, Tasks, Insights, Messages, Entries, Certifications.
 **Surfaces**:
 - *Today screen* — `lib/features/today/today_screen.dart`. Card list, refresh on pull.
 - *Embedded cards* — leading-today (from Schedule), morning-checklist (from Attendance), recent-captures (from Captures), open-tasks (from Tasks), insights (from Insights), unread-messages (deferred).
+- *Director pulse card* — `_DirectorPulseCard` inside `today_screen.dart`. Director-only proactive pulse: surfaces today's absent kids (from group day state), cohorts running on substitute coverage (from schedule), and certs expiring within 30 days (from certs-in-space). Renders nothing on "all clear" so it never adds noise. Shipped 2026-05-22 (Wave 36).
 **Depends on**: nearly everything.
 **Consumed by**: Nothing — Today is a leaf.
-**Last verified**: 2026-05-21
+**Last verified**: 2026-05-23
 
 ---
 
@@ -613,10 +616,10 @@ surface — preferences + roster + fleet, not primary workflows.
 **Data**: None — audio is streamed, not stored.
 **Surfaces**:
 - *Deepgram voice service* — `lib/features/voice/deepgram_voice_service.dart`. WebSocket client; emits interim + final transcripts.
-**Status**: voice dictation wired in two places — the omnibox composer mic AND the observation-form body field (Jordan's "voice on the floor" item, partially shipped 2026-05-22). Capture-form mic still pending.
+**Status**: voice dictation wired in THREE places — the omnibox composer mic, the observation-form body field, AND the capture-form body field. Capture mic shipped 2026-05-23 (Wave 38), closing the Jordan / Brianna floor-use gap. Free-text future fields can adopt the same pattern: form-local `DeepgramVoiceController`, snapshot `_voicePrefix`, append `transcript` on each update, tear down in dispose before the text controller.
 **Depends on**: `DEEPGRAM_API_KEY` in `.env`, `record` plugin, mic permission.
-**Consumed by**: Omnibox (composer mic — uses the shared `deepgramVoiceProvider` singleton), Entries (observation form body field — instantiates its own `DeepgramVoiceController`, does not consume the singleton).
-**Last verified**: 2026-05-22
+**Consumed by**: Omnibox (composer mic — uses the shared `deepgramVoiceProvider` singleton), Entries (observation form body field — form-local `DeepgramVoiceController`), Captures (capture form body field — form-local `DeepgramVoiceController`).
+**Last verified**: 2026-05-23
 
 ---
 

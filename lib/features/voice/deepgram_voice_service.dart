@@ -253,6 +253,15 @@ class DeepgramVoiceController {
   }
 
   Future<void> dispose() async {
+    // Flip state to idle BEFORE the async teardown so an in-flight
+    // `start()` aborts at its existing `if (_state == VoiceState.idle)`
+    // guard (line ~160) instead of installing a fresh `_channel` over
+    // a disposed controller — that path would leak the WS socket and
+    // the audio recorder. The closed `_updates` controller is already
+    // guarded by `isClosed` checks in `_emit` / `_emitError`, so no
+    // events would land in user-visible state; this prevents the
+    // underlying resource leak.
+    _state = VoiceState.idle;
     await _teardown();
     await _updates.close();
     await _recorder.dispose();

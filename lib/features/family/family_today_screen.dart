@@ -8,6 +8,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
+import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -42,7 +43,22 @@ class FamilyTodayScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       showBack: false,
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        // Guardians never reach `/settings`, but Helen-persona accounts
+        // still need the in-app text-size override (the OS slider alone
+        // isn't enough — see persona-audit 2026-05-23). One tap opens
+        // the shared text-size sheet used by staff Settings; no new
+        // route, no guardian-only Settings screen needed. We pass the
+        // enclosing `ref` directly — FamilyTodayScreen is already a
+        // ConsumerWidget, so a nested Consumer just for the ref would
+        // be redundant.
+        IconButton(
+          tooltip: 'Display settings',
+          icon: const Icon(Icons.format_size_outlined),
+          onPressed: () => showTextSizePicker(context, ref),
+        ),
+        const SyncStatusIndicator(),
+      ],
       body: childrenAsync.when(
         loading: () => const LoadingSlot(variant: LoadingVariant.cards),
         error: (_, _) => ErrorState(
