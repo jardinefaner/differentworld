@@ -761,6 +761,23 @@ authenticated user that knows the row id (low-impact at our scale —
 invites are not high-value targets — but list it among the things to
 re-tighten once JWT claims work).
 
+**Server-side `SECURITY DEFINER` functions hit the same trap.** Even
+though a `security definer` function runs as the function owner and
+bypasses RLS, any `auth.uid()` call INSIDE the function still resolves
+against `request.jwt.claims` — which is empty. So a function that
+reads `auth.uid()` to know which user is calling it will see NULL
+and do the wrong thing silently.
+
+The workaround pattern: the function takes the auth user id as an
+explicit `caller_uid uuid` parameter; the Dart client reads
+`session.user.id` and passes it. The function `coalesce`s the param
+with `auth.uid()` as a fallback. See migration
+`20260523000003_accept_invite_explicit_uid.sql` — the canonical
+fix for `accept_invite` that closed two bugs at once (the auth.uid()
+NULL plus a stale `0 → boolean` type mismatch on the
+subject_guardians INSERT). Apply the same shape to any new RPC that
+needs to know who called it.
+
 ### PowerSync `uploadData` must guard against null Supabase session
 `PowerSyncBackendConnector.uploadData` runs **independently** of
 `fetchCredentials`. PowerSync drains the local CRUD queue whenever

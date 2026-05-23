@@ -127,12 +127,24 @@ class InviteActions {
   /// in one shot) and a Drift-local optimistic version doesn't make
   /// sense. This is the one place outside auth where the UI talks to
   /// Supabase directly.
+  ///
+  /// Passes the auth user's id (`session.user.id`) as an explicit
+  /// `caller_uid` param — the function falls back to `auth.uid()` only
+  /// when the param is null. Reason: `auth.uid()` returns NULL in REST
+  /// requests on this ES256-keyed project (see CLAUDE.md gotcha and
+  /// migration 20260523000003). Without the explicit pass, guardian
+  /// invites silently never linked the user_id and the next sign-in
+  /// couldn't resolve them.
   Future<void> redeem({String? code}) async {
     final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentSession?.user.id;
     try {
       await supabase.rpc<dynamic>(
         'accept_invite',
-        params: {'invite_code': code},
+        params: {
+          'invite_code': code,
+          'caller_uid': userId,
+        },
       );
     } on PostgrestException catch (e) {
       // Surface 'No matching active invite' as a clean exception the
@@ -140,12 +152,15 @@ class InviteActions {
       if (e.message.contains('No matching active invite')) {
         throw const NoMatchingInviteException();
       }
-      // PostgREST error messages can include row context; in production
-      // we'd rather route to crash reporting than to the OS log. The
-      // exception still bubbles up to the UI's runReported handler.
+      // Surface the real error code + message in debug builds so the
+      // next failure isn't another opaque "Could not redeem that
+      // invite." Logs are kDebugMode-gated per the no-PII-in-logs
+      // policy — the message can carry the invite code or guardian
+      // email otherwise.
       if (kDebugMode) {
         debugPrint(
-          '[invites] accept_invite rpc failed: ${e.message} code=${e.code}',
+          '[invites] accept_invite rpc failed: ${e.message} '
+          'code=${e.code} hint=${e.hint} details=${e.details}',
         );
       }
       rethrow;
