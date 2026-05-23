@@ -39,13 +39,23 @@ final exportsForSubjectProvider =
 /// the full Drift `Export` here because (a) PowerSync's `by_space`
 /// doesn't reach guardian devices — see DAO comment in
 /// `lib/core/db/dao/exports_dao.dart` — and (b) the card only reads
-/// id / sent_at / subject_id / storage_path. Direct PostgREST round-
-/// trip every time, gated by RLS on `export_recipients`.
+/// id / sent_at / subject_id / storage_path / my read_at. Direct
+/// PostgREST round-trip every time, gated by RLS on
+/// `export_recipients`.
+///
+/// `myReadAt` (Wave 42, Devon persona) is the signed-in guardian's
+/// own recipient row's `read_at` — null until they tap to open the
+/// PDF, ISO-8601 timestamp after. Drives the "Seen" badge on the
+/// card so a parent can tell what they've already read. Co-parent
+/// visibility ("Also seen by Lauren") needs a sibling-recipient
+/// fetch — deferred to a follow-up wave once we settle the
+/// multi-recipient PostgREST query shape.
 typedef ReceivedExport = ({
   String id,
   String? subjectId,
   String? sentAt,
   String? storagePath,
+  String? myReadAt,
 });
 
 /// Every progress report the current GuardianViewer is a recipient
@@ -79,11 +89,12 @@ final myReceivedExportsProvider =
   // selecting the parent. The nested column filter ensures the join
   // is gated by the recipient row's guardian_id — exactly the rows
   // RLS would have permitted anyway, but the explicit filter keeps
-  // the planner happy and the response small.
+  // the planner happy and the response small. We also select
+  // `read_at` off the inner row to drive the "Seen" badge.
   final rows = await supabase
       .from('exports')
       .select('id, subject_id, sent_at, storage_path, '
-          'export_recipients!inner(guardian_id)')
+          'export_recipients!inner(guardian_id, read_at)')
       .eq('export_recipients.guardian_id', viewer.guardian.id)
       .eq('status', 'sent')
       .order('sent_at', ascending: false)
@@ -95,9 +106,40 @@ final myReceivedExportsProvider =
         subjectId: r['subject_id'] as String?,
         sentAt: r['sent_at'] as String?,
         storagePath: r['storage_path'] as String?,
+        // `export_recipients` is returned as a list (one element after
+        // the !inner filter on my guardian_id); read_at lives on that
+        // row. Null if the guardian hasn't opened it yet.
+        myReadAt: () {
+          final recipients = r['export_recipients'];
+          if (recipients is List && recipients.isNotEmpty) {
+            final first = recipients.first;
+            if (first is Map) return first['read_at'] as String?;
+          }
+          return null;
+        }(),
       ),
   ];
 });
+
+/// Stamp the signed-in guardian's `read_at` on an export. Called from
+/// the Family Today received-reports card the moment the parent taps
+/// to open the PDF — the "Seen" state is owned by them, not the
+/// server-side delivery pipeline. Idempotent; safe to call from a tap
+/// handler without checking the current state first.
+///
+/// Sibling recipients' rows aren't touched; that's intentional
+/// (co-parent visibility is a separate signal).
+Future<void> markReceivedExportRead({
+  required String exportId,
+  required String guardianId,
+}) async {
+  final supabase = Supabase.instance.client;
+  await supabase
+      .from('export_recipients')
+      .update({'read_at': DateTime.now().toUtc().toIso8601String()})
+      .eq('guardian_id', guardianId)
+      .eq('export_id', exportId);
+}
 
 /// One export's recipient list (for an audit detail view).
 // ignore: specify_nonobvious_property_types

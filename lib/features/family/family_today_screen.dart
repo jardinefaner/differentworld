@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -707,6 +709,14 @@ class _ReceivedReportRowState extends ConsumerState<_ReceivedReportRow> {
   /// `myReceivedExportsProvider`; we don't go through the Drift mirror
   /// `ExportActions.downloadUrl` because the local Drift `exports`
   /// table is empty for guardians (by_space sync stream limitation).
+  ///
+  /// Also stamps the guardian's `export_recipients.read_at` (Devon
+  /// persona, Wave 42) — fire-and-forget so a slow round-trip doesn't
+  /// block the launchUrl. The card refreshes via provider invalidation
+  /// once the round-trip lands, so the "Seen" badge appears on next
+  /// rebuild. Errors on the mark-read are swallowed (the user already
+  /// has the PDF open by then; a missed timestamp isn't worth a
+  /// snackbar).
   Future<void> _open() async {
     if (_opening) return;
     setState(() => _opening = true);
@@ -737,6 +747,26 @@ class _ReceivedReportRowState extends ConsumerState<_ReceivedReportRow> {
           const SnackBar(
             content:
                 Text("Couldn't open the report. Try again or check email."),
+          ),
+        );
+        return;
+      }
+      // PDF opened successfully — stamp read_at + refresh the card so
+      // the "Seen" badge shows on next rebuild. Done in the background
+      // because the user already has the document open.
+      final viewer = ref.read(viewerProvider);
+      if (viewer is GuardianViewer && widget.export.myReadAt == null) {
+        unawaited(
+          markReceivedExportRead(
+            exportId: widget.export.id,
+            guardianId: viewer.guardian.id,
+          ).then(
+            (_) {
+              if (mounted) ref.invalidate(myReceivedExportsProvider);
+            },
+            onError: (Object _, _) {
+              // Swallow — user has the PDF; missed stamp isn't fatal.
+            },
           ),
         );
       }
@@ -771,6 +801,12 @@ class _ReceivedReportRowState extends ConsumerState<_ReceivedReportRow> {
     final subtitle = sent == null
         ? 'Sent recently'
         : 'Sent ${DateFormat.yMMMd().add_jm().format(sent)}';
+    // Devon persona (Wave 42): once the guardian taps to open the
+    // PDF, their `export_recipients.read_at` is stamped. The check-
+    // mark badge on subsequent rebuilds tells the parent which
+    // reports they've already worked through — useful when 3 PDFs
+    // arrive on a Monday morning.
+    final hasBeenRead = widget.export.myReadAt != null;
     return InkWell(
       onTap: _opening ? null : _open,
       child: Padding(
@@ -778,9 +814,11 @@ class _ReceivedReportRowState extends ConsumerState<_ReceivedReportRow> {
         child: Row(
           children: [
             Icon(
-              Icons.description_outlined,
+              hasBeenRead
+                  ? Icons.task_alt
+                  : Icons.description_outlined,
               size: 20,
-              color: scheme.onSurfaceVariant,
+              color: hasBeenRead ? scheme.primary : scheme.onSurfaceVariant,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -791,13 +829,18 @@ class _ReceivedReportRowState extends ConsumerState<_ReceivedReportRow> {
                     label,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: hasBeenRead
+                          ? scheme.onSurfaceVariant
+                          : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    subtitle,
+                    hasBeenRead ? '$subtitle · Seen' : subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
+                      fontWeight:
+                          hasBeenRead ? FontWeight.w600 : null,
                     ),
                   ),
                 ],

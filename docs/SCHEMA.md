@@ -40,8 +40,8 @@ of the SQL.
 - `recorded_by` (uuid → members.id)
 **RLS gist**: relaxed (`current_user = 'authenticated'`); GRANT-level scoping does the real gating.
 **Sync rule**: `by_space` stream; `WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`.
-**Consumers**: [Attendance](FEATURES.md#attendance), [Insights](FEATURES.md#insights).
-**Last verified**: 2026-05-21
+**Consumers**: [Attendance](FEATURES.md#attendance), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (direct PostgREST via `familyAttendanceForSubjectProvider` — not in `by_guardian` stream; 2-level subquery deferred).
+**Last verified**: 2026-05-23
 
 ---
 
@@ -71,8 +71,8 @@ of the SQL.
 - `created_at` (timestamptz)
 **RLS gist**: relaxed; signed-URL minting scoped via Storage RLS.
 **Sync rule**: `by_space`.
-**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Photos](FEATURES.md#photos).
-**Last verified**: 2026-05-21
+**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Photos](FEATURES.md#photos), [Family](FEATURES.md#family) (direct PostgREST via `familyAttachmentsForEntityProvider` — not in `by_guardian` stream; 2-level subquery deferred).
+**Last verified**: 2026-05-23
 
 ---
 
@@ -137,9 +137,9 @@ of the SQL.
 - `state` (text — `delivered` / `failed` / `manual`)
 - `sent_at` (timestamptz)
 **RLS gist**: relaxed; recipient-side reads gated server-side by the Edge Function.
-**Sync rule**: `by_space` for staff; guardian-side reads bypass PowerSync (direct PostgREST when needed).
-**Consumers**: [Exports](FEATURES.md#exports).
-**Last verified**: 2026-05-21
+**Sync rule**: `by_space` for staff. `by_guardian` stream delivers the guardian's own recipient rows (`WHERE guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.user_id())`) for the "Seen by…" tracker; the parent `exports` row itself is still fetched via PostgREST in `myReceivedExportsProvider` (2-level join).
+**Consumers**: [Exports](FEATURES.md#exports), [Family](FEATURES.md#family) (offline-first recipient rows via `by_guardian`).
+**Last verified**: 2026-05-23
 
 ---
 
@@ -158,8 +158,8 @@ of the SQL.
 - `note` (text, nullable)
 **RLS gist**: relaxed for staff; guardian reads gated server-side.
 **Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
-**Consumers**: [Exports](FEATURES.md#exports), [Family](FEATURES.md#family) (received reports — not yet wired).
-**Last verified**: 2026-05-21
+**Consumers**: [Exports](FEATURES.md#exports), [Family](FEATURES.md#family) (received reports — direct PostgREST via `myReceivedExportsProvider`; not in `by_guardian` stream because the join requires 2 levels).
+**Last verified**: 2026-05-23
 
 ---
 
@@ -202,9 +202,9 @@ of the SQL.
 - `phone` (text, nullable)
 - `user_id` (uuid → auth.users.id, nullable — set when the guardian has signed in)
 **RLS gist**: relaxed for staff; guardian self-reads via direct PostgREST with `user_id = auth.uid()`.
-**Sync rule**: `by_space` for staff; guardian-side reads bypass PowerSync.
+**Sync rule**: `by_space` for staff. `by_guardian` stream delivers the guardian's own row (`WHERE user_id = auth.user_id()`) so `GuardianViewer` resolution is offline-first.
 **Consumers**: [Guardians](FEATURES.md#guardians), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Exports](FEATURES.md#exports), [Subjects](FEATURES.md#subjects) (guardian section embedded in Subject detail).
-**Last verified**: 2026-05-22
+**Last verified**: 2026-05-23
 
 ---
 
@@ -306,9 +306,9 @@ of the SQL.
 - `created_at` (timestamptz)
 - `read_by_guardian_ids` (jsonb array — set of guardian.ids who have read this message)
 **RLS gist**: relaxed for staff. Guardian self-reads via direct PostgREST with `guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.uid())`.
-**Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
+**Sync rule**: `by_space` for staff. `by_guardian` stream delivers the guardian's own thread rows (`WHERE guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.user_id())`) so the family messages index is now offline-first.
 **Consumers**: [Messages](FEATURES.md#messages), [Family](FEATURES.md#family).
-**Last verified**: 2026-05-21
+**Last verified**: 2026-05-23
 
 ---
 
@@ -358,9 +358,9 @@ of the SQL.
 - `created_at` (timestamptz)
 - `created_by` (uuid → members.id)
 **RLS gist**: relaxed.
-**Sync rule**: `by_space` (a member's own space row).
-**Consumers**: [Settings](FEATURES.md#settings), [Onboarding](FEATURES.md#onboarding), [Auth](FEATURES.md#auth) (viewer resolution), and every other feature via `viewer.spaceId`.
-**Last verified**: 2026-05-21
+**Sync rule**: `by_space` (a member's own space row). `by_guardian` stream also delivers the guardian's linked space row (`WHERE id IN (SELECT space_id FROM guardians WHERE user_id = auth.user_id())`) so the family lens resolves the space name offline-first.
+**Consumers**: [Settings](FEATURES.md#settings), [Onboarding](FEATURES.md#onboarding), [Auth](FEATURES.md#auth) (viewer resolution), [Family](FEATURES.md#family) (offline-first via `by_guardian`), and every other feature via `viewer.spaceId`.
+**Last verified**: 2026-05-23
 
 ---
 
@@ -393,9 +393,9 @@ of the SQL.
 - `relationship` (text — `mother` / `father` / `guardian` / etc.)
 - UNIQUE(subject_id, guardian_id)
 **RLS gist**: relaxed for staff. Guardian self-reads via direct PostgREST.
-**Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
+**Sync rule**: `by_space` for staff. `by_guardian` stream delivers the guardian's own link rows (`WHERE guardian_id IN (SELECT id FROM guardians WHERE user_id = auth.user_id())`) so the per-child fan-out in `myChildSubjectIdsProvider` is offline-first.
 **Consumers**: [Guardians](FEATURES.md#guardians), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Exports](FEATURES.md#exports), [Subjects](FEATURES.md#subjects) (guardian links displayed inline on Subject detail).
-**Last verified**: 2026-05-22
+**Last verified**: 2026-05-23
 
 ---
 
@@ -499,7 +499,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-05-22._
+_Last full registry verification: 2026-05-23._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
