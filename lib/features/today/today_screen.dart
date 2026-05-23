@@ -763,7 +763,10 @@ class _IdentityStrip extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => context.push('/settings/roles'),
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push('/settings/roles'));
+          },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
             child: Row(
