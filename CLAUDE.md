@@ -1288,18 +1288,57 @@ shipped; what's below needs its own focused PR.
   {Cohort} today" action that flips the LeadingTodayCard contents to
   the absent counselor's blocks + cabin notes. Needs a `substitutes`
   table or a `daily_assignments` row carrying the override.
-- **Ava — PARTIAL: locked kid-mode mechanism shipped.**
+- **Ava — PARTIAL: kid-mode mechanism + staff exit shipped.**
   `kidModeProvider` (Notifier<bool>) + AppShell honors it (omnibox
-  bar + body padding strip when on). `survey_take_screen.dart`
-  auto-enters in `initState` and exits in `dispose`. STILL TO DO:
-  staff-only exit affordance (PIN dialog or hidden multi-tap area),
-  drawer suppression on kid surfaces, the kid-journal feature
-  itself, and route-pop hardening so a kid tapping system-back
-  can't break out of the locked screen.
+  bar + drawer + body padding strip when on). `survey_take_screen.dart`
+  auto-enters in `initState`, exits in `dispose`, AND wires a
+  5-tap-on-the-top-right-corner gesture that opens
+  `showKidModeExitDialog` (numeric PIN against `SpaceCaps.staffPin`
+  if set; the 5-tap alone unlocks when no PIN is configured). STILL
+  TO DO: the kid-journal feature itself, route-pop hardening so a
+  kid tapping system-back can't break out of the locked screen, and
+  a wider audit of which kid-mode surfaces exist beyond
+  survey-take.
+- **Ava — Action Words of the Day (vision, undesigned).** A
+  kid-mode surface where each kid picks (or is assigned) 3 verbs
+  for the day — e.g. "explore", "share", "create" — with kid-
+  friendly descriptions and voiceover for the pre-readers in the
+  4-6 cohort. Surface their picks back to staff (today's cohort
+  words) and to family (parent gets "today {Name} chose: …").
+  Open design questions before coding: who picks (kid alone vs
+  staff-curated menu vs assigned), when (morning intention / end-
+  of-day reflection / ongoing tap-when-done), who sees (kid /
+  staff / family / all), catalog source (program-fixed / per-
+  cohort / director-authored), voiceover (TTS via `flutter_tts`
+  vs pre-recorded narrator vs staff voice). Structural sketch:
+  new `action_words` catalog table + `entries.kind = 'action_words'`
+  per kid per day storing the picks + kid-mode card layout with
+  generous tap targets. Picking should feel like play, not a quiz.
 - **All — empty-state illustrations + wordmark-as-system.** Single
   illustrator pass: 4-5 SVGs for the most common empty states
   ("nothing in your inbox", "all done for today") + gradient
   squircle used consistently across login, onboarding, exports.
+- **Showcase / growth arc (vision, undesigned).** Every artifact a
+  kid makes (drawing photo, voice note, action-words pick,
+  observation moment, survey answer) feeds a compilation that
+  tells a growth story over time. Daily highlight → weekly wrap →
+  term portfolio → year-end keepsake. The "drawing becomes a film"
+  framing — metaphorical (compilation + voiceover + music), not
+  literal (animating the drawing itself; that's months of ML).
+  Most of the source data already exists: `attachments`
+  (photos/audio), `entries` (observations + payload), 
+  `survey_responses`, `schedule_blocks` (activity context).
+  What's missing: a curation surface, a render pipeline, and a
+  delivery channel. Structural sketch: a new `showcases` table
+  (same shape as `exports` — author/subject/format/storage_path/
+  status — but format='mp4' or 'web' instead of 'pdf') + a
+  `showcase_items` join table (showcase_id, attachment_id OR
+  entry_id, position, caption). Render via a backend job, NOT in
+  the device — encoding is heavy. Open questions before coding:
+  cadence (daily/weekly/term/year — pick 1 to start), curation
+  (auto-pick from signals, staff-curated, kid-curated, hybrid),
+  output format (mp4 file / in-app slideshow / web page with
+  embedded media).
 
 ---
 
