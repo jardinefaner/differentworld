@@ -36,6 +36,7 @@ import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
+import 'package:differentworld/features/settings/roles_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
@@ -368,6 +369,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'locations',
             builder: (_, _) => const LocationsListScreen(),
+          ),
+          GoRoute(
+            path: 'roles',
+            builder: (_, _) => const RolesScreen(),
           ),
           GoRoute(
             path: 'team',

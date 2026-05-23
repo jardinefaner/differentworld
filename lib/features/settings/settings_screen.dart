@@ -121,6 +121,16 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SettingsDivider(),
               ListTile(
+                leading: const Icon(Icons.shield_outlined),
+                title: const Text('Roles & permissions'),
+                subtitle: const Text(
+                  'What each role can do by default',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/settings/roles'),
+              ),
+              const _SettingsDivider(),
+              ListTile(
                 leading: const Icon(Icons.directions_bus_outlined),
                 title: const Text('Vehicles'),
                 subtitle: const Text(

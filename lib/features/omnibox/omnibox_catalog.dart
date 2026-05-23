@@ -155,6 +155,20 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       keywords: const ['locations', 'pool', 'barn', 'range', 'where'],
       onSelect: (ctx, _) => ctx.push('/settings/locations'),
     ),
+    OmniboxEntry(
+      id: 'page.roles',
+      label: 'Roles & permissions',
+      category: OmniboxCategory.setting,
+      icon: Icons.shield_outlined,
+      keywords: const [
+        'roles',
+        'permissions',
+        'who can do what',
+        'caps',
+        'capability',
+      ],
+      onSelect: (ctx, _) => ctx.push('/settings/roles'),
+    ),
     if (viewer is GuardianViewer && viewer.childSubjectIds.isNotEmpty)
       OmniboxEntry(
         id: 'page.messages',

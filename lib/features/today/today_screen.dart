@@ -5,8 +5,10 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
+import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/today/today_providers.dart';
@@ -242,6 +244,16 @@ class _TodayBody extends ConsumerWidget {
             // assignments.
             const LeadingTodayCard(),
             const SizedBox(height: 16),
+            // Director's morning pulse — aggregates absent kids,
+            // cohorts with substitute coverage today, and
+            // expiring-soon certs into a single card. Renders
+            // nothing when there's nothing to flag (the "all clear"
+            // case doesn't need to consume scroll). Only directors
+            // see this; non-directors hit the early-return.
+            if (viewer.isDirector) ...[
+              _DirectorPulseCard(groups: groups),
+              const SizedBox(height: 16),
+            ],
             // Upward loop made visible: the system surfaces one
             // question here when the data demands it; silent when
             // it doesn't. UX_DECISIONS §6 / framework upward loop.
@@ -530,6 +542,157 @@ class _StateLine extends StatelessWidget {
       text,
       style: theme.textTheme.bodyMedium?.copyWith(
         color: color ?? theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+/// Director's morning pulse — a single card surfacing the three
+/// things a director typically checks first: who's absent, where
+/// someone is covering, and what's about to expire.
+///
+/// **Renders nothing when there's nothing to flag.** "All clear" is
+/// not a card; it's the absence of one. That keeps the rest of the
+/// Today scroll calm on quiet mornings.
+///
+/// Reads three providers, none of them new:
+/// * `groupDayStateProvider(g)` per group → sum absent counts
+/// * `scheduleDayProvider(todayIso)` → cohorts with non-null
+///   `leadSubstituteMemberId`, deduplicated by group
+/// * `certsInSpaceProvider` → certs expiring in the next 30 days
+///   (or already expired)
+class _DirectorPulseCard extends ConsumerWidget {
+  const _DirectorPulseCard({required this.groups});
+
+  final List<Group> groups;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    // Absent across all cohorts today.
+    var absent = 0;
+    for (final g in groups) {
+      final state = ref.watch(groupDayStateProvider(g)).value;
+      if (state != null) {
+        absent += state.counts[AttendanceStatus.absent] ?? 0;
+      }
+    }
+
+    // Cohorts with a substitute covering today (deduped by group_id).
+    final blocks =
+        ref.watch(scheduleDayProvider(todayIso())).value ?? const <ScheduleBlock>[];
+    final coveredGroupIds = <String>{};
+    for (final b in blocks) {
+      if (b.leadSubstituteMemberId != null &&
+          b.leadSubstituteMemberId!.isNotEmpty) {
+        coveredGroupIds.add(b.groupId);
+      }
+    }
+    final substituteGroups = coveredGroupIds.length;
+
+    // Certs expiring within 30 days OR already expired.
+    final certs =
+        ref.watch(certsInSpaceProvider).value ?? const <MemberCertification>[];
+    final now = DateTime.now();
+    final cutoff = now.add(const Duration(days: 30));
+    var expiring = 0;
+    for (final c in certs) {
+      final iso = c.expiresAt;
+      if (iso == null || iso.isEmpty) continue;
+      final exp = DateTime.tryParse(iso);
+      if (exp == null) continue;
+      if (exp.isBefore(cutoff)) expiring++;
+    }
+
+    // Nothing to flag → render nothing.
+    if (absent == 0 && substituteGroups == 0 && expiring == 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.dashboard_outlined,
+                    size: 20, color: scheme.primary),
+                const SizedBox(width: 10),
+                Text(
+                  "Today's pulse",
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (absent > 0)
+              _PulseRow(
+                icon: Icons.event_busy_outlined,
+                tint: scheme.error,
+                label: '$absent ${absent == 1 ? "kid" : "kids"} '
+                    'absent today',
+                onTap: () => Navigator.of(context).maybePop(),
+              ),
+            if (substituteGroups > 0)
+              _PulseRow(
+                icon: Icons.person_add_alt_1,
+                tint: scheme.tertiary,
+                label: substituteGroups == 1
+                    ? '1 cohort with a substitute covering today'
+                    : '$substituteGroups cohorts with a substitute '
+                        'covering today',
+                onTap: () => Navigator.of(context).maybePop(),
+              ),
+            if (expiring > 0)
+              _PulseRow(
+                icon: Icons.verified_outlined,
+                tint: scheme.tertiary,
+                label: '$expiring ${expiring == 1 ? "cert" : "certs"} '
+                    'expiring in the next 30 days',
+                onTap: () => Navigator.of(context).maybePop(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PulseRow extends StatelessWidget {
+  const _PulseRow({
+    required this.icon,
+    required this.tint,
+    required this.label,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final Color tint;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: tint),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(label, style: theme.textTheme.bodyMedium),
+          ),
+        ],
       ),
     );
   }
