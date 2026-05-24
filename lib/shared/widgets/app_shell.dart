@@ -128,6 +128,18 @@ class _AppShellState extends ConsumerState<AppShell> {
   ///   approach, focus loss here is genuine (user tapped outside,
   ///   navigated away) — we never artificially steal focus, so we
   ///   don't need a rescue path.
+  ///
+  /// Wave 58 follow-up: focus loss alone NO LONGER closes the overlay.
+  /// The bar's focus and the overlay's open-state are now independent —
+  /// the overlay opens on focus-gain and stays open until an explicit
+  /// close action fires (keyboard-hide button, suggestion select, back
+  /// gesture via PopScope, scrim tap). Without this decoupling, the
+  /// Cupertino swipe-back gesture would steal focus from the
+  /// TextField mid-gesture, this listener would set
+  /// `_searchOverlayOpen=false`, PopScope's canPop would flip to true
+  /// at the next rebuild, and the gesture would commit a route pop
+  /// (or, on root, fire the exit-confirmation). The user saw the
+  /// app "exit" instead of just dismissing the overlay.
   void _onFocusChanged() {
     if (kDebugMode) {
       debugPrint(
@@ -136,9 +148,12 @@ class _AppShellState extends ConsumerState<AppShell> {
       );
     }
     if (!mounted) return;
-    final shouldOpen = _focus.hasFocus;
-    if (shouldOpen == _searchOverlayOpen) return;
-    setState(() => _searchOverlayOpen = shouldOpen);
+    if (_focus.hasFocus && !_searchOverlayOpen) {
+      // Focus gained → open the overlay.
+      setState(() => _searchOverlayOpen = true);
+    }
+    // Focus loss is intentionally ignored — overlay stays open until
+    // an explicit close fires _closeSearchOverlay().
   }
 
   /// Bar value change. The TextField already updated its own
