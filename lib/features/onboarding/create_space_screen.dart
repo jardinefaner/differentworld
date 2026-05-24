@@ -1,5 +1,7 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -89,34 +91,38 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Set up your program'),
-        actions: [
-          IconButton(
-            tooltip: 'Sign out',
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Softer hero — gradient squircle keeps the same
-                    // visual family as the login wordmark so the
-                    // onboarding flow reads as one piece.
-                    Center(
-                      child: Container(
+    return EdgeScaffold(
+      // Onboarding: showBack false (no place to back-pop to), sign-out
+      // moves to the actions slot of the floating chrome instead of
+      // an AppBar action. ContentHeader inside the body carries the
+      // page title — same chrome system as every other screen.
+      showBack: false,
+      actions: [
+        IconButton(
+          tooltip: 'Sign out',
+          icon: const Icon(Icons.logout),
+          onPressed: _signOut,
+        ),
+      ],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const ContentHeader(
+                    title: 'Set up your program',
+                  ),
+                  // Softer hero — gradient squircle keeps the same
+                  // visual family as the login wordmark so the
+                  // onboarding flow reads as one piece.
+                  Center(
+                    child: Container(
                         width: 72,
                         height: 72,
                         decoration: BoxDecoration(
@@ -208,7 +214,6 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
             ),
           ),
         ),
-      ),
     );
   }
 }

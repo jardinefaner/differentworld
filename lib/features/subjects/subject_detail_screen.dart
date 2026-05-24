@@ -17,6 +17,7 @@ import 'package:differentworld/features/subjects/widgets/observation_item.dart';
 import 'package:differentworld/features/subjects/widgets/pickup_list.dart';
 import 'package:differentworld/features/subjects/widgets/today_status_card.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -149,12 +150,19 @@ class _SubjectBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 96),
       children: [
-        // Today's status is hoisted ABOVE the identity row — emotional
-        // context (what happened today?) first, identity (who am I
-        // looking at) second. The back-button breadcrumb supplies the
-        // name context until the eye reaches the bigger header.
-        // (Shell reserves the chrome height; just breathing room here.)
-        const SizedBox(height: 8),
+        // ContentHeader does the chrome reservation so the title clears
+        // the floating chrome pills (Wave 53 layout law). Title is the
+        // child's name; the identity row below still carries the avatar
+        // + bigger headline for the eye-anchor.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ContentHeader(
+            title: fullName,
+            bottomGap: 4,
+          ),
+        ),
+        // Today's status is hoisted ABOVE the rest — emotional context
+        // (what happened today?) first.
         if (groupId != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

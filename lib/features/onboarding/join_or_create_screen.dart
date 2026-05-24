@@ -5,6 +5,8 @@ import 'package:differentworld/core/invites/invite_code.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/onboarding/create_space_screen.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -249,7 +251,8 @@ class _AutoMatchScaffoldState extends State<_AutoMatchScaffold> {
     final helper = _elapsedSec >= 3
         ? "This can take a moment offline. We'll keep looking…"
         : '';
-    return Scaffold(
+    return EdgeScaffold(
+      showBack: false,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -284,34 +287,26 @@ class _ChoosingScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    Icons.waving_hand_outlined,
-                    size: 56,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Welcome to Different World',
-                    style: theme.textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Let's get you into a program.",
-                    style: theme.textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
+    return EdgeScaffold(
+      showBack: false,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const ContentHeader(
+                  title: 'Welcome to Different World',
+                  subtitle: "Let's get you into a program.",
+                ),
+                Icon(
+                  Icons.waving_hand_outlined,
+                  size: 56,
+                  color: theme.colorScheme.primary,
+                ),
                   if (warning != null) ...[
                     const SizedBox(height: 16),
                     Text(
@@ -371,7 +366,6 @@ class _ChoosingScaffold extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
@@ -444,46 +438,31 @@ class _CodeEntryScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        leading: onBack == null
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: onBack,
-              ),
-        title: const Text('Enter invite code'),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    Icons.key_outlined,
-                    size: 48,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Type the 6-character code',
-                    style: theme.textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your director can find this in Settings → Team.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
+    // showBack only renders the floating back pill if `onBack` is set —
+    // when no back handler is provided (deep-link landed straight on
+    // code-entry) the floating chrome stays clean. Tap routes through
+    // the standard EdgeScaffold back machinery.
+    return EdgeScaffold(
+      showBack: onBack != null,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const ContentHeader(
+                  title: 'Enter invite code',
+                  subtitle: 'Type the 6-character code your director gave you.',
+                ),
+                Icon(
+                  Icons.key_outlined,
+                  size: 48,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 24),
                   // 6-cell PIN-style input. Each cell is a Material 3
                   // outlined box; typing into any one auto-advances to
                   // the next. The hidden underlying TextField holds
@@ -523,7 +502,6 @@ class _CodeEntryScaffold extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

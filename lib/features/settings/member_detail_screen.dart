@@ -14,6 +14,7 @@ import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -157,9 +158,17 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
             length: 3,
             child: Column(
               children: [
-                // Shell reserves the top chrome height — avatar sits
-                // immediately below the chrome boundary.
-                const SizedBox(height: 8),
+                // ContentHeader reserves chrome height + status bar
+                // inset so the avatar/identity row below sits clear
+                // of the floating chrome pills (Wave 53 layout law,
+                // wave 59 conformance).
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ContentHeader(
+                    title: member.displayName,
+                    bottomGap: 4,
+                  ),
+                ),
                 Center(
                   child: PersonAvatar(
                     name: member.displayName,
