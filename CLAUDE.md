@@ -1026,7 +1026,7 @@ should be stale until the next sync round-trip (it usually shouldn't).
 When testing changes, run on the user's Pixel 6 over wireless ADB:
 
 ```sh
-flutter run -d adb-1A291FDF6002RQ-JYcM2v._adb-tls-connect._tcp
+flutter run -d adb-1A291FDF6002RQ-JYcM2v._adb-tls-connect._tcp 2>&1 | tee /tmp/dw-pixel.log
 ```
 
 Background it via `tee /tmp/dw-pixel.log` so you can tail logs later.
@@ -1034,6 +1034,14 @@ Don't switch to Chrome / macOS as the default — phone is the primary
 testing surface (the app is phone-first). Web is a secondary
 verification, not the default. If the Pixel is disconnected, tell the
 user; don't silently fall back to a different device.
+
+**Redeploy after every commit.** The user has set the standing
+preference: any wave that lands on `main` should be followed by a
+Pixel redeploy in the background (so they can hot-restart / cold-
+launch as soon as the APK lands). Don't ask before redeploying;
+just kick it. Filter the log monitor to `Built build|Syncing
+files|Hot reload|Exception CAUGHT|Lost connection|Build failed`
+— routine PowerSync stream blips are noise, don't surface them.
 
 ---
 
