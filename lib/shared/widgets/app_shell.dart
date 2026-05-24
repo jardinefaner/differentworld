@@ -503,14 +503,24 @@ class _AppShellState extends ConsumerState<AppShell> {
         // (This was the actual root cause of "keyboard disappears
         // on first tap" — not FocusScope rotation, the prior theory.)
         children: [
-          // Route content. Inset on both ends by the shell so the
-          // layout law (chrome top, omnibox bottom, body in the
-          // visible slot) applies to every route uniformly. See
-          // ShellMetrics for the constants + rationale.
+          // Route content. Edge-to-edge: the body fills the viewport
+          // from top to bottom; the floating chrome pills + omnibox
+          // bar overlay it as translucent glass elements. We only
+          // reserve BOTTOM space (so the last scrolled item doesn't
+          // sit forever behind the omnibox); the TOP is intentionally
+          // un-padded so list content scrolls THROUGH the chrome
+          // strip — Wave 52 reverted the prior "padded below the
+          // chrome" layout-law because it produced a solid-coloured
+          // strip at top that read as an opaque appbar even though
+          // the pills themselves were already glass.
+          //
+          // Routes typically start with a ContentHeader; that header
+          // is wide enough that the chrome pills (~48dp each, top
+          // ~64dp area) only overlap a sliver of it, and the glass
+          // blur keeps the underlying text readable.
           Padding(
             key: const ValueKey('shell-route-content'),
             padding: EdgeInsets.only(
-              top: inKidMode ? 0 : ShellMetrics.topChromeHeight,
               bottom: inKidMode ? 0 : ShellMetrics.bottomOmniboxHeight,
             ),
             child: widget.child,
