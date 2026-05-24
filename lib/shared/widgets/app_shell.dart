@@ -539,23 +539,42 @@ class _AppShellState extends ConsumerState<AppShell> {
           if (!inKidMode && _searchOverlayOpen)
             Positioned(
               key: const ValueKey('shell-omnibox-overlay'),
-              top: topInset + ShellMetrics.topChromeHeight,
+              // Extend edge-to-edge to the screen top + only stop
+              // above the omnibox bar at the bottom. Wave 53 had
+              // this starting at topInset + topChromeHeight which
+              // left the chrome-strip area uncovered — the body's
+              // top edge showed through there, creating a visible
+              // seam that read as "appbar background color." Now
+              // the glass covers everything except where the bar
+              // sits; chrome pills (rendered after this in the
+              // Stack order) float on top of the glass.
+              top: 0,
               left: 0,
               right: 0,
               bottom: ShellMetrics.bottomOmniboxHeight,
-              // Frosted-glass overlay (Wave 53 follow-up). Same
-              // BackdropFilter + translucent surface vocabulary the
-              // top chrome pills and bottom omnibox bar use, so the
-              // suggestion panel reads as part of the same floating
-              // chrome system instead of a solid sheet plopped on
-              // top of the page. The blur keeps the underlying
-              // route content visible behind the suggestions.
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-                child: Material(
-                  color: scheme.surface.withValues(alpha: 0.78),
-                  child: OmniboxSearchScreen(
-                    onClose: _closeSearchOverlay,
+                // Same blur vocabulary as the top pills + bottom
+                // bar (18σ, alpha 0.55) so the suggestion overlay
+                // visibly belongs to the same chrome system. The
+                // suggestion list inside provides its own padding
+                // and contrast for readability — the page content
+                // is naturally enough background to read against
+                // through the blur.
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: ColoredBox(
+                  color: scheme.surface.withValues(alpha: 0.55),
+                  // Inner SafeArea + chrome reservation so the
+                  // suggestion content doesn't render under the
+                  // status bar or the floating chrome pills. The
+                  // overlay's frame extends to (0, screen-top); the
+                  // suggestion content sits below the chrome.
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: topInset + ShellMetrics.topChromeHeight,
+                    ),
+                    child: OmniboxSearchScreen(
+                      onClose: _closeSearchOverlay,
+                    ),
                   ),
                 ),
               ),
