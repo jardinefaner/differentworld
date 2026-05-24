@@ -434,7 +434,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     final inKidMode = ref.watch(kidModeProvider);
     final chrome = ref.watch(routeChromeProvider);
     final topInset = MediaQuery.paddingOf(context).top;
-    final scheme = Theme.of(context).colorScheme;
 
     final viewer = ref.watch(viewerProvider);
     final showDrawer = viewer.isSignedIn && !inKidMode;
@@ -553,28 +552,27 @@ class _AppShellState extends ConsumerState<AppShell> {
               right: 0,
               bottom: ShellMetrics.bottomOmniboxHeight,
               child: BackdropFilter(
-                // Same blur vocabulary as the top pills + bottom
-                // bar (18σ, alpha 0.55) so the suggestion overlay
-                // visibly belongs to the same chrome system. The
-                // suggestion list inside provides its own padding
-                // and contrast for readability — the page content
-                // is naturally enough background to read against
-                // through the blur.
+                // Blur-only — NO surface tint here. Wave 55 had a
+                // 0.55-alpha ColoredBox wrapping the search content
+                // which made the chrome pills (also 0.55 alpha)
+                // sitting on top stack to ~0.78 effective alpha,
+                // i.e. visually solid. By providing only the blur,
+                // the chrome pills render against blurred page
+                // content directly (same backdrop they have when
+                // the overlay is closed), so they keep their
+                // floating-glass character. The suggestion list
+                // inside provides its own per-row affordances so
+                // the content remains readable against the blur.
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: ColoredBox(
-                  color: scheme.surface.withValues(alpha: 0.55),
-                  // Inner SafeArea + chrome reservation so the
-                  // suggestion content doesn't render under the
-                  // status bar or the floating chrome pills. The
-                  // overlay's frame extends to (0, screen-top); the
-                  // suggestion content sits below the chrome.
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      top: topInset + ShellMetrics.topChromeHeight,
-                    ),
-                    child: OmniboxSearchScreen(
-                      onClose: _closeSearchOverlay,
-                    ),
+                // Inner Padding reserves the chrome height + status
+                // bar inset so the suggestion content itself isn't
+                // hidden under the floating chrome pills.
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: topInset + ShellMetrics.topChromeHeight,
+                  ),
+                  child: OmniboxSearchScreen(
+                    onClose: _closeSearchOverlay,
                   ),
                 ),
               ),
