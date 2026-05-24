@@ -6,10 +6,15 @@ import 'package:go_router/go_router.dart';
 /// screen via a `Positioned` parent. Auto-hides when there's nothing
 /// to pop to. Pair with a fallback route via [fallbackRoute] for
 /// deep-link entries that have no stack.
+///
+/// Pass [onPressed] for non-route back semantics (e.g. closing an
+/// in-app overlay like the omnibox suggestion panel). When provided,
+/// it overrides the default pop/go behavior.
 class FloatingBack extends StatelessWidget {
   const FloatingBack({
     this.fallbackRoute = '/',
     this.semanticsLabel = 'Back',
+    this.onPressed,
     super.key,
   });
 
@@ -17,6 +22,11 @@ class FloatingBack extends StatelessWidget {
   /// home page.
   final String fallbackRoute;
   final String semanticsLabel;
+
+  /// Custom back handler. When non-null, replaces the route-pop /
+  /// go-fallback logic — used by the AppShell's overlay-mode chrome
+  /// to close the suggestion panel without touching the navigator.
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +37,14 @@ class FloatingBack extends StatelessWidget {
       child: IconButton(
         tooltip: semanticsLabel,
         icon: Icon(Icons.arrow_back, color: scheme.onSurface),
-        onPressed: () {
-          if (canPop) {
-            context.pop();
-          } else {
-            context.go(fallbackRoute);
-          }
-        },
+        onPressed: onPressed ??
+            () {
+              if (canPop) {
+                context.pop();
+              } else {
+                context.go(fallbackRoute);
+              }
+            },
       ),
     );
   }

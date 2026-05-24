@@ -201,6 +201,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     RouteChrome chrome,
     double topInset, {
     required bool showDrawer,
+    VoidCallback? overlayBackOverride,
   }) {
     // Stable keys on every emitted Positioned so the Stack's
     // reconciliation stays predictable when sibling Stack children
@@ -229,7 +230,12 @@ class _AppShellState extends ConsumerState<AppShell> {
         leftChrome.add(const SizedBox(width: 8));
       }
       leftChrome.add(
-        FloatingBack(fallbackRoute: chrome.backFallbackRoute),
+        FloatingBack(
+          fallbackRoute: chrome.backFallbackRoute,
+          // overlayBackOverride is set when the suggestion overlay is
+          // open — closes the overlay instead of popping the route.
+          onPressed: overlayBackOverride,
+        ),
       );
     }
     if (leftChrome.isNotEmpty) {
@@ -602,12 +608,21 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
             ),
           // Persistent top chrome (hamburger + back + per-route
-          // actions). Hidden in kid mode.
+          // actions). Hidden in kid mode. When the suggestion
+          // overlay is open, the chrome pivots to "overlay mode" —
+          // always a back-pill that closes the overlay, no per-
+          // route actions, no topOverlay. Users see a consistent
+          // back affordance whether they got to the suggestion
+          // list from Today, a subject detail, or any other route.
           if (!inKidMode)
             ..._buildTopChrome(
-              chrome,
+              _searchOverlayOpen
+                  ? const RouteChrome(showBack: true)
+                  : chrome,
               topInset,
-              showDrawer: showDrawer,
+              showDrawer: showDrawer && !_searchOverlayOpen,
+              overlayBackOverride:
+                  _searchOverlayOpen ? _closeSearchOverlay : null,
             ),
           // Composer at the bottom. Sits flush above the keyboard
           // when it's up, flush above the home-indicator safe area
