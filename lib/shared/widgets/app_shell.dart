@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
@@ -542,10 +543,20 @@ class _AppShellState extends ConsumerState<AppShell> {
               left: 0,
               right: 0,
               bottom: ShellMetrics.bottomOmniboxHeight,
-              child: Material(
-                color: scheme.surface,
-                child: OmniboxSearchScreen(
-                  onClose: _closeSearchOverlay,
+              // Frosted-glass overlay (Wave 53 follow-up). Same
+              // BackdropFilter + translucent surface vocabulary the
+              // top chrome pills and bottom omnibox bar use, so the
+              // suggestion panel reads as part of the same floating
+              // chrome system instead of a solid sheet plopped on
+              // top of the page. The blur keeps the underlying
+              // route content visible behind the suggestions.
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                child: Material(
+                  color: scheme.surface.withValues(alpha: 0.78),
+                  child: OmniboxSearchScreen(
+                    onClose: _closeSearchOverlay,
+                  ),
                 ),
               ),
             ),
