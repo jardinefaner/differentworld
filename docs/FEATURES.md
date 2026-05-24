@@ -57,7 +57,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Personas served**: All staff (Maya for oversight, Jordan + Coach Sam day-to-day).
 **Discovery surfaces**:
 - Routes: `/checklist`, `/groups/:id/attendance`
-- Omnibox: yes — "Morning checklist", "Take attendance · {Group.name}" (dynamic per cohort)
+- Omnibox: yes — "Morning checklist", "Take attendance · {Group.name}" (per cohort), "Mark absent today · {Child name}" (per subject, single-tap write with snackbar + "Open attendance" action for course-correction)
 - Slash: `/attendance {group}` (alias `/atd`)
 - Drawer: no
 - Settings: no

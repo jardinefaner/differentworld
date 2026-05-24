@@ -11,6 +11,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/attendance/attendance_providers.dart';
+import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
@@ -321,6 +323,24 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/settings/team/invite/new'),
       ),
+    // My profile — direct path for the signed-in staff member to
+    // their own detail screen. Most-asked-for from the omnibox path
+    // since cert / role / photo edits all live there. Guardians
+    // don't have a member detail surface (they edit themselves via
+    // the family lens preferences); hide the entry for them.
+    if (viewer is! GuardianViewer && viewer.memberId != null)
+      OmniboxEntry(
+        id: 'action.profile.self',
+        label: 'My profile',
+        category: OmniboxCategory.action,
+        icon: Icons.account_circle_outlined,
+        keywords: const [
+          'me', 'profile', 'account', 'my account', 'cert',
+          'certification', 'photo', 'avatar',
+        ],
+        onSelect: (ctx, _) =>
+            ctx.push('/settings/team/${viewer.memberId}'),
+      ),
     OmniboxEntry(
       id: 'action.signout',
       label: 'Sign out',
@@ -520,6 +540,61 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         groupId: 'subject:${s.id}',
         onSelect: (ctx, _) =>
             unawaited(ctx.push('/groups/$gid/students/${s.id}')),
+      ));
+    }
+    // Mark absent today — single-tap chore for the most common
+    // attendance write. Today this requires opening the attendance
+    // screen for the cohort + finding the kid + tapping Absent;
+    // floor staff often know about a callout 30 seconds before
+    // they can free a hand. Tap → fires the upsert + snackbar.
+    // Not destructive — director / staff can flip it back from the
+    // attendance screen.
+    if (viewer.canTakeAttendance) {
+      entries.add(OmniboxEntry(
+        id: 'subject:${s.id}:attendance.absent',
+        label: 'Mark absent today · $fullName',
+        category: OmniboxCategory.action,
+        icon: Icons.event_busy_outlined,
+        keywords: const [
+          'absent', 'absence', 'out', 'callout', 'sick', 'not here',
+          'missing', 'check in',
+        ],
+        groupId: 'subject:${s.id}',
+        onSelect: (ctx, ref) async {
+          try {
+            await ref.read(attendanceActionsProvider).setStatus(
+                  groupId: gid,
+                  subjectId: s.id,
+                  date: _todayIsoLocal(),
+                  status: AttendanceStatus.absent,
+                );
+            if (!ctx.mounted) return;
+            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+              SnackBar(
+                content: Text('$fullName marked absent.'),
+                action: SnackBarAction(
+                  label: 'Open attendance',
+                  onPressed: () =>
+                      ctx.push('/groups/$gid/attendance'),
+                ),
+              ),
+            );
+          } on Exception catch (e, st) {
+            FlutterError.reportError(
+              FlutterErrorDetails(
+                exception: e,
+                stack: st,
+                library: 'attendance',
+              ),
+            );
+            if (!ctx.mounted) return;
+            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+              const SnackBar(
+                content: Text('Could not mark absent. Try again.'),
+              ),
+            );
+          }
+        },
       ));
     }
   }
