@@ -296,14 +296,22 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         unawaited(ctx.push('/activities/new'));
       },
     ),
-    OmniboxEntry(
-      id: 'action.invite',
-      label: 'Invite a teammate',
-      category: OmniboxCategory.action,
-      icon: Icons.person_add_alt_1_outlined,
-      keywords: const ['invite', 'add staff', 'add teacher', 'team'],
-      onSelect: (ctx, _) => ctx.push('/settings/team'),
-    ),
+    // Staff invite — directors only. Lands directly on the create
+    // form (not the team list) so the user is one tap from the form
+    // they came to fill. Hidden for non-directors per the "if you
+    // can't do it, don't show it" rule.
+    if (viewer.canInviteStaff)
+      OmniboxEntry(
+        id: 'action.invite.staff',
+        label: 'Invite a teammate',
+        category: OmniboxCategory.action,
+        icon: Icons.person_add_alt_1_outlined,
+        keywords: const [
+          'invite', 'add staff', 'add teacher', 'add counselor',
+          'add specialist', 'add substitute', 'team', 'hire',
+        ],
+        onSelect: (ctx, _) => ctx.push('/settings/team/invite/new'),
+      ),
     OmniboxEntry(
       id: 'action.signout',
       label: 'Sign out',
@@ -459,6 +467,28 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
             ctx.push('/observations/new?groupId=$gid&subjectId=${s.id}'),
           );
         },
+      ));
+    }
+    // Invite a parent — per-subject action surfaced for directors so
+    // they can mint a guardian invite for a specific kid without
+    // drilling into the kid's profile first. Routes to the subject
+    // edit screen where the inline Guardians editor lives (the
+    // existing `_handleAddGuardian` flow runs from there). Gated on
+    // canManageSpace because creating a guardians row + minting an
+    // invite is a director action.
+    if (viewer.canManageSpace) {
+      entries.add(OmniboxEntry(
+        id: 'subject:${s.id}:invite.parent',
+        label: 'Invite a parent · $fullName',
+        category: OmniboxCategory.action,
+        icon: Icons.family_restroom_outlined,
+        keywords: const [
+          'parent', 'family', 'mom', 'dad', 'guardian', 'invite',
+          'invite parent', 'invite family',
+        ],
+        groupId: 'subject:${s.id}',
+        onSelect: (ctx, _) =>
+            ctx.push('/groups/$gid/students/${s.id}/edit'),
       ));
     }
   }

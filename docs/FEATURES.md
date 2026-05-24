@@ -267,23 +267,24 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Invites
 **Path**: `lib/features/invites/`
-**Purpose**: Staff onboarding via 6-char invite codes (deep link + QR + share-text); cold-launch & warm-app deep links both supported.
-**Personas served**: Maya (creates + revokes), Brianna (redeems on her phone).
+**Purpose**: Staff + guardian onboarding via 6-char invite codes (deep link + QR + share-text); cold-launch & warm-app deep links both supported.
+**Personas served**: Maya (creates + revokes staff AND guardian invites), Brianna (redeems on her phone), Lauren / Devon / Helen / Marcus (redeem as guardians).
 **Discovery surfaces**:
 - Routes: `/settings/team/invite/new`, `/settings/team/invite/:id`
-- Omnibox: yes — "Invite a teammate" (action)
+- Omnibox: yes — "Invite a teammate" (action, director-gated, routes directly to `/settings/team/invite/new`); "Invite a parent · {Child name}" (per-subject action, director-gated, routes to the subject edit screen's inline Guardians editor). Keyword aliases: parent, family, mom, dad, guardian
 - Slash: none
 - Drawer: no
-- Settings: no — embedded in Team
-**Capabilities**: Create / revoke: `can_invite_staff`. Redeem: pre-auth or post-auth without an active space.
+- Settings: no — embedded in Team / Subject detail
+**Capabilities**: Create / revoke staff: `can_invite_staff`. Create guardian invites: `can_manage_space`. Redeem: pre-auth or post-auth without an active space; the RPC takes an explicit `caller_uid` to work around the ES256 auth.uid()-null gotcha (see migration 20260523000003).
 **Data**: [invites](SCHEMA.md#invites)
 **Surfaces**:
 - *Invite create screen* — `lib/features/invites/invite_create_screen.dart`. Role + optional email + expiry chips.
 - *Invite share screen* — `lib/features/invites/invite_share_screen.dart`. The created code; copy / QR / share-text.
+- *Subject-edit inline Guardians editor* — embedded in `lib/features/subjects/subject_edit_screen.dart`. The Add Guardian flow mints a guardian invite for that specific kid via `createGuardianInvite`; this is the destination of the omnibox "Invite a parent" entry.
 - *Deep-link listener* — `lib/features/invites/deep_link_listener.dart`. Captures `differentworld://invite/<code>` and the https fallback into `pendingInviteCodeProvider`; consumed by `home_redeem_invite_host.dart`.
-**Depends on**: Members (assigning role), Spaces.
-**Consumed by**: Team screen (pending-invites list), Onboarding (redeem path).
-**Last verified**: 2026-05-21
+**Depends on**: Members (assigning role), Spaces, Subjects (guardian invites need a subject_id), Guardians (guardian invites create + link rows).
+**Consumed by**: Team screen (pending-invites list), Onboarding (redeem path), Subject detail (inline Guardians editor + invite-share navigation).
+**Last verified**: 2026-05-23
 
 ---
 
