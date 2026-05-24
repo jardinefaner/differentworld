@@ -1,7 +1,9 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/power_sync_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Drift instance wrapping the same SQLite database PowerSync owns.
 /// Single shared instance for the app's lifetime.
@@ -50,15 +52,122 @@ final currentSpaceProvider = StreamProvider<Space?>((ref) {
 
 /// Reactive view of the signed-in user's Guardian row, if they have
 /// one. Returns null for staff (Members) or anyone not yet linked.
-/// Drives the family-side viewer resolution.
-final currentGuardianProvider = StreamProvider<Guardian?>((ref) {
+/// Drives the family-side viewer resolution in `viewerProvider`.
+///
+/// **Hybrid lookup** (Wave 45): the local Drift mirror is the primary
+/// source — offline-first, live-updating when `subject_guardians`
+/// changes elsewhere. But on a guardian's FIRST sign-in after
+/// redeeming an invite, the local mirror is empty until the
+/// `by_guardian` PowerSync stream catches up (and that stream only
+/// exists once the YAML in `supabase/sync_rules.yaml` has been
+/// redeployed on the PowerSync dashboard — repo file ≠ runtime).
+///
+/// If Drift emits null on first subscription, we fire a one-shot
+/// direct PostgREST fetch as a fallback. This way:
+///   * Dashboard deployed → Drift wins → offline-first, live updates.
+///   * Dashboard not yet deployed → PostgREST returns the row → the
+///     family path lights up immediately; once dashboard catches up
+///     the watch stream takes over without a re-mount.
+///   * Staff user (no guardian row) → both sources return null → the
+///     viewer falls through to the staff path. Cost of the fallback
+///     for staff is one extra round-trip per sign-in.
+final currentGuardianProvider = StreamProvider<Guardian?>((ref) async* {
   final session = ref.watch(sessionProvider);
-  if (session == null) return Stream<Guardian?>.value(null);
-  final dbAsync = ref.watch(appDatabaseProvider);
-  final db = dbAsync.value;
-  if (db == null) return Stream<Guardian?>.value(null);
-  return db.guardiansDao.watchForUser(session.user.id);
+  if (session == null) {
+    yield null;
+    return;
+  }
+  final db = await ref.watch(appDatabaseProvider.future);
+  final userId = session.user.id;
+  final driftStream = db.guardiansDao.watchForUser(userId);
+
+  // First emission from Drift. If non-null, we're done — the row is
+  // present in the local mirror, the `by_guardian` stream is wired,
+  // continue watching from the second emission onward (skip(1) so we
+  // don't double-yield the first row).
+  final first = await driftStream.first;
+  if (first != null) {
+    yield first;
+    yield* driftStream.skip(1);
+    return;
+  }
+
+  // Drift empty. Two possibilities — we can short-circuit one of them
+  // by checking the local member row: if the user has a member row
+  // with a non-null space_id, they're confirmed staff and definitely
+  // not a guardian, so we can skip the PostgREST round-trip entirely.
+  // (Guardians' member.space_id stays null.) Saves a guardians-table
+  // GET on every staff cold-start (preflight perf WARNING).
+  final localMember = await db.membersDao.watchById(userId).first;
+  if (localMember != null && localMember.spaceId != null) {
+    yield null;
+    // No watch on the staff side — guardian row can't appear later
+    // for someone who's already in a space as staff. Done.
+    return;
+  }
+
+  // Drift empty AND no staff-confirmation. Try direct PostgREST as
+  // a fallback — either we get a row (the user IS a guardian; the
+  // by_guardian stream just hasn't delivered yet) or we get null
+  // (the user isn't a guardian and we fall through to the staff
+  // path with no guardian).
+  final fromPostgrest = await _fetchGuardianFromPostgrest(userId);
+  yield fromPostgrest;
+
+  // Keep watching Drift in case the stream eventually delivers — but
+  // FILTER OUT trailing nulls. Without the filter, Drift's cold
+  // re-subscription immediately emits null (the mirror still hasn't
+  // synced) which would cascade back through `viewerProvider` →
+  // `_Home` → bounce a freshly-onboarded guardian to JoinOrCreate
+  // (preflight BLOCKER). Once Drift delivers a real row we let it
+  // supersede the PostgREST fallback; a deletion (guardian revoked)
+  // is the only case we'd lose visibility on, and that's acceptable
+  // for the interim until the dashboard redeploy lands.
+  yield* driftStream.where((g) => g != null);
 });
+
+/// One-shot fetch of `public.guardians` for the signed-in user via
+/// direct PostgREST. Used by [currentGuardianProvider] as a fallback
+/// when the local Drift mirror is empty (e.g. the `by_guardian`
+/// PowerSync stream isn't yet deployed). Returns null if the user
+/// isn't a guardian OR the network call fails — we don't want to
+/// throw out of a viewer-resolution path.
+Future<Guardian?> _fetchGuardianFromPostgrest(String userId) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final row = await supabase
+        .from('guardians')
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (row == null) return null;
+    return _guardianFromMap(row);
+  } on Object catch (e, st) {
+    if (kDebugMode) {
+      debugPrint('[guardian-fallback] postgrest fetch failed: $e\n$st');
+    }
+    return null;
+  }
+}
+
+/// PostgREST JSON map → Drift Guardian. Mirrors the structure of the
+/// `Guardians` table in `app_database.dart`. Kept here next to the
+/// fetch helper so the round-trip-and-decode lives in one place.
+Guardian _guardianFromMap(Map<String, dynamic> r) => Guardian(
+      id: r['id'] as String,
+      spaceId: r['space_id'] as String,
+      userId: r['user_id'] as String?,
+      name: r['name'] as String,
+      relationship: r['relationship'] as String?,
+      phone: r['phone'] as String?,
+      email: r['email'] as String?,
+      authorizedForPickup: r['authorized_for_pickup'] is bool
+          ? ((r['authorized_for_pickup'] as bool) ? 1 : 0)
+          : r['authorized_for_pickup'] as int?,
+      notes: r['notes'] as String?,
+      createdAt: r['created_at'] as String,
+      updatedAt: r['updated_at'] as String,
+    );
 
 /// IDs of the children the signed-in guardian is linked to. Offline-
 /// first: reads the local `subject_guardians` mirror (delivered by
