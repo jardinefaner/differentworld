@@ -552,28 +552,20 @@ class _AppShellState extends ConsumerState<AppShell> {
               right: 0,
               bottom: ShellMetrics.bottomOmniboxHeight,
               child: BackdropFilter(
-                // Blur-only — NO surface tint here. Wave 55 had a
-                // 0.55-alpha ColoredBox wrapping the search content
-                // which made the chrome pills (also 0.55 alpha)
-                // sitting on top stack to ~0.78 effective alpha,
-                // i.e. visually solid. By providing only the blur,
-                // the chrome pills render against blurred page
-                // content directly (same backdrop they have when
-                // the overlay is closed), so they keep their
-                // floating-glass character. The suggestion list
-                // inside provides its own per-row affordances so
-                // the content remains readable against the blur.
+                // Blur-only — NO surface tint, NO outer Padding.
+                // The suggestion list extends all the way to the
+                // screen top (behind the chrome pills); the list's
+                // OWN top padding (set inside OmniboxSearchScreen
+                // via the overlay-mode `topInset` it reads from
+                // MediaQuery + ShellMetrics.topChromeHeight)
+                // keeps the first row clear of the chrome. This
+                // way the list's row backgrounds + scroll surface
+                // genuinely extend edge-to-edge — what the user
+                // sees behind the chrome pills is the same blurred
+                // list, not a chopped-off chrome strip.
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                // Inner Padding reserves the chrome height + status
-                // bar inset so the suggestion content itself isn't
-                // hidden under the floating chrome pills.
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    top: topInset + ShellMetrics.topChromeHeight,
-                  ),
-                  child: OmniboxSearchScreen(
-                    onClose: _closeSearchOverlay,
-                  ),
+                child: OmniboxSearchScreen(
+                  onClose: _closeSearchOverlay,
                 ),
               ),
             ),

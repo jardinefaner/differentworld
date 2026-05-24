@@ -16,6 +16,7 @@ import 'package:differentworld/features/omnibox/omnibox_state.dart';
 import 'package:differentworld/features/omnibox/slash_commands.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -218,7 +219,23 @@ class OmniboxSearchScreen extends ConsumerWidget {
               else
                 Expanded(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    // In overlay-mode the suggestion list extends
+                    // edge-to-edge behind the floating chrome (the
+                    // BackdropFilter wrapping us in AppShell takes
+                    // care of the visual). Reserve the chrome height
+                    // + status bar inset HERE so the first row is
+                    // clear of the pills while the scrolling surface
+                    // itself still fills behind them. Route-mode
+                    // (onClose == null) has EdgeScaffold handling
+                    // chrome reservation differently — fall back to
+                    // the original symmetric padding.
+                    padding: onClose == null
+                        ? const EdgeInsets.symmetric(vertical: 6)
+                        : EdgeInsets.only(
+                            top: MediaQuery.paddingOf(context).top +
+                                ShellMetrics.topChromeHeight + 6,
+                            bottom: 6,
+                          ),
                     itemCount: activeNodes.length,
                     itemBuilder: (_, i) {
                       final n = activeNodes[i];
