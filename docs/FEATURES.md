@@ -271,7 +271,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Personas served**: Maya (creates + revokes staff AND guardian invites), Brianna (redeems on her phone), Lauren / Devon / Helen / Marcus (redeem as guardians).
 **Discovery surfaces**:
 - Routes: `/settings/team/invite/new`, `/settings/team/invite/:id`
-- Omnibox: yes — "Invite a teammate" (action, director-gated, routes directly to `/settings/team/invite/new`); "Invite a parent · {Child name}" (per-subject action, director-gated, routes to the subject edit screen's inline Guardians editor). Keyword aliases: parent, family, mom, dad, guardian
+- Omnibox: yes — "Invite a teammate" (action, director-gated, routes directly to `/settings/team/invite/new`); "Invite a parent · {Child name}" (per-subject action, director-gated, routes to the subject edit screen's inline Guardians editor); "Revoke pending invite · {label}" (per-pending-invite action, director-gated, destructive-confirm before InviteActions.revoke). Keyword aliases: parent, family, mom, dad, guardian, revoke, cancel, pending
 - Slash: none
 - Drawer: no
 - Settings: no — embedded in Team / Subject detail
@@ -317,7 +317,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Personas served**: All staff (write to family), Lauren / Devon / Helen / Marcus (receive + reply).
 **Discovery surfaces**:
 - Routes: `/messages`, `/messages/:subjectId/:guardianId`
-- Omnibox: yes — "Messages" (gated by guardian-with-children OR staff)
+- Omnibox: yes — "Messages" (gated by guardian-with-children — guardian-side page entry). Staff side: per-subject "Messages · {Child name}" action (gated by `can_observe`, routes to subject detail where the per-thread navigation lives). Keyword aliases: message, chat, family, parent, mom, dad, guardian.
 - Slash: none
 - Drawer: no — guardians may eventually get a dedicated drawer entry
 - Settings: no

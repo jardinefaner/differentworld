@@ -12,6 +12,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
@@ -20,6 +21,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart'
     show startNewObservation;
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -46,6 +48,13 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
   final members =
       ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+  // Pending invites — only needed for director-side revoke actions.
+  // We watch unconditionally because providers can't be conditional;
+  // the per-entry guard on canInviteStaff handles the gating.
+  final pendingInvites = viewer.spaceId == null
+      ? const <Invite>[]
+      : (ref.watch(pendingInvitesProvider(viewer.spaceId!)).value ??
+          const <Invite>[]);
 
   // -- Static pages + actions -------------------------------------------
   final entries = <OmniboxEntry>[
@@ -491,6 +500,64 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
             ctx.push('/groups/$gid/students/${s.id}/edit'),
       ));
     }
+    // Messages — staff path to the per-child thread. Subject detail
+    // hosts the messaging surface (lists guardians + threads), so the
+    // omnibox lands there. Gated on canObserve (the floor-staff cap)
+    // because anyone who logs observations may need to message the
+    // family. Keywords include "chat" + "family" so the action
+    // surfaces whether the user types "messages", "family", or the
+    // kid's name.
+    if (viewer.canObserve) {
+      entries.add(OmniboxEntry(
+        id: 'subject:${s.id}:messages',
+        label: 'Messages · $fullName',
+        category: OmniboxCategory.action,
+        icon: Icons.forum_outlined,
+        keywords: const [
+          'message', 'messages', 'chat', 'family', 'parent', 'mom',
+          'dad', 'guardian',
+        ],
+        groupId: 'subject:${s.id}',
+        onSelect: (ctx, _) =>
+            unawaited(ctx.push('/groups/$gid/students/${s.id}')),
+      ));
+    }
+  }
+
+  // -- Dynamic: pending invites (director admin) ------------------------
+  // Per-pending-invite "Revoke" actions. Directors live in the team
+  // screen for this today; the omnibox shortens it to one keyword.
+  // Gated on canInviteStaff (same cap that controls who can create
+  // invites). Destructive-confirm before the revoke fires.
+  if (viewer.canInviteStaff) {
+    for (final inv in pendingInvites) {
+      final label = _inviteShortLabel(inv);
+      entries.add(OmniboxEntry(
+        id: 'invite:${inv.id}:revoke',
+        label: 'Revoke pending invite · $label',
+        category: OmniboxCategory.action,
+        icon: Icons.cancel_outlined,
+        keywords: const [
+          'revoke', 'cancel', 'pending', 'invite', 'remove',
+        ],
+        onSelect: (ctx, ref) async {
+          final ok = await confirmDestructive(
+            ctx,
+            title: 'Revoke this invite?',
+            message:
+                'The code stops working immediately. The recipient '
+                "won't be able to join with it.",
+            confirmLabel: 'Revoke',
+          );
+          if (!ok || !ctx.mounted) return;
+          await ref.read(inviteActionsProvider).revoke(inv.id);
+          if (!ctx.mounted) return;
+          ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+            SnackBar(content: Text('Revoked invite for $label.')),
+          );
+        },
+      ));
+    }
   }
 
   // -- Dynamic: activities ---------------------------------------------
@@ -585,4 +652,14 @@ String _todayIsoLocal() {
   final m = now.month.toString().padLeft(2, '0');
   final d = now.day.toString().padLeft(2, '0');
   return '$y-$m-$d';
+}
+
+/// Short human label for an invite — used in the omnibox revoke
+/// entry so a director can tell two pending invites apart at a
+/// glance. Preference: email (most specific) → role-by-shortcode
+/// fallback. Email may be null; code is always present.
+String _inviteShortLabel(Invite inv) {
+  final email = inv.email;
+  if (email != null && email.isNotEmpty) return email;
+  return '${inv.role} · ${inv.code ?? "(no code)"}';
 }
