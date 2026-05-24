@@ -452,12 +452,29 @@ class _AppShellState extends ConsumerState<AppShell> {
     final atRoot =
         GoRouterState.of(context).matchedLocation == '/' && !inKidMode;
 
+    // When the suggestion overlay is open, the system back gesture
+    // (swipe-from-left-edge on Android, swipe-back on iOS) should
+    // close the OVERLAY first — not pop the underlying route. Without
+    // this, a user who tapped the omnibox on /groups/abc and then
+    // swiped back would land on Today (route popped) instead of just
+    // returning to the page they were on. canPop: false intercepts;
+    // the handler below decides what to actually do based on which
+    // overlay (if any) is currently visible.
+    final canPop = !atRoot && !_searchOverlayOpen;
+
     return PopScope(
-      canPop: !atRoot,
+      canPop: canPop,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        // Only fires when canPop was false (we're at /) and the user
-        // tried to back out. Confirm before exiting.
+        // First: did the back come from the overlay being open? If so,
+        // close it and stop — the user wanted to dismiss the overlay,
+        // not pop the route.
+        if (_searchOverlayOpen) {
+          _closeSearchOverlay();
+          return;
+        }
+        // Otherwise we're at root (canPop=false because of atRoot) and
+        // the user tried to back out of the app entirely. Confirm.
         if (!mounted) return;
         final shouldExit = await showDialog<bool>(
           context: context,
