@@ -75,6 +75,82 @@ final _messagesInSpaceProvider =
   },
 );
 
+/// A staff-side digest of unread family-sent messages — one row per
+/// (subject, guardian) thread that has at least one unread message,
+/// newest message first. Drives the Today "Unread messages" card so
+/// staff can see WHICH families messaged them without drilling into
+/// every kid's profile.
+///
+/// Empty list for guardians (they only see their own threads via the
+/// family lens). Empty list when the staff member has no space yet.
+typedef UnreadThread = ({
+  String subjectId,
+  String guardianId,
+  int unreadCount,
+  String latestBody,
+  String latestCreatedAt,
+});
+
+final unreadThreadsForStaffProvider = Provider<List<UnreadThread>>((ref) {
+  final viewer = ref.watch(viewerProvider);
+  if (viewer is GuardianViewer) return const <UnreadThread>[];
+  final spaceId = viewer.spaceId;
+  if (spaceId == null) return const <UnreadThread>[];
+  final all = ref.watch(_messagesInSpaceProvider(spaceId)).value ??
+      const <Message>[];
+  // Group by (subjectId, guardianId). Only count guardian-sent + unread.
+  final byThread = <String, _ThreadAccum>{};
+  for (final m in all) {
+    if (m.senderKind != 'guardian' || m.readAt != null) continue;
+    final key = '${m.subjectId}|${m.guardianId}';
+    final acc = byThread[key];
+    if (acc == null) {
+      byThread[key] = _ThreadAccum(
+        subjectId: m.subjectId,
+        guardianId: m.guardianId,
+        count: 1,
+        latestBody: m.body,
+        latestCreatedAt: m.createdAt,
+      );
+    } else {
+      acc.count += 1;
+      // Track newest message for the preview.
+      if (m.createdAt.compareTo(acc.latestCreatedAt) > 0) {
+        acc
+          ..latestBody = m.body
+          ..latestCreatedAt = m.createdAt;
+      }
+    }
+  }
+  final result = [
+    for (final acc in byThread.values)
+      (
+        subjectId: acc.subjectId,
+        guardianId: acc.guardianId,
+        unreadCount: acc.count,
+        latestBody: acc.latestBody,
+        latestCreatedAt: acc.latestCreatedAt,
+      ),
+  ]..sort((a, b) => b.latestCreatedAt.compareTo(a.latestCreatedAt));
+  return result;
+});
+
+class _ThreadAccum {
+  _ThreadAccum({
+    required this.subjectId,
+    required this.guardianId,
+    required this.count,
+    required this.latestBody,
+    required this.latestCreatedAt,
+  });
+
+  final String subjectId;
+  final String guardianId;
+  int count;
+  String latestBody;
+  String latestCreatedAt;
+}
+
 class MessageActions {
   MessageActions(this._ref);
 

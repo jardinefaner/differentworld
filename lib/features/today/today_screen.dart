@@ -8,9 +8,11 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
+import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/breakpoints.dart';
@@ -251,6 +253,13 @@ class _TodayBody extends ConsumerWidget {
             // assignments.
             const LeadingTodayCard(),
             const SizedBox(height: 16),
+            // Unread family messages — staff-side proactive surface
+            // (Wave 60). Renders only when at least one family has
+            // sent a message that nobody on staff has read yet.
+            // Each row taps through to that (subject, guardian)
+            // thread. Hidden for guardians (their messages flow is
+            // through the family lens).
+            const _UnreadMessagesCard(),
             // Director's morning pulse — aggregates absent kids,
             // cohorts with substitute coverage today, and
             // expiring-soon certs into a single card. Renders
@@ -790,6 +799,133 @@ class _IdentityStrip extends ConsumerWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Staff-side Today card — surfaces every (subject, guardian) thread
+/// that has at least one unread family-sent message. Hidden when the
+/// inbox is empty so the "all caught up" case doesn't add chrome.
+/// Tapping a row opens that specific thread.
+class _UnreadMessagesCard extends ConsumerWidget {
+  const _UnreadMessagesCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final threads = ref.watch(unreadThreadsForStaffProvider);
+    if (threads.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final visible = threads.length > 4 ? threads.sublist(0, 4) : threads;
+    final totalUnread = threads.fold<int>(0, (sum, t) => sum + t.unreadCount);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: scheme.primaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.mark_chat_unread_outlined,
+                    size: 20,
+                    color: scheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    totalUnread == 1
+                        ? '1 unread message'
+                        : '$totalUnread unread messages',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (threads.length > visible.length)
+                    Text(
+                      '+${threads.length - visible.length}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.onPrimaryContainer
+                            .withValues(alpha: 0.7),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            for (final t in visible) _UnreadThreadRow(thread: t),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UnreadThreadRow extends ConsumerWidget {
+  const _UnreadThreadRow({required this.thread});
+
+  final UnreadThread thread;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final subjectAsync = ref.watch(subjectByIdProvider(thread.subjectId));
+    final subject = subjectAsync.value;
+    final subjectName = subject == null
+        ? 'A child'
+        : '${subject.firstName} ${subject.lastName}'.trim();
+    return InkWell(
+      onTap: () => context.push(
+        '/messages/${thread.subjectId}/${thread.guardianId}',
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+        child: Row(
+          children: [
+            Icon(
+              Icons.forum_outlined,
+              size: 18,
+              color: scheme.onPrimaryContainer,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$subjectName · ${thread.unreadCount} new',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: scheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    thread.latestBody,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onPrimaryContainer
+                          .withValues(alpha: 0.78),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: scheme.onPrimaryContainer.withValues(alpha: 0.7),
+            ),
+          ],
         ),
       ),
     );
