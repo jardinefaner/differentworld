@@ -169,37 +169,91 @@ Guardian _guardianFromMap(Map<String, dynamic> r) => Guardian(
       updatedAt: r['updated_at'] as String,
     );
 
-/// IDs of the children the signed-in guardian is linked to. Offline-
-/// first: reads the local `subject_guardians` mirror (delivered by
-/// the `by_guardian` PowerSync stream — see `supabase/sync_rules.yaml`).
+/// IDs of the children the signed-in guardian is linked to.
 ///
-/// Used by `viewerProvider` to seed `GuardianViewer.childSubjectIds`
-/// without a PostgREST round-trip. Full `Subject` rows for these IDs
-/// come from `familyChildrenProvider` (PostgREST) in
-/// `lib/features/family/family_providers.dart` — `subjects` themselves
-/// don't sync to a guardian's device under the current narrow
-/// `by_guardian` scope.
+/// **Hybrid lookup** (Wave 46, parallel shape to Wave 45's guardian
+/// fallback): primary source is the local `subject_guardians` mirror
+/// delivered by the `by_guardian` PowerSync stream (see
+/// `supabase/sync_rules.yaml`). If the dashboard hasn't been
+/// redeployed with the new stream — or hasn't synced yet on a freshly
+/// onboarded guardian device — the mirror is empty and every
+/// `viewer.canSeeSubject(...)` check returns false, leaving the
+/// family lens with no kids visible. Fallback: one-shot direct
+/// PostgREST query on `subject_guardians` filtered by the guardian's
+/// id. Once Drift catches up, the watch supersedes.
+///
+/// `viewerProvider` watches this stream, so every emission rebuilds
+/// the viewer + re-fires every family provider that depends on it.
+/// Drift watches re-emit on ANY column write to a matching row — so
+/// a touch to `is_primary` or a `created_at` re-stamp would cascade
+/// a full PostgREST refetch storm. Dedupe to id-set equality: emit
+/// only when the visible kid roster actually changes.
 ///
 /// Empty for staff viewers — they have no guardian row.
-final myChildSubjectIdsProvider = StreamProvider<List<String>>((ref) {
+final myChildSubjectIdsProvider =
+    StreamProvider<List<String>>((ref) async* {
   final guardian = ref.watch(currentGuardianProvider).value;
   final dbAsync = ref.watch(appDatabaseProvider);
   final db = dbAsync.value;
   if (guardian == null || db == null) {
-    return Stream<List<String>>.value(const []);
+    yield const <String>[];
+    return;
   }
-  // `viewerProvider` watches this stream, so every emission rebuilds
-  // the viewer and re-fires every family provider that depends on it.
-  // Drift watches re-emit on ANY column write to a matching row — so
-  // a touch to `is_primary` or a `created_at` re-stamp would cascade
-  // a full PostgREST refetch storm. Dedupe to id-set equality:
-  // emit only when the visible kid roster actually changes.
-  return (db.select(db.subjectGuardians)
+  final driftStream = (db.select(db.subjectGuardians)
         ..where((sg) => sg.guardianId.equals(guardian.id)))
       .watch()
       .map((rows) => rows.map((r) => r.subjectId).toList())
       .distinct(_listEquals);
+
+  // First Drift emission. If non-empty, we're offline-first — yield
+  // and continue watching from the second emission (skip(1)).
+  final first = await driftStream.first;
+  if (first.isNotEmpty) {
+    yield first;
+    yield* driftStream.skip(1);
+    return;
+  }
+
+  // Drift empty. Either: (a) the by_guardian stream hasn't delivered
+  // subject_guardians for this guardian yet, or (b) the guardian
+  // really has no linked children. Try direct PostgREST to
+  // disambiguate.
+  final fromPostgrest = await _fetchSubjectIdsForGuardian(guardian.id);
+  yield fromPostgrest;
+
+  // Keep watching Drift, but ONLY take over once it delivers a
+  // non-empty list — otherwise Drift's cold re-emission of `[]`
+  // would clobber a PostgREST-resolved roster, cascade through
+  // viewerProvider, and family screens would suddenly lose their
+  // kids mid-session.
+  yield* driftStream.where((ids) => ids.isNotEmpty);
 });
+
+/// One-shot fetch of `subject_guardians.subject_id` rows for the
+/// guardian via direct PostgREST. Used by [myChildSubjectIdsProvider]
+/// as a fallback when the local Drift mirror is empty (the
+/// `by_guardian` stream isn't yet delivering). Returns `[]` on any
+/// failure — viewer-resolution paths must never throw.
+Future<List<String>> _fetchSubjectIdsForGuardian(String guardianId) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final rows = await supabase
+        .from('subject_guardians')
+        .select('subject_id')
+        .eq('guardian_id', guardianId);
+    return [
+      for (final r in rows)
+        if (r['subject_id'] != null) r['subject_id'] as String,
+    ];
+  } on Object catch (e, st) {
+    if (kDebugMode) {
+      debugPrint(
+        '[children-fallback] postgrest fetch failed: $e\n$st',
+      );
+    }
+    return const <String>[];
+  }
+}
 
 bool _listEquals(List<String> a, List<String> b) {
   if (identical(a, b)) return true;
