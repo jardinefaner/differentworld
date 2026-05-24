@@ -578,6 +578,40 @@ flutter test        # all passing
 
 The ones we've already burned a turn on.
 
+### Google OAuth's `name` claim, not `display_name` or `full_name`
+Supabase's docs / examples reference `raw_user_meta_data->>'display_name'`
+when reading the user's name out of an OAuth sign-in. That field is a
+Supabase convention; Google's OAuth response sends the user's name
+under the **`name`** key (sometimes ALSO under `full_name`, but never
+reliably under `display_name`). Coalescing in the order
+`display_name → full_name → email-local-part` (as the original
+`handle_new_user` trigger did) silently falls through to the email-
+local-part for every Google sign-in. A "john.smith@gmail.com" sign-in
+shows as "john.smith" in the drawer; a guardian whose director typed
+their email when creating the invite shows up as their email forever.
+
+Fix: try `name` FIRST when reading `raw_user_meta_data`. Pattern (from
+migration `20260523000004_pull_google_name.sql`):
+```sql
+coalesce(
+  nullif(trim(u.raw_user_meta_data->>'name'), ''),
+  nullif(trim(u.raw_user_meta_data->>'display_name'), ''),
+  nullif(trim(u.raw_user_meta_data->>'full_name'), ''),
+  split_part(u.email, '@', 1)
+)
+```
+
+The same migration backfills existing `members.display_name` +
+`guardians.name` rows that look like placeholders (display_name
+matches email local-part exactly; guardian.name contains "@") with
+the real Google name from `auth.users.raw_user_meta_data`.
+
+Dart side: the drawer renders `viewer.displayName`, not
+`member.displayName` — so a GuardianViewer's name resolves through
+`guardian.name` (the friendly identity) instead of the member-shell
+row's email-local-part placeholder. Apply the same `viewer.displayName`
+pattern to any new identity-rendering surface.
+
 ### Stack children without keys → IME closes when sibling is added (the "keyboard disappears on tap" bug)
 
 If a `Stack` has multiple `Positioned` children of the same widget

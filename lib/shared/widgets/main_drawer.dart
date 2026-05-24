@@ -76,7 +76,18 @@ class MainDrawer extends ConsumerWidget {
                         child: Row(
                           children: [
                             PersonAvatar(
-                              name: member?.displayName ?? '?',
+                              // viewer.displayName routes through
+                              // GuardianViewer for guardians (returns
+                              // guardian.name) and falls back to
+                              // member.displayName for staff. Using the
+                              // member field directly was leaving the
+                              // guardian avatar with a "?" because the
+                              // staff member row carries an email-local-
+                              // part placeholder, not their real name.
+                              name: () {
+                                final n = viewer.displayName;
+                                return n.isEmpty ? '?' : n;
+                              }(),
                               photoUrl: member?.avatarUrl,
                               radius: 22,
                             ),
@@ -86,7 +97,9 @@ class MainDrawer extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    member?.displayName ?? '—',
+                                    viewer.displayName.isEmpty
+                                        ? '—'
+                                        : viewer.displayName,
                                     style: theme.textTheme.titleMedium,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
