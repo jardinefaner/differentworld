@@ -451,6 +451,45 @@ Conventions:
 - **Mouse + touch + keyboard** all work on every interactive element.
   `Focus` and `Shortcuts` for keyboard, `MouseRegion` for cursor.
 
+### Floating-glass chrome — one visual language
+
+Every chrome surface in the app — top action pills, bottom omnibox
+bar, suggestion overlay, drawer, modal bottom sheets — uses the
+same translucent BackdropFilter blur over a slightly tinted
+surface. **The single source of truth is
+`lib/shared/widgets/glass_panel.dart`.** Don't write a new solid
+Material wrapper for chrome; reach for `GlassPanel` (with the
+shape variant that matches the surface) or the existing widgets
+that already wrap it (`GlassPill`, drawer, `showGlassSheet`).
+
+Shapes:
+- `GlassPanelShape.pill` — small floating chrome (top pills).
+  Used via `GlassPill`.
+- `GlassPanelShape.bar` — full-width floating bar (bottom omnibox).
+  Inline in `bottom_omnibox_bar.dart`.
+- `GlassPanelShape.sheet` — drawer panel, modal bottom sheets.
+  `MainDrawer` wraps its body in this; ad-hoc sheets use
+  `showGlassSheet(context: ctx, builder: ...)` from `glass_panel.dart`.
+- `GlassPanelShape.overlay` — full-screen panels (omnibox
+  suggestion list). Inline in `app_shell.dart`.
+
+When you need glass for a new surface (e.g. a context-menu sheet, a
+help bubble, a system-message banner):
+1. Pick the shape that matches the surface size + roundness.
+2. Wrap the content in `GlassPanel(shape: ..., child: ...)`.
+3. If you're routing through `showModalBottomSheet`, use
+   `showGlassSheet` so the outer Material is transparent + the
+   glass becomes the only visible surface.
+4. Do NOT theme the bottom sheet / drawer / dialog backgrounds
+   globally to translucent — that breaks every existing dialog
+   that expects a solid surface. Opt in per-surface.
+
+The blur strength + alpha is tuned per shape in `GlassPanel`;
+don't override them inline without a clear reason. Visual
+consistency across chrome is what makes the floating language
+read as "one system" instead of "a bunch of slightly translucent
+things."
+
 ### UX state primitives
 
 Every list / data screen has four states, all designed:

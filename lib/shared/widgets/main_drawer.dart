@@ -5,6 +5,7 @@ import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,8 +33,20 @@ class MainDrawer extends ConsumerWidget {
     // "Project manager" in childcare strings or vice versa.
     final vertical = ref.watch(verticalLabelsProvider).vertical;
 
+    // Wave 54: drawer surface uses the shared GlassPanel so the
+    // staff drawer reads as part of the same floating-chrome
+    // language as the top pills, the bottom omnibox bar, and the
+    // suggestion overlay. Flutter's Drawer wraps the child in its
+    // own Material with the DrawerThemeData background — we set the
+    // Drawer's backgroundColor + elevation to nil so the GlassPanel
+    // is the only visible surface (otherwise the default Material
+    // shows behind the glass and defeats the blur).
     return Drawer(
-      child: SafeArea(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(),
+      child: GlassPanel(
+        child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -248,6 +261,7 @@ class MainDrawer extends ConsumerWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
