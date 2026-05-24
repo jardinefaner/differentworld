@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:differentworld/features/omnibox/omnibox_mode.dart';
 import 'package:flutter/material.dart';
 
@@ -94,7 +96,13 @@ class BottomOmniboxBar extends StatelessWidget {
       leadingTint = scheme.tertiary;
       hint = 'Slash command — type /today, /log, /attendance…';
     } else {
-      containerColor = scheme.surfaceContainerHighest;
+      // Translucent so the backdrop blur shows through (Wave 51 made
+      // the bar floating-glass). The 0.55 alpha matches GlassPill's
+      // default tintOpacity used by the top chrome — keeps the
+      // brightness of the bar and the FloatingActions pill visually
+      // consistent against the same page body.
+      containerColor =
+          scheme.surfaceContainerHighest.withValues(alpha: 0.55);
       leadingIcon = Icons.search;
       // `onSurfaceVariant` (not `onSurface`) by design — the
       // unfocused bar glyph is a de-emphasized placeholder, NOT a
@@ -115,22 +123,36 @@ class BottomOmniboxBar extends StatelessWidget {
       borderColor = Colors.transparent;
     }
 
+    // Floating glass — same vocabulary as the top chrome's GlassPill.
+    // Outer Material is fully transparent so the bar reads as one
+    // hovering pill against the page body, not an M3 bottom-bar
+    // strip cutting the screen. The inner AnimatedContainer's
+    // BackdropFilter provides the blur; the container's `color`
+    // (already a tinted/translucent value per mode) gives the visual
+    // chrome. Adds a small bottom padding so the pill genuinely
+    // floats above the OS gesture nav rather than seating against
+    // the bezel.
     return Material(
-      // Slight elevation + container tint so the bar reads as a
-      // distinct surface against the page body above it. Matches the
-      // M3 "bottom app bar" look without the heavy chrome.
-      color: scheme.surface,
-      elevation: 2,
+      color: Colors.transparent,
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+          padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
           child: ConstrainedBox(
             // Cap the bar's content width on tablet / desktop so it
             // doesn't read as a giant strip; same center-cap the
             // overlay uses.
             constraints: const BoxConstraints(maxWidth: 720),
-            child: AnimatedContainer(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                // Same blur strength as GlassPill — keeps the look
+                // consistent between the bar and the top action pill.
+                // RepaintBoundary above (via ClipRRect+BackdropFilter
+                // being a leaf in the route stack) keeps the blur
+                // raster cached across body rebuilds.
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: AnimatedContainer(
               duration: const Duration(milliseconds: 160),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
@@ -256,6 +278,8 @@ class BottomOmniboxBar extends StatelessWidget {
                     onPressed: onMicTap,
                   ),
                 ],
+              ),
+            ),
               ),
             ),
           ),
