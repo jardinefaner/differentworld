@@ -165,6 +165,29 @@ class InviteActions {
       }
       rethrow;
     }
+
+    // RPC succeeded → the server changed the guardian row (linked
+    // user_id) AND created the subject_guardians link AND stamped
+    // the invite as accepted. None of these write through Drift, so
+    // the PowerSync delta has to round-trip — and on the family path
+    // it goes via the `by_guardian` stream which may not be
+    // dashboard-deployed yet (Wave 41 follow-up). The Wave 45 + 46
+    // PostgREST fallbacks fired exactly ONCE on initial subscription
+    // and returned null/empty because the rows didn't exist at that
+    // point. Without a re-fire signal the providers stay null and
+    // the user is stuck on JoinOrCreate forever.
+    //
+    // Invalidate the resolution chain so the fallbacks run again
+    // with the new server state. Order matters: guardian first
+    // (viewer.isGuardian gates everything downstream), then the
+    // children IDs. currentMemberProvider too in case this was a
+    // staff redemption (the member's space_id just changed).
+    _ref
+      ..invalidate(currentMemberProvider)
+      ..invalidate(currentGuardianProvider)
+      ..invalidate(myChildSubjectIdsProvider);
+    // viewerProvider doesn't need an explicit invalidate — it
+    // recomputes from the three above via ref.watch.
   }
 }
 
