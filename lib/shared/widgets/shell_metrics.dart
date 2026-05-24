@@ -1,22 +1,25 @@
 /// Vertical space the persistent shell (AppShell) reserves so no
-/// content ever permanently sits behind the chrome pills or the
-/// omnibox bar.
+/// content ever permanently sits behind the bottom omnibox bar.
 ///
-/// **The layout law (every screen, every state), Wave 52 revision:**
+/// **The layout law (every screen, every state), Wave 53 revision:**
 ///
-/// - Body content extends EDGE-TO-EDGE from the screen top down.
-///   The floating chrome pills (hamburger / back / actions) are
-///   translucent glass overlays — list content scrolls THROUGH the
-///   chrome strip rather than stopping below it. Earlier revision
-///   padded the body by [topChromeHeight] which produced a visible
-///   solid-coloured strip at top that read as an opaque appbar.
+/// - Body content fills the entire Scaffold area — TRULY edge-to-edge,
+///   no SafeArea wrapper, no top padding. Content extends behind the
+///   system status bar (transparent overlay, icons paint over the
+///   content with theme-appropriate contrast) AND behind the
+///   floating chrome pills (translucent glass overlays).
+/// - The first scrollable item that should be visible on initial
+///   paint — typically the screen's `ContentHeader` — reserves
+///   `statusBarInset + topChromeHeight + topGap` for itself so the
+///   title doesn't sit under chrome. ContentHeader handles this
+///   internally; one place that knows about chrome.
 /// - Bottom of body content, when scrolled to `maxScrollExtent`,
 ///   ends above [bottomOmniboxHeight] — never permanently behind
-///   the omnibox bar. Routes that author their own scrollables can
-///   layer their bottom padding on top of this.
-/// - Centered widgets (loading spinner, EmptyState, NoAccess)
-///   center inside `(0, bottomOmniboxHeight)` slot. The chrome at
-///   the top is the only thing that overlaps centered content.
+///   the omnibox bar. AppShell pads the route content's bottom by
+///   this; routes don't need to add it manually.
+/// - Centered widgets (loading spinner, EmptyState, NoAccess) sit
+///   in the natural viewport center. Floating chrome may overlap
+///   them; the chrome's glass blur keeps them readable.
 /// - In kid mode the shell hides the chrome AND the omnibox; the
 ///   bottom inset drops to 0 so the kid surface fills the viewport.
 ///

@@ -5,15 +5,18 @@ import 'package:flutter/material.dart';
 /// scrollable body. Scrolls away with the rest of the content — no
 /// persistent top chrome.
 ///
-/// **Chrome clearance lives here, Wave 52 onward.** AppShell used to
-/// pad the route content by `ShellMetrics.topChromeHeight` so titles
-/// rendered below the floating chrome. That created a visible solid-
-/// coloured strip at the top of every screen (the gap between
-/// status bar and route content). Wave 52 dropped that padding —
-/// the body now extends edge-to-edge and the chrome pills float
-/// over content as translucent glass. To keep the title from being
-/// hidden behind the chrome on initial paint, this widget reserves
-/// the chrome height + status bar inset internally.
+/// **Chrome clearance** is reserved by THIS widget when it's the
+/// first item in the scrollable (which is the convention across
+/// every screen). EdgeScaffold no longer pads the body for chrome —
+/// the body extends fully edge-to-edge, the chrome pills float as
+/// translucent glass overlays. To keep the title from sitting
+/// behind the chrome on initial paint, ContentHeader reserves the
+/// status bar inset + chrome pill row internally.
+///
+/// Wave 53 made this the single place that knows about chrome — the
+/// EdgeScaffold's old SafeArea wrapper was removed because layering
+/// it on top of this reservation produced a solid-coloured strip
+/// (the "appbar background color" the user reported).
 ///
 /// [topGap] stays as the breathing room ABOVE the title (between
 /// the chrome edge and the first text). Set to 0 if a screen wants

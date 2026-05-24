@@ -204,13 +204,18 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
         extendBody: true,
         resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
         drawer: widget.drawer,
-        // Body is just the page content now. Chrome (back, actions,
-        // topOverlay) is painted by AppShell over the route, so we
-        // don't render any Positioned widgets here.
-        body: SafeArea(
-          bottom: false,
-          child: widget.body,
-        ),
+        // True edge-to-edge (Wave 53). The body fills the entire
+        // Scaffold area — no SafeArea wrapper, no top padding. The
+        // floating chrome pills (top) + omnibox bar (bottom) are
+        // translucent glass overlays rendered by AppShell on top of
+        // the body; the system status bar icons paint on top of the
+        // body too, with contrast set via `AnnotatedRegion` above.
+        //
+        // Per-screen padding decisions live on each route's first
+        // scrollable, NOT here — putting the inset in this wrapper
+        // would create a solid-coloured strip at the screen top
+        // (the user's "appbar background color" complaint).
+        body: widget.body,
         floatingActionButton: widget.floatingActionButton,
         bottomSheet: widget.bottomSheet,
       ),
