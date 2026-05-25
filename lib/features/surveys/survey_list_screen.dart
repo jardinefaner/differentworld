@@ -169,7 +169,10 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
     final template = SurveyTemplates.byId(templateId);
     if (template == null) {
       return const EdgeScaffold(
-        body: Center(child: Text('Survey not found.')),
+        body: EmptyState(
+          icon: Icons.quiz_outlined,
+          title: 'Survey not found',
+        ),
       );
     }
     final viewer = ref.watch(viewerProvider);

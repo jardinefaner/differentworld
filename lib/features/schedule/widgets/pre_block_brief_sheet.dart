@@ -5,6 +5,9 @@ import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -49,17 +52,20 @@ class PreBlockBriefSheet extends ConsumerWidget {
     return blockAsync.when(
       loading: () => const SizedBox(
         height: 200,
-        child: Center(child: CircularProgressIndicator()),
+        child: LoadingSlot(variant: LoadingVariant.spinner),
       ),
       error: (_, _) => const SizedBox(
-        height: 120,
-        child: Center(child: Text('Could not load the block.')),
+        height: 200,
+        child: ErrorState(title: 'Could not load the block'),
       ),
       data: (block) {
         if (block == null) {
           return const SizedBox(
-            height: 120,
-            child: Center(child: Text('Block not found.')),
+            height: 200,
+            child: EmptyState(
+              icon: Icons.event_busy_outlined,
+              title: 'Block not found',
+            ),
           );
         }
         final start = DateTime.parse(block.startAt).toLocal();

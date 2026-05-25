@@ -16,6 +16,8 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -235,13 +237,15 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
         ],
         body: subjectAsync.when(
           loading: () => const LoadingSlot(),
-          error: (_, _) =>
-              const Center(child: Text('Could not load student.')),
+          error: (_, _) => const ErrorState(title: 'Could not load student'),
           data: (subject) {
             // Edit mode but row missing: subject was deleted out from
             // under us (sync). Show empty rather than a half-bound form.
             if (widget.isEdit && subject == null) {
-              return const Center(child: Text('Student not found.'));
+              return const EmptyState(
+                icon: Icons.person_search_outlined,
+                title: 'Student not found',
+              );
             }
             // The form key + controllers persist across tab switches —
             // wrapping the TabBarView in a single Form means validation

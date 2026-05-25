@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -35,7 +36,10 @@ class TeamScreen extends ConsumerWidget {
     if (spaceId == null) {
       return const EdgeScaffold(
         backFallbackRoute: '/settings',
-        body: Center(child: Text('No space selected.')),
+        body: EmptyState(
+          icon: Icons.group_off_outlined,
+          title: 'No space selected',
+        ),
       );
     }
 

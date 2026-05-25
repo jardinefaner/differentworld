@@ -5,6 +5,8 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -144,11 +146,13 @@ class _VehicleInspectionScreenState
         backFallbackRoute: '/settings/vehicles/${widget.vehicleId}',
         body: vehicleAsync.when(
           loading: () => const LoadingSlot(),
-          error: (_, _) =>
-              const Center(child: Text('Could not load vehicle.')),
+          error: (_, _) => const ErrorState(title: 'Could not load vehicle'),
           data: (v) {
             if (v == null) {
-              return const Center(child: Text('Vehicle not found.'));
+              return const EmptyState(
+                icon: Icons.directions_car_outlined,
+                title: 'Vehicle not found',
+              );
             }
             // The "Unsafe" status anywhere in the checklist surfaces a
             // confirm banner above the bottom submit; the driver can

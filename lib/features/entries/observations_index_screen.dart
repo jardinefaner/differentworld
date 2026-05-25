@@ -169,9 +169,9 @@ class _ObservationsFeed extends StatelessWidget {
           ),
         if (entries.isEmpty && allCount > 0)
           const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: Text('No observations match this filter.')),
+            child: EmptyState(
+              icon: Icons.filter_alt_off_outlined,
+              title: 'No observations match this filter',
             ),
           ),
         for (final key in dayOrder) ...[

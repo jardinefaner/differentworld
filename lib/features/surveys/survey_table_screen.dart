@@ -14,6 +14,7 @@ import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -46,7 +47,10 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
     final template = SurveyTemplates.byId(widget.templateId);
     if (template == null) {
       return const EdgeScaffold(
-        body: Center(child: Text('Survey not found.')),
+        body: EmptyState(
+          icon: Icons.quiz_outlined,
+          title: 'Survey not found',
+        ),
       );
     }
     final viewer = ref.watch(viewerProvider);

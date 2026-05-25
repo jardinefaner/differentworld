@@ -10,6 +10,8 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
@@ -76,7 +78,10 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
     if (spaceId == null) {
       return const EdgeScaffold(
         backFallbackRoute: '/settings',
-        body: Center(child: Text('No space selected.')),
+        body: EmptyState(
+          icon: Icons.group_off_outlined,
+          title: 'No space selected',
+        ),
       );
     }
     final spaceAsync = ref.watch(_spaceProvider(spaceId));
@@ -87,9 +92,14 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
       body: spaceAsync.when(
         loading: () => const LoadingSlot(),
         error: (e, _) =>
-            const Center(child: Text('Could not load program settings.')),
+            const ErrorState(title: 'Could not load program settings'),
         data: (space) {
-          if (space == null) return const Center(child: Text('No space.'));
+          if (space == null) {
+            return const EmptyState(
+              icon: Icons.group_off_outlined,
+              title: 'No space',
+            );
+          }
           final caps = space.caps;
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),

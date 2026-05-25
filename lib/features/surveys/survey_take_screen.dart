@@ -10,6 +10,7 @@ import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/chibi_smiley.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
 import 'package:flutter/material.dart';
@@ -229,7 +230,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     final t = _template;
     if (t == null) {
       return const EdgeScaffold(
-        body: Center(child: Text('Survey not found.')),
+        body: EmptyState(
+          icon: Icons.quiz_outlined,
+          title: 'Survey not found',
+        ),
       );
     }
     ref

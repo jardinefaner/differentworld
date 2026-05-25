@@ -10,6 +10,8 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -208,11 +210,13 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
         backFallbackRoute: '/activities',
         body: activityAsync.when(
           loading: () => const LoadingSlot(),
-          error: (_, _) =>
-              const Center(child: Text('Could not load activity.')),
+          error: (_, _) => const ErrorState(title: 'Could not load activity'),
           data: (a) {
             if (widget.isEdit && a == null) {
-              return const Center(child: Text('Activity not found.'));
+              return const EmptyState(
+                icon: Icons.local_activity_outlined,
+                title: 'Activity not found',
+              );
             }
             return Stack(
               children: [
