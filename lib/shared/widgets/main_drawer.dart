@@ -4,7 +4,9 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
+import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -245,11 +247,17 @@ class MainDrawer extends ConsumerWidget {
                     icon: Icons.inbox_outlined,
                     label: 'Captures',
                     onTap: () => _go(context, '/captures'),
+                    // Open captures = items awaiting triage. Shown as
+                    // a primary-tinted badge so the user sees the
+                    // inbox depth without opening the screen (Wave
+                    // 65, addresses "inbox is hidden" feedback).
+                    count: ref.watch(openCapturesProvider).value?.length ?? 0,
                   ),
                   _DrawerTile(
                     icon: Icons.check_circle_outline,
                     label: 'Tasks',
                     onTap: () => _go(context, '/tasks'),
+                    count: ref.watch(openTasksProvider).value?.length ?? 0,
                   ),
                   _DrawerTile(
                     icon: Icons.settings_outlined,
@@ -279,19 +287,46 @@ class _DrawerTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.count = 0,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
+  /// Open-item count shown as a pill on the right. Zero hides it
+  /// entirely so the destination reads as quiet when there's
+  /// nothing pending.
+  final int count;
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return ListTile(
       leading: Icon(icon),
       title: Text(label),
       dense: true,
       onTap: onTap,
+      trailing: count == 0
+          ? null
+          : Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 2,
+              ),
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count > 99 ? '99+' : '$count',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
     );
   }
 }
