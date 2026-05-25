@@ -65,7 +65,8 @@ class _GuardianRow extends ConsumerWidget {
     ));
     final messages = messagesAsync.value ?? const <Message>[];
     final unread = messages
-        .where((m) => m.senderKind == 'guardian' && m.readAt == null)
+        .where((m) =>
+            m.senderKind == MessageSenderKind.guardian && m.readAt == null)
         .length;
 
     return ListTile(

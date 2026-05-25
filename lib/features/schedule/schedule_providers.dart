@@ -5,6 +5,15 @@ import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Kind discriminator for the `schedule_blocks` table — distinguishes
+/// on-site activities from field trips, breaks, and closed days.
+class BlockKind {
+  static const String onSite = 'on_site';
+  static const String fieldTrip = 'field_trip';
+  static const String breakBlock = 'break';
+  static const String closed = 'closed';
+}
+
 /// Today's ISO date in the device's local zone — matches the way
 /// `schedule_blocks.date` is written. Stored as `YYYY-MM-DD`.
 String todayIsoLocal() => todayKey();

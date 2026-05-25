@@ -1,5 +1,6 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/capabilities/role_keys.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
@@ -159,12 +160,12 @@ class _MemberTile extends ConsumerWidget {
     // If none is set yet, render "Specialist · choose specialty" in
     // the warning tint so a director can spot incomplete profiles
     // from the list, no per-tile drill-in required.
-    final specialty = member.role == 'specialist'
+    final specialty = member.role == RoleKey.specialist
         ? member.caps.getString(ChildcareCaps.specialty)
         : null;
     final hasSpecialty = specialty != null && specialty.isNotEmpty;
     final isSpecialistMissingSpecialty =
-        member.role == 'specialist' && !hasSpecialty;
+        member.role == RoleKey.specialist && !hasSpecialty;
 
     final Widget subtitle;
     if (isSpecialistMissingSpecialty) {

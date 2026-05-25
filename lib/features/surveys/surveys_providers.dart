@@ -35,6 +35,12 @@ final surveyResponseProvider = StreamProvider.autoDispose
   );
 });
 
+/// Status discriminator for `survey_responses.status`.
+class SurveyResponseStatus {
+  static const String draft = 'draft';
+  static const String completed = 'completed';
+}
+
 /// In-memory representation of one kid's answers. The renderer holds
 /// one of these as local state while the kid is taking the survey;
 /// `SurveyActions.upsert` round-trips it to the DB as the JSONB blob.

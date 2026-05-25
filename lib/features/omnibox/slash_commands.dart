@@ -276,11 +276,11 @@ void _execLog(BuildContext ctx, WidgetRef ref, String? args) {
 }
 
 void _execCheckout(BuildContext ctx, WidgetRef ref, String? args) {
-  _execVehicleAction(ctx, ref, args, kind: 'checkout');
+  _execVehicleAction(ctx, ref, args, kind: VehicleLogKind.checkout);
 }
 
 void _execCheckin(BuildContext ctx, WidgetRef ref, String? args) {
-  _execVehicleAction(ctx, ref, args, kind: 'checkin');
+  _execVehicleAction(ctx, ref, args, kind: VehicleLogKind.checkin);
 }
 
 /// Shared resolver for `/checkout {name}` and `/checkin {name}`.

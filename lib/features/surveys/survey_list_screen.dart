@@ -62,10 +62,11 @@ class _SurveyTemplateCard extends ConsumerWidget {
             (spaceId: spaceId, templateId: template.id),
           ));
     final responses = responsesAsync.value ?? const <SurveyResponse>[];
-    final completed =
-        responses.where((r) => r.status == 'completed').length;
+    final completed = responses
+        .where((r) => r.status == SurveyResponseStatus.completed)
+        .length;
     final inProgress =
-        responses.where((r) => r.status == 'draft').length;
+        responses.where((r) => r.status == SurveyResponseStatus.draft).length;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: Card(
@@ -188,7 +189,7 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
     final responsesList = responsesAsync.value ?? const <SurveyResponse>[];
     final completedIds = <String>{
       for (final r in responsesList)
-        if (r.status == 'completed') r.subjectId,
+        if (r.status == SurveyResponseStatus.completed) r.subjectId,
     };
     final nextSubject = subjectsList.isEmpty
         ? null
@@ -243,7 +244,7 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
             itemBuilder: (_, i) {
               if (i == 0) {
                 final completed = responses
-                    .where((r) => r.status == 'completed')
+                    .where((r) => r.status == SurveyResponseStatus.completed)
                     .length;
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -307,7 +308,9 @@ class _SubjectStatusRow extends StatelessWidget {
         style: theme.textTheme.bodySmall?.copyWith(color: statusColor),
       ),
       trailing: Icon(
-        status == 'completed' ? Icons.replay : Icons.arrow_forward,
+        status == SurveyResponseStatus.completed
+            ? Icons.replay
+            : Icons.arrow_forward,
         color: theme.colorScheme.onSurfaceVariant,
       ),
       onTap: () => context.push('/surveys/$templateId/take/${subject.id}'),

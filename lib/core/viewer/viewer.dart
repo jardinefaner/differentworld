@@ -1,5 +1,6 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
+import 'package:differentworld/core/capabilities/role_keys.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
@@ -116,14 +117,16 @@ class Viewer {
   /// "Act as director" cap OR actual director role. The cap is the
   /// graceful path; the role is the seeded default.
   bool get isDirector =>
-      roleKey == 'director' || memberCaps.getBool(MemberCaps.canActAsDirector);
+      roleKey == RoleKey.director ||
+      memberCaps.getBool(MemberCaps.canActAsDirector);
 
   /// True for any specialist staff — role + cap parity, like
   /// [isDirector]. The cap is what scheduling / pickup logic checks;
   /// the role is what the director set when inviting. Either route
   /// makes the chrome say "Specialist."
   bool get isSpecialist =>
-      roleKey == 'specialist' || memberCaps.getBool(CoreCaps.isSpecialist);
+      roleKey == RoleKey.specialist ||
+      memberCaps.getBool(CoreCaps.isSpecialist);
 
   /// True for substitutes. Substitutes have a narrower default bundle
   /// (observe + attendance, no schedule write, no pickup auth) so

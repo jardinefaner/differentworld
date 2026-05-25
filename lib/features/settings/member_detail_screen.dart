@@ -1,6 +1,7 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/capabilities/certifications.dart';
+import 'package:differentworld/core/capabilities/role_keys.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
@@ -491,7 +492,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                         padding:
                             const EdgeInsets.fromLTRB(16, 8, 16, 32),
                         children: [
-                          if (member.role != 'director') ...[
+                          if (member.role != RoleKey.director) ...[
                             _SectionLabel(
                               label:
                                   'Assigned ${labels.groupPlural.toLowerCase()}',

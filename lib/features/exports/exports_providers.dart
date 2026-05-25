@@ -151,6 +151,11 @@ final exportRecipientsProvider =
   },
 );
 
+/// Recipient kind for `export_recipients.kind`.
+class ExportRecipientKind {
+  static const String guardian = 'guardian';
+}
+
 /// All the writes that touch the `exports` table + the Storage
 /// bucket. Storage upload is one of the few places this app talks
 /// to Supabase directly — see `offline-first` skill, which lists

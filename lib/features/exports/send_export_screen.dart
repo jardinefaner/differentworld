@@ -77,7 +77,7 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
         email: email,
         label: g.name,
         guardianId: g.id,
-        kind: 'guardian',
+        kind: ExportRecipientKind.guardian,
       ));
     }
     final manual = _manualEmail.text.trim();

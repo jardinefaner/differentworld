@@ -229,7 +229,7 @@ class _LeadingRow extends ConsumerWidget {
                 Text(
                   loc == null
                       ? (activity?.name ??
-                          (block.kind == 'break' ? 'Break' : '—'))
+                          (block.kind == BlockKind.breakBlock ? 'Break' : '—'))
                       : '${activity?.name ?? "—"} · ${loc.name}',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: fg,

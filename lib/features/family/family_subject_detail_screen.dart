@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/entries/entries_providers.dart' show EntryKind;
 import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
@@ -232,7 +233,7 @@ class _TodayObservations extends ConsumerWidget {
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
     final entriesAsync = ref.watch(familyEntriesForSubjectProvider(
-      (subjectId: subjectId, kind: 'observation'),
+      (subjectId: subjectId, kind: EntryKind.observation),
     ));
     final todays = (entriesAsync.value ?? const <Entry>[])
         .where((e) {
@@ -276,7 +277,7 @@ class _RecentObservations extends ConsumerWidget {
     final cutoff =
         DateTime(now.year, now.month, now.day - 7);
     final entriesAsync = ref.watch(familyEntriesForSubjectProvider(
-      (subjectId: subjectId, kind: 'observation'),
+      (subjectId: subjectId, kind: EntryKind.observation),
     ));
     final today = DateTime(now.year, now.month, now.day);
     final recent = (entriesAsync.value ?? const <Entry>[])
@@ -387,7 +388,7 @@ class _MessagesCard extends ConsumerWidget {
     ));
     final messages = messagesAsync.value ?? const <Message>[];
     final lastFromStaff = messages.lastWhere(
-      (m) => m.senderKind == 'staff',
+      (m) => m.senderKind == MessageSenderKind.staff,
       orElse: () => const Message(
         id: '',
         spaceId: '',

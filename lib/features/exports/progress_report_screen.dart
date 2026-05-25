@@ -73,7 +73,7 @@ class _ProgressReportScreenState
               .firstOrNull;
           final observations = ref
                   .watch(entriesForSubjectProvider(
-                    (subjectId: subject.id, kind: 'observation'),
+                    (subjectId: subject.id, kind: EntryKind.observation),
                   ))
                   .value ??
               const <Entry>[];

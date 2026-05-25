@@ -52,6 +52,8 @@ import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_inspection_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
+import 'package:differentworld/features/vehicles/vehicles_providers.dart'
+    show VehicleLogKind;
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -447,14 +449,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'checkout',
                     builder: (_, state) => VehicleInspectionScreen(
                       vehicleId: state.pathParameters['id']!,
-                      kind: 'checkout',
+                      kind: VehicleLogKind.checkout,
                     ),
                   ),
                   GoRoute(
                     path: 'checkin',
                     builder: (_, state) => VehicleInspectionScreen(
                       vehicleId: state.pathParameters['id']!,
-                      kind: 'checkin',
+                      kind: VehicleLogKind.checkin,
                     ),
                   ),
                 ],

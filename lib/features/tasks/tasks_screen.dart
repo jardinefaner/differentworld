@@ -322,8 +322,9 @@ class _TaskCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final due = task.dueAt == null ? null : DateTime.tryParse(task.dueAt!);
     final created = DateTime.tryParse(task.createdAt)?.toLocal();
-    final overdue =
-        due != null && due.isBefore(DateTime.now()) && task.status == 'open';
+    final overdue = due != null &&
+        due.isBefore(DateTime.now()) &&
+        task.status == TaskStatus.open;
     return Dismissible(
       key: ValueKey('task-${task.id}'),
       // Right swipe (start→end) snoozes 1 day. Left swipe (end→start)

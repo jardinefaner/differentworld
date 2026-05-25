@@ -286,7 +286,7 @@ class _LogRow extends ConsumerWidget {
     final when = dt == null
         ? log.createdAt
         : DateFormat.MMMd().add_jm().format(dt.toLocal());
-    final isCheckout = log.kind == 'checkout';
+    final isCheckout = log.kind == VehicleLogKind.checkout;
     final worst = InspectionResults.fromJson(log.items).worst;
 
     return ListTile(

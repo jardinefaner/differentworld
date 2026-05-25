@@ -243,7 +243,8 @@ class _MessageBubble extends ConsumerWidget {
     final theme = Theme.of(context);
     final viewer = ref.watch(viewerProvider);
     final iAmGuardian = viewer is GuardianViewer;
-    final mine = (message.senderKind == 'guardian') == iAmGuardian;
+    final mine =
+        (message.senderKind == MessageSenderKind.guardian) == iAmGuardian;
 
     final bg = mine
         ? theme.colorScheme.primary

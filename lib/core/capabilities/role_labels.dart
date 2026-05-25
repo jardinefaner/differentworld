@@ -14,6 +14,8 @@
 /// the pre-consolidation behavior of every callsite.
 library;
 
+import 'package:differentworld/core/capabilities/role_keys.dart';
+
 abstract class RoleLabels {
   /// Human label for a role key in a given vertical. Returns
   /// `'Signed in'` for unknown or empty input. The GuardianViewer
@@ -21,7 +23,7 @@ abstract class RoleLabels {
   /// viewer; don't route guardians through this function.
   static String of(String? roleKey, {String vertical = 'childcare'}) {
     if (roleKey == null || roleKey.isEmpty) return 'Signed in';
-    if (roleKey == 'guardian') return 'Family';
+    if (roleKey == RoleKey.guardian) return 'Family';
     return switch (vertical) {
       'construction' => _construction[roleKey] ?? 'Signed in',
       'healthcare' => _healthcare[roleKey] ?? 'Signed in',

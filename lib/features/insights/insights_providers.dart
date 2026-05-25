@@ -442,7 +442,7 @@ List<Insight> _surveyInsights(
     ));
     final responses = responsesAsync.value ?? const <SurveyResponse>[];
     final completedIds = responses
-        .where((r) => r.status == 'completed')
+        .where((r) => r.status == SurveyResponseStatus.completed)
         .map((r) => r.subjectId)
         .toSet();
     final notStarted =

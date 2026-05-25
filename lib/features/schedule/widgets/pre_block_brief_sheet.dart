@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
+import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -94,7 +95,7 @@ class PreBlockBriefSheet extends ConsumerWidget {
               Row(
                 children: [
                   Icon(
-                    block.kind == 'field_trip'
+                    block.kind == BlockKind.fieldTrip
                         ? Icons.directions_bus_outlined
                         : Icons.local_activity_outlined,
                     color: scheme.primary,
@@ -107,7 +108,9 @@ class PreBlockBriefSheet extends ConsumerWidget {
                       children: [
                         Text(
                           activity?.name ??
-                              (block.kind == 'break' ? 'Break' : '—'),
+                              (block.kind == BlockKind.breakBlock
+                                  ? 'Break'
+                                  : '—'),
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),

@@ -53,7 +53,8 @@ final unreadMessagesCountProvider = Provider<int>((ref) {
     final all = ref.watch(myGuardianMessagesProvider).value ??
         const <Message>[];
     return all
-        .where((m) => m.senderKind == 'staff' && m.readAt == null)
+        .where(
+            (m) => m.senderKind == MessageSenderKind.staff && m.readAt == null)
         .length;
   }
   final spaceId = viewer.spaceId;
@@ -61,7 +62,8 @@ final unreadMessagesCountProvider = Provider<int>((ref) {
   final allAsync = ref.watch(_messagesInSpaceProvider(spaceId));
   final all = allAsync.value ?? const <Message>[];
   return all
-      .where((m) => m.senderKind == 'guardian' && m.readAt == null)
+      .where((m) =>
+          m.senderKind == MessageSenderKind.guardian && m.readAt == null)
       .length;
 });
 
@@ -134,6 +136,12 @@ final unreadThreadsForStaffProvider = Provider<List<UnreadThread>>((ref) {
   ]..sort((a, b) => b.latestCreatedAt.compareTo(a.latestCreatedAt));
   return result;
 });
+
+/// Who originated a message in a staff↔guardian thread.
+class MessageSenderKind {
+  static const String staff = 'staff';
+  static const String guardian = 'guardian';
+}
 
 class _ThreadAccum {
   _ThreadAccum({

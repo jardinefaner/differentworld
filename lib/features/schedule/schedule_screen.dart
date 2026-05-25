@@ -533,8 +533,8 @@ class _BlockTile extends StatelessWidget {
     final end = DateTime.parse(block.endAt).toLocal();
     final timeLabel = '${_t(start)} – ${_t(end)}';
 
-    final isField = block.kind == 'field_trip';
-    final isBreak = block.kind == 'break';
+    final isField = block.kind == BlockKind.fieldTrip;
+    final isBreak = block.kind == BlockKind.breakBlock;
     final title = activity?.name ?? (isBreak ? 'Break' : block.notes ?? '—');
 
     final container = isField

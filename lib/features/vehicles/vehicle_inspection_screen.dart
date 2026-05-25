@@ -26,9 +26,9 @@ class VehicleInspectionScreen extends ConsumerStatefulWidget {
   });
 
   final String vehicleId;
-  final String kind; // 'checkout' | 'checkin'
+  final String kind; // VehicleLogKind.checkout | VehicleLogKind.checkin
 
-  bool get isCheckout => kind == 'checkout';
+  bool get isCheckout => kind == VehicleLogKind.checkout;
 
   @override
   ConsumerState<VehicleInspectionScreen> createState() =>

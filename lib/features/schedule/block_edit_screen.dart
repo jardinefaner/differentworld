@@ -171,9 +171,10 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
             groupId: widget.groupId,
             startAt: _startAt,
             endAt: _endAt,
-            activityId: _kind == 'on_site' || _kind == 'field_trip'
-                ? _activityId
-                : null,
+            activityId:
+                _kind == BlockKind.onSite || _kind == BlockKind.fieldTrip
+                    ? _activityId
+                    : null,
             leadMemberId: _leadMemberId,
             locationOverrideId: _locationOverrideId,
             kind: _kind,
@@ -302,7 +303,7 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
               ),
             ),
           ),
-          if (_kind == 'on_site' || _kind == 'field_trip') ...[
+          if (_kind == BlockKind.onSite || _kind == BlockKind.fieldTrip) ...[
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
               initialValue: _activityId,
@@ -425,14 +426,14 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
             maxLines: 4,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              labelText: _kind == 'break'
+              labelText: _kind == BlockKind.breakBlock
                   ? 'Label'
-                  : _kind == 'closed'
+                  : _kind == BlockKind.closed
                       ? 'Reason (optional)'
                       : 'Notes (optional)',
-              hintText: _kind == 'break'
+              hintText: _kind == BlockKind.breakBlock
                   ? 'Snack · Lunch · Rest'
-                  : _kind == 'closed'
+                  : _kind == BlockKind.closed
                       ? 'Holiday · weather · maintenance'
                       : 'Anything specific staff or parents should see',
               border: const OutlineInputBorder(),

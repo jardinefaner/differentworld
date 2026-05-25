@@ -44,9 +44,15 @@ final latestVehicleLogProvider = StreamProvider.autoDispose
   yield* db.vehiclesDao.watchLatestLogFor(vehicleId);
 });
 
+/// Kind discriminator for `vehicle_logs` rows.
+class VehicleLogKind {
+  static const String checkout = 'checkout';
+  static const String checkin = 'checkin';
+}
+
 /// Whether a vehicle is currently out (last log was a checkout) vs in.
 extension VehicleStatusX on VehicleLog {
-  bool get isCheckout => kind == 'checkout';
+  bool get isCheckout => kind == VehicleLogKind.checkout;
 }
 
 /// Pair of a [Vehicle] + its latest log, for surfaces that need

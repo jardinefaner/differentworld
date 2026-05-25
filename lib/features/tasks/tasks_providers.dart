@@ -47,6 +47,12 @@ final tasksForSubjectProvider =
   },
 );
 
+/// Status discriminator for the `tasks` table.
+class TaskStatus {
+  static const String open = 'open';
+  static const String completed = 'completed';
+}
+
 class TaskActions {
   TaskActions(this._ref);
 

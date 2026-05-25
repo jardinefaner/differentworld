@@ -109,7 +109,8 @@ class _ChildThreadCard extends StatelessWidget {
         .where((m) => m.subjectId == child.id && m.guardianId == guardianId)
         .toList();
     final unread = mine
-        .where((m) => m.senderKind == 'staff' && m.readAt == null)
+        .where(
+            (m) => m.senderKind == MessageSenderKind.staff && m.readAt == null)
         .length;
     final latest = mine.isEmpty ? null : mine.first;
     final fullName = '${child.firstName} ${child.lastName}'.trim();

@@ -160,7 +160,7 @@ class _BlockRow extends StatelessWidget {
     final end = DateTime.parse(block.endAt).toLocal();
     final timeLabel = '${_fmt(start)}–${_fmt(end)}';
     final title = activity?.name ??
-        (block.kind == 'break' ? 'Break' : block.notes ?? '—');
+        (block.kind == BlockKind.breakBlock ? 'Break' : block.notes ?? '—');
 
     final (container, onContainer) = switch (tone) {
       _Tone.now => (scheme.primaryContainer, scheme.onPrimaryContainer),
