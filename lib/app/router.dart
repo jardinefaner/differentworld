@@ -48,6 +48,7 @@ import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_inspection_screen.dart';
@@ -658,6 +659,24 @@ class _SignedInHome extends ConsumerWidget {
           ),
         ),
       );
+    });
+
+    // Vehicle deep links — driver scans the QR on the dashboard,
+    // OS opens the app, we land here, push to the inspection route.
+    // `canDrive` is enforced by the inspection screen itself; the
+    // listener doesn't gate so a driver who's been temporarily off-
+    // duty still gets a clear "you can't submit" inside the form
+    // (rather than a silent no-op here).
+    // ignore: cascade_invocations
+    ref.listen<VehicleDeepLink?>(pendingVehicleDeepLinkProvider, (prev, next) {
+      if (next == null) return;
+      ref.read(pendingVehicleDeepLinkProvider.notifier).clear();
+      // Defer the push through a microtask so the listen callback
+      // doesn't push while the widget tree is still settling — same
+      // microtask pattern AppShell uses for routeChromeProvider.
+      unawaited(Future<void>.microtask(() async {
+        if (context.mounted) await context.push(next.routePath);
+      }));
     });
 
     return const TodayScreen();

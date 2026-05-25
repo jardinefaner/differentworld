@@ -72,6 +72,31 @@
                       android:host="differentworld.app"
                       android:pathPrefix="/invite"/>
             </intent-filter>
+            <!-- Vehicle checkout / checkin deep links — custom scheme.
+                 QR codes printed for the dashboard / key fob encode
+                 differentworld://v/<vehicleId>/checkout (or /checkin).
+                 Works today on both Android and iOS without owning
+                 the domain. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="differentworld"
+                      android:host="v"/>
+            </intent-filter>
+            <!-- HTTPS fallback for vehicle links. Same autoVerify=false
+                 rationale as /invite above — promote to verified once
+                 .well-known/assetlinks.json lands at differentworld.app.
+                 Until then, scanning the https form gives an "Open with"
+                 chooser; the custom scheme above is the reliable path. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="differentworld.app"
+                      android:pathPrefix="/v"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

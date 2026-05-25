@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
+import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,21 +74,30 @@ class DeepLinkService {
   }
 
   void _ingest(Uri uri) {
-    // The URI carries an invite code which is sensitive (grants
-    // access to a specific child/guardian relationship). Never log
-    // its contents in production — log only that we received one and
-    // whether it parsed.
+    // Inbound URIs are sensitive — invite codes grant guardian access
+    // and vehicle ids are PII-adjacent. Never log payloads in
+    // production; debug-only and gated.
     if (kDebugMode) {
       debugPrint('[deeplink] received: $uri');
     }
+
+    // Try invite first (most common deep link by volume).
     final code = InviteCode.extractFromUri(uri);
-    if (code == null) {
-      if (kDebugMode) {
-        debugPrint('[deeplink] no invite code in URI; ignoring');
-      }
+    if (code != null) {
+      _ref.read(pendingInviteCodeProvider.notifier).set(code);
       return;
     }
-    _ref.read(pendingInviteCodeProvider.notifier).set(code);
+
+    // Vehicle checkout / checkin (QR on dashboard / key fob).
+    final vehicle = VehicleDeepLink.tryParse(uri);
+    if (vehicle != null) {
+      _ref.read(pendingVehicleDeepLinkProvider.notifier).set(vehicle);
+      return;
+    }
+
+    if (kDebugMode) {
+      debugPrint('[deeplink] URI not recognized; ignoring');
+    }
   }
 
   void dispose() {
