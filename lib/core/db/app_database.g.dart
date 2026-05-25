@@ -11304,10 +11304,9 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
       GeneratedColumn<String>(
         'read_by_guardian_ids',
         aliasedName,
-        false,
+        true,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
-        defaultValue: const Constant('[]'),
       );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
@@ -11480,7 +11479,7 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
       readByGuardianIds: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}read_by_guardian_ids'],
-      )!,
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -11508,8 +11507,14 @@ class Message extends DataClass implements Insertable<Message> {
   /// JSON-array of guardian UUIDs who've read past this message.
   /// Devon-persona: divorced parents share a kid; per-guardian
   /// read-state lets staff see "Seen by Mom only" vs "Seen by both."
-  /// Empty string / null is treated as `'[]'`.
-  final String readByGuardianIds;
+  /// Empty string / null is treated as `'[]'` at the reader site.
+  ///
+  /// Nullable here because the local SQLite schema (PowerSync-managed)
+  /// stores it as TEXT NULL — declaring this as non-nullable in Drift
+  /// caused row decoding to throw on every read of a message inserted
+  /// before the server's default kicked in, which manifested as
+  /// "Could not load this thread" after sending a message (Wave 62).
+  final String? readByGuardianIds;
   final String createdAt;
   const Message({
     required this.id,
@@ -11521,7 +11526,7 @@ class Message extends DataClass implements Insertable<Message> {
     this.senderGuardianId,
     required this.body,
     this.readAt,
-    required this.readByGuardianIds,
+    this.readByGuardianIds,
     required this.createdAt,
   });
   @override
@@ -11542,7 +11547,9 @@ class Message extends DataClass implements Insertable<Message> {
     if (!nullToAbsent || readAt != null) {
       map['read_at'] = Variable<String>(readAt);
     }
-    map['read_by_guardian_ids'] = Variable<String>(readByGuardianIds);
+    if (!nullToAbsent || readByGuardianIds != null) {
+      map['read_by_guardian_ids'] = Variable<String>(readByGuardianIds);
+    }
     map['created_at'] = Variable<String>(createdAt);
     return map;
   }
@@ -11564,7 +11571,9 @@ class Message extends DataClass implements Insertable<Message> {
       readAt: readAt == null && nullToAbsent
           ? const Value.absent()
           : Value(readAt),
-      readByGuardianIds: Value(readByGuardianIds),
+      readByGuardianIds: readByGuardianIds == null && nullToAbsent
+          ? const Value.absent()
+          : Value(readByGuardianIds),
       createdAt: Value(createdAt),
     );
   }
@@ -11584,7 +11593,9 @@ class Message extends DataClass implements Insertable<Message> {
       senderGuardianId: serializer.fromJson<String?>(json['senderGuardianId']),
       body: serializer.fromJson<String>(json['body']),
       readAt: serializer.fromJson<String?>(json['readAt']),
-      readByGuardianIds: serializer.fromJson<String>(json['readByGuardianIds']),
+      readByGuardianIds: serializer.fromJson<String?>(
+        json['readByGuardianIds'],
+      ),
       createdAt: serializer.fromJson<String>(json['createdAt']),
     );
   }
@@ -11601,7 +11612,7 @@ class Message extends DataClass implements Insertable<Message> {
       'senderGuardianId': serializer.toJson<String?>(senderGuardianId),
       'body': serializer.toJson<String>(body),
       'readAt': serializer.toJson<String?>(readAt),
-      'readByGuardianIds': serializer.toJson<String>(readByGuardianIds),
+      'readByGuardianIds': serializer.toJson<String?>(readByGuardianIds),
       'createdAt': serializer.toJson<String>(createdAt),
     };
   }
@@ -11616,7 +11627,7 @@ class Message extends DataClass implements Insertable<Message> {
     Value<String?> senderGuardianId = const Value.absent(),
     String? body,
     Value<String?> readAt = const Value.absent(),
-    String? readByGuardianIds,
+    Value<String?> readByGuardianIds = const Value.absent(),
     String? createdAt,
   }) => Message(
     id: id ?? this.id,
@@ -11632,7 +11643,9 @@ class Message extends DataClass implements Insertable<Message> {
         : this.senderGuardianId,
     body: body ?? this.body,
     readAt: readAt.present ? readAt.value : this.readAt,
-    readByGuardianIds: readByGuardianIds ?? this.readByGuardianIds,
+    readByGuardianIds: readByGuardianIds.present
+        ? readByGuardianIds.value
+        : this.readByGuardianIds,
     createdAt: createdAt ?? this.createdAt,
   );
   Message copyWithCompanion(MessagesCompanion data) {
@@ -11720,7 +11733,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   final Value<String?> senderGuardianId;
   final Value<String> body;
   final Value<String?> readAt;
-  final Value<String> readByGuardianIds;
+  final Value<String?> readByGuardianIds;
   final Value<String> createdAt;
   final Value<int> rowid;
   const MessagesCompanion({
@@ -11797,7 +11810,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Value<String?>? senderGuardianId,
     Value<String>? body,
     Value<String?>? readAt,
-    Value<String>? readByGuardianIds,
+    Value<String?>? readByGuardianIds,
     Value<String>? createdAt,
     Value<int>? rowid,
   }) {
@@ -24027,7 +24040,7 @@ typedef $$MessagesTableCreateCompanionBuilder =
       Value<String?> senderGuardianId,
       required String body,
       Value<String?> readAt,
-      Value<String> readByGuardianIds,
+      Value<String?> readByGuardianIds,
       required String createdAt,
       Value<int> rowid,
     });
@@ -24042,7 +24055,7 @@ typedef $$MessagesTableUpdateCompanionBuilder =
       Value<String?> senderGuardianId,
       Value<String> body,
       Value<String?> readAt,
-      Value<String> readByGuardianIds,
+      Value<String?> readByGuardianIds,
       Value<String> createdAt,
       Value<int> rowid,
     });
@@ -24267,7 +24280,7 @@ class $$MessagesTableTableManager
                 Value<String?> senderGuardianId = const Value.absent(),
                 Value<String> body = const Value.absent(),
                 Value<String?> readAt = const Value.absent(),
-                Value<String> readByGuardianIds = const Value.absent(),
+                Value<String?> readByGuardianIds = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MessagesCompanion(
@@ -24295,7 +24308,7 @@ class $$MessagesTableTableManager
                 Value<String?> senderGuardianId = const Value.absent(),
                 required String body,
                 Value<String?> readAt = const Value.absent(),
-                Value<String> readByGuardianIds = const Value.absent(),
+                Value<String?> readByGuardianIds = const Value.absent(),
                 required String createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => MessagesCompanion.insert(

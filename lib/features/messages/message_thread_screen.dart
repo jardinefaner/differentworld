@@ -390,7 +390,7 @@ class _ReadReceipt extends ConsumerWidget {
       return message.readAt != null ? seenLabel('Seen') : sentOnly();
     }
 
-    final readIds = _parseReadByIds(message.readByGuardianIds);
+    final readIds = _parseReadByIds(message.readByGuardianIds ?? '');
     final readGuardians = guardians
         .where((g) => readIds.contains(g.id))
         .toList(growable: false);

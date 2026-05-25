@@ -138,8 +138,10 @@ class MessagesDao extends DatabaseAccessor<AppDatabase>
         .get();
     final now = DateTime.now().toUtc().toIso8601String();
     for (final row in rows) {
-      // Parse existing list, append if missing, write back.
-      final raw = row.readByGuardianIds;
+      // Parse existing list, append if missing, write back. raw may be
+      // null when the column wasn't populated (older inserts / PowerSync
+      // delivers NULL); treat that as an empty list.
+      final raw = row.readByGuardianIds ?? '[]';
       final List<dynamic> ids;
       try {
         ids = jsonDecode(raw) as List<dynamic>;

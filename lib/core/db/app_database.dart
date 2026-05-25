@@ -409,8 +409,14 @@ class Messages extends Table {
   /// JSON-array of guardian UUIDs who've read past this message.
   /// Devon-persona: divorced parents share a kid; per-guardian
   /// read-state lets staff see "Seen by Mom only" vs "Seen by both."
-  /// Empty string / null is treated as `'[]'`.
-  TextColumn get readByGuardianIds => text().withDefault(const Constant('[]'))();
+  /// Empty string / null is treated as `'[]'` at the reader site.
+  ///
+  /// Nullable here because the local SQLite schema (PowerSync-managed)
+  /// stores it as TEXT NULL — declaring this as non-nullable in Drift
+  /// caused row decoding to throw on every read of a message inserted
+  /// before the server's default kicked in, which manifested as
+  /// "Could not load this thread" after sending a message (Wave 62).
+  TextColumn get readByGuardianIds => text().nullable()();
   TextColumn get createdAt => text()();
 
   @override
