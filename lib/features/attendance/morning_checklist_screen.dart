@@ -8,6 +8,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/attendance_row.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -71,13 +72,7 @@ class _MorningChecklistScreenState
     });
   }
 
-  String get _isoDate {
-    final n = DateTime.now();
-    final y = n.year.toString().padLeft(4, '0');
-    final m = n.month.toString().padLeft(2, '0');
-    final d = n.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  String get _isoDate => todayKey();
 
   Future<void> _markAllPresentEverywhere(
     List<({Group group, List<Subject> subjects, List<AttendanceRecord> records})>

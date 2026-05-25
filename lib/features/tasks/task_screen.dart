@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/tasks/tasks_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -107,9 +108,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                 onPressed: _pickDate,
                 icon: const Icon(Icons.calendar_today_outlined),
                 label: Text(
-                  _due == null
-                      ? 'No due date'
-                      : 'Due ${_due!.year}-${_due!.month.toString().padLeft(2, '0')}-${_due!.day.toString().padLeft(2, '0')}',
+                  _due == null ? 'No due date' : 'Due ${dateKey(_due!)}',
                 ),
               ),
               if (_due != null)

@@ -2,6 +2,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -71,8 +72,5 @@ class TodayStatusCard extends ConsumerWidget {
     );
   }
 
-  static String _isoDate(DateTime n) =>
-      '${n.year.toString().padLeft(4, '0')}-'
-      '${n.month.toString().padLeft(2, '0')}-'
-      '${n.day.toString().padLeft(2, '0')}';
+  static String _isoDate(DateTime n) => dateKey(n);
 }

@@ -9,6 +9,7 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/attendance_row.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -46,12 +47,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     _date = widget.initialDate ?? DateTime(now.year, now.month, now.day);
   }
 
-  String get _isoDate {
-    final y = _date.year.toString().padLeft(4, '0');
-    final m = _date.month.toString().padLeft(2, '0');
-    final d = _date.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  String get _isoDate => dateKey(_date);
 
   DateTime get _todayMidnight {
     final n = DateTime.now();

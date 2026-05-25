@@ -6,6 +6,7 @@ import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -163,13 +164,7 @@ class _TodayCard extends ConsumerWidget {
   const _TodayCard({required this.subject});
   final Subject subject;
 
-  String get _todayIso {
-    final n = DateTime.now();
-    final y = n.year.toString().padLeft(4, '0');
-    final m = n.month.toString().padLeft(2, '0');
-    final d = n.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  String get _todayIso => todayKey();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

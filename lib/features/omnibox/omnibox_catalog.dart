@@ -23,6 +23,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart'
     show startNewObservation;
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -721,13 +722,7 @@ String _roleLabel(String? role) => RoleLabels.of(role);
 /// Today's date as `YYYY-MM-DD` in the device's local zone. The
 /// schedule DAO expects this exact shape — it indexes blocks by the
 /// `date` column (date type) without any zone conversion.
-String _todayIsoLocal() {
-  final now = DateTime.now();
-  final y = now.year.toString().padLeft(4, '0');
-  final m = now.month.toString().padLeft(2, '0');
-  final d = now.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}
+String _todayIsoLocal() => todayKey();
 
 /// Short human label for an invite — used in the omnibox revoke
 /// entry so a director can tell two pending invites apart at a

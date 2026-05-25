@@ -2,16 +2,11 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Today's date in the local timezone, formatted YYYY-MM-DD.
-String todayIso() {
-  final now = DateTime.now();
-  final y = now.year.toString().padLeft(4, '0');
-  final m = now.month.toString().padLeft(2, '0');
-  final d = now.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}
+String todayIso() => todayKey();
 
 /// Per-Group day rollup: total subjects, status breakdown, count
 /// unmarked. Lives as a plain immutable value object.

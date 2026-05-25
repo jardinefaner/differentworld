@@ -8,6 +8,7 @@ import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -627,11 +628,7 @@ class _BlockTile extends StatelessWidget {
     );
   }
 
-  static String _t(DateTime when) {
-    final h = when.hour.toString().padLeft(2, '0');
-    final m = when.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
+  static String _t(DateTime when) => timeOfDay(when);
 }
 
 Future<void> _openBlockSheet(

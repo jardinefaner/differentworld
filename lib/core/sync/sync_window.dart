@@ -1,3 +1,5 @@
+import 'package:differentworld/shared/format/date_keys.dart';
+
 /// Time-window helpers for the parameterized PowerSync streams.
 ///
 /// PowerSync's sync-rule SQL subset doesn't support `now()` / `date()`
@@ -42,13 +44,8 @@ class SyncWindow {
   /// Date-only form of the cutoff for tables that store dates as
   /// `YYYY-MM-DD` strings (attendance_records.date). Local time —
   /// "what was the date 90 days before today, in the user's tz."
-  static String cutoffDateNow({Duration lookback = defaultLookback}) {
-    final cutoff = DateTime.now().subtract(lookback);
-    final y = cutoff.year.toString().padLeft(4, '0');
-    final m = cutoff.month.toString().padLeft(2, '0');
-    final d = cutoff.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  static String cutoffDateNow({Duration lookback = defaultLookback}) =>
+      dateKey(DateTime.now().subtract(lookback));
 
   /// Duration from now until the next local midnight. Use this to
   /// schedule a re-subscribe so the window slides at day rollover.

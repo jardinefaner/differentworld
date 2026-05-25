@@ -17,6 +17,7 @@ import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -107,13 +108,7 @@ class _FamilyTodayList extends ConsumerWidget {
   final List<Subject> children;
   final String guardianName;
 
-  String get _todayIso {
-    final n = DateTime.now();
-    final y = n.year.toString().padLeft(4, '0');
-    final m = n.month.toString().padLeft(2, '0');
-    final d = n.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  String get _todayIso => todayKey();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -202,13 +197,7 @@ class _ChildCard extends ConsumerWidget {
 
   final Subject child;
 
-  String get _todayIso {
-    final n = DateTime.now();
-    final y = n.year.toString().padLeft(4, '0');
-    final m = n.month.toString().padLeft(2, '0');
-    final d = n.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  String get _todayIso => todayKey();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -447,8 +436,7 @@ class _SummarySentence extends ConsumerWidget {
         final m = diff.inMinutes - h * 60;
         when = m == 0 ? '${h}h' : '${h}h ${m}m';
       } else {
-        when = '${nearestPickup.hour.toString().padLeft(2, '0')}:'
-            '${nearestPickup.minute.toString().padLeft(2, '0')}';
+        when = timeOfDay(nearestPickup);
       }
       if (children.length == 1) {
         return '$countLabel accounted for · pickup in $when';

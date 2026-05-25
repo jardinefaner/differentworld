@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -274,9 +275,5 @@ class _BlockRow extends StatelessWidget {
     );
   }
 
-  static String _fmt(DateTime when) {
-    final h = when.hour.toString().padLeft(2, '0');
-    final m = when.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
+  static String _fmt(DateTime when) => timeOfDay(when);
 }

@@ -1,6 +1,7 @@
 
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -60,10 +61,7 @@ class AttendanceStrip extends ConsumerWidget {
     );
   }
 
-  static String _isoDate(DateTime n) =>
-      '${n.year.toString().padLeft(4, '0')}-'
-      '${n.month.toString().padLeft(2, '0')}-'
-      '${n.day.toString().padLeft(2, '0')}';
+  static String _isoDate(DateTime n) => dateKey(n);
 }
 
 class _AttendanceDot extends StatelessWidget {

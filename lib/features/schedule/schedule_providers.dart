@@ -1,27 +1,17 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Today's ISO date in the device's local zone — matches the way
 /// `schedule_blocks.date` is written. Stored as `YYYY-MM-DD`.
-String todayIsoLocal() {
-  final n = DateTime.now();
-  final y = n.year.toString().padLeft(4, '0');
-  final m = n.month.toString().padLeft(2, '0');
-  final d = n.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}
+String todayIsoLocal() => todayKey();
 
 /// Convert any DateTime to the local YYYY-MM-DD date string used as
 /// `schedule_blocks.date`.
-String isoDateLocal(DateTime when) {
-  final y = when.year.toString().padLeft(4, '0');
-  final m = when.month.toString().padLeft(2, '0');
-  final d = when.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}
+String isoDateLocal(DateTime when) => dateKey(when);
 
 /// Blocks on the given `date` across every cohort in the current
 /// space. Drives the staff schedule grid.

@@ -3,6 +3,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -317,11 +318,7 @@ class PreBlockBriefSheet extends ConsumerWidget {
     );
   }
 
-  static String _t(DateTime when) {
-    final h = when.hour.toString().padLeft(2, '0');
-    final m = when.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
+  static String _t(DateTime when) => timeOfDay(when);
 }
 
 /// Watches a single schedule block by id. Lives inline because the

@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -380,17 +381,7 @@ pw.Widget _sectionHeading(String label) {
   );
 }
 
-String _formatDate(DateTime dt) {
-  final y = dt.year.toString().padLeft(4, '0');
-  final m = dt.month.toString().padLeft(2, '0');
-  final d = dt.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}
+String _formatDate(DateTime dt) => dateKey(dt);
 
-String _formatDateTime(DateTime? dt) {
-  if (dt == null) return '';
-  final base = _formatDate(dt);
-  final hh = dt.hour.toString().padLeft(2, '0');
-  final mm = dt.minute.toString().padLeft(2, '0');
-  return '$base $hh:$mm';
-}
+String _formatDateTime(DateTime? dt) =>
+    dt == null ? '' : '${dateKey(dt)} ${timeOfDay(dt)}';

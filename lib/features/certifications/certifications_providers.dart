@@ -3,6 +3,7 @@ import 'package:differentworld/core/capabilities/certifications.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -120,11 +121,7 @@ class CertActions {
     final spaceId = viewer.spaceId;
     if (spaceId == null) return;
     final db = await _ref.read(appDatabaseProvider.future);
-    final iso = expiresAt == null
-        ? null
-        : '${expiresAt.year.toString().padLeft(4, '0')}-'
-            '${expiresAt.month.toString().padLeft(2, '0')}-'
-            '${expiresAt.day.toString().padLeft(2, '0')}';
+    final iso = expiresAt == null ? null : dateKey(expiresAt);
     await db.certificationsDao.upsert(
       id: _uuid.v4(),
       spaceId: spaceId,

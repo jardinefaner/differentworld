@@ -10,6 +10,7 @@ import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -88,11 +89,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
   }
 
   bool _isDirty(Subject? s) {
-    final dobIso = _dob == null
-        ? null
-        : '${_dob!.year.toString().padLeft(4, '0')}-'
-            '${_dob!.month.toString().padLeft(2, '0')}-'
-            '${_dob!.day.toString().padLeft(2, '0')}';
+    final dobIso = _dob == null ? null : dateKey(_dob!);
     if (s == null) {
       return _firstName.text.trim().isNotEmpty ||
           _lastName.text.trim().isNotEmpty ||
@@ -462,12 +459,7 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
     );
   }
 
-  static String _formatDob(DateTime dt) {
-    final y = dt.year.toString().padLeft(4, '0');
-    final m = dt.month.toString().padLeft(2, '0');
-    final d = dt.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  static String _formatDob(DateTime dt) => dateKey(dt);
 }
 
 Future<void> _sendGuardianInvite(
