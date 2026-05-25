@@ -39,13 +39,20 @@ class SettingsScreen extends ConsumerWidget {
             child: ContentHeader(title: 'Settings', bottomGap: 8),
           ),
 
-          // Account
+          // Account — uses viewer.displayName so the right identity
+          // renders for staff (member.displayName) AND guardians
+          // (guardian.name). Avatar tap → open the photo-change sheet
+          // when the viewer has a member row (staff path); guardians
+          // tap their identity row to land on their own family
+          // profile in a future revision.
           _SettingsGroup(
             label: 'Signed in as',
             children: [
               ListTile(
                 leading: PersonAvatar(
-                  name: member?.displayName ?? '?',
+                  name: viewer.displayName.isEmpty
+                      ? '?'
+                      : viewer.displayName,
                   photoUrl: member?.avatarUrl,
                   onTap: member == null
                       ? null
@@ -54,14 +61,29 @@ class SettingsScreen extends ConsumerWidget {
                             entity: PhotoEntity.member,
                             entityId: member.id,
                             hasExisting: member.avatarUrl != null,
-                            displayName: member.displayName,
+                            displayName: viewer.displayName,
                           ),
                 ),
-                title: Text(member?.displayName ?? '—'),
+                title: Text(
+                  viewer.displayName.isEmpty
+                      ? '—'
+                      : viewer.displayName,
+                ),
                 subtitle: Text(
-                  RoleLabels.of(member?.role, vertical: labels.vertical),
+                  viewer is GuardianViewer
+                      ? 'Family'
+                      : RoleLabels.of(
+                          member?.role,
+                          vertical: labels.vertical,
+                        ),
                   style: theme.textTheme.bodySmall,
                 ),
+                // Tap the row → open the member detail (own profile)
+                // for staff; guardians have no member detail screen,
+                // so the row stays informational for them.
+                onTap: member == null
+                    ? null
+                    : () => context.push('/settings/team/${member.id}'),
                 trailing: TextButton.icon(
                   onPressed: () async {
                     final ok = await _confirmSignOut(context);

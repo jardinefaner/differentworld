@@ -559,7 +559,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           Padding(
             key: const ValueKey('shell-route-content'),
             padding: EdgeInsets.only(
-              bottom: inKidMode ? 0 : ShellMetrics.bottomOmniboxHeight,
+              // No omnibox bar for guardians or in kid mode → no
+              // bottom reservation needed; route content can fill all
+              // the way to the gesture inset.
+              bottom: (inKidMode || viewer is GuardianViewer)
+                  ? 0
+                  : ShellMetrics.bottomOmniboxHeight,
             ),
             child: widget.child,
           ),
@@ -627,8 +632,11 @@ class _AppShellState extends ConsumerState<AppShell> {
           // Composer at the bottom. Sits flush above the keyboard
           // when it's up, flush above the home-indicator safe area
           // otherwise. Hidden in kid mode so the kid surface has no
-          // staff-facing affordance.
-          if (!inKidMode)
+          // staff-facing affordance. Also hidden for guardians —
+          // the omnibox catalog is staff-only (settings, captures,
+          // tasks, observations, etc.) and the family lens has its
+          // own navigation pattern via the Family Today header.
+          if (!inKidMode && viewer is! GuardianViewer)
             Positioned(
               key: const ValueKey('shell-omnibox-bar'),
               left: 0,

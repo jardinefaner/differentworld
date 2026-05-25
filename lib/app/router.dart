@@ -70,6 +70,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       final goingToAuth = state.matchedLocation.startsWith('/login');
       if (!isSignedIn && !goingToAuth) return '/login';
       if (isSignedIn && goingToAuth) return '/';
+      // Guardian gating: family-lens users have no business on the
+      // staff-side surfaces (settings, schedule, captures, tasks,
+      // observations, etc.). Bounce them back to /. The router uses
+      // `_Home` which auto-resolves the family path for guardians via
+      // viewerProvider, so / is always the right destination. Only
+      // routes meant for the family lens are allowed through.
+      final viewer = ref.read(viewerProvider);
+      if (viewer is GuardianViewer) {
+        final loc = state.matchedLocation;
+        const familyAllowed = <String>[
+          '/',
+          '/messages',
+          '/children',
+        ];
+        final allowed = familyAllowed.any(
+          (prefix) => loc == prefix || loc.startsWith('$prefix/'),
+        );
+        if (!allowed) return '/';
+      }
       return null;
     },
     routes: [
