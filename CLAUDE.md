@@ -514,6 +514,36 @@ consistency across chrome is what makes the floating language
 read as "one system" instead of "a bunch of slightly translucent
 things."
 
+### Composition primitives — reach for these before you build
+
+A new feature's first `build()` should be **composition**, not
+invention. The primitives below cover ~90% of what feature surfaces
+need; only build a custom widget when the shape genuinely doesn't
+fit. Each one has a single responsibility and known visual contract,
+so a screen built from them inherits the app's vocabulary for free.
+
+| Need | Reach for | Lives in |
+|---|---|---|
+| The chrome around any screen | `EdgeScaffold` | `lib/shared/widgets/edge_scaffold.dart` |
+| Page title + subtitle inside the scrollable body | `ContentHeader` | `lib/shared/widgets/content_header.dart` |
+| Top-right action(s) in the glass pill | `actions:` slot on `EdgeScaffold` + `PrimaryActionButton` / `SecondaryActionButton` | `lib/shared/widgets/` |
+| Loading state | `LoadingSlot` (`.list` / `.cards` / `.spinner`) | `lib/shared/widgets/async_loading.dart` |
+| Empty state | `EmptyState(icon:, title:, message:, action:)` | `lib/shared/widgets/empty_state.dart` |
+| Error state | `ErrorState(title:, detail:, onRetry:)` | `lib/shared/widgets/error_state.dart` |
+| Tappable row card (person / item / template) | `FeatureCard(leading:, title:, subtitle:, trailing:, tone:, onTap:)` | `lib/shared/widgets/feature_card.dart` |
+| Aggregator section that hides when empty | `SectionCard(visible:, icon:, title:, tone:, child:)` | `lib/shared/widgets/section_card.dart` |
+| Person identity (member / subject / guardian) | `PersonAvatar(name:, photoUrl:, radius:)` | `lib/shared/widgets/person_avatar.dart` |
+| Modal sheet | `showGlassSheet(context:, builder:)` | `lib/shared/widgets/glass_panel.dart` |
+| Top-of-screen actions pill | `GlassPill` wrapping action buttons | `lib/shared/widgets/glass_panel.dart` |
+| Form sheet > 3 fields | `DismissGuard(isDirty:, child:)` | `lib/shared/widgets/dismiss_guard.dart` |
+| Destructive button | `DestructiveButton(label:, onPressed:)` | `lib/shared/widgets/destructive_button.dart` |
+| Confirm destructive action | `confirmDestructive(context, title:, message:)` | `lib/shared/widgets/destructive_button.dart` |
+| Capability toggle | `CapSwitch(label:, value:, enabled:, onChanged:)` | `lib/shared/widgets/cap_switch.dart` |
+| Date / time format | `dateKey(dt)` / `timeOfDay(dt)` / `todayKey()` | `lib/shared/format/date_keys.dart` |
+| Relative-time label | `relativeTimeAgo(dt)` | `lib/shared/format/relative_time.dart` |
+
+If you find yourself writing `Material(color:..., borderRadius:..., child: InkWell(...))` from scratch — stop, reach for `FeatureCard`. If you're writing `if (items.isEmpty) return SizedBox.shrink(); return Container(...)` — stop, reach for `SectionCard`. If you're writing your own `'Could not load X'` text — stop, reach for `ErrorState`. The convention IS the primitive.
+
 ### UX state primitives
 
 Every list / data screen has four states, all designed:
