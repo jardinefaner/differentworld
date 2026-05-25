@@ -280,10 +280,18 @@ class _DateScrubber extends StatelessWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        label,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                      // Flexible + ellipsis — a long weekday-month-day
+                      // label ("Wednesday, November 25, 2026") was
+                      // overflowing horizontally on phone (RenderFlex
+                      // overflow caught in /tmp/dw-pixel.log, Wave 66).
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       if (!isToday) ...[
