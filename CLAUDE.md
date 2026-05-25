@@ -105,10 +105,34 @@ background.
 - ✅ `ref.watch(currentProfileProvider)` → `db.watchProfile(id)`
 - ❌ `await supabase.from('profiles').select()` from UI code
 
-The only place that talks to Supabase directly is
-[lib/core/sync/supabase_connector.dart](lib/core/sync/supabase_connector.dart),
-which is PowerSync's upload callback. Auth is the other exception
-(`supabase.auth.signInWithOAuth`) because PowerSync doesn't manage it.
+The only places that talk to Supabase directly are:
+- [lib/core/sync/supabase_connector.dart](lib/core/sync/supabase_connector.dart) — PowerSync's upload callback.
+- Auth (`supabase.auth.signInWithOAuth`) — PowerSync doesn't manage it.
+- [lib/core/db/drift_provider.dart](lib/core/db/drift_provider.dart) — two
+  documented PostgREST fallbacks for the guardian + child-roster
+  reads that prime the family viewer (the `by_guardian` PowerSync
+  stream is the canonical path; the fallback covers cold-launch on a
+  fresh device before the stream delivers its first batch).
+- [lib/features/family/family_providers.dart](lib/features/family/family_providers.dart) —
+  per-subject family reads (subjects / attendance / entries /
+  attachments) — see the "Family lens" gotcha section for the
+  2-level-subquery deferral.
+- [lib/features/photos/person_photo_url.dart](lib/features/photos/person_photo_url.dart) +
+  [lib/features/exports/signed_export_url.dart](lib/features/exports/signed_export_url.dart) —
+  signed-URL minting for Storage assets (binary media doesn't
+  ride PowerSync; see "Binary media never goes through
+  PowerSync").
+- [lib/features/photos/photo_service.dart](lib/features/photos/photo_service.dart) +
+  [lib/features/photos/photo_upload_queue.dart](lib/features/photos/photo_upload_queue.dart) +
+  [lib/features/exports/exports_providers.dart](lib/features/exports/exports_providers.dart) —
+  Storage uploads for person photos + exported PDFs (same binary-
+  media exception).
+
+Any other `Supabase.instance.client.from(...)` /
+`.storage.from(...)` call from UI / providers / repositories is a
+bug — route the read through Drift or the appropriate fallback
+provider, and route the binary upload through the photo / export
+helpers above.
 
 **Writes are optimistic.** A user tap commits to local SQLite in one frame
 and the UI reflects it immediately. PowerSync uploads later. Never `await`

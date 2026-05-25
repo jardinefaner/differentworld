@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -135,17 +136,9 @@ class _SubjectPickerSheetState
                             if (s.lastName.isNotEmpty) s.lastName,
                           ].join(' ');
                           return ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: s.photoUrl == null
-                                  ? null
-                                  : NetworkImage(s.photoUrl!),
-                              child: s.photoUrl == null
-                                  ? Text(
-                                      s.firstName.isEmpty
-                                          ? '?'
-                                          : s.firstName[0].toUpperCase(),
-                                    )
-                                  : null,
+                            leading: PersonAvatar(
+                              name: fullName.isEmpty ? s.firstName : fullName,
+                              photoUrl: s.photoUrl,
                             ),
                             title: Text(fullName),
                             onTap: () => Navigator.of(context).pop(s),

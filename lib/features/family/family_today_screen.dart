@@ -9,6 +9,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 // the local Drift mirror is empty for guardians (see file header there).
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
+import 'package:differentworld/features/exports/signed_export_url.dart';
 import 'package:differentworld/features/family/family_providers.dart';
 // `attachments_providers.dart` is imported for the `AttachmentsX`
 // `.urls` / `.thumbUrls` extension; the read itself goes via
@@ -29,7 +30,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Family-side home screen. Shown when the active viewer is a
@@ -720,9 +720,7 @@ class _ReceivedReportRowState extends ConsumerState<_ReceivedReportRow> {
         );
         return;
       }
-      final url = await Supabase.instance.client.storage
-          .from('exports')
-          .createSignedUrl(path, 600);
+      final url = await mintExportSignedUrl(path);
       if (!mounted) return;
       final uri = Uri.parse(url);
       final ok = await launchUrl(
