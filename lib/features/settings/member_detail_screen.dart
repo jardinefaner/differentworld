@@ -211,7 +211,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   tabAlignment: TabAlignment.center,
                   tabs: [
                     Tab(text: 'Profile'),
-                    Tab(text: 'Permissions'),
+                    // "Certs & access" rather than "Permissions" — the
+                    // primary reason most directors open this screen
+                    // is adding/renewing a certification (Wave 64 UX
+                    // rerank); the tab label leads with that.
+                    Tab(text: 'Certs & access'),
                     Tab(text: 'Assignments'),
                   ],
                 ),
@@ -291,16 +295,24 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                         ],
                       ),
 
-                      // -- Tab 2: Permissions ------------------------
-                      // Two sections: vertical-agnostic core verbs
-                      // (observe / take attendance / open-close /
-                      // billing / etc.) and vertical-specific extras
-                      // (childcare-only meal/nap/diaper/pickup; future
-                      // verticals add their own block here).
+                      // -- Tab 2: Certs & access ---------------------
+                      // Certifications first (primary reason directors
+                      // open Member Detail per Wave 64 UX rerank),
+                      // then the per-cap toggles below: vertical-
+                      // agnostic core verbs and vertical-specific
+                      // extras.
                       ListView(
                         padding:
                             const EdgeInsets.fromLTRB(16, 8, 16, 32),
                         children: [
+                          const _SectionLabel(label: 'Certifications'),
+                          _CertificationsSection(
+                            active: activeCerts,
+                            onToggle: canManage ? _toggleCert : null,
+                            onSetExpiry:
+                                canManage ? _setCertExpiry : null,
+                          ),
+                          const SizedBox(height: 24),
                           const _SectionLabel(label: 'Core abilities'),
                           CapSwitch(
                             label: 'Observe',
@@ -471,14 +483,6 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 24),
-                          const _SectionLabel(label: 'Certifications'),
-                          _CertificationsSection(
-                            active: activeCerts,
-                            onToggle: canManage ? _toggleCert : null,
-                            onSetExpiry:
-                                canManage ? _setCertExpiry : null,
-                          ),
                         ],
                       ),
 

@@ -650,13 +650,17 @@ class _DirectorPulseCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 10),
+            // Each row taps through to where the director would
+            // actually act on the flag (Wave 64 UX rerank). Before
+            // these were no-ops (maybePop on root) which was the
+            // single biggest UX miss on Today.
             if (absent > 0)
               _PulseRow(
                 icon: Icons.event_busy_outlined,
                 tint: scheme.error,
                 label: '$absent ${absent == 1 ? "kid" : "kids"} '
                     'absent today',
-                onTap: () => Navigator.of(context).maybePop(),
+                onTap: () => context.push('/checklist'),
               ),
             if (substituteGroups > 0)
               _PulseRow(
@@ -666,7 +670,7 @@ class _DirectorPulseCard extends ConsumerWidget {
                     ? '1 cohort with a substitute covering today'
                     : '$substituteGroups cohorts with a substitute '
                         'covering today',
-                onTap: () => Navigator.of(context).maybePop(),
+                onTap: () => context.push('/schedule'),
               ),
             if (expiring > 0)
               _PulseRow(
@@ -674,7 +678,7 @@ class _DirectorPulseCard extends ConsumerWidget {
                 tint: scheme.tertiary,
                 label: '$expiring ${expiring == 1 ? "cert" : "certs"} '
                     'expiring in the next 30 days',
-                onTap: () => Navigator.of(context).maybePop(),
+                onTap: () => context.push('/settings/team'),
               ),
           ],
         ),

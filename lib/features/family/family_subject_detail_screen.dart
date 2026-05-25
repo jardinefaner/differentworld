@@ -85,31 +85,33 @@ class _FamilyDetailBody extends ConsumerWidget {
         return ListView(
           padding: EdgeInsets.fromLTRB(horiz, 0, horiz, 96),
           children: [
-            // -- Header ---------------------------------------------------
+            // Wave 64 reranking: the parent's first question is
+            // "is my kid OK today?" — the answer leads. The big
+            // avatar that used to dominate the top is gone; the
+            // ContentHeader still shows the name + age + a small
+            // trailing avatar so identity is confirmed without
+            // pushing the day's status below the fold.
             ContentHeader(
               title: fullName,
               subtitle: age,
-            ),
-            Center(
-              child: PersonAvatar(
+              trailing: PersonAvatar(
                 name: fullName,
                 photoUrl: subject.photoUrl,
-                radius: 56,
+                radius: 22,
               ),
             ),
-            const SizedBox(height: 24),
 
-            // -- Today ---------------------------------------------------
+            // -- Today (loudest) -----------------------------------------
             _SectionLabel(label: 'Today', theme: theme),
             _TodayCard(subject: subject),
             const SizedBox(height: 8),
             _TodayObservations(subjectId: subject.id),
 
-            // -- Messages -----------------------------------------------
+            // -- Messages (next-most-important) --------------------------
             _SectionLabel(label: 'Messages', theme: theme),
             _MessagesCard(subjectId: subject.id),
 
-            // -- Recent observations --------------------------------------
+            // -- Recent observations (history) ---------------------------
             const SizedBox(height: 16),
             _SectionLabel(label: 'This week', theme: theme),
             _RecentObservations(subjectId: subject.id),

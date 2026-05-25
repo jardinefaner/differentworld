@@ -16,15 +16,17 @@ class CapturesDao extends DatabaseAccessor<AppDatabase>
     with _$CapturesDaoMixin {
   CapturesDao(super.attachedDatabase);
 
-  /// Open captures in a space, newest first. Drives the inbox screen
-  /// and the Today launchpad's "captures awaiting triage" indicator.
+  /// Open captures in a space, **oldest first** — the inbox is a
+  /// triage queue. The thing that's been sitting longest is the most
+  /// likely to be forgotten; surfacing newest-first inverted the
+  /// triage priority (Wave 64 UX rerank). Today launchpad's "captures
+  /// awaiting triage" count still works regardless of order.
   Stream<List<Capture>> watchOpen(String spaceId) {
     return (select(captures)
           ..where((c) => c.spaceId.equals(spaceId) & c.status.equals('open'))
           ..orderBy([
             (c) => OrderingTerm(
                   expression: c.createdAt,
-                  mode: OrderingMode.desc,
                 ),
           ]))
         .watch();
