@@ -263,7 +263,7 @@ class _MessageBubble extends ConsumerWidget {
         children: [
           ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
+              maxWidth: MediaQuery.sizeOf(context).width * 0.75,
             ),
             child: Container(
               padding: const EdgeInsets.symmetric(

@@ -129,30 +129,33 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
               ),
             );
           }
-          return ListView(
+          return ListView.builder(
             padding: const EdgeInsets.only(bottom: 96),
-            children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: ContentHeader(
-                  title: 'Capture inbox',
-                  subtitle:
-                      'What you noticed. Promote it to an observation, '
-                      'or dismiss it.',
-                ),
-              ),
-              for (final c in rows)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                  child: _CaptureCard(
-                    capture: c,
-                    selectMode: _selectMode,
-                    selected: _selected.contains(c.id),
-                    onLongPress: () => _toggle(c.id),
-                    onTapInSelectMode: () => _toggle(c.id),
+            itemCount: rows.length + 1,
+            itemBuilder: (_, i) {
+              if (i == 0) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: ContentHeader(
+                    title: 'Capture inbox',
+                    subtitle:
+                        'What you noticed. Promote it to an observation, '
+                        'or dismiss it.',
                   ),
+                );
+              }
+              final c = rows[i - 1];
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                child: _CaptureCard(
+                  capture: c,
+                  selectMode: _selectMode,
+                  selected: _selected.contains(c.id),
+                  onLongPress: () => _toggle(c.id),
+                  onTapInSelectMode: () => _toggle(c.id),
                 ),
-            ],
+              );
+            },
           );
         },
       ),

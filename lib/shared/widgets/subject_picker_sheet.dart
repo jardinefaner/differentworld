@@ -69,13 +69,13 @@ class _SubjectPickerSheetState
           }).toList();
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
       child: SafeArea(
         top: false,
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
