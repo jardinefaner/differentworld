@@ -3,6 +3,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/vehicles/inspection_checklist.dart';
+import 'package:differentworld/features/vehicles/vehicle_qr_pdf.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -38,6 +39,14 @@ class VehicleDetailScreen extends ConsumerWidget {
     return EdgeScaffold(
       backFallbackRoute: '/settings/vehicles',
       actions: [
+        if (canEdit && vehicleAsync.value != null)
+          SecondaryActionButton(
+            tooltip: 'Print check-out QR',
+            icon: Icons.qr_code_2_outlined,
+            onPressed: () => printVehicleCheckoutQr(
+              vehicle: vehicleAsync.value!,
+            ),
+          ),
         if (canEdit && vehicleAsync.value != null)
           SecondaryActionButton(
             tooltip: 'Edit',
