@@ -14,6 +14,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -178,47 +179,24 @@ class _TodayCard extends ConsumerWidget {
     final status =
         myRecord == null ? null : AttendanceStatus.fromDb(myRecord.status);
 
-    return Container(
+    final statusColor = status?.color(theme.colorScheme) ??
+        theme.colorScheme.onSurfaceVariant;
+    final notes = myRecord?.notes;
+    return FeatureCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
+      leading: Icon(
+        status?.icon ?? Icons.schedule,
+        color: statusColor,
+        size: 32,
       ),
-      child: Row(
-        children: [
-          Icon(
-            status?.icon ?? Icons.schedule,
-            color: status?.color(theme.colorScheme) ??
-                theme.colorScheme.onSurfaceVariant,
-            size: 32,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  status?.label ?? 'Not yet checked in today',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: status?.color(theme.colorScheme) ??
-                        theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (myRecord?.notes != null &&
-                    (myRecord?.notes ?? '').isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      myRecord!.notes!,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+      title: Text(
+        status?.label ?? 'Not yet checked in today',
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: statusColor,
+          fontWeight: FontWeight.w700,
+        ),
       ),
+      subtitle: notes != null && notes.isNotEmpty ? notes : null,
     );
   }
 }

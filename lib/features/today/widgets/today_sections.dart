@@ -15,6 +15,7 @@ import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
@@ -175,10 +176,7 @@ class TodayBody extends ConsumerWidget {
             // nothing when there's nothing to flag (the "all clear"
             // case doesn't need to consume scroll). Only directors
             // see this; non-directors hit the early-return.
-            if (viewer.isDirector) ...[
-              _DirectorPulseCard(groups: groups),
-              const SizedBox(height: 16),
-            ],
+            if (viewer.isDirector) _DirectorPulseCard(groups: groups),
             // Upward loop made visible: the system surfaces one
             // question here when the data demands it; silent when
             // it doesn't. UX_DECISIONS §6 / framework upward loop.
@@ -533,33 +531,19 @@ class _DirectorPulseCard extends ConsumerWidget {
       if (exp.isBefore(cutoff)) expiring++;
     }
 
-    // Nothing to flag → render nothing.
-    if (absent == 0 && substituteGroups == 0 && expiring == 0) {
-      return const SizedBox.shrink();
-    }
+    final nothing = absent == 0 && substituteGroups == 0 && expiring == 0;
 
-    return Material(
-      color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
+    return SectionCard(
+      visible: !nothing,
+      borderRadius: 16,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      icon: Icons.dashboard_outlined,
+      title: "Today's pulse",
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.dashboard_outlined, size: 20, color: scheme.primary),
-                const SizedBox(width: 10),
-                Text(
-                  "Today's pulse",
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
             // Each row taps through to where the director would
             // actually act on the flag (Wave 64 UX rerank). Before
             // these were no-ops (maybePop on root) which was the
@@ -731,53 +715,29 @@ class _UnreadMessagesCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final threads = ref.watch(unreadThreadsForStaffProvider);
-    if (threads.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final visible = threads.length > 4 ? threads.sublist(0, 4) : threads;
     final totalUnread = threads.fold<int>(0, (sum, t) => sum + t.unreadCount);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Material(
-        color: scheme.primaryContainer.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(14),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.mark_chat_unread_outlined,
-                    size: 20,
-                    color: scheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    totalUnread == 1
-                        ? '1 unread message'
-                        : '$totalUnread unread messages',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onPrimaryContainer,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (threads.length > visible.length)
-                    Text(
-                      '+${threads.length - visible.length}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.onPrimaryContainer.withValues(alpha: 0.7),
-                      ),
-                    ),
-                ],
+    return SectionCard(
+      visible: threads.isNotEmpty,
+      icon: Icons.mark_chat_unread_outlined,
+      tone: SectionCardTone.featured,
+      title: totalUnread == 1
+          ? '1 unread message'
+          : '$totalUnread unread messages',
+      trailing: threads.length > visible.length
+          ? Text(
+              '+${threads.length - visible.length}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer
+                    .withValues(alpha: 0.7),
               ),
-            ),
-            for (final t in visible) _UnreadThreadRow(thread: t),
-          ],
-        ),
+            )
+          : null,
+      child: Column(
+        children: [
+          for (final t in visible) _UnreadThreadRow(thread: t),
+        ],
       ),
     );
   }
