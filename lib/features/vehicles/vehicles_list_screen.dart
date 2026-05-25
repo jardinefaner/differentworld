@@ -7,6 +7,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,15 @@ class VehiclesListScreen extends ConsumerWidget {
       // team / etc. Empty state has its own CTA too; that's fine, the
       // chrome '+' is the GROUND for the verb.
       actions: [
+        // Scan-to-check-out is the backup path for the OS deep link.
+        // Every signed-in user gets it — the inspection screen
+        // self-gates submit on `canDrive`, so a non-driver can still
+        // scan and see the form but can't write a log.
+        SecondaryActionButton(
+          tooltip: 'Scan vehicle QR',
+          icon: Icons.qr_code_scanner_outlined,
+          onPressed: () => context.push('/settings/vehicles/scan'),
+        ),
         if (canEditFleet)
           PrimaryActionButton(
             tooltip: 'New vehicle',

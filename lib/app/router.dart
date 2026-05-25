@@ -52,6 +52,7 @@ import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_inspection_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_scan_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart'
     show VehicleLogKind;
@@ -433,6 +434,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'new',
                 builder: (_, _) => const VehicleEditScreen(),
+              ),
+              GoRoute(
+                path: 'scan',
+                builder: (_, _) => const VehicleScanScreen(),
               ),
               GoRoute(
                 path: ':id',

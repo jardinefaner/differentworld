@@ -38,6 +38,10 @@ dependencies:
   path: ^1.9.1
   share_plus: ^11.0.0
   qr_flutter: ^4.1.0
+  # In-app QR scanner — backup path for the OS deep link in case the
+  # OS hands the URL off to the wrong handler. Used by the vehicles
+  # list "Scan" button (Wave 82).
+  mobile_scanner: ^7.1.3
   app_links: ^6.4.1
   intl: ^0.20.2
 
