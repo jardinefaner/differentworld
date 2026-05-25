@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
@@ -375,95 +376,60 @@ class _TriageSheet extends StatelessWidget {
             const SizedBox(height: 16),
             // Three large M3-tinted action cards. Bigger affordances
             // for weightier decisions; color tells you the destination.
-            _TriageActionCard(
-              icon: Icons.menu_book_outlined,
+            FeatureCard(
+              borderRadius: 16,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              tone: FeatureCardTone.selected,
+              leading: Icon(
+                Icons.menu_book_outlined,
+                color: scheme.onPrimaryContainer,
+                size: 26,
+              ),
               title: 'Make this an observation',
               subtitle: 'Pick a child to attach it to',
-              container: scheme.primaryContainer,
-              onContainer: scheme.onPrimaryContainer,
+              trailing: Icon(
+                Icons.chevron_right,
+                color: scheme.onPrimaryContainer,
+              ),
               onTap: () => unawaited(onMakeObservation()),
             ),
             const SizedBox(height: 8),
-            _TriageActionCard(
-              icon: Icons.check_circle_outline,
+            FeatureCard(
+              borderRadius: 16,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              tone: FeatureCardTone.success,
+              leading: Icon(
+                Icons.check_circle_outline,
+                color: scheme.onTertiaryContainer,
+                size: 26,
+              ),
               title: 'Make this a task',
               subtitle: 'A to-do that lives in /tasks until done',
-              container: scheme.tertiaryContainer,
-              onContainer: scheme.onTertiaryContainer,
+              trailing: Icon(
+                Icons.chevron_right,
+                color: scheme.onTertiaryContainer,
+              ),
               onTap: () => unawaited(onMakeTask()),
             ),
             const SizedBox(height: 8),
-            _TriageActionCard(
-              icon: Icons.delete_outline,
+            FeatureCard(
+              borderRadius: 16,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              tone: FeatureCardTone.danger,
+              leading: Icon(
+                Icons.delete_outline,
+                color: scheme.onErrorContainer,
+                size: 26,
+              ),
               title: 'Dismiss',
               subtitle: 'Not going to act on this. Hide from inbox.',
-              container: scheme.errorContainer,
-              onContainer: scheme.onErrorContainer,
+              trailing: Icon(
+                Icons.chevron_right,
+                color: scheme.onErrorContainer,
+              ),
               onTap: () => unawaited(onDismiss()),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TriageActionCard extends StatelessWidget {
-  const _TriageActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.container,
-    required this.onContainer,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color container;
-  final Color onContainer;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
-      color: container,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-          child: Row(
-            children: [
-              Icon(icon, color: onContainer, size: 26),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: onContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: onContainer.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: onContainer),
-            ],
-          ),
         ),
       ),
     );

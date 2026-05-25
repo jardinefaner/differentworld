@@ -3,6 +3,7 @@ import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -89,86 +90,80 @@ class _RoleCard extends StatelessWidget {
       }
     });
 
-    return Material(
-      color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  _iconFor(roleKey),
-                  size: 22,
-                  color: scheme.primary,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+    return FeatureCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      borderRadius: 16,
+      title: '',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(_iconFor(roleKey), size: 22, color: scheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: scheme.surface,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    roleKey,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontFamily: 'monospace',
-                      color: scheme.onSurfaceVariant,
-                    ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  roleKey,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontFamily: 'monospace',
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _summaryFor(roleKey),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 6),
+          ),
+          const SizedBox(height: 12),
+          if (cans.isEmpty)
             Text(
-              _summaryFor(roleKey),
+              'No default permissions — assign manually on the Member '
+              'detail screen.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
+            )
+          else
+            ...cans.map(
+              (r) => _CapRowTile(label: r.label, granted: true),
             ),
-            const SizedBox(height: 12),
-            if (cans.isEmpty)
-              Text(
-                'No default permissions — assign manually on the Member '
-                'detail screen.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              )
-            else
-              ...cans.map(
-                (r) => _CapRowTile(label: r.label, granted: true),
+          if (certGated.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Cert-gated (off until a certification is added)',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                letterSpacing: 0.4,
               ),
-            if (certGated.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Cert-gated (off until a certification is added)',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(height: 4),
-              ...certGated.map(
-                (r) => _CapRowTile(label: r.label, granted: false),
-              ),
-            ],
+            ),
+            const SizedBox(height: 4),
+            ...certGated.map(
+              (r) => _CapRowTile(label: r.label, granted: false),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

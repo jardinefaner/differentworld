@@ -9,6 +9,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
@@ -69,87 +70,65 @@ class _SurveyTemplateCard extends ConsumerWidget {
         responses.where((r) => r.status == SurveyResponseStatus.draft).length;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => context.push('/surveys/${template.id}'),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: scheme.primaryContainer,
-                  foregroundColor: scheme.onPrimaryContainer,
-                  child: const Icon(Icons.poll_outlined),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(template.title, style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${template.year} · ${template.scored.length} questions',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+      child: FeatureCard(
+        onTap: () => context.push('/surveys/${template.id}'),
+        leading: CircleAvatar(
+          backgroundColor: scheme.primaryContainer,
+          foregroundColor: scheme.onPrimaryContainer,
+          child: const Icon(Icons.poll_outlined),
+        ),
+        title: template.title,
+        subtitle:
+            '${template.year} · ${template.scored.length} questions',
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: completed > 0
+                    ? scheme.primaryContainer.withValues(alpha: 0.7)
+                    : scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$completed',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: scheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  if (inProgress > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 1,
+                      height: 12,
+                      color: scheme.onSurfaceVariant
+                          .withValues(alpha: 0.3),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$inProgress…',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.tertiary,
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
-                    ],
-                  ),
-                ),
-                // Progress chip: state lives on the right, separated
-                // from the "what" on the left. Tabular figures so the
-                // counts don't jitter as data lands.
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: completed > 0
-                        ? scheme.primaryContainer.withValues(alpha: 0.7)
-                        : scheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        '$completed',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: scheme.onPrimaryContainer,
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                      if (inProgress > 0) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          width: 1,
-                          height: 12,
-                          color: scheme.onSurfaceVariant
-                              .withValues(alpha: 0.3),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$inProgress…',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: scheme.tertiary,
-                            fontWeight: FontWeight.w700,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures()
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right),
-              ],
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right),
+          ],
         ),
       ),
     );
