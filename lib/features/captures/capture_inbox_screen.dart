@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
@@ -290,7 +291,7 @@ Future<void> _openTriage(
   final actions = ref.read(captureActionsProvider);
   final messenger = ScaffoldMessenger.maybeOf(context);
   final parentContext = context;
-  await showModalBottomSheet<void>(
+  await showGlassSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

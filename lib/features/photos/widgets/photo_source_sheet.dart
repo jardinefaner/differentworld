@@ -1,4 +1,5 @@
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,10 +29,9 @@ class PhotoSourceSheet extends ConsumerStatefulWidget {
     required bool hasExisting,
     required String displayName,
   }) {
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (_) => PhotoSourceSheet(
         entity: entity,
         entityId: entityId,

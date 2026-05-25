@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,7 +25,7 @@ Future<Subject?> pickSubject(
   String title = 'Pick a child',
   String hintText = 'Search children',
 }) {
-  return showModalBottomSheet<Subject>(
+  return showGlassSheet<Subject>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

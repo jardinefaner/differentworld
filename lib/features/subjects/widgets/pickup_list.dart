@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -122,10 +123,9 @@ class PickupPersonSheet extends StatefulWidget {
     BuildContext context, {
     PickupPerson? existing,
   }) {
-    return showModalBottomSheet<PickupPerson>(
+    return showGlassSheet<PickupPerson>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (_) => PickupPersonSheet(existing: existing),
     );
   }

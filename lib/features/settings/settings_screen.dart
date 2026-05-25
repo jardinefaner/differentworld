@@ -9,6 +9,7 @@ import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -333,7 +334,7 @@ class _OutdoorModeTile extends ConsumerWidget {
       subtitle: Text(mode.label),
       trailing: const Icon(Icons.chevron_right),
       onTap: () async {
-        final picked = await showModalBottomSheet<OutdoorMode>(
+        final picked = await showGlassSheet<OutdoorMode>(
           context: context,
           showDragHandle: true,
           builder: (sheetContext) {

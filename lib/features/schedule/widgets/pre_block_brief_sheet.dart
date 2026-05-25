@@ -5,6 +5,7 @@ import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,11 +28,10 @@ class PreBlockBriefSheet extends ConsumerWidget {
   final String blockId;
 
   static Future<void> show(BuildContext context, String blockId) {
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      useSafeArea: true,
       builder: (_) => PreBlockBriefSheet(blockId: blockId),
     );
   }

@@ -9,6 +9,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,7 +132,7 @@ Future<String?> openLocationEditSheet(
   BuildContext context, {
   Location? existing,
 }) {
-  return showModalBottomSheet<String?>(
+  return showGlassSheet<String?>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

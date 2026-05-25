@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,7 +46,7 @@ class SubstituteLeadSheet extends ConsumerWidget {
     required String groupName,
     required String date,
   }) {
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -208,7 +209,7 @@ class SubstituteLeadSheet extends ConsumerWidget {
     required List<Member> allMembers,
     required Set<String> excludeIds,
   }) async {
-    final substitute = await showModalBottomSheet<Member>(
+    final substitute = await showGlassSheet<Member>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,

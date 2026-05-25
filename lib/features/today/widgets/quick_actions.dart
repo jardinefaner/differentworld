@@ -6,6 +6,7 @@ import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -320,9 +321,8 @@ class _ClassroomPickerSheet extends StatelessWidget {
     BuildContext context, {
     required List<Group> groups,
   }) {
-    return showModalBottomSheet<Group>(
+    return showGlassSheet<Group>(
       context: context,
-      useSafeArea: true,
       builder: (_) => _ClassroomPickerSheet(groups: groups),
     );
   }

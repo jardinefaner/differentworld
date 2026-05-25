@@ -1,4 +1,5 @@
 import 'package:differentworld/features/settings/text_scale_setting.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,7 +45,7 @@ class TextSizeTile extends ConsumerWidget {
 Future<void> showTextSizePicker(BuildContext context, WidgetRef ref) async {
   final currentAsync = ref.read(textScaleSettingProvider);
   final current = currentAsync.value ?? TextScaleMode.systemDefault;
-  final picked = await showModalBottomSheet<TextScaleMode>(
+  final picked = await showGlassSheet<TextScaleMode>(
     context: context,
     showDragHandle: true,
     builder: (sheetContext) {

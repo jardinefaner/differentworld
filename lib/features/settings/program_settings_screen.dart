@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -253,7 +254,7 @@ class _VerticalPickerTile extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () async {
-            final picked = await showModalBottomSheet<String>(
+            final picked = await showGlassSheet<String>(
               context: context,
               showDragHandle: true,
               builder: (_) => _VerticalPickerSheet(currentKey: currentKey),
