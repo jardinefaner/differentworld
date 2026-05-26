@@ -125,14 +125,21 @@ class _SurveyHeaderState extends State<SurveyHeader> {
                         key: ValueKey('idle'),
                       ),
               ),
-              const SizedBox(width: 6),
-              Text(
-                '${widget.answeredScored} / ${widget.scoredTotal}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+              // Wave 139: hide the score fraction until the kid has
+              // actually started (progressTotal > 0 stand-in for
+              // _started). Showing "0 / 11" on the About-you page
+              // suggested the kid had to do something they hadn't
+              // gotten to yet.
+              if (widget.progressTotal > 0) ...[
+                const SizedBox(width: 6),
+                Text(
+                  '${widget.answeredScored} / ${widget.scoredTotal}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
           if (widget.progressTotal > 0) ...[
@@ -664,80 +671,105 @@ class _AboutYouPageState extends State<AboutYouPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Web/desktop parity: the take screen runs full-bleed kid-mode,
+    // so without a width constraint the voice tiles and chip rows
+    // stretch edge-to-edge on a 1440 dp window. Cap at 560 dp +
+    // center — matches the template-detail landing's
+    // ConstrainedBox(maxWidth: 520) pattern so the kid sees the
+    // same vertical column on phone, tablet, and desktop.
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'A few things about you',
-              style: theme.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Pick a reader and tell us a little about you. Then '
-              'tap Start.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            const _SectionLabel(label: 'Reader'),
-            const SizedBox(height: 8),
-            _VoiceTilesGrid(
-              previewing: _previewing,
-              onTap: _onVoiceTap,
-            ),
-            const SizedBox(height: 24),
-            _DimensionPicker(
-              label: 'Age band',
-              dimension: 'age_band',
-              options: widget.ageBandOptions,
-              selected: widget.ageBand,
-              onPick: (l) => widget.onPickIdentity('age_band', l),
-              onAdd: (l) => widget.onAddIdentityOption('age_band', l),
-              addHint: 'e.g. 7-9',
-            ),
-            const SizedBox(height: 20),
-            _DimensionPicker(
-              label: 'Grade',
-              dimension: 'grade',
-              options: widget.gradeOptions,
-              selected: widget.grade,
-              onPick: (l) => widget.onPickIdentity('grade', l),
-              onAdd: (l) => widget.onAddIdentityOption('grade', l),
-              addHint: 'e.g. 2nd',
-            ),
-            const SizedBox(height: 20),
-            _DimensionPicker(
-              label: 'School',
-              dimension: 'school',
-              options: widget.schoolOptions,
-              selected: widget.school,
-              onPick: (l) => widget.onPickIdentity('school', l),
-              onAdd: (l) => widget.onAddIdentityOption('school', l),
-              addHint: 'e.g. Lincoln Elementary',
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: widget.onStart,
-                icon: const Icon(Icons.play_arrow),
-                label: Text(
-                  widget.onStart == null
-                      ? 'Pick a reader and one for each'
-                      : 'Start',
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'A few things about you',
+                  style: theme.textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
                 ),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                const SizedBox(height: 6),
+                Text(
+                  'Pick a reader and tell us a little about you. Then '
+                  'tap Start.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
+                const SizedBox(height: 20),
+                const _SectionLabel(label: 'Reader'),
+                const SizedBox(height: 8),
+                _VoiceTilesGrid(
+                  previewing: _previewing,
+                  onTap: _onVoiceTap,
+                ),
+                const SizedBox(height: 24),
+                _DimensionPicker(
+                  label: 'Age band',
+                  dimension: 'age_band',
+                  options: widget.ageBandOptions,
+                  selected: widget.ageBand,
+                  onPick: (l) => widget.onPickIdentity('age_band', l),
+                  onAdd: (l) => widget.onAddIdentityOption('age_band', l),
+                  addHint: 'e.g. 7-9',
+                  // Wave 139: starter defaults so a fresh-install
+                  // program isn't blocked on the "+" button. Tapping
+                  // graduates the default into the program catalog.
+                  defaults: const ['4-6', '7-9', '10-12'],
+                ),
+                const SizedBox(height: 20),
+                _DimensionPicker(
+                  label: 'Grade',
+                  dimension: 'grade',
+                  options: widget.gradeOptions,
+                  selected: widget.grade,
+                  onPick: (l) => widget.onPickIdentity('grade', l),
+                  onAdd: (l) => widget.onAddIdentityOption('grade', l),
+                  addHint: 'e.g. 2nd',
+                  defaults: const [
+                    'TK',
+                    'K',
+                    '1st',
+                    '2nd',
+                    '3rd',
+                    '4th',
+                    '5th',
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _DimensionPicker(
+                  label: 'School',
+                  dimension: 'school',
+                  options: widget.schoolOptions,
+                  selected: widget.school,
+                  onPick: (l) => widget.onPickIdentity('school', l),
+                  onAdd: (l) => widget.onAddIdentityOption('school', l),
+                  addHint: 'e.g. Lincoln Elementary',
+                  // No school defaults — schools are program-specific.
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: widget.onStart,
+                    icon: const Icon(Icons.play_arrow),
+                    label: Text(
+                      widget.onStart == null
+                          ? 'Choose a reader, age, grade, and school first'
+                          : 'Start',
+                    ),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -851,6 +883,7 @@ class _DimensionPicker extends StatelessWidget {
     required this.onPick,
     required this.onAdd,
     required this.addHint,
+    this.defaults = const [],
   });
 
   final String label;
@@ -860,6 +893,13 @@ class _DimensionPicker extends StatelessWidget {
   final ValueChanged<String> onPick;
   final Future<void> Function(String label) onAdd;
   final String addHint;
+
+  /// Wave 139: starter labels rendered when the program hasn't added
+  /// any options for this dimension yet (so the first kid taking a
+  /// survey never sees an empty row + lone "+" chip). Tapping a
+  /// default persists it to the program catalog AND selects it, so
+  /// the next kid sees it as a known option (no longer a default).
+  final List<String> defaults;
 
   Future<void> _promptAdd(BuildContext context) async {
     final controller = TextEditingController();
@@ -897,6 +937,15 @@ class _DimensionPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Merge program options with defaults — but only defaults that
+    // aren't already program options (otherwise the kid sees the same
+    // label twice). Tapping a default goes through onAdd→onPick so it
+    // graduates into the program catalog for the next kid.
+    final knownLower = {for (final o in options) o.toLowerCase()};
+    final displayDefaults = defaults
+        .where((d) => !knownLower.contains(d.toLowerCase()))
+        .toList(growable: false);
+    final hasAny = options.isNotEmpty || displayDefaults.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -918,6 +967,15 @@ class _DimensionPicker extends StatelessWidget {
                 selected: selected == opt,
                 onSelected: (_) => onPick(opt),
               ),
+            for (final opt in displayDefaults)
+              ChoiceChip(
+                label: Text(opt),
+                selected: selected == opt,
+                onSelected: (_) async {
+                  await onAdd(opt);
+                  onPick(opt);
+                },
+              ),
             // Trailing "+" chip. Tapping opens a dialog to type the
             // new label; submitting persists it + auto-picks it.
             ActionChip(
@@ -927,6 +985,15 @@ class _DimensionPicker extends StatelessWidget {
             ),
           ],
         ),
+        if (!hasAny) ...[
+          const SizedBox(height: 6),
+          Text(
+            'No options yet — tap Add to enter your first.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ],
     );
   }

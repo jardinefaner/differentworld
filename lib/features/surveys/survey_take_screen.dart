@@ -107,7 +107,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   int _staffTapCount = 0;
   Timer? _staffTapReset;
   static const _staffTapTarget = 5;
-  static const _staffTapWindow = Duration(milliseconds: 1500);
+  // Wave 139: tightened from 1500ms → 800ms between consecutive taps.
+  // The window is *between taps* (each tap reschedules the reset
+  // timer), so a kid randomly mashing the corner can no longer space
+  // their taps out over ~7 seconds and accumulate 5. The full gesture
+  // must complete in ~3.2 s with no pauses longer than 800 ms.
+  static const _staffTapWindow = Duration(milliseconds: 800);
 
   SurveyTemplate? get _template => SurveyTemplates.byId(widget.templateId);
 
@@ -446,10 +451,14 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                       // Wave 138: the header's "Subject" identity
                       // panel is dropped; the survey is anonymous,
                       // so the header just shows template + progress.
+                      // Wave 139: pass progressTotal=0 while on
+                      // About-you so the header hides both the dots
+                      // and the score (avoids "0 / 11" before any
+                      // question has been seen).
                       SurveyHeader(
                         template: t,
                         progressIndex: math.min(_index + 1, totalQuestions),
-                        progressTotal: totalQuestions,
+                        progressTotal: _started ? totalQuestions : 0,
                         answeredScored: answeredScored,
                         scoredTotal: t.scored.length,
                         atCloseout: atCloseout,
