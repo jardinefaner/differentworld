@@ -4,6 +4,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,12 +34,12 @@ class RolesScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      body: ResponsivePage(
         children: [
           const ContentHeader(
             title: 'Roles & permissions',
-            subtitle: 'What each role can do by default. Directors can '
+            subtitle:
+                'What each role can do by default. Directors can '
                 'fine-tune individual permissions on the Member detail '
                 'screen.',
           ),
@@ -172,22 +173,29 @@ class _RoleCard extends StatelessWidget {
   /// doesn't capture (responsibility, trust level, target persona).
   static String _summaryFor(String role) {
     return switch (role) {
-      'director' => 'Full administrative access. Invites staff, edits '
-          'roles, generates reports, manages the program.',
-      'lead_teacher' => 'Owns a cohort full-time. Direct-care + '
-          'authorizes pickup + plans the day for their kids.',
-      'teacher' => 'Direct-care frontline. Observes, takes attendance, '
-          'and records meals.',
-      'substitute' => 'Temporary coverage. Low default trust — '
-          'observes and takes attendance, but no pickup authorization '
-          'or schedule edits until the director grants them.',
-      'specialist' => 'Subject-matter staff (coach, tutor, health aide, '
-          'and others). Cohort scope is controlled by group '
-          'assignments; specialty is set on the Member detail screen.',
-      'kitchen' => 'Meals only. Doesn’t observe, doesn’t take '
-          'attendance, doesn’t see family contacts.',
-      'guardian' => 'Family lens — read access to their linked '
-          'children and messaging with staff.',
+      'director' =>
+        'Full administrative access. Invites staff, edits '
+            'roles, generates reports, manages the program.',
+      'lead_teacher' =>
+        'Owns a cohort full-time. Direct-care + '
+            'authorizes pickup + plans the day for their kids.',
+      'teacher' =>
+        'Direct-care frontline. Observes, takes attendance, '
+            'and records meals.',
+      'substitute' =>
+        'Temporary coverage. Low default trust — '
+            'observes and takes attendance, but no pickup authorization '
+            'or schedule edits until the director grants them.',
+      'specialist' =>
+        'Subject-matter staff (coach, tutor, health aide, '
+            'and others). Cohort scope is controlled by group '
+            'assignments; specialty is set on the Member detail screen.',
+      'kitchen' =>
+        'Meals only. Doesn’t observe, doesn’t take '
+            'attendance, doesn’t see family contacts.',
+      'guardian' =>
+        'Family lens — read access to their linked '
+            'children and messaging with staff.',
       _ => 'Custom role — caps come from the per-vertical bundle.',
     };
   }
@@ -313,11 +321,12 @@ String _capLabel(String key) {
     ChildcareCaps.canRecordDiaper => 'Log diaper changes',
     ChildcareCaps.canAdministerMedication => 'Administer medication',
     ChildcareCaps.canAuthorizePickup => 'Authorize pickup',
-    _ => key
-        .replaceAll('can_', '')
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
-        .join(' '),
+    _ =>
+      key
+          .replaceAll('can_', '')
+          .replaceAll('_', ' ')
+          .split(' ')
+          .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+          .join(' '),
   };
 }

@@ -5,6 +5,7 @@ import 'package:differentworld/core/invites/invite_code.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,7 +77,7 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
 
     return EdgeScaffold(
       backFallbackRoute: '/settings/team',
-      body: ListView(
+      body: FormBody(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         children: [
           ContentHeader(

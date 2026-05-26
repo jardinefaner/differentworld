@@ -6,6 +6,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -167,7 +168,7 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
   Widget build(BuildContext context) {
     final s = widget.subject;
     return EdgeScaffold(
-      body: ListView(
+      body: FormBody(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           ContentHeader(

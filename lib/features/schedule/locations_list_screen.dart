@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,8 +60,7 @@ class LocationsListScreen extends ConsumerWidget {
                   : null,
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 96),
+          return ResponsivePage.builder(
             itemCount: locations.length + 1,
             itemBuilder: (_, i) {
               if (i == 0) {
@@ -99,8 +99,7 @@ class _LocationTile extends ConsumerWidget {
     final subtitle = [
       if (cap != null) 'cap. $cap',
       if (isOutdoor) 'outdoor',
-      if (location.notes != null && location.notes!.isNotEmpty)
-        location.notes!,
+      if (location.notes != null && location.notes!.isNotEmpty) location.notes!,
     ].join(' · ');
     return ListTile(
       leading: CircleAvatar(
@@ -117,9 +116,7 @@ class _LocationTile extends ConsumerWidget {
       title: Text(location.name),
       subtitle: subtitle.isEmpty ? null : Text(subtitle),
       trailing: canEdit ? const Icon(Icons.chevron_right) : null,
-      onTap: canEdit
-          ? () => _openEditSheet(context, existing: location)
-          : null,
+      onTap: canEdit ? () => _openEditSheet(context, existing: location) : null,
     );
   }
 }
@@ -153,8 +150,7 @@ class _LocationEditSheet extends ConsumerStatefulWidget {
   final Location? existing;
 
   @override
-  ConsumerState<_LocationEditSheet> createState() =>
-      _LocationEditSheetState();
+  ConsumerState<_LocationEditSheet> createState() => _LocationEditSheetState();
 }
 
 class _LocationEditSheetState extends ConsumerState<_LocationEditSheet> {

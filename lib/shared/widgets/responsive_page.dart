@@ -30,14 +30,29 @@ class ResponsivePage extends StatelessWidget {
   const ResponsivePage({
     this.children,
     this.slivers,
+    this.itemCount,
+    this.itemBuilder,
     this.maxWidth = Breakpoints.splitMaxWidth,
     this.bottomPadding = 96,
     this.physics,
     super.key,
   }) : assert(
-          children != null || slivers != null,
-          'Provide either children: or slivers:',
+          children != null || slivers != null || itemBuilder != null,
+          'Provide one of children:, slivers:, or itemBuilder:',
         );
+
+  /// Convenience for `.builder`-shape lists — use when itemCount can
+  /// be large enough that materializing every row up front matters.
+  /// Pass `itemCount` + `itemBuilder` just like `ListView.builder`.
+  const ResponsivePage.builder({
+    required int this.itemCount,
+    required IndexedWidgetBuilder this.itemBuilder,
+    this.maxWidth = Breakpoints.splitMaxWidth,
+    this.bottomPadding = 96,
+    this.physics,
+    super.key,
+  })  : children = null,
+        slivers = null;
 
   /// Flat list of widgets — rendered as a `ListView`. Most screens
   /// use this.
@@ -47,6 +62,12 @@ class ResponsivePage extends StatelessWidget {
   /// screen needs sliver-only widgets like `SliverPersistentHeader`
   /// or `SliverAppBar` extensions.
   final List<Widget>? slivers;
+
+  /// `ListView.builder` shape — pass with `itemCount`.
+  final IndexedWidgetBuilder? itemBuilder;
+
+  /// Row count when using [itemBuilder].
+  final int? itemCount;
 
   /// Max content width when rendered on wide windows. Defaults to
   /// 1200dp — wider than a form, narrower than a 1920 desktop. Lists
@@ -94,6 +115,14 @@ class ResponsivePage extends StatelessWidget {
                 ),
               ),
             ],
+          );
+        }
+        if (itemBuilder != null) {
+          return ListView.builder(
+            padding: padding,
+            physics: physics,
+            itemCount: itemCount,
+            itemBuilder: itemBuilder!,
           );
         }
         return ListView(

@@ -8,6 +8,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -62,8 +63,7 @@ class ActivitiesListScreen extends ConsumerWidget {
                   : null,
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 96),
+          return ResponsivePage.builder(
             itemCount: activities.length + 1,
             itemBuilder: (_, i) {
               if (i == 0) {
@@ -103,8 +103,8 @@ class _ActivityTile extends ConsumerWidget {
     final loc = activity.defaultLocationId == null
         ? null
         : (ref.watch(locationsProvider).value ?? const <Location>[])
-            .where((l) => l.id == activity.defaultLocationId)
-            .firstOrNull;
+              .where((l) => l.id == activity.defaultLocationId)
+              .firstOrNull;
 
     final chips = <Widget>[
       if (loc != null) _MetaChip(icon: Icons.place_outlined, label: loc.name),
@@ -139,12 +139,12 @@ class _ActivityTile extends ConsumerWidget {
       title: Text(activity.name),
       subtitle: chips.isEmpty
           ? (activity.description == null
-              ? const Text('—')
-              : Text(
-                  activity.description!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ))
+                ? const Text('—')
+                : Text(
+                    activity.description!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ))
           : Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Wrap(spacing: 4, runSpacing: 4, children: chips),

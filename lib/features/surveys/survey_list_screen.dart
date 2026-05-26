@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,8 +30,8 @@ class SurveyIndexScreen extends ConsumerWidget {
     const templates = SurveyTemplates.all;
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
+      body: ResponsivePage(
+        bottomPadding: 32,
         children: [
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -39,8 +40,7 @@ class SurveyIndexScreen extends ConsumerWidget {
               subtitle: 'Short check-ins kids can answer with smileys',
             ),
           ),
-          for (final t in templates)
-            _SurveyTemplateCard(template: t),
+          for (final t in templates) _SurveyTemplateCard(template: t),
         ],
       ),
     );
@@ -59,15 +59,18 @@ class _SurveyTemplateCard extends ConsumerWidget {
     final spaceId = viewer.spaceId;
     final responsesAsync = spaceId == null
         ? const AsyncValue<List<SurveyResponse>>.data([])
-        : ref.watch(surveyResponsesProvider(
-            (spaceId: spaceId, templateId: template.id),
-          ));
+        : ref.watch(
+            surveyResponsesProvider(
+              (spaceId: spaceId, templateId: template.id),
+            ),
+          );
     final responses = responsesAsync.value ?? const <SurveyResponse>[];
     final completed = responses
         .where((r) => r.status == SurveyResponseStatus.completed)
         .length;
-    final inProgress =
-        responses.where((r) => r.status == SurveyResponseStatus.draft).length;
+    final inProgress = responses
+        .where((r) => r.status == SurveyResponseStatus.draft)
+        .length;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: FeatureCard(
@@ -78,8 +81,7 @@ class _SurveyTemplateCard extends ConsumerWidget {
           child: const Icon(Icons.poll_outlined),
         ),
         title: template.title,
-        subtitle:
-            '${template.year} · ${template.scored.length} questions',
+        subtitle: '${template.year} · ${template.scored.length} questions',
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -110,8 +112,7 @@ class _SurveyTemplateCard extends ConsumerWidget {
                     Container(
                       width: 1,
                       height: 12,
-                      color: scheme.onSurfaceVariant
-                          .withValues(alpha: 0.3),
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.3),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -159,15 +160,16 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
     final responsesAsync = spaceId == null
         ? const AsyncValue<List<SurveyResponse>>.data([])
-        : ref.watch(surveyResponsesProvider(
-            (spaceId: spaceId, templateId: templateId),
-          ));
+        : ref.watch(
+            surveyResponsesProvider(
+              (spaceId: spaceId, templateId: templateId),
+            ),
+          );
 
     // Compute the "next unsurveyed kid" so the primary action can
     // jump straight to them. When everyone's done, pivots to "redo"
     // for the first kid.
-    final subjectsList =
-        subjectsAsync.value ?? const <Subject>[];
+    final subjectsList = subjectsAsync.value ?? const <Subject>[];
     final responsesList = responsesAsync.value ?? const <SurveyResponse>[];
     final completedIds = <String>{
       for (final r in responsesList)
@@ -179,8 +181,8 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
             (s) => !completedIds.contains(s.id),
             orElse: () => subjectsList.first,
           );
-    final allDone = subjectsList.isNotEmpty &&
-        completedIds.length >= subjectsList.length;
+    final allDone =
+        subjectsList.isNotEmpty && completedIds.length >= subjectsList.length;
 
     return EdgeScaffold(
       backFallbackRoute: '/surveys',
@@ -270,17 +272,17 @@ class _SubjectStatusRow extends StatelessWidget {
     final fullName = '${subject.firstName} ${subject.lastName}';
     final (statusLabel, statusColor) = switch (status) {
       'completed' => (
-          'Done',
-          theme.colorScheme.primary,
-        ),
+        'Done',
+        theme.colorScheme.primary,
+      ),
       'draft' => (
-          'In progress',
-          theme.colorScheme.tertiary,
-        ),
+        'In progress',
+        theme.colorScheme.tertiary,
+      ),
       _ => (
-          'Not started',
-          theme.colorScheme.onSurfaceVariant,
-        ),
+        'Not started',
+        theme.colorScheme.onSurfaceVariant,
+      ),
     };
     return ListTile(
       leading: PersonAvatar(name: fullName, photoUrl: subject.photoUrl),

@@ -13,6 +13,7 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
@@ -130,8 +131,7 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
               ),
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 96),
+          return ResponsivePage.builder(
             itemCount: rows.length + 1,
             itemBuilder: (_, i) {
               if (i == 0) {

@@ -7,6 +7,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
@@ -72,8 +73,7 @@ class VehiclesListScreen extends ConsumerWidget {
                   : null,
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 96),
+          return ResponsivePage.builder(
             itemCount: vehicles.length + 1,
             itemBuilder: (_, i) {
               if (i == 0) {

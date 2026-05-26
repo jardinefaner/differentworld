@@ -10,6 +10,7 @@ import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -250,7 +251,7 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
             onPressed: _saving ? null : _delete,
           ),
       ],
-      body: ListView(
+      body: FormBody(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           ContentHeader(

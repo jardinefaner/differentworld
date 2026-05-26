@@ -13,6 +13,7 @@ import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -474,7 +475,7 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
         if (ok && context.mounted && context.canPop()) context.pop();
       },
       child: EdgeScaffold(
-        body: ListView(
+        body: FormBody(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           children: [
             ContentHeader(

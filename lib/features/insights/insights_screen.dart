@@ -9,6 +9,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,17 +61,17 @@ class InsightsScreen extends ConsumerWidget {
           final suggestion = insights
               .where((i) => i.severity == InsightSeverity.suggestion)
               .toList();
-          final info =
-              insights.where((i) => i.severity == InsightSeverity.info).toList();
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 32),
+          final info = insights
+              .where((i) => i.severity == InsightSeverity.info)
+              .toList();
+          return ResponsivePage(
+            bottomPadding: 32,
             children: [
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(
                   title: 'Insights',
-                  subtitle:
-                      'Questions the system is surfacing from your data',
+                  subtitle: 'Questions the system is surfacing from your data',
                 ),
               ),
               if (urgent.isNotEmpty)
@@ -80,8 +81,7 @@ class InsightsScreen extends ConsumerWidget {
                   label: 'SUGGESTIONS',
                   insights: suggestion,
                 ),
-              if (info.isNotEmpty)
-                _SeverityGroup(label: 'FYI', insights: info),
+              if (info.isNotEmpty) _SeverityGroup(label: 'FYI', insights: info),
             ],
           );
         },
@@ -166,8 +166,7 @@ class InsightCard extends ConsumerWidget {
               children: [
                 // Default action: prominent filled button.
                 FilledButton(
-                  onPressed: () =>
-                      context.push(insight.actions.first.route),
+                  onPressed: () => context.push(insight.actions.first.route),
                   child: Text(insight.actions.first.label),
                 ),
                 // Secondary actions render as text buttons.
@@ -188,17 +187,17 @@ class InsightCard extends ConsumerWidget {
     final scheme = theme.colorScheme;
     return switch (s) {
       InsightSeverity.urgent => (
-          scheme.errorContainer,
-          scheme.onErrorContainer,
-        ),
+        scheme.errorContainer,
+        scheme.onErrorContainer,
+      ),
       InsightSeverity.suggestion => (
-          scheme.tertiaryContainer,
-          scheme.onTertiaryContainer,
-        ),
+        scheme.tertiaryContainer,
+        scheme.onTertiaryContainer,
+      ),
       InsightSeverity.info => (
-          scheme.surfaceContainerHighest,
-          scheme.onSurface,
-        ),
+        scheme.surfaceContainerHighest,
+        scheme.onSurface,
+      ),
     };
   }
 }
@@ -260,9 +259,7 @@ class TopInsightCard extends ConsumerWidget {
             child: TextButton(
               onPressed: () => context.push('/insights'),
               child: Text(
-                rest == 1
-                    ? '1 more — see all'
-                    : '$rest more — see all',
+                rest == 1 ? '1 more — see all' : '$rest more — see all',
               ),
             ),
           ),

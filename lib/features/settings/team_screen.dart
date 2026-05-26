@@ -15,6 +15,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -63,8 +64,7 @@ class TeamScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(_teamProvider(spaceId)),
         ),
         data: (members) {
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 96),
+          return ResponsivePage(
             children: [
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),

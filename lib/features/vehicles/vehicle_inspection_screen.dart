@@ -7,6 +7,7 @@ import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -167,8 +168,7 @@ class _VehicleInspectionScreenState
                 Expanded(
                   child: Form(
                     key: _formKey,
-                    child: ListView(
-                      // Shell reserves top + bottom chrome.
+                    child: FormBody(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                       children: [
                         ContentHeader(

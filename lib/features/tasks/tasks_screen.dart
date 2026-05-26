@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,10 +70,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           }
           final buckets = _bucketize(tasks);
           final scoped = _scopeToFilter(buckets, _filter);
-          final scopedCount = scoped.values.fold<int>(0, (a, b) => a + b.length);
+          final scopedCount = scoped.values.fold<int>(
+            0,
+            (a, b) => a + b.length,
+          );
 
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 96),
+          return ResponsivePage(
             children: [
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
@@ -99,7 +102,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     ),
                     _FilterChip(
                       label: 'This week',
-                      count: (buckets[_Bucket.today]?.length ?? 0) +
+                      count:
+                          (buckets[_Bucket.today]?.length ?? 0) +
                           (buckets[_Bucket.thisWeek]?.length ?? 0),
                       selected: _filter == _TaskFilter.week,
                       onTap: () => setState(() => _filter = _TaskFilter.week),
@@ -131,10 +135,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           ? 'Nothing overdue. Nice.'
                           : 'Nothing in this horizon — try a wider one.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 )
@@ -190,17 +192,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   ) {
     return switch (filter) {
       _TaskFilter.today => {
-          _Bucket.overdue: buckets[_Bucket.overdue]!,
-          _Bucket.today: buckets[_Bucket.today]!,
-        },
+        _Bucket.overdue: buckets[_Bucket.overdue]!,
+        _Bucket.today: buckets[_Bucket.today]!,
+      },
       _TaskFilter.week => {
-          _Bucket.overdue: buckets[_Bucket.overdue]!,
-          _Bucket.today: buckets[_Bucket.today]!,
-          _Bucket.thisWeek: buckets[_Bucket.thisWeek]!,
-        },
+        _Bucket.overdue: buckets[_Bucket.overdue]!,
+        _Bucket.today: buckets[_Bucket.today]!,
+        _Bucket.thisWeek: buckets[_Bucket.thisWeek]!,
+      },
       _TaskFilter.overdue => {
-          _Bucket.overdue: buckets[_Bucket.overdue]!,
-        },
+        _Bucket.overdue: buckets[_Bucket.overdue]!,
+      },
       _TaskFilter.all => buckets,
     };
   }
@@ -210,7 +212,8 @@ enum _Bucket {
   overdue('Overdue'),
   today('Today'),
   thisWeek('This week'),
-  later('Later');
+  later('Later')
+  ;
 
   const _Bucket(this.label);
   final String label;
@@ -244,8 +247,8 @@ class _FilterChip extends StatelessWidget {
     final bg = selected
         ? scheme.primary
         : (emphasize && count > 0
-            ? scheme.errorContainer.withValues(alpha: 0.45)
-            : scheme.surfaceContainerHighest);
+              ? scheme.errorContainer.withValues(alpha: 0.45)
+              : scheme.surfaceContainerHighest);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Material(
@@ -322,7 +325,8 @@ class _TaskCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final due = task.dueAt == null ? null : DateTime.tryParse(task.dueAt!);
     final created = DateTime.tryParse(task.createdAt)?.toLocal();
-    final overdue = due != null &&
+    final overdue =
+        due != null &&
         due.isBefore(DateTime.now()) &&
         task.status == TaskStatus.open;
     return Dismissible(
@@ -433,8 +437,7 @@ class _TaskCard extends ConsumerWidget {
                                 color: overdue
                                     ? theme.colorScheme.error
                                     : theme.colorScheme.onSurfaceVariant,
-                                fontWeight:
-                                    overdue ? FontWeight.w700 : null,
+                                fontWeight: overdue ? FontWeight.w700 : null,
                               ),
                             ),
                             const SizedBox(width: 12),

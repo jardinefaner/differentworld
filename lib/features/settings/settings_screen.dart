@@ -9,6 +9,7 @@ import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,7 @@ class SettingsScreen extends ConsumerWidget {
     final member = viewer.member;
 
     return EdgeScaffold(
-      body: ListView(
+      body: FormBody(
         padding: const EdgeInsets.only(bottom: 96),
         children: [
           const Padding(

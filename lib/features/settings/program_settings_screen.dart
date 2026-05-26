@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:flutter/material.dart';
@@ -101,7 +102,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
             );
           }
           final caps = space.caps;
-          return ListView(
+          return FormBody(
             padding: const EdgeInsets.only(bottom: 32),
             children: [
               Padding(

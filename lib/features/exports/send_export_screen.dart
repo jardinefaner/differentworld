@@ -6,6 +6,7 @@ import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -202,7 +203,7 @@ class _SendExportScreenState extends ConsumerState<SendExportScreen> {
         : ref.watch(_guardiansForSubjectShortProvider(subjectId));
 
     return EdgeScaffold(
-      body: ListView(
+      body: FormBody(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           const ContentHeader(
