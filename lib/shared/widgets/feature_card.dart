@@ -131,6 +131,18 @@ class FeatureCard extends StatelessWidget {
       FeatureCardTone.success =>
         scheme.tertiaryContainer.withValues(alpha: 0.5),
     };
+    // Foreground paired to each tone. Default text color over
+    // `surfaceContainerHighest` is `onSurface`, but over tinted
+    // containers it has to flip to the matching foreground or the
+    // contrast drops below WCAG AA. Wave 94 fix: title + subtitle
+    // now inherit this color instead of the always-`onSurface`
+    // they had before.
+    final fg = switch (tone) {
+      FeatureCardTone.neutral => scheme.onSurface,
+      FeatureCardTone.selected => scheme.onPrimaryContainer,
+      FeatureCardTone.danger => scheme.onErrorContainer,
+      FeatureCardTone.success => scheme.onTertiaryContainer,
+    };
 
     final body = Padding(
       padding: padding,
@@ -142,7 +154,7 @@ class FeatureCard extends StatelessWidget {
             const SizedBox(width: 12),
           ],
           Expanded(
-            child: content ?? _defaultContent(theme),
+            child: content ?? _defaultContent(theme, fg),
           ),
           if (trailing != null) ...[
             const SizedBox(width: 8),
@@ -184,37 +196,39 @@ class FeatureCard extends StatelessWidget {
     );
   }
 
-  Widget _defaultContent(ThemeData theme) {
+  Widget _defaultContent(ThemeData theme, Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _renderTitle(theme),
+        _renderTitle(theme, fg),
         if (subtitle != null) ...[
           const SizedBox(height: 2),
-          _renderSubtitle(theme),
+          _renderSubtitle(theme, fg),
         ],
       ],
     );
   }
 
-  Widget _renderTitle(ThemeData theme) {
+  Widget _renderTitle(ThemeData theme, Color fg) {
     if (title is Widget) return title as Widget;
     return Text(
       title as String,
-      style: theme.textTheme.titleMedium,
+      style: theme.textTheme.titleMedium?.copyWith(color: fg),
       overflow: TextOverflow.ellipsis,
       maxLines: 1,
     );
   }
 
-  Widget _renderSubtitle(ThemeData theme) {
+  Widget _renderSubtitle(ThemeData theme, Color fg) {
     final s = subtitle;
     if (s is Widget) return s;
+    // Fade the foreground a touch for the subtitle so it reads as
+    // secondary while still passing AA against the tinted surface.
     return Text(
       s! as String,
       style: theme.textTheme.bodyMedium?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
+        color: fg.withValues(alpha: 0.78),
       ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,

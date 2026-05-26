@@ -32,7 +32,8 @@ class EmptyState extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 72,
+                // 64dp matches ErrorState — was 72 (accidental drift).
+                size: 64,
                 color: theme.colorScheme.primary.withValues(alpha: 0.7),
               ),
               const SizedBox(height: 20),

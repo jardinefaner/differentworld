@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +40,23 @@ class VehicleDetailScreen extends ConsumerWidget {
     return EdgeScaffold(
       backFallbackRoute: '/settings/vehicles',
       actions: [
+        // Primary verb (check out / check in) lives in the top-right
+        // pill alongside the other action chrome. The prior
+        // FloatingActionButton.extended overlapped the floating
+        // omnibox bar on phone + stranded itself in the bottom-right
+        // void on desktop. Wave 94 pulls it back into the chrome
+        // row so the action vocabulary is uniform with every other
+        // screen.
+        if (vehicleAsync.value != null && canDrive)
+          PrimaryActionButton(
+            tooltip: isOut ? 'Check in' : 'Check out',
+            icon: isOut
+                ? Icons.assignment_turned_in_outlined
+                : Icons.key_outlined,
+            onPressed: () => context.push(
+              '/settings/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
+            ),
+          ),
         if (canEdit && vehicleAsync.value != null)
           SecondaryActionButton(
             tooltip: 'Print check-out QR',
@@ -56,17 +74,6 @@ class VehicleDetailScreen extends ConsumerWidget {
           ),
         const SyncStatusIndicator(),
       ],
-      floatingActionButton: vehicleAsync.value == null || !canDrive
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => context.push(
-                '/settings/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
-              ),
-              icon: Icon(
-                isOut ? Icons.assignment_turned_in_outlined : Icons.key_outlined,
-              ),
-              label: Text(isOut ? 'Check in' : 'Check out'),
-            ),
       body: vehicleAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => const ErrorState(title: 'Could not load vehicle'),

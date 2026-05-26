@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
@@ -16,8 +14,8 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -46,7 +44,19 @@ class ObservationsScreen extends ConsumerWidget {
 
     final group = groupAsync.value;
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        // Primary verb in chrome instead of a FAB.extended (which
+        // overlapped the omnibox bar on phone + stranded itself on
+        // desktop). Wave 94.
+        if (viewer.canObserve)
+          PrimaryActionButton(
+            tooltip: 'New observation',
+            icon: Icons.add,
+            onPressed: () =>
+                context.push('/observations/new?groupId=$groupId'),
+          ),
+        const SyncStatusIndicator(),
+      ],
       body: entriesAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
@@ -97,18 +107,6 @@ class ObservationsScreen extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: viewer.canObserve
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                unawaited(HapticFeedback.mediumImpact());
-                unawaited(
-                  context.push('/observations/new?groupId=$groupId'),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Observation'),
-            )
-          : null,
     );
   }
 }
