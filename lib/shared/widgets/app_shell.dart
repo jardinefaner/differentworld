@@ -628,9 +628,26 @@ class _AppShellState extends ConsumerState<AppShell> {
               // sheet expectations). Row taps inside the search
               // screen still win because child gestures beat parent
               // in Flutter's gesture arena.
+              //
+              // Wave 119: horizontal-drag also closes the overlay.
+              // Swipe-back (either direction — left-to-right matches
+              // iOS gesture, right-to-left matches Android Material)
+              // is a faster dismiss than reaching for the back pill
+              // or the Esc key. Velocity threshold keeps small
+              // accidental drags from triggering. The list rows
+              // themselves don't drag horizontally — child gestures
+              // win in Flutter's arena, so this only fires when the
+              // user actually swipes empty space or background.
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _closeSearchOverlay,
+                onHorizontalDragEnd: (details) {
+                  // Velocity is logical px/s. ~300 px/s is a casual
+                  // swipe; below that is probably a slow scroll
+                  // adjustment that should NOT pop the overlay.
+                  final v = details.primaryVelocity ?? 0;
+                  if (v.abs() > 300) _closeSearchOverlay();
+                },
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: OmniboxSearchScreen(
