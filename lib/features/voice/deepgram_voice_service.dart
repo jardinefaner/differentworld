@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show WebSocket;
 
-import 'package:differentworld/core/env/env.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -64,8 +64,15 @@ final Provider<DeepgramVoiceController> deepgramVoiceProvider =
 /// previous session is live silently no-ops (the UI's mic affordance
 /// should already be in "stop" state).
 ///
-/// Config: requires `DEEPGRAM_API_KEY` in env. Without it `start()`
-/// immediately emits an error update and stays in idle.
+/// Config: requires the `voice-token` Supabase Edge Function deployed
+/// + its `DEEPGRAM_API_KEY` secret set. The master key NEVER ships in
+/// the app — the controller calls the broker, receives a 30-second
+/// token, and uses that to open the streaming WebSocket. See
+/// `docs/SECRETS.md` and `supabase/functions/voice-token/`.
+///
+/// Auth: the broker call uses the user's Supabase session JWT. An
+/// unauthenticated caller receives "Voice dictation requires
+/// sign-in." and stays in idle.
 class DeepgramVoiceController {
   DeepgramVoiceController({AudioRecorder? recorder})
       : _recorder = recorder ?? AudioRecorder();
@@ -94,14 +101,6 @@ class DeepgramVoiceController {
     _finalTranscript = '';
     _interimTranscript = '';
 
-    if (!Env.hasDeepgram) {
-      _emitError(
-        'Voice dictation is not configured. '
-        'Set DEEPGRAM_API_KEY in your env to enable it.',
-      );
-      return;
-    }
-
     if (kIsWeb) {
       // `dart:io` compiles on web but `WebSocket.connect()` throws
       // `UnsupportedError` at runtime — caught by the try/catch
@@ -121,6 +120,19 @@ class DeepgramVoiceController {
     }
 
     _setState(VoiceState.starting);
+
+    // Ask our Edge Function for a short-lived Deepgram token. The
+    // master key lives on the function (Supabase secret); the client
+    // only ever sees a ≤30-second token scoped to a single
+    // connection. Leak surface is bounded to that 30s window.
+    final String tempToken;
+    try {
+      tempToken = await _fetchShortLivedToken();
+    } on _VoiceTokenException catch (e) {
+      _emitError(e.message);
+      return;
+    }
+
     try {
       // Open the Deepgram live-transcription WebSocket. The URL
       // params tell Deepgram what audio format we're sending and
@@ -138,7 +150,7 @@ class DeepgramVoiceController {
         '&smart_format=true'
         '&endpointing=600',
       );
-      // Pass the API key via Authorization header rather than the
+      // Pass the token via Authorization header rather than the
       // WebSocket subprotocol. Subprotocols ride the WS upgrade in
       // `Sec-WebSocket-Protocol`, which is plaintext in network
       // proxies / OS diagnostic logs — credential-exposure risk.
@@ -148,7 +160,7 @@ class DeepgramVoiceController {
       final socket = await WebSocket.connect(
         uri.toString(),
         headers: <String, dynamic>{
-          'Authorization': 'Token ${Env.deepgramApiKey}',
+          'Authorization': 'Token $tempToken',
         },
       );
       // If `cancel()` (or another `stop()`) fired while the connect
@@ -338,4 +350,66 @@ class DeepgramVoiceController {
       await _recorder.stop();
     }
   }
+
+  /// Round-trip to our Supabase Edge Function `/voice-token` to mint
+  /// a short-lived Deepgram token. The master key lives on the
+  /// function (Supabase secret); the client never sees it.
+  ///
+  /// Throws [_VoiceTokenException] with a user-friendly message when
+  /// the user isn't signed in, the function isn't deployed, or
+  /// Deepgram rejects the grant. The caller surfaces the message via
+  /// `_emitError` so the omnibox shows a snackbar.
+  Future<String> _fetchShortLivedToken() async {
+    final supabase = Supabase.instance.client;
+    final session = supabase.auth.currentSession;
+    if (session == null) {
+      throw const _VoiceTokenException(
+        'Voice dictation requires sign-in.',
+      );
+    }
+
+    final FunctionResponse response;
+    try {
+      response = await supabase.functions.invoke(
+        'voice-token',
+        body: <String, dynamic>{},
+      );
+    } on FunctionException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[deepgram] broker error: ${e.status} ${e.details}');
+      }
+      throw _VoiceTokenException(
+        e.status == 401
+            ? 'Voice dictation requires sign-in.'
+            : 'Voice dictation is temporarily unavailable.',
+      );
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[deepgram] broker network error: $e\n$st');
+      }
+      throw const _VoiceTokenException(
+        'Could not reach voice service. Check your connection.',
+      );
+    }
+
+    final data = response.data;
+    final token = data is Map<String, dynamic>
+        ? data['access_token'] as String? ?? ''
+        : '';
+    if (token.isEmpty) {
+      throw const _VoiceTokenException(
+        'Voice dictation is temporarily unavailable.',
+      );
+    }
+    return token;
+  }
+}
+
+/// Internal exception type — carries a user-facing message that the
+/// controller forwards verbatim to `_emitError`. Not exported because
+/// callers don't need to distinguish broker failures from other
+/// voice errors; they all surface the same way.
+class _VoiceTokenException implements Exception {
+  const _VoiceTokenException(this.message);
+  final String message;
 }

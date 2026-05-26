@@ -57,12 +57,11 @@ jobs:
       # startup; without it the app boots into the "missing env"
       # error screen.
       #
-      # SECURITY: DEEPGRAM_API_KEY ships in the web bundle, where any
-      # visitor can extract it. Personal-dev acceptable risk per
-      # CLAUDE.md; the Deepgram dashboard has per-key spending caps
-      # set as the real boundary. If/when the app goes external,
-      # move voice dictation behind a Supabase Edge Function broker
-      # (see docs/SECRETS.md) and remove this secret.
+      # Only public-by-design config goes here. Vendor keys
+      # (Deepgram, OpenAI) are deliberately NOT in the web bundle —
+      # they go through Supabase Edge Function brokers
+      # (`voice-token`, future `ai-chat`) so the master keys never
+      # touch a device. See docs/SECRETS.md.
       - name: Write .env
         run: |
           cat > .env <<EOF
@@ -70,8 +69,6 @@ jobs:
           SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           POWERSYNC_URL=${{ secrets.POWERSYNC_URL }}
           SENTRY_DSN=
-          DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}
-          OPENAI_API_KEY=
           EOF
 
       # Project-page hosting is at /differentworld/, not the root, so
