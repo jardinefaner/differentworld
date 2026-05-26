@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// The screen's primary verb — what used to be a FAB. Renders inside
 /// the `actions:` row of an EdgeScaffold (top-right pill) with filled
@@ -35,7 +38,15 @@ class PrimaryActionButton extends StatelessWidget {
         shape: const StadiumBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onPressed,
+          // Light haptic on every tap — the primary verb deserves the
+          // tactile confirmation. Wired into the primitive so every
+          // top-right pill across the app inherits it.
+          onTap: onPressed == null
+              ? null
+              : () {
+                  unawaited(HapticFeedback.selectionClick());
+                  onPressed!();
+                },
           child: Padding(
             // 12dp all sides + 24dp icon = 48dp footprint, matching
             // IconButton default (which the chrome pills use).

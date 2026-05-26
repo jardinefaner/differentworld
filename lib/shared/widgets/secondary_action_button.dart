@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Companion to `PrimaryActionButton` for secondary verbs in the
 /// chrome pill row — same height + padding + icon size as the
@@ -50,7 +53,14 @@ class SecondaryActionButton extends StatelessWidget {
         shape: const StadiumBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onPressed,
+          // Light haptic on every tap — consistent with
+          // PrimaryActionButton + FeatureCard.
+          onTap: onPressed == null
+              ? null
+              : () {
+                  unawaited(HapticFeedback.selectionClick());
+                  onPressed!();
+                },
           child: Padding(
             // Match PrimaryActionButton exactly so heights line up
             // in the GlassPill row — AND match the IconButton-based

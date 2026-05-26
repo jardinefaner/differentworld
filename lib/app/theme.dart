@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 
-const _seed = Color(0xFF1F6FEB);
+// Warm teal — picked over the prior developer-blue (`0xFF1F6FEB`) so
+// every container / pill / status tint resolved by `ColorScheme.fromSeed`
+// reads as "afterschool program for children" rather than "GitHub /
+// Linear / Jira." One-line swap; everything else in the app derives
+// from this single value so the whole product shifts in lock-step:
+// glass pills, primaryContainer tints, FeatureCard / SectionCard
+// .featured / .selected tones, PersonAvatar initials palette,
+// FloatingHamburger / FloatingBack pill chrome, login wordmark
+// gradient.
+const _seed = Color(0xFF2A9D8F);
 
 /// Cupertino-style slide on every platform. M3's default Android
 /// transitions (zoom / fade-through) feel sluggish on a 60 Hz panel;

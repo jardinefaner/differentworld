@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Visual tone for a [FeatureCard]. Drives the surface color so the
 /// at-a-glance reading of a list of rows scans correctly even before
@@ -157,8 +160,25 @@ class FeatureCard extends StatelessWidget {
           ? body
           : InkWell(
               borderRadius: radius,
-              onTap: onTap,
-              onLongPress: onLongPress,
+              // Light haptic on every tap. FeatureCard is the canonical
+              // tap surface used in 11+ sites + every list row that
+              // migrates onto it (drawer rows, vehicle list, team list,
+              // captures, …). Per CLAUDE.md "every primary tap should
+              // fire HapticFeedback" — wiring it into the primitive
+              // means new screens inherit the convention without
+              // having to remember to call it.
+              onTap: onTap == null
+                  ? null
+                  : () {
+                      unawaited(HapticFeedback.selectionClick());
+                      onTap!();
+                    },
+              onLongPress: onLongPress == null
+                  ? null
+                  : () {
+                      unawaited(HapticFeedback.mediumImpact());
+                      onLongPress!();
+                    },
               child: body,
             ),
     );
