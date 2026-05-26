@@ -137,12 +137,35 @@ class SurveyTtsService {
   /// Play the audio for the given resolved file path. Stops any
   /// in-progress playback first; resolves when playback ends or
   /// the player is stopped.
+  ///
+  /// Wave 128: just_audio's `setFilePath` races with itself — if a
+  /// previous load is still in flight when a new one starts, the
+  /// previous one's Future completes with "Loading interrupted."
+  /// That's expected when the kid taps multiple voice tiles quickly
+  /// or auto-advances through questions. We track the latest play
+  /// request with a token; if a newer request started while we were
+  /// loading, swallow the interruption silently (the newer play is
+  /// the one the user wants). Only real failures bubble to the log.
+  int _playToken = 0;
   Future<void> play(String filePath) async {
+    final myToken = ++_playToken;
     try {
+      // Stop any in-progress playback BEFORE setFilePath so just_audio
+      // doesn't queue up an interrupt internally.
       await _player.stop();
+      if (myToken != _playToken) return; // superseded mid-stop
       await _player.setFilePath(filePath);
+      if (myToken != _playToken) return; // superseded mid-load
       await _player.play();
+    } on PlayerInterruptedException catch (_) {
+      // Expected: a newer play() call superseded this one. Silent.
     } on Object catch (e, st) {
+      // Some real failures surface as a plain Exception with the
+      // message "Loading interrupted." (Older just_audio versions
+      // don't always throw PlayerInterruptedException.) Treat the
+      // string-match as benign too.
+      final msg = e.toString();
+      if (msg.contains('interrupted') || myToken != _playToken) return;
       if (kDebugMode) {
         debugPrint('[survey-tts] play failed: $e\n$st');
       }

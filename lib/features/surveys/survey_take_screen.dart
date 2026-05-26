@@ -577,7 +577,13 @@ class _VoicePickerOverlayState extends State<_VoicePickerOverlay> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
+    // Wave 128: SafeArea wraps the picker so the title doesn't bump
+    // into the system status bar on Pixel / iPhone notch / Android
+    // gesture inset. Kid-mode strips the omnibox bar but the system
+    // status bar still draws on top of the body — without SafeArea,
+    // "Pick a reader" overlapped clock + battery + wifi icons.
+    return SafeArea(
+      child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         children: [
@@ -634,16 +640,27 @@ class _VoicePickerOverlayState extends State<_VoicePickerOverlay> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
+                                // Wave 128: cap to one line each so
+                                // "Andromeda" / "warm and reassuring"
+                                // don't split into two lines on narrow
+                                // phones (where they read as a fragmented
+                                // mess). The Expanded above gives them
+                                // the column width they need.
                                 Text(
                                   v.displayName,
                                   style: theme.textTheme.titleLarge,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   v.personality,
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
@@ -686,6 +703,7 @@ class _VoicePickerOverlayState extends State<_VoicePickerOverlay> {
           ),
         ],
       ),
+    ),
     );
   }
 }
