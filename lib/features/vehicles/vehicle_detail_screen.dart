@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,8 +37,15 @@ class VehicleDetailScreen extends ConsumerWidget {
     final logsAsync = ref.watch(vehicleLogsProvider(vehicleId));
 
     final isOut = latestAsync.value?.isCheckout ?? false;
+    // Wave 113: dynamic tab title — the vehicle's name (e.g. "Big
+    // White Van"). Falls back to "Vehicle" for an unknown id.
+    final vehicleName = vehicleAsync.value?.name.trim().isNotEmpty == true
+        ? vehicleAsync.value!.name
+        : 'Vehicle';
 
-    return EdgeScaffold(
+    return RouteTitle(
+      title: vehicleName,
+      child: EdgeScaffold(
       backFallbackRoute: '/vehicles',
       actions: [
         // Primary verb (check out / check in) lives in the top-right
@@ -161,6 +169,7 @@ class VehicleDetailScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 

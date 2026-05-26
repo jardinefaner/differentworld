@@ -16,6 +16,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,8 +37,16 @@ class FamilySubjectDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
     final subjectAsync = ref.watch(familySubjectByIdProvider(subjectId));
+    // Wave 113: dynamic tab title — the child's name. Falls back
+    // to "Child" while loading.
+    final childName = subjectAsync.value == null
+        ? 'Child'
+        : '${subjectAsync.value!.firstName} ${subjectAsync.value!.lastName}'
+            .trim();
 
-    return EdgeScaffold(
+    return RouteTitle(
+      title: childName.isEmpty ? 'Child' : childName,
+      child: EdgeScaffold(
       actions: const [SyncStatusIndicator()],
       body: subjectAsync.when(
         loading: () => const LoadingSlot(),
@@ -67,6 +76,7 @@ class FamilySubjectDetailScreen extends ConsumerWidget {
           return _FamilyDetailBody(subject: subject);
         },
       ),
+    ),
     );
   }
 }

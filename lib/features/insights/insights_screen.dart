@@ -64,25 +64,72 @@ class InsightsScreen extends ConsumerWidget {
           final info = insights
               .where((i) => i.severity == InsightSeverity.info)
               .toList();
-          return ResponsivePage(
-            bottomPadding: 32,
-            children: [
-              const Padding(
+          // Wave 114: at desktop widths the three severity buckets
+          // sit side-by-side as a 3-column dashboard (Urgent left,
+          // FYI right). On phone they stack vertically as before.
+          return LayoutBuilder(
+            builder: (ctx, c) {
+              final isWide = c.maxWidth >= 1100;
+              const header = Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(
                   title: 'Insights',
-                  subtitle: 'Questions the system is surfacing from your data',
+                  subtitle:
+                      'Questions the system is surfacing from your data',
                 ),
-              ),
-              if (urgent.isNotEmpty)
-                _SeverityGroup(label: 'URGENT', insights: urgent),
-              if (suggestion.isNotEmpty)
-                _SeverityGroup(
-                  label: 'SUGGESTIONS',
-                  insights: suggestion,
-                ),
-              if (info.isNotEmpty) _SeverityGroup(label: 'FYI', insights: info),
-            ],
+              );
+              if (!isWide) {
+                return ResponsivePage(
+                  bottomPadding: 32,
+                  children: [
+                    header,
+                    if (urgent.isNotEmpty)
+                      _SeverityGroup(label: 'URGENT', insights: urgent),
+                    if (suggestion.isNotEmpty)
+                      _SeverityGroup(
+                        label: 'SUGGESTIONS',
+                        insights: suggestion,
+                      ),
+                    if (info.isNotEmpty)
+                      _SeverityGroup(label: 'FYI', insights: info),
+                  ],
+                );
+              }
+              return ResponsivePage(
+                bottomPadding: 32,
+                children: [
+                  header,
+                  const SizedBox(height: 12),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _SeverityGroup(
+                            label: 'URGENT',
+                            insights: urgent,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _SeverityGroup(
+                            label: 'SUGGESTIONS',
+                            insights: suggestion,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _SeverityGroup(
+                            label: 'FYI',
+                            insights: info,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -113,11 +160,28 @@ class _SeverityGroup extends StatelessWidget {
             ),
           ),
         ),
-        for (final i in insights)
+        // Wave 114: on the 3-column desktop dashboard, empty buckets
+        // render "All clear" so the column doesn't read as broken.
+        // On phone (single-column), the bucket header is hidden
+        // upstream when empty, so this branch only fires at desktop.
+        if (insights.isEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-            child: InsightCard(insight: i),
-          ),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(
+              'All clear.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant
+                    .withValues(alpha: 0.7),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          )
+        else
+          for (final i in insights)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+              child: InsightCard(insight: i),
+            ),
       ],
     );
   }

@@ -11,6 +11,7 @@ import 'package:differentworld/features/surveys/widgets/survey_chrome.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -274,7 +275,15 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // goes through normally.
     final inKidMode = ref.watch(kidModeProvider);
     final blockPop = inKidMode && !_staffUnlocked;
-    return PopScope(
+    // Wave 113: dynamic tab title — "{Template} · {Kid}". When the
+    // tab actually says what the kid is filling out, a director
+    // QA'ing in multiple tabs can tell them apart.
+    final routeTitle = subject == null
+        ? t.title
+        : '${t.title} · ${subject.firstName}';
+    return RouteTitle(
+      title: routeTitle,
+      child: PopScope(
       canPop: !blockPop,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
@@ -418,6 +427,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         ),
       ),
     ),
+  ),
   );
   }
 }

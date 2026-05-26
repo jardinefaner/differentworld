@@ -179,14 +179,45 @@ class TodayBody extends ConsumerWidget {
             // viewer has nothing to launch.
             const QuickActions(),
             const SizedBox(height: 24),
-            ...groups.map(
-              (g) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                // RepaintBoundary so an InkWell ripple / re-watch
-                // on one card doesn't repaint its siblings — each
-                // card watches its own per-group state.
-                child: RepaintBoundary(child: _GroupTodayCard(group: g)),
-              ),
+            // Wave 114: at desktop widths the group cards flow as a
+            // 2-column wrap. At phone / tablet they stack vertically
+            // (the natural shape for a scroll-with-omnibox layout).
+            // LayoutBuilder reads the current viewport once; cards
+            // self-size in their columns.
+            LayoutBuilder(
+              builder: (ctx, c) {
+                final isWide = c.maxWidth >= 1100;
+                if (!isWide) {
+                  return Column(
+                    children: [
+                      for (final g in groups)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: RepaintBoundary(
+                            child: _GroupTodayCard(group: g),
+                          ),
+                        ),
+                    ],
+                  );
+                }
+                // Desktop: 2-column wrap. Each card claims ~half the
+                // available width minus the column gap.
+                const gap = 12.0;
+                final cardWidth = (c.maxWidth - gap) / 2;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final g in groups)
+                      SizedBox(
+                        width: cardWidth,
+                        child: RepaintBoundary(
+                          child: _GroupTodayCard(group: g),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
       ],
     );

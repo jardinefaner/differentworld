@@ -20,6 +20,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -128,8 +129,16 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final labels = ref.watch(verticalLabelsProvider);
     final vertical = labels.vertical;
 
+    // Wave 113: dynamic tab title — the teammate's name. Falls
+    // back to "Team member" while loading or for an unknown id.
+    final memberName = memberAsync.value?.displayName.trim().isNotEmpty == true
+        ? memberAsync.value!.displayName
+        : 'Team member';
+
     // No save action — toggles auto-save (UX_DECISIONS §1).
-    return EdgeScaffold(
+    return RouteTitle(
+      title: memberName,
+      child: EdgeScaffold(
       backFallbackRoute: '/settings/team',
       body: memberAsync.when(
         loading: () => const LoadingSlot(),
@@ -552,6 +561,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           );
         },
       ),
+    ),
     );
   }
 

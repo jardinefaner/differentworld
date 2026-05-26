@@ -6,11 +6,13 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -121,8 +123,17 @@ class _MessageThreadScreenState
       guardianId: widget.guardianId,
     );
     final messagesAsync = ref.watch(messageThreadProvider(threadKey));
+    // Wave 113: dynamic tab title — the child's first name in the
+    // active thread. "Messages · Emma" on the family side reads as
+    // a real chat-app title.
+    final subject = ref.watch(subjectByIdProvider(widget.subjectId)).value;
+    final threadTitle = subject == null
+        ? 'Messages'
+        : 'Messages · ${subject.firstName}';
 
-    return EdgeScaffold(
+    return RouteTitle(
+      title: threadTitle,
+      child: EdgeScaffold(
       body: Column(
         children: [
           // Shell now reserves the top chrome height; no per-screen
@@ -231,6 +242,7 @@ class _MessageThreadScreenState
           ),
         ],
       ),
+    ),
     );
   }
 }

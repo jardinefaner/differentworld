@@ -13,6 +13,7 @@ import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -184,7 +185,10 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
     final allDone =
         subjectsList.isNotEmpty && completedIds.length >= subjectsList.length;
 
-    return EdgeScaffold(
+    // Wave 113: dynamic tab title — the survey template's name.
+    return RouteTitle(
+      title: template.title,
+      child: EdgeScaffold(
       backFallbackRoute: '/surveys',
       actions: [
         if (nextSubject != null)
@@ -251,6 +255,7 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
           );
         },
       ),
+    ),
     );
   }
 }
