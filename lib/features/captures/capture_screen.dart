@@ -4,6 +4,7 @@ import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -179,7 +180,7 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     final theme = Theme.of(context);
     return EdgeScaffold(
       backFallbackRoute: '/captures',
-      body: ListView(
+      body: FormBody(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           Row(

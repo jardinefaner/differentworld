@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -214,9 +215,7 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
               );
             }
             final groupLower = labels.group.toLowerCase();
-            return ListView(
-              // Shell reserves top + bottom chrome; this padding is
-              // lateral + breathing room.
+            return FormBody(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
                 ContentHeader(

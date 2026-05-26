@@ -25,6 +25,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -131,41 +132,34 @@ class _FamilyTodayList extends ConsumerWidget {
       }
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final horiz = constraints.maxWidth > 840 ? 48.0 : 16.0;
-        return ListView(
-          padding: EdgeInsets.fromLTRB(horiz, 0, horiz, 96),
-          children: [
-            ContentHeader(
-              title: space?.name ?? 'Today',
-              subtitle: _subtitle(guardianName: guardianName, flagged: flagged),
-              subtitleColor: flagged.isEmpty
-                  ? null
-                  : Theme.of(context).colorScheme.error,
-            ),
-            // Marcus-persona "30-second check" summary — one sentence
-            // that closes the loop without parsing each card. Reads
-            // either "All accounted for · Pickup in 3h" (calm) or
-            // "{kid} needs your attention" (action-mode).
-            _SummarySentence(children: children, flagged: flagged),
-            const SizedBox(height: 12),
-            // Recent progress reports the staff have sent the guardian.
-            // Renders nothing when the inbox is empty so it never adds
-            // chrome on a quiet day. Closes the last Tier-B item from
-            // the 2026-05-23 persona-audit (Lauren / Devon / Helen /
-            // Marcus). Subjects-by-id is computed here once so the
-            // card can label each report with the kid's first name.
-            _ReceivedReportsCard(
-              subjectsById: {for (final c in children) c.id: c},
-            ),
-            for (final child in children) ...[
-              _ChildCard(child: child),
-              const SizedBox(height: 12),
-            ],
-          ],
-        );
-      },
+    return ResponsivePage(
+      children: [
+        ContentHeader(
+          title: space?.name ?? 'Today',
+          subtitle: _subtitle(guardianName: guardianName, flagged: flagged),
+          subtitleColor:
+              flagged.isEmpty ? null : Theme.of(context).colorScheme.error,
+        ),
+        // Marcus-persona "30-second check" summary — one sentence
+        // that closes the loop without parsing each card. Reads
+        // either "All accounted for · Pickup in 3h" (calm) or
+        // "{kid} needs your attention" (action-mode).
+        _SummarySentence(children: children, flagged: flagged),
+        const SizedBox(height: 12),
+        // Recent progress reports the staff have sent the guardian.
+        // Renders nothing when the inbox is empty so it never adds
+        // chrome on a quiet day. Closes the last Tier-B item from
+        // the 2026-05-23 persona-audit (Lauren / Devon / Helen /
+        // Marcus). Subjects-by-id is computed here once so the
+        // card can label each report with the kid's first name.
+        _ReceivedReportsCard(
+          subjectsById: {for (final c in children) c.id: c},
+        ),
+        for (final child in children) ...[
+          _ChildCard(child: child),
+          const SizedBox(height: 12),
+        ],
+      ],
     );
   }
 

@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -222,8 +223,7 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
               children: [
                 Form(
                   key: _formKey,
-                  child: ListView(
-                    // Shell reserves top + bottom chrome.
+                  child: FormBody(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     children: [
                       ContentHeader(

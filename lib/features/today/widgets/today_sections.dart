@@ -13,8 +13,8 @@ import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
-import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
@@ -124,16 +124,9 @@ class TodayBody extends ConsumerWidget {
       }
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final formFactor = FormFactor.fromWidth(constraints.maxWidth);
-        final horiz = formFactor.isExpanded ? 48.0 : 16.0;
-
-        return ListView(
-          // Horizontal-only padding; shell handles top + bottom chrome
-          // reservation so the list ends above the omnibox naturally.
-          padding: EdgeInsets.fromLTRB(horiz, 0, horiz, 24),
-          children: [
+    return ResponsivePage(
+      bottomPadding: 24,
+      children: [
             ContentHeader(
               title: space?.name ?? 'Today',
               subtitle: _subtitleLine(
@@ -195,9 +188,7 @@ class TodayBody extends ConsumerWidget {
                 child: RepaintBoundary(child: _GroupTodayCard(group: g)),
               ),
             ),
-          ],
-        );
-      },
+      ],
     );
   }
 
