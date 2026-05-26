@@ -1,3 +1,4 @@
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:flutter/material.dart';
 
 /// Error variant of `EmptyState` with a built-in retry button.
@@ -35,37 +36,49 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Wave 112: same scale-up treatment as EmptyState — error
+    // states on a 1920px window with a tiny 64dp icon look like
+    // the app crashed, not "this slice couldn't load."
+    final isWide = FormFactor.of(context).isExpanded;
+    final iconSize = isWide ? 96.0 : 64.0;
+    final maxWidth = isWide ? 480.0 : 360.0;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
+          constraints: BoxConstraints(maxWidth: maxWidth),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                size: 64,
+                size: iconSize,
                 color: theme.colorScheme.error.withValues(alpha: 0.85),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: isWide ? 24 : 20),
               Text(
                 title,
-                style: theme.textTheme.titleMedium,
+                style: isWide
+                    ? theme.textTheme.headlineSmall
+                    : theme.textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: isWide ? 10 : 6),
               Text(
                 detail ??
                     "We couldn't reach the server. Your local data is "
                         'safe — try again in a moment.',
-                style: theme.textTheme.bodySmall?.copyWith(
+                style: (isWide
+                        ? theme.textTheme.bodyMedium
+                        : theme.textTheme.bodySmall)
+                    ?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
               if (onRetry != null) ...[
-                const SizedBox(height: 20),
+                SizedBox(height: isWide ? 28 : 20),
                 FilledButton.tonalIcon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh, size: 18),

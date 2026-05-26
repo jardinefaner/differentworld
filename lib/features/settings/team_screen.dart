@@ -253,6 +253,12 @@ class _InviteTile extends ConsumerWidget {
     final vertical = ref.watch(verticalLabelsProvider).vertical;
     final subtitle = _subtitleFor(invite, vertical: vertical);
 
+    // Wave 112: trailing PopupMenuButton (icon: more_vert) so a
+    // director on desktop has a visible mouse path to Revoke. The
+    // swipe gesture below is still the mobile accelerator, but
+    // shipping destructive-action-via-swipe-only meant a desktop
+    // user had no path to revoke. Tap the menu → Revoke → same
+    // confirmDestructive + revoke flow the Dismissible uses.
     final tile = ListTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.secondaryContainer,
@@ -262,7 +268,52 @@ class _InviteTile extends ConsumerWidget {
       title: Text(primary),
       subtitle: Text(subtitle),
       trailing: viewerCanInvite
-          ? const Icon(Icons.chevron_right)
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PopupMenuButton<String>(
+                  tooltip: 'More',
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (v) async {
+                    if (v != 'revoke') return;
+                    final messenger = ScaffoldMessenger.of(context);
+                    final confirmed = await confirmDestructive(
+                      context,
+                      title: 'Revoke this invite?',
+                      message: email == null
+                          ? 'Code ${_formatCode(code ?? '')} will stop '
+                              'working immediately.'
+                          : '$email will no longer be able to join with '
+                              'this invite.',
+                      confirmLabel: 'Revoke',
+                    );
+                    if (!confirmed) return;
+                    await ref
+                        .read(inviteActionsProvider)
+                        .revoke(invite.id);
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Invite revoked'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'revoke',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline, size: 18),
+                          SizedBox(width: 12),
+                          Text('Revoke'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            )
           : null,
       onTap: viewerCanInvite
           ? () => context.push(
