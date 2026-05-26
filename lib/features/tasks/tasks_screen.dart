@@ -24,18 +24,41 @@ import 'package:go_router/go_router.dart';
 /// Tap a row to mark it done; swipe a row to dismiss.
 enum _TaskFilter { today, week, overdue, all }
 
-class TasksScreen extends ConsumerStatefulWidget {
+class TasksScreen extends ConsumerWidget {
   const TasksScreen({super.key});
 
-  @override
-  ConsumerState<TasksScreen> createState() => _TasksScreenState();
-}
+  // URL-state: the filter chip lives in the query string so a refresh /
+  // bookmark / share keeps the user on the same horizon.
+  // `/tasks?filter=overdue` etc.
+  static const _filterParam = 'filter';
 
-class _TasksScreenState extends ConsumerState<TasksScreen> {
-  _TaskFilter _filter = _TaskFilter.today;
+  _TaskFilter _filterFromUri(Uri uri) {
+    final raw = uri.queryParameters[_filterParam];
+    return switch (raw) {
+      'week' => _TaskFilter.week,
+      'overdue' => _TaskFilter.overdue,
+      'all' => _TaskFilter.all,
+      _ => _TaskFilter.today,
+    };
+  }
+
+  String _filterName(_TaskFilter f) => switch (f) {
+        _TaskFilter.today => 'today',
+        _TaskFilter.week => 'week',
+        _TaskFilter.overdue => 'overdue',
+        _TaskFilter.all => 'all',
+      };
+
+  void _setFilter(BuildContext context, _TaskFilter next) {
+    // Use `replace` (not `go`) so the back button doesn't accumulate
+    // a history entry per filter tap — the user's expectation is that
+    // back exits the screen, not "back through filters."
+    context.replace('/tasks?$_filterParam=${_filterName(next)}');
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = _filterFromUri(GoRouterState.of(context).uri);
     final tasksAsync = ref.watch(openTasksProvider);
     return EdgeScaffold(
       actions: [
@@ -69,7 +92,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             );
           }
           final buckets = _bucketize(tasks);
-          final scoped = _scopeToFilter(buckets, _filter);
+          final scoped = _scopeToFilter(buckets, filter);
           final scopedCount = scoped.values.fold<int>(
             0,
             (a, b) => a + b.length,
@@ -97,30 +120,29 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     _FilterChip(
                       label: 'Today',
                       count: buckets[_Bucket.today]?.length ?? 0,
-                      selected: _filter == _TaskFilter.today,
-                      onTap: () => setState(() => _filter = _TaskFilter.today),
+                      selected: filter == _TaskFilter.today,
+                      onTap: () => _setFilter(context, _TaskFilter.today),
                     ),
                     _FilterChip(
                       label: 'This week',
                       count:
                           (buckets[_Bucket.today]?.length ?? 0) +
                           (buckets[_Bucket.thisWeek]?.length ?? 0),
-                      selected: _filter == _TaskFilter.week,
-                      onTap: () => setState(() => _filter = _TaskFilter.week),
+                      selected: filter == _TaskFilter.week,
+                      onTap: () => _setFilter(context, _TaskFilter.week),
                     ),
                     _FilterChip(
                       label: 'Overdue',
                       count: buckets[_Bucket.overdue]?.length ?? 0,
-                      selected: _filter == _TaskFilter.overdue,
+                      selected: filter == _TaskFilter.overdue,
                       emphasize: true,
-                      onTap: () =>
-                          setState(() => _filter = _TaskFilter.overdue),
+                      onTap: () => _setFilter(context, _TaskFilter.overdue),
                     ),
                     _FilterChip(
                       label: 'All',
                       count: tasks.length,
-                      selected: _filter == _TaskFilter.all,
-                      onTap: () => setState(() => _filter = _TaskFilter.all),
+                      selected: filter == _TaskFilter.all,
+                      onTap: () => _setFilter(context, _TaskFilter.all),
                     ),
                   ],
                 ),
@@ -131,7 +153,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   padding: const EdgeInsets.all(32),
                   child: Center(
                     child: Text(
-                      _filter == _TaskFilter.overdue
+                      filter == _TaskFilter.overdue
                           ? 'Nothing overdue. Nice.'
                           : 'Nothing in this horizon — try a wider one.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(

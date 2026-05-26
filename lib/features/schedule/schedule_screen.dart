@@ -30,7 +30,15 @@ import 'package:intl/intl.dart';
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key, this.initialDate});
 
+  /// Optional fallback used only when the URL has no `?date=` param
+  /// (e.g. deep-linking from a notification). The URL is the
+  /// canonical source.
   final DateTime? initialDate;
+
+  /// Query-string parameter for the active day. Stored as `YYYY-MM-DD`
+  /// so a bookmark / refresh / share keeps the schedule pinned to the
+  /// same day. Defaults to today when missing or unparseable.
+  static const _dateParam = 'date';
 
   @override
   ConsumerState<ScheduleScreen> createState() => _ScheduleScreenState();
@@ -38,15 +46,43 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     with TickerProviderStateMixin {
-  late DateTime _date;
   TabController? _tabs;
   int _activeTabIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    final n = widget.initialDate ?? DateTime.now();
-    _date = DateTime(n.year, n.month, n.day);
+  /// Today's date — used as the fallback when the URL has nothing.
+  DateTime get _today {
+    final n = DateTime.now();
+    return DateTime(n.year, n.month, n.day);
+  }
+
+  /// Reads the active day out of the URL (`?date=YYYY-MM-DD`). Falls
+  /// back to the widget's initialDate, then to today. Called from
+  /// `build` — the URL is the source of truth, no `setState` needed
+  /// when the user picks a different day.
+  DateTime _dateFromUri(BuildContext context) {
+    final raw = GoRouterState.of(context).uri.queryParameters[
+        ScheduleScreen._dateParam];
+    if (raw != null && raw.isNotEmpty) {
+      final parsed = DateTime.tryParse(raw);
+      if (parsed != null) {
+        return DateTime(parsed.year, parsed.month, parsed.day);
+      }
+    }
+    return widget.initialDate == null
+        ? _today
+        : DateTime(
+            widget.initialDate!.year,
+            widget.initialDate!.month,
+            widget.initialDate!.day,
+          );
+  }
+
+  void _setDate(BuildContext context, DateTime next) {
+    // `replace` so back doesn't traverse the date picker — the user
+    // expects back to exit the screen.
+    context.replace(
+      '/schedule?${ScheduleScreen._dateParam}=${dateKey(next)}',
+    );
   }
 
   @override
@@ -79,45 +115,39 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     return _tabs!;
   }
 
-  String get _dateIso => isoDateLocal(_date);
-
-  bool get _isToday {
-    final n = DateTime.now();
-    return n.year == _date.year &&
-        n.month == _date.month &&
-        n.day == _date.day;
+  bool _isToday(DateTime date) {
+    final t = _today;
+    return date.year == t.year &&
+        date.month == t.month &&
+        date.day == t.day;
   }
 
-  String _dateLabel() {
-    final n = DateTime.now();
-    final today = DateTime(n.year, n.month, n.day);
-    final delta = _date.difference(today).inDays;
+  String _dateLabel(DateTime date) {
+    final delta = date.difference(_today).inDays;
     if (delta == 0) return 'Today';
     if (delta == 1) return 'Tomorrow';
     if (delta == -1) return 'Yesterday';
-    return DateFormat.yMMMMEEEEd().format(_date);
+    return DateFormat.yMMMMEEEEd().format(date);
   }
 
-  Future<void> _pickDate() async {
+  Future<void> _pickDate(BuildContext context, DateTime date) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _date,
+      initialDate: date,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    if (picked != null && mounted) {
-      setState(() => _date = DateTime(picked.year, picked.month, picked.day));
+    if (picked != null && context.mounted) {
+      _setDate(context, DateTime(picked.year, picked.month, picked.day));
     }
-  }
-
-  void _shiftDay(int days) {
-    setState(() => _date = _date.add(Duration(days: days)));
   }
 
   @override
   Widget build(BuildContext context) {
+    final date = _dateFromUri(context);
+    final dateIso = isoDateLocal(date);
     final groupsAsync = ref.watch(groupsProvider);
-    final blocksAsync = ref.watch(scheduleDayProvider(_dateIso));
+    final blocksAsync = ref.watch(scheduleDayProvider(dateIso));
     final groups = groupsAsync.value ?? const <Group>[];
     final tabs = groups.isEmpty ? null : _ensureTabController(groups.length);
 
@@ -144,8 +174,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                     context,
                     ref,
                     groupId: cohort.id,
-                    date: _date,
-                    defaultStart: _defaultStartTime(),
+                    date: date,
+                    defaultStart: _defaultStartTime(date),
                     existingBlocks:
                         blocksAsync.value ?? const <ScheduleBlock>[],
                   ));
@@ -178,23 +208,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(
                   title: 'Schedule',
-                  subtitle: _dateLabel(),
+                  subtitle: _dateLabel(date),
                   bottomGap: 8,
                 ),
               ),
               _DateScrubber(
-                label: _dateLabel(),
-                isToday: _isToday,
-                onPrev: () => _shiftDay(-1),
-                onNext: () => _shiftDay(1),
-                onPickDate: _pickDate,
-                onJumpToday: () => setState(
-                  () => _date = DateTime(
-                    DateTime.now().year,
-                    DateTime.now().month,
-                    DateTime.now().day,
-                  ),
-                ),
+                label: _dateLabel(date),
+                isToday: _isToday(date),
+                onPrev: () =>
+                    _setDate(context, date.subtract(const Duration(days: 1))),
+                onNext: () =>
+                    _setDate(context, date.add(const Duration(days: 1))),
+                onPickDate: () => _pickDate(context, date),
+                onJumpToday: () => _setDate(context, _today),
               ),
               TabBar(
                 controller: tabs,
@@ -207,7 +233,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                   controller: tabs,
                   children: [
                     for (final g in gs)
-                      _CohortDay(group: g, date: _dateIso),
+                      _CohortDay(group: g, date: dateIso),
                   ],
                 ),
               ),
@@ -221,12 +247,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
   /// Next round half-hour from now (or 9 a.m. on a future date). The
   /// scheduler can override; this just seeds the time picker so the
   /// teacher doesn't start at "12:00 a.m." by default.
-  DateTime _defaultStartTime() {
+  DateTime _defaultStartTime(DateTime date) {
     final now = DateTime.now();
-    if (now.year != _date.year ||
-        now.month != _date.month ||
-        now.day != _date.day) {
-      return DateTime(_date.year, _date.month, _date.day, 9);
+    if (now.year != date.year ||
+        now.month != date.month ||
+        now.day != date.day) {
+      return DateTime(date.year, date.month, date.day, 9);
     }
     final mins = ((now.minute / 30).ceil()) * 30;
     return DateTime(now.year, now.month, now.day, now.hour, mins);
