@@ -161,6 +161,7 @@ class SurveyQuestionPage extends StatelessWidget {
     required this.question,
     required this.answers,
     required this.onAnswered,
+    this.onReplayTts,
     super.key,
   });
 
@@ -169,6 +170,12 @@ class SurveyQuestionPage extends StatelessWidget {
   final SurveyAnswers answers;
   final void Function(SurveyAnswers next, {required bool autoAdvance})
       onAnswered;
+
+  /// Wave 131: tapping the prompt text replays the TTS audio. Wired by
+  /// survey_take_screen to call `_playQuestion(_index)`. Optional —
+  /// when null (older callers / preview contexts), the prompt is a
+  /// plain Text with no tap behavior.
+  final VoidCallback? onReplayTts;
 
   @override
   Widget build(BuildContext context) {
@@ -184,10 +191,43 @@ class SurveyQuestionPage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: _PracticeBadge(theme: theme),
             ),
-          Text(
-            question.prompt,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall,
+          // Wave 131: prompt is tappable for replay. Wrapped in a
+          // Semantics with a hint so screen readers announce the
+          // tap target. Visual hint = subtle volume icon inline
+          // when onReplayTts is wired.
+          Semantics(
+            label: question.prompt,
+            hint: onReplayTts == null
+                ? null
+                : 'Tap to hear it again',
+            button: onReplayTts != null,
+            child: InkWell(
+              onTap: onReplayTts,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        question.prompt,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall,
+                      ),
+                    ),
+                    if (onReplayTts != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.volume_up_outlined,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           switch (question.kind) {

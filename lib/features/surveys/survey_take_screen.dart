@@ -455,6 +455,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                     questionIndex: i,
                     question: q,
                     answers: _answers,
+                    // Wave 131: tap the prompt text to replay the TTS
+                    // audio for this question. Cache hit (after first
+                    // play) makes the replay near-instant.
+                    onReplayTts: _voiceId == null
+                        ? null
+                        : () => unawaited(_playQuestion(i)),
                     onAnswered: (next, {required autoAdvance}) {
                       setState(() => _answers = next);
                       unawaited(_autosave());

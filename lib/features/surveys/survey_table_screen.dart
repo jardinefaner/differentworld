@@ -336,8 +336,13 @@ class _TextCol extends _Col {
 }
 
 List<_Col> _buildColumns(SurveyTemplate t) {
+  // Wave 131: include practice questions in the table too. They're
+  // not "scored" (don't count toward completion) but a director
+  // reviewing the data still wants to see how the warm-up answers
+  // landed — they're useful signal for "did this kid understand the
+  // smileys?" Iteration switched from t.scored → t.questions.
   final out = <_Col>[];
-  for (final q in t.scored) {
+  for (final q in t.questions) {
     switch (q.kind) {
       case SurveyQuestionKind.agree3:
         out.add(_Agree3Col(q));
