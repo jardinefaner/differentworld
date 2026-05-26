@@ -80,6 +80,28 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
 
   SurveyTemplate? get _template => SurveyTemplates.byId(widget.templateId);
 
+  /// Wave 132: each "page" in the PageView is one of these. For
+  /// most question kinds (agree3 / text) there's exactly one page
+  /// per question. For multiselect questions, we EXPLODE each
+  /// option into its own page: the activities list of 7 options
+  /// becomes 7 sub-pages, each a yes/no smiley pair. Same answer
+  /// shape on disk (List&lt;String&gt; of selected option keys).
+  List<_SurveyPage> get _pages {
+    final t = _template;
+    if (t == null) return const [];
+    final out = <_SurveyPage>[];
+    for (final q in t.questions) {
+      if (q.kind == SurveyQuestionKind.multiselect) {
+        for (var i = 0; i < q.options.length; i++) {
+          out.add(_SurveyPage(question: q, optionIndex: i));
+        }
+      } else {
+        out.add(_SurveyPage(question: q));
+      }
+    }
+    return out;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -172,19 +194,32 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     }
   }
 
-  /// Wave 120: kick off TTS for question at `index`. Fire-and-forget
-  /// from the caller's perspective — caching makes most calls a
-  /// near-instant disk read; failures degrade silently (kid still
-  /// sees the text).
+  /// Wave 120 + 132: kick off TTS for page at `index`. The page
+  /// might be a whole question (agree3 / text) or an exploded
+  /// multiselect option — in the latter case, play the option
+  /// label instead of the question prompt so the kid hears the
+  /// specific yes/no being asked.
   Future<void> _playQuestion(int index) async {
     final t = _template;
     final voice = _voiceId;
     if (t == null || voice == null) return;
-    if (index < 0 || index >= t.questions.length) return;
-    final q = t.questions[index];
-    final text = q.prompt.trim();
+    final pages = _pages;
+    if (index < 0 || index >= pages.length) return;
+    final page = pages[index];
+    final q = page.question;
+
+    final String text;
+    final String cacheSuffix;
+    if (page.isOption) {
+      final opt = q.options[page.optionIndex!];
+      text = opt.label.trim();
+      cacheSuffix = '${q.key}__${opt.key}';
+    } else {
+      text = q.prompt.trim();
+      cacheSuffix = q.key;
+    }
     if (text.isEmpty) return;
-    final cacheKey = '${t.id}__${q.key}'
+    final cacheKey = '${t.id}__$cacheSuffix'
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
     try {
       final path = await _tts.resolve(
@@ -269,9 +304,9 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// if we're on the last question). Called from the answer
   /// handlers after the visual feedback window.
   void _advanceFrom(int from) {
-    final t = _template;
-    if (t == null) return;
-    final pageCount = t.questions.length + 1;
+    // Wave 132: page count is over the EXPANDED page list (one entry
+    // per multiselect option) not the raw question list.
+    final pageCount = _pages.length + 1;
     if (from + 1 >= pageCount) return;
     unawaited(_page.animateToPage(
       from + 1,
@@ -346,7 +381,11 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     final subjectAsync = ref.watch(subjectByIdProvider(widget.subjectId));
     final subject = subjectAsync.value;
 
-    final totalQuestions = t.questions.length;
+    // Wave 132: page count is now derived from the expanded _pages
+    // list (multiselect options inflate to N sub-pages each), not
+    // the raw question count.
+    final pages = _pages;
+    final totalQuestions = pages.length;
     // PageView holds N question pages + 1 closeout page at the end.
     final pageCount = totalQuestions + 1;
     final answeredScored =
@@ -450,31 +489,69 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                       onFinish: _saving ? null : _submit,
                     );
                   }
-                  final q = t.questions[i];
+                  // Wave 132: dispatch on page kind. A page can be:
+                  //   - a whole question (agree3 / text) — old behavior
+                  //   - one option of a multiselect (yes/no smiley)
+                  final page = pages[i];
+                  final q = page.question;
+                  final onReplay = _voiceId == null
+                      ? null
+                      : () => unawaited(_playQuestion(i));
+                  void afterAnswer({required bool autoAdvance}) {
+                    unawaited(_autosave());
+                    if (autoAdvance) {
+                      // Give the tap-feedback a beat (~450ms) before
+                      // the page slides, so the kid sees their pick
+                      // register before the swap.
+                      Future.delayed(
+                        const Duration(milliseconds: 450),
+                        () {
+                          if (mounted) _advanceFrom(i);
+                        },
+                      );
+                    }
+                  }
+
+                  if (page.isOption) {
+                    final opt = q.options[page.optionIndex!];
+                    return SurveyOptionYesNoPage(
+                      questionIndex: i,
+                      optionIndex: page.optionIndex!,
+                      question: q,
+                      option: opt,
+                      isYes: _answers
+                          .multiselect(q.key)
+                          .contains(opt.key),
+                      onReplayTts: onReplay,
+                      onPickYes: () {
+                        final picked =
+                            _answers.multiselect(q.key).toSet()..add(opt.key);
+                        final updated =
+                            SurveyAnswers.fromJson(_answers.toJson())
+                              ..setMultiselect(q.key, picked.toList());
+                        setState(() => _answers = updated);
+                        afterAnswer(autoAdvance: true);
+                      },
+                      onPickNo: () {
+                        final picked =
+                            _answers.multiselect(q.key).toSet()
+                              ..remove(opt.key);
+                        final updated =
+                            SurveyAnswers.fromJson(_answers.toJson())
+                              ..setMultiselect(q.key, picked.toList());
+                        setState(() => _answers = updated);
+                        afterAnswer(autoAdvance: true);
+                      },
+                    );
+                  }
                   return SurveyQuestionPage(
                     questionIndex: i,
                     question: q,
                     answers: _answers,
-                    // Wave 131: tap the prompt text to replay the TTS
-                    // audio for this question. Cache hit (after first
-                    // play) makes the replay near-instant.
-                    onReplayTts: _voiceId == null
-                        ? null
-                        : () => unawaited(_playQuestion(i)),
+                    onReplayTts: onReplay,
                     onAnswered: (next, {required autoAdvance}) {
                       setState(() => _answers = next);
-                      unawaited(_autosave());
-                      if (autoAdvance) {
-                        // Give the chibi tap-animation a beat (~450ms)
-                        // before the page slides, so the kid sees
-                        // their answer register before the swap.
-                        Future.delayed(
-                          const Duration(milliseconds: 450),
-                          () {
-                            if (mounted) _advanceFrom(i);
-                          },
-                        );
-                      }
+                      afterAnswer(autoAdvance: autoAdvance);
                     },
                   );
                 },
@@ -727,4 +804,22 @@ class _VoicePickerOverlayState extends State<_VoicePickerOverlay> {
     ),
     );
   }
+}
+
+
+/// Wave 132: one PageView page. Most are a whole question; for
+/// multiselect questions, each option is its own page so the kid
+/// makes one yes/no decision at a time instead of scanning a
+/// 7-row checklist.
+class _SurveyPage {
+  const _SurveyPage({required this.question, this.optionIndex});
+
+  final SurveyQuestion question;
+
+  /// Null for non-multiselect (the whole question is the page).
+  /// Non-null for an exploded multiselect option — that option's
+  /// label is the page's main text.
+  final int? optionIndex;
+
+  bool get isOption => optionIndex != null;
 }

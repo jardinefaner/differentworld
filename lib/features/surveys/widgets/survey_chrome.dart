@@ -352,3 +352,181 @@ class SurveyCloseoutPage extends StatelessWidget {
     );
   }
 }
+
+/// Wave 132: one option of a multiselect, rendered as a dedicated
+/// yes/no page. The activities multiselect (7 options) explodes into
+/// 7 of these pages. Visual rhythm: each page rotates through the 8
+/// ChibiVariant looks so the kid doesn't see the same color/posture
+/// 7 times in a row — what the user called "randomised" smileys.
+///
+/// Storage: the parent maintains the same `List<String>` of selected
+/// option keys that the original MultiselectList uses, so existing
+/// answers stay compatible.
+class SurveyOptionYesNoPage extends StatelessWidget {
+  const SurveyOptionYesNoPage({
+    required this.questionIndex,
+    required this.optionIndex,
+    required this.question,
+    required this.option,
+    required this.isYes,
+    required this.onPickYes,
+    required this.onPickNo,
+    this.onReplayTts,
+    super.key,
+  });
+
+  /// Page index in the expanded PageView — drives variant rotation.
+  final int questionIndex;
+
+  /// Position within the parent question's options list. Currently
+  /// unused for visual variation (questionIndex is the rotation
+  /// driver) but kept on the widget for downstream tweaks.
+  final int optionIndex;
+
+  final SurveyQuestion question;
+  final SurveyOption option;
+  final bool isYes;
+  final VoidCallback onPickYes;
+  final VoidCallback onPickNo;
+  final VoidCallback? onReplayTts;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Variant rotates by page index across all 8 ChibiVariants. Two
+    // adjacent options never look the same.
+    final variant = ChibiVariant.forQuestionIndex(questionIndex);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Smaller question prompt sits as a subtitle at the top so
+          // the kid remembers which prompt they're answering yes/no
+          // to (the activities multiselect's parent prompt is
+          // "Check any of the activities you did this year").
+          Text(
+            question.prompt,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // The option label is the main text of the page — tappable
+          // to replay the TTS.
+          Semantics(
+            label: option.label,
+            hint: onReplayTts == null ? null : 'Tap to hear it again',
+            button: onReplayTts != null,
+            child: InkWell(
+              onTap: onReplayTts,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        option.label,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall,
+                      ),
+                    ),
+                    if (onReplayTts != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.volume_up_outlined,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Big yes / no smiley pair. Larger than the inline
+          // _MultiOptionRow used to be — each option is its own
+          // page now so we can give the choice the visual presence
+          // of a single agree3 question.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _BigYesNoButton(
+                label: 'No',
+                variant: variant,
+                expression: ChibiExpression.sad,
+                selected: !isYes,
+                onTap: onPickNo,
+              ),
+              _BigYesNoButton(
+                label: 'Yes',
+                variant: variant,
+                expression: ChibiExpression.happy,
+                selected: isYes,
+                onTap: onPickYes,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BigYesNoButton extends StatelessWidget {
+  const _BigYesNoButton({
+    required this.label,
+    required this.variant,
+    required this.expression,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final ChibiVariant variant;
+  final ChibiExpression expression;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ChibiSmiley(
+                variant: variant,
+                expression: expression,
+                selected: selected,
+                size: 128,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
