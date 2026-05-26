@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/chibi_smiley.dart';
+import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -420,6 +421,13 @@ class _OptionToggleChip extends StatelessWidget {
 
 /// Text question — debounced autosave, no auto-advance.
 /// Next button at the bottom lets the kid commit when ready.
+///
+/// Wave 134: a mic icon on the trailing edge of the field opens a
+/// live Deepgram dictation session. The kid (or teacher) taps it,
+/// speaks, and the transcript appends to whatever's already in the
+/// field. Same prefix-preservation pattern as the omnibox bar and
+/// the observation form mic: snapshot the field value at session
+/// start, append the live transcript stream.
 class TextAnswer extends StatefulWidget {
   const TextAnswer({
     required this.question,
@@ -439,6 +447,12 @@ class TextAnswer extends StatefulWidget {
 class _TextAnswerState extends State<TextAnswer> {
   late final TextEditingController _controller;
   Timer? _debounce;
+  // Wave 134: Deepgram dictation. Local controller (not the AppShell
+  // singleton) so survey-take isolation matches the observation form.
+  late final DeepgramVoiceController _voice;
+  StreamSubscription<VoiceUpdate>? _voiceSub;
+  bool _voiceActive = false;
+  String _voicePrefix = '';
 
   @override
   void initState() {
@@ -446,11 +460,14 @@ class _TextAnswerState extends State<TextAnswer> {
     _controller = TextEditingController(
       text: widget.answers.text(widget.question.key),
     );
+    _voice = DeepgramVoiceController();
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    unawaited(_voiceSub?.cancel());
+    unawaited(_voice.dispose());
     _controller.dispose();
     super.dispose();
   }
@@ -464,6 +481,47 @@ class _TextAnswerState extends State<TextAnswer> {
     });
   }
 
+  void _toggleVoice() {
+    if (_voiceActive) {
+      unawaited(_voice.stop());
+      return;
+    }
+    _voicePrefix = _controller.text;
+    setState(() => _voiceActive = true);
+    _voiceSub = _voice.updates.listen(_onVoiceUpdate);
+    unawaited(_voice.start());
+  }
+
+  void _onVoiceUpdate(VoiceUpdate update) {
+    if (!mounted) return;
+    if (update.state == VoiceState.error) {
+      _voiceActive = false;
+      unawaited(_voiceSub?.cancel());
+      _voiceSub = null;
+      final msg = update.errorMessage ?? 'Voice dictation failed.';
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+      setState(() {});
+      return;
+    }
+    final transcript = update.transcript.trim();
+    final glue = (_voicePrefix.isEmpty || transcript.isEmpty) ? '' : ' ';
+    final combined = '$_voicePrefix$glue$transcript';
+    _controller
+      ..text = combined
+      ..selection = TextSelection.collapsed(offset: combined.length);
+    // Treat each transcript chunk like a typed change so autosave
+    // catches up.
+    _onChanged(combined);
+    if (update.state == VoiceState.idle) {
+      _voiceActive = false;
+      unawaited(_voiceSub?.cancel());
+      _voiceSub = null;
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -471,10 +529,14 @@ class _TextAnswerState extends State<TextAnswer> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Write here, or say it out loud and the teacher will type it.',
+          _voiceActive
+              ? 'Listening… tap the mic to stop.'
+              : 'Tap the mic to say it out loud, or type below.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: _voiceActive
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 12),
@@ -483,9 +545,24 @@ class _TextAnswerState extends State<TextAnswer> {
           minLines: 3,
           maxLines: 6,
           textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
             hintText: 'Type what they said…',
+            // Wave 134: mic icon as suffix. Big tap target via
+            // IconButton's default 48dp insets — same pattern the
+            // observation form uses.
+            suffixIcon: IconButton(
+              tooltip: _voiceActive
+                  ? 'Stop dictation'
+                  : 'Dictate by voice',
+              icon: Icon(
+                _voiceActive
+                    ? Icons.stop_circle
+                    : Icons.mic_none_outlined,
+                color: _voiceActive ? theme.colorScheme.error : null,
+              ),
+              onPressed: _toggleVoice,
+            ),
           ),
           onChanged: _onChanged,
         ),

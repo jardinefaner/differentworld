@@ -181,11 +181,22 @@ class SurveyQuestionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    // Wave 133: full-bleed. SingleChildScrollView still wraps the
+    // content (so a long text-question on a small phone scrolls),
+    // but the inner Column is sized to the viewport's min height
+    // and uses MainAxisAlignment.center to float the question +
+    // smileys vertically — feels like a single-purpose page, not
+    // a card stuck to the top.
+    return LayoutBuilder(
+      builder: (ctx, c) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: c.maxHeight),
+          child: IntrinsicHeight(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
           if (question.isPractice)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -229,7 +240,7 @@ class SurveyQuestionPage extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           switch (question.kind) {
             SurveyQuestionKind.agree3 => Agree3Row(
                 question: question,
@@ -249,7 +260,10 @@ class SurveyQuestionPage extends StatelessWidget {
                 onAnswered: (next) => onAnswered(next, autoAdvance: false),
               ),
           },
-        ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -396,10 +410,16 @@ class SurveyOptionYesNoPage extends StatelessWidget {
     // Variant rotates by page index across all 8 ChibiVariants. Two
     // adjacent options never look the same.
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    // Wave 133: same full-bleed treatment as SurveyQuestionPage.
+    return LayoutBuilder(
+      builder: (ctx, c) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: c.maxHeight),
+          child: IntrinsicHeight(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Smaller question prompt sits as a subtitle at the top so
           // the kid remembers which prompt they're answering yes/no
@@ -471,7 +491,10 @@ class SurveyOptionYesNoPage extends StatelessWidget {
               ),
             ],
           ),
-        ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
