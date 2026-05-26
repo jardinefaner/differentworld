@@ -177,6 +177,10 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
+            // Wave 111: tag for browser autofill / password-manager
+            // helpers. Lets a director typing a teammate's email
+            // pick from their address book / saved contacts.
+            autofillHints: const [AutofillHints.email],
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
               labelText: 'Their email (optional)',

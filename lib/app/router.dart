@@ -72,6 +72,13 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     refreshListenable: refresh,
+    // Wave 111: friendly 404 instead of go_router's default red error
+    // frame when a user types or follows a stale URL. Wrapped in
+    // RouteTitle so the browser tab also reflects the state.
+    errorBuilder: (context, state) => RouteTitle(
+      title: 'Page not found',
+      child: _NotFoundScreen(uri: state.uri.toString()),
+    ),
     redirect: (context, state) {
       final isSignedIn = ref.read(isSignedInProvider);
       final goingToAuth = state.matchedLocation.startsWith('/login');
@@ -808,6 +815,85 @@ class _MissingSubjectScreen extends StatelessWidget {
               'links are not supported yet.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Wave 111: friendly 404 surface. Reached via GoRouter's
+/// `errorBuilder` whenever a path doesn't match any registered
+/// route (typo'd deep link, stale bookmark, an old URL from before
+/// a refactor). Shows the typo'd URL back to the user so they can
+/// spot a fixable mistake, and offers a single CTA back to Today.
+class _NotFoundScreen extends StatelessWidget {
+  const _NotFoundScreen({required this.uri});
+
+  final String uri;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.travel_explore_outlined,
+                    size: 72,
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "We can't find that page.",
+                    style: theme.textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'The URL might be from an older version of the '
+                    "app, or there's a typo. Check the address and "
+                    'try again, or head back home.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      uri,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: 'monospace',
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => context.go('/'),
+                    icon: const Icon(Icons.home_outlined),
+                    label: const Text('Back to home'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

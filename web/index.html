@@ -45,6 +45,97 @@
 </head>
 <body>
   <!--
+    Wave 111: minimal HTML splash so the user sees the wordmark + a
+    spinner instead of a blank white page during the 1-4 second
+    Flutter cold-boot window. Removed by JavaScript once Flutter
+    has mounted (the bootstrap script provides an `onEntrypointLoaded`
+    callback we don't currently wire; this CSS-based version uses
+    a fade that triggers when the body element gets a `.dw-booted`
+    class from Flutter's first frame).
+  -->
+  <style>
+    #dw-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #F8F7F4;
+      color: #2A9D8F;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+      transition: opacity 240ms ease-out;
+      z-index: 1000;
+    }
+    @media (prefers-color-scheme: dark) {
+      #dw-splash { background: #0F1B1A; color: #5EBFB5; }
+    }
+    #dw-splash.fade { opacity: 0; pointer-events: none; }
+    #dw-splash .wordmark {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    #dw-splash .spinner {
+      margin-top: 20px;
+      width: 28px;
+      height: 28px;
+      border: 3px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: dw-spin 720ms linear infinite;
+    }
+    @keyframes dw-spin { to { transform: rotate(360deg); } }
+    noscript {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      background: #F8F7F4;
+      color: #1A1A1A;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+  </style>
+  <div id="dw-splash">
+    <div class="wordmark">Different World</div>
+    <div class="spinner"></div>
+  </div>
+  <noscript>
+    <div>
+      <h1>Different World</h1>
+      <p>This app needs JavaScript to run. Please enable it in your browser settings.</p>
+    </div>
+  </noscript>
+  <script>
+    // Fade the splash out as soon as Flutter has painted its first
+    // frame. We detect that by watching for any element appearing
+    // inside <flutter-view> / a Flutter-injected canvas.
+    (function () {
+      var splash = document.getElementById('dw-splash');
+      if (!splash) return;
+      var observer = new MutationObserver(function () {
+        if (document.querySelector('flt-glass-pane, flutter-view, flt-scene-host')) {
+          splash.classList.add('fade');
+          observer.disconnect();
+          setTimeout(function () { splash.remove(); }, 280);
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      // Safety net: drop the splash after 8s no matter what so it
+      // never permanently hides the app.
+      setTimeout(function () {
+        if (splash && splash.parentNode) {
+          splash.classList.add('fade');
+          setTimeout(function () { splash.remove(); }, 280);
+        }
+      }, 8000);
+    })();
+  </script>
+  <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
     or to give the user feedback during the initialization process.

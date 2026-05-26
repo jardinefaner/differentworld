@@ -156,10 +156,12 @@ class _ProgressReportScreenState
                     final doc = await buildProgressReportPdf(data);
                     return doc.save();
                   },
-                  // Hide the built-in toolbar — the bottom bar holds
-                  // the canonical entry points so we don't have two
-                  // affordances doing the same thing.
-                  allowPrinting: false,
+                  // Wave 111: allow printing. The bottom bar still
+                  // hosts the canonical Share / Email actions, but
+                  // a director hitting Cmd+P expects to print the
+                  // report — without `allowPrinting: true` the
+                  // browser prints the whole Flutter shell with
+                  // chrome instead of just the PDF content.
                   allowSharing: false,
                   canChangePageFormat: false,
                   canChangeOrientation: false,
