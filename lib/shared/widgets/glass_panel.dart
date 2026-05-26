@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:flutter/material.dart';
 
 /// Shapes the [GlassPanel] knows how to render. Pick the one that
@@ -125,7 +126,35 @@ Future<T?> showGlassSheet<T>({
   bool showDragHandle = false,
   bool useSafeArea = true,
   bool isScrollControlled = false,
+  // Wave 107: at tablet+ widths route through a centered dialog
+  // instead of a bottom sheet. Pinning a 3-row picker to the
+  // bottom of a 1080p window is the single biggest "this is a
+  // phone app" tell. Opt-out is `dialogAtDesktop: false` for
+  // sheets that genuinely need the bottom anchor (e.g. one-handed
+  // gestural pickers).
+  bool dialogAtDesktop = true,
+  double dialogMaxWidth = 480,
 }) {
+  final width = MediaQuery.sizeOf(context).width;
+  if (dialogAtDesktop && width >= Breakpoints.smallTablet) {
+    return showDialog<T>(
+      context: context,
+      barrierDismissible: isDismissible,
+      builder: (ctx) => Dialog(
+        // Transparent + zero-elevation so the GlassPanel inside is
+        // the only visible surface — matches the sheet path.
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: dialogMaxWidth),
+          child: GlassPanel(
+            child: builder(ctx),
+          ),
+        ),
+      ),
+    );
+  }
   return showModalBottomSheet<T>(
     context: context,
     isDismissible: isDismissible,

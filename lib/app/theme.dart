@@ -27,10 +27,23 @@ const _pageTransitions = PageTransitionsTheme(
   },
 );
 
+// Wave 107: floating snackbars on every form factor. The default
+// `SnackBarBehavior.fixed` pins a snackbar to the bottom-edge of
+// the viewport — on a 1440-tall desktop the "Saved" toast fires
+// 1300dp below where the user's eye is. Floating + a capped width
+// + a small bottom margin lets it sit closer to the action that
+// triggered it on phone too. The width cap centers it on desktop.
+const _snackBarTheme = SnackBarThemeData(
+  behavior: SnackBarBehavior.floating,
+  width: 480,
+  insetPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+);
+
 ThemeData buildLightTheme() => ThemeData(
       colorScheme: ColorScheme.fromSeed(seedColor: _seed),
       useMaterial3: true,
       pageTransitionsTheme: _pageTransitions,
+      snackBarTheme: _snackBarTheme,
     );
 
 ThemeData buildDarkTheme() => ThemeData(
@@ -40,4 +53,5 @@ ThemeData buildDarkTheme() => ThemeData(
       ),
       useMaterial3: true,
       pageTransitionsTheme: _pageTransitions,
+      snackBarTheme: _snackBarTheme,
     );

@@ -20,6 +20,18 @@ Future<void> main() async {
   //
   // No-op on mobile / desktop.
   usePathUrlStrategy();
+  // Wave 107: disable the browser's native right-click context menu
+  // on web. Without this, right-clicking any student photo offers
+  // "Save Image As…" — bypassing every signed-URL guard and
+  // exfiltrating bytes through the browser. Children's data is
+  // sensitive PII; this closes the only obvious in-browser leak.
+  // On native (iOS/Android/macOS/Windows/Linux) the call is a no-op
+  // — it's a `kIsWeb`-guarded BrowserContextMenu API. The Flutter
+  // text-selection UI keeps working because we surface our own
+  // selection toolbar via SelectionArea (Wave 111).
+  if (kIsWeb) {
+    await BrowserContextMenu.disableContextMenu();
+  }
   await Env.load();
 
   // Edge-to-edge: status bar + gesture nav are transparent, content

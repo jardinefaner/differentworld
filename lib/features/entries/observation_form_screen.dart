@@ -15,6 +15,7 @@ import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -339,6 +340,14 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
 
   Future<void> _showAddPhotoSheet() async {
     if (_photoUploading) return;
+    // Wave 107: on web, MultiShotCamera imports dart:io and crashes
+    // — skip the picker, go straight to the file-upload path. The
+    // image_picker library handler uses an <input type=file> on web,
+    // which is the correct desktop UX.
+    if (kIsWeb) {
+      await _addPhotoFromLibrary();
+      return;
+    }
     final source = await showGlassSheet<ImageSource>(
       context: context,
       builder: (ctx) => SafeArea(

@@ -136,7 +136,16 @@ class BottomOmniboxBar extends StatelessWidget {
       color: Colors.transparent,
       child: SafeArea(
         top: false,
-        child: Padding(
+        // Wave 107: Align.bottomCenter so the 720dp pill centers in
+        // the viewport instead of pinning to the bottom-LEFT edge of
+        // a 1920px screen. AppShell positions this whole widget with
+        // Positioned(left:0, right:0, bottom:0); without the Align,
+        // the ConstrainedBox child rendered at top-start of that
+        // stretched parent — leaving 1200dp of empty bar to its
+        // right at desktop widths, which read as broken layout.
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
           child: ConstrainedBox(
             // Cap the bar's content width on tablet / desktop so it
@@ -283,6 +292,7 @@ class BottomOmniboxBar extends StatelessWidget {
               ),
             ),
           ),
+        ),
         ),
       ),
     );

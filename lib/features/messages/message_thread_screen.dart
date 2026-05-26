@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -262,8 +263,15 @@ class _MessageBubble extends ConsumerWidget {
             mine ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           ConstrainedBox(
+            // Wave 107: cap absolute bubble width at 560dp so a
+            // one-sentence message doesn't render as a 1400dp
+            // ribbon on a desktop browser. The 75% floor still
+            // applies on narrow phones (75% of 360 = 270dp).
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.sizeOf(context).width * 0.75,
+              maxWidth: math.min(
+                560,
+                MediaQuery.sizeOf(context).width * 0.75,
+              ),
             ),
             child: Container(
               padding: const EdgeInsets.symmetric(

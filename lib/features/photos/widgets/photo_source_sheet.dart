@@ -1,5 +1,6 @@
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -170,15 +171,29 @@ class _PhotoSourceSheetState extends ConsumerState<PhotoSourceSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          ListTile(
-            leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Take a photo'),
-            enabled: !_busy,
-            onTap: () => _pick(ImageSource.camera),
-          ),
+          // Wave 107: hide the "Take a photo" tile on web. The
+          // image_picker ImageSource.camera path on web requires
+          // getUserMedia() which only works on HTTPS desktops with
+          // an attached webcam, and ranges from awkward (Chrome) to
+          // broken (Safari/Firefox). The "Choose from library" path
+          // on web uses an <input type=file> picker — the correct
+          // file-upload UX on desktop. On phones (kIsWeb=false in a
+          // Flutter native build) we keep both.
+          if (!kIsWeb)
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Take a photo'),
+              enabled: !_busy,
+              onTap: () => _pick(ImageSource.camera),
+            ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Choose from library'),
+            // Wave 107: copy varies by platform — "library" reads as
+            // mobile, "file" reads as desktop. The handler still
+            // routes through ImageSource.gallery either way.
+            title: const Text(
+              kIsWeb ? 'Choose a file…' : 'Choose from library',
+            ),
             enabled: !_busy,
             onTap: () => _pick(ImageSource.gallery),
           ),
