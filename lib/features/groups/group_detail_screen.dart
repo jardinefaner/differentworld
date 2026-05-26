@@ -17,6 +17,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +54,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
 
     final group = groupAsync.value;
     final groupId = widget.groupId;
-    return EdgeScaffold(
+    // Wave 108: dynamic tab title — the classroom name.
+    return RouteTitle(
+      title: group?.name.trim().isNotEmpty == true
+          ? group!.name
+          : labels.group,
+      child: EdgeScaffold(
       actions: [
         // Primary verb: add a subject (director-only). For everyone
         // else, take-attendance is the most frequent so it takes the
@@ -222,6 +228,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
       // FAB removed — "Add student" lives in the top-right primary
       // action pill (see actions above) for directors. Take-attendance
       // remains the primary verb for non-directors.
+    ),
     );
   }
 }

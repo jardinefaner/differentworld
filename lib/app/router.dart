@@ -58,6 +58,7 @@ import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart'
     show VehicleLogKind;
 import 'package:differentworld/shared/widgets/app_shell.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,67 +122,95 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
       GoRoute(
         path: '/',
-        builder: (_, _) => const _Home(),
+        builder: (_, _) => const RouteTitle(title: 'Today', child: _Home()),
         routes: [
           GoRoute(
             path: 'checklist',
-            builder: (_, state) => MorningChecklistScreen(
-              initialFilter: state.uri.queryParameters['filter'],
+            builder: (_, state) => RouteTitle(
+              title: 'Morning checklist',
+              child: MorningChecklistScreen(
+                initialFilter: state.uri.queryParameters['filter'],
+              ),
             ),
           ),
           GoRoute(
             path: 'groups/new',
-            builder: (_, _) => const GroupEditScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'New classroom',
+              child: GroupEditScreen(),
+            ),
           ),
           GoRoute(
             path: 'groups/:id',
+            // Dynamic title (group name) is set INSIDE GroupDetailScreen
+            // — see its build method. Same pattern for student detail
+            // and member detail below.
             builder: (_, state) => GroupDetailScreen(
               groupId: state.pathParameters['id']!,
             ),
             routes: [
               GoRoute(
                 path: 'edit',
-                builder: (_, state) => GroupEditScreen(
-                  groupId: state.pathParameters['id'],
+                builder: (_, state) => RouteTitle(
+                  title: 'Edit classroom',
+                  child: GroupEditScreen(
+                    groupId: state.pathParameters['id'],
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'attendance',
-                builder: (_, state) => AttendanceScreen(
-                  groupId: state.pathParameters['id']!,
+                builder: (_, state) => RouteTitle(
+                  title: 'Attendance',
+                  child: AttendanceScreen(
+                    groupId: state.pathParameters['id']!,
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'observations',
-                builder: (_, state) => ObservationsScreen(
-                  groupId: state.pathParameters['id']!,
+                builder: (_, state) => RouteTitle(
+                  title: 'Observations',
+                  child: ObservationsScreen(
+                    groupId: state.pathParameters['id']!,
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'students/new',
-                builder: (_, state) => SubjectEditScreen(
-                  groupId: state.pathParameters['id']!,
+                builder: (_, state) => RouteTitle(
+                  title: 'New student',
+                  child: SubjectEditScreen(
+                    groupId: state.pathParameters['id']!,
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'students/:sid',
+                // Dynamic title set in SubjectDetailScreen.
                 builder: (_, state) => SubjectDetailScreen(
                   subjectId: state.pathParameters['sid']!,
                 ),
                 routes: [
                   GoRoute(
                     path: 'edit',
-                    builder: (_, state) => SubjectEditScreen(
-                      groupId: state.pathParameters['id']!,
-                      subjectId: state.pathParameters['sid'],
+                    builder: (_, state) => RouteTitle(
+                      title: 'Edit student',
+                      child: SubjectEditScreen(
+                        groupId: state.pathParameters['id']!,
+                        subjectId: state.pathParameters['sid'],
+                      ),
                     ),
                   ),
                   // Progress-report PDF — preview + share/print.
                   // Reached from the staff subject detail screen.
                   GoRoute(
                     path: 'progress-report',
-                    builder: (_, state) => ProgressReportScreen(
-                      subjectId: state.pathParameters['sid']!,
+                    builder: (_, state) => RouteTitle(
+                      title: 'Progress report',
+                      child: ProgressReportScreen(
+                        subjectId: state.pathParameters['sid']!,
+                      ),
                     ),
                   ),
                 ],
@@ -192,7 +221,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           // viewer can see, newest first. See UX_DECISIONS §8.
           GoRoute(
             path: 'observations',
-            builder: (_, _) => const ObservationsIndexScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Observations',
+              child: ObservationsIndexScreen(),
+            ),
             routes: [
               // Create-observation route (Wave 21, replaces the old
               // `ObservationFormSheet.show`). Query params let the
@@ -201,9 +233,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'new',
                 builder: (_, state) {
                   final q = state.uri.queryParameters;
-                  return ObservationFormScreen(
-                    groupId: q['groupId'],
-                    initialSubjectId: q['subjectId'],
+                  return RouteTitle(
+                    title: 'New observation',
+                    child: ObservationFormScreen(
+                      groupId: q['groupId'],
+                      initialSubjectId: q['subjectId'],
+                    ),
                   );
                 },
               ),
@@ -214,8 +249,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: ':id/edit',
                 builder: (_, state) {
                   final entry = state.extra;
-                  return ObservationFormScreen(
-                    existing: entry is Entry ? entry : null,
+                  return RouteTitle(
+                    title: 'Edit observation',
+                    child: ObservationFormScreen(
+                      existing: entry is Entry ? entry : null,
+                    ),
                   );
                 },
               ),
@@ -226,20 +264,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           // / observations / surveys). No new schema; pure derivation.
           GoRoute(
             path: 'insights',
-            builder: (_, _) => const InsightsScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Insights',
+              child: InsightsScreen(),
+            ),
           ),
           // Capture inbox — the upward loop's *input* side. Quick
           // "I noticed…" notes awaiting triage into observations
           // or dismissal.
           GoRoute(
             path: 'captures',
-            builder: (_, _) => const CaptureInboxScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Captures',
+              child: CaptureInboxScreen(),
+            ),
             routes: [
               // New-capture surface as a real route (Wave 21,
               // replaces the old `showCaptureSheet` bottom-sheet).
               GoRoute(
                 path: 'new',
-                builder: (_, _) => const CaptureScreen(),
+                builder: (_, _) => const RouteTitle(
+                  title: 'New capture',
+                  child: CaptureScreen(),
+                ),
               ),
             ],
           ),
@@ -247,13 +294,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           // standalone to-do list for the program.
           GoRoute(
             path: 'tasks',
-            builder: (_, _) => const TasksScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Tasks',
+              child: TasksScreen(),
+            ),
             routes: [
               // New-task surface as a real route (Wave 21,
               // replaces the old `showNewTaskSheet` bottom-sheet).
               GoRoute(
                 path: 'new',
-                builder: (_, _) => const TaskScreen(),
+                builder: (_, _) => const RouteTitle(
+                  title: 'New task',
+                  child: TaskScreen(),
+                ),
               ),
             ],
           ),
@@ -263,10 +316,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           // index or the staff subject_detail.
           GoRoute(
             path: 'messages',
-            builder: (_, _) => const FamilyMessagesScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Messages',
+              child: FamilyMessagesScreen(),
+            ),
           ),
           GoRoute(
             path: 'messages/:subjectId/:guardianId',
+            // Dynamic title set in MessageThreadScreen.
             builder: (_, state) => MessageThreadScreen(
               subjectId: state.pathParameters['subjectId']!,
               guardianId: state.pathParameters['guardianId']!,
@@ -277,14 +334,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           // medium-tempo surface.
           GoRoute(
             path: 'review',
-            builder: (_, _) => const WeeklyReviewScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Weekly review',
+              child: WeeklyReviewScreen(),
+            ),
             routes: [
               // Yearly review — the long-tempo Foundation re-grounding.
               // A calm snapshot + three open-ended prompts; no data to
               // submit, just orientation.
               GoRoute(
                 path: 'year',
-                builder: (_, _) => const YearlyReviewScreen(),
+                builder: (_, _) => const RouteTitle(
+                  title: 'Yearly review',
+                  child: YearlyReviewScreen(),
+                ),
               ),
             ],
           ),
@@ -292,16 +355,21 @@ final routerProvider = Provider<GoRouter>((ref) {
           // + take-survey flow.
           GoRoute(
             path: 'surveys',
-            builder: (_, _) => const SurveyIndexScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Surveys',
+              child: SurveyIndexScreen(),
+            ),
             routes: [
               GoRoute(
                 path: ':templateId',
+                // Dynamic title set in SurveyTemplateDetailScreen.
                 builder: (_, state) => SurveyTemplateDetailScreen(
                   templateId: state.pathParameters['templateId']!,
                 ),
                 routes: [
                   GoRoute(
                     path: 'take/:subjectId',
+                    // Dynamic title (kid name) set in SurveyTakeScreen.
                     builder: (_, state) => SurveyTakeScreen(
                       templateId: state.pathParameters['templateId']!,
                       subjectId: state.pathParameters['subjectId']!,
@@ -311,8 +379,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                   // patterns and exports CSV.
                   GoRoute(
                     path: 'table',
-                    builder: (_, state) => SurveyTableScreen(
-                      templateId: state.pathParameters['templateId']!,
+                    builder: (_, state) => RouteTitle(
+                      title: 'Survey table',
+                      child: SurveyTableScreen(
+                        templateId: state.pathParameters['templateId']!,
+                      ),
                     ),
                   ),
                 ],
@@ -326,6 +397,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // route at /groups/:id/students/:sid instead.
           GoRoute(
             path: 'children/:sid',
+            // Dynamic title (kid name) set in FamilySubjectDetailScreen.
             builder: (_, state) => FamilySubjectDetailScreen(
               subjectId: state.pathParameters['sid']!,
             ),
@@ -333,7 +405,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Camp scheduling — staff-facing.
           GoRoute(
             path: 'schedule',
-            builder: (_, _) => const ScheduleScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Schedule',
+              child: ScheduleScreen(),
+            ),
           ),
           // Block create/edit route (Wave 26, replaces
           // `BlockEditSheet`). Args ride via go_router `extra` as
@@ -344,12 +419,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) {
               final args = state.extra;
               if (args is! BlockEditArgs) {
-                return const ScheduleScreen();
+                return const RouteTitle(
+                  title: 'Schedule',
+                  child: ScheduleScreen(),
+                );
               }
-              return BlockEditScreen(
-                groupId: args.groupId,
-                defaultStart: args.defaultStart,
-                existing: args.existing,
+              return RouteTitle(
+                title: args.existing == null ? 'New block' : 'Edit block',
+                child: BlockEditScreen(
+                  groupId: args.groupId,
+                  defaultStart: args.defaultStart,
+                  existing: args.existing,
+                ),
               );
             },
           ),
@@ -363,7 +444,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               if (export is! Export) {
                 return const _MissingExportScreen();
               }
-              return SendExportScreen(export: export);
+              return RouteTitle(
+                title: 'Send report',
+                child: SendExportScreen(export: export),
+              );
             },
           ),
           // Subject health profile (Wave 27, replaces
@@ -375,21 +459,33 @@ final routerProvider = Provider<GoRouter>((ref) {
               if (subject is! Subject) {
                 return const _MissingSubjectScreen();
               }
-              return HealthProfileScreen(subject: subject);
+              return RouteTitle(
+                title: 'Health profile',
+                child: HealthProfileScreen(subject: subject),
+              );
             },
           ),
           GoRoute(
             path: 'activities',
-            builder: (_, _) => const ActivitiesListScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Activities',
+              child: ActivitiesListScreen(),
+            ),
             routes: [
               GoRoute(
                 path: 'new',
-                builder: (_, _) => const ActivityEditScreen(),
+                builder: (_, _) => const RouteTitle(
+                  title: 'New activity',
+                  child: ActivityEditScreen(),
+                ),
               ),
               GoRoute(
                 path: ':id',
-                builder: (_, state) => ActivityEditScreen(
-                  activityId: state.pathParameters['id'],
+                builder: (_, state) => RouteTitle(
+                  title: 'Edit activity',
+                  child: ActivityEditScreen(
+                    activityId: state.pathParameters['id'],
+                  ),
                 ),
               ),
             ],
@@ -398,23 +494,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/settings',
-        builder: (_, _) => const SettingsScreen(),
+        builder: (_, _) => const RouteTitle(
+          title: 'Settings',
+          child: SettingsScreen(),
+        ),
         routes: [
           GoRoute(
             path: 'program',
-            builder: (_, _) => const ProgramSettingsScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Program',
+              child: ProgramSettingsScreen(),
+            ),
           ),
           GoRoute(
             path: 'locations',
-            builder: (_, _) => const LocationsListScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Locations',
+              child: LocationsListScreen(),
+            ),
           ),
           GoRoute(
             path: 'roles',
-            builder: (_, _) => const RolesScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Roles',
+              child: RolesScreen(),
+            ),
           ),
           GoRoute(
             path: 'team',
-            builder: (_, _) => const TeamScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Team',
+              child: TeamScreen(),
+            ),
             routes: [
               // Invite flow (Wave 24, replaces InviteCreateSheet +
               // InviteShareSheet bottom-sheets). Create → push-replace
@@ -422,7 +533,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               // the create form.
               GoRoute(
                 path: 'invite/new',
-                builder: (_, _) => const InviteCreateScreen(),
+                builder: (_, _) => const RouteTitle(
+                  title: 'New invite',
+                  child: InviteCreateScreen(),
+                ),
               ),
               GoRoute(
                 path: 'invite/:id',
@@ -431,11 +545,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   if (invite is! Invite) {
                     return const _MissingInviteScreen();
                   }
-                  return InviteShareScreen(invite: invite);
+                  return RouteTitle(
+                    title: 'Invite',
+                    child: InviteShareScreen(invite: invite),
+                  );
                 },
               ),
               GoRoute(
                 path: ':id',
+                // Dynamic title set in MemberDetailScreen.
                 builder: (_, state) => MemberDetailScreen(
                   memberId: state.pathParameters['id']!,
                 ),
@@ -452,40 +570,59 @@ final routerProvider = Provider<GoRouter>((ref) {
       // were generated before this rename).
       GoRoute(
         path: '/vehicles',
-        builder: (_, _) => const VehiclesListScreen(),
+        builder: (_, _) => const RouteTitle(
+          title: 'Vehicles',
+          child: VehiclesListScreen(),
+        ),
         routes: [
           GoRoute(
             path: 'new',
-            builder: (_, _) => const VehicleEditScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'New vehicle',
+              child: VehicleEditScreen(),
+            ),
           ),
           GoRoute(
             path: 'scan',
-            builder: (_, _) => const VehicleScanScreen(),
+            builder: (_, _) => const RouteTitle(
+              title: 'Scan vehicle',
+              child: VehicleScanScreen(),
+            ),
           ),
           GoRoute(
             path: ':id',
+            // Dynamic title (vehicle name) set in VehicleDetailScreen.
             builder: (_, state) => VehicleDetailScreen(
               vehicleId: state.pathParameters['id']!,
             ),
             routes: [
               GoRoute(
                 path: 'edit',
-                builder: (_, state) => VehicleEditScreen(
-                  vehicleId: state.pathParameters['id'],
+                builder: (_, state) => RouteTitle(
+                  title: 'Edit vehicle',
+                  child: VehicleEditScreen(
+                    vehicleId: state.pathParameters['id'],
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'checkout',
-                builder: (_, state) => VehicleInspectionScreen(
-                  vehicleId: state.pathParameters['id']!,
-                  kind: VehicleLogKind.checkout,
+                builder: (_, state) => RouteTitle(
+                  title: 'Check out vehicle',
+                  child: VehicleInspectionScreen(
+                    vehicleId: state.pathParameters['id']!,
+                    kind: VehicleLogKind.checkout,
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'checkin',
-                builder: (_, state) => VehicleInspectionScreen(
-                  vehicleId: state.pathParameters['id']!,
-                  kind: VehicleLogKind.checkin,
+                builder: (_, state) => RouteTitle(
+                  title: 'Check in vehicle',
+                  child: VehicleInspectionScreen(
+                    vehicleId: state.pathParameters['id']!,
+                    kind: VehicleLogKind.checkin,
+                  ),
                 ),
               ),
             ],
@@ -571,7 +708,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        builder: (_, _) => const LoginScreen(),
+        builder: (_, _) => const RouteTitle(
+          title: 'Sign in',
+          child: LoginScreen(),
+        ),
       ),
       // The omnibox search screen — pushed when the user taps the
       // bottom composer. Lives inside the ShellRoute so the persistent

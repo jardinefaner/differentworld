@@ -24,6 +24,7 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,8 +60,17 @@ class SubjectDetailScreen extends ConsumerWidget {
     }
 
     final subjectAsync = ref.watch(subjectByIdProvider(subjectId));
+    // Wave 108: dynamic tab title — the kid's name. Falls back to
+    // "Student" while the row is still loading or absent (a stale
+    // deep link).
+    final subjectName = subjectAsync.value == null
+        ? 'Student'
+        : '${subjectAsync.value!.firstName} ${subjectAsync.value!.lastName}'
+            .trim();
 
-    return EdgeScaffold(
+    return RouteTitle(
+      title: subjectName.isEmpty ? 'Student' : subjectName,
+      child: EdgeScaffold(
       actions: [
         // Primary verb on the kid's detail screen is "Observation" —
         // the most-frequent action a teacher does here.
@@ -123,6 +133,7 @@ class SubjectDetailScreen extends ConsumerWidget {
           return _SubjectBody(subject: subject, viewer: viewer);
         },
       ),
+    ),
     );
   }
 }
