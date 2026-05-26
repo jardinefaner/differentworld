@@ -24,11 +24,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(supabaseProvider).auth.signInWithOAuth(
             OAuthProvider.google,
-            // On web: pass null so Supabase redirects to the current origin.
-            // On mobile: deep-link back via the custom scheme declared in
-            // android/app/src/main/AndroidManifest.xml + ios/Runner/Info.plist.
+            // Web: bounce back to the CURRENT page (without any query
+            // string / fragment). `redirectTo: null` would make
+            // Supabase fall back to the dashboard's Site URL, which
+            // is `localhost:3000` for local dev — sending the user
+            // there after a github.io OAuth produces a Safari "can't
+            // connect to localhost" page. Building the URL from
+            // `Uri.base` keeps local-dev (localhost:3000) AND web
+            // production (github.io/differentworld/) working from
+            // the same code with no env-specific config.
+            //
+            // Mobile: deep-link back via the custom scheme declared
+            // in android/app/src/main/AndroidManifest.xml +
+            // ios/Runner/Info.plist.
+            //
+            // NOTE: every web origin used here MUST also be on the
+            // Supabase project's Redirect URLs allowlist
+            // (Dashboard → Authentication → URL Configuration).
+            // Today: localhost:3000/** + jardinefaner.github.io/differentworld/**
             redirectTo: kIsWeb
-                ? null
+                ? Uri.base.toString().split('?').first.split('#').first
                 : 'com.jardine.differentworld://login-callback',
           );
       // signInWithOAuth returns immediately after launching the browser /
