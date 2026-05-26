@@ -67,21 +67,27 @@ class KidMode extends Notifier<bool> {
   }
 
   Future<void> _loadInitial() async {
-    // Web doesn't persist kid mode. A laptop / desktop browser is
-    // never going to be "handed to a kid" — the use case is mobile-
-    // only. Persisting on web means a survey-take session from a
-    // dev's testing pins kid-mode on across all subsequent visits,
-    // hiding the staff chrome and looking like the app is broken.
-    if (kIsWeb) return;
+    // Wave 129: don't restore a persisted kid-mode flag on cold
+    // launch — actively clear it instead. The original idea was
+    // "kid backgrounds the app while on survey-take → reopens →
+    // stays locked." But in practice, the survey-take screen's
+    // initState always re-calls .enter() when it mounts, so if
+    // the route is still on top after a resurrection the lock
+    // re-engages automatically. Persistence only matters when the
+    // user is NO LONGER on a kid-mode route after a force-quit —
+    // and in that case we DON'T want the lock to persist, because
+    // every staff screen (Today, Schedule, Captures, Tasks, etc.)
+    // would render with chrome stripped and look broken.
+    //
+    // Web already did this since Wave 91; Android catches up now.
     try {
       final prefs = await SharedPreferences.getInstance();
-      final persisted = prefs.getBool(_kPrefsKey) ?? false;
-      if (persisted && !state) {
-        state = true;
-      }
+      // Clear any stale persisted flag from older builds that did
+      // persist on Android. Idempotent if already absent.
+      await prefs.remove(_kPrefsKey);
     } on Object catch (e, st) {
       if (kDebugMode) {
-        debugPrint('[kid-mode] persistence load failed: $e\n$st');
+        debugPrint('[kid-mode] persistence clear failed: $e\n$st');
       }
     }
   }
@@ -100,29 +106,18 @@ class KidMode extends Notifier<bool> {
   }
 
   Future<void> _persist(bool value) async {
-    // Skip persistence on web — see `_loadInitial` for rationale.
-    // Also actively clear any stale value so a user upgrading from
-    // an older build that DID persist on web doesn't stay locked.
-    if (kIsWeb) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove(_kPrefsKey);
-      } on Object catch (_) {
-        // best-effort
-      }
-      return;
-    }
+    // Wave 129: don't persist on ANY platform. Per `_loadInitial`,
+    // restoring kid-mode from disk does more harm (chrome stripped
+    // from random screens after a survey-take force-quit) than
+    // good (the lock re-engages from the route's initState anyway).
+    // We actively clear any prior persisted value so older builds
+    // that DID persist don't leave users stuck.
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_kPrefsKey, value);
+      await prefs.remove(_kPrefsKey);
     } on Object catch (e, st) {
-      // Persistence is best-effort — if we can't write, the lock
-      // still works for the current session. Don't crash; the
-      // failure mode is "kid backgrounds + reopens after a crash =
-      // staff chrome visible" which is no worse than the pre-
-      // persistence behavior.
       if (kDebugMode) {
-        debugPrint('[kid-mode] persistence write failed: $e\n$st');
+        debugPrint('[kid-mode] persistence clear failed: $e\n$st');
       }
     }
   }
