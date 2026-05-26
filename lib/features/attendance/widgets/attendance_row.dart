@@ -109,9 +109,14 @@ class _StatusButton extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
+            // Wave 97: 48dp tap target — was 36, below WCAG/Material
+            // minimum. Attendance is the daily-use surface, marked
+            // ~50 times per teacher per day; below-spec targets here
+            // hurt the most. Icon stays 18dp so the visual density
+            // doesn't change perceptibly.
             child: SizedBox(
-              width: 36,
-              height: 36,
+              width: 48,
+              height: 48,
               child: Icon(status.icon, size: 18, color: fg),
             ),
           ),

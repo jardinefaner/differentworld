@@ -412,6 +412,11 @@ class _TaskCard extends ConsumerWidget {
               // accidental closes when users tap to read more.
               Tooltip(
                 message: 'Mark done',
+                // Wave 97: bumped padding 10 → 12 so the radius
+                // grows from 44 to 48 (matches Material's tap target
+                // minimum). The icon stays 24dp so the visual is the
+                // same; just more forgiving for the next 50,000
+                // taps a teacher does in their career.
                 child: InkResponse(
                   radius: 24,
                   onTap: () async {
@@ -419,7 +424,7 @@ class _TaskCard extends ConsumerWidget {
                     await ref.read(taskActionsProvider).markDone(task.id);
                   },
                   child: Padding(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(12),
                     child: Icon(
                       Icons.radio_button_unchecked,
                       color: overdue

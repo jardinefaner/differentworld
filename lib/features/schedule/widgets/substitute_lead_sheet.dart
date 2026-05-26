@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -104,7 +105,7 @@ class SubstituteLeadSheet extends ConsumerWidget {
               child: blocksAsync.when(
                 loading: () => const Padding(
                   padding: EdgeInsets.symmetric(vertical: 32),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: LoadingSlot(variant: LoadingVariant.spinner),
                 ),
                 error: (e, _) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
