@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/capabilities/role_keys.dart';
@@ -7,12 +9,14 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/master_detail_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
@@ -46,6 +50,12 @@ class TeamScreen extends ConsumerWidget {
 
     final teamAsync = ref.watch(_teamProvider(spaceId));
     final invitesAsync = ref.watch(pendingInvitesProvider(spaceId));
+    // Wave 118: ?selected=<id> from the URL drives the right-pane
+    // member summary at desktop widths. Refresh / share / browser-
+    // back all preserve it because it lives in the URL, not in
+    // local state.
+    final selectedId =
+        GoRouterState.of(context).uri.queryParameters['selected'];
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
@@ -64,73 +74,103 @@ class TeamScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(_teamProvider(spaceId)),
         ),
         data: (members) {
-          return ResponsivePage(
+          // The list column — same content as the old single-column
+          // scroll, but each _MemberTile now respects selection
+          // highlighting and the master-detail tap routing.
+          final list = ResponsivePage(
             children: [
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: ContentHeader(title: 'Team', bottomGap: 8),
               ),
               const _SectionLabel(label: 'Members'),
-                if (members.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Text('Nobody here yet.'),
-                  )
-                else
-                  for (final m in members) _MemberTile(member: m),
-                const SizedBox(height: 16),
-                const Divider(),
-                _PendingInvitesHeader(canInvite: canInvite),
-                invitesAsync.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: LinearProgressIndicator(),
+              if (members.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Text('Nobody here yet.'),
+                )
+              else
+                for (final m in members)
+                  _MemberTile(
+                    member: m,
+                    selectedId: selectedId,
                   ),
-                  error: (_, _) => const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Text('Could not load pending invites.'),
-                  ),
-                  data: (invites) {
-                    final theme = Theme.of(context);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (invites.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                            child: Text(
-                              'No pending invites.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          )
-                        else
-                          for (final inv in invites)
-                            _InviteTile(invite: inv, viewerCanInvite: canInvite),
-                        // Explicit in-body invite affordance for
-                        // directors. The same action lives in the
-                        // top-right chrome (PrimaryActionButton), but
-                        // the chrome icon is easy to miss as a primary
-                        // verb — surface it where users are reading.
-                        if (canInvite)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                            child: FilledButton.icon(
-                              onPressed: () => context.push(
-                                '/settings/team/invite/new',
-                              ),
-                              icon: const Icon(Icons.person_add_alt_1),
-                              label: const Text('Invite a teammate'),
+              const SizedBox(height: 16),
+              const Divider(),
+              _PendingInvitesHeader(canInvite: canInvite),
+              invitesAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: LinearProgressIndicator(),
+                ),
+                error: (_, _) => const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Text('Could not load pending invites.'),
+                ),
+                data: (invites) {
+                  final theme = Theme.of(context);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (invites.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          child: Text(
+                            'No pending invites.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 32),
-              ],
-            );
+                        )
+                      else
+                        for (final inv in invites)
+                          _InviteTile(
+                            invite: inv,
+                            viewerCanInvite: canInvite,
+                          ),
+                      // Explicit in-body invite affordance for
+                      // directors. The same action lives in the
+                      // top-right chrome (PrimaryActionButton), but
+                      // the chrome icon is easy to miss as a primary
+                      // verb — surface it where users are reading.
+                      if (canInvite)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                          child: FilledButton.icon(
+                            onPressed: () => context.push(
+                              '/settings/team/invite/new',
+                            ),
+                            icon: const Icon(Icons.person_add_alt_1),
+                            label: const Text('Invite a teammate'),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 32),
+            ],
+          );
+
+          // The detail pane: a compact summary of the selected
+          // member with a CTA into the full edit screen. Compact
+          // on purpose — this is the at-a-glance pane, not a
+          // replacement for the full /settings/team/<id> route
+          // where every cap + cert lives.
+          final selectedMember = selectedId == null
+              ? null
+              : members.where((m) => m.id == selectedId).firstOrNull;
+          final detail = selectedMember == null
+              ? null
+              : _MemberSummaryPanel(member: selectedMember);
+
+          return MasterDetailScaffold(
+            list: list,
+            detail: detail,
+            // Wider left rail than the default 360dp — member list
+            // rows are dense (avatar + 2-line subtitle + chevron).
+            listWidth: 420,
+          );
         },
       ),
       // FAB removed — "Invite a teammate" lives in the top-right
@@ -149,9 +189,14 @@ final _teamProvider = StreamProvider.autoDispose.family<List<Member>, String>(
 );
 
 class _MemberTile extends ConsumerWidget {
-  const _MemberTile({required this.member});
+  const _MemberTile({required this.member, this.selectedId});
 
   final Member member;
+
+  /// Wave 118: when non-null, the tile whose `member.id` matches
+  /// renders with a selected background. Drives the master-detail
+  /// left-rail highlight on wide windows.
+  final String? selectedId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -192,6 +237,14 @@ class _MemberTile extends ConsumerWidget {
     } else {
       subtitle = Text(roleLabel);
     }
+    // Wave 118: master-detail tap routing. On wide windows (≥1200dp,
+    // matching MasterDetailScaffold's collapseAt) update the URL
+    // with `?selected=<id>` so the right pane reflects the selection
+    // without a route push. On narrow, keep the drill-in to the
+    // full /settings/team/<id> route.
+    final isSelected = selectedId == member.id;
+    final isWide =
+        MediaQuery.sizeOf(context).width >= Breakpoints.tablet;
     return ListTile(
       leading: PersonAvatar(
         name: member.displayName,
@@ -199,8 +252,17 @@ class _MemberTile extends ConsumerWidget {
       ),
       title: Text(member.displayName),
       subtitle: subtitle,
+      selected: isSelected,
+      selectedTileColor:
+          theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.push('/settings/team/${member.id}'),
+      onTap: () {
+        if (isWide) {
+          context.replace('/settings/team?selected=${member.id}');
+        } else {
+          unawaited(context.push('/settings/team/${member.id}'));
+        }
+      },
     );
   }
 }
@@ -404,6 +466,80 @@ class _SectionLabel extends StatelessWidget {
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+/// Wave 118: the right-pane summary card for `/settings/team` master-
+/// detail. Renders the selected member's identity + role at a glance,
+/// with a CTA into the full edit screen. Compact on purpose — the
+/// full editing surface (cap toggles, certifications, danger zone)
+/// still lives at `/settings/team/<id>` where it has the screen
+/// estate to breathe. This pane is for "who is this person?" reads
+/// the director does scanning the roster, not for editing.
+class _MemberSummaryPanel extends ConsumerWidget {
+  const _MemberSummaryPanel({required this.member});
+
+  final Member member;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final vertical = ref.watch(verticalLabelsProvider).vertical;
+    final roleLabel = RoleLabels.of(member.role, vertical: vertical);
+    final caps = member.caps;
+    final actsAsDirector = caps.getBool(CoreCaps.canActAsDirector);
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PersonAvatar(
+                name: member.displayName,
+                photoUrl: member.avatarUrl,
+                radius: 56,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                member.displayName,
+                style: theme.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                roleLabel,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (actsAsDirector) ...[
+                const SizedBox(height: 8),
+                Chip(
+                  avatar: Icon(
+                    Icons.verified_user_outlined,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                  label: const Text('Acts as director'),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () =>
+                    context.push('/settings/team/${member.id}'),
+                icon: const Icon(Icons.tune),
+                label: const Text('Open full settings'),
+              ),
+            ],
+          ),
         ),
       ),
     );

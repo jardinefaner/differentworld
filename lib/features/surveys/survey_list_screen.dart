@@ -12,6 +12,7 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_grid.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
@@ -226,32 +227,45 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
           final statusBySubjectId = <String, String>{
             for (final r in responses) r.subjectId: r.status,
           };
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 32),
-            itemCount: subjects.length + 1,
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                final completed = responses
-                    .where((r) => r.status == SurveyResponseStatus.completed)
-                    .length;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: template.title,
-                    subtitle:
-                        '${template.year} · $completed / ${subjects.length} '
-                        'completed',
-                  ),
-                );
-              }
-              final subject = subjects[i - 1];
-              final status = statusBySubjectId[subject.id];
-              return _SubjectStatusRow(
-                subject: subject,
-                status: status,
-                templateId: template.id,
-              );
-            },
+          final completed = responses
+              .where((r) => r.status == SurveyResponseStatus.completed)
+              .length;
+          // Wave 116: ResponsiveGrid at tablet+. A roster of 24 kids
+          // each in a wide-and-short status row stretched edge-to-
+          // edge on a 1920px screen; 2-3 columns fits more on
+          // screen + makes the "tap a kid to start their survey"
+          // affordance feel like an interactive board.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ContentHeader(
+                  title: template.title,
+                  subtitle:
+                      '${template.year} · $completed / ${subjects.length} '
+                      'completed',
+                ),
+              ),
+              Expanded(
+                child: ResponsiveGrid(
+                  itemCount: subjects.length,
+                  // Status rows are short — avatar + name + status
+                  // chip. Wide-and-short reads as scannable.
+                  aspectRatio: 3,
+                  itemMaxWidth: 320,
+                  itemBuilder: (_, i) {
+                    final subject = subjects[i];
+                    final status = statusBySubjectId[subject.id];
+                    return _SubjectStatusRow(
+                      subject: subject,
+                      status: status,
+                      templateId: template.id,
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

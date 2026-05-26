@@ -598,6 +598,11 @@ class _PinInputState extends State<_PinInput> {
               autocorrect: false,
               enableSuggestions: false,
               textCapitalization: TextCapitalization.characters,
+              // Wave 115: oneTimeCode tells iOS / 1Password / browsers
+              // that this is a short verification code — they'll
+              // surface SMS auto-grab + "use this code" overlays
+              // automatically. Best fit for our 6-char invite codes.
+              autofillHints: const [AutofillHints.oneTimeCode],
               inputFormatters: [
                 FilteringTextInputFormatter.allow(
                   RegExp(r'[A-Za-z0-9 \-_]'),

@@ -203,6 +203,11 @@ class PickupPersonSheetState extends State<PickupPersonSheet> {
                 controller: _name,
                 autofocus: widget.existing == null,
                 textCapitalization: TextCapitalization.words,
+                // Wave 115: pickup people often come from a parent's
+                // address book — autofill suggestions cut a lot of
+                // typing when grandma / babysitter / neighbor is
+                // being added.
+                autofillHints: const [AutofillHints.name],
                 decoration: const InputDecoration(
                   labelText: 'Name',
                   border: OutlineInputBorder(),
@@ -212,6 +217,9 @@ class PickupPersonSheetState extends State<PickupPersonSheet> {
               TextField(
                 controller: _phone,
                 keyboardType: TextInputType.phone,
+                autofillHints: const [
+                  AutofillHints.telephoneNumber,
+                ],
                 decoration: const InputDecoration(
                   labelText: 'Phone (optional)',
                   border: OutlineInputBorder(),

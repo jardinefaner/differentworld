@@ -13,7 +13,7 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
-import 'package:differentworld/shared/widgets/responsive_page.dart';
+import 'package:differentworld/shared/widgets/responsive_grid.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
@@ -131,32 +131,43 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
               ),
             );
           }
-          return ResponsivePage.builder(
-            itemCount: rows.length + 1,
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: 'Capture inbox',
-                    subtitle:
-                        'What you noticed. Promote it to an observation, '
-                        'or dismiss it.',
-                  ),
-                );
-              }
-              final c = rows[i - 1];
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                child: _CaptureCard(
-                  capture: c,
-                  selectMode: _selectMode,
-                  selected: _selected.contains(c.id),
-                  onLongPress: () => _toggle(c.id),
-                  onTapInSelectMode: () => _toggle(c.id),
+          // Wave 116: ResponsiveGrid so captures flow as 2-3 columns
+          // at tablet/desktop. Captures are card-shaped (body + age
+          // pill + a small set of triage actions) and vary in height
+          // only slightly, so a uniform aspect grid reads well.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: ContentHeader(
+                  title: 'Capture inbox',
+                  subtitle:
+                      'What you noticed. Promote it to an observation, '
+                      'or dismiss it.',
                 ),
-              );
-            },
+              ),
+              Expanded(
+                child: ResponsiveGrid(
+                  itemCount: rows.length,
+                  // Capture cards carry 2-4 lines of body text + a
+                  // metadata row. ~2.5 reads "card-shaped, not a
+                  // tile."
+                  aspectRatio: 2.5,
+                  itemMaxWidth: 460,
+                  itemBuilder: (_, i) {
+                    final c = rows[i];
+                    return _CaptureCard(
+                      capture: c,
+                      selectMode: _selectMode,
+                      selected: _selected.contains(c.id),
+                      onLongPress: () => _toggle(c.id),
+                      onTapInSelectMode: () => _toggle(c.id),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

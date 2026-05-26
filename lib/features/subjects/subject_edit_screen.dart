@@ -321,6 +321,13 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                           TextCapitalization.words,
                                       textInputAction:
                                           TextInputAction.next,
+                                      // Wave 115: browser / 1Password
+                                      // autofill hint. `givenName` is
+                                      // the cross-platform W3C identity
+                                      // category for a first name.
+                                      autofillHints: const [
+                                        AutofillHints.givenName,
+                                      ],
                                       decoration: const InputDecoration(
                                         labelText: 'First name',
                                         border: OutlineInputBorder(),
@@ -339,6 +346,9 @@ class _SubjectEditScreenState extends ConsumerState<SubjectEditScreen> {
                                           TextCapitalization.words,
                                       textInputAction:
                                           TextInputAction.next,
+                                      autofillHints: const [
+                                        AutofillHints.familyName,
+                                      ],
                                       decoration: const InputDecoration(
                                         labelText: 'Last name',
                                         border: OutlineInputBorder(),

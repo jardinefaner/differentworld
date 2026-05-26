@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
@@ -68,6 +69,10 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
   String? _subjectId;
   bool _saving = false;
   bool _photoUploading = false;
+  /// Wave 117: true while the user is hovering with a dragged file
+  /// (from the OS or the browser) over the photo grid. Drives the
+  /// hover-highlight on the DropTarget.
+  bool _isDragging = false;
   String? _error;
 
   /// Pre-generated entry id when creating. Photo uploads use this in
@@ -275,6 +280,38 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
     }
     if (picked == null) return;
     await _uploadAll(picker, [picked]);
+  }
+
+  /// Wave 117: handler for files dropped onto the photo grid from the
+  /// OS (desktop) or the browser (web). Each `DropItemFile` carries a
+  /// path; we filter to image MIME types, convert to `XFile`, and
+  /// reuse the same `_uploadAll` path the file-picker uses.
+  Future<void> _handleDroppedFiles(List<XFile> files) async {
+    if (_photoUploading || files.isEmpty) return;
+    // Filter to image MIME types — desktop_drop accepts everything
+    // the OS drag source offers (PDFs, .txts, screenshots). Tag what
+    // we can; for paths whose extension is something we know is an
+    // image, accept; reject everything else.
+    final images = <XFile>[];
+    const imageExts = {
+      '.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif',
+    };
+    for (final f in files) {
+      final name = f.name.toLowerCase();
+      final mime = f.mimeType?.toLowerCase() ?? '';
+      final isImage = mime.startsWith('image/') ||
+          imageExts.any(name.endsWith);
+      if (isImage) images.add(f);
+    }
+    if (images.isEmpty) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Only images can be attached to observations.'),
+        ),
+      );
+      return;
+    }
+    await _uploadAll(ref.read(photoServiceProvider), images);
   }
 
   /// Custom multi-shot camera. Returns when the user taps Done; the
@@ -589,16 +626,51 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            ObservationPhotosGrid(
-              photos: _photos,
-              uploading: _photoUploading,
-              onAdd: _showAddPhotoSheet,
-              onView: (i) => PhotoViewer.open(
-                context,
-                urls: _photos,
-                initialIndex: i,
+            // Wave 117: DropTarget accepts files dragged from the OS
+            // (or the browser) directly onto the photos grid. _isDragging
+            // toggles a hover state so the user sees a clear drop zone
+            // appear when their finger / cursor crosses the boundary.
+            // The drop handler reuses the existing _uploadAll pipeline,
+            // so compression + offline queueing + the 'pending:' token
+            // all work identically to file-picker uploads.
+            DropTarget(
+              onDragEntered: (_) => setState(() => _isDragging = true),
+              onDragExited: (_) => setState(() => _isDragging = false),
+              onDragDone: (detail) {
+                setState(() => _isDragging = false);
+                unawaited(_handleDroppedFiles(detail.files));
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: _isDragging
+                      ? Border.all(
+                          color: theme.colorScheme.primary,
+                          width: 2,
+                        )
+                      : Border.all(
+                          color: Colors.transparent,
+                          width: 2,
+                        ),
+                  color: _isDragging
+                      ? theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.18)
+                      : Colors.transparent,
+                ),
+                padding: const EdgeInsets.all(4),
+                child: ObservationPhotosGrid(
+                  photos: _photos,
+                  uploading: _photoUploading,
+                  onAdd: _showAddPhotoSheet,
+                  onView: (i) => PhotoViewer.open(
+                    context,
+                    urls: _photos,
+                    initialIndex: i,
+                  ),
+                  onRemove: _removePhotoAt,
+                ),
               ),
-              onRemove: _removePhotoAt,
             ),
             if (_error != null) ...[
               const SizedBox(height: 12),

@@ -167,6 +167,13 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
                       textCapitalization: TextCapitalization.words,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
+                      // Wave 115: closest semantic hint for "name of
+                      // an organization the user is associated with."
+                      // Browsers won't reliably autofill this, but
+                      // tagging it keeps form heuristics consistent.
+                      autofillHints: const [
+                        AutofillHints.organizationName,
+                      ],
                       decoration: const InputDecoration(
                         labelText: 'Program name',
                         hintText: 'e.g. Sunshine Preschool',
