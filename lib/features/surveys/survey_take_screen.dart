@@ -8,10 +8,13 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/survey_chrome.dart';
+import 'package:differentworld/features/voice/aura_voices.dart';
+import 'package:differentworld/features/voice/survey_tts_service.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +50,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   bool _seeded = false;
   bool _saving = false;
   String? _error;
+
+  /// Wave 120: the kid's chosen TTS voice for this template. Null
+  /// until the picker fires on first session (a stale-or-empty
+  /// `voice_id` on the response row). Once set, the picker is
+  /// skipped on subsequent sessions and audio auto-plays.
+  String? _voiceId;
 
   /// Set true after the staff exit gesture completes; lets the next
   /// pop go through. Re-arms (back to false) whenever kid mode is
@@ -134,7 +143,67 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     _seeded = true;
     if (row != null) {
       _answers = SurveyAnswers.fromJson(row.answers);
+      // Wave 120: restore the previously-picked voice. If null, the
+      // picker overlay surfaces on first build; otherwise we go
+      // straight into question 1 with audio.
+      _voiceId = row.voiceId;
+      // If the voice is already known, kick off TTS for question 0
+      // as soon as the seed completes.
+      if (_voiceId != null) {
+        // Defer to post-frame so the build pipeline finishes before
+        // we trigger the player.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_playQuestion(0));
+        });
+      }
     }
+  }
+
+  /// Wave 120: kick off TTS for question at `index`. Fire-and-forget
+  /// from the caller's perspective — caching makes most calls a
+  /// near-instant disk read; failures degrade silently (kid still
+  /// sees the text).
+  Future<void> _playQuestion(int index) async {
+    final t = _template;
+    final voice = _voiceId;
+    if (t == null || voice == null) return;
+    if (index < 0 || index >= t.questions.length) return;
+    final q = t.questions[index];
+    final text = q.prompt.trim();
+    if (text.isEmpty) return;
+    final cacheKey = '${t.id}__${q.key}'
+        .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
+    try {
+      final path = await ref
+          .read(surveyTtsServiceProvider)
+          .resolve(voiceId: voice, text: text, cacheKey: cacheKey);
+      if (!mounted) return;
+      await ref.read(surveyTtsServiceProvider).play(path);
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[survey-tts] resolve/play failed: $e\n$st');
+      }
+    }
+  }
+
+  /// Wave 120: kid picked a voice on the first-question overlay.
+  /// Stash on state, persist on the response row via _autosave, then
+  /// auto-play question 0.
+  Future<void> _onVoicePicked(String voiceId) async {
+    if (!mounted) return;
+    setState(() => _voiceId = voiceId);
+    final t = _template;
+    if (t != null) {
+      await ref.read(surveyActionsProvider).save(
+            templateId: t.id,
+            subjectId: widget.subjectId,
+            answers: _answers,
+            complete: false,
+            voiceId: voiceId,
+          );
+    }
+    if (!mounted) return;
+    await _playQuestion(0);
   }
 
   Future<void> _autosave() async {
@@ -336,9 +405,25 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: PageView.builder(
+              // Wave 120: if the kid hasn't picked a voice yet for
+              // this template, show the picker INSTEAD of the
+              // PageView. They tap one of five voices, audio
+              // starts auto-playing, picker dismisses, and they
+              // proceed to question 1. Already-picked rows skip
+              // straight to questions.
+              child: _voiceId == null
+                  ? _VoicePickerOverlay(
+                      onPicked: _onVoicePicked,
+                      ttsService: ref.read(surveyTtsServiceProvider),
+                    )
+                  : PageView.builder(
                 controller: _page,
-                onPageChanged: (i) => setState(() => _index = i),
+                onPageChanged: (i) {
+                  setState(() => _index = i);
+                  // Wave 120: auto-play TTS for the new question.
+                  // Closeout page (i == totalQuestions) has no audio.
+                  if (i < totalQuestions) unawaited(_playQuestion(i));
+                },
                 itemCount: pageCount,
                 itemBuilder: (_, i) {
                   if (i == totalQuestions) {
@@ -374,6 +459,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                 },
               ),
             ),
+            // Close the ternary above (PageView branch).
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
@@ -429,5 +515,177 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     ),
   ),
   );
+  }
+}
+
+/// Wave 120: the 5-voice picker that fires on the first question of a
+/// kid's first session for a given template. Kid taps a voice tile to
+/// hear a 1-sentence sample (the voice introduces itself by name);
+/// when they tap "Pick" the voice locks in and the picker dismisses.
+///
+/// The tile they last tapped is preview-played; tapping a different
+/// tile cuts the previous preview and plays the new one. Only the
+/// final tap-then-confirm choice is persisted to the response row.
+class _VoicePickerOverlay extends StatefulWidget {
+  const _VoicePickerOverlay({
+    required this.onPicked,
+    required this.ttsService,
+  });
+
+  /// Called with the chosen Deepgram voice id after the kid confirms.
+  final Future<void> Function(String voiceId) onPicked;
+
+  /// Reused TTS service so the sample audio benefits from the same
+  /// cache the survey questions use — once a voice samples once
+  /// anywhere in the world, the next kid to preview it gets the
+  /// cached sample with no Deepgram call.
+  final SurveyTtsService ttsService;
+
+  @override
+  State<_VoicePickerOverlay> createState() => _VoicePickerOverlayState();
+}
+
+class _VoicePickerOverlayState extends State<_VoicePickerOverlay> {
+  String? _previewing;
+
+  /// Stable cache key for each voice's sample line — same key per voice
+  /// so every kid in the program shares one MP3 per voice. (5 voices
+  /// × 1 sample = 5 cached files for the whole platform.)
+  String _sampleKeyFor(AuraVoice v) => 'sample_${v.id}';
+
+  String _sampleTextFor(AuraVoice v) =>
+      "Hi! I'm ${v.displayName}. I can read the questions to you "
+      'if you tap me.';
+
+  Future<void> _preview(AuraVoice v) async {
+    setState(() => _previewing = v.id);
+    try {
+      final path = await widget.ttsService.resolve(
+        voiceId: v.id,
+        text: _sampleTextFor(v),
+        cacheKey: _sampleKeyFor(v),
+      );
+      if (!mounted) return;
+      await widget.ttsService.play(path);
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[voice-picker] preview failed: $e\n$st');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        children: [
+          Text(
+            'Pick a reader',
+            style: theme.textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tap to hear them say hi. Then pick the one you like.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: ListView.separated(
+              itemCount: kAuraCast.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final v = kAuraCast[i];
+                final selected = _previewing == v.id;
+                return Material(
+                  color: selected
+                      ? theme.colorScheme.primaryContainer
+                      : theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(16),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => _preview(v),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: selected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.secondaryContainer,
+                            child: Icon(
+                              v.gender == 'F'
+                                  ? Icons.face_3_outlined
+                                  : v.gender == 'M'
+                                      ? Icons.face_outlined
+                                      : Icons.face_6_outlined,
+                              color: selected
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSecondaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  v.displayName,
+                                  style: theme.textTheme.titleLarge,
+                                ),
+                                Text(
+                                  v.personality,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            selected
+                                ? Icons.volume_up
+                                : Icons.play_circle_outline,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _previewing == null
+                  ? null
+                  : () async {
+                      final picked = _previewing!;
+                      await widget.ttsService.stop();
+                      await widget.onPicked(picked);
+                    },
+              icon: const Icon(Icons.check),
+              label: Text(
+                _previewing == null
+                    ? 'Tap a reader to hear them'
+                    : 'Pick ${auraVoiceById(_previewing)?.displayName ?? "this one"}',
+              ),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

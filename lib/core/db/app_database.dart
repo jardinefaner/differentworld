@@ -322,6 +322,10 @@ class SurveyResponses extends Table {
   TextColumn get answers => text()(); // JSON string keyed by question_key
   TextColumn get startedAt => text()();
   TextColumn get completedAt => text().nullable()();
+  // Wave 120: the kid's chosen TTS voice for this template, e.g.
+  // `aura-2-thalia-en`. Null until they pick on the first question;
+  // once set, it persists so subsequent sessions skip the picker.
+  TextColumn get voiceId => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 

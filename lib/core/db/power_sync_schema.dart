@@ -187,6 +187,8 @@ const appSchema = Schema([
     Column.text('completed_at'),
     Column.text('created_at'),
     Column.text('updated_at'),
+    // Wave 120: the kid's chosen TTS voice for this template.
+    Column.text('voice_id'),
   ]),
   Table('dismissed_insights', [
     Column.text('space_id'),

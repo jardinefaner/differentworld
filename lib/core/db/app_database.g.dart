@@ -8863,6 +8863,17 @@ class $SurveyResponsesTable extends SurveyResponses
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _voiceIdMeta = const VerificationMeta(
+    'voiceId',
+  );
+  @override
+  late final GeneratedColumn<String> voiceId = GeneratedColumn<String>(
+    'voice_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8896,6 +8907,7 @@ class $SurveyResponsesTable extends SurveyResponses
     answers,
     startedAt,
     completedAt,
+    voiceId,
     createdAt,
     updatedAt,
   ];
@@ -8979,6 +8991,12 @@ class $SurveyResponsesTable extends SurveyResponses
         ),
       );
     }
+    if (data.containsKey('voice_id')) {
+      context.handle(
+        _voiceIdMeta,
+        voiceId.isAcceptableOrUnknown(data['voice_id']!, _voiceIdMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -9040,6 +9058,10 @@ class $SurveyResponsesTable extends SurveyResponses
         DriftSqlType.string,
         data['${effectivePrefix}completed_at'],
       ),
+      voiceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}voice_id'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -9067,6 +9089,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
   final String answers;
   final String startedAt;
   final String? completedAt;
+  final String? voiceId;
   final String createdAt;
   final String updatedAt;
   const SurveyResponse({
@@ -9079,6 +9102,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     required this.answers,
     required this.startedAt,
     this.completedAt,
+    this.voiceId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -9097,6 +9121,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     map['started_at'] = Variable<String>(startedAt);
     if (!nullToAbsent || completedAt != null) {
       map['completed_at'] = Variable<String>(completedAt);
+    }
+    if (!nullToAbsent || voiceId != null) {
+      map['voice_id'] = Variable<String>(voiceId);
     }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
@@ -9118,6 +9145,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       completedAt: completedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(completedAt),
+      voiceId: voiceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(voiceId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -9138,6 +9168,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       answers: serializer.fromJson<String>(json['answers']),
       startedAt: serializer.fromJson<String>(json['startedAt']),
       completedAt: serializer.fromJson<String?>(json['completedAt']),
+      voiceId: serializer.fromJson<String?>(json['voiceId']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -9155,6 +9186,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       'answers': serializer.toJson<String>(answers),
       'startedAt': serializer.toJson<String>(startedAt),
       'completedAt': serializer.toJson<String?>(completedAt),
+      'voiceId': serializer.toJson<String?>(voiceId),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -9170,6 +9202,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     String? answers,
     String? startedAt,
     Value<String?> completedAt = const Value.absent(),
+    Value<String?> voiceId = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => SurveyResponse(
@@ -9182,6 +9215,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     answers: answers ?? this.answers,
     startedAt: startedAt ?? this.startedAt,
     completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    voiceId: voiceId.present ? voiceId.value : this.voiceId,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -9202,6 +9236,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       completedAt: data.completedAt.present
           ? data.completedAt.value
           : this.completedAt,
+      voiceId: data.voiceId.present ? data.voiceId.value : this.voiceId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -9219,6 +9254,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
           ..write('answers: $answers, ')
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
+          ..write('voiceId: $voiceId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -9236,6 +9272,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     answers,
     startedAt,
     completedAt,
+    voiceId,
     createdAt,
     updatedAt,
   );
@@ -9252,6 +9289,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
           other.answers == this.answers &&
           other.startedAt == this.startedAt &&
           other.completedAt == this.completedAt &&
+          other.voiceId == this.voiceId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -9266,6 +9304,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
   final Value<String> answers;
   final Value<String> startedAt;
   final Value<String?> completedAt;
+  final Value<String?> voiceId;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -9279,6 +9318,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     this.answers = const Value.absent(),
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
+    this.voiceId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9293,6 +9333,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     required String answers,
     required String startedAt,
     this.completedAt = const Value.absent(),
+    this.voiceId = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -9315,6 +9356,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     Expression<String>? answers,
     Expression<String>? startedAt,
     Expression<String>? completedAt,
+    Expression<String>? voiceId,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -9329,6 +9371,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
       if (answers != null) 'answers': answers,
       if (startedAt != null) 'started_at': startedAt,
       if (completedAt != null) 'completed_at': completedAt,
+      if (voiceId != null) 'voice_id': voiceId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -9345,6 +9388,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     Value<String>? answers,
     Value<String>? startedAt,
     Value<String?>? completedAt,
+    Value<String?>? voiceId,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -9359,6 +9403,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
       answers: answers ?? this.answers,
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
+      voiceId: voiceId ?? this.voiceId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -9395,6 +9440,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     if (completedAt.present) {
       map['completed_at'] = Variable<String>(completedAt.value);
     }
+    if (voiceId.present) {
+      map['voice_id'] = Variable<String>(voiceId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -9419,6 +9467,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
           ..write('answers: $answers, ')
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
+          ..write('voiceId: $voiceId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -22909,6 +22958,7 @@ typedef $$SurveyResponsesTableCreateCompanionBuilder =
       required String answers,
       required String startedAt,
       Value<String?> completedAt,
+      Value<String?> voiceId,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -22924,6 +22974,7 @@ typedef $$SurveyResponsesTableUpdateCompanionBuilder =
       Value<String> answers,
       Value<String> startedAt,
       Value<String?> completedAt,
+      Value<String?> voiceId,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -22980,6 +23031,11 @@ class $$SurveyResponsesTableFilterComposer
 
   ColumnFilters<String> get completedAt => $composableBuilder(
     column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get voiceId => $composableBuilder(
+    column: $table.voiceId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -23048,6 +23104,11 @@ class $$SurveyResponsesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get voiceId => $composableBuilder(
+    column: $table.voiceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -23100,6 +23161,9 @@ class $$SurveyResponsesTableAnnotationComposer
     column: $table.completedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get voiceId =>
+      $composableBuilder(column: $table.voiceId, builder: (column) => column);
 
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -23154,6 +23218,7 @@ class $$SurveyResponsesTableTableManager
                 Value<String> answers = const Value.absent(),
                 Value<String> startedAt = const Value.absent(),
                 Value<String?> completedAt = const Value.absent(),
+                Value<String?> voiceId = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -23167,6 +23232,7 @@ class $$SurveyResponsesTableTableManager
                 answers: answers,
                 startedAt: startedAt,
                 completedAt: completedAt,
+                voiceId: voiceId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -23182,6 +23248,7 @@ class $$SurveyResponsesTableTableManager
                 required String answers,
                 required String startedAt,
                 Value<String?> completedAt = const Value.absent(),
+                Value<String?> voiceId = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -23195,6 +23262,7 @@ class $$SurveyResponsesTableTableManager
                 answers: answers,
                 startedAt: startedAt,
                 completedAt: completedAt,
+                voiceId: voiceId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

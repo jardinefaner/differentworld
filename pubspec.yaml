@@ -61,6 +61,14 @@ dependencies:
   # OS-level drag source).
   desktop_drop: ^0.7.1
 
+  # Wave 120: audio playback for the survey TTS (Aura 2). Picks
+  # up MP3 bytes from the local cache (or the Supabase signed URL
+  # on first fetch) and plays them. just_audio handles every
+  # platform (iOS / Android / macOS / Windows / Linux / web).
+  just_audio: ^0.10.4
+  # path_provider already declared above — reused for the TTS
+  # cache directory at ${appDocs}/tts/{voice}/{question_id}.mp3.
+
   # Stream composition (already a transitive via PowerSync; declare it
   # explicitly because we use Rx.combineLatest in groups_providers).
   rxdart: ^0.28.0

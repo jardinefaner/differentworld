@@ -155,11 +155,17 @@ class SurveyActions {
   /// Save the (possibly partial) answers under (templateId, subjectId).
   /// If `complete` is true, mark the response as completed; otherwise
   /// it stays a draft the kid can re-open later.
+  ///
+  /// Wave 120: `voiceId` is the Deepgram Aura 2 voice the kid picked
+  /// for TTS playback on this template. Null is allowed — older
+  /// rows from before the picker shipped won't have one and the
+  /// next session will prompt. Once set, it's sticky.
   Future<void> save({
     required String templateId,
     required String subjectId,
     required SurveyAnswers answers,
     required bool complete,
+    String? voiceId,
   }) async {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.spaceId;
@@ -176,6 +182,7 @@ class SurveyActions {
       status: complete ? 'completed' : 'draft',
       recordedBy: viewer.memberId,
       completedAt: complete ? DateTime.now() : null,
+      voiceId: voiceId,
     );
   }
 

@@ -65,6 +65,7 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
     required String status,
     String? recordedBy,
     DateTime? completedAt,
+    String? voiceId,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final existing = await findForSubject(
@@ -84,6 +85,7 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
           answers: answersJson,
           startedAt: now,
           completedAt: Value(completedIso),
+          voiceId: Value(voiceId),
           createdAt: now,
           updatedAt: now,
         ),
@@ -100,6 +102,9 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
             ? const Value.absent()
             : Value(recordedBy),
         completedAt: Value(completedIso),
+        // voice id is opt-in on update: absent value = leave alone,
+        // explicit value (including null) overwrites.
+        voiceId: voiceId == null ? const Value.absent() : Value(voiceId),
         updatedAt: Value(now),
       ),
     );
