@@ -7,7 +7,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
-import 'package:differentworld/shared/widgets/responsive_page.dart';
+import 'package:differentworld/shared/widgets/responsive_grid.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
@@ -73,20 +73,31 @@ class VehiclesListScreen extends ConsumerWidget {
                   : null,
             );
           }
-          return ResponsivePage.builder(
-            itemCount: vehicles.length + 1,
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: 'Vehicles',
-                    subtitle: 'Pre-trip checks and check-in/check-out',
-                  ),
-                );
-              }
-              return _VehicleTile(vehicle: vehicles[i - 1]);
-            },
+          // Wave 110: ResponsiveGrid so a fleet of vehicles renders
+          // as 2 cards/row at tablet, 3 cards/row at desktop. Phone
+          // stays single-column. The ContentHeader becomes a sibling
+          // ABOVE the grid (it doesn't belong inside the grid
+          // because it isn't a card).
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: ContentHeader(
+                  title: 'Vehicles',
+                  subtitle: 'Pre-trip checks and check-in/check-out',
+                ),
+              ),
+              Expanded(
+                child: ResponsiveGrid(
+                  itemCount: vehicles.length,
+                  // Vehicle tiles are tall (photo + name + status +
+                  // driver row). Adjust aspect so they don't squash.
+                  aspectRatio: 1.4,
+                  itemBuilder: (_, i) => _VehicleTile(vehicle: vehicles[i]),
+                ),
+              ),
+            ],
           );
         },
       ),

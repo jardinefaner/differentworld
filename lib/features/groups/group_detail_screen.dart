@@ -17,6 +17,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/responsive_grid.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
@@ -177,51 +178,61 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   return name.contains(_query.toLowerCase());
                 }).toList();
 
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 96),
-            itemCount: filtered.length + 2,
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: group?.name ?? labels.group,
-                    subtitle: group?.ageRange,
-                    bottomGap: 8,
-                  ),
-                );
-              }
-              if (i == 1) {
-                // Search pill — useful when rosters cross 10 kids
-                // (a phone roster of 24 is unscannable without one).
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: TextField(
-                    controller: _searchCtl,
-                    onChanged: (v) => setState(() => _query = v),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: 'Find a student…',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      suffixIcon: _query.isEmpty
-                          ? null
-                          : IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _searchCtl.clear();
-                                setState(() => _query = '');
-                              },
-                            ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+          // Wave 110: header + search field as siblings ABOVE the
+          // grid (they're not roster cards). The roster itself
+          // flows into a ResponsiveGrid so a class of 24 kids
+          // renders as 2 columns at tablet, 3 columns at desktop
+          // instead of a 1920-wide single column.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ContentHeader(
+                  title: group?.name ?? labels.group,
+                  subtitle: group?.ageRange,
+                  bottomGap: 8,
+                ),
+              ),
+              // Search pill — useful when rosters cross 10 kids.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: TextField(
+                  controller: _searchCtl,
+                  onChanged: (v) => setState(() => _query = v),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: 'Find a student…',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchCtl.clear();
+                              setState(() => _query = '');
+                            },
+                          ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                );
-              }
-              final subject = filtered[i - 2];
-              return _SubjectTile(subject: subject, groupId: groupId);
-            },
+                ),
+              ),
+              Expanded(
+                child: ResponsiveGrid(
+                  itemCount: filtered.length,
+                  // Roster tiles are short (avatar + name + age).
+                  // 3.0 = wide-and-short — fits more kids on screen.
+                  aspectRatio: 3,
+                  itemMaxWidth: 320,
+                  itemBuilder: (_, i) => _SubjectTile(
+                    subject: filtered[i],
+                    groupId: groupId,
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
