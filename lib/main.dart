@@ -4,11 +4,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Use path-based URLs on web (e.g. /differentworld/schedule) instead
+  // of hash-fragment URLs (/differentworld/#/schedule). Path URLs look
+  // like real URLs, are bookmark-clean, and play correctly with the
+  // browser back button. Paired with a copy of index.html as 404.html
+  // on the server (handled in .github/workflows/deploy-web.yml) so
+  // GitHub Pages serves the Flutter shell for any unknown path —
+  // Flutter's go_router then resolves the path client-side.
+  //
+  // No-op on mobile / desktop.
+  usePathUrlStrategy();
   await Env.load();
 
   // Edge-to-edge: status bar + gesture nav are transparent, content

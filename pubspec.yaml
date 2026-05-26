@@ -9,6 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Used in main.dart to opt into path-based web URLs (instead of
+  # hash-fragment URLs). Ships with the Flutter SDK; declared
+  # explicitly so the analyzer accepts the import.
+  flutter_web_plugins:
+    sdk: flutter
 
   cupertino_icons: ^1.0.8
 

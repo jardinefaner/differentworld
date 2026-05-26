@@ -76,6 +76,15 @@ jobs:
       - name: Build web
         run: flutter build web --base-href "/differentworld/" --release
 
+      # SPA fallback: GitHub Pages 404s for any unknown path
+      # (`/differentworld/schedule` etc), but it WILL serve a
+      # `404.html` if present. Make that file a copy of `index.html`
+      # so the Flutter shell loads on any path and `go_router`
+      # resolves the route client-side. This is the standard
+      # GitHub-Pages-hosting-an-SPA trick.
+      - name: Copy index.html to 404.html (SPA fallback)
+        run: cp build/web/index.html build/web/404.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
