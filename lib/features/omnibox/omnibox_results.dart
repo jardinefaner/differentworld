@@ -45,16 +45,40 @@ class OmniboxResults extends ConsumerWidget {
     scored.sort((a, b) => b.$2.compareTo(a.$2));
     final top = scored.map((p) => p.$1).take(12).toList();
     if (top.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'No matches for "$query".',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      // Wave 96: the no-results state used to be a dead-end with
+      // just "No matches for X." Now: brief context-line + a small
+      // set of fallback entries (the catalog's "always show" picks)
+      // so the user has a tap target instead of a blank canvas.
+      // First few catalog entries — typically the highest-traffic
+      // verbs (capture, attendance, observation, surveys).
+      final fallback = catalog.take(4).toList();
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(0, 64, 0, 24),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+            child: Text(
+              'No results for "$query" — try a name or one of these:',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-        ),
+          for (final e in fallback) ...[
+            ListTile(
+              leading: Icon(e.icon, color: theme.colorScheme.primary),
+              title: Text(e.label),
+              subtitle: Text(
+                e.subtitle ?? e.category.label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              onTap: () => e.onSelect(context, ref),
+            ),
+            const Divider(height: 1),
+          ],
+        ],
       );
     }
     return ListView.separated(

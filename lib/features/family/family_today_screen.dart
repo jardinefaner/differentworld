@@ -82,9 +82,15 @@ class FamilyTodayScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.child_care_outlined,
               title: 'No children linked yet',
+              // Wave 96: dropped the "check back in a few minutes"
+              // promise — linking children often happens days
+              // before the program starts, and a parent who came
+              // back the next day shouldn't think the app is
+              // broken. Now: just say what will happen, without
+              // pretending we know when.
               message:
-                  'Your program director will link your children to your '
-                  'account shortly. Check back in a few minutes.',
+                  "Your program director hasn't linked your children yet. "
+                  "Once they do, your child's daily updates will appear here.",
             );
           }
           return _FamilyTodayList(
