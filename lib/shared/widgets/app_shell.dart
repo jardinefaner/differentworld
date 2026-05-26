@@ -22,7 +22,8 @@ import 'package:differentworld/shared/widgets/route_chrome.dart';
 import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemChannels, SystemNavigator;
+import 'package:flutter/services.dart'
+    show LogicalKeyboardKey, SystemChannels, SystemNavigator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -483,7 +484,28 @@ class _AppShellState extends ConsumerState<AppShell> {
     // overlay (if any) is currently visible.
     final canPop = !atRoot && !_searchOverlayOpen;
 
-    return PopScope(
+    // Keyboard shortcuts — desktop-/web-friendly verbs. Cmd-K opens
+    // the omnibox (the universal "go anywhere" verb), Esc closes the
+    // overlay, Cmd-/ also opens (a Discord / Slack convention). Mobile
+    // users never hit these but they're free to add — `CallbackShortcuts`
+    // only fires when a keyboard is present.
+    final shortcuts = <ShortcutActivator, VoidCallback>{
+      const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+          _focus.requestFocus,
+      const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+          _focus.requestFocus,
+      const SingleActivator(LogicalKeyboardKey.slash, meta: true):
+          _focus.requestFocus,
+      const SingleActivator(LogicalKeyboardKey.slash, control: true):
+          _focus.requestFocus,
+      const SingleActivator(LogicalKeyboardKey.escape): () {
+        if (_searchOverlayOpen) _closeSearchOverlay();
+      },
+    };
+
+    return CallbackShortcuts(
+      bindings: shortcuts,
+      child: PopScope(
       canPop: canPop,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
@@ -655,6 +677,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
             ),
         ],
+      ),
       ),
       ),
     );
