@@ -77,6 +77,15 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// Lifecycle: built in initState, disposed in dispose.
   late final SurveyTtsService _tts;
 
+  /// Wave 137: token for the latest _playQuestion invocation. The
+  /// TTS service has its OWN token for `play()`, but that one
+  /// guards AFTER resolve completes — meaning a slow first-time
+  /// resolve (Supabase fetch) for page N can complete after a fast
+  /// cache-hit resolve for page N+1, and the page N audio plays
+  /// on top of N+1's. Tracking the latest invocation in
+  /// survey-take lets us bail out BEFORE play() runs.
+  int _playRequestId = 0;
+
   /// Set true after the staff exit gesture completes; lets the next
   /// pop go through. Re-arms (back to false) whenever kid mode is
   /// still locked, so the user re-does the gesture to leave again.
@@ -217,6 +226,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// multiselect option — in the latter case, play the option
   /// label instead of the question prompt so the kid hears the
   /// specific yes/no being asked.
+  ///
+  /// Wave 137: token-guarded against races. If a new _playQuestion
+  /// fires while an older one's resolve() is still in flight, the
+  /// older one bails out before it can stomp on the newer audio.
   Future<void> _playQuestion(int index) async {
     final t = _template;
     final voice = _voiceId;
@@ -239,13 +252,22 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     if (text.isEmpty) return;
     final cacheKey = '${t.id}__$cacheSuffix'
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
+    // Claim the token before any async work. If anything later
+    // mutates _playRequestId (another _playQuestion call), we know
+    // we've been superseded and should not play.
+    final myToken = ++_playRequestId;
     try {
       final path = await _tts.resolve(
         voiceId: voice,
         text: text,
         cacheKey: cacheKey,
       );
-      if (!mounted) return;
+      // Wave 137: bail if a newer _playQuestion already started.
+      // Without this check, a slow first-time resolve for page N
+      // can finish after a fast cache-hit resolve for page N+1
+      // and stomp on the newer audio. Belt + suspenders alongside
+      // the play()-internal token in SurveyTtsService.
+      if (!mounted || myToken != _playRequestId) return;
       await _tts.play(path);
     } on Object catch (e, st) {
       if (kDebugMode) {
