@@ -2539,6 +2539,17 @@ class $AttendanceRecordsTable extends AttendanceRecords
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _lastUpdatedByMeta = const VerificationMeta(
+    'lastUpdatedBy',
+  );
+  @override
+  late final GeneratedColumn<String> lastUpdatedBy = GeneratedColumn<String>(
+    'last_updated_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2551,6 +2562,7 @@ class $AttendanceRecordsTable extends AttendanceRecords
     recordedBy,
     recordedAt,
     updatedAt,
+    lastUpdatedBy,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2637,6 +2649,15 @@ class $AttendanceRecordsTable extends AttendanceRecords
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('last_updated_by')) {
+      context.handle(
+        _lastUpdatedByMeta,
+        lastUpdatedBy.isAcceptableOrUnknown(
+          data['last_updated_by']!,
+          _lastUpdatedByMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2686,6 +2707,10 @@ class $AttendanceRecordsTable extends AttendanceRecords
         DriftSqlType.string,
         data['${effectivePrefix}updated_at'],
       )!,
+      lastUpdatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_updated_by'],
+      ),
     );
   }
 
@@ -2707,6 +2732,7 @@ class AttendanceRecord extends DataClass
   final String recordedBy;
   final String recordedAt;
   final String updatedAt;
+  final String? lastUpdatedBy;
   const AttendanceRecord({
     required this.id,
     required this.spaceId,
@@ -2718,6 +2744,7 @@ class AttendanceRecord extends DataClass
     required this.recordedBy,
     required this.recordedAt,
     required this.updatedAt,
+    this.lastUpdatedBy,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2736,6 +2763,9 @@ class AttendanceRecord extends DataClass
     map['recorded_by'] = Variable<String>(recordedBy);
     map['recorded_at'] = Variable<String>(recordedAt);
     map['updated_at'] = Variable<String>(updatedAt);
+    if (!nullToAbsent || lastUpdatedBy != null) {
+      map['last_updated_by'] = Variable<String>(lastUpdatedBy);
+    }
     return map;
   }
 
@@ -2755,6 +2785,9 @@ class AttendanceRecord extends DataClass
       recordedBy: Value(recordedBy),
       recordedAt: Value(recordedAt),
       updatedAt: Value(updatedAt),
+      lastUpdatedBy: lastUpdatedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastUpdatedBy),
     );
   }
 
@@ -2774,6 +2807,7 @@ class AttendanceRecord extends DataClass
       recordedBy: serializer.fromJson<String>(json['recordedBy']),
       recordedAt: serializer.fromJson<String>(json['recordedAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
+      lastUpdatedBy: serializer.fromJson<String?>(json['lastUpdatedBy']),
     );
   }
   @override
@@ -2790,6 +2824,7 @@ class AttendanceRecord extends DataClass
       'recordedBy': serializer.toJson<String>(recordedBy),
       'recordedAt': serializer.toJson<String>(recordedAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
+      'lastUpdatedBy': serializer.toJson<String?>(lastUpdatedBy),
     };
   }
 
@@ -2804,6 +2839,7 @@ class AttendanceRecord extends DataClass
     String? recordedBy,
     String? recordedAt,
     String? updatedAt,
+    Value<String?> lastUpdatedBy = const Value.absent(),
   }) => AttendanceRecord(
     id: id ?? this.id,
     spaceId: spaceId ?? this.spaceId,
@@ -2815,6 +2851,9 @@ class AttendanceRecord extends DataClass
     recordedBy: recordedBy ?? this.recordedBy,
     recordedAt: recordedAt ?? this.recordedAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    lastUpdatedBy: lastUpdatedBy.present
+        ? lastUpdatedBy.value
+        : this.lastUpdatedBy,
   );
   AttendanceRecord copyWithCompanion(AttendanceRecordsCompanion data) {
     return AttendanceRecord(
@@ -2832,6 +2871,9 @@ class AttendanceRecord extends DataClass
           ? data.recordedAt.value
           : this.recordedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      lastUpdatedBy: data.lastUpdatedBy.present
+          ? data.lastUpdatedBy.value
+          : this.lastUpdatedBy,
     );
   }
 
@@ -2847,7 +2889,8 @@ class AttendanceRecord extends DataClass
           ..write('notes: $notes, ')
           ..write('recordedBy: $recordedBy, ')
           ..write('recordedAt: $recordedAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lastUpdatedBy: $lastUpdatedBy')
           ..write(')'))
         .toString();
   }
@@ -2864,6 +2907,7 @@ class AttendanceRecord extends DataClass
     recordedBy,
     recordedAt,
     updatedAt,
+    lastUpdatedBy,
   );
   @override
   bool operator ==(Object other) =>
@@ -2878,7 +2922,8 @@ class AttendanceRecord extends DataClass
           other.notes == this.notes &&
           other.recordedBy == this.recordedBy &&
           other.recordedAt == this.recordedAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.lastUpdatedBy == this.lastUpdatedBy);
 }
 
 class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
@@ -2892,6 +2937,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
   final Value<String> recordedBy;
   final Value<String> recordedAt;
   final Value<String> updatedAt;
+  final Value<String?> lastUpdatedBy;
   final Value<int> rowid;
   const AttendanceRecordsCompanion({
     this.id = const Value.absent(),
@@ -2904,6 +2950,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
     this.recordedBy = const Value.absent(),
     this.recordedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.lastUpdatedBy = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   AttendanceRecordsCompanion.insert({
@@ -2917,6 +2964,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
     required String recordedBy,
     required String recordedAt,
     required String updatedAt,
+    this.lastUpdatedBy = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        spaceId = Value(spaceId),
@@ -2937,6 +2985,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
     Expression<String>? recordedBy,
     Expression<String>? recordedAt,
     Expression<String>? updatedAt,
+    Expression<String>? lastUpdatedBy,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2950,6 +2999,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
       if (recordedBy != null) 'recorded_by': recordedBy,
       if (recordedAt != null) 'recorded_at': recordedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (lastUpdatedBy != null) 'last_updated_by': lastUpdatedBy,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2965,6 +3015,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
     Value<String>? recordedBy,
     Value<String>? recordedAt,
     Value<String>? updatedAt,
+    Value<String?>? lastUpdatedBy,
     Value<int>? rowid,
   }) {
     return AttendanceRecordsCompanion(
@@ -2978,6 +3029,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
       recordedBy: recordedBy ?? this.recordedBy,
       recordedAt: recordedAt ?? this.recordedAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3015,6 +3067,9 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<String>(updatedAt.value);
     }
+    if (lastUpdatedBy.present) {
+      map['last_updated_by'] = Variable<String>(lastUpdatedBy.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3034,6 +3089,7 @@ class AttendanceRecordsCompanion extends UpdateCompanion<AttendanceRecord> {
           ..write('recordedBy: $recordedBy, ')
           ..write('recordedAt: $recordedAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('lastUpdatedBy: $lastUpdatedBy, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -19777,6 +19833,7 @@ typedef $$AttendanceRecordsTableCreateCompanionBuilder =
       required String recordedBy,
       required String recordedAt,
       required String updatedAt,
+      Value<String?> lastUpdatedBy,
       Value<int> rowid,
     });
 typedef $$AttendanceRecordsTableUpdateCompanionBuilder =
@@ -19791,6 +19848,7 @@ typedef $$AttendanceRecordsTableUpdateCompanionBuilder =
       Value<String> recordedBy,
       Value<String> recordedAt,
       Value<String> updatedAt,
+      Value<String?> lastUpdatedBy,
       Value<int> rowid,
     });
 
@@ -19850,6 +19908,11 @@ class $$AttendanceRecordsTableFilterComposer
 
   ColumnFilters<String> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastUpdatedBy => $composableBuilder(
+    column: $table.lastUpdatedBy,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -19912,6 +19975,11 @@ class $$AttendanceRecordsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get lastUpdatedBy => $composableBuilder(
+    column: $table.lastUpdatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AttendanceRecordsTableAnnotationComposer
@@ -19956,6 +20024,11 @@ class $$AttendanceRecordsTableAnnotationComposer
 
   GeneratedColumn<String> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get lastUpdatedBy => $composableBuilder(
+    column: $table.lastUpdatedBy,
+    builder: (column) => column,
+  );
 }
 
 class $$AttendanceRecordsTableTableManager
@@ -20008,6 +20081,7 @@ class $$AttendanceRecordsTableTableManager
                 Value<String> recordedBy = const Value.absent(),
                 Value<String> recordedAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
+                Value<String?> lastUpdatedBy = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AttendanceRecordsCompanion(
                 id: id,
@@ -20020,6 +20094,7 @@ class $$AttendanceRecordsTableTableManager
                 recordedBy: recordedBy,
                 recordedAt: recordedAt,
                 updatedAt: updatedAt,
+                lastUpdatedBy: lastUpdatedBy,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -20034,6 +20109,7 @@ class $$AttendanceRecordsTableTableManager
                 required String recordedBy,
                 required String recordedAt,
                 required String updatedAt,
+                Value<String?> lastUpdatedBy = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => AttendanceRecordsCompanion.insert(
                 id: id,
@@ -20046,6 +20122,7 @@ class $$AttendanceRecordsTableTableManager
                 recordedBy: recordedBy,
                 recordedAt: recordedAt,
                 updatedAt: updatedAt,
+                lastUpdatedBy: lastUpdatedBy,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

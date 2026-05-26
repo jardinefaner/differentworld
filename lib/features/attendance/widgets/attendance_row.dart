@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// One student row on the attendance / morning-checklist screens.
 ///
@@ -22,11 +25,20 @@ class AttendanceRow extends StatelessWidget {
     required this.subject,
     required this.status,
     required this.onChangeStatus,
+    this.record,
     super.key,
   });
 
   final Subject subject;
   final AttendanceStatus? status;
+
+  /// The current attendance row, if any. Drives the Wave 105 audit
+  /// footnote: when `lastUpdatedBy` exists and differs from
+  /// `recordedBy`, the row surfaces "Updated by X · 2m ago" so a
+  /// teacher whose write was overwritten by a co-teacher can see
+  /// who flipped it. Optional — older call sites that don't have
+  /// the record handy stay supported.
+  final AttendanceRecord? record;
 
   /// Called when the user taps a status icon. The widget passes the
   /// new status, OR `null` if the user re-tapped the current status
@@ -37,6 +49,14 @@ class AttendanceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fullName = '${subject.firstName} ${subject.lastName}';
+    // Wave 105: an overwrite is when someone OTHER than the original
+    // author last touched the row. Calm path (single author, no
+    // collision) stays visually quiet.
+    final overwrittenBy = record != null &&
+            record!.lastUpdatedBy != null &&
+            record!.lastUpdatedBy != record!.recordedBy
+        ? record!.lastUpdatedBy
+        : null;
 
     // RepaintBoundary so a tap-ripple on one row doesn't repaint
     // siblings — important on the morning checklist where users
@@ -44,33 +64,75 @@ class AttendanceRow extends StatelessWidget {
     return RepaintBoundary(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                fullName,
-                style: theme.textTheme.bodyLarge,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+            Row(
+              children: [
+                PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    fullName,
+                    style: theme.textTheme.bodyLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                for (final s in AttendanceStatus.values) ...[
+                  _StatusButton(
+                    status: s,
+                    selected: s == status,
+                    onTap: () async {
+                      unawaited(HapticFeedback.selectionClick());
+                      // Re-tap clears; otherwise sets to this status.
+                      await onChangeStatus(s == status ? null : s);
+                    },
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ],
             ),
-            const SizedBox(width: 8),
-            for (final s in AttendanceStatus.values) ...[
-              _StatusButton(
-                status: s,
-                selected: s == status,
-                onTap: () async {
-                  unawaited(HapticFeedback.selectionClick());
-                  // Re-tap clears; otherwise sets to this status.
-                  await onChangeStatus(s == status ? null : s);
-                },
+            if (overwrittenBy != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 52, top: 2),
+                child: _UpdatedByFootnote(
+                  memberId: overwrittenBy,
+                  updatedAt: record!.updatedAt,
+                ),
               ),
-              const SizedBox(width: 4),
-            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Subtle "Updated by Jane · 2m ago" line under an attendance row
+/// whose last writer wasn't the original author. Lazily resolves the
+/// member name; falls back to a generic "another teacher" when the
+/// member can't be found (e.g. revoked / pending sync). Wave 105.
+class _UpdatedByFootnote extends ConsumerWidget {
+  const _UpdatedByFootnote({required this.memberId, required this.updatedAt});
+
+  final String memberId;
+  final String updatedAt;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final member = ref.watch(memberByIdProvider(memberId)).value;
+    final name = member?.displayName.trim().isNotEmpty == true
+        ? member!.displayName
+        : 'another teacher';
+    final when = DateTime.tryParse(updatedAt);
+    final whenLabel = when == null ? '' : ' · ${relativeTimeAgo(when)}';
+    return Text(
+      'Updated by $name$whenLabel',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontStyle: FontStyle.italic,
       ),
     );
   }

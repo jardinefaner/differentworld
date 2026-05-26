@@ -57,6 +57,9 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
           .getSingleOrNull();
 
       if (existing != null) {
+        // Wave 105: track who flipped the row on every write so a
+        // racing co-teacher can see who overwrote what. recordedBy
+        // is preserved (original author); lastUpdatedBy is rewritten.
         await (update(attendanceRecords)
               ..where((a) => a.id.equals(existing.id)))
             .write(
@@ -64,6 +67,7 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
             status: Value(status),
             notes: notes == null ? const Value.absent() : Value(notes),
             updatedAt: Value(now),
+            lastUpdatedBy: Value(recordedBy),
           ),
         );
       } else {
@@ -79,6 +83,10 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
             recordedBy: recordedBy,
             recordedAt: now,
             updatedAt: now,
+            // Wave 105: seed lastUpdatedBy = recordedBy on first
+            // insert so the UI footnote ("Last updated by X")
+            // doesn't have to special-case null on calm-path rows.
+            lastUpdatedBy: Value(recordedBy),
           ),
         );
       }
@@ -128,6 +136,8 @@ class AttendanceDao extends DatabaseAccessor<AppDatabase>
             recordedBy: recordedBy,
             recordedAt: now,
             updatedAt: now,
+            // Wave 105 — see upsert() for rationale.
+            lastUpdatedBy: Value(recordedBy),
           ),
         );
         inserted.add(entry.subjectId);

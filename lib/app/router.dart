@@ -24,6 +24,7 @@ import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
+import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
@@ -93,6 +94,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           (prefix) => loc == prefix || loc.startsWith('$prefix/'),
         );
         if (!allowed) return '/';
+      }
+      // Wave 106: kid-mode pin. When a kid-launchable surface
+      // (survey-take today; kid-journal in the future) sets
+      // `kidModeLockedRouteProvider`, the router refuses to leave
+      // that URL. PopScope.canPop catches Flutter Navigator pops;
+      // THIS catches the web browser back button (which calls
+      // `window.history.back()` directly and bypasses PopScope).
+      // Once the staff exit dance completes, the surface's dispose
+      // clears the locked route, and navigation resumes normally.
+      final lockedRoute = ref.read(kidModeLockedRouteProvider);
+      if (lockedRoute != null &&
+          state.matchedLocation != lockedRoute) {
+        return lockedRoute;
       }
       return null;
     },

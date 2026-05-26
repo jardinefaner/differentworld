@@ -130,3 +130,57 @@ class KidMode extends Notifier<bool> {
 
 final NotifierProvider<KidMode, bool> kidModeProvider =
     NotifierProvider<KidMode, bool>(KidMode.new);
+
+/// URL the kid is pinned to during a kid-mode lockdown.
+///
+/// Wave 106: on Flutter web, `PopScope.canPop: false` only blocks
+/// Flutter Navigator pops — the browser back button calls
+/// `window.history.back()` directly, which bypasses PopScope and
+/// pops the route. That route's dispose calls
+/// `kidModeProvider.notifier.exit()`, but for the brief window the
+/// kid lands on a staff-facing surface with the chrome already
+/// stripped. The router redirect reads THIS provider and bounces
+/// any navigation away from `lockedRoute` back to it; combined
+/// with PopScope on native, kid-mode is locked across both
+/// platforms.
+///
+/// Surfaces opt in via:
+///
+/// ```dart
+/// @override
+/// void initState() {
+///   super.initState();
+///   unawaited(Future.microtask(() {
+///     if (!mounted) return;
+///     ref.read(kidModeProvider.notifier).enter();
+///     ref.read(kidModeLockedRouteProvider.notifier).state =
+///         '/surveys/${widget.templateId}/take/${widget.subjectId}';
+///   }));
+/// }
+///
+/// @override
+/// void dispose() {
+///   ref.read(kidModeProvider.notifier).exit();
+///   ref.read(kidModeLockedRouteProvider.notifier).state = null;
+///   super.dispose();
+/// }
+/// ```
+///
+/// Why a separate provider (not a field on KidMode): keeps the
+/// boolean-shaped `kidModeProvider` API stable so the dozen-plus
+/// existing call sites that watch it as `bool` don't need to
+/// change.
+class KidModeLockedRoute extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  /// Pin the router to `route` (or `null` to clear the pin). Named
+  /// instead of using `state =` directly so call sites read with
+  /// intent — `pin(url)` to lock, `pin(null)` to release.
+  // ignore: use_setters_to_change_properties
+  void pin(String? route) => state = route;
+}
+
+final NotifierProvider<KidModeLockedRoute, String?>
+    kidModeLockedRouteProvider =
+    NotifierProvider<KidModeLockedRoute, String?>(KidModeLockedRoute.new);

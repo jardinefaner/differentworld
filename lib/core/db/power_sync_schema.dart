@@ -89,6 +89,9 @@ const appSchema = Schema([
     Column.text('recorded_by'),
     Column.text('recorded_at'),
     Column.text('updated_at'),
+    // Wave 105: last-write attribution. Nullable on the server side
+    // (existing rows have no value); the local schema mirrors that.
+    Column.text('last_updated_by'),
   ]),
   Table('invites', [
     Column.text('space_id'),

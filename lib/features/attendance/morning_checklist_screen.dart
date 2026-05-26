@@ -433,9 +433,13 @@ class _ChecklistList extends ConsumerWidget {
     _Section s,
   ) {
     final byId = <String, AttendanceStatus>{};
+    // Wave 105: hold the full record so the AttendanceRow can render
+    // its "Updated by X · 2m ago" audit footnote.
+    final recordById = <String, AttendanceRecord>{};
     for (final r in s.records) {
       final st = AttendanceStatus.fromDb(r.status);
       if (st != null) byId[r.subjectId] = st;
+      recordById[r.subjectId] = r;
     }
     final filtered = filter == _Filter.unmarked
         ? s.subjects.where((sub) => byId[sub.id] == null).toList()
@@ -460,6 +464,7 @@ class _ChecklistList extends ConsumerWidget {
             groupId: s.group.id,
             subject: filtered[i],
             status: byId[filtered[i].id],
+            record: recordById[filtered[i].id],
             date: date,
           ),
         ),
@@ -545,11 +550,13 @@ class _ChecklistRow extends ConsumerWidget {
     required this.subject,
     required this.status,
     required this.date,
+    this.record,
   });
 
   final String groupId;
   final Subject subject;
   final AttendanceStatus? status;
+  final AttendanceRecord? record;
   final String date;
 
   @override
@@ -557,6 +564,7 @@ class _ChecklistRow extends ConsumerWidget {
     return AttendanceRow(
       subject: subject,
       status: status,
+      record: record,
       onChangeStatus: (next) async {
         if (next == null) {
           await ref.read(attendanceActionsProvider).clearStatus(

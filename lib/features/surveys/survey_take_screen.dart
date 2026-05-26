@@ -84,6 +84,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     unawaited(Future.microtask(() {
       if (!mounted) return;
       ref.read(kidModeProvider.notifier).enter();
+      // Wave 106: pin the locked URL so the router redirect can
+      // bounce any navigation away (e.g. web browser back) back to
+      // this screen. `PopScope.canPop: false` only catches Flutter
+      // Navigator pops, not `window.history.back()`.
+      ref.read(kidModeLockedRouteProvider.notifier).pin(
+            '/surveys/${widget.templateId}/take/${widget.subjectId}',
+          );
     }));
   }
 
@@ -112,6 +119,9 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // pop from completion).
     WidgetsBinding.instance.removeObserver(this);
     ref.read(kidModeProvider.notifier).exit();
+    // Wave 106: clear the pinned route so the router redirect stops
+    // bouncing future navigations.
+    ref.read(kidModeLockedRouteProvider.notifier).pin(null);
     _staffTapReset?.cancel();
     _staffTapReset = null;
     _page.dispose();
@@ -205,6 +215,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         case KidModeExitResult.unlocked:
         case KidModeExitResult.noPinConfigured:
           setState(() => _staffUnlocked = true);
+          // Wave 106: clear the router pin immediately so staff
+          // navigating back via the browser back button (web) or
+          // system back (native, after PopScope yields) doesn't get
+          // bounced. Dispose will run shortly and is idempotent
+          // (setting state to null when it's already null is fine).
+          ref.read(kidModeLockedRouteProvider.notifier).pin(null);
           ScaffoldMessenger.maybeOf(context)?.showSnackBar(
             const SnackBar(
               content: Text('Unlocked. Press back to exit.'),

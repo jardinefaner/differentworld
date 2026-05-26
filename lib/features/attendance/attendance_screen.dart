@@ -325,9 +325,13 @@ class _AttendanceList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Map subject id → current status for fast row lookup.
     final bySubject = <String, AttendanceStatus>{};
+    // Wave 105: also keep the full record so the row can render the
+    // audit footnote when a co-teacher overwrote the original write.
+    final recordBySubject = <String, AttendanceRecord>{};
     for (final r in records) {
       final s = AttendanceStatus.fromDb(r.status);
       if (s != null) bySubject[r.subjectId] = s;
+      recordBySubject[r.subjectId] = r;
     }
 
     return ListView.separated(
@@ -421,6 +425,10 @@ class _AttendanceList extends ConsumerWidget {
             subject: subject,
             status: bySubject[subject.id],
             onChangeStatus: apply,
+            // Wave 105: pass the record so the row can surface the
+            // "Updated by X · 2m ago" footnote when a co-teacher
+            // overwrote the original write.
+            record: recordBySubject[subject.id],
           ),
         );
       },

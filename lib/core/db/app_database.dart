@@ -112,6 +112,12 @@ class AttendanceRecords extends Table {
   TextColumn get recordedBy => text()();
   TextColumn get recordedAt => text()();
   TextColumn get updatedAt => text()();
+  // Wave 105: who LAST touched this row. recordedBy stays as the
+  // original author (set once at insert); lastUpdatedBy is rewritten
+  // on every upsert. The attendance row surfaces a "Last updated by
+  // X · 2m ago" footnote when the value diverges from recordedBy
+  // (i.e. someone overwrote the original write).
+  TextColumn get lastUpdatedBy => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
