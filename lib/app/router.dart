@@ -488,6 +488,63 @@ final routerProvider = Provider<GoRouter>((ref) {
           return '/vehicles$tail$query';
         },
       ),
+      // Convenience aliases — the URL space a user would naturally
+      // type or share. Each is a no-op redirect to the canonical
+      // path. Keeps the route tree small while letting people
+      // bookmark `/today` or share `/team` without remembering the
+      // exact route.
+      GoRoute(
+        path: '/today',
+        redirect: (_, _) => '/',
+      ),
+      GoRoute(
+        path: '/home',
+        redirect: (_, _) => '/',
+      ),
+      GoRoute(
+        path: '/team',
+        redirect: (_, _) => '/settings/team',
+      ),
+      GoRoute(
+        path: '/program',
+        redirect: (_, _) => '/settings/program',
+      ),
+      // Subjects-by-id alias: the staff path to a kid's profile lives
+      // at /groups/:gid/students/:sid because the group context is
+      // useful when you got there via a roster. But /subjects/:id
+      // (engine-canonical) and /students/:id (vertical-label) are
+      // both natural URLs to type or share. We look up the subject's
+      // group at redirect time so the canonical URL still works.
+      GoRoute(
+        path: '/subjects/:id',
+        redirect: (context, state) {
+          final id = state.pathParameters['id']!;
+          return '/students/$id';
+        },
+      ),
+      GoRoute(
+        path: '/students/:id',
+        redirect: (context, state) async {
+          final id = state.pathParameters['id']!;
+          try {
+            final db = await ProviderScope.containerOf(
+              context,
+              listen: false,
+            ).read(appDatabaseProvider.future);
+            final row = await (db.select(db.subjects)
+                  ..where((s) => s.id.equals(id)))
+                .getSingleOrNull();
+            final gid = row?.groupId;
+            if (gid == null) return '/';
+            return '/groups/$gid/students/$id';
+          } on Object {
+            // Any failure during the lookup → home, with the URL
+            // change as the user's signal that something didn't
+            // find what they wanted.
+            return '/';
+          }
+        },
+      ),
       GoRoute(
         path: '/login',
         builder: (_, _) => const LoginScreen(),
