@@ -3,7 +3,14 @@ import 'package:drift/drift.dart';
 
 part 'surveys_dao.g.dart';
 
-/// Drift mutators for survey responses (one row per subject+template).
+/// Drift mutators for survey responses.
+///
+/// Wave 138: surveys are anonymous. Each "Start a survey" creates a
+/// fresh row keyed by `id` (a client-generated UUID); there is no
+/// resume mechanism, so we no longer key by (subject, template) and
+/// the (subject_id, template_id) findForSubject lookup is gone.
+/// Identity (age_band / grade / school) is captured on the first
+/// page of the take flow.
 ///
 /// Templates themselves are Dart-defined constants in
 /// `lib/features/surveys/survey_templates.dart`; only the *answers*
@@ -13,8 +20,9 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
     with _$SurveysDaoMixin {
   SurveysDao(super.attachedDatabase);
 
-  /// All responses in the space for one template — used by the survey
-  /// list screen to render per-child completion status.
+  /// All responses in the space for one template — used by the
+  /// template detail screen (history strip) and the table view
+  /// (one row per response).
   Stream<List<SurveyResponse>> watchForTemplate({
     required String spaceId,
     required String templateId,
@@ -25,42 +33,38 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
                 r.spaceId.equals(spaceId) &
                 r.templateId.equals(templateId),
           )
-          ..orderBy([(r) => OrderingTerm(expression: r.updatedAt)]))
+          ..orderBy([
+            (r) => OrderingTerm(
+                  expression: r.updatedAt,
+                  mode: OrderingMode.desc,
+                ),
+          ]))
         .watch();
   }
 
-  /// The (at most one) response for a given subject + template.
-  Stream<SurveyResponse?> watchForSubject({
-    required String templateId,
-    required String subjectId,
-  }) {
-    return (select(surveyResponses)
-          ..where(
-            (r) =>
-                r.templateId.equals(templateId) &
-                r.subjectId.equals(subjectId),
-          ))
+  /// Wave 138: the single in-progress response for the take screen.
+  /// The screen generates the response id in initState and watches
+  /// this stream to seed itself with whatever has been autosaved so
+  /// far. On a fresh launch the row doesn't exist yet (returns null)
+  /// — the screen flushes its first autosave to create it.
+  Stream<SurveyResponse?> watchById(String id) {
+    return (select(surveyResponses)..where((r) => r.id.equals(id)))
         .watchSingleOrNull();
   }
 
-  Future<SurveyResponse?> findForSubject({
-    required String templateId,
-    required String subjectId,
-  }) {
-    return (select(surveyResponses)
-          ..where(
-            (r) =>
-                r.templateId.equals(templateId) &
-                r.subjectId.equals(subjectId),
-          ))
+  Future<SurveyResponse?> findById(String id) {
+    return (select(surveyResponses)..where((r) => r.id.equals(id)))
         .getSingleOrNull();
   }
 
+  /// Wave 138: upsert by `id`. Used by the take-screen autosave +
+  /// final submit. The first call inserts; subsequent calls update.
+  /// All callers pass the same id for the duration of one take
+  /// session.
   Future<String> upsert({
     required String id,
     required String spaceId,
     required String templateId,
-    required String subjectId,
     required String answersJson,
     required String status,
     String? recordedBy,
@@ -71,10 +75,7 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
     String? school,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    final existing = await findForSubject(
-      templateId: templateId,
-      subjectId: subjectId,
-    );
+    final existing = await findById(id);
     final completedIso = completedAt?.toUtc().toIso8601String();
     if (existing == null) {
       await into(surveyResponses).insert(
@@ -82,14 +83,14 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
           id: id,
           spaceId: spaceId,
           templateId: templateId,
-          subjectId: subjectId,
+          // Wave 138: subjectId is nullable; anonymous rows leave
+          // it absent.
           status: status,
           recordedBy: Value(recordedBy),
           answers: answersJson,
           startedAt: now,
           completedAt: Value(completedIso),
           voiceId: Value(voiceId),
-          // Wave 135: identity capture columns.
           ageBand: Value(ageBand),
           grade: Value(grade),
           school: Value(school),
@@ -99,8 +100,7 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
       );
       return id;
     }
-    await (update(surveyResponses)
-          ..where((r) => r.id.equals(existing.id)))
+    await (update(surveyResponses)..where((r) => r.id.equals(existing.id)))
         .write(
       SurveyResponsesCompanion(
         status: Value(status),

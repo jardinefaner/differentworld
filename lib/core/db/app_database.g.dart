@@ -8806,9 +8806,9 @@ class $SurveyResponsesTable extends SurveyResponses
   late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
     'subject_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
@@ -8981,8 +8981,6 @@ class $SurveyResponsesTable extends SurveyResponses
         _subjectIdMeta,
         subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_subjectIdMeta);
     }
     if (data.containsKey('status')) {
       context.handle(
@@ -9087,7 +9085,7 @@ class $SurveyResponsesTable extends SurveyResponses
       subjectId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}subject_id'],
-      )!,
+      ),
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
@@ -9145,7 +9143,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
   final String id;
   final String spaceId;
   final String templateId;
-  final String subjectId;
+  final String? subjectId;
   final String status;
   final String? recordedBy;
   final String answers;
@@ -9161,7 +9159,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     required this.id,
     required this.spaceId,
     required this.templateId,
-    required this.subjectId,
+    this.subjectId,
     required this.status,
     this.recordedBy,
     required this.answers,
@@ -9180,7 +9178,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     map['id'] = Variable<String>(id);
     map['space_id'] = Variable<String>(spaceId);
     map['template_id'] = Variable<String>(templateId);
-    map['subject_id'] = Variable<String>(subjectId);
+    if (!nullToAbsent || subjectId != null) {
+      map['subject_id'] = Variable<String>(subjectId);
+    }
     map['status'] = Variable<String>(status);
     if (!nullToAbsent || recordedBy != null) {
       map['recorded_by'] = Variable<String>(recordedBy);
@@ -9212,7 +9212,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       id: Value(id),
       spaceId: Value(spaceId),
       templateId: Value(templateId),
-      subjectId: Value(subjectId),
+      subjectId: subjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectId),
       status: Value(status),
       recordedBy: recordedBy == null && nullToAbsent
           ? const Value.absent()
@@ -9248,7 +9250,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       id: serializer.fromJson<String>(json['id']),
       spaceId: serializer.fromJson<String>(json['spaceId']),
       templateId: serializer.fromJson<String>(json['templateId']),
-      subjectId: serializer.fromJson<String>(json['subjectId']),
+      subjectId: serializer.fromJson<String?>(json['subjectId']),
       status: serializer.fromJson<String>(json['status']),
       recordedBy: serializer.fromJson<String?>(json['recordedBy']),
       answers: serializer.fromJson<String>(json['answers']),
@@ -9269,7 +9271,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       'id': serializer.toJson<String>(id),
       'spaceId': serializer.toJson<String>(spaceId),
       'templateId': serializer.toJson<String>(templateId),
-      'subjectId': serializer.toJson<String>(subjectId),
+      'subjectId': serializer.toJson<String?>(subjectId),
       'status': serializer.toJson<String>(status),
       'recordedBy': serializer.toJson<String?>(recordedBy),
       'answers': serializer.toJson<String>(answers),
@@ -9288,7 +9290,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     String? id,
     String? spaceId,
     String? templateId,
-    String? subjectId,
+    Value<String?> subjectId = const Value.absent(),
     String? status,
     Value<String?> recordedBy = const Value.absent(),
     String? answers,
@@ -9304,7 +9306,7 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     id: id ?? this.id,
     spaceId: spaceId ?? this.spaceId,
     templateId: templateId ?? this.templateId,
-    subjectId: subjectId ?? this.subjectId,
+    subjectId: subjectId.present ? subjectId.value : this.subjectId,
     status: status ?? this.status,
     recordedBy: recordedBy.present ? recordedBy.value : this.recordedBy,
     answers: answers ?? this.answers,
@@ -9408,7 +9410,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
   final Value<String> id;
   final Value<String> spaceId;
   final Value<String> templateId;
-  final Value<String> subjectId;
+  final Value<String?> subjectId;
   final Value<String> status;
   final Value<String?> recordedBy;
   final Value<String> answers;
@@ -9443,7 +9445,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     required String id,
     required String spaceId,
     required String templateId,
-    required String subjectId,
+    this.subjectId = const Value.absent(),
     required String status,
     this.recordedBy = const Value.absent(),
     required String answers,
@@ -9459,7 +9461,6 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
   }) : id = Value(id),
        spaceId = Value(spaceId),
        templateId = Value(templateId),
-       subjectId = Value(subjectId),
        status = Value(status),
        answers = Value(answers),
        startedAt = Value(startedAt),
@@ -9507,7 +9508,7 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     Value<String>? id,
     Value<String>? spaceId,
     Value<String>? templateId,
-    Value<String>? subjectId,
+    Value<String?>? subjectId,
     Value<String>? status,
     Value<String?>? recordedBy,
     Value<String>? answers,
@@ -23561,7 +23562,7 @@ typedef $$SurveyResponsesTableCreateCompanionBuilder =
       required String id,
       required String spaceId,
       required String templateId,
-      required String subjectId,
+      Value<String?> subjectId,
       required String status,
       Value<String?> recordedBy,
       required String answers,
@@ -23580,7 +23581,7 @@ typedef $$SurveyResponsesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> spaceId,
       Value<String> templateId,
-      Value<String> subjectId,
+      Value<String?> subjectId,
       Value<String> status,
       Value<String?> recordedBy,
       Value<String> answers,
@@ -23866,7 +23867,7 @@ class $$SurveyResponsesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> spaceId = const Value.absent(),
                 Value<String> templateId = const Value.absent(),
-                Value<String> subjectId = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> recordedBy = const Value.absent(),
                 Value<String> answers = const Value.absent(),
@@ -23902,7 +23903,7 @@ class $$SurveyResponsesTableTableManager
                 required String id,
                 required String spaceId,
                 required String templateId,
-                required String subjectId,
+                Value<String?> subjectId = const Value.absent(),
                 required String status,
                 Value<String?> recordedBy = const Value.absent(),
                 required String answers,

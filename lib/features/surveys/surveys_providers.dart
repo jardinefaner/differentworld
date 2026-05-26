@@ -39,18 +39,17 @@ final surveyPickerOptionsProvider = StreamProvider.autoDispose
   );
 });
 
-/// The single response (if any) for a (template, subject) pair.
-typedef SurveyResponseKey = ({String templateId, String subjectId});
-
+/// Wave 138: the in-progress survey response by id. The survey-take
+/// screen generates a fresh UUID in initState and watches this stream
+/// to pick up its autosaved state on rebuild (e.g. after a hot
+/// reload). On first launch the row doesn't exist yet — null is a
+/// valid "fresh session" state, not an error.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final surveyResponseProvider = StreamProvider.autoDispose
-    .family<SurveyResponse?, SurveyResponseKey>((ref, key) async* {
+final surveyResponseByIdProvider = StreamProvider.autoDispose
+    .family<SurveyResponse?, String>((ref, id) async* {
   final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.surveysDao.watchForSubject(
-    templateId: key.templateId,
-    subjectId: key.subjectId,
-  );
+  yield* db.surveysDao.watchById(id);
 });
 
 /// Status discriminator for `survey_responses.status`.
@@ -170,22 +169,20 @@ class SurveyActions {
   final Ref _ref;
   final Uuid _uuid = const Uuid();
 
-  /// Save the (possibly partial) answers under (templateId, subjectId).
-  /// If `complete` is true, mark the response as completed; otherwise
-  /// it stays a draft the kid can re-open later.
+  /// Wave 138: save by response id (anonymous; no subject linkage).
+  /// The take screen generates the id in initState and reuses it for
+  /// every autosave + the final submit. If `complete` is true, mark
+  /// the response as completed; otherwise it stays a draft (visible
+  /// in the table view but never re-opened — there's no resume).
   ///
-  /// Wave 120: `voiceId` is the Deepgram Aura 2 voice the kid picked
-  /// for TTS playback on this template. Null is allowed — older
-  /// rows from before the picker shipped won't have one and the
-  /// next session will prompt. Once set, it's sticky.
-  ///
-  /// Wave 135: `ageBand` / `grade` / `school` are captured on a
-  /// mini-page right after the voice picker. They anonymize the
-  /// table view (kid name doesn't appear there anymore). All three
-  /// null is legal for older rows.
+  /// Identity columns (`voiceId` / `ageBand` / `grade` / `school`)
+  /// are captured on the first page of the take flow and are
+  /// nullable in the schema. Once set on a row, subsequent saves
+  /// with a null value preserve the prior value (the DAO's
+  /// Value.absent() semantics handle this).
   Future<void> save({
+    required String id,
     required String templateId,
-    required String subjectId,
     required SurveyAnswers answers,
     required bool complete,
     String? voiceId,
@@ -200,10 +197,9 @@ class SurveyActions {
     }
     final db = await _ref.read(appDatabaseProvider.future);
     await db.surveysDao.upsert(
-      id: _uuid.v4(),
+      id: id,
       spaceId: spaceId,
       templateId: templateId,
-      subjectId: subjectId,
       answersJson: answers.toJson(),
       status: complete ? 'completed' : 'draft',
       recordedBy: viewer.memberId,
@@ -237,19 +233,17 @@ class SurveyActions {
     );
   }
 
-  /// Drop a response entirely (e.g. start fresh).
-  Future<void> reset({
-    required String templateId,
-    required String subjectId,
-  }) async {
+  /// Drop a response entirely. Used by the table view's row-level
+  /// delete affordance (not yet wired) and by debug surfaces.
+  Future<void> reset({required String id}) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    final existing = await db.surveysDao.findForSubject(
-      templateId: templateId,
-      subjectId: subjectId,
-    );
-    if (existing == null) return;
-    await db.surveysDao.deleteById(existing.id);
+    await db.surveysDao.deleteById(id);
   }
+
+  /// Wave 138: convenience for "Start a new survey" — generates a
+  /// fresh response id without touching the DB. The take screen
+  /// inserts the row lazily on its first autosave.
+  String freshResponseId() => _uuid.v4();
 }
 
 final surveyActionsProvider = Provider<SurveyActions>(SurveyActions.new);

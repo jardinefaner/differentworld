@@ -5,11 +5,9 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/survey_chrome.dart';
-import 'package:differentworld/features/voice/aura_voices.dart';
 import 'package:differentworld/features/voice/survey_tts_service.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -21,23 +19,25 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// `/surveys/:templateId/take/:subjectId`
+/// `/surveys/:templateId/take`
 ///
-/// One-question-at-a-time runner. Tap a chibi → auto-advance to the
-/// next question after a quick squash + particle burst feedback.
-/// Multiselect / text questions don't auto-advance — they use the
-/// explicit Next button so a kid can change their picks before
-/// committing. Back button always lets the user revisit any earlier
-/// answer (autosave keeps everything synced).
+/// Wave 138: anonymous survey-take. The screen generates a fresh
+/// response id in initState (no resume — each landing on this route
+/// is a brand-new session) and threads it through every save. Page
+/// 0 is a combined "About you" surface: pick a voice + age band +
+/// grade + school, then tap Start to begin the questions. From
+/// there it's one-question-at-a-time: tap a chibi → auto-advance
+/// after a quick squash + particle burst. Multiselect / text
+/// questions use the explicit Next button so a kid can change picks
+/// before committing. Back button always lets the user revisit an
+/// earlier answer (autosave keeps everything synced).
 class SurveyTakeScreen extends ConsumerStatefulWidget {
   const SurveyTakeScreen({
     required this.templateId,
-    required this.subjectId,
     super.key,
   });
 
   final String templateId;
-  final String subjectId;
 
   @override
   ConsumerState<SurveyTakeScreen> createState() => _SurveyTakeScreenState();
@@ -48,27 +48,36 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   late final PageController _page;
   SurveyAnswers _answers = SurveyAnswers();
   int _index = 0;
-  bool _seeded = false;
   bool _saving = false;
   String? _error;
 
-  /// Wave 120: the kid's chosen TTS voice for this template. Null
-  /// until the picker fires on first session (a stale-or-empty
-  /// `voice_id` on the response row). Once set, the picker is
-  /// skipped on subsequent sessions and audio auto-plays.
+  /// Wave 138: the response id generated for THIS take session. Used
+  /// as the upsert key for every autosave + the final submit. Fresh
+  /// per route landing (no resume).
+  late final String _responseId;
+
+  /// The kid's chosen TTS voice for this template. Null until they
+  /// pick on the About-you page. Voice is captured per-response now
+  /// (Wave 138), not per-(subject, template), so a kid can pick
+  /// differently each session.
   String? _voiceId;
 
-  /// Wave 135: identity-capture state. All three required before
-  /// question 1 renders. Loaded from the response row on _seed; if
-  /// any is null we surface the identity-capture page after the
-  /// voice picker.
+  /// Wave 135/138: identity capture state. All three required before
+  /// the kid taps Start. Lives only in memory until first autosave;
+  /// every change persists to the response row.
   String? _ageBand;
   String? _grade;
   String? _school;
   bool get _identityComplete =>
+      _voiceId != null &&
       (_ageBand?.isNotEmpty ?? false) &&
       (_grade?.isNotEmpty ?? false) &&
       (_school?.isNotEmpty ?? false);
+
+  /// True once the kid taps "Start" on the About-you page. Until
+  /// then, the PageView stays hidden and the About-you surface
+  /// fills the body.
+  bool _started = false;
 
   /// Wave 130: TTS service held as a State field, not via a Riverpod
   /// autoDispose provider. The previous shape disposed the
@@ -128,9 +137,11 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   void initState() {
     super.initState();
     _page = PageController();
+    // Wave 138: fresh response id for this session. The first
+    // autosave (triggered by voice/identity picks) inserts the row
+    // lazily; until then, nothing exists in the DB.
+    _responseId = ref.read(surveyActionsProvider).freshResponseId();
     // Wave 130: one TTS service for the lifetime of this screen.
-    // Held here (not via autoDispose provider) so the underlying
-    // AudioPlayer survives across ref.read() calls.
     _tts = SurveyTtsService();
     // Watch app lifecycle so we can RE-engage kid mode if the user
     // backgrounded the app — defends against the OS resurrecting
@@ -153,21 +164,15 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
       // bounce any navigation away (e.g. web browser back) back to
       // this screen. `PopScope.canPop: false` only catches Flutter
       // Navigator pops, not `window.history.back()`.
-      ref.read(kidModeLockedRouteProvider.notifier).pin(
-            '/surveys/${widget.templateId}/take/${widget.subjectId}',
-          );
+      ref
+          .read(kidModeLockedRouteProvider.notifier)
+          .pin('/surveys/${widget.templateId}/take');
     }));
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // Re-engage kid mode on resume. The persisted SharedPreferences
-    // value typically restores it, but on devices where the
-    // notifier rebuilt before persistence loaded, this is the
-    // belt + suspenders. Also resets `_staffUnlocked` so an
-    // unlocked-but-not-exited surface re-locks if backgrounded —
-    // staff has to redo the gesture after coming back.
     if (state == AppLifecycleState.resumed && mounted) {
       ref.read(kidModeProvider.notifier).enter();
       if (_staffUnlocked) {
@@ -178,58 +183,25 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
 
   @override
   void dispose() {
-    // Drop the lock when the screen pops. The PopScope below
-    // intercepts system-back while still in kid mode, so this only
-    // runs after the staff has unlocked (or after a programmatic
-    // pop from completion).
     WidgetsBinding.instance.removeObserver(this);
     ref.read(kidModeProvider.notifier).exit();
-    // Wave 106: clear the pinned route so the router redirect stops
-    // bouncing future navigations.
     ref.read(kidModeLockedRouteProvider.notifier).pin(null);
     _staffTapReset?.cancel();
     _staffTapReset = null;
     _page.dispose();
-    // Wave 130: tear down the AudioPlayer when the screen leaves.
     unawaited(_tts.dispose());
     super.dispose();
   }
 
-  void _seed(SurveyResponse? row) {
-    if (_seeded) return;
-    _seeded = true;
-    if (row != null) {
-      _answers = SurveyAnswers.fromJson(row.answers);
-      // Wave 120: restore the previously-picked voice. If null, the
-      // picker overlay surfaces on first build; otherwise we go
-      // straight into question 1 with audio.
-      _voiceId = row.voiceId;
-      // Wave 135: restore identity capture. If any is missing, the
-      // identity page surfaces between voice picker and question 1.
-      _ageBand = row.ageBand;
-      _grade = row.grade;
-      _school = row.school;
-      // If the voice is already known, kick off TTS for question 0
-      // as soon as the seed completes.
-      if (_voiceId != null) {
-        // Defer to post-frame so the build pipeline finishes before
-        // we trigger the player.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) unawaited(_playQuestion(0));
-        });
-      }
-    }
-  }
-
-  /// Wave 120 + 132: kick off TTS for page at `index`. The page
-  /// might be a whole question (agree3 / text) or an exploded
-  /// multiselect option — in the latter case, play the option
-  /// label instead of the question prompt so the kid hears the
-  /// specific yes/no being asked.
+  /// Wave 120 + 132 + 137 + 138: kick off TTS for page at `index`. The
+  /// page might be a whole question (agree3 / text) or an exploded
+  /// multiselect option — in the latter case, play the option label
+  /// instead of the question prompt so the kid hears the specific
+  /// yes/no being asked.
   ///
-  /// Wave 137: token-guarded against races. If a new _playQuestion
-  /// fires while an older one's resolve() is still in flight, the
-  /// older one bails out before it can stomp on the newer audio.
+  /// Token-guarded against races. If a new _playQuestion fires while
+  /// an older one's resolve() is still in flight, the older one
+  /// bails out before it can stomp on the newer audio.
   Future<void> _playQuestion(int index) async {
     final t = _template;
     final voice = _voiceId;
@@ -252,9 +224,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     if (text.isEmpty) return;
     final cacheKey = '${t.id}__$cacheSuffix'
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
-    // Claim the token before any async work. If anything later
-    // mutates _playRequestId (another _playQuestion call), we know
-    // we've been superseded and should not play.
     final myToken = ++_playRequestId;
     try {
       final path = await _tts.resolve(
@@ -262,11 +231,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         text: text,
         cacheKey: cacheKey,
       );
-      // Wave 137: bail if a newer _playQuestion already started.
-      // Without this check, a slow first-time resolve for page N
-      // can finish after a fast cache-hit resolve for page N+1
-      // and stomp on the newer audio. Belt + suspenders alongside
-      // the play()-internal token in SurveyTtsService.
       if (!mounted || myToken != _playRequestId) return;
       await _tts.play(path);
     } on Object catch (e, st) {
@@ -276,32 +240,16 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     }
   }
 
-  /// Wave 120: kid picked a voice on the first-question overlay.
-  /// Stash on state, persist on the response row via _autosave. If
-  /// identity is also complete, auto-play question 0; otherwise
-  /// the identity page renders next (no audio there).
+  /// Wave 138: voice tapped on the combined About-you page. Stash on
+  /// state + autosave (also creates the response row on first call).
   Future<void> _onVoicePicked(String voiceId) async {
     if (!mounted) return;
     setState(() => _voiceId = voiceId);
-    final t = _template;
-    if (t != null) {
-      await ref.read(surveyActionsProvider).save(
-            templateId: t.id,
-            subjectId: widget.subjectId,
-            answers: _answers,
-            complete: false,
-            voiceId: voiceId,
-          );
-    }
-    if (!mounted) return;
-    if (_identityComplete) {
-      await _playQuestion(0);
-    }
+    await _autosave();
   }
 
-  /// Wave 135: a dimension chip was tapped. Stash on local state +
-  /// persist on the response row. When all three are non-null the
-  /// "Start the survey" button enables.
+  /// Wave 135/138: a dimension chip was tapped on the About-you page.
+  /// Stash on local state + persist on the response row.
   Future<void> _onIdentityPick(String dimension, String label) async {
     if (!mounted) return;
     setState(() {
@@ -314,34 +262,24 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
           _school = label;
       }
     });
-    final t = _template;
-    if (t == null) return;
-    await ref.read(surveyActionsProvider).save(
-          templateId: t.id,
-          subjectId: widget.subjectId,
-          answers: _answers,
-          complete: false,
-          ageBand: _ageBand,
-          grade: _grade,
-          school: _school,
-        );
+    await _autosave();
   }
 
-  /// Wave 135: "+" button on the identity page — add a new label
+  /// Wave 135: "+" button on the About-you page — add a new label
   /// to the per-program catalog. Returns once persisted; the
   /// caller auto-selects it.
   Future<void> _onIdentityAddOption(String dimension, String label) async {
-    await ref.read(surveyActionsProvider).addPickerOption(
-          dimension: dimension,
-          label: label,
-        );
+    await ref
+        .read(surveyActionsProvider)
+        .addPickerOption(dimension: dimension, label: label);
   }
 
-  /// Wave 135: kid finished the identity capture. Kick off question 1
-  /// audio.
-  Future<void> _onIdentityContinue() async {
+  /// Wave 138: kid tapped Start on the About-you page. Flip into
+  /// the PageView and auto-play question 0's audio.
+  Future<void> _onStart() async {
     if (!mounted) return;
-    setState(() {}); // force rebuild so the PageView shows
+    if (!_identityComplete) return;
+    setState(() => _started = true);
     await _playQuestion(0);
   }
 
@@ -350,10 +288,14 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     if (t == null) return;
     try {
       await ref.read(surveyActionsProvider).save(
+            id: _responseId,
             templateId: t.id,
-            subjectId: widget.subjectId,
             answers: _answers,
             complete: false,
+            voiceId: _voiceId,
+            ageBand: _ageBand,
+            grade: _grade,
+            school: _school,
           );
     } on Exception catch (e, st) {
       FlutterError.reportError(
@@ -371,10 +313,14 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     });
     try {
       await ref.read(surveyActionsProvider).save(
+            id: _responseId,
             templateId: t.id,
-            subjectId: widget.subjectId,
             answers: _answers,
             complete: true,
+            voiceId: _voiceId,
+            ageBand: _ageBand,
+            grade: _grade,
+            school: _school,
           );
       if (!mounted) return;
       context.pop();
@@ -393,8 +339,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// if we're on the last question). Called from the answer
   /// handlers after the visual feedback window.
   void _advanceFrom(int from) {
-    // Wave 132: page count is over the EXPANDED page list (one entry
-    // per multiselect option) not the raw question list.
     final pageCount = _pages.length + 1;
     if (from + 1 >= pageCount) return;
     unawaited(_page.animateToPage(
@@ -408,10 +352,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// exit dance. If a staff PIN is configured for this Space
   /// (`SpaceCaps.staffPin`), a PIN dialog opens; the wrong PIN
   /// keeps the lock. If no PIN is configured, the gesture itself
-  /// unlocks (the previous behavior).
-  ///
-  /// Window resets after 1.5 s of silence so a kid tapping
-  /// randomly can't accumulate.
+  /// unlocks.
   Future<void> _onStaffCornerTap() async {
     _staffTapCount += 1;
     _staffTapReset?.cancel();
@@ -424,11 +365,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         case KidModeExitResult.unlocked:
         case KidModeExitResult.noPinConfigured:
           setState(() => _staffUnlocked = true);
-          // Wave 106: clear the router pin immediately so staff
-          // navigating back via the browser back button (web) or
-          // system back (native, after PopScope yields) doesn't get
-          // bounced. Dispose will run shortly and is idempotent
-          // (setting state to null when it's already null is fine).
           ref.read(kidModeLockedRouteProvider.notifier).pin(null);
           ScaffoldMessenger.maybeOf(context)?.showSnackBar(
             const SnackBar(
@@ -436,8 +372,6 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
             ),
           );
         case KidModeExitResult.cancelled:
-          // Staff dismissed the dialog (or kid tapped wrong) —
-          // the lock stays. Silent.
           break;
       }
       return;
@@ -459,20 +393,8 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         ),
       );
     }
-    ref
-        .watch(
-          surveyResponseProvider(
-            (templateId: widget.templateId, subjectId: widget.subjectId),
-          ),
-        )
-        .whenData(_seed);
 
-    final subjectAsync = ref.watch(subjectByIdProvider(widget.subjectId));
-    final subject = subjectAsync.value;
-
-    // Wave 132: page count is now derived from the expanded _pages
-    // list (multiselect options inflate to N sub-pages each), not
-    // the raw question count.
+    // Wave 132: page count is derived from the expanded _pages list.
     final pages = _pages;
     final totalQuestions = pages.length;
     // PageView holds N question pages + 1 closeout page at the end.
@@ -482,468 +404,269 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     final atCloseout = _index >= totalQuestions;
 
     // Kid-mode hardening: while locked, refuse the system back
-    // gesture. The hidden top-right tap target (5 fast taps in the
-    // corner) is the staff-only unlock — once tapped, the next pop
-    // goes through normally.
+    // gesture. The hidden top-right tap target is the staff unlock.
     final inKidMode = ref.watch(kidModeProvider);
     final blockPop = inKidMode && !_staffUnlocked;
-    // Wave 113: dynamic tab title — "{Template} · {Kid}". When the
-    // tab actually says what the kid is filling out, a director
-    // QA'ing in multiple tabs can tell them apart.
-    final routeTitle = subject == null
-        ? t.title
-        : '${t.title} · ${subject.firstName}';
     return RouteTitle(
-      title: routeTitle,
+      title: t.title,
       child: PopScope(
-      canPop: !blockPop,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        // A kid tried to leave. Show a discrete hint so staff who
-        // are watching see what's expected; the kid sees a generic
-        // copy that doesn't reveal the gesture.
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          const SnackBar(
-            content: Text('Hand the device back to a teacher to exit.'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      },
-      child: DismissGuard(
-      isDirty: () => !_seeded || _answers.toJson() != '{}',
-      child: EdgeScaffold(
-        body: Stack(
-          children: [
-            // The hidden staff-corner: 48 dp invisible tap target in
-            // the very top-right. Five fast taps unlocks (see
-            // `_onStaffCornerTap`). Behind everything else so the
-            // survey UI's own widgets keep their normal hit areas;
-            // the corner only catches taps in the deadzone above
-            // the top-right of the first question's chibi grid.
-            Positioned(
-              top: 0,
-              right: 0,
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: _onStaffCornerTap,
-                child: const SizedBox(width: 48, height: 48),
-              ),
+        canPop: !blockPop,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text('Hand the device back to a teacher to exit.'),
+              duration: Duration(seconds: 2),
             ),
-            Positioned.fill(
-              child: Column(
-          children: [
-            // Survey-take is a KID-MODE surface — the shell drops its
-            // chrome insets to 0, so the body fills from the top. A
-            // small spacer keeps the header off the status bar.
-            const SizedBox(height: 16),
-            SurveyHeader(
-              template: t,
-              subject: subject,
-              progressIndex: math.min(_index + 1, totalQuestions),
-              progressTotal: totalQuestions,
-              answeredScored: answeredScored,
-              scoredTotal: t.scored.length,
-              atCloseout: atCloseout,
-              saving: _saving,
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              // Wave 120: if the kid hasn't picked a voice yet for
-              // this template, show the picker INSTEAD of the
-              // PageView. They tap one of five voices, audio
-              // starts auto-playing, picker dismisses, and they
-              // proceed to question 1. Already-picked rows skip
-              // straight to questions.
-              // Wave 120: voice picker first if needed.
-              // Wave 135: then identity-capture if needed.
-              // Then question PageView.
-              child: _voiceId == null
-                  ? _VoicePickerOverlay(
-                      onPicked: _onVoicePicked,
-                      ttsService: _tts,
-                    )
-                  : !_identityComplete
-                      ? _IdentityCaptureBinding(
-                          ageBand: _ageBand,
-                          grade: _grade,
-                          school: _school,
-                          onPick: _onIdentityPick,
-                          onAddOption: _onIdentityAddOption,
-                          onContinue: _onIdentityContinue,
-                        )
-                      : PageView.builder(
-                controller: _page,
-                onPageChanged: (i) {
-                  setState(() => _index = i);
-                  // Wave 120: auto-play TTS for the new question.
-                  // Closeout page (i == totalQuestions) has no audio.
-                  if (i < totalQuestions) unawaited(_playQuestion(i));
-                },
-                itemCount: pageCount,
-                itemBuilder: (_, i) {
-                  if (i == totalQuestions) {
-                    return SurveyCloseoutPage(
-                      template: t,
-                      answeredScored: answeredScored,
-                      scoredTotal: t.scored.length,
-                      saving: _saving,
-                      onFinish: _saving ? null : _submit,
-                    );
-                  }
-                  // Wave 132: dispatch on page kind. A page can be:
-                  //   - a whole question (agree3 / text) — old behavior
-                  //   - one option of a multiselect (yes/no smiley)
-                  final page = pages[i];
-                  final q = page.question;
-                  final onReplay = _voiceId == null
-                      ? null
-                      : () => unawaited(_playQuestion(i));
-                  void afterAnswer({required bool autoAdvance}) {
-                    unawaited(_autosave());
-                    if (autoAdvance) {
-                      // Give the tap-feedback a beat (~450ms) before
-                      // the page slides, so the kid sees their pick
-                      // register before the swap.
-                      Future.delayed(
-                        const Duration(milliseconds: 450),
-                        () {
-                          if (mounted) _advanceFrom(i);
-                        },
-                      );
-                    }
-                  }
-
-                  if (page.isOption) {
-                    final opt = q.options[page.optionIndex!];
-                    return SurveyOptionYesNoPage(
-                      questionIndex: i,
-                      optionIndex: page.optionIndex!,
-                      question: q,
-                      option: opt,
-                      isYes: _answers
-                          .multiselect(q.key)
-                          .contains(opt.key),
-                      onReplayTts: onReplay,
-                      onPickYes: () {
-                        final picked =
-                            _answers.multiselect(q.key).toSet()..add(opt.key);
-                        final updated =
-                            SurveyAnswers.fromJson(_answers.toJson())
-                              ..setMultiselect(q.key, picked.toList());
-                        setState(() => _answers = updated);
-                        afterAnswer(autoAdvance: true);
-                      },
-                      onPickNo: () {
-                        final picked =
-                            _answers.multiselect(q.key).toSet()
-                              ..remove(opt.key);
-                        final updated =
-                            SurveyAnswers.fromJson(_answers.toJson())
-                              ..setMultiselect(q.key, picked.toList());
-                        setState(() => _answers = updated);
-                        afterAnswer(autoAdvance: true);
-                      },
-                    );
-                  }
-                  return SurveyQuestionPage(
-                    questionIndex: i,
-                    question: q,
-                    answers: _answers,
-                    onReplayTts: onReplay,
-                    onAnswered: (next, {required autoAdvance}) {
-                      setState(() => _answers = next);
-                      afterAnswer(autoAdvance: autoAdvance);
-                    },
-                  );
-                },
-              ),
-            ),
-            // Close the ternary above (PageView branch).
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                child: Text(
-                  _error!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
+          );
+        },
+        child: DismissGuard(
+          isDirty: () => _answers.toJson() != '{}',
+          child: EdgeScaffold(
+            body: Stack(
+              children: [
+                // Hidden staff-corner: 48 dp invisible tap target in
+                // the top-right. Five fast taps unlocks.
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _onStaffCornerTap,
+                    child: const SizedBox(width: 48, height: 48),
                   ),
                 ),
-              ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                child: Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: _index == 0
-                          ? null
-                          : () {
-                              unawaited(HapticFeedback.selectionClick());
-                              unawaited(_page.previousPage(
-                                duration: const Duration(milliseconds: 240),
-                                curve: Curves.easeOut,
-                              ));
-                            },
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back'),
-                    ),
-                    const Spacer(),
-                    // Forward affordance ONLY appears for kinds that
-                    // don't auto-advance (multiselect / text) and on
-                    // the question pages — closeout has its own
-                    // Finish button inside the page body.
-                    if (!atCloseout) SurveyForwardButton(
-                      question: t.questions[_index],
-                      atCloseout: false,
-                      onTap: () {
-                        unawaited(HapticFeedback.selectionClick());
-                        _advanceFrom(_index);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  ),
-  );
-  }
-}
+                Positioned.fill(
+                  child: Column(
+                    children: [
+                      // Survey-take is a KID-MODE surface — the
+                      // shell drops chrome insets, so a small
+                      // spacer keeps the header off the status bar.
+                      const SizedBox(height: 16),
+                      // Wave 138: the header's "Subject" identity
+                      // panel is dropped; the survey is anonymous,
+                      // so the header just shows template + progress.
+                      SurveyHeader(
+                        template: t,
+                        progressIndex: math.min(_index + 1, totalQuestions),
+                        progressTotal: totalQuestions,
+                        answeredScored: answeredScored,
+                        scoredTotal: t.scored.length,
+                        atCloseout: atCloseout,
+                        saving: _saving,
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: !_started
+                            ? _AboutYouBinding(
+                                voiceId: _voiceId,
+                                ageBand: _ageBand,
+                                grade: _grade,
+                                school: _school,
+                                onPickVoice: _onVoicePicked,
+                                onPickIdentity: _onIdentityPick,
+                                onAddIdentityOption: _onIdentityAddOption,
+                                onStart: _identityComplete ? _onStart : null,
+                                ttsService: _tts,
+                              )
+                            : PageView.builder(
+                                controller: _page,
+                                onPageChanged: (i) {
+                                  setState(() => _index = i);
+                                  if (i < totalQuestions) {
+                                    unawaited(_playQuestion(i));
+                                  }
+                                },
+                                itemCount: pageCount,
+                                itemBuilder: (_, i) {
+                                  if (i == totalQuestions) {
+                                    return SurveyCloseoutPage(
+                                      template: t,
+                                      answeredScored: answeredScored,
+                                      scoredTotal: t.scored.length,
+                                      saving: _saving,
+                                      onFinish: _saving ? null : _submit,
+                                    );
+                                  }
+                                  final page = pages[i];
+                                  final q = page.question;
+                                  final onReplay = _voiceId == null
+                                      ? null
+                                      : () =>
+                                          unawaited(_playQuestion(i));
+                                  void afterAnswer(
+                                      {required bool autoAdvance}) {
+                                    unawaited(_autosave());
+                                    if (autoAdvance) {
+                                      Future.delayed(
+                                        const Duration(milliseconds: 450),
+                                        () {
+                                          if (mounted) _advanceFrom(i);
+                                        },
+                                      );
+                                    }
+                                  }
 
-/// Wave 120: the 5-voice picker that fires on the first question of a
-/// kid's first session for a given template. Kid taps a voice tile to
-/// hear a 1-sentence sample (the voice introduces itself by name);
-/// when they tap "Pick" the voice locks in and the picker dismisses.
-///
-/// The tile they last tapped is preview-played; tapping a different
-/// tile cuts the previous preview and plays the new one. Only the
-/// final tap-then-confirm choice is persisted to the response row.
-class _VoicePickerOverlay extends StatefulWidget {
-  const _VoicePickerOverlay({
-    required this.onPicked,
-    required this.ttsService,
-  });
-
-  /// Called with the chosen Deepgram voice id after the kid confirms.
-  final Future<void> Function(String voiceId) onPicked;
-
-  /// Reused TTS service so the sample audio benefits from the same
-  /// cache the survey questions use — once a voice samples once
-  /// anywhere in the world, the next kid to preview it gets the
-  /// cached sample with no Deepgram call.
-  final SurveyTtsService ttsService;
-
-  @override
-  State<_VoicePickerOverlay> createState() => _VoicePickerOverlayState();
-}
-
-class _VoicePickerOverlayState extends State<_VoicePickerOverlay> {
-  String? _previewing;
-
-  /// Stable cache key for each voice's sample line — same key per voice
-  /// so every kid in the program shares one MP3 per voice. (5 voices
-  /// × 1 sample = 5 cached files for the whole platform.)
-  String _sampleKeyFor(AuraVoice v) => 'sample_${v.id}';
-
-  String _sampleTextFor(AuraVoice v) =>
-      "Hi! I'm ${v.displayName}. I can read the questions to you "
-      'if you tap me.';
-
-  Future<void> _preview(AuraVoice v) async {
-    setState(() => _previewing = v.id);
-    try {
-      final path = await widget.ttsService.resolve(
-        voiceId: v.id,
-        text: _sampleTextFor(v),
-        cacheKey: _sampleKeyFor(v),
-      );
-      if (!mounted) return;
-      await widget.ttsService.play(path);
-    } on Object catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('[voice-picker] preview failed: $e\n$st');
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    // Wave 128: SafeArea wraps the picker so the title doesn't bump
-    // into the system status bar on Pixel / iPhone notch / Android
-    // gesture inset. Kid-mode strips the omnibox bar but the system
-    // status bar still draws on top of the body — without SafeArea,
-    // "Pick a reader" overlapped clock + battery + wifi icons.
-    return SafeArea(
-      child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        children: [
-          Text(
-            'Pick a reader',
-            style: theme.textTheme.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Tap to hear them say hi. Then pick the one you like.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: ListView.separated(
-              itemCount: kAuraCast.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                final v = kAuraCast[i];
-                final selected = _previewing == v.id;
-                return Material(
-                  color: selected
-                      ? theme.colorScheme.primaryContainer
-                      : theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: () => _preview(v),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: selected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.secondaryContainer,
-                            child: Icon(
-                              v.gender == 'F'
-                                  ? Icons.face_3_outlined
-                                  : v.gender == 'M'
-                                      ? Icons.face_outlined
-                                      : Icons.face_6_outlined,
-                              color: selected
-                                  ? theme.colorScheme.onPrimary
-                                  : theme.colorScheme.onSecondaryContainer,
+                                  if (page.isOption) {
+                                    final opt = q.options[page.optionIndex!];
+                                    return SurveyOptionYesNoPage(
+                                      questionIndex: i,
+                                      optionIndex: page.optionIndex!,
+                                      question: q,
+                                      option: opt,
+                                      isYes: _answers
+                                          .multiselect(q.key)
+                                          .contains(opt.key),
+                                      onReplayTts: onReplay,
+                                      onPickYes: () {
+                                        final picked = _answers
+                                            .multiselect(q.key)
+                                            .toSet()
+                                          ..add(opt.key);
+                                        final updated =
+                                            SurveyAnswers.fromJson(
+                                                _answers.toJson())
+                                              ..setMultiselect(
+                                                  q.key, picked.toList());
+                                        setState(() => _answers = updated);
+                                        afterAnswer(autoAdvance: true);
+                                      },
+                                      onPickNo: () {
+                                        final picked = _answers
+                                            .multiselect(q.key)
+                                            .toSet()
+                                          ..remove(opt.key);
+                                        final updated =
+                                            SurveyAnswers.fromJson(
+                                                _answers.toJson())
+                                              ..setMultiselect(
+                                                  q.key, picked.toList());
+                                        setState(() => _answers = updated);
+                                        afterAnswer(autoAdvance: true);
+                                      },
+                                    );
+                                  }
+                                  return SurveyQuestionPage(
+                                    questionIndex: i,
+                                    question: q,
+                                    answers: _answers,
+                                    onReplayTts: onReplay,
+                                    onAnswered:
+                                        (next, {required autoAdvance}) {
+                                      setState(() => _answers = next);
+                                      afterAnswer(autoAdvance: autoAdvance);
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                          child: Text(
+                            _error!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
+                        ),
+                      // Bottom Back / Next row only renders once the
+                      // kid has started the questions. The About-you
+                      // page owns its own Start button inline.
+                      if (_started)
+                        SafeArea(
+                          top: false,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                            child: Row(
                               children: [
-                                // Wave 128: cap to one line each so
-                                // "Andromeda" / "warm and reassuring"
-                                // don't split into two lines on narrow
-                                // phones (where they read as a fragmented
-                                // mess). The Expanded above gives them
-                                // the column width they need.
-                                Text(
-                                  v.displayName,
-                                  style: theme.textTheme.titleLarge,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                TextButton.icon(
+                                  onPressed: _index == 0
+                                      ? null
+                                      : () {
+                                          unawaited(
+                                              HapticFeedback.selectionClick());
+                                          unawaited(_page.previousPage(
+                                            duration: const Duration(
+                                                milliseconds: 240),
+                                            curve: Curves.easeOut,
+                                          ));
+                                        },
+                                  icon: const Icon(Icons.arrow_back),
+                                  label: const Text('Back'),
                                 ),
-                                Text(
-                                  v.personality,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
+                                const Spacer(),
+                                if (!atCloseout)
+                                  SurveyForwardButton(
+                                    question: t.questions[
+                                        _safeQuestionIndex(t, _index)],
+                                    atCloseout: false,
+                                    onTap: () {
+                                      unawaited(
+                                          HapticFeedback.selectionClick());
+                                      _advanceFrom(_index);
+                                    },
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
                               ],
                             ),
                           ),
-                          Icon(
-                            selected
-                                ? Icons.volume_up
-                                : Icons.play_circle_outline,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _previewing == null
-                  ? null
-                  : () async {
-                      final picked = _previewing!;
-                      await widget.ttsService.stop();
-                      await widget.onPicked(picked);
-                    },
-              icon: const Icon(Icons.check),
-              label: Text(
-                _previewing == null
-                    ? 'Tap a reader to hear them'
-                    : 'Pick ${auraVoiceById(_previewing)?.displayName ?? "this one"}',
-              ),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
-    ),
     );
+  }
+
+  /// The exploded-pages list maps multiselect options onto
+  /// per-option pages; the bottom Next button still wants to know
+  /// what KIND of question we're on (so it can hide for agree3).
+  /// Walk back from page index to the parent question index.
+  int _safeQuestionIndex(SurveyTemplate t, int pageIndex) {
+    var remaining = pageIndex;
+    for (var qi = 0; qi < t.questions.length; qi++) {
+      final q = t.questions[qi];
+      final span = q.kind == SurveyQuestionKind.multiselect
+          ? q.options.length
+          : 1;
+      if (remaining < span) return qi;
+      remaining -= span;
+    }
+    return t.questions.length - 1;
   }
 }
 
-
-/// Wave 132: one PageView page. Most are a whole question; for
-/// multiselect questions, each option is its own page so the kid
-/// makes one yes/no decision at a time instead of scanning a
-/// 7-row checklist.
-class _SurveyPage {
-  const _SurveyPage({required this.question, this.optionIndex});
-
-  final SurveyQuestion question;
-
-  /// Null for non-multiselect (the whole question is the page).
-  /// Non-null for an exploded multiselect option — that option's
-  /// label is the page's main text.
-  final int? optionIndex;
-
-  bool get isOption => optionIndex != null;
-}
-
-/// Wave 135: Riverpod binding for [IdentityCapturePage]. Watches the
-/// three per-program picker-options streams and pipes them in;
-/// otherwise it's a thin wrapper around the pure widget.
-class _IdentityCaptureBinding extends ConsumerWidget {
-  const _IdentityCaptureBinding({
+/// Wave 138: Riverpod binding for [AboutYouPage]. Watches the three
+/// per-program picker-options streams and pipes them in; otherwise
+/// it's a thin wrapper around the pure widget.
+class _AboutYouBinding extends ConsumerWidget {
+  const _AboutYouBinding({
+    required this.voiceId,
     required this.ageBand,
     required this.grade,
     required this.school,
-    required this.onPick,
-    required this.onAddOption,
-    required this.onContinue,
+    required this.onPickVoice,
+    required this.onPickIdentity,
+    required this.onAddIdentityOption,
+    required this.onStart,
+    required this.ttsService,
   });
 
+  final String? voiceId;
   final String? ageBand;
   final String? grade;
   final String? school;
-  final void Function(String dimension, String label) onPick;
-  final Future<void> Function(String dimension, String label) onAddOption;
-  final VoidCallback onContinue;
+  final Future<void> Function(String voiceId) onPickVoice;
+  final Future<void> Function(String dimension, String label) onPickIdentity;
+  final Future<void> Function(String dimension, String label)
+      onAddIdentityOption;
+  final VoidCallback? onStart;
+  final SurveyTtsService ttsService;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -970,16 +693,36 @@ class _IdentityCaptureBinding extends ConsumerWidget {
     List<String> labels(AsyncValue<List<SurveyPickerOption>> a) =>
         (a.value ?? const []).map((o) => o.label).toList();
 
-    return IdentityCapturePage(
+    return AboutYouPage(
+      voiceId: voiceId,
       ageBand: ageBand,
       grade: grade,
       school: school,
       ageBandOptions: labels(ageAsync),
       gradeOptions: labels(gradeAsync),
       schoolOptions: labels(schoolAsync),
-      onPick: onPick,
-      onAddOption: onAddOption,
-      onContinue: onContinue,
+      onPickVoice: onPickVoice,
+      onPickIdentity: onPickIdentity,
+      onAddIdentityOption: onAddIdentityOption,
+      onStart: onStart,
+      ttsService: ttsService,
     );
   }
+}
+
+/// Wave 132: one PageView page. Most are a whole question; for
+/// multiselect questions, each option is its own page so the kid
+/// makes one yes/no decision at a time instead of scanning a
+/// 7-row checklist.
+class _SurveyPage {
+  const _SurveyPage({required this.question, this.optionIndex});
+
+  final SurveyQuestion question;
+
+  /// Null for non-multiselect (the whole question is the page).
+  /// Non-null for an exploded multiselect option — that option's
+  /// label is the page's main text.
+  final int? optionIndex;
+
+  bool get isOption => optionIndex != null;
 }

@@ -10,8 +10,6 @@ import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/features/exports/templates/progress_report.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/features/surveys/survey_templates.dart';
-import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -91,25 +89,13 @@ class _ProgressReportScreenState
               .toList();
           final summary = _summarizeAttendance(attendance, _windowDays);
 
-          // Pull every survey the kid has answered.
+          // Wave 138: surveys are anonymous now — they no longer
+          // link to a specific kid, so the progress report can't
+          // include a per-kid survey summary. The director can still
+          // pull aggregate trends from the survey table view; this
+          // surface stays focused on the per-kid signals the report
+          // is meant for (observations + attendance).
           final surveys = <SurveySummary>[];
-          for (final template in SurveyTemplates.all) {
-            final response = ref
-                .watch(surveyResponseProvider(
-                  (
-                    templateId: template.id,
-                    subjectId: subject.id,
-                  ),
-                ))
-                .value;
-            if (response == null) continue;
-            surveys.add(
-              SurveySummary(
-                template: template,
-                answers: SurveyAnswers.fromJson(response.answers),
-              ),
-            );
-          }
 
           final data = ProgressReportData(
             subject: subject,

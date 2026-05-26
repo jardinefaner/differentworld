@@ -307,16 +307,22 @@ class DismissedInsights extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// One row per (subject, survey-template). The questions themselves
-/// are app-defined templates (see `survey_templates.dart`); only the
-/// answers a kid gave land here, keyed by question_key inside
-/// `answers` JSONB. Status: 'draft' (started, partial) or
-/// 'completed' (submitted).
+/// One row per survey-take session. Wave 138: surveys are now
+/// fully anonymous — each "Start" creates a fresh row with
+/// `subject_id = null`. The questions themselves are app-defined
+/// templates (see `survey_templates.dart`); only the answers a kid
+/// gave land here, keyed by question_key inside `answers` JSONB.
+/// Identity (age_band / grade / school) is captured on the first
+/// page of the survey-take flow. Status: 'draft' (started, partial)
+/// or 'completed' (submitted). Legacy rows (pre-Wave-138) had
+/// `subject_id` populated; the Wave 138 migration scrubbed those to
+/// NULL to anonymize without dropping the answer data.
 class SurveyResponses extends Table {
   TextColumn get id => text()();
   TextColumn get spaceId => text()();
   TextColumn get templateId => text()();
-  TextColumn get subjectId => text()();
+  // Wave 138: nullable — anonymous responses have no kid linkage.
+  TextColumn get subjectId => text().nullable()();
   TextColumn get status => text()();
   TextColumn get recordedBy => text().nullable()();
   TextColumn get answers => text()(); // JSON string keyed by question_key

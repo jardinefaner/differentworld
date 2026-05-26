@@ -374,12 +374,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                   templateId: state.pathParameters['templateId']!,
                 ),
                 routes: [
+                  // Wave 138: anonymous take. The screen owns the
+                  // response id (generated in initState) so the
+                  // route itself doesn't carry one — every
+                  // navigation to `/surveys/:templateId/take`
+                  // starts a fresh session. No resume by design;
+                  // the user's "Start a new survey" button always
+                  // lands here.
                   GoRoute(
-                    path: 'take/:subjectId',
-                    // Dynamic title (kid name) set in SurveyTakeScreen.
+                    path: 'take',
                     builder: (_, state) => SurveyTakeScreen(
                       templateId: state.pathParameters['templateId']!,
-                      subjectId: state.pathParameters['subjectId']!,
                     ),
                   ),
                   // Spreadsheet review across kids — director scans

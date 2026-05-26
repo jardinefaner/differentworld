@@ -1,10 +1,11 @@
-import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/chibi_smiley.dart';
 import 'package:differentworld/features/surveys/widgets/survey_inputs.dart';
-import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/features/voice/aura_voices.dart';
+import 'package:differentworld/features/voice/survey_tts_service.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 /// Bottom-bar Next button. Hidden during agree3 (auto-advance handles
@@ -35,12 +36,14 @@ class SurveyForwardButton extends StatelessWidget {
   }
 }
 
-/// Top-of-screen identity strip: avatar + name, template title, save
-/// indicator, progress dots.
+/// Top-of-screen header for the survey-take flow.
+///
+/// Wave 138: no kid avatar / name — surveys are anonymous. Header
+/// shows template title + progress + saving indicator. Progress dots
+/// only render once the kid has started (progressTotal > 0).
 class SurveyHeader extends StatefulWidget {
   const SurveyHeader({
     required this.template,
-    required this.subject,
     required this.progressIndex,
     required this.progressTotal,
     required this.answeredScored,
@@ -51,7 +54,6 @@ class SurveyHeader extends StatefulWidget {
   });
 
   final SurveyTemplate template;
-  final Subject? subject;
   final int progressIndex;
   final int progressTotal;
   final int answeredScored;
@@ -85,9 +87,6 @@ class _SurveyHeaderState extends State<SurveyHeader> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final name = widget.subject == null
-        ? 'Survey'
-        : '${widget.subject!.firstName} ${widget.subject!.lastName}';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -95,19 +94,16 @@ class _SurveyHeaderState extends State<SurveyHeader> {
         children: [
           Row(
             children: [
-              if (widget.subject != null)
-                PersonAvatar(
-                  name: name,
-                  photoUrl: widget.subject!.photoUrl,
-                ),
-              if (widget.subject != null) const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: theme.textTheme.titleMedium),
                     Text(
-                      '${widget.template.title} · ${widget.template.year}',
+                      widget.template.title,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    Text(
+                      widget.template.year,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -139,13 +135,15 @@ class _SurveyHeaderState extends State<SurveyHeader> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          ProgressDots(
-            count: widget.progressTotal,
-            current: widget.atCloseout
-                ? widget.progressTotal - 1
-                : widget.progressIndex - 1,
-          ),
+          if (widget.progressTotal > 0) ...[
+            const SizedBox(height: 10),
+            ProgressDots(
+              count: widget.progressTotal,
+              current: widget.atCloseout
+                  ? widget.progressTotal - 1
+                  : widget.progressIndex - 1,
+            ),
+          ],
         ],
       ),
     );
@@ -558,62 +556,117 @@ class _BigYesNoButton extends StatelessWidget {
   }
 }
 
-/// Wave 135: identity-capture page. Shown right after the kid picks a
-/// voice (and before question 1) when any of `ageBand` / `grade` /
-/// `school` is missing on the response row. Each dimension renders
-/// as a row of chips populated from the per-program
-/// `survey_picker_options` catalog, with a trailing "+" button that
-/// adds a new label inline. The added label persists for the
-/// program: the next kid who reaches this page sees it as a
-/// pre-existing chip.
+/// Wave 138: combined "About you" page — the FIRST surface every
+/// kid sees when they start a survey. Folds the Wave 120 voice
+/// picker and the Wave 135 identity-capture chips into one
+/// scrollable surface so the kid makes all the per-session
+/// choices up front, then taps Start.
 ///
-/// The whole page locks the "Continue" button until all three
-/// dimensions are picked. Tap a chip → it's selected; tap a
-/// different chip → selection swaps. No deselect.
-class IdentityCapturePage extends StatelessWidget {
-  const IdentityCapturePage({
+/// Sections, in order:
+///   1. Voice reader (5 chibi voices; tap to preview the sample line)
+///   2. Age band chips (with a "+" button to add a new label)
+///   3. Grade chips (same)
+///   4. School chips (same)
+///   5. Start button (enabled only when all four are picked)
+///
+/// Each pick persists immediately via the parent's autosave; the
+/// kid can re-tap any choice to change it before Start. After
+/// Start the kid moves into the question PageView and the
+/// About-you page never re-surfaces (no resume; the user starts
+/// a fresh survey from the template detail screen if they want
+/// to redo).
+class AboutYouPage extends StatefulWidget {
+  const AboutYouPage({
+    required this.voiceId,
     required this.ageBand,
     required this.grade,
     required this.school,
     required this.ageBandOptions,
     required this.gradeOptions,
     required this.schoolOptions,
-    required this.onPick,
-    required this.onAddOption,
-    required this.onContinue,
+    required this.onPickVoice,
+    required this.onPickIdentity,
+    required this.onAddIdentityOption,
+    required this.onStart,
+    required this.ttsService,
     super.key,
   });
 
+  final String? voiceId;
   final String? ageBand;
   final String? grade;
   final String? school;
 
-  /// One list per dimension. Empty on first survey-take in a program.
   final List<String> ageBandOptions;
   final List<String> gradeOptions;
   final List<String> schoolOptions;
 
+  /// Called when a voice tile is tapped — the parent persists it
+  /// onto the response row. The preview audio is played locally by
+  /// this widget (so taps feel instant); only the final selection
+  /// commits to the DB.
+  final Future<void> Function(String voiceId) onPickVoice;
+
   /// `dimension` is 'age_band' / 'grade' / 'school'; `label` is the
   /// chosen label. Called when a chip is tapped.
-  final void Function(String dimension, String label) onPick;
+  final Future<void> Function(String dimension, String label) onPickIdentity;
 
   /// Called when "+" is tapped and the user submits a new label.
-  final Future<void> Function(String dimension, String label) onAddOption;
+  final Future<void> Function(String dimension, String label)
+      onAddIdentityOption;
 
-  /// Continue to question 1. Disabled until all three are picked.
-  final VoidCallback onContinue;
+  /// Tapping Start. Null disables the button (when any of the four
+  /// picks is still empty).
+  final VoidCallback? onStart;
 
-  bool get _ready =>
-      (ageBand?.isNotEmpty ?? false) &&
-      (grade?.isNotEmpty ?? false) &&
-      (school?.isNotEmpty ?? false);
+  /// Shared TTS service so voice samples piggyback on the same MP3
+  /// cache the survey questions use — one sample per voice per
+  /// program, ever.
+  final SurveyTtsService ttsService;
+
+  @override
+  State<AboutYouPage> createState() => _AboutYouPageState();
+}
+
+class _AboutYouPageState extends State<AboutYouPage> {
+  /// Voice currently being previewed (i.e. last tapped). Mirrors
+  /// `widget.voiceId` once the parent's autosave round-trips back,
+  /// but exists here so the tile shows the highlighted state
+  /// immediately on tap (no wait for the autosave).
+  String? get _previewing => widget.voiceId;
+
+  String _sampleKeyFor(AuraVoice v) => 'sample_${v.id}';
+
+  String _sampleTextFor(AuraVoice v) =>
+      "Hi! I'm ${v.displayName}. I can read the questions to you "
+      'if you tap me.';
+
+  Future<void> _onVoiceTap(AuraVoice v) async {
+    // Persist the pick first (parent updates state synchronously)
+    // so the tile highlights instantly; then kick off the preview.
+    await widget.onPickVoice(v.id);
+    if (!mounted) return;
+    try {
+      final path = await widget.ttsService.resolve(
+        voiceId: v.id,
+        text: _sampleTextFor(v),
+        cacheKey: _sampleKeyFor(v),
+      );
+      if (!mounted) return;
+      await widget.ttsService.play(path);
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[about-you] voice preview failed: $e\n$st');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -622,52 +675,63 @@ class IdentityCapturePage extends StatelessWidget {
               style: theme.textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
-              'These help us see patterns across kids without using '
-              'names. Pick one for each.',
+              'Pick a reader and tell us a little about you. Then '
+              'tap Start.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 20),
+            const _SectionLabel(label: 'Reader'),
+            const SizedBox(height: 8),
+            _VoiceTilesGrid(
+              previewing: _previewing,
+              onTap: _onVoiceTap,
+            ),
             const SizedBox(height: 24),
             _DimensionPicker(
               label: 'Age band',
               dimension: 'age_band',
-              options: ageBandOptions,
-              selected: ageBand,
-              onPick: (l) => onPick('age_band', l),
-              onAdd: (l) => onAddOption('age_band', l),
+              options: widget.ageBandOptions,
+              selected: widget.ageBand,
+              onPick: (l) => widget.onPickIdentity('age_band', l),
+              onAdd: (l) => widget.onAddIdentityOption('age_band', l),
               addHint: 'e.g. 7-9',
             ),
             const SizedBox(height: 20),
             _DimensionPicker(
               label: 'Grade',
               dimension: 'grade',
-              options: gradeOptions,
-              selected: grade,
-              onPick: (l) => onPick('grade', l),
-              onAdd: (l) => onAddOption('grade', l),
+              options: widget.gradeOptions,
+              selected: widget.grade,
+              onPick: (l) => widget.onPickIdentity('grade', l),
+              onAdd: (l) => widget.onAddIdentityOption('grade', l),
               addHint: 'e.g. 2nd',
             ),
             const SizedBox(height: 20),
             _DimensionPicker(
               label: 'School',
               dimension: 'school',
-              options: schoolOptions,
-              selected: school,
-              onPick: (l) => onPick('school', l),
-              onAdd: (l) => onAddOption('school', l),
+              options: widget.schoolOptions,
+              selected: widget.school,
+              onPick: (l) => widget.onPickIdentity('school', l),
+              onAdd: (l) => widget.onAddIdentityOption('school', l),
               addHint: 'e.g. Lincoln Elementary',
             ),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: _ready ? onContinue : null,
-                icon: const Icon(Icons.arrow_forward),
-                label: Text(_ready ? 'Start the survey' : 'Pick one for each'),
+                onPressed: widget.onStart,
+                icon: const Icon(Icons.play_arrow),
+                label: Text(
+                  widget.onStart == null
+                      ? 'Pick a reader and one for each'
+                      : 'Start',
+                ),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
@@ -676,6 +740,104 @@ class IdentityCapturePage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+  final String label;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      label,
+      style: theme.textTheme.titleSmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        letterSpacing: 0.6,
+      ),
+    );
+  }
+}
+
+class _VoiceTilesGrid extends StatelessWidget {
+  const _VoiceTilesGrid({required this.previewing, required this.onTap});
+
+  final String? previewing;
+  final Future<void> Function(AuraVoice voice) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        for (final v in kAuraCast)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Material(
+              color: previewing == v.id
+                  ? theme.colorScheme.primaryContainer
+                  : theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => onTap(v),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: previewing == v.id
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.secondaryContainer,
+                        child: Icon(
+                          v.gender == 'F'
+                              ? Icons.face_3_outlined
+                              : v.gender == 'M'
+                                  ? Icons.face_outlined
+                                  : Icons.face_6_outlined,
+                          color: previewing == v.id
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              v.displayName,
+                              style: theme.textTheme.titleMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              v.personality,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        previewing == v.id
+                            ? Icons.volume_up
+                            : Icons.play_circle_outline,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

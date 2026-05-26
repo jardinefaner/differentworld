@@ -1,7 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -10,9 +9,6 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
-import 'package:differentworld/shared/widgets/person_avatar.dart';
-import 'package:differentworld/shared/widgets/primary_action_button.dart';
-import 'package:differentworld/shared/widgets/responsive_grid.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
@@ -22,8 +18,8 @@ import 'package:go_router/go_router.dart';
 
 /// `/surveys` — index of every survey template registered in code.
 ///
-/// One row per template. Tapping drills into the per-template list
-/// of children with their completion status.
+/// One row per template. Tapping drills into the template detail
+/// screen with the Start-a-survey button.
 class SurveyIndexScreen extends ConsumerWidget {
   const SurveyIndexScreen({super.key});
 
@@ -70,9 +66,6 @@ class _SurveyTemplateCard extends ConsumerWidget {
     final completed = responses
         .where((r) => r.status == SurveyResponseStatus.completed)
         .length;
-    final inProgress = responses
-        .where((r) => r.status == SurveyResponseStatus.draft)
-        .length;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: FeatureCard(
@@ -98,35 +91,18 @@ class _SurveyTemplateCard extends ConsumerWidget {
                     : scheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$completed',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: scheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w700,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                  if (inProgress > 0) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      width: 1,
-                      height: 12,
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.3),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$inProgress…',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.tertiary,
-                        fontWeight: FontWeight.w700,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ],
+              child: Text(
+                // Wave 138: anonymous surveys — show only completed
+                // count (one row = one response, not one row = one
+                // kid). In-progress drafts no longer get separate
+                // billing because nobody resumes them; they're just
+                // abandoned sessions.
+                '$completed',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: scheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
             const SizedBox(width: 4),
@@ -138,9 +114,16 @@ class _SurveyTemplateCard extends ConsumerWidget {
   }
 }
 
-/// `/surveys/:templateId` — every student in the space with their
-/// completion status for the chosen template. Tap a row → start (or
-/// resume) the survey for that kid.
+/// `/surveys/:templateId` — Wave 138: simplified anonymous landing.
+///
+/// Replaces the per-kid roster (which assumed surveys were attributed
+/// to individuals) with:
+///   * Template title + subtitle
+///   * A big "Start a new survey" button (hands the device to a kid)
+///   * A small history strip: "N responses recorded · View table"
+///
+/// No resume — every Start fires a fresh response. The table view is
+/// where directors review what's been recorded.
 class SurveyTemplateDetailScreen extends ConsumerWidget {
   const SurveyTemplateDetailScreen({required this.templateId, super.key});
 
@@ -159,7 +142,6 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
     }
     final viewer = ref.watch(viewerProvider);
     final spaceId = viewer.spaceId;
-    final subjectsAsync = ref.watch(subjectsInSpaceProvider);
     final responsesAsync = spaceId == null
         ? const AsyncValue<List<SurveyResponse>>.data([])
         : ref.watch(
@@ -168,155 +150,161 @@ class SurveyTemplateDetailScreen extends ConsumerWidget {
             ),
           );
 
-    // Compute the "next unsurveyed kid" so the primary action can
-    // jump straight to them. When everyone's done, pivots to "redo"
-    // for the first kid.
-    final subjectsList = subjectsAsync.value ?? const <Subject>[];
-    final responsesList = responsesAsync.value ?? const <SurveyResponse>[];
-    final completedIds = <String>{
-      for (final r in responsesList)
-        if (r.status == SurveyResponseStatus.completed) r.subjectId,
-    };
-    final nextSubject = subjectsList.isEmpty
-        ? null
-        : subjectsList.firstWhere(
-            (s) => !completedIds.contains(s.id),
-            orElse: () => subjectsList.first,
-          );
-    final allDone =
-        subjectsList.isNotEmpty && completedIds.length >= subjectsList.length;
-
-    // Wave 113: dynamic tab title — the survey template's name.
     return RouteTitle(
       title: template.title,
       child: EdgeScaffold(
-      backFallbackRoute: '/surveys',
-      actions: [
-        if (nextSubject != null)
-          PrimaryActionButton(
-            tooltip: allDone
-                ? 'Redo · ${nextSubject.firstName}'
-                : 'Survey · ${nextSubject.firstName}',
-            icon: allDone ? Icons.replay : Icons.arrow_forward,
-            onPressed: () => context.push(
-              '/surveys/$templateId/take/${nextSubject.id}',
+        backFallbackRoute: '/surveys',
+        actions: [
+          SecondaryActionButton(
+            tooltip: 'Table view',
+            icon: Icons.table_chart_outlined,
+            onPressed: () => context.push('/surveys/$templateId/table'),
+          ),
+          const SyncStatusIndicator(),
+        ],
+        body: responsesAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (_, _) => ErrorState(
+            title: 'Could not load responses',
+            onRetry: () => ref.invalidate(
+              surveyResponsesProvider(
+                (
+                  spaceId: spaceId ?? '',
+                  templateId: templateId,
+                ),
+              ),
             ),
           ),
-        SecondaryActionButton(
-          tooltip: 'Table view',
-          icon: Icons.table_chart_outlined,
-          onPressed: () => context.push('/surveys/$templateId/table'),
-        ),
-        const SyncStatusIndicator(),
-      ],
-      body: subjectsAsync.when(
-        loading: () => const LoadingSlot(),
-        error: (_, _) => ErrorState(
-          title: 'Could not load students',
-          onRetry: () => ref.invalidate(subjectsInSpaceProvider),
-        ),
-        data: (subjects) {
-          if (subjects.isEmpty) {
-            return const EmptyState(
-              icon: Icons.child_care_outlined,
-              title: 'No students yet',
-              message: 'Add students before running the survey.',
+          data: (responses) {
+            final completed = responses
+                .where((r) => r.status == SurveyResponseStatus.completed)
+                .length;
+            return _TemplateLanding(
+              template: template,
+              completed: completed,
+              totalRecorded: responses.length,
             );
-          }
-          final responses = responsesAsync.value ?? const <SurveyResponse>[];
-          final statusBySubjectId = <String, String>{
-            for (final r in responses) r.subjectId: r.status,
-          };
-          final completed = responses
-              .where((r) => r.status == SurveyResponseStatus.completed)
-              .length;
-          // Wave 116: ResponsiveGrid at tablet+. A roster of 24 kids
-          // each in a wide-and-short status row stretched edge-to-
-          // edge on a 1920px screen; 2-3 columns fits more on
-          // screen + makes the "tap a kid to start their survey"
-          // affordance feel like an interactive board.
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ContentHeader(
-                  title: template.title,
-                  subtitle:
-                      '${template.year} · $completed / ${subjects.length} '
-                      'completed',
-                ),
-              ),
-              Expanded(
-                child: ResponsiveGrid(
-                  itemCount: subjects.length,
-                  // Status rows are short — avatar + name + status
-                  // chip. Wide-and-short reads as scannable.
-                  aspectRatio: 3,
-                  itemMaxWidth: 320,
-                  itemBuilder: (_, i) {
-                    final subject = subjects[i];
-                    final status = statusBySubjectId[subject.id];
-                    return _SubjectStatusRow(
-                      subject: subject,
-                      status: status,
-                      templateId: template.id,
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
-    ),
     );
   }
 }
 
-class _SubjectStatusRow extends StatelessWidget {
-  const _SubjectStatusRow({
-    required this.subject,
-    required this.status,
+class _TemplateLanding extends StatelessWidget {
+  const _TemplateLanding({
+    required this.template,
+    required this.completed,
+    required this.totalRecorded,
+  });
+
+  final SurveyTemplate template;
+  final int completed;
+  final int totalRecorded;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CircleAvatar(
+                radius: 36,
+                backgroundColor: scheme.primaryContainer,
+                foregroundColor: scheme.onPrimaryContainer,
+                child: const Icon(Icons.poll_outlined, size: 36),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                template.title,
+                style: theme.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${template.year} · ${template.scored.length} questions',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Responses are anonymous. Each kid picks a reader and '
+                'tells us their age, grade, and school — but their '
+                'name never gets attached.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: () =>
+                    context.push('/surveys/${template.id}/take'),
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Start a new survey'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  textStyle: theme.textTheme.titleMedium,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _HistoryStrip(
+                completed: completed,
+                totalRecorded: totalRecorded,
+                templateId: template.id,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryStrip extends StatelessWidget {
+  const _HistoryStrip({
+    required this.completed,
+    required this.totalRecorded,
     required this.templateId,
   });
 
-  final Subject subject;
-  final String? status;
+  final int completed;
+  final int totalRecorded;
   final String templateId;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fullName = '${subject.firstName} ${subject.lastName}';
-    final (statusLabel, statusColor) = switch (status) {
-      'completed' => (
-        'Done',
-        theme.colorScheme.primary,
-      ),
-      'draft' => (
-        'In progress',
-        theme.colorScheme.tertiary,
-      ),
-      _ => (
-        'Not started',
-        theme.colorScheme.onSurfaceVariant,
-      ),
-    };
-    return ListTile(
-      leading: PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
-      title: Text(fullName),
-      subtitle: Text(
-        statusLabel,
-        style: theme.textTheme.bodySmall?.copyWith(color: statusColor),
-      ),
-      trailing: Icon(
-        status == SurveyResponseStatus.completed
-            ? Icons.replay
-            : Icons.arrow_forward,
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
-      onTap: () => context.push('/surveys/$templateId/take/${subject.id}'),
+    final scheme = theme.colorScheme;
+    if (totalRecorded == 0) {
+      return Text(
+        'No responses yet.',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        textAlign: TextAlign.center,
+      );
+    }
+    final label = totalRecorded == 1
+        ? '1 response recorded'
+        : '$totalRecorded responses recorded';
+    final completedLabel = completed == totalRecorded
+        ? ''
+        : ' · $completed complete';
+    return TextButton.icon(
+      onPressed: () =>
+          GoRouter.of(context).push('/surveys/$templateId/table'),
+      icon: const Icon(Icons.table_chart_outlined),
+      label: Text('$label$completedLabel · View table'),
     );
   }
 }

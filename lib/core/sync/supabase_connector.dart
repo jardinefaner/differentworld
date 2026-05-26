@@ -171,7 +171,11 @@ class SupabaseConnector extends PowerSyncBackendConnector {
   /// the worst case is a single retry-and-recover, not an infinite
   /// loop, because join-table writes are typically single-origin.
   static const Map<String, String> _naturalKeyByTable = {
-    'survey_responses': 'subject_id,template_id',
+    // Wave 138: surveys are anonymous and each Start is a fresh
+    // row, so the (subject_id, template_id) natural key no longer
+    // exists. The PK on `id` is the only uniqueness constraint;
+    // omitting the entry means PowerSync falls back to PK-only
+    // upserts, which is exactly what we want.
     'dismissed_insights': 'member_id,insight_id',
     'member_certifications': 'member_id,cert_key',
     'attendance_records': 'subject_id,date',

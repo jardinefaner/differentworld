@@ -149,7 +149,7 @@ final NotifierProvider<KidMode, bool> kidModeProvider =
 ///     if (!mounted) return;
 ///     ref.read(kidModeProvider.notifier).enter();
 ///     ref.read(kidModeLockedRouteProvider.notifier).state =
-///         '/surveys/${widget.templateId}/take/${widget.subjectId}';
+///         '/surveys/${widget.templateId}/take';
 ///   }));
 /// }
 ///

@@ -517,24 +517,24 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Surveys
 **Path**: `lib/features/surveys/`
-**Purpose**: Questionnaires — templates authored by directors, responses collected from staff or (via kid-mode) from children.
-**Personas served**: Maya (authors templates + reviews cross-cohort), All staff (take), Ava (kid-mode take). Guardians (Lauren, Devon, Helen, Marcus) don't reach the survey surface.
+**Purpose**: Anonymous questionnaires kids fill out themselves — director taps "Start a new survey" on a template, hands the device to a kid, who picks a reader voice + tells us their age band / grade / school on the About-you page, then answers one-question-per-page. No kid name is ever attached to the response.
+**Personas served**: Maya (reviews cross-cohort trends via the table view), Ava (kid-mode take). Guardians (Lauren, Devon, Helen, Marcus) don't reach the survey surface.
 **Discovery surfaces**:
-- Routes: `/surveys`, `/surveys/:templateId`, `/surveys/:templateId/take/:subjectId`, `/surveys/:templateId/table`
+- Routes: `/surveys`, `/surveys/:templateId`, `/surveys/:templateId/take`, `/surveys/:templateId/table`
 - Omnibox: yes — "Surveys"
 - Slash: none
 - Drawer: no
 - Settings: no — surveys are top-level
 **Capabilities**: None for taking. Authoring templates is gated by `can_manage_space`.
-**Data**: [survey_responses](SCHEMA.md#survey_responses). Templates live in code today (no `survey_templates` table yet).
+**Data**: [survey_responses](SCHEMA.md#survey_responses), [survey_picker_options](SCHEMA.md#survey_picker_options). Templates live in code today (no `survey_templates` table yet).
 **Surfaces**:
-- *Survey index* — `lib/features/surveys/survey_list_screen.dart`. List of templates.
-- *Survey template detail* — `lib/features/surveys/survey_template_detail_screen.dart`. List of kids who have / haven't taken it.
-- *Survey take screen* — `lib/features/surveys/survey_take_screen.dart`. One-question-per-page; auto-enters kid mode for Ava.
-- *Survey table* — `lib/features/surveys/survey_table_screen.dart`. Spreadsheet review of all responses for a template.
-**Depends on**: Subjects, Kid mode.
+- *Survey index* — `lib/features/surveys/survey_list_screen.dart`. List of templates with a per-template completed-response counter.
+- *Survey template detail* — same file. Big "Start a new survey" button + history strip linking to the table view. No kid roster (responses are anonymous).
+- *Survey take screen* — `lib/features/surveys/survey_take_screen.dart`. Generates a fresh response id per landing (no resume). Page 0 is the combined About-you surface (voice picker + age band / grade / school chips + Start). Auto-enters kid mode; 5-tap top-right corner is the staff-exit gesture.
+- *Survey table* — `lib/features/surveys/survey_table_screen.dart`. One row per response, anonymized (recorded-at timestamp + identity columns + answer slots). Status filter (all / completed / drafts). CSV export.
+**Depends on**: Kid mode, Voice (Deepgram Aura 2 TTS).
 **Consumed by**: Insights (low-signal survey detection).
-**Last verified**: 2026-05-21
+**Last verified**: 2026-05-26
 
 ---
 

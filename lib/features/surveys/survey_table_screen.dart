@@ -6,8 +6,6 @@ import 'dart:typed_data';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/groups/groups_providers.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -22,8 +20,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// `/surveys/:templateId/table` — spreadsheet review of every kid's
-/// answers for one survey template.
+/// `/surveys/:templateId/table` — Wave 138: anonymous spreadsheet
+/// review.
+///
+/// Before: one row per kid in the program, joined to their survey
+/// response. After: one row per RESPONSE — each "Start a new survey"
+/// produces a fresh row with no kid linkage. Identity columns
+/// (age band / grade / school) take the place of the name column.
 ///
 /// Columns are *answer slots* — one per agree3/text question, and one
 /// per option for multiselect questions (so a 3-option multiselect
@@ -40,7 +43,9 @@ class SurveyTableScreen extends ConsumerStatefulWidget {
 }
 
 class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
-  String? _filterGroupId;
+  /// Filter rows by completion status: null = all, 'completed' /
+  /// 'draft' = matching only.
+  String? _statusFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +60,6 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
     }
     final viewer = ref.watch(viewerProvider);
     final spaceId = viewer.spaceId;
-    final subjectsAsync = ref.watch(subjectsInSpaceProvider);
-    final groups = ref.watch(groupsProvider).value ?? const <Group>[];
     final responsesAsync = spaceId == null
         ? const AsyncValue<List<SurveyResponse>>.data([])
         : ref.watch(surveyResponsesProvider(
@@ -66,30 +69,23 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
     return EdgeScaffold(
       backFallbackRoute: '/surveys/${widget.templateId}',
       actions: const [SyncStatusIndicator()],
-      body: subjectsAsync.when(
+      body: responsesAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
           title: 'Could not load',
-          onRetry: () => ref.invalidate(subjectsInSpaceProvider),
+          onRetry: () => ref.invalidate(surveyResponsesProvider(
+            (
+              spaceId: spaceId ?? '',
+              templateId: widget.templateId,
+            ),
+          )),
         ),
-        data: (allSubjects) {
-          final responses =
-              responsesAsync.value ?? const <SurveyResponse>[];
-          final subjects = _filterGroupId == null
-              ? allSubjects
-              : allSubjects
-                  .where((s) => s.groupId == _filterGroupId)
+        data: (allResponses) {
+          final responses = _statusFilter == null
+              ? allResponses
+              : allResponses
+                  .where((r) => r.status == _statusFilter)
                   .toList();
-          final answersBySubject = <String, SurveyAnswers>{
-            for (final r in responses)
-              r.subjectId: SurveyAnswers.fromJson(r.answers),
-          };
-          // Wave 135: also keep the FULL response row by subject so
-          // the table can render age_band / grade / school instead
-          // of the kid's name.
-          final responseBySubject = <String, SurveyResponse>{
-            for (final r in responses) r.subjectId: r,
-          };
           final cols = _buildColumns(template);
 
           return ListView(
@@ -100,8 +96,8 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                 child: ContentHeader(
                   title: '${template.title} · Table',
                   subtitle: '${template.year} · '
-                      '${subjects.length} '
-                      '${subjects.length == 1 ? 'kid' : 'kids'} · '
+                      '${responses.length} '
+                      '${responses.length == 1 ? 'response' : 'responses'} · '
                       '${cols.length} columns',
                 ),
               ),
@@ -110,23 +106,20 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: _GroupFilter(
-                        groups: groups,
-                        selected: _filterGroupId,
-                        onChanged: (id) =>
-                            setState(() => _filterGroupId = id),
+                      child: _StatusFilter(
+                        selected: _statusFilter,
+                        onChanged: (s) =>
+                            setState(() => _statusFilter = s),
                       ),
                     ),
                     const SizedBox(width: 8),
                     FilledButton.tonalIcon(
-                      onPressed: subjects.isEmpty
+                      onPressed: responses.isEmpty
                           ? null
                           : () => _exportCsv(
                                 template: template,
-                                subjects: subjects,
+                                responses: responses,
                                 cols: cols,
-                                answersBySubject: answersBySubject,
-                                responseBySubject: responseBySubject,
                               ),
                       icon: const Icon(Icons.download),
                       label: const Text('Export CSV'),
@@ -134,23 +127,22 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                   ],
                 ),
               ),
-              if (subjects.isEmpty)
+              if (responses.isEmpty)
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    _filterGroupId == null
-                        ? 'No children in your program yet.'
-                        : 'No children in this classroom.',
+                    _statusFilter == null
+                        ? 'No responses recorded yet.'
+                        : 'No matching responses.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 )
               else
                 _ResponsesGrid(
-                  subjects: subjects,
+                  responses: responses,
                   cols: cols,
-                  answersBySubject: answersBySubject,
-                  responseBySubject: responseBySubject,
+                  template: template,
                 ),
             ],
           );
@@ -161,10 +153,8 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
 
   Future<void> _exportCsv({
     required SurveyTemplate template,
-    required List<Subject> subjects,
+    required List<SurveyResponse> responses,
     required List<_Col> cols,
-    required Map<String, SurveyAnswers> answersBySubject,
-    required Map<String, SurveyResponse> responseBySubject,
   }) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     await runReported(
@@ -173,45 +163,35 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
       onError: 'Could not export the CSV.',
       action: () => _writeAndShareCsv(
         template: template,
-        subjects: subjects,
+        responses: responses,
         cols: cols,
-        answersBySubject: answersBySubject,
-        responseBySubject: responseBySubject,
       ),
     );
   }
 
   Future<void> _writeAndShareCsv({
     required SurveyTemplate template,
-    required List<Subject> subjects,
+    required List<SurveyResponse> responses,
     required List<_Col> cols,
-    required Map<String, SurveyAnswers> answersBySubject,
-    required Map<String, SurveyResponse> responseBySubject,
   }) async {
-    final groups = ref.read(groupsProvider).value ?? const <Group>[];
-    final groupName = {for (final g in groups) g.id: g.name};
-
-    // Wave 135: anonymized export. Drop first/last name; use the
-    // per-response age_band / grade / school columns instead. Older
-    // responses without identity capture render empty for those
-    // three columns but the rest of the row is unchanged.
+    // Wave 138: anonymized export. Identity columns + status + the
+    // answer slots; no kid name, no classroom.
     final header = <String>[
+      'Recorded at',
       'Age band',
       'Grade',
       'School',
-      'Classroom',
       'Status',
       for (final c in cols) c.header,
     ];
     final rows = <List<String>>[header];
-    for (final subject in subjects) {
-      final answers = answersBySubject[subject.id];
-      final response = responseBySubject[subject.id];
+    for (final r in responses) {
+      final answers = SurveyAnswers.fromJson(r.answers);
       rows.add([
-        response?.ageBand ?? '',
-        response?.grade ?? '',
-        response?.school ?? '',
-        groupName[subject.groupId] ?? '',
+        _formatTimestamp(r.completedAt ?? r.updatedAt),
+        r.ageBand ?? '',
+        r.grade ?? '',
+        r.school ?? '',
         _statusLabel(answers, template.scored.toList()),
         for (final c in cols) c.csv(answers),
       ]);
@@ -242,6 +222,17 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
       ShareParams(files: [XFile(file.path)]),
     );
   }
+}
+
+String _formatTimestamp(String iso) {
+  // Trim to "YYYY-MM-DD HH:MM" for readability. Robust to either
+  // ISO date-time format (with or without trailing Z / fractional).
+  final dt = DateTime.tryParse(iso);
+  if (dt == null) return iso;
+  final local = dt.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${local.year}-${two(local.month)}-${two(local.day)} '
+      '${two(local.hour)}:${two(local.minute)}';
 }
 
 Uint8List _utf8Bytes(String s) => Uint8List.fromList(utf8.encode(s));
@@ -294,14 +285,6 @@ class _Agree3Col extends _Col {
   }
 }
 
-/// One column per multiselect option. The cell renders Yes if the
-/// option key is in the kid's pick list, No if it's not.
-///
-/// Note: "No" is ambiguous between "kid said no" and "kid hasn't
-/// answered this question yet" — we render `—` when the kid has NO
-/// answer recorded for the parent question (i.e. no response row at
-/// all), and only fall back to "No" once there's a response with at
-/// least one option picked elsewhere on this question.
 class _MultiOptCol extends _Col {
   _MultiOptCol(this.q, this.opt);
   final SurveyQuestion q;
@@ -315,9 +298,6 @@ class _MultiOptCol extends _Col {
     if (a == null) return '—';
     final picks = a.multiselect(q.key);
     if (picks.contains(opt.key)) return '✓ Yes';
-    // Heuristic for "answered no" vs "not answered": if the kid has
-    // ANY pick on this question, they engaged with it; missing keys
-    // are deliberate Nos.
     if (picks.isNotEmpty) return 'No';
     return '—';
   }
@@ -354,11 +334,6 @@ class _TextCol extends _Col {
 }
 
 List<_Col> _buildColumns(SurveyTemplate t) {
-  // Wave 131: include practice questions in the table too. They're
-  // not "scored" (don't count toward completion) but a director
-  // reviewing the data still wants to see how the warm-up answers
-  // landed — they're useful signal for "did this kid understand the
-  // smileys?" Iteration switched from t.scored → t.questions.
   final out = <_Col>[];
   for (final q in t.questions) {
     switch (q.kind) {
@@ -379,14 +354,12 @@ List<_Col> _buildColumns(SurveyTemplate t) {
 // UI bits.
 // ---------------------------------------------------------------------------
 
-class _GroupFilter extends StatelessWidget {
-  const _GroupFilter({
-    required this.groups,
+class _StatusFilter extends StatelessWidget {
+  const _StatusFilter({
     required this.selected,
     required this.onChanged,
   });
 
-  final List<Group> groups;
   final String? selected;
   final ValueChanged<String?> onChanged;
 
@@ -395,16 +368,20 @@ class _GroupFilter extends StatelessWidget {
     return DropdownButtonFormField<String?>(
       initialValue: selected,
       decoration: const InputDecoration(
-        labelText: 'Classroom filter',
+        labelText: 'Status filter',
         border: OutlineInputBorder(),
         isDense: true,
       ),
-      items: [
-        const DropdownMenuItem<String?>(
-          child: Text('All classrooms'),
+      items: const [
+        DropdownMenuItem<String?>(child: Text('All responses')),
+        DropdownMenuItem<String?>(
+          value: SurveyResponseStatus.completed,
+          child: Text('Completed only'),
         ),
-        for (final g in groups)
-          DropdownMenuItem<String?>(value: g.id, child: Text(g.name)),
+        DropdownMenuItem<String?>(
+          value: SurveyResponseStatus.draft,
+          child: Text('Drafts only'),
+        ),
       ],
       onChanged: onChanged,
     );
@@ -413,19 +390,14 @@ class _GroupFilter extends StatelessWidget {
 
 class _ResponsesGrid extends StatelessWidget {
   const _ResponsesGrid({
-    required this.subjects,
+    required this.responses,
     required this.cols,
-    required this.answersBySubject,
-    // Wave 135: full response by subject so the row can render the
-    // anonymized age_band / grade / school columns instead of the
-    // kid's name.
-    this.responseBySubject = const {},
+    required this.template,
   });
 
-  final List<Subject> subjects;
+  final List<SurveyResponse> responses;
   final List<_Col> cols;
-  final Map<String, SurveyAnswers> answersBySubject;
-  final Map<String, SurveyResponse> responseBySubject;
+  final SurveyTemplate template;
 
   @override
   Widget build(BuildContext context) {
@@ -437,9 +409,7 @@ class _ResponsesGrid extends StatelessWidget {
           theme.colorScheme.surfaceContainerHighest,
         ),
         columns: [
-          // Wave 135: kid name column replaced by 3 anonymized
-          // identity columns. Rows where the identity wasn't
-          // captured (older draft responses) show "—" per cell.
+          const DataColumn(label: Text('Recorded')),
           const DataColumn(label: Text('Age band')),
           const DataColumn(label: Text('Grade')),
           const DataColumn(label: Text('School')),
@@ -457,13 +427,12 @@ class _ResponsesGrid extends StatelessWidget {
             ),
         ],
         rows: [
-          for (final subject in subjects)
+          for (final r in responses)
             _row(
               context,
-              subject: subject,
+              response: r,
               cols: cols,
-              answers: answersBySubject[subject.id],
-              response: responseBySubject[subject.id],
+              template: template,
             ),
         ],
       ),
@@ -473,46 +442,42 @@ class _ResponsesGrid extends StatelessWidget {
 
 DataRow _row(
   BuildContext context, {
-  required Subject subject,
+  required SurveyResponse response,
   required List<_Col> cols,
-  required SurveyAnswers? answers,
-  SurveyResponse? response,
+  required SurveyTemplate template,
 }) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
+  final answers = SurveyAnswers.fromJson(response.answers);
   final total = cols.length;
   var done = 0;
-  if (answers != null) {
-    for (final c in cols) {
-      if (c.csv(answers).isNotEmpty) done++;
-    }
+  for (final c in cols) {
+    if (c.csv(answers).isNotEmpty) done++;
   }
-  final isComplete = done >= total && total > 0;
-  final statusChip = answers == null
-      ? Text('—', style: TextStyle(color: scheme.onSurfaceVariant))
-      : Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: isComplete
-                ? scheme.primary.withValues(alpha: 0.15)
-                : scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            isComplete ? 'Complete' : '$done / $total',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: isComplete
-                  ? scheme.primary
-                  : scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        );
+  final isComplete = response.status == SurveyResponseStatus.completed;
+  final statusChip = Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    decoration: BoxDecoration(
+      color: isComplete
+          ? scheme.primary.withValues(alpha: 0.15)
+          : scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Text(
+      isComplete ? 'Complete' : '$done / $total',
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: isComplete ? scheme.primary : scheme.onSurfaceVariant,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
   return DataRow(
     cells: [
-      DataCell(Text(response?.ageBand ?? '—')),
-      DataCell(Text(response?.grade ?? '—')),
-      DataCell(Text(response?.school ?? '—')),
+      DataCell(Text(_formatTimestamp(
+          response.completedAt ?? response.updatedAt))),
+      DataCell(Text(response.ageBand ?? '—')),
+      DataCell(Text(response.grade ?? '—')),
+      DataCell(Text(response.school ?? '—')),
       DataCell(statusChip),
       for (final c in cols)
         DataCell(
