@@ -616,21 +616,26 @@ class _AppShellState extends ConsumerState<AppShell> {
               left: 0,
               right: 0,
               bottom: ShellMetrics.bottomOmniboxHeight,
-              child: BackdropFilter(
-                // Blur-only — NO surface tint, NO outer Padding.
-                // The suggestion list extends all the way to the
-                // screen top (behind the chrome pills); the list's
-                // OWN top padding (set inside OmniboxSearchScreen
-                // via the overlay-mode `topInset` it reads from
-                // MediaQuery + ShellMetrics.topChromeHeight)
-                // keeps the first row clear of the chrome. This
-                // way the list's row backgrounds + scroll surface
-                // genuinely extend edge-to-edge — what the user
-                // sees behind the chrome pills is the same blurred
-                // list, not a chopped-off chrome strip.
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: OmniboxSearchScreen(
-                  onClose: _closeSearchOverlay,
+              // Scrim behavior: the overlay must absorb every tap
+              // in its bounds. Without this, the BackdropFilter is
+              // pointer-transparent and taps on dead space (between
+              // rows, padding, etc.) fall through to whatever route
+              // sits underneath — clicking "ghost" buttons on Today
+              // through the suggestion glass. Wrapping in a
+              // GestureDetector with opaque hit-test blocks pass-
+              // through; the onTap closes the overlay so tapping
+              // empty space is a dismiss gesture (matching modal-
+              // sheet expectations). Row taps inside the search
+              // screen still win because child gestures beat parent
+              // in Flutter's gesture arena.
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _closeSearchOverlay,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: OmniboxSearchScreen(
+                    onClose: _closeSearchOverlay,
+                  ),
                 ),
               ),
             ),
