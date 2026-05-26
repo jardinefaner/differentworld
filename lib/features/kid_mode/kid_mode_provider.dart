@@ -67,6 +67,12 @@ class KidMode extends Notifier<bool> {
   }
 
   Future<void> _loadInitial() async {
+    // Web doesn't persist kid mode. A laptop / desktop browser is
+    // never going to be "handed to a kid" — the use case is mobile-
+    // only. Persisting on web means a survey-take session from a
+    // dev's testing pins kid-mode on across all subsequent visits,
+    // hiding the staff chrome and looking like the app is broken.
+    if (kIsWeb) return;
     try {
       final prefs = await SharedPreferences.getInstance();
       final persisted = prefs.getBool(_kPrefsKey) ?? false;
@@ -94,6 +100,18 @@ class KidMode extends Notifier<bool> {
   }
 
   Future<void> _persist(bool value) async {
+    // Skip persistence on web — see `_loadInitial` for rationale.
+    // Also actively clear any stale value so a user upgrading from
+    // an older build that DID persist on web doesn't stay locked.
+    if (kIsWeb) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_kPrefsKey);
+      } on Object catch (_) {
+        // best-effort
+      }
+      return;
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_kPrefsKey, value);
