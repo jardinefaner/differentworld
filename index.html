@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Different World</title>
+  <meta name="description" content="Offline-first classroom planning & logging for early-childhood program staff.">
+  <style>
+    :root {
+      --bg: #faf8f4;
+      --fg: #1a1a1a;
+      --muted: #6b6b6b;
+      --accent: #2f6f5f;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16181a;
+        --fg: #f3f3f3;
+        --muted: #9a9a9a;
+        --accent: #6fc7af;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .logo {
+      width: 84px;
+      height: 84px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--accent), #4ba48d);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2.6rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(47, 111, 95, 0.25);
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin: 0 0 8px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .tag {
+      color: var(--muted);
+      margin: 0 0 40px;
+      max-width: 520px;
+      font-size: 1.1rem;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 0 48px;
+    }
+    .feature {
+      padding: 20px;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.03);
+      text-align: left;
+    }
+    @media (prefers-color-scheme: dark) {
+      .feature { background: rgba(255, 255, 255, 0.04); }
+    }
+    .feature h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .cta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    a.btn {
+      display: inline-block;
+      padding: 14px 24px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.15s ease;
+    }
+    a.btn:hover { transform: translateY(-1px); }
+    a.btn.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    footer {
+      margin-top: 64px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">D</div>
+  <h1>Different World</h1>
+  <p class="tag">Offline-first classroom planning &amp; logging for early-childhood program staff.</p>
+
+  <section class="features">
+    <div class="feature">
+      <h3>Offline by default</h3>
+      <p>Every read and write works without a connection. Sync happens whenever the device reconnects — no errors, no waiting.</p>
+    </div>
+    <div class="feature">
+      <h3>Built for the day</h3>
+      <p>Attendance, observations, schedule, fleet, captures, exports — the things directors and teachers actually do, on one home screen.</p>
+    </div>
+    <div class="feature">
+      <h3>Family lens</h3>
+      <p>Guardians see their kids' day. Staff and families talk through the same per-child thread.</p>
+    </div>
+    <div class="feature">
+      <h3>Private by design</h3>
+      <p>Children's data lives in your program's space. Photos are signed and short-lived; screenshots are blocked in release builds.</p>
+    </div>
+  </section>
+
+  <div class="cta">
+    <a class="btn" href="mailto:hello@differentworld.app">Get in touch</a>
+  </div>
+
+  <footer>© Different World</footer>
+</body>
+</html>
