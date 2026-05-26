@@ -181,18 +181,21 @@ class SurveyQuestionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    // Wave 133: full-bleed. SingleChildScrollView still wraps the
-    // content (so a long text-question on a small phone scrolls),
-    // but the inner Column is sized to the viewport's min height
-    // and uses MainAxisAlignment.center to float the question +
-    // smileys vertically — feels like a single-purpose page, not
-    // a card stuck to the top.
-    return LayoutBuilder(
-      builder: (ctx, c) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: c.maxHeight),
-          child: IntrinsicHeight(
+    // Wave 136: replace the Wave 133 LayoutBuilder+ConstrainedBox+
+    // IntrinsicHeight sandwich (which violated Flutter's contract —
+    // LayoutBuilder explicitly doesn't support intrinsic dimension
+    // queries) with the canonical full-bleed pattern:
+    // CustomScrollView+SliverFillRemaining(hasScrollBody: false).
+    // The sliver gives the inner Column an exact viewport-height
+    // constraint, so MainAxisAlignment.center works to float the
+    // content vertically. Tall content still scrolls because the
+    // CustomScrollView is the parent.
+    return CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -264,7 +267,7 @@ class SurveyQuestionPage extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -410,13 +413,14 @@ class SurveyOptionYesNoPage extends StatelessWidget {
     // Variant rotates by page index across all 8 ChibiVariants. Two
     // adjacent options never look the same.
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    // Wave 133: same full-bleed treatment as SurveyQuestionPage.
-    return LayoutBuilder(
-      builder: (ctx, c) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: c.maxHeight),
-          child: IntrinsicHeight(
+    // Wave 136: same SliverFillRemaining replacement as
+    // SurveyQuestionPage — see comment there.
+    return CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -495,7 +499,7 @@ class SurveyOptionYesNoPage extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
