@@ -61,21 +61,16 @@ class DifferentWorldApp extends ConsumerWidget {
       //      shortcut chrome itself respects the user's font preference.
       //   2. OmniboxShortcuts — Cmd+K (mac) / Ctrl+K (everything else)
       //      summons the command palette from any screen.
-      //   3. SelectionArea (Wave 111) — every `Text` inside the
-      //      routed tree becomes click-and-drag selectable. Only
-      //      ONE `SelectableText` existed in the codebase before
-      //      this; parents couldn't copy a teacher's note about
-      //      their kid, directors couldn't copy an invite code by
-      //      dragging across it. The contextMenu uses the platform
-      //      defaults (copy / select-all). On native this is a
-      //      gestural floating toolbar; on web it's the browser's
-      //      own selection model — they just work.
       // All wrappers are shallow — no rebuilds on route changes.
+      //
+      // Wave 127: SelectionArea was here in Wave 111 but lived
+      // OUTSIDE the routed Navigator/Overlay, causing
+      // "No Overlay widget found" assertions on every screen build.
+      // It now lives inside AppShell (which sits BELOW the routed
+      // Navigator), where the Overlay ancestor exists.
       builder: (context, child) => AppTextScaleApplier(
         child: OmniboxShortcuts(
-          child: SelectionArea(
-            child: child ?? const SizedBox.shrink(),
-          ),
+          child: child ?? const SizedBox.shrink(),
         ),
       ),
     );

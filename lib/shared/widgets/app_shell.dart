@@ -654,7 +654,18 @@ class _AppShellState extends ConsumerState<AppShell> {
                   ? 0
                   : ShellMetrics.bottomOmniboxHeight,
             ),
-            child: widget.child,
+            // Wave 127: SelectionArea moved here from
+            // MaterialApp.builder. Now sits inside the routed
+            // Navigator's Overlay scope (provided by Scaffold's
+            // ancestor Navigator), so the SelectableRegion's
+            // upward Overlay lookup succeeds. Every `Text` inside
+            // a route body becomes click-and-drag selectable; the
+            // platform default copy/select-all toolbar shows on
+            // selection. Excludes chrome / omnibox / drawer (they
+            // sit outside this Padding in the Stack), which is
+            // the right call — selecting "Today" out of a chrome
+            // pill isn't what users want.
+            child: SelectionArea(child: widget.child),
           ),
           // Omnibox suggestion panel — rendered inline as an overlay
           // when the bar has focus. NOT a pushed route (see Wave 25
