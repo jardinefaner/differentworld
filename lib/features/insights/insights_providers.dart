@@ -324,7 +324,7 @@ List<Insight> _vehicleInsights(Ref ref, List<Vehicle> vehicles) {
         actions: [
           InsightAction(
             label: 'Open vehicle',
-            route: '/settings/vehicles/${v.id}',
+            route: '/vehicles/${v.id}',
           ),
         ],
       ));
@@ -339,7 +339,7 @@ List<Insight> _vehicleInsights(Ref ref, List<Vehicle> vehicles) {
         actions: [
           InsightAction(
             label: 'Open vehicle',
-            route: '/settings/vehicles/${v.id}',
+            route: '/vehicles/${v.id}',
           ),
         ],
       ));

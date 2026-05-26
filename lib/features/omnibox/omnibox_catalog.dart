@@ -221,7 +221,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       category: OmniboxCategory.setting,
       icon: Icons.directions_bus_outlined,
       keywords: const ['fleet', 'van', 'bus', 'transport'],
-      onSelect: (ctx, _) => ctx.push('/settings/vehicles'),
+      onSelect: (ctx, _) => ctx.push('/vehicles'),
     ),
     OmniboxEntry(
       id: 'page.settings',
@@ -295,7 +295,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         icon: Icons.add_circle_outline,
         keywords: const ['new vehicle', 'fleet', 'van', 'bus'],
         onSelect: (ctx, _) {
-          unawaited(ctx.push('/settings/vehicles/new'));
+          unawaited(ctx.push('/vehicles/new'));
         },
       ),
     OmniboxEntry(
@@ -674,7 +674,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       icon: Icons.directions_bus_outlined,
       keywords: const ['vehicle', 'fleet', 'van', 'bus'],
       groupId: 'vehicle:${v.id}',
-      onSelect: (ctx, _) => ctx.push('/settings/vehicles/${v.id}'),
+      onSelect: (ctx, _) => ctx.push('/vehicles/${v.id}'),
     ));
     if (viewer.canDrive) {
       entries.add(OmniboxEntry(
@@ -685,7 +685,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         keywords: const ['checkout', 'pre-trip', 'pretrip'],
         groupId: 'vehicle:${v.id}',
         onSelect: (ctx, _) =>
-            ctx.push('/settings/vehicles/${v.id}/checkout'),
+            ctx.push('/vehicles/${v.id}/checkout'),
       ));
       entries.add(OmniboxEntry(
         id: 'vehicle:${v.id}:checkin',
@@ -695,7 +695,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         keywords: const ['checkin', 'post-trip', 'return'],
         groupId: 'vehicle:${v.id}',
         onSelect: (ctx, _) =>
-            ctx.push('/settings/vehicles/${v.id}/checkin'),
+            ctx.push('/vehicles/${v.id}/checkin'),
       ));
     }
   }

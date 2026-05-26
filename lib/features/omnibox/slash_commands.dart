@@ -310,7 +310,7 @@ void _execVehicleAction(
     return;
   }
   if (args == null || args.isEmpty) {
-    unawaited(ctx.push('/settings/vehicles'));
+    unawaited(ctx.push('/vehicles'));
     return;
   }
   final fleet =
@@ -337,7 +337,7 @@ void _execVehicleAction(
     );
     return;
   }
-  unawaited(ctx.push('/settings/vehicles/${hit.vehicle.id}/$kind'));
+  unawaited(ctx.push('/vehicles/${hit.vehicle.id}/$kind'));
 }
 
 extension _ListFirstWhereOrNullX<T> on Iterable<T> {

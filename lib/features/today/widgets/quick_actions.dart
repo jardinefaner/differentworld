@@ -205,7 +205,7 @@ class _VehicleQuickTile extends ConsumerWidget {
             : 'Return vehicle',
         badge: myOut.length > 1 ? '${myOut.length}' : null,
         onTap: () => unawaited(
-          context.push('/settings/vehicles/${first.id}/checkin'),
+          context.push('/vehicles/${first.id}/checkin'),
         ),
       );
     }
@@ -213,13 +213,13 @@ class _VehicleQuickTile extends ConsumerWidget {
       return _Tile(
         icon: Icons.key_outlined,
         label: 'Check out a vehicle',
-        onTap: () => unawaited(context.push('/settings/vehicles')),
+        onTap: () => unawaited(context.push('/vehicles')),
       );
     }
     return _Tile(
       icon: Icons.directions_bus_outlined,
       label: 'Fleet',
-      onTap: () => unawaited(context.push('/settings/vehicles')),
+      onTap: () => unawaited(context.push('/vehicles')),
     );
   }
 }

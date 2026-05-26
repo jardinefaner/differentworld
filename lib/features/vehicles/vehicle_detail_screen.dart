@@ -17,7 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-/// `/settings/vehicles/:id` — fleet vehicle detail. Shows current
+/// `/vehicles/:id` — fleet vehicle detail. Shows current
 /// state (in / out + driver), recent log history, and a check-out /
 /// check-in button gated on `canDrive`.
 class VehicleDetailScreen extends ConsumerWidget {
@@ -38,7 +38,7 @@ class VehicleDetailScreen extends ConsumerWidget {
     final isOut = latestAsync.value?.isCheckout ?? false;
 
     return EdgeScaffold(
-      backFallbackRoute: '/settings/vehicles',
+      backFallbackRoute: '/vehicles',
       actions: [
         // Primary verb (check out / check in) lives in the top-right
         // pill alongside the other action chrome. The prior
@@ -54,7 +54,7 @@ class VehicleDetailScreen extends ConsumerWidget {
                 ? Icons.assignment_turned_in_outlined
                 : Icons.key_outlined,
             onPressed: () => context.push(
-              '/settings/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
+              '/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
             ),
           ),
         if (canEdit && vehicleAsync.value != null)
@@ -70,7 +70,7 @@ class VehicleDetailScreen extends ConsumerWidget {
             tooltip: 'Edit',
             icon: Icons.edit_outlined,
             onPressed: () =>
-                context.push('/settings/vehicles/$vehicleId/edit'),
+                context.push('/vehicles/$vehicleId/edit'),
           ),
         const SyncStatusIndicator(),
       ],

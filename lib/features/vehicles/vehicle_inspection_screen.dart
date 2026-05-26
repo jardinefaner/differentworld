@@ -19,8 +19,8 @@ import 'package:go_router/go_router.dart';
 /// the submit button label.
 ///
 /// Routes:
-///   /settings/vehicles/:id/checkout
-///   /settings/vehicles/:id/checkin
+///   /vehicles/:id/checkout
+///   /vehicles/:id/checkin
 class VehicleInspectionScreen extends ConsumerStatefulWidget {
   const VehicleInspectionScreen({
     required this.vehicleId,
@@ -129,7 +129,7 @@ class _VehicleInspectionScreenState
     // Defence-in-depth — UI gates the entry point on canDrive too.
     if (!viewer.canDrive) {
       return EdgeScaffold(
-        backFallbackRoute: '/settings/vehicles/${widget.vehicleId}',
+        backFallbackRoute: '/vehicles/${widget.vehicleId}',
         body: const NoAccess(
           title: 'Driver certification required',
           message:
@@ -144,7 +144,7 @@ class _VehicleInspectionScreenState
     return DismissGuard(
       isDirty: _isDirty,
       child: EdgeScaffold(
-        backFallbackRoute: '/settings/vehicles/${widget.vehicleId}',
+        backFallbackRoute: '/vehicles/${widget.vehicleId}',
         body: vehicleAsync.when(
           loading: () => const LoadingSlot(),
           error: (_, _) => const ErrorState(title: 'Could not load vehicle'),

@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// `/settings/vehicles` — the fleet list. Directors create/edit;
+/// `/vehicles` — the fleet list. Directors create/edit;
 /// drivers (members with `can_drive`) can tap through to a vehicle
 /// detail screen and check it out.
 class VehiclesListScreen extends ConsumerWidget {
@@ -40,13 +40,13 @@ class VehiclesListScreen extends ConsumerWidget {
         SecondaryActionButton(
           tooltip: 'Scan vehicle QR',
           icon: Icons.qr_code_scanner_outlined,
-          onPressed: () => context.push('/settings/vehicles/scan'),
+          onPressed: () => context.push('/vehicles/scan'),
         ),
         if (canEditFleet)
           PrimaryActionButton(
             tooltip: 'New vehicle',
             icon: Icons.add,
-            onPressed: () => context.push('/settings/vehicles/new'),
+            onPressed: () => context.push('/vehicles/new'),
           ),
       ],
       body: vehiclesAsync.when(
@@ -66,7 +66,7 @@ class VehiclesListScreen extends ConsumerWidget {
                   : 'Your director will set up the fleet here.',
               action: canEditFleet
                   ? FilledButton.icon(
-                      onPressed: () => context.push('/settings/vehicles/new'),
+                      onPressed: () => context.push('/vehicles/new'),
                       icon: const Icon(Icons.add),
                       label: const Text('Add vehicle'),
                     )
@@ -167,7 +167,7 @@ class _VehicleTile extends ConsumerWidget {
                 )
               : const Icon(Icons.chevron_right),
       onTap: () =>
-          context.push('/settings/vehicles/${vehicle.id}'),
+          context.push('/vehicles/${vehicle.id}'),
     );
   }
 }

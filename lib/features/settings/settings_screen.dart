@@ -161,7 +161,7 @@ class SettingsScreen extends ConsumerWidget {
                   'Fleet vehicles, pre-trip checks, check-in/out',
                 ),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/settings/vehicles'),
+                onTap: () => context.push('/vehicles'),
               ),
             ],
           ),

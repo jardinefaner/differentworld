@@ -80,7 +80,7 @@ class _VehicleScanScreenState extends State<VehicleScanScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return EdgeScaffold(
-      backFallbackRoute: '/settings/vehicles',
+      backFallbackRoute: '/vehicles',
       body: Stack(
         children: [
           MobileScanner(

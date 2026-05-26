@@ -15,7 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// `/settings/vehicles/new` and `/settings/vehicles/:id/edit`.
+/// `/vehicles/new` and `/vehicles/:id/edit`.
 ///
 /// Director-only. Per `docs/UX_DECISIONS.md §2`, vehicle settings are
 /// a routable screen (not a sheet) because they're persistent state
@@ -187,7 +187,7 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
     final viewer = ref.watch(viewerProvider);
     if (!viewer.canManageSpace) {
       return const EdgeScaffold(
-        backFallbackRoute: '/settings/vehicles',
+        backFallbackRoute: '/vehicles',
         body: NoAccess(
           title: 'Only directors can edit vehicles.',
           message: 'Ask the program director to make changes.',
@@ -206,8 +206,8 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
       isDirty: () => _isDirty(vehicleForDirty),
       child: EdgeScaffold(
         backFallbackRoute: widget.isEdit
-            ? '/settings/vehicles/${widget.vehicleId}'
-            : '/settings/vehicles',
+            ? '/vehicles/${widget.vehicleId}'
+            : '/vehicles',
         body: vehicleAsync.when(
           loading: () => const LoadingSlot(),
           error: (_, _) => const ErrorState(title: 'Could not load vehicle'),

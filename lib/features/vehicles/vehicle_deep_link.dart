@@ -69,7 +69,7 @@ class VehicleDeepLink {
 
   /// Path inside the app router. Pair with `context.push` from the
   /// signed-in shell when a pending link lands.
-  String get routePath => '/settings/vehicles/$vehicleId/$kind';
+  String get routePath => '/vehicles/$vehicleId/$kind';
 }
 
 /// Holds a pending vehicle deep link captured at app boot or during a

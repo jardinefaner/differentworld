@@ -427,49 +427,66 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+        ],
+      ),
+      // Vehicles live at /vehicles (not /settings/vehicles).
+      // Wave 95: driving is a daily operation, not a configuration —
+      // burying it under settings made the route taxonomy lie about
+      // the surface's role. Old /settings/vehicles* URLs still
+      // resolve via a redirect (preserves any printed QR codes that
+      // were generated before this rename).
+      GoRoute(
+        path: '/vehicles',
+        builder: (_, _) => const VehiclesListScreen(),
+        routes: [
           GoRoute(
-            path: 'vehicles',
-            builder: (_, _) => const VehiclesListScreen(),
+            path: 'new',
+            builder: (_, _) => const VehicleEditScreen(),
+          ),
+          GoRoute(
+            path: 'scan',
+            builder: (_, _) => const VehicleScanScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (_, state) => VehicleDetailScreen(
+              vehicleId: state.pathParameters['id']!,
+            ),
             routes: [
               GoRoute(
-                path: 'new',
-                builder: (_, _) => const VehicleEditScreen(),
-              ),
-              GoRoute(
-                path: 'scan',
-                builder: (_, _) => const VehicleScanScreen(),
-              ),
-              GoRoute(
-                path: ':id',
-                builder: (_, state) => VehicleDetailScreen(
-                  vehicleId: state.pathParameters['id']!,
+                path: 'edit',
+                builder: (_, state) => VehicleEditScreen(
+                  vehicleId: state.pathParameters['id'],
                 ),
-                routes: [
-                  GoRoute(
-                    path: 'edit',
-                    builder: (_, state) => VehicleEditScreen(
-                      vehicleId: state.pathParameters['id'],
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'checkout',
-                    builder: (_, state) => VehicleInspectionScreen(
-                      vehicleId: state.pathParameters['id']!,
-                      kind: VehicleLogKind.checkout,
-                    ),
-                  ),
-                  GoRoute(
-                    path: 'checkin',
-                    builder: (_, state) => VehicleInspectionScreen(
-                      vehicleId: state.pathParameters['id']!,
-                      kind: VehicleLogKind.checkin,
-                    ),
-                  ),
-                ],
+              ),
+              GoRoute(
+                path: 'checkout',
+                builder: (_, state) => VehicleInspectionScreen(
+                  vehicleId: state.pathParameters['id']!,
+                  kind: VehicleLogKind.checkout,
+                ),
+              ),
+              GoRoute(
+                path: 'checkin',
+                builder: (_, state) => VehicleInspectionScreen(
+                  vehicleId: state.pathParameters['id']!,
+                  kind: VehicleLogKind.checkin,
+                ),
               ),
             ],
           ),
         ],
+      ),
+      // Compatibility redirect: anything under /settings/vehicles
+      // routes to the equivalent path under /vehicles. Keeps old
+      // QR codes, bookmarks, and shared links working.
+      GoRoute(
+        path: '/settings/vehicles',
+        redirect: (_, state) {
+          final tail = state.uri.path.replaceFirst('/settings/vehicles', '');
+          final query = state.uri.hasQuery ? '?${state.uri.query}' : '';
+          return '/vehicles$tail$query';
+        },
       ),
       GoRoute(
         path: '/login',
