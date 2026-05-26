@@ -21,6 +21,24 @@ final surveyResponsesProvider = StreamProvider.autoDispose
   );
 });
 
+/// Wave 135: per-program catalog of identity-picker options.
+/// `dimension` is one of 'age_band' / 'grade' / 'school'. Empty list
+/// is normal on first-ever survey-take — the director adds options
+/// via the "+" button on the identity-capture page.
+typedef SurveyPickerOptionsKey = ({String spaceId, String dimension});
+
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final surveyPickerOptionsProvider = StreamProvider.autoDispose
+    .family<List<SurveyPickerOption>, SurveyPickerOptionsKey>(
+        (ref, key) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  yield* db.surveysDao.watchPickerOptions(
+    spaceId: key.spaceId,
+    dimension: key.dimension,
+  );
+});
+
 /// The single response (if any) for a (template, subject) pair.
 typedef SurveyResponseKey = ({String templateId, String subjectId});
 
@@ -160,12 +178,20 @@ class SurveyActions {
   /// for TTS playback on this template. Null is allowed — older
   /// rows from before the picker shipped won't have one and the
   /// next session will prompt. Once set, it's sticky.
+  ///
+  /// Wave 135: `ageBand` / `grade` / `school` are captured on a
+  /// mini-page right after the voice picker. They anonymize the
+  /// table view (kid name doesn't appear there anymore). All three
+  /// null is legal for older rows.
   Future<void> save({
     required String templateId,
     required String subjectId,
     required SurveyAnswers answers,
     required bool complete,
     String? voiceId,
+    String? ageBand,
+    String? grade,
+    String? school,
   }) async {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.spaceId;
@@ -183,6 +209,31 @@ class SurveyActions {
       recordedBy: viewer.memberId,
       completedAt: complete ? DateTime.now() : null,
       voiceId: voiceId,
+      ageBand: ageBand,
+      grade: grade,
+      school: school,
+    );
+  }
+
+  /// Wave 135: add a new identity-picker option for the current
+  /// program. Idempotent if the label already exists (returns the
+  /// existing id). Called by the "+" button on the identity-capture
+  /// page.
+  Future<String> addPickerOption({
+    required String dimension,
+    required String label,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId = viewer.spaceId;
+    if (spaceId == null) {
+      throw StateError('No Space — cannot add picker option.');
+    }
+    final db = await _ref.read(appDatabaseProvider.future);
+    return db.surveysDao.addPickerOption(
+      id: _uuid.v4(),
+      spaceId: spaceId,
+      dimension: dimension,
+      label: label,
     );
   }
 

@@ -326,6 +326,31 @@ class SurveyResponses extends Table {
   // `aura-2-thalia-en`. Null until they pick on the first question;
   // once set, it persists so subsequent sessions skip the picker.
   TextColumn get voiceId => text().nullable()();
+  // Wave 135: anonymized identity captured at the start of the
+  // survey-take flow. Used by the table view to label rows without
+  // exposing the kid's name. All three are nullable — older rows
+  // from before the picker shipped won't have them.
+  TextColumn get ageBand => text().nullable()();
+  TextColumn get grade => text().nullable()();
+  TextColumn get school => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Wave 135: per-program catalog of survey identity-picker options.
+/// One row per (program, dimension, label). Director's first kid
+/// adds a label via the "+" button on the survey-take identity
+/// page; subsequent kids see it pre-existing in the picker.
+class SurveyPickerOptions extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  /// One of 'age_band' / 'grade' / 'school' (server-side CHECK).
+  TextColumn get dimension => text()();
+  TextColumn get label => text()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 
@@ -627,7 +652,8 @@ class Headcounts extends Table {
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
           Vehicles, VehicleLogs, MemberCertifications, Attachments,
-          SurveyResponses, DismissedInsights, Captures, Tasks, Messages,
+          SurveyResponses, SurveyPickerOptions,
+          DismissedInsights, Captures, Tasks, Messages,
           Exports, ExportRecipients,
           // Camp scheduling.
           Locations, Activities, ScheduleBlocks, TripLogistics,

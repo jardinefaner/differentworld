@@ -553,3 +553,215 @@ class _BigYesNoButton extends StatelessWidget {
     );
   }
 }
+
+/// Wave 135: identity-capture page. Shown right after the kid picks a
+/// voice (and before question 1) when any of `ageBand` / `grade` /
+/// `school` is missing on the response row. Each dimension renders
+/// as a row of chips populated from the per-program
+/// `survey_picker_options` catalog, with a trailing "+" button that
+/// adds a new label inline. The added label persists for the
+/// program: the next kid who reaches this page sees it as a
+/// pre-existing chip.
+///
+/// The whole page locks the "Continue" button until all three
+/// dimensions are picked. Tap a chip → it's selected; tap a
+/// different chip → selection swaps. No deselect.
+class IdentityCapturePage extends StatelessWidget {
+  const IdentityCapturePage({
+    required this.ageBand,
+    required this.grade,
+    required this.school,
+    required this.ageBandOptions,
+    required this.gradeOptions,
+    required this.schoolOptions,
+    required this.onPick,
+    required this.onAddOption,
+    required this.onContinue,
+    super.key,
+  });
+
+  final String? ageBand;
+  final String? grade;
+  final String? school;
+
+  /// One list per dimension. Empty on first survey-take in a program.
+  final List<String> ageBandOptions;
+  final List<String> gradeOptions;
+  final List<String> schoolOptions;
+
+  /// `dimension` is 'age_band' / 'grade' / 'school'; `label` is the
+  /// chosen label. Called when a chip is tapped.
+  final void Function(String dimension, String label) onPick;
+
+  /// Called when "+" is tapped and the user submits a new label.
+  final Future<void> Function(String dimension, String label) onAddOption;
+
+  /// Continue to question 1. Disabled until all three are picked.
+  final VoidCallback onContinue;
+
+  bool get _ready =>
+      (ageBand?.isNotEmpty ?? false) &&
+      (grade?.isNotEmpty ?? false) &&
+      (school?.isNotEmpty ?? false);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'A few things about you',
+              style: theme.textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'These help us see patterns across kids without using '
+              'names. Pick one for each.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            _DimensionPicker(
+              label: 'Age band',
+              dimension: 'age_band',
+              options: ageBandOptions,
+              selected: ageBand,
+              onPick: (l) => onPick('age_band', l),
+              onAdd: (l) => onAddOption('age_band', l),
+              addHint: 'e.g. 7-9',
+            ),
+            const SizedBox(height: 20),
+            _DimensionPicker(
+              label: 'Grade',
+              dimension: 'grade',
+              options: gradeOptions,
+              selected: grade,
+              onPick: (l) => onPick('grade', l),
+              onAdd: (l) => onAddOption('grade', l),
+              addHint: 'e.g. 2nd',
+            ),
+            const SizedBox(height: 20),
+            _DimensionPicker(
+              label: 'School',
+              dimension: 'school',
+              options: schoolOptions,
+              selected: school,
+              onPick: (l) => onPick('school', l),
+              onAdd: (l) => onAddOption('school', l),
+              addHint: 'e.g. Lincoln Elementary',
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _ready ? onContinue : null,
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(_ready ? 'Start the survey' : 'Pick one for each'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DimensionPicker extends StatelessWidget {
+  const _DimensionPicker({
+    required this.label,
+    required this.dimension,
+    required this.options,
+    required this.selected,
+    required this.onPick,
+    required this.onAdd,
+    required this.addHint,
+  });
+
+  final String label;
+  final String dimension;
+  final List<String> options;
+  final String? selected;
+  final ValueChanged<String> onPick;
+  final Future<void> Function(String label) onAdd;
+  final String addHint;
+
+  Future<void> _promptAdd(BuildContext context) async {
+    final controller = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Add $label'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(hintText: addHint),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value == null || value.isEmpty) return;
+    await onAdd(value);
+    // Auto-select the newly added option so the kid doesn't have to
+    // tap it after adding.
+    onPick(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final opt in options)
+              ChoiceChip(
+                label: Text(opt),
+                selected: selected == opt,
+                onSelected: (_) => onPick(opt),
+              ),
+            // Trailing "+" chip. Tapping opens a dialog to type the
+            // new label; submitting persists it + auto-picks it.
+            ActionChip(
+              avatar: const Icon(Icons.add, size: 18),
+              label: const Text('Add'),
+              onPressed: () => _promptAdd(context),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}

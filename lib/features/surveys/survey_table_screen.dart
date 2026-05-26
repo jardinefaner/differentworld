@@ -84,6 +84,12 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
             for (final r in responses)
               r.subjectId: SurveyAnswers.fromJson(r.answers),
           };
+          // Wave 135: also keep the FULL response row by subject so
+          // the table can render age_band / grade / school instead
+          // of the kid's name.
+          final responseBySubject = <String, SurveyResponse>{
+            for (final r in responses) r.subjectId: r,
+          };
           final cols = _buildColumns(template);
 
           return ListView(
@@ -120,6 +126,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                                 subjects: subjects,
                                 cols: cols,
                                 answersBySubject: answersBySubject,
+                                responseBySubject: responseBySubject,
                               ),
                       icon: const Icon(Icons.download),
                       label: const Text('Export CSV'),
@@ -143,6 +150,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
                   subjects: subjects,
                   cols: cols,
                   answersBySubject: answersBySubject,
+                  responseBySubject: responseBySubject,
                 ),
             ],
           );
@@ -156,6 +164,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
     required List<Subject> subjects,
     required List<_Col> cols,
     required Map<String, SurveyAnswers> answersBySubject,
+    required Map<String, SurveyResponse> responseBySubject,
   }) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     await runReported(
@@ -167,6 +176,7 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
         subjects: subjects,
         cols: cols,
         answersBySubject: answersBySubject,
+        responseBySubject: responseBySubject,
       ),
     );
   }
@@ -176,13 +186,19 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
     required List<Subject> subjects,
     required List<_Col> cols,
     required Map<String, SurveyAnswers> answersBySubject,
+    required Map<String, SurveyResponse> responseBySubject,
   }) async {
     final groups = ref.read(groupsProvider).value ?? const <Group>[];
     final groupName = {for (final g in groups) g.id: g.name};
 
+    // Wave 135: anonymized export. Drop first/last name; use the
+    // per-response age_band / grade / school columns instead. Older
+    // responses without identity capture render empty for those
+    // three columns but the rest of the row is unchanged.
     final header = <String>[
-      'First name',
-      'Last name',
+      'Age band',
+      'Grade',
+      'School',
       'Classroom',
       'Status',
       for (final c in cols) c.header,
@@ -190,9 +206,11 @@ class _SurveyTableScreenState extends ConsumerState<SurveyTableScreen> {
     final rows = <List<String>>[header];
     for (final subject in subjects) {
       final answers = answersBySubject[subject.id];
+      final response = responseBySubject[subject.id];
       rows.add([
-        subject.firstName,
-        subject.lastName,
+        response?.ageBand ?? '',
+        response?.grade ?? '',
+        response?.school ?? '',
         groupName[subject.groupId] ?? '',
         _statusLabel(answers, template.scored.toList()),
         for (final c in cols) c.csv(answers),
@@ -398,11 +416,16 @@ class _ResponsesGrid extends StatelessWidget {
     required this.subjects,
     required this.cols,
     required this.answersBySubject,
+    // Wave 135: full response by subject so the row can render the
+    // anonymized age_band / grade / school columns instead of the
+    // kid's name.
+    this.responseBySubject = const {},
   });
 
   final List<Subject> subjects;
   final List<_Col> cols;
   final Map<String, SurveyAnswers> answersBySubject;
+  final Map<String, SurveyResponse> responseBySubject;
 
   @override
   Widget build(BuildContext context) {
@@ -414,7 +437,12 @@ class _ResponsesGrid extends StatelessWidget {
           theme.colorScheme.surfaceContainerHighest,
         ),
         columns: [
-          const DataColumn(label: Text('Name')),
+          // Wave 135: kid name column replaced by 3 anonymized
+          // identity columns. Rows where the identity wasn't
+          // captured (older draft responses) show "—" per cell.
+          const DataColumn(label: Text('Age band')),
+          const DataColumn(label: Text('Grade')),
+          const DataColumn(label: Text('School')),
           const DataColumn(label: Text('Status')),
           for (final c in cols)
             DataColumn(
@@ -435,6 +463,7 @@ class _ResponsesGrid extends StatelessWidget {
               subject: subject,
               cols: cols,
               answers: answersBySubject[subject.id],
+              response: responseBySubject[subject.id],
             ),
         ],
       ),
@@ -447,6 +476,7 @@ DataRow _row(
   required Subject subject,
   required List<_Col> cols,
   required SurveyAnswers? answers,
+  SurveyResponse? response,
 }) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
@@ -480,7 +510,9 @@ DataRow _row(
         );
   return DataRow(
     cells: [
-      DataCell(Text('${subject.firstName} ${subject.lastName}')),
+      DataCell(Text(response?.ageBand ?? '—')),
+      DataCell(Text(response?.grade ?? '—')),
+      DataCell(Text(response?.school ?? '—')),
       DataCell(statusChip),
       for (final c in cols)
         DataCell(

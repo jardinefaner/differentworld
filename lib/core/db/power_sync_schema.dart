@@ -189,6 +189,23 @@ const appSchema = Schema([
     Column.text('updated_at'),
     // Wave 120: the kid's chosen TTS voice for this template.
     Column.text('voice_id'),
+    // Wave 135: captured at the start of the survey (after the voice
+    // picker, before question 1). Used by the table view to
+    // anonymize the kid's identity column.
+    Column.text('age_band'),
+    Column.text('grade'),
+    Column.text('school'),
+  ]),
+  // Wave 135: per-program catalog of survey identity-picker options.
+  // Kids' first survey adds new labels via a "+" button; subsequent
+  // surveys see the accumulated list.
+  Table('survey_picker_options', [
+    Column.text('space_id'),
+    Column.text('dimension'),
+    Column.text('label'),
+    Column.integer('sort_order'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
   ]),
   Table('dismissed_insights', [
     Column.text('space_id'),

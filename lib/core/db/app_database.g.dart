@@ -8874,6 +8874,35 @@ class $SurveyResponsesTable extends SurveyResponses
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _ageBandMeta = const VerificationMeta(
+    'ageBand',
+  );
+  @override
+  late final GeneratedColumn<String> ageBand = GeneratedColumn<String>(
+    'age_band',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _gradeMeta = const VerificationMeta('grade');
+  @override
+  late final GeneratedColumn<String> grade = GeneratedColumn<String>(
+    'grade',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _schoolMeta = const VerificationMeta('school');
+  @override
+  late final GeneratedColumn<String> school = GeneratedColumn<String>(
+    'school',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8908,6 +8937,9 @@ class $SurveyResponsesTable extends SurveyResponses
     startedAt,
     completedAt,
     voiceId,
+    ageBand,
+    grade,
+    school,
     createdAt,
     updatedAt,
   ];
@@ -8997,6 +9029,24 @@ class $SurveyResponsesTable extends SurveyResponses
         voiceId.isAcceptableOrUnknown(data['voice_id']!, _voiceIdMeta),
       );
     }
+    if (data.containsKey('age_band')) {
+      context.handle(
+        _ageBandMeta,
+        ageBand.isAcceptableOrUnknown(data['age_band']!, _ageBandMeta),
+      );
+    }
+    if (data.containsKey('grade')) {
+      context.handle(
+        _gradeMeta,
+        grade.isAcceptableOrUnknown(data['grade']!, _gradeMeta),
+      );
+    }
+    if (data.containsKey('school')) {
+      context.handle(
+        _schoolMeta,
+        school.isAcceptableOrUnknown(data['school']!, _schoolMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -9062,6 +9112,18 @@ class $SurveyResponsesTable extends SurveyResponses
         DriftSqlType.string,
         data['${effectivePrefix}voice_id'],
       ),
+      ageBand: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}age_band'],
+      ),
+      grade: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}grade'],
+      ),
+      school: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}school'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -9090,6 +9152,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
   final String startedAt;
   final String? completedAt;
   final String? voiceId;
+  final String? ageBand;
+  final String? grade;
+  final String? school;
   final String createdAt;
   final String updatedAt;
   const SurveyResponse({
@@ -9103,6 +9168,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     required this.startedAt,
     this.completedAt,
     this.voiceId,
+    this.ageBand,
+    this.grade,
+    this.school,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -9124,6 +9192,15 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     }
     if (!nullToAbsent || voiceId != null) {
       map['voice_id'] = Variable<String>(voiceId);
+    }
+    if (!nullToAbsent || ageBand != null) {
+      map['age_band'] = Variable<String>(ageBand);
+    }
+    if (!nullToAbsent || grade != null) {
+      map['grade'] = Variable<String>(grade);
+    }
+    if (!nullToAbsent || school != null) {
+      map['school'] = Variable<String>(school);
     }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
@@ -9148,6 +9225,15 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       voiceId: voiceId == null && nullToAbsent
           ? const Value.absent()
           : Value(voiceId),
+      ageBand: ageBand == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ageBand),
+      grade: grade == null && nullToAbsent
+          ? const Value.absent()
+          : Value(grade),
+      school: school == null && nullToAbsent
+          ? const Value.absent()
+          : Value(school),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -9169,6 +9255,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       startedAt: serializer.fromJson<String>(json['startedAt']),
       completedAt: serializer.fromJson<String?>(json['completedAt']),
       voiceId: serializer.fromJson<String?>(json['voiceId']),
+      ageBand: serializer.fromJson<String?>(json['ageBand']),
+      grade: serializer.fromJson<String?>(json['grade']),
+      school: serializer.fromJson<String?>(json['school']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -9187,6 +9276,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
       'startedAt': serializer.toJson<String>(startedAt),
       'completedAt': serializer.toJson<String?>(completedAt),
       'voiceId': serializer.toJson<String?>(voiceId),
+      'ageBand': serializer.toJson<String?>(ageBand),
+      'grade': serializer.toJson<String?>(grade),
+      'school': serializer.toJson<String?>(school),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -9203,6 +9295,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     String? startedAt,
     Value<String?> completedAt = const Value.absent(),
     Value<String?> voiceId = const Value.absent(),
+    Value<String?> ageBand = const Value.absent(),
+    Value<String?> grade = const Value.absent(),
+    Value<String?> school = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => SurveyResponse(
@@ -9216,6 +9311,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     startedAt: startedAt ?? this.startedAt,
     completedAt: completedAt.present ? completedAt.value : this.completedAt,
     voiceId: voiceId.present ? voiceId.value : this.voiceId,
+    ageBand: ageBand.present ? ageBand.value : this.ageBand,
+    grade: grade.present ? grade.value : this.grade,
+    school: school.present ? school.value : this.school,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -9237,6 +9335,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
           ? data.completedAt.value
           : this.completedAt,
       voiceId: data.voiceId.present ? data.voiceId.value : this.voiceId,
+      ageBand: data.ageBand.present ? data.ageBand.value : this.ageBand,
+      grade: data.grade.present ? data.grade.value : this.grade,
+      school: data.school.present ? data.school.value : this.school,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -9255,6 +9356,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('voiceId: $voiceId, ')
+          ..write('ageBand: $ageBand, ')
+          ..write('grade: $grade, ')
+          ..write('school: $school, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -9273,6 +9377,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
     startedAt,
     completedAt,
     voiceId,
+    ageBand,
+    grade,
+    school,
     createdAt,
     updatedAt,
   );
@@ -9290,6 +9397,9 @@ class SurveyResponse extends DataClass implements Insertable<SurveyResponse> {
           other.startedAt == this.startedAt &&
           other.completedAt == this.completedAt &&
           other.voiceId == this.voiceId &&
+          other.ageBand == this.ageBand &&
+          other.grade == this.grade &&
+          other.school == this.school &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -9305,6 +9415,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
   final Value<String> startedAt;
   final Value<String?> completedAt;
   final Value<String?> voiceId;
+  final Value<String?> ageBand;
+  final Value<String?> grade;
+  final Value<String?> school;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -9319,6 +9432,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.voiceId = const Value.absent(),
+    this.ageBand = const Value.absent(),
+    this.grade = const Value.absent(),
+    this.school = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9334,6 +9450,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     required String startedAt,
     this.completedAt = const Value.absent(),
     this.voiceId = const Value.absent(),
+    this.ageBand = const Value.absent(),
+    this.grade = const Value.absent(),
+    this.school = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -9357,6 +9476,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     Expression<String>? startedAt,
     Expression<String>? completedAt,
     Expression<String>? voiceId,
+    Expression<String>? ageBand,
+    Expression<String>? grade,
+    Expression<String>? school,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -9372,6 +9494,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
       if (startedAt != null) 'started_at': startedAt,
       if (completedAt != null) 'completed_at': completedAt,
       if (voiceId != null) 'voice_id': voiceId,
+      if (ageBand != null) 'age_band': ageBand,
+      if (grade != null) 'grade': grade,
+      if (school != null) 'school': school,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -9389,6 +9514,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     Value<String>? startedAt,
     Value<String?>? completedAt,
     Value<String?>? voiceId,
+    Value<String?>? ageBand,
+    Value<String?>? grade,
+    Value<String?>? school,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -9404,6 +9532,9 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
       voiceId: voiceId ?? this.voiceId,
+      ageBand: ageBand ?? this.ageBand,
+      grade: grade ?? this.grade,
+      school: school ?? this.school,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -9443,6 +9574,15 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
     if (voiceId.present) {
       map['voice_id'] = Variable<String>(voiceId.value);
     }
+    if (ageBand.present) {
+      map['age_band'] = Variable<String>(ageBand.value);
+    }
+    if (grade.present) {
+      map['grade'] = Variable<String>(grade.value);
+    }
+    if (school.present) {
+      map['school'] = Variable<String>(school.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -9468,6 +9608,472 @@ class SurveyResponsesCompanion extends UpdateCompanion<SurveyResponse> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('voiceId: $voiceId, ')
+          ..write('ageBand: $ageBand, ')
+          ..write('grade: $grade, ')
+          ..write('school: $school, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SurveyPickerOptionsTable extends SurveyPickerOptions
+    with TableInfo<$SurveyPickerOptionsTable, SurveyPickerOption> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SurveyPickerOptionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dimensionMeta = const VerificationMeta(
+    'dimension',
+  );
+  @override
+  late final GeneratedColumn<String> dimension = GeneratedColumn<String>(
+    'dimension',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    dimension,
+    label,
+    sortOrder,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'survey_picker_options';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SurveyPickerOption> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('dimension')) {
+      context.handle(
+        _dimensionMeta,
+        dimension.isAcceptableOrUnknown(data['dimension']!, _dimensionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dimensionMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SurveyPickerOption map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SurveyPickerOption(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      dimension: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dimension'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SurveyPickerOptionsTable createAlias(String alias) {
+    return $SurveyPickerOptionsTable(attachedDatabase, alias);
+  }
+}
+
+class SurveyPickerOption extends DataClass
+    implements Insertable<SurveyPickerOption> {
+  final String id;
+  final String spaceId;
+
+  /// One of 'age_band' / 'grade' / 'school' (server-side CHECK).
+  final String dimension;
+  final String label;
+  final int sortOrder;
+  final String createdAt;
+  final String updatedAt;
+  const SurveyPickerOption({
+    required this.id,
+    required this.spaceId,
+    required this.dimension,
+    required this.label,
+    required this.sortOrder,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['dimension'] = Variable<String>(dimension);
+    map['label'] = Variable<String>(label);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  SurveyPickerOptionsCompanion toCompanion(bool nullToAbsent) {
+    return SurveyPickerOptionsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      dimension: Value(dimension),
+      label: Value(label),
+      sortOrder: Value(sortOrder),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory SurveyPickerOption.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SurveyPickerOption(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      dimension: serializer.fromJson<String>(json['dimension']),
+      label: serializer.fromJson<String>(json['label']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'dimension': serializer.toJson<String>(dimension),
+      'label': serializer.toJson<String>(label),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  SurveyPickerOption copyWith({
+    String? id,
+    String? spaceId,
+    String? dimension,
+    String? label,
+    int? sortOrder,
+    String? createdAt,
+    String? updatedAt,
+  }) => SurveyPickerOption(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    dimension: dimension ?? this.dimension,
+    label: label ?? this.label,
+    sortOrder: sortOrder ?? this.sortOrder,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  SurveyPickerOption copyWithCompanion(SurveyPickerOptionsCompanion data) {
+    return SurveyPickerOption(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      dimension: data.dimension.present ? data.dimension.value : this.dimension,
+      label: data.label.present ? data.label.value : this.label,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SurveyPickerOption(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('dimension: $dimension, ')
+          ..write('label: $label, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    dimension,
+    label,
+    sortOrder,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SurveyPickerOption &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.dimension == this.dimension &&
+          other.label == this.label &&
+          other.sortOrder == this.sortOrder &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class SurveyPickerOptionsCompanion extends UpdateCompanion<SurveyPickerOption> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> dimension;
+  final Value<String> label;
+  final Value<int> sortOrder;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const SurveyPickerOptionsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.dimension = const Value.absent(),
+    this.label = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SurveyPickerOptionsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String dimension,
+    required String label,
+    this.sortOrder = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       dimension = Value(dimension),
+       label = Value(label),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<SurveyPickerOption> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? dimension,
+    Expression<String>? label,
+    Expression<int>? sortOrder,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (dimension != null) 'dimension': dimension,
+      if (label != null) 'label': label,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SurveyPickerOptionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? dimension,
+    Value<String>? label,
+    Value<int>? sortOrder,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return SurveyPickerOptionsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      dimension: dimension ?? this.dimension,
+      label: label ?? this.label,
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (dimension.present) {
+      map['dimension'] = Variable<String>(dimension.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SurveyPickerOptionsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('dimension: $dimension, ')
+          ..write('label: $label, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -18631,6 +19237,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SurveyResponsesTable surveyResponses = $SurveyResponsesTable(
     this,
   );
+  late final $SurveyPickerOptionsTable surveyPickerOptions =
+      $SurveyPickerOptionsTable(this);
   late final $DismissedInsightsTable dismissedInsights =
       $DismissedInsightsTable(this);
   late final $CapturesTable captures = $CapturesTable(this);
@@ -18699,6 +19307,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     memberCertifications,
     attachments,
     surveyResponses,
+    surveyPickerOptions,
     dismissedInsights,
     captures,
     tasks,
@@ -22959,6 +23568,9 @@ typedef $$SurveyResponsesTableCreateCompanionBuilder =
       required String startedAt,
       Value<String?> completedAt,
       Value<String?> voiceId,
+      Value<String?> ageBand,
+      Value<String?> grade,
+      Value<String?> school,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -22975,6 +23587,9 @@ typedef $$SurveyResponsesTableUpdateCompanionBuilder =
       Value<String> startedAt,
       Value<String?> completedAt,
       Value<String?> voiceId,
+      Value<String?> ageBand,
+      Value<String?> grade,
+      Value<String?> school,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -23036,6 +23651,21 @@ class $$SurveyResponsesTableFilterComposer
 
   ColumnFilters<String> get voiceId => $composableBuilder(
     column: $table.voiceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ageBand => $composableBuilder(
+    column: $table.ageBand,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get grade => $composableBuilder(
+    column: $table.grade,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get school => $composableBuilder(
+    column: $table.school,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -23109,6 +23739,21 @@ class $$SurveyResponsesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get ageBand => $composableBuilder(
+    column: $table.ageBand,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get grade => $composableBuilder(
+    column: $table.grade,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get school => $composableBuilder(
+    column: $table.school,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -23165,6 +23810,15 @@ class $$SurveyResponsesTableAnnotationComposer
   GeneratedColumn<String> get voiceId =>
       $composableBuilder(column: $table.voiceId, builder: (column) => column);
 
+  GeneratedColumn<String> get ageBand =>
+      $composableBuilder(column: $table.ageBand, builder: (column) => column);
+
+  GeneratedColumn<String> get grade =>
+      $composableBuilder(column: $table.grade, builder: (column) => column);
+
+  GeneratedColumn<String> get school =>
+      $composableBuilder(column: $table.school, builder: (column) => column);
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -23219,6 +23873,9 @@ class $$SurveyResponsesTableTableManager
                 Value<String> startedAt = const Value.absent(),
                 Value<String?> completedAt = const Value.absent(),
                 Value<String?> voiceId = const Value.absent(),
+                Value<String?> ageBand = const Value.absent(),
+                Value<String?> grade = const Value.absent(),
+                Value<String?> school = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -23233,6 +23890,9 @@ class $$SurveyResponsesTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 voiceId: voiceId,
+                ageBand: ageBand,
+                grade: grade,
+                school: school,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -23249,6 +23909,9 @@ class $$SurveyResponsesTableTableManager
                 required String startedAt,
                 Value<String?> completedAt = const Value.absent(),
                 Value<String?> voiceId = const Value.absent(),
+                Value<String?> ageBand = const Value.absent(),
+                Value<String?> grade = const Value.absent(),
+                Value<String?> school = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -23263,6 +23926,9 @@ class $$SurveyResponsesTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 voiceId: voiceId,
+                ageBand: ageBand,
+                grade: grade,
+                school: school,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -23290,6 +23956,260 @@ typedef $$SurveyResponsesTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $SurveyResponsesTable, SurveyResponse>,
       ),
       SurveyResponse,
+      PrefetchHooks Function()
+    >;
+typedef $$SurveyPickerOptionsTableCreateCompanionBuilder =
+    SurveyPickerOptionsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String dimension,
+      required String label,
+      Value<int> sortOrder,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$SurveyPickerOptionsTableUpdateCompanionBuilder =
+    SurveyPickerOptionsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> dimension,
+      Value<String> label,
+      Value<int> sortOrder,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$SurveyPickerOptionsTableFilterComposer
+    extends Composer<_$AppDatabase, $SurveyPickerOptionsTable> {
+  $$SurveyPickerOptionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dimension => $composableBuilder(
+    column: $table.dimension,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SurveyPickerOptionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SurveyPickerOptionsTable> {
+  $$SurveyPickerOptionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dimension => $composableBuilder(
+    column: $table.dimension,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SurveyPickerOptionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SurveyPickerOptionsTable> {
+  $$SurveyPickerOptionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get dimension =>
+      $composableBuilder(column: $table.dimension, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$SurveyPickerOptionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SurveyPickerOptionsTable,
+          SurveyPickerOption,
+          $$SurveyPickerOptionsTableFilterComposer,
+          $$SurveyPickerOptionsTableOrderingComposer,
+          $$SurveyPickerOptionsTableAnnotationComposer,
+          $$SurveyPickerOptionsTableCreateCompanionBuilder,
+          $$SurveyPickerOptionsTableUpdateCompanionBuilder,
+          (
+            SurveyPickerOption,
+            BaseReferences<
+              _$AppDatabase,
+              $SurveyPickerOptionsTable,
+              SurveyPickerOption
+            >,
+          ),
+          SurveyPickerOption,
+          PrefetchHooks Function()
+        > {
+  $$SurveyPickerOptionsTableTableManager(
+    _$AppDatabase db,
+    $SurveyPickerOptionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SurveyPickerOptionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SurveyPickerOptionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$SurveyPickerOptionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> dimension = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SurveyPickerOptionsCompanion(
+                id: id,
+                spaceId: spaceId,
+                dimension: dimension,
+                label: label,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String dimension,
+                required String label,
+                Value<int> sortOrder = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SurveyPickerOptionsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                dimension: dimension,
+                label: label,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SurveyPickerOptionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SurveyPickerOptionsTable,
+      SurveyPickerOption,
+      $$SurveyPickerOptionsTableFilterComposer,
+      $$SurveyPickerOptionsTableOrderingComposer,
+      $$SurveyPickerOptionsTableAnnotationComposer,
+      $$SurveyPickerOptionsTableCreateCompanionBuilder,
+      $$SurveyPickerOptionsTableUpdateCompanionBuilder,
+      (
+        SurveyPickerOption,
+        BaseReferences<
+          _$AppDatabase,
+          $SurveyPickerOptionsTable,
+          SurveyPickerOption
+        >,
+      ),
+      SurveyPickerOption,
       PrefetchHooks Function()
     >;
 typedef $$DismissedInsightsTableCreateCompanionBuilder =
@@ -27607,6 +28527,8 @@ class $AppDatabaseManager {
       $$AttachmentsTableTableManager(_db, _db.attachments);
   $$SurveyResponsesTableTableManager get surveyResponses =>
       $$SurveyResponsesTableTableManager(_db, _db.surveyResponses);
+  $$SurveyPickerOptionsTableTableManager get surveyPickerOptions =>
+      $$SurveyPickerOptionsTableTableManager(_db, _db.surveyPickerOptions);
   $$DismissedInsightsTableTableManager get dismissedInsights =>
       $$DismissedInsightsTableTableManager(_db, _db.dismissedInsights);
   $$CapturesTableTableManager get captures =>

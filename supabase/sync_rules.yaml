@@ -86,6 +86,11 @@ streams:
       # year of TK–3rd kid responses for a whole program is well under
       # the noise of any other table.
       - SELECT * FROM survey_responses   WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Wave 135: per-program catalog of survey identity-picker
+      # options (age band / grade / school). Tiny table — at most a
+      # few dozen rows per program over the life of the surveys
+      # feature.
+      - SELECT * FROM survey_picker_options WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Dismissed insights — per-member snooze rows. Tiny table
       # (one row per insight a member has chosen to mute).
       - SELECT * FROM dismissed_insights WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())

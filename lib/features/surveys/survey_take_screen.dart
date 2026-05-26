@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -56,6 +57,18 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// `voice_id` on the response row). Once set, the picker is
   /// skipped on subsequent sessions and audio auto-plays.
   String? _voiceId;
+
+  /// Wave 135: identity-capture state. All three required before
+  /// question 1 renders. Loaded from the response row on _seed; if
+  /// any is null we surface the identity-capture page after the
+  /// voice picker.
+  String? _ageBand;
+  String? _grade;
+  String? _school;
+  bool get _identityComplete =>
+      (_ageBand?.isNotEmpty ?? false) &&
+      (_grade?.isNotEmpty ?? false) &&
+      (_school?.isNotEmpty ?? false);
 
   /// Wave 130: TTS service held as a State field, not via a Riverpod
   /// autoDispose provider. The previous shape disposed the
@@ -182,6 +195,11 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
       // picker overlay surfaces on first build; otherwise we go
       // straight into question 1 with audio.
       _voiceId = row.voiceId;
+      // Wave 135: restore identity capture. If any is missing, the
+      // identity page surfaces between voice picker and question 1.
+      _ageBand = row.ageBand;
+      _grade = row.grade;
+      _school = row.school;
       // If the voice is already known, kick off TTS for question 0
       // as soon as the seed completes.
       if (_voiceId != null) {
@@ -237,8 +255,9 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   }
 
   /// Wave 120: kid picked a voice on the first-question overlay.
-  /// Stash on state, persist on the response row via _autosave, then
-  /// auto-play question 0.
+  /// Stash on state, persist on the response row via _autosave. If
+  /// identity is also complete, auto-play question 0; otherwise
+  /// the identity page renders next (no audio there).
   Future<void> _onVoicePicked(String voiceId) async {
     if (!mounted) return;
     setState(() => _voiceId = voiceId);
@@ -253,6 +272,54 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
           );
     }
     if (!mounted) return;
+    if (_identityComplete) {
+      await _playQuestion(0);
+    }
+  }
+
+  /// Wave 135: a dimension chip was tapped. Stash on local state +
+  /// persist on the response row. When all three are non-null the
+  /// "Start the survey" button enables.
+  Future<void> _onIdentityPick(String dimension, String label) async {
+    if (!mounted) return;
+    setState(() {
+      switch (dimension) {
+        case 'age_band':
+          _ageBand = label;
+        case 'grade':
+          _grade = label;
+        case 'school':
+          _school = label;
+      }
+    });
+    final t = _template;
+    if (t == null) return;
+    await ref.read(surveyActionsProvider).save(
+          templateId: t.id,
+          subjectId: widget.subjectId,
+          answers: _answers,
+          complete: false,
+          ageBand: _ageBand,
+          grade: _grade,
+          school: _school,
+        );
+  }
+
+  /// Wave 135: "+" button on the identity page — add a new label
+  /// to the per-program catalog. Returns once persisted; the
+  /// caller auto-selects it.
+  Future<void> _onIdentityAddOption(String dimension, String label) async {
+    await ref.read(surveyActionsProvider).addPickerOption(
+          dimension: dimension,
+          label: label,
+        );
+  }
+
+  /// Wave 135: kid finished the identity capture. Kick off question 1
+  /// audio.
+  Future<void> _onIdentityContinue() async {
+    if (!mounted) return;
+    setState(() {}); // force rebuild so the PageView shows
     await _playQuestion(0);
   }
 
@@ -465,12 +532,24 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
               // starts auto-playing, picker dismisses, and they
               // proceed to question 1. Already-picked rows skip
               // straight to questions.
+              // Wave 120: voice picker first if needed.
+              // Wave 135: then identity-capture if needed.
+              // Then question PageView.
               child: _voiceId == null
                   ? _VoicePickerOverlay(
                       onPicked: _onVoicePicked,
                       ttsService: _tts,
                     )
-                  : PageView.builder(
+                  : !_identityComplete
+                      ? _IdentityCaptureBinding(
+                          ageBand: _ageBand,
+                          grade: _grade,
+                          school: _school,
+                          onPick: _onIdentityPick,
+                          onAddOption: _onIdentityAddOption,
+                          onContinue: _onIdentityContinue,
+                        )
+                      : PageView.builder(
                 controller: _page,
                 onPageChanged: (i) {
                   setState(() => _index = i);
@@ -822,4 +901,63 @@ class _SurveyPage {
   final int? optionIndex;
 
   bool get isOption => optionIndex != null;
+}
+
+/// Wave 135: Riverpod binding for [IdentityCapturePage]. Watches the
+/// three per-program picker-options streams and pipes them in;
+/// otherwise it's a thin wrapper around the pure widget.
+class _IdentityCaptureBinding extends ConsumerWidget {
+  const _IdentityCaptureBinding({
+    required this.ageBand,
+    required this.grade,
+    required this.school,
+    required this.onPick,
+    required this.onAddOption,
+    required this.onContinue,
+  });
+
+  final String? ageBand;
+  final String? grade;
+  final String? school;
+  final void Function(String dimension, String label) onPick;
+  final Future<void> Function(String dimension, String label) onAddOption;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    final spaceId = viewer.spaceId;
+    if (spaceId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final ageAsync = ref.watch(
+      surveyPickerOptionsProvider(
+        (spaceId: spaceId, dimension: 'age_band'),
+      ),
+    );
+    final gradeAsync = ref.watch(
+      surveyPickerOptionsProvider(
+        (spaceId: spaceId, dimension: 'grade'),
+      ),
+    );
+    final schoolAsync = ref.watch(
+      surveyPickerOptionsProvider(
+        (spaceId: spaceId, dimension: 'school'),
+      ),
+    );
+    List<String> labels(AsyncValue<List<SurveyPickerOption>> a) =>
+        (a.value ?? const []).map((o) => o.label).toList();
+
+    return IdentityCapturePage(
+      ageBand: ageBand,
+      grade: grade,
+      school: school,
+      ageBandOptions: labels(ageAsync),
+      gradeOptions: labels(gradeAsync),
+      schoolOptions: labels(schoolAsync),
+      onPick: onPick,
+      onAddOption: onAddOption,
+      onContinue: onContinue,
+    );
+  }
 }
