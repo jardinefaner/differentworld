@@ -13,7 +13,9 @@ import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_state.dart';
 import 'package:differentworld/features/omnibox/slash_commands.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/error_handling.dart';
+import 'package:differentworld/shared/widgets/desktop_nav_rail.dart';
 import 'package:differentworld/shared/widgets/floating_actions.dart';
 import 'package:differentworld/shared/widgets/floating_back.dart';
 import 'package:differentworld/shared/widgets/floating_hamburger.dart';
@@ -459,6 +461,15 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final viewer = ref.watch(viewerProvider);
     final showDrawer = viewer.isSignedIn && !inKidMode;
+    // Wave 121: at desktop widths the hamburger drawer is replaced
+    // by a persistent left-side nav rail. The rail only renders for
+    // signed-in staff (guardians have no peer destinations to nav
+    // between — they live on /, /messages, /children/*), and is
+    // hidden in kid mode same as the drawer.
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final showDesktopRail = showDrawer &&
+        viewer is! GuardianViewer &&
+        viewportWidth >= Breakpoints.tablet;
 
     // Compute whether the current route is at the root — if so,
     // a back gesture would exit the app entirely. We intercept
@@ -547,13 +558,68 @@ class _AppShellState extends ConsumerState<AppShell> {
         }
       },
       child: Scaffold(
-      drawer: showDrawer ? const MainDrawer() : null,
+      // Wave 121: at desktop the persistent rail replaces the
+      // hamburger drawer. Drawer slot stays wired below desktop so
+      // phone / tablet keep their existing swipe-from-edge gesture
+      // + hamburger pill.
+      drawer: (showDrawer && !showDesktopRail)
+          ? const MainDrawer()
+          : null,
       // `resizeToAvoidBottomInset: true` is load-bearing — it shrinks
       // the body so the keyboard occupies its own space below the
       // body. The omnibox bar lives at the bottom of that body, so
       // it sits flush above the keyboard with no extra math.
       resizeToAvoidBottomInset: true,
-      body: Stack(
+      body: showDesktopRail
+          ? Row(
+              children: [
+                const SizedBox(width: 240, child: DesktopNavRail()),
+                Expanded(child: _buildBodyStack(
+                  inKidMode: inKidMode,
+                  viewer: viewer,
+                  topInset: topInset,
+                  chrome: chrome,
+                  query: query,
+                  mode: mode,
+                  showDrawer: false, // hamburger pill hidden at desktop
+                  atRoot: atRoot,
+                  context: context,
+                )),
+              ],
+            )
+          : _buildBodyStack(
+              inKidMode: inKidMode,
+              viewer: viewer,
+              topInset: topInset,
+              chrome: chrome,
+              query: query,
+              mode: mode,
+              showDrawer: showDrawer,
+              atRoot: atRoot,
+              context: context,
+            ),
+    ),
+    ),
+    );
+  }
+
+  /// Wave 121: the body Stack is now used either standalone (phone /
+  /// tablet — the existing rendering) or as the right column of a
+  /// desktop layout (alongside [DesktopNavRail]). Extracting it as a
+  /// method lets us call it in both shapes without duplicating the
+  /// 100+ lines of stack contents.
+  Widget _buildBodyStack({
+    required bool inKidMode,
+    required Viewer viewer,
+    required double topInset,
+    required RouteChrome chrome,
+    required String query,
+    required OmniboxMode mode,
+    required bool showDrawer,
+    required bool atRoot,
+    required BuildContext context,
+  }) {
+    return Stack(
         // Every child is keyed so Flutter's reconciliation matches
         // them ACROSS overlay toggles. Without keys, inserting the
         // overlay child shifts the rest of the children's positions
@@ -699,9 +765,6 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
             ),
         ],
-      ),
-      ),
-      ),
-    );
+      );
   }
 }
