@@ -74,31 +74,36 @@ class SubjectDetailScreen extends ConsumerWidget {
               '&subjectId=$subjectId',
             ),
           ),
-        if (viewer.canObserve && subjectAsync.value != null)
+        // Wave 101: hide-don't-disable. Both Progress report and Edit
+        // require a group id to build the route, but the buttons used
+        // to render even when `groupId` was empty — and silently no-op
+        // when tapped. A student without a group is rare (only
+        // possible mid-rename or right after creation), but rendering
+        // an inert button on a high-traffic surface is the wrong
+        // shape. Gate visibility on `groupId != null && isNotEmpty`.
+        if (viewer.canObserve &&
+            (subjectAsync.value?.groupId?.isNotEmpty ?? false))
           SecondaryActionButton(
             tooltip: 'Progress report',
             icon: Icons.description_outlined,
-            onPressed: () {
-              final gid = subjectAsync.value!.groupId ?? '';
-              if (gid.isEmpty) return;
-              unawaited(
-                context.push(
-                  '/groups/$gid/students/$subjectId/progress-report',
-                ),
-              );
-            },
+            onPressed: () => unawaited(
+              context.push(
+                '/groups/${subjectAsync.value!.groupId}'
+                '/students/$subjectId/progress-report',
+              ),
+            ),
           ),
-        if (viewer.canManageSpace && subjectAsync.value != null)
+        if (viewer.canManageSpace &&
+            (subjectAsync.value?.groupId?.isNotEmpty ?? false))
           SecondaryActionButton(
             tooltip: 'Edit',
             icon: Icons.edit_outlined,
-            onPressed: () {
-              final gid = subjectAsync.value!.groupId ?? '';
-              if (gid.isEmpty) return;
-              unawaited(
-                context.push('/groups/$gid/students/$subjectId/edit'),
-              );
-            },
+            onPressed: () => unawaited(
+              context.push(
+                '/groups/${subjectAsync.value!.groupId}'
+                '/students/$subjectId/edit',
+              ),
+            ),
           ),
         const SyncStatusIndicator(),
       ],
@@ -122,14 +127,49 @@ class SubjectDetailScreen extends ConsumerWidget {
   }
 }
 
-class _SubjectBody extends ConsumerWidget {
+class _SubjectBody extends ConsumerStatefulWidget {
   const _SubjectBody({required this.subject, required this.viewer});
 
   final Subject subject;
   final Viewer viewer;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SubjectBody> createState() => _SubjectBodyState();
+}
+
+class _SubjectBodyState extends ConsumerState<_SubjectBody> {
+  // Wave 103: section-anchor keys. The _SectionChips at the top of the
+  // body used to be a "visual TOC" with no taps wired — every user
+  // tapped expecting jump-to-section, got nothing. Each key here is
+  // attached to the corresponding section header below, and the chips
+  // call Scrollable.ensureVisible(<key>.currentContext) on tap.
+  final GlobalKey _alertsKey = GlobalKey();
+  final GlobalKey _observationsKey = GlobalKey();
+  final GlobalKey _attendanceKey = GlobalKey();
+  final GlobalKey _familyKey = GlobalKey();
+  final GlobalKey _pickupKey = GlobalKey();
+  final GlobalKey _reportsKey = GlobalKey();
+  final GlobalKey _notesKey = GlobalKey();
+
+  void _scrollTo(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null) return;
+    unawaited(
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        // 80dp of breathing room so the section header isn't flush
+        // against the floating chrome pills.
+        alignment: 0.08,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final subject = widget.subject;
+    final viewer = widget.viewer;
     final theme = Theme.of(context);
     final caps = Capabilities.fromJson(subject.capabilities);
     final fullName = '${subject.firstName} ${subject.lastName}';
@@ -212,11 +252,33 @@ class _SubjectBody extends ConsumerWidget {
 
         // Section index chips: scroll-anchored quick links. Tap to
         // jump to a section. Lightweight; doesn't introduce slivers.
-        const _SectionChips(),
+        _SectionChips(
+          onTap: (label) {
+            switch (label) {
+              case 'Alerts':
+                _scrollTo(_alertsKey);
+              case 'Observations':
+                _scrollTo(_observationsKey);
+              case 'Attendance':
+                _scrollTo(_attendanceKey);
+              case 'Family':
+                _scrollTo(_familyKey);
+              case 'Pickup':
+                _scrollTo(_pickupKey);
+              case 'Reports':
+                _scrollTo(_reportsKey);
+              case 'Notes':
+                _scrollTo(_notesKey);
+            }
+          },
+        ),
         const SizedBox(height: 8),
 
         // Alerts (allergies / IEP / meds)
-        AlertsSection(subject: subject, caps: caps),
+        KeyedSubtree(
+          key: _alertsKey,
+          child: AlertsSection(subject: subject, caps: caps),
+        ),
 
         // Structured health profile — childcare-vertical only.
         // Storage layer is agnostic (subjects.capabilities JSONB);
@@ -241,6 +303,7 @@ class _SubjectBody extends ConsumerWidget {
         if (viewer.canObserve && groupId != null) const _SectionGap(),
 
         Padding(
+          key: _observationsKey,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Row(
             children: [
@@ -308,6 +371,7 @@ class _SubjectBody extends ConsumerWidget {
 
         const _SectionGap(),
         Padding(
+          key: _attendanceKey,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Text(
             'Attendance — last 30 days',
@@ -318,6 +382,7 @@ class _SubjectBody extends ConsumerWidget {
 
         const _SectionGap(),
         Padding(
+          key: _familyKey,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text('Family', style: theme.textTheme.titleSmall),
         ),
@@ -325,6 +390,7 @@ class _SubjectBody extends ConsumerWidget {
 
         const _SectionGap(),
         Padding(
+          key: _pickupKey,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text(
             'Authorized for pickup',
@@ -335,6 +401,7 @@ class _SubjectBody extends ConsumerWidget {
 
         const _SectionGap(),
         Padding(
+          key: _reportsKey,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text(
             'Sent reports',
@@ -348,6 +415,7 @@ class _SubjectBody extends ConsumerWidget {
         // exists.
         const _SectionGap(),
         Padding(
+          key: _notesKey,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text('Notes', style: theme.textTheme.titleSmall),
         ),
@@ -411,7 +479,12 @@ class _SectionGap extends StatelessWidget {
 /// into a sliver-with-keys); instead the chips serve as a visual TOC
 /// and an affordance reminder of what's below.
 class _SectionChips extends StatelessWidget {
-  const _SectionChips();
+  const _SectionChips({required this.onTap});
+
+  /// Called with the chip's label when tapped. The parent scrolls its
+  /// ListView to the matching section via Scrollable.ensureVisible
+  /// against the section header's GlobalKey.
+  final ValueChanged<String> onTap;
 
   static const List<(String, IconData)> _items = [
     ('Alerts', Icons.health_and_safety_outlined),
@@ -435,11 +508,14 @@ class _SectionChips extends StatelessWidget {
           for (final (label, icon) in _items)
             Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: Chip(
+              // Wave 103: ActionChip = Chip but tappable. Wires the
+              // visual TOC to actual scroll-to-section behavior.
+              child: ActionChip(
                 avatar: Icon(icon, size: 16),
                 label: Text(label, style: theme.textTheme.labelSmall),
                 visualDensity: VisualDensity.compact,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onPressed: () => onTap(label),
               ),
             ),
         ],

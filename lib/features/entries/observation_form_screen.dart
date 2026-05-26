@@ -201,6 +201,15 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
   }
 
   bool _isDirty() {
+    // Wave 99: an in-flight photo upload counts as dirty. Without
+    // this, the user can swipe-dismiss the route while bytes are
+    // still uploading — `_photos` is still `[]` (the URL hasn't
+    // been appended yet), so `canPop` lets the route die, the
+    // upload completes after dispose, the form state is gone, and
+    // the bytes are orphaned in Storage with nothing referencing
+    // them. Treating mid-upload as dirty forces the discard
+    // confirmation, which gives the upload time to finish.
+    if (_photoUploading) return true;
     final original = widget.existing;
     if (original == null) {
       return _textCtrl.text.trim().isNotEmpty ||
@@ -287,7 +296,13 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       final urls = await Future.wait(
         picks.map(
           (pick) => service.uploadOnly(
-            entityKind: 'observation',
+            // Wave 99: was 'observation' — the upload queue only has a
+            // resolver for 'attachment', so offline uploads landed in
+            // Storage but the row stayed `pending:<id>` forever (silent
+            // photo loss). Attachments are what we actually create in
+            // createObservation; align the kind so the queue can patch
+            // the URL when the bytes finally upload.
+            entityKind: 'attachment',
             entityId: _entryId,
             picked: pick,
           ),
@@ -418,6 +433,16 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Author OR director can delete. Mirrors Wave 104 policy — a
+  /// teacher who fat-fingers a save shouldn't have to escalate.
+  bool _canDelete(WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    if (viewer.canManageSpace) return true;
+    final myMemberId = viewer.member?.id;
+    final authorId = widget.existing?.recordedBy;
+    return myMemberId != null && authorId != null && myMemberId == authorId;
   }
 
   Future<void> _delete() async {
@@ -578,7 +603,13 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
             const SizedBox(height: 20),
             Row(
               children: [
-                if (_isEdit && ref.watch(viewerProvider).canManageSpace)
+                // Wave 104: gate was director-only (`canManageSpace`)
+                // which forced a teacher who fat-fingered an
+                // observation to escalate to the director to delete
+                // it. New rule: the author OR a director can delete.
+                // Audit trail is still preserved server-side
+                // (recordedBy is set at create time and never edited).
+                if (_isEdit && _canDelete(ref))
                   DestructiveButton(
                     label: 'Delete',
                     onPressed: _saving ? null : _delete,

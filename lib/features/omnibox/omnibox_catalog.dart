@@ -14,6 +14,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
@@ -521,13 +522,15 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
             ctx.push('/groups/$gid/students/${s.id}/edit'),
       ));
     }
-    // Messages — staff path to the per-child thread. Subject detail
-    // hosts the messaging surface (lists guardians + threads), so the
-    // omnibox lands there. Gated on canObserve (the floor-staff cap)
-    // because anyone who logs observations may need to message the
-    // family. Keywords include "chat" + "family" so the action
-    // surfaces whether the user types "messages", "family", or the
-    // kid's name.
+    // Messages — staff path to the per-child thread. Wave 100: the
+    // entry used to push subject-detail and let the user find the
+    // guardian, but the label promised a thread; users would tap
+    // expecting a thread and land on a profile. Now: at tap time
+    // we read `guardiansForSubjectProvider`; if there's exactly one
+    // guardian, push the thread URL directly; if there are 0 or 2+,
+    // fall back to subject-detail (it lists every guardian) and
+    // surface a snackbar so the user knows why. Gated on canObserve
+    // because anyone who logs observations may need to ping family.
     if (viewer.canObserve) {
       entries.add(OmniboxEntry(
         id: 'subject:${s.id}:messages',
@@ -539,8 +542,30 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'dad', 'guardian',
         ],
         groupId: 'subject:${s.id}',
-        onSelect: (ctx, _) =>
-            unawaited(ctx.push('/groups/$gid/students/${s.id}')),
+        onSelect: (ctx, ref) async {
+          final guardians =
+              await ref.read(guardiansForSubjectProvider(s.id).future);
+          if (!ctx.mounted) return;
+          if (guardians.length == 1) {
+            unawaited(
+              ctx.push('/messages/${s.id}/${guardians.first.id}'),
+            );
+            return;
+          }
+          // 0 guardians: subject-detail is where the user adds one.
+          // 2+ guardians: subject-detail lists them and the user
+          // picks the thread.
+          unawaited(ctx.push('/groups/$gid/students/${s.id}'));
+          if (guardians.isEmpty) {
+            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'No guardians linked yet — add one to start messaging.',
+                ),
+              ),
+            );
+          }
+        },
       ));
     }
     // Mark absent today — single-tap chore for the most common

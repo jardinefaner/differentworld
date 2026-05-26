@@ -221,12 +221,25 @@ final myChildSubjectIdsProvider =
   final fromPostgrest = await _fetchSubjectIdsForGuardian(guardian.id);
   yield fromPostgrest;
 
-  // Keep watching Drift, but ONLY take over once it delivers a
-  // non-empty list — otherwise Drift's cold re-emission of `[]`
-  // would clobber a PostgREST-resolved roster, cascade through
-  // viewerProvider, and family screens would suddenly lose their
-  // kids mid-session.
-  yield* driftStream.where((ids) => ids.isNotEmpty);
+  // Wave 102 (Red Team #8): the old behavior was
+  // `.where((ids) => ids.isNotEmpty)` — designed to stop Drift from
+  // clobbering the PostgREST-resolved roster with a stale `[]` cold
+  // emission. The side effect: a director unlinking a guardian's
+  // last child mid-session would never propagate (Drift correctly
+  // emits `[]`, the filter drops it, the guardian keeps seeing the
+  // unlinked child until cold launch — a privacy violation).
+  //
+  // Fix: only suppress empty emissions UNTIL Drift has delivered at
+  // least one non-empty list. After that, empty emissions are real
+  // (an unlink) and must propagate so viewerProvider updates.
+  var sawNonEmpty = false;
+  yield* driftStream.where((ids) {
+    if (ids.isNotEmpty) {
+      sawNonEmpty = true;
+      return true;
+    }
+    return sawNonEmpty;
+  });
 });
 
 /// One-shot fetch of `subject_guardians.subject_id` rows for the

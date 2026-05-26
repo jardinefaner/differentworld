@@ -7,7 +7,6 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
-import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,8 +37,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     return EdgeScaffold(
       // Today is a home page → no back button, just the hamburger.
       // Search affordance is the global one injected by EdgeScaffold.
+      // (Wave 101: dropped `drawer: const MainDrawer()`. The param
+      // is documented as ignored — AppShell owns the drawer for every
+      // signed-in route. Passing it here was misleading.)
       showBack: false,
-      drawer: const MainDrawer(),
       actions: [
         // Primary verb on Today is "Capture" — what used to be the
         // bottom-right FAB lives here so the bottom of the screen is

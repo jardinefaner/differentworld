@@ -303,8 +303,15 @@ Future<void> _openTriage(
       capture: capture,
       onDismiss: () async {
         Navigator.of(sheetCtx).pop();
+        // Wave 100: pass messenger + onSuccess so dismiss matches the
+        // promote-to-task / promote-to-observation paths. Previously
+        // dismiss was silent — the row disappeared, but with no
+        // confirmation, easy to miss in a busy inbox.
         await runReported(
           library: 'captures',
+          messenger: messenger,
+          onSuccess: 'Capture dismissed.',
+          onError: 'Could not dismiss the capture.',
           action: () => actions.discard(capture.id),
         );
       },

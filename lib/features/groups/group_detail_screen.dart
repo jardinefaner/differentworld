@@ -292,12 +292,19 @@ class _SubjectTile extends ConsumerWidget {
       ),
       title: Text(fullName),
       subtitle: ageLine == null ? null : Text(ageLine),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () {
-        final gid = subject.groupId;
-        if (gid == null) return;
-        unawaited(context.push('/groups/$gid/students/${subject.id}'));
-      },
+      // Wave 101: hide-don't-disable. If the subject is in this group's
+      // roster, `groupId` is always set — but a tap target with no
+      // handler is the worst shape. Drop the chevron + tap when null
+      // so the row degrades to a plain identity tile rather than
+      // promising navigation it won't deliver.
+      trailing: subject.groupId == null
+          ? null
+          : const Icon(Icons.chevron_right),
+      onTap: subject.groupId == null
+          ? null
+          : () => unawaited(
+                context.push('/groups/${subject.groupId}/students/${subject.id}'),
+              ),
     );
   }
 

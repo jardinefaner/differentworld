@@ -9,6 +9,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
@@ -402,14 +403,24 @@ class _TaskCard extends ConsumerWidget {
             ? theme.colorScheme.errorContainer.withValues(alpha: 0.45)
             : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(14),
-        child: Padding(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          // Wave 100: the row body used to be inert ("opens edit (TBD)")
+          // — the visual screamed tappable, the handler did nothing.
+          // There's no edit screen for tasks (the body is set once at
+          // creation), so a sheet listing the three real actions is the
+          // honest payoff: Mark done / Snooze +1d / Dismiss. Doubles as
+          // discoverability for the swipe gestures (most teachers don't
+          // know to swipe right for snooze).
+          onTap: () => _showTaskActions(context, ref, task),
+          child: Padding(
           padding: const EdgeInsets.fromLTRB(8, 8, 14, 8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Tap the radio button to complete — the row body opens
-              // edit (TBD). Separating completes vs. opens avoids
-              // accidental closes when users tap to read more.
+              // Tap the radio button to complete — the row body opens a
+              // quick-action sheet (Wave 100). Separating completes vs.
+              // opens avoids accidental closes when users tap to read.
               Tooltip(
                 message: 'Mark done',
                 // Wave 97: bumped padding 10 → 12 so the radius
@@ -483,6 +494,57 @@ class _TaskCard extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+        ),
+      ),
+    );
+  }
+
+  /// Glass-sheet menu of the three real task actions. Each tile
+  /// duplicates a gesture that already exists (radio = mark done,
+  /// right-swipe = snooze, left-swipe = dismiss) but surfaces them
+  /// explicitly so users who don't know the gestures aren't stuck.
+  Future<void> _showTaskActions(
+    BuildContext context,
+    WidgetRef ref,
+    Task task,
+  ) async {
+    final actions = ref.read(taskActionsProvider);
+    await showGlassSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.check_circle_outline),
+              title: const Text('Mark done'),
+              onTap: () async {
+                unawaited(HapticFeedback.mediumImpact());
+                Navigator.of(ctx).pop();
+                await actions.markDone(task.id);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.snooze),
+              title: const Text('Snooze · +1 day'),
+              onTap: () async {
+                unawaited(HapticFeedback.mediumImpact());
+                Navigator.of(ctx).pop();
+                await actions.snooze(id: task.id);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('Dismiss'),
+              onTap: () async {
+                unawaited(HapticFeedback.mediumImpact());
+                Navigator.of(ctx).pop();
+                await actions.discard(task.id);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );

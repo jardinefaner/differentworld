@@ -143,6 +143,26 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           }
           final currentRole = member.role;
           final caps = member.caps;
+          // Wave 102 (Red Team #5): the role-selector chip guards
+          // against the last director changing their own role, but
+          // the `canActAsDirector` CapSwitch had no equivalent
+          // protection. A member acting AS director (role: teacher,
+          // cap: canActAsDirector = true) who was the only admin
+          // could toggle off the cap on their own profile and brick
+          // the space — no recovery without DB access. Mirror the
+          // role-selector's "admin count" check here.
+          final directorRole = RoleBundles.directorRoleFor(vertical);
+          final allMembers = ref.watch(membersInSpaceProvider).value ??
+              const <Member>[];
+          final admins = allMembers.where((m) {
+            if (m.role == directorRole) return true;
+            return m.caps.getBool(CoreCaps.canActAsDirector);
+          }).toList(growable: false);
+          final isCurrentAdmin = currentRole == directorRole ||
+              caps.getBool(CoreCaps.canActAsDirector);
+          final iAmLastAdmin = isCurrentAdmin &&
+              admins.length == 1 &&
+              admins.first.id == widget.memberId;
           // Certs are now their own table; the cap-gating UI reads
           // from that stream so an expired MAT immediately disables
           // "Administer medication" without manual refresh.
@@ -392,8 +412,14 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                           ),
                           CapSwitch(
                             label: 'Act as director',
-                            subtitle: 'Full admin when the director is offsite',
-                            enabled: canManage,
+                            // Wave 102: if this is the only admin in
+                            // the space, surface why it's locked.
+                            subtitle: iAmLastAdmin
+                                ? "Can't turn off — you're the only "
+                                    'admin in this program. Promote '
+                                    'a teammate first.'
+                                : 'Full admin when the director is offsite',
+                            enabled: canManage && !iAmLastAdmin,
                             value: caps.getBool(
                               CoreCaps.canActAsDirector,
                             ),

@@ -57,6 +57,7 @@ import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart'
     show VehicleLogKind;
 import 'package:differentworld/shared/widgets/app_shell.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -526,11 +527,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/students/:id',
         redirect: (context, state) async {
           final id = state.pathParameters['id']!;
+          final container = ProviderScope.containerOf(context, listen: false);
+          // Wave 102 (Red Team #4): guardians have no subjects in
+          // local Drift (their data comes via PostgREST fallback at
+          // the family lens), so the Drift lookup below would always
+          // return null and silently redirect to /. A director who
+          // texts `/students/<id>` to a parent expects them to land
+          // on the kid's profile. Detect the guardian path and route
+          // to the family-side surface instead.
+          final viewer = container.read(viewerProvider);
+          if (viewer is GuardianViewer) {
+            return '/children/$id';
+          }
           try {
-            final db = await ProviderScope.containerOf(
-              context,
-              listen: false,
-            ).read(appDatabaseProvider.future);
+            final db = await container.read(appDatabaseProvider.future);
             final row = await (db.select(db.subjects)
                   ..where((s) => s.id.equals(id)))
                 .getSingleOrNull();
@@ -790,6 +800,12 @@ class _ErrorScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Wave 101 (Red Team #7): the raw `error.toString()` used to be
+    // rendered on-screen, which could expose internal Dart class names,
+    // SQLite file paths, or Supabase URLs to a non-technical end user
+    // (and to anyone glancing at a school-shared device). Show a
+    // generic message; log the detail in debug builds only.
+    if (kDebugMode) debugPrint('Profile load error: $error');
     return Scaffold(
       body: Center(
         child: Padding(
@@ -810,7 +826,8 @@ class _ErrorScaffold extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                error.toString(),
+                'Try restarting the app. If this keeps happening, '
+                'sign out and back in.',
                 style: theme.textTheme.bodySmall,
                 textAlign: TextAlign.center,
               ),

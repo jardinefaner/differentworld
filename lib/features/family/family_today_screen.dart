@@ -282,13 +282,13 @@ class _ChildCard extends ConsumerWidget {
                   // to the per-child thread. The kid detail screen also
                   // exposes Messages, but for "quick ping" the friction-
                   // free path is the card itself.
-                  IconButton.filledTonal(
-                    tooltip: 'Message staff',
-                    icon: const Icon(Icons.forum_outlined),
-                    onPressed: () => context.push(
-                      '/messages?subjectId=${child.id}',
-                    ),
-                  ),
+                  //
+                  // Wave 100: route shape was `/messages?subjectId=…`
+                  // which the router doesn't match — the user landed
+                  // on the family-messages index and had to tap again.
+                  // The thread route is `/messages/:subjectId/:guardianId`
+                  // (the same shape family_subject_detail_screen uses).
+                  _MessageStaffButton(subjectId: child.id),
                   if (status != null) ...[
                     const SizedBox(width: 4),
                     Icon(status.icon, color: status.color(scheme)),
@@ -321,6 +321,33 @@ class _ChildCard extends ConsumerWidget {
   static String _statusLabel(AttendanceStatus? s) {
     if (s == null) return 'Check-in pending — usually before 9 AM';
     return s.label;
+  }
+}
+
+/// "Message staff" icon button on each child card. Pulled out as its
+/// own ConsumerWidget so the surrounding `_ChildCard.build()` doesn't
+/// have to read the viewer just to construct one tap target — and so
+/// the route shape lives in one place (matches the per-child thread
+/// route shape `/messages/:subjectId/:guardianId`).
+class _MessageStaffButton extends ConsumerWidget {
+  const _MessageStaffButton({required this.subjectId});
+
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    final guardianId = viewer is GuardianViewer ? viewer.guardian.id : null;
+    return IconButton.filledTonal(
+      tooltip: 'Message staff',
+      icon: const Icon(Icons.forum_outlined),
+      // If the viewer isn't a guardian (staff impersonating a family
+      // surface in dev, e.g.) we can't build a valid thread URL —
+      // disable the button rather than push a broken route.
+      onPressed: guardianId == null
+          ? null
+          : () => context.push('/messages/$subjectId/$guardianId'),
+    );
   }
 }
 
