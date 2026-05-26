@@ -57,6 +57,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// skipped on subsequent sessions and audio auto-plays.
   String? _voiceId;
 
+  /// Wave 130: TTS service held as a State field, not via a Riverpod
+  /// autoDispose provider. The previous shape disposed the
+  /// underlying AudioPlayer between every ref.read() because nothing
+  /// `ref.watch`-ed it — kids picked a voice and heard nothing.
+  /// Lifecycle: built in initState, disposed in dispose.
+  late final SurveyTtsService _tts;
+
   /// Set true after the staff exit gesture completes; lets the next
   /// pop go through. Re-arms (back to false) whenever kid mode is
   /// still locked, so the user re-does the gesture to leave again.
@@ -77,6 +84,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   void initState() {
     super.initState();
     _page = PageController();
+    // Wave 130: one TTS service for the lifetime of this screen.
+    // Held here (not via autoDispose provider) so the underlying
+    // AudioPlayer survives across ref.read() calls.
+    _tts = SurveyTtsService();
     // Watch app lifecycle so we can RE-engage kid mode if the user
     // backgrounded the app — defends against the OS resurrecting
     // the Activity without rebuilding the widget tree, in which
@@ -135,6 +146,8 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     _staffTapReset?.cancel();
     _staffTapReset = null;
     _page.dispose();
+    // Wave 130: tear down the AudioPlayer when the screen leaves.
+    unawaited(_tts.dispose());
     super.dispose();
   }
 
@@ -174,11 +187,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     final cacheKey = '${t.id}__${q.key}'
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
     try {
-      final path = await ref
-          .read(surveyTtsServiceProvider)
-          .resolve(voiceId: voice, text: text, cacheKey: cacheKey);
+      final path = await _tts.resolve(
+        voiceId: voice,
+        text: text,
+        cacheKey: cacheKey,
+      );
       if (!mounted) return;
-      await ref.read(surveyTtsServiceProvider).play(path);
+      await _tts.play(path);
     } on Object catch (e, st) {
       if (kDebugMode) {
         debugPrint('[survey-tts] resolve/play failed: $e\n$st');
@@ -414,7 +429,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
               child: _voiceId == null
                   ? _VoicePickerOverlay(
                       onPicked: _onVoicePicked,
-                      ttsService: ref.read(surveyTtsServiceProvider),
+                      ttsService: _tts,
                     )
                   : PageView.builder(
                 controller: _page,

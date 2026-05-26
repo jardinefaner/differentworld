@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -224,13 +223,17 @@ class SurveyTtsService {
   }
 }
 
-/// One instance per screen — autoDispose so the player is torn down
-/// when the kid leaves the survey.
-// ignore: specify_nonobvious_property_types
-final surveyTtsServiceProvider = Provider.autoDispose<SurveyTtsService>(
-  (ref) {
-    final svc = SurveyTtsService();
-    ref.onDispose(() => unawaited(svc.dispose()));
-    return svc;
-  },
-);
+// Wave 130: the `surveyTtsServiceProvider` used to live here as a
+// `Provider.autoDispose<SurveyTtsService>`. That was wrong: survey-
+// take only calls `ref.read(...)` (never `watch`), so the autoDispose
+// provider had zero subscribers, was disposed between reads, and the
+// underlying just_audio AudioPlayer was torn down mid-load every
+// time the kid tapped a voice tile. The Android logs showed:
+//   ExoPlayerImpl: Init  <hash>
+//   ExoPlayerImpl: Release <hash>
+// back-to-back with no audio. Kids picked a voice and heard nothing.
+//
+// Fix: the service is now held as a State field in survey_take_
+// screen, instantiated once in initState and disposed in dispose.
+// No provider needed — the service has no Riverpod-side deps and
+// nothing else in the app uses it.
