@@ -1,0 +1,89 @@
+name: Deploy Flutter web
+
+# Builds the Flutter web target and publishes it to GitHub Pages.
+# Triggers on every push to main and is also manually re-runnable via
+# the "Run workflow" button.
+#
+# What ships in the web bundle:
+# - Public config (Supabase URL + anon key + PowerSync URL) injected
+#   from GitHub Secrets. These are public-by-design per CLAUDE.md —
+#   RLS is the real gate. Putting them in Secrets is for hygiene
+#   (rotating later = one UI change), not secrecy.
+# - NO vendor keys (Deepgram, OpenAI). The omnibox mic + AI features
+#   degrade gracefully ("voice not configured" snackbar) when the
+#   keys are blank. To enable them on the web build, add
+#   DEEPGRAM_API_KEY / OPENAI_API_KEY secrets — but read the
+#   `EXTERNAL ROLLOUT` warning in `.env.example` first; vendor keys
+#   in a public web bundle are extractable by any visitor.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # PowerSync needs its web worker + sqlite3.wasm copied into web/.
+      # CLAUDE.md: "After every powersync version bump: dart run powersync:setup_web."
+      # We re-run on every build to stay safe; idempotent + cheap.
+      - name: Setup PowerSync web assets
+        run: dart run powersync:setup_web
+
+      # Write .env from secrets. flutter_dotenv reads this at app
+      # startup; without it the app boots into the "missing env"
+      # error screen.
+      - name: Write .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          POWERSYNC_URL=${{ secrets.POWERSYNC_URL }}
+          SENTRY_DSN=
+          DEEPGRAM_API_KEY=
+          OPENAI_API_KEY=
+          EOF
+
+      # Project-page hosting is at /differentworld/, not the root, so
+      # the base href has to match or all asset paths 404.
+      - name: Build web
+        run: flutter build web --base-href "/differentworld/" --release
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
