@@ -56,6 +56,13 @@ jobs:
       # Write .env from secrets. flutter_dotenv reads this at app
       # startup; without it the app boots into the "missing env"
       # error screen.
+      #
+      # SECURITY: DEEPGRAM_API_KEY ships in the web bundle, where any
+      # visitor can extract it. Personal-dev acceptable risk per
+      # CLAUDE.md; the Deepgram dashboard has per-key spending caps
+      # set as the real boundary. If/when the app goes external,
+      # move voice dictation behind a Supabase Edge Function broker
+      # (see docs/SECRETS.md) and remove this secret.
       - name: Write .env
         run: |
           cat > .env <<EOF
@@ -63,7 +70,7 @@ jobs:
           SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           POWERSYNC_URL=${{ secrets.POWERSYNC_URL }}
           SENTRY_DSN=
-          DEEPGRAM_API_KEY=
+          DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}
           OPENAI_API_KEY=
           EOF
 
