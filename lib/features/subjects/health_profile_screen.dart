@@ -225,6 +225,9 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
                 child: TextField(
                   controller: _docName,
                   textCapitalization: TextCapitalization.words,
+                  // Wave 125: physician's name — parents often have
+                  // it saved in contacts. Generic `name` hint.
+                  autofillHints: const [AutofillHints.name],
                   decoration: const InputDecoration(
                     labelText: 'Physician name',
                     border: OutlineInputBorder(),
@@ -237,6 +240,7 @@ class _HealthProfileScreenState extends ConsumerState<HealthProfileScreen> {
                 child: TextField(
                   controller: _docPhone,
                   keyboardType: TextInputType.phone,
+                  autofillHints: const [AutofillHints.telephoneNumber],
                   decoration: const InputDecoration(
                     labelText: 'Phone',
                     border: OutlineInputBorder(),

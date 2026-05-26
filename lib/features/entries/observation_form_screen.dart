@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:differentworld/core/db/app_database.dart';
@@ -18,9 +20,13 @@ import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 import 'package:uuid/uuid.dart';
 
 /// Create / edit observation as a real route.
@@ -280,6 +286,46 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
     }
     if (picked == null) return;
     await _uploadAll(picker, [picked]);
+  }
+
+  /// Wave 124: clipboard paste handler. When the kid / teacher hits
+  /// Cmd+V (or Ctrl+V on Windows/Linux) inside the body field, we
+  /// read the system clipboard via super_clipboard. If it carries an
+  /// image (e.g. a screenshot the teacher copied), we extract the
+  /// bytes, write a temp XFile, and route through _uploadAll. If
+  /// there's no image (just text), we let the default text-paste
+  /// happen by NOT consuming the shortcut.
+  Future<void> _handlePasteShortcut() async {
+    final clipboard = SystemClipboard.instance;
+    if (clipboard == null) return;
+    final reader = await clipboard.read();
+    // png + jpeg cover ~all screenshot / "copy image" sources.
+    for (final fmt in const [Formats.png, Formats.jpeg]) {
+      if (!reader.canProvide(fmt)) continue;
+      final completer = Completer<Uint8List?>();
+      reader.getFile(fmt, (file) async {
+        try {
+          final bytes = await file.readAll();
+          completer.complete(bytes);
+        } on Object {
+          completer.complete(null);
+        }
+      }, onError: (_) => completer.complete(null));
+      final bytes = await completer.future;
+      if (bytes == null || bytes.isEmpty) continue;
+      // Write to a temp file so we can hand it to _handleDroppedFiles
+      // as an XFile (the same path the DropTarget uses).
+      final tempDir = await getTemporaryDirectory();
+      final name = 'paste_${DateTime.now().millisecondsSinceEpoch}'
+          '.${fmt == Formats.png ? 'png' : 'jpg'}';
+      final path = p.join(tempDir.path, name);
+      final f = File(path);
+      await f.writeAsBytes(bytes, flush: true);
+      await _handleDroppedFiles([XFile(path)]);
+      return;
+    }
+    // No image on the clipboard — fall through so the default text
+    // paste handling runs (we don't intercept the keystroke).
   }
 
   /// Wave 117: handler for files dropped onto the photo grid from the
@@ -599,7 +645,19 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
               ),
 
             const SizedBox(height: 16),
-            TextField(
+            // Wave 124: Cmd/Ctrl+V paste-image intercept. When the
+            // clipboard carries an image (e.g. a teacher pasted a
+            // screenshot), we route it through _handleDroppedFiles
+            // and skip the default text paste. Text-only clipboard
+            // contents fall through to TextField's normal paste.
+            CallbackShortcuts(
+              bindings: {
+                const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
+                    () => unawaited(_handlePasteShortcut()),
+                const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+                    () => unawaited(_handlePasteShortcut()),
+              },
+              child: TextField(
               controller: _textCtrl,
               autofocus: !_isEdit && _subjectId != null,
               minLines: 4,
@@ -624,6 +682,7 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
                   onPressed: _toggleVoice,
                 ),
               ),
+            ),
             ),
             const SizedBox(height: 16),
             // Wave 117: DropTarget accepts files dragged from the OS

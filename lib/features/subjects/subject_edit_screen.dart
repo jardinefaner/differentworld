@@ -738,6 +738,9 @@ class _InlineAddGuardianState extends ConsumerState<_InlineAddGuardian> {
             controller: _name,
             autofocus: true,
             textCapitalization: TextCapitalization.words,
+            // Wave 125: guardian's full name — autofill from the
+            // parent's address book / 1Password if available.
+            autofillHints: const [AutofillHints.name],
             decoration: const InputDecoration(
               labelText: 'Full name',
               border: OutlineInputBorder(),
@@ -756,6 +759,7 @@ class _InlineAddGuardianState extends ConsumerState<_InlineAddGuardian> {
           TextField(
             controller: _phone,
             keyboardType: TextInputType.phone,
+            autofillHints: const [AutofillHints.telephoneNumber],
             decoration: const InputDecoration(
               labelText: 'Phone (optional)',
               border: OutlineInputBorder(),
@@ -766,6 +770,7 @@ class _InlineAddGuardianState extends ConsumerState<_InlineAddGuardian> {
             controller: _email,
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
+            autofillHints: const [AutofillHints.email],
             decoration: const InputDecoration(
               labelText: 'Email (optional)',
               border: OutlineInputBorder(),
