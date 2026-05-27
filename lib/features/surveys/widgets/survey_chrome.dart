@@ -273,6 +273,24 @@ class SurveyQuestionPage extends StatelessWidget {
                 variant: variant,
                 onAnswered: (next) => onAnswered(next, autoAdvance: true),
               ),
+            SurveyQuestionKind.agree5 => Scale5Row(
+                question: question,
+                answers: answers,
+                labels: language == SurveyLanguage.es
+                    ? Scale5Sets.agreeLabelsEs
+                    : Scale5Sets.agreeLabelsEn,
+                emoji: Scale5Sets.agreeEmoji,
+                onAnswered: (next) => onAnswered(next, autoAdvance: true),
+              ),
+            SurveyQuestionKind.likeMe5 => Scale5Row(
+                question: question,
+                answers: answers,
+                labels: language == SurveyLanguage.es
+                    ? Scale5Sets.likeMeLabelsEs
+                    : Scale5Sets.likeMeLabelsEn,
+                emoji: Scale5Sets.likeMeEmoji,
+                onAnswered: (next) => onAnswered(next, autoAdvance: true),
+              ),
             SurveyQuestionKind.multiselect => MultiselectList(
                 question: question,
                 answers: answers,
@@ -811,6 +829,10 @@ class _AboutYouPageState extends State<AboutYouPage> {
                   addHint: widget.language == SurveyLanguage.es
                       ? 'p. ej. 2°'
                       : 'e.g. 2nd',
+                  // Wave 167: includes 6th for the BASECamp 4-6 survey
+                  // path. The per-space picker promotes the user's
+                  // first tap into a real saved option, so these are
+                  // first-time defaults only.
                   defaults: const [
                     'TK',
                     'K',
@@ -819,6 +841,7 @@ class _AboutYouPageState extends State<AboutYouPage> {
                     '3rd',
                     '4th',
                     '5th',
+                    '6th',
                   ],
                 ),
                 const SizedBox(height: 20),

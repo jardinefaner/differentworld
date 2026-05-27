@@ -357,6 +357,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         // it anyway. Returning true means tap-Next stays harmless if
         // ever exposed.
         return _answers.agree3(q.key) != null;
+      case SurveyQuestionKind.agree5:
+      case SurveyQuestionKind.likeMe5:
+        // 5-point scales auto-advance on tap, same as agree3.
+        return _answers.scale5(q.key) != null;
       case SurveyQuestionKind.multiselect:
         // Each multiselect option page is its OWN yes/no choice. A
         // yes adds the option to the picks list; a no removes it.

@@ -317,6 +317,35 @@ class _MultiOptCol extends _Col {
   }
 }
 
+/// Wave 167: 5-point scale (agree5 / likeMe5). Cell value reads as
+/// "score / 4" so cross-template comparisons are uniform.
+class _Scale5Col extends _Col {
+  _Scale5Col(this.q);
+  final SurveyQuestion q;
+
+  @override
+  String get header => q.prompt;
+
+  @override
+  String display(SurveyAnswers? a) {
+    if (a == null) return '—';
+    final v = a.scale5(q.key);
+    if (v == null) return '—';
+    final labels = q.kind == SurveyQuestionKind.agree5
+        ? const ['Strongly disagree', 'Disagree', 'Kind of agree', 'Agree',
+            'Strongly agree']
+        : const ['Not like me', 'A little', 'Somewhat', 'Mostly', 'Exactly'];
+    return '${v + 1}/5 · ${labels[v]}';
+  }
+
+  @override
+  String csv(SurveyAnswers? a) {
+    if (a == null) return '';
+    final v = a.scale5(q.key);
+    return v == null ? '' : '${v + 1}';
+  }
+}
+
 class _TextCol extends _Col {
   _TextCol(this.q);
   final SurveyQuestion q;
@@ -344,6 +373,9 @@ List<_Col> _buildColumns(SurveyTemplate t) {
     switch (q.kind) {
       case SurveyQuestionKind.agree3:
         out.add(_Agree3Col(q));
+      case SurveyQuestionKind.agree5:
+      case SurveyQuestionKind.likeMe5:
+        out.add(_Scale5Col(q));
       case SurveyQuestionKind.multiselect:
         for (final opt in q.options) {
           out.add(_MultiOptCol(q, opt));
@@ -562,6 +594,9 @@ String _statusLabel(SurveyAnswers? a, List<SurveyQuestion> questions) {
   for (final q in questions) {
     final has = switch (q.kind) {
       SurveyQuestionKind.agree3 => a.agree3(q.key) != null,
+      SurveyQuestionKind.agree5 ||
+      SurveyQuestionKind.likeMe5 =>
+        a.scale5(q.key) != null,
       SurveyQuestionKind.multiselect => a.multiselect(q.key).isNotEmpty,
       SurveyQuestionKind.text => a.text(q.key).isNotEmpty,
     };

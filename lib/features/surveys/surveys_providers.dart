@@ -103,6 +103,13 @@ class SurveyAnswers {
     return null;
   }
 
+  /// Wave 167: 0..4 for agree5 / likeMe5 (both 5-point scales).
+  int? scale5(String key) {
+    final v = _raw[key];
+    if (v is int) return (v >= 0 && v <= 4) ? v : null;
+    return null;
+  }
+
   /// Returns the option keys selected on a multiselect question.
   List<String> multiselect(String key) {
     final v = _raw[key];
@@ -124,6 +131,14 @@ class SurveyAnswers {
       _raw.remove(key);
     } else {
       _raw[key] = value.clamp(0, 2);
+    }
+  }
+
+  void setScale5(String key, int? value) {
+    if (value == null) {
+      _raw.remove(key);
+    } else {
+      _raw[key] = value.clamp(0, 4);
     }
   }
 
@@ -150,6 +165,9 @@ class SurveyAnswers {
     switch (q.kind) {
       case SurveyQuestionKind.agree3:
         return agree3(q.key) != null;
+      case SurveyQuestionKind.agree5:
+      case SurveyQuestionKind.likeMe5:
+        return scale5(q.key) != null;
       case SurveyQuestionKind.multiselect:
         // multiselect is allowed to be empty intentionally — but the
         // question still needs a deliberate "I'm done" tap, which

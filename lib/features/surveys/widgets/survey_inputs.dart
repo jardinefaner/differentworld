@@ -570,3 +570,239 @@ class _TextAnswerState extends State<TextAnswer> {
     );
   }
 }
+
+/// Wave 167: 5-point scale row used by `agree5` and `likeMe5` questions.
+/// Five tappable cells, each with an emoji at top + a 2-line label
+/// underneath. Tap → store value 0..4 → caller auto-advances.
+///
+/// The five labels and emoji are passed in, so the same widget powers
+/// "Strongly disagree → Strongly agree" (agree5) and "Not like me →
+/// Exactly like me" (likeMe5). For older 4-6th graders, this scale
+/// is what the BASECamp paper survey uses, so the digital take has
+/// to match for the data to be comparable across years.
+class Scale5Row extends StatefulWidget {
+  const Scale5Row({
+    required this.question,
+    required this.answers,
+    required this.labels,
+    required this.emoji,
+    required this.onAnswered,
+    super.key,
+  });
+
+  final SurveyQuestion question;
+  final SurveyAnswers answers;
+
+  /// Five labels rendered under each cell. Index 0 = leftmost
+  /// ("Strongly disagree" / "Not like me"); index 4 = rightmost.
+  final List<String> labels;
+
+  /// Five emoji glyphs, one per cell. For agree5 the 5 sad-to-happy
+  /// faces; for likeMe5 a 5-cell circle progression (○ ◔ ◑ ◕ ●) or
+  /// similar.
+  final List<String> emoji;
+
+  final ValueChanged<SurveyAnswers> onAnswered;
+
+  @override
+  State<Scale5Row> createState() => _Scale5RowState();
+}
+
+class _Scale5RowState extends State<Scale5Row> {
+  int? _tappingValue;
+  Timer? _tapTimer;
+
+  @override
+  void dispose() {
+    _tapTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onTap(int value) {
+    unawaited(HapticFeedback.selectionClick());
+    setState(() => _tappingValue = value);
+    _tapTimer?.cancel();
+    _tapTimer = Timer(const Duration(milliseconds: 220), () {
+      if (!mounted) return;
+      setState(() => _tappingValue = null);
+    });
+    final next = SurveyAnswers.fromJson(widget.answers.toJson())
+      ..setScale5(widget.question.key, value);
+    widget.onAnswered(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final selected = widget.answers.scale5(widget.question.key);
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Five cells with small gutters between. Older kids handle a
+        // tighter grid than the K-3 smiley row.
+        final cellSize = ((c.maxWidth - 32) / 5).clamp(56.0, 110.0);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var value = 0; value < 5; value++)
+              _Scale5Cell(
+                emoji: widget.emoji[value],
+                label: widget.labels[value],
+                size: cellSize,
+                selected: selected == value,
+                dimmed: selected != null && selected != value,
+                tapping: _tappingValue == value,
+                onTap: () => _onTap(value),
+                color: theme.colorScheme.primary,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _Scale5Cell extends StatelessWidget {
+  const _Scale5Cell({
+    required this.emoji,
+    required this.label,
+    required this.size,
+    required this.selected,
+    required this.dimmed,
+    required this.tapping,
+    required this.onTap,
+    required this.color,
+  });
+
+  final String emoji;
+  final String label;
+  final double size;
+  final bool selected;
+  final bool dimmed;
+  final bool tapping;
+  final VoidCallback onTap;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scaleAnim = tapping ? 0.9 : (selected ? 1.06 : 1.0);
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedScale(
+          scale: scaleAnim,
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? color.withValues(alpha: 0.18)
+                        : theme.colorScheme.surfaceContainerHigh,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected
+                          ? color
+                          : theme.colorScheme.outlineVariant
+                                .withValues(alpha: 0.5),
+                      width: selected ? 3 : 1,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 180),
+                    opacity: dimmed ? 0.4 : 1.0,
+                    child: Text(
+                      emoji,
+                      style: TextStyle(
+                        fontSize: math.min(size * 0.55, 48),
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: size + 12,
+                  child: Text(
+                    label,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: dimmed
+                          ? theme.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.6)
+                          : selected
+                              ? color
+                              : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Wave 167: standard label/emoji sets for the two 5-point scales.
+/// Centralised so the take screen, table renderer, and any future
+/// docs share one source of truth.
+abstract final class Scale5Sets {
+  /// Five faces from strongly-disagree to strongly-agree.
+  static const agreeEmoji = ['🙁', '🫤', '😐', '🙂', '😃'];
+
+  /// English labels for agree5.
+  static const agreeLabelsEn = [
+    'Strongly disagree',
+    'Disagree',
+    'Kind of agree',
+    'Agree',
+    'Strongly agree',
+  ];
+
+  /// Spanish labels for agree5.
+  static const agreeLabelsEs = [
+    'Muy en desacuerdo',
+    'En desacuerdo',
+    'Más o menos',
+    'De acuerdo',
+    'Muy de acuerdo',
+  ];
+
+  /// Filled-progression emoji for likeMe5 — same shape as the React
+  /// mock so the kid associates "more filled = more like me."
+  static const likeMeEmoji = ['○', '◔', '◑', '◕', '●'];
+
+  static const likeMeLabelsEn = [
+    'Not like me',
+    'A little like me',
+    'Somewhat like me',
+    'Mostly like me',
+    'Exactly like me',
+  ];
+
+  static const likeMeLabelsEs = [
+    'No como yo',
+    'Poco como yo',
+    'Algo como yo',
+    'Bastante como yo',
+    'Igual que yo',
+  ];
+}
