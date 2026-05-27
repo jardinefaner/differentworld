@@ -1,13 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show WebSocket;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// What's currently happening with the user's voice session. Pumped
@@ -101,22 +99,17 @@ class DeepgramVoiceController {
     _finalTranscript = '';
     _interimTranscript = '';
 
-    if (kIsWeb) {
-      // `dart:io` compiles on web but `WebSocket.connect()` throws
-      // `UnsupportedError` at runtime — caught by the try/catch
-      // below as a vague "Could not start voice" error which doesn't
-      // help the user. Tell them honestly; we can revisit with the
-      // Deepgram-browser SDK or the subprotocol fallback later if
-      // voice on web becomes important.
-      _emitError('Voice dictation is not available in the browser yet.');
-      return;
-    }
-
+    // Wave 150: permission_handler is a no-op stub on web — the
+    // browser's getUserMedia prompt fires inside _recorder.startStream
+    // below, which is the real gate. On native this is the actual
+    // mic-permission request. Either way it's safe to call.
     _setState(VoiceState.requestingPermission);
-    final granted = await Permission.microphone.request();
-    if (!granted.isGranted) {
-      _emitError('Microphone permission was declined.');
-      return;
+    if (!kIsWeb) {
+      final granted = await Permission.microphone.request();
+      if (!granted.isGranted) {
+        _emitError('Microphone permission was declined.');
+        return;
+      }
     }
 
     _setState(VoiceState.starting);
@@ -150,30 +143,35 @@ class DeepgramVoiceController {
         '&smart_format=true'
         '&endpointing=600',
       );
-      // Pass the token via Authorization header rather than the
-      // WebSocket subprotocol. Subprotocols ride the WS upgrade in
-      // `Sec-WebSocket-Protocol`, which is plaintext in network
-      // proxies / OS diagnostic logs — credential-exposure risk.
-      // `IOWebSocketChannel.connect` accepts headers on native
-      // platforms; on web (where dart:io isn't available) Deepgram's
-      // subprotocol fallback is the only option.
-      final socket = await WebSocket.connect(
-        uri.toString(),
-        headers: <String, dynamic>{
-          'Authorization': 'Token $tempToken',
-        },
+      // Wave 150: Deepgram supports two auth shapes for live STT —
+      // an `Authorization: Token <key>` HTTP header or a
+      // `Sec-WebSocket-Protocol: token, <key>` subprotocol on the
+      // upgrade. The header path only works on native (dart:io
+      // WebSocket). The subprotocol path works on every platform
+      // including web, where the browser's WebSocket API doesn't
+      // let us set arbitrary headers. We use subprotocol on both
+      // platforms — single code path, and the short-lived
+      // (30 s, single-connection) token from `voice-token` bounds
+      // the exposure of the protocol-header plaintext.
+      final channel = WebSocketChannel.connect(
+        uri,
+        protocols: <String>['token', tempToken],
       );
+      try {
+        await channel.ready;
+      } on Object {
+        rethrow; // caught by outer try/catch
+      }
       // If `cancel()` (or another `stop()`) fired while the connect
       // was in flight — possible on fast nav or low-memory eviction
       // — `_teardown()` already nulled out `_channel`. Without this
       // guard we'd happily install a fresh channel that nobody owns
-      // any more; the mic + WS would leak. `_setState` re-emits idle
-      // in `cancel()` so we don't have to here.
+      // any more; the mic + WS would leak.
       if (_state == VoiceState.idle) {
-        await socket.close();
+        await channel.sink.close();
         return;
       }
-      _channel = IOWebSocketChannel(socket);
+      _channel = channel;
       _wsSub = _channel!.stream.listen(
         _onWsMessage,
         onError: (Object e, StackTrace st) {
