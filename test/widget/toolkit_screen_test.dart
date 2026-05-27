@@ -123,12 +123,13 @@ void main() {
       );
     });
 
-    testWidgets('non-matching query shows the "no tools match" line',
+    testWidgets('non-matching query shows the empty state',
         (tester) async {
       await pumpCatalog(tester);
       await tester.enterText(find.byType(TextField), 'xyzzy123');
       await tester.pump();
-      expect(find.text('No tools match that search.'), findsOneWidget);
+      expect(find.text('No tools match'), findsOneWidget);
+      expect(find.text('Clear search'), findsOneWidget);
     });
   });
 
@@ -140,13 +141,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text(tool.name, skipOffstage: false), findsWidgets);
-      expect(find.text('INSTEAD OF', skipOffstage: false), findsOneWidget);
-      expect(find.text('TRY THIS', skipOffstage: false), findsOneWidget);
+      // SectionCard section titles (sentence case, matching the rest
+      // of the app's section-card vocabulary).
+      expect(find.text('Instead of', skipOffstage: false), findsOneWidget);
+      expect(find.text('Try this', skipOffstage: false), findsOneWidget);
       expect(
-        find.text('WHY THIS WORKS', skipOffstage: false),
+        find.text('Why this works', skipOffstage: false),
         findsOneWidget,
       );
-      expect(find.text('QUICK SCRIPT', skipOffstage: false), findsOneWidget);
+      expect(find.text('Quick script', skipOffstage: false), findsOneWidget);
     });
 
     testWidgets('unknown slug renders the fallback', (tester) async {
@@ -174,12 +177,8 @@ void main() {
         const _TestHarness(child: ToolkitScreen()),
       );
       await tester.pumpAndSettle();
-      // Master-detail's "Pick a tool to see how it works" placeholder
-      // should NOT appear on phone — only the catalog feed.
-      expect(
-        find.text('Pick a tool on the left to see how to use it.'),
-        findsNothing,
-      );
+      // The wide-only placeholder header should NOT appear on phone.
+      expect(find.text('Pick a tool'), findsNothing);
     });
 
     testWidgets('tablet width activates master-detail with placeholder',
@@ -193,13 +192,9 @@ void main() {
         const _TestHarness(child: ToolkitScreen()),
       );
       await tester.pumpAndSettle();
-      // Default active category is Celebrate — the right pane
-      // placeholder should reference picking a tool.
-      expect(
-        find.text('Pick a tool on the left to see how to use it.'),
-        findsOneWidget,
-      );
-      // The left rail "Toolkit" header should be visible.
+      // The right-pane placeholder uses ContentHeader title.
+      expect(find.text('Pick a tool'), findsOneWidget);
+      // The left rail header "Toolkit" should be visible too.
       expect(find.text('Toolkit'), findsOneWidget);
     });
   });
