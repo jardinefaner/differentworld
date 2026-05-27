@@ -783,9 +783,11 @@ ToolkitTool? findToolBySlug(String slug) {
 }
 
 /// Flat list of every tool across categories — convenient for search.
-List<ToolkitTool> get allToolkitTools => [
-      for (final c in toolkitCatalog) ...c.tools,
-    ];
+/// Computed once at first access (the unmodifiable wrapper guards
+/// callers from mutating the cache).
+final List<ToolkitTool> allToolkitTools = List.unmodifiable([
+  for (final c in toolkitCatalog) ...c.tools,
+]);
 
 /// Lookup a category by its enum id.
 ToolkitCategory categoryById(ToolkitCategoryId id) =>

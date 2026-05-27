@@ -555,10 +555,26 @@ class _ToolkitSearchFieldState extends State<ToolkitSearchField> {
   @override
   void didUpdateWidget(covariant ToolkitSearchField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Reconcile when the parent changes `value` out from under us
+    // (e.g. result-tap clears the query; future Wave 162 might
+    // fill from the omnibox). Skip when text already matches — the
+    // common path is "parent rebuilt because someone else's state
+    // changed; our text is fine."
+    //
+    // If the controller already had a SELECTION (the user was
+    // mid-edit and the new value is a SUPERSET / SUBSET of their
+    // text), preserve the cursor at its current position clamped
+    // into the new length. Only collapse to end-of-text when we
+    // had no selection or this is a programmatic clear.
     if (widget.value != _controller.text) {
+      final hadFocus = FocusScope.of(context).hasFocus &&
+          _controller.selection.isValid;
+      final clampedOffset = hadFocus
+          ? _controller.selection.baseOffset.clamp(0, widget.value.length)
+          : widget.value.length;
       _controller.value = TextEditingValue(
         text: widget.value,
-        selection: TextSelection.collapsed(offset: widget.value.length),
+        selection: TextSelection.collapsed(offset: clampedOffset),
       );
     }
   }
