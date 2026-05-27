@@ -280,6 +280,26 @@ pw.Widget _surveyQA(SurveyQuestion q, SurveyAnswers a) {
         2 => 'Yes',
         _ => '—',
       },
+    // Wave 167: 5-point scales — render as "score/5 · label" so the
+    // PDF reader sees both the numeric value and the meaning. agree5
+    // and likeMe5 share the same data shape but use different label
+    // sets per the editorial intent.
+    SurveyQuestionKind.agree5 => switch (a.scale5(q.key)) {
+        0 => '1/5 · Strongly disagree',
+        1 => '2/5 · Disagree',
+        2 => '3/5 · Kind of agree',
+        3 => '4/5 · Agree',
+        4 => '5/5 · Strongly agree',
+        _ => '—',
+      },
+    SurveyQuestionKind.likeMe5 => switch (a.scale5(q.key)) {
+        0 => '1/5 · Not like me',
+        1 => '2/5 · A little like me',
+        2 => '3/5 · Somewhat like me',
+        3 => '4/5 · Mostly like me',
+        4 => '5/5 · Exactly like me',
+        _ => '—',
+      },
     SurveyQuestionKind.multiselect => () {
         final ks = a.multiselect(q.key);
         if (ks.isEmpty) return '—';
