@@ -203,6 +203,17 @@ class DeepgramVoiceController {
           unawaited(_teardown());
         },
         onDone: () {
+          // Wave 151: log the close code/reason so we can tell auth
+          // failures (4001) from data-format problems (1011) from
+          // network blips (1006). Deepgram exposes close-code +
+          // close-reason on the channel after the stream completes.
+          if (kDebugMode) {
+            final ch = _channel;
+            debugPrint(
+              '[deepgram] ws closed — code=${ch?.closeCode} '
+              'reason=${ch?.closeReason} state=$_state',
+            );
+          }
           // Stream closed. Emit a final idle update so the UI clears
           // the indicator — whether the user explicitly stopped
           // (state was already `finalizing`) or the server dropped
