@@ -11,6 +11,7 @@ import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -392,7 +393,7 @@ class _StatusFilter extends StatelessWidget {
   }
 }
 
-class _ResponsesGrid extends StatelessWidget {
+class _ResponsesGrid extends ConsumerWidget {
   const _ResponsesGrid({
     required this.responses,
     required this.cols,
@@ -404,7 +405,7 @@ class _ResponsesGrid extends StatelessWidget {
   final SurveyTemplate template;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -413,6 +414,7 @@ class _ResponsesGrid extends StatelessWidget {
           theme.colorScheme.surfaceContainerHighest,
         ),
         columns: [
+          const DataColumn(label: Text('')), // delete column
           const DataColumn(label: Text('Recorded')),
           const DataColumn(label: Text('Age band')),
           const DataColumn(label: Text('Grade')),
@@ -434,6 +436,7 @@ class _ResponsesGrid extends StatelessWidget {
           for (final r in responses)
             _row(
               context,
+              ref: ref,
               response: r,
               cols: cols,
               template: template,
@@ -446,6 +449,7 @@ class _ResponsesGrid extends StatelessWidget {
 
 DataRow _row(
   BuildContext context, {
+  required WidgetRef ref,
   required SurveyResponse response,
   required List<_Col> cols,
   required SurveyTemplate template,
@@ -477,6 +481,44 @@ DataRow _row(
   );
   return DataRow(
     cells: [
+      DataCell(
+        // Wave 166.1: per-row delete affordance. Tap → confirm sheet
+        // → SurveyActions.reset(id). Rows are anonymous so no PII is
+        // surfaced in the confirm copy; just "this response."
+        IconButton(
+          tooltip: 'Delete this response',
+          icon: Icon(
+            Icons.delete_outline,
+            color: scheme.error.withValues(alpha: 0.85),
+            size: 20,
+          ),
+          onPressed: () async {
+            final timestamp = _formatTimestamp(
+              response.completedAt ?? response.updatedAt,
+            );
+            final identityBits = <String>[
+              if (response.ageBand != null) response.ageBand!,
+              if (response.grade != null) response.grade!,
+              if (response.school != null) response.school!,
+            ];
+            final identity = identityBits.isEmpty
+                ? 'no identity recorded'
+                : identityBits.join(' · ');
+            final confirmed = await confirmDestructive(
+              context,
+              title: 'Delete this response?',
+              message:
+                  'Recorded $timestamp · $identity. This removes '
+                  'just this row from the table — the template '
+                  'itself stays put. This action cannot be undone.',
+            );
+            if (!confirmed) return;
+            await ref
+                .read(surveyActionsProvider)
+                .reset(id: response.id);
+          },
+        ),
+      ),
       DataCell(Text(_formatTimestamp(
           response.completedAt ?? response.updatedAt))),
       DataCell(Text(response.ageBand ?? '—')),
