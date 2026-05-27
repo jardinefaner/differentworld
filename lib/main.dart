@@ -6,6 +6,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+// shared_preferences IS listed as a direct dep in pubspec.yaml; the
+// analyzer sometimes warns spuriously across pub workspace boundaries.
+// ignore: depend_on_referenced_packages
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -33,6 +37,10 @@ Future<void> main() async {
     await BrowserContextMenu.disableContextMenu();
   }
   await Env.load();
+  // Wave 141: prune deprecated prefs keys from older builds so they
+  // don't bloat localStorage forever on long-lived web sessions. Add
+  // a key here when its read-site is removed from the code.
+  await _pruneDeprecatedPrefs();
 
   // Edge-to-edge: status bar + gesture nav are transparent, content
   // draws under them. Each Scaffold uses extendBody / extendBodyBehindAppBar
@@ -91,5 +99,30 @@ Future<void> main() async {
     );
   } else {
     runApp(const ProviderScope(child: DifferentWorldApp()));
+  }
+}
+
+/// Wave 141: drop SharedPreferences keys that older builds wrote but
+/// no current code reads. Cheap idempotent cleanup that prevents
+/// dead state from accumulating across long-running browser sessions.
+///
+/// Add a string to `deadKeys` when a feature that owned a pref is
+/// removed. The next launch cleans it up; subsequent launches no-op
+/// because the key is already gone.
+Future<void> _pruneDeprecatedPrefs() async {
+  const deadKeys = <String>{
+    // Backfill flag from a removed one-shot data migration. No code
+    // reads it anymore (verified via grep on the lib/ tree).
+    'incident_child_backfill_v1_done',
+  };
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in deadKeys) {
+      if (prefs.containsKey(key)) {
+        await prefs.remove(key);
+      }
+    }
+  } on Object {
+    // Best-effort. A failure here mustn't block boot.
   }
 }

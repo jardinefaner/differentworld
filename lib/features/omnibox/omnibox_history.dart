@@ -18,15 +18,41 @@ class RecentOmniboxIds extends AsyncNotifier<List<String>> {
   static const _kKey = 'omnibox.recent.ids';
   static const _maxItems = 10;
 
+  /// Wave 141: which omnibox ids count as "specific person/kid"
+  /// surfaces — these never belong in the recents list. Tapping a
+  /// kid's profile once shouldn't make the kid feel like a permanent
+  /// shortcut: it leaks "child choice" affordance into surfaces that
+  /// should be person-agnostic (the survey landing, for one).
+  ///
+  /// Subject verbs (`subject:<id>:observation.new`,
+  /// `subject:<id>:messages`, etc.) ARE allowed — those are specific
+  /// actions a director might repeat. The bare `subject:<id>` is the
+  /// only one filtered.
+  static bool _isExcluded(String id) {
+    if (!id.startsWith('subject:')) return false;
+    // `subject:<uuid>` alone (no trailing `:verb`) → exclude.
+    return ':'.allMatches(id).length == 1;
+  }
+
   @override
   Future<List<String>> build() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_kKey) ?? const <String>[];
+    final raw = prefs.getStringList(_kKey) ?? const <String>[];
+    // Wave 141: prune any excluded ids that were persisted before
+    // this filter shipped. One-shot cleanup; rewrite back if we
+    // dropped anything.
+    final clean = raw.where((id) => !_isExcluded(id)).toList(growable: false);
+    if (clean.length != raw.length) {
+      await prefs.setStringList(_kKey, clean);
+    }
+    return clean;
   }
 
   /// Bump an id to the head of the recent list. Idempotent — if it's
-  /// already there it just moves to the front.
+  /// already there it just moves to the front. Excluded ids (bare
+  /// kid profiles) silently skip the write.
   Future<void> bump(String id) async {
+    if (_isExcluded(id)) return;
     final current = state.value ?? const <String>[];
     final next = [id, ...current.where((x) => x != id)];
     final trimmed =
