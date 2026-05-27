@@ -125,15 +125,18 @@ class _SurveyHeaderState extends State<SurveyHeader> {
                         key: ValueKey('idle'),
                       ),
               ),
-              // Wave 139: hide the score fraction until the kid has
-              // actually started (progressTotal > 0 stand-in for
-              // _started). Showing "0 / 11" on the About-you page
-              // suggested the kid had to do something they hadn't
-              // gotten to yet.
+              // Wave 146: replaced the `answeredScored / scoredTotal`
+              // fraction with a page counter. The old fraction was
+              // computed pre-Wave 132 (before the activities
+              // multiselect exploded into 7 yes/no pages), so it
+              // read e.g. "3 / 14" while the dot strip showed 5 of
+              // 21 dots filled — two different denominators on the
+              // same screen. Now the fraction matches the dot count:
+              // both are PAGES.
               if (widget.progressTotal > 0) ...[
                 const SizedBox(width: 6),
                 Text(
-                  '${widget.answeredScored} / ${widget.scoredTotal}',
+                  '${widget.progressIndex} / ${widget.progressTotal}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -356,9 +359,13 @@ class SurveyCloseoutPage extends StatelessWidget {
             Text(
               allAnswered
                   ? 'Great job. Tap Finish to save your answers.'
-                  : 'Tap Back to fill in the $scoredTotal — $answeredScored '
-                      "you haven't answered yet, or Finish to save what "
-                      'you have.',
+                  // Wave 146: the old "fill in the $scoredTotal — "
+                  // "$answeredScored" math used pre-page-explosion
+                  // counts and read wrong. Replaced with a simpler,
+                  // kid-friendly nudge that doesn't try to put a
+                  // number on what's missing.
+                  : 'Tap Back to look at any question again, or '
+                      "Finish to save what you've answered.",
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
