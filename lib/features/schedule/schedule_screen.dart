@@ -16,6 +16,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -191,10 +192,21 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
             ],
       body: groupsAsync.when(
         loading: () => const LoadingSlot(),
-        error: (_, _) => ErrorState(
-          title: 'Could not load schedule',
-          onRetry: () => ref.invalidate(groupsProvider),
-        ),
+        error: (err, stack) {
+          // Wave 165.1 — surface the actual cause so we can tell
+          // "PowerSync hasn't synced yet" from "Drift query failed
+          // because the local schema is missing a column" from
+          // "guardian viewer hit /schedule which isn't gated."
+          if (kDebugMode) {
+            debugPrint('[schedule] groupsProvider failed: $err');
+            debugPrint('[schedule] stack: $stack');
+          }
+          return ErrorState(
+            title: 'Could not load schedule',
+            detail: '$err',
+            onRetry: () => ref.invalidate(groupsProvider),
+          );
+        },
         data: (gs) {
           if (gs.isEmpty) {
             final labels = ref.read(verticalLabelsProvider);
@@ -402,12 +414,22 @@ class _CohortDay extends ConsumerWidget {
 
     return blocksAsync.when(
       loading: () => const LoadingSlot(),
-      error: (_, _) => ErrorState(
-        title: "Couldn't load this cohort's schedule",
-        onRetry: () => ref.invalidate(
-          scheduleDayForGroupProvider((groupId: group.id, date: date)),
-        ),
-      ),
+      error: (err, stack) {
+        if (kDebugMode) {
+          debugPrint(
+            '[schedule] scheduleDayForGroupProvider(${group.id}, $date) '
+            'failed: $err',
+          );
+          debugPrint('[schedule] stack: $stack');
+        }
+        return ErrorState(
+          title: "Couldn't load this cohort's schedule",
+          detail: '$err',
+          onRetry: () => ref.invalidate(
+            scheduleDayForGroupProvider((groupId: group.id, date: date)),
+          ),
+        );
+      },
       data: (blocks) {
         if (blocks.isEmpty) {
           return EmptyState(
