@@ -559,6 +559,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Toolkit
+**Path**: `lib/features/toolkit/`
+**Purpose**: Editorial reference library — 30 in-the-moment teaching moves (Celebrate, Tough Moments, Know Your Kids, Classroom Culture, Self-Care). Search-by-situation + tool detail (Instead of / Try this / Why this works / Quick script). Content ships in the binary; Wave 162 will add a per-space overrides table for director-authored additions and built-in hides.
+**Personas served**: All staff. Especially Jordan (in-the-moment scripts when it falls apart), Coach Sam (door-greeting + cohort culture), Brianna (specific-notice + 5:1 ratio while learning the room), Lauren (parent-text language).
+**Discovery surfaces**:
+- Routes: `/settings/toolkit`
+- Omnibox: yes — "Teacher Toolkit" (keywords cover toolkit, scripts, phrases, celebrate, praise, tough, angry, meltdown, parent text, morning, door greeting, cool down, repair, boundary, self care, burnout)
+- Slash: no
+- Drawer: no
+- Settings: yes — "Teacher Toolkit" row under Resources group
+**Capabilities**: None — open to every signed-in staff member. Read-only in Wave 161.
+**Data**: None (Wave 161, Dart const catalog). Wave 162 will add a `toolkit_overrides` table joined on `builtin_slug` to the const list.
+**Surfaces**:
+- *Toolkit catalog* — `lib/features/toolkit/toolkit_catalog.dart`. Dart const `toolkitCatalog`: 5 categories × 6 tools, each with stable slug + name/when/instead/tryThis/why/quick fields.
+- *Toolkit screen* — `lib/features/toolkit/toolkit_screen.dart`. Search across all tools, category strip, expandable tool detail card with Instead/Try pair + Why-this-works rail + optional Quick-script chip.
+**Depends on**: Nothing — pure content.
+**Consumed by**: Nothing yet. Future: tagged captures could surface a "Try this" toolkit suggestion contextually.
+**Last verified**: 2026-05-26
+
+---
+
 ## Today
 **Path**: `lib/features/today/`
 **Purpose**: The daily launchpad. Root destination. Context-driven cards: morning (attendance, leading-today, captures); afternoon (pickup, end-of-day capture); director pulse (oversight signals).

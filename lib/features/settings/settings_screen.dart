@@ -173,6 +173,26 @@ class SettingsScreen extends ConsumerWidget {
           // them in Settings too made the menu busier without adding
           // a new path. Settings is now preferences-only.
 
+          // Resources — editorial reference content that ships with
+          // the binary. The Teacher Toolkit is the first one;
+          // anything else that's "read-only library of curated
+          // moves / phrases / scripts" lives here too.
+          _SettingsGroup(
+            label: 'Resources',
+            children: [
+              ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: const Text('Teacher Toolkit'),
+                subtitle: const Text(
+                  'Sentences you can say, moves you can make, in the '
+                  'moment',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/settings/toolkit'),
+              ),
+            ],
+          ),
+
           // Preferences — appearance / text size / language. Appearance
           // and language are still placeholders (their detail screens
           // aren't built); the text-size override is live so Helen-

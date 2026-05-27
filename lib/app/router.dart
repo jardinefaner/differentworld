@@ -51,6 +51,7 @@ import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
+import 'package:differentworld/features/toolkit/toolkit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
@@ -552,6 +553,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'Roles',
               child: RolesScreen(),
+            ),
+          ),
+          GoRoute(
+            path: 'toolkit',
+            builder: (_, _) => const RouteTitle(
+              title: 'Teacher Toolkit',
+              child: ToolkitScreen(),
             ),
           ),
           GoRoute(
