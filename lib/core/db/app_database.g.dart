@@ -16160,6 +16160,17 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _recurrenceIdMeta = const VerificationMeta(
+    'recurrenceId',
+  );
+  @override
+  late final GeneratedColumn<String> recurrenceId = GeneratedColumn<String>(
+    'recurrence_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -16199,6 +16210,7 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     status,
     statusReason,
     curriculumSessionSlug,
+    recurrenceId,
     createdAt,
     updatedAt,
   ];
@@ -16330,6 +16342,15 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         ),
       );
     }
+    if (data.containsKey('recurrence_id')) {
+      context.handle(
+        _recurrenceIdMeta,
+        recurrenceId.isAcceptableOrUnknown(
+          data['recurrence_id']!,
+          _recurrenceIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -16415,6 +16436,10 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         DriftSqlType.string,
         data['${effectivePrefix}curriculum_session_slug'],
       ),
+      recurrenceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recurrence_id'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -16459,6 +16484,12 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
   /// block-edit screen offers a deep-link to the curriculum session
   /// detail.
   final String? curriculumSessionSlug;
+
+  /// Wave 166.2: shared UUID for blocks that came out of one
+  /// "Repeat…" action. Null for ad-hoc one-off blocks. Future
+  /// "edit all in series" / "delete all in series" affordances key
+  /// on this column.
+  final String? recurrenceId;
   final String createdAt;
   final String updatedAt;
   const ScheduleBlock({
@@ -16477,6 +16508,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     required this.status,
     this.statusReason,
     this.curriculumSessionSlug,
+    this.recurrenceId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -16514,6 +16546,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     if (!nullToAbsent || curriculumSessionSlug != null) {
       map['curriculum_session_slug'] = Variable<String>(curriculumSessionSlug);
     }
+    if (!nullToAbsent || recurrenceId != null) {
+      map['recurrence_id'] = Variable<String>(recurrenceId);
+    }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
@@ -16550,6 +16585,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       curriculumSessionSlug: curriculumSessionSlug == null && nullToAbsent
           ? const Value.absent()
           : Value(curriculumSessionSlug),
+      recurrenceId: recurrenceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recurrenceId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -16582,6 +16620,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       curriculumSessionSlug: serializer.fromJson<String?>(
         json['curriculumSessionSlug'],
       ),
+      recurrenceId: serializer.fromJson<String?>(json['recurrenceId']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -16609,6 +16648,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       'curriculumSessionSlug': serializer.toJson<String?>(
         curriculumSessionSlug,
       ),
+      'recurrenceId': serializer.toJson<String?>(recurrenceId),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -16630,6 +16670,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     String? status,
     Value<String?> statusReason = const Value.absent(),
     Value<String?> curriculumSessionSlug = const Value.absent(),
+    Value<String?> recurrenceId = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => ScheduleBlock(
@@ -16654,6 +16695,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     curriculumSessionSlug: curriculumSessionSlug.present
         ? curriculumSessionSlug.value
         : this.curriculumSessionSlug,
+    recurrenceId: recurrenceId.present ? recurrenceId.value : this.recurrenceId,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -16686,6 +16728,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       curriculumSessionSlug: data.curriculumSessionSlug.present
           ? data.curriculumSessionSlug.value
           : this.curriculumSessionSlug,
+      recurrenceId: data.recurrenceId.present
+          ? data.recurrenceId.value
+          : this.recurrenceId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -16709,6 +16754,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           ..write('status: $status, ')
           ..write('statusReason: $statusReason, ')
           ..write('curriculumSessionSlug: $curriculumSessionSlug, ')
+          ..write('recurrenceId: $recurrenceId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -16732,6 +16778,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     status,
     statusReason,
     curriculumSessionSlug,
+    recurrenceId,
     createdAt,
     updatedAt,
   );
@@ -16754,6 +16801,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           other.status == this.status &&
           other.statusReason == this.statusReason &&
           other.curriculumSessionSlug == this.curriculumSessionSlug &&
+          other.recurrenceId == this.recurrenceId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -16774,6 +16822,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
   final Value<String> status;
   final Value<String?> statusReason;
   final Value<String?> curriculumSessionSlug;
+  final Value<String?> recurrenceId;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -16793,6 +16842,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.status = const Value.absent(),
     this.statusReason = const Value.absent(),
     this.curriculumSessionSlug = const Value.absent(),
+    this.recurrenceId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -16813,6 +16863,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.status = const Value.absent(),
     this.statusReason = const Value.absent(),
     this.curriculumSessionSlug = const Value.absent(),
+    this.recurrenceId = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -16841,6 +16892,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Expression<String>? status,
     Expression<String>? statusReason,
     Expression<String>? curriculumSessionSlug,
+    Expression<String>? recurrenceId,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -16864,6 +16916,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       if (statusReason != null) 'status_reason': statusReason,
       if (curriculumSessionSlug != null)
         'curriculum_session_slug': curriculumSessionSlug,
+      if (recurrenceId != null) 'recurrence_id': recurrenceId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -16886,6 +16939,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Value<String>? status,
     Value<String?>? statusReason,
     Value<String?>? curriculumSessionSlug,
+    Value<String?>? recurrenceId,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -16908,6 +16962,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       statusReason: statusReason ?? this.statusReason,
       curriculumSessionSlug:
           curriculumSessionSlug ?? this.curriculumSessionSlug,
+      recurrenceId: recurrenceId ?? this.recurrenceId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -16966,6 +17021,9 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
         curriculumSessionSlug.value,
       );
     }
+    if (recurrenceId.present) {
+      map['recurrence_id'] = Variable<String>(recurrenceId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -16996,6 +17054,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
           ..write('status: $status, ')
           ..write('statusReason: $statusReason, ')
           ..write('curriculumSessionSlug: $curriculumSessionSlug, ')
+          ..write('recurrenceId: $recurrenceId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -29244,6 +29303,7 @@ typedef $$ScheduleBlocksTableCreateCompanionBuilder =
       Value<String> status,
       Value<String?> statusReason,
       Value<String?> curriculumSessionSlug,
+      Value<String?> recurrenceId,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -29265,6 +29325,7 @@ typedef $$ScheduleBlocksTableUpdateCompanionBuilder =
       Value<String> status,
       Value<String?> statusReason,
       Value<String?> curriculumSessionSlug,
+      Value<String?> recurrenceId,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -29351,6 +29412,11 @@ class $$ScheduleBlocksTableFilterComposer
 
   ColumnFilters<String> get curriculumSessionSlug => $composableBuilder(
     column: $table.curriculumSessionSlug,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recurrenceId => $composableBuilder(
+    column: $table.recurrenceId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -29449,6 +29515,11 @@ class $$ScheduleBlocksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get recurrenceId => $composableBuilder(
+    column: $table.recurrenceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -29526,6 +29597,11 @@ class $$ScheduleBlocksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get recurrenceId => $composableBuilder(
+    column: $table.recurrenceId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -29581,6 +29657,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> statusReason = const Value.absent(),
                 Value<String?> curriculumSessionSlug = const Value.absent(),
+                Value<String?> recurrenceId = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -29600,6 +29677,7 @@ class $$ScheduleBlocksTableTableManager
                 status: status,
                 statusReason: statusReason,
                 curriculumSessionSlug: curriculumSessionSlug,
+                recurrenceId: recurrenceId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -29621,6 +29699,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String?> statusReason = const Value.absent(),
                 Value<String?> curriculumSessionSlug = const Value.absent(),
+                Value<String?> recurrenceId = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -29640,6 +29719,7 @@ class $$ScheduleBlocksTableTableManager
                 status: status,
                 statusReason: statusReason,
                 curriculumSessionSlug: curriculumSessionSlug,
+                recurrenceId: recurrenceId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

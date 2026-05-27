@@ -133,6 +133,59 @@ class ScheduleActions {
     );
   }
 
+  /// Wave 166.2 — schedule the same block on multiple dates atomically.
+  /// `dates` is the list of YYYY-MM-DD strings to spawn on; the time
+  /// of day is taken from `startAt` / `endAt`. Returns the new block
+  /// ids. All blocks share a `recurrenceId` so a future "edit series"
+  /// flow can re-find them.
+  Future<List<String>> createBatch({
+    required String groupId,
+    required List<DateTime> dates,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? activityId,
+    String? leadMemberId,
+    String? locationOverrideId,
+    String kind = 'on_site',
+    String? notes,
+    String? curriculumSessionSlug,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId = viewer.requireSpaceId(action: 'create schedule blocks');
+    final db = await _ref.read(appDatabaseProvider.future);
+    final templates = <({String date, DateTime startAt, DateTime endAt})>[];
+    for (final d in dates) {
+      final dayStart = DateTime(
+        d.year,
+        d.month,
+        d.day,
+        startAt.hour,
+        startAt.minute,
+      );
+      final dayEnd = DateTime(
+        d.year,
+        d.month,
+        d.day,
+        endAt.hour,
+        endAt.minute,
+      );
+      templates.add(
+        (date: isoDateLocal(dayStart), startAt: dayStart, endAt: dayEnd),
+      );
+    }
+    return db.scheduleDao.createBatch(
+      spaceId: spaceId,
+      groupId: groupId,
+      templates: templates,
+      activityId: activityId,
+      leadMemberId: leadMemberId,
+      locationOverrideId: locationOverrideId,
+      kind: kind,
+      notes: notes,
+      curriculumSessionSlug: curriculumSessionSlug,
+    );
+  }
+
   Future<void> update_({
     required String id,
     String? activityId,

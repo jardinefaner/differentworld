@@ -341,6 +341,9 @@ const appSchema = Schema([
     // Wave 165: optional link back to a curriculum session slug
     // (e.g. 'photo.s1.click-game'). NULL for ad-hoc blocks.
     Column.text('curriculum_session_slug'),
+    // Wave 166.2: UUID shared by all blocks spawned in one
+    // Repeat-creation batch. NULL for ad-hoc one-off blocks.
+    Column.text('recurrence_id'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),

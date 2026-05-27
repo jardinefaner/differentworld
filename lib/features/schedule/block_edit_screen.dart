@@ -80,6 +80,21 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   final _notes = TextEditingController();
   bool _saving = false;
 
+  /// Wave 166.2: when on, the form spawns N blocks (one per matching
+  /// weekday between start date and `_repeatUntil`) instead of one.
+  /// Only available on new blocks, never on edit — editing a single
+  /// instance of a series doesn't propagate.
+  bool _repeatOn = false;
+
+  /// Day-of-week mask. Indexed [0]=Mon … [6]=Sun (matches
+  /// DateTime.weekday — 1..7 — minus 1). The starting day is
+  /// pre-checked on toggle-on.
+  late List<bool> _repeatDays;
+
+  /// Last date to spawn (inclusive). Defaults to "+4 weeks from the
+  /// start" when the repeat is first enabled.
+  late DateTime _repeatUntil;
+
   /// The curriculum slug this block carries. For new blocks comes
   /// from [BlockEditScreen.prefillCurriculumSlug]; for edits it
   /// reads from the existing row. Persists unchanged on save — the
@@ -91,10 +106,13 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   void initState() {
     super.initState();
     final e = widget.existing;
+    _repeatDays = List<bool>.filled(7, false);
+    _repeatUntil = widget.defaultStart.add(const Duration(days: 28));
     if (e == null) {
       _kind = 'on_site';
       _startAt = widget.defaultStart;
       _endAt = widget.defaultStart.add(const Duration(minutes: 60));
+      _repeatDays[(widget.defaultStart.weekday - 1) % 7] = true;
       _curriculumSlug = widget.prefillCurriculumSlug;
       // Wave 165: prefill from curriculum session metadata when the
       // CTA-originated route arrives with a slug. The notes carry the
@@ -193,6 +211,34 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
     });
   }
 
+  /// Wave 166.2: expand the repeat parameters (start date,
+  /// `_repeatUntil`, weekday mask) into the list of dates that the
+  /// batch should spawn on. Inclusive of both endpoints when they
+  /// match the mask.
+  List<DateTime> _expandRepeatDates() {
+    final out = <DateTime>[];
+    var cursor = DateTime(_startAt.year, _startAt.month, _startAt.day);
+    final last =
+        DateTime(_repeatUntil.year, _repeatUntil.month, _repeatUntil.day);
+    while (!cursor.isAfter(last)) {
+      final idx = (cursor.weekday - 1) % 7;
+      if (_repeatDays[idx]) out.add(cursor);
+      cursor = cursor.add(const Duration(days: 1));
+    }
+    return out;
+  }
+
+  Future<void> _pickRepeatUntil() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _repeatUntil,
+      firstDate: _startAt,
+      lastDate: _startAt.add(const Duration(days: 365)),
+    );
+    if (picked == null) return;
+    setState(() => _repeatUntil = picked);
+  }
+
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
@@ -207,20 +253,42 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       action: () async {
         final notes = _notes.text.trim();
         if (widget.existing == null) {
-          await actions.create(
-            groupId: widget.groupId,
-            startAt: _startAt,
-            endAt: _endAt,
-            activityId:
-                _kind == BlockKind.onSite || _kind == BlockKind.fieldTrip
-                    ? _activityId
-                    : null,
-            leadMemberId: _leadMemberId,
-            locationOverrideId: _locationOverrideId,
-            kind: _kind,
-            notes: notes.isEmpty ? null : notes,
-            curriculumSessionSlug: _curriculumSlug,
-          );
+          if (_repeatOn) {
+            // Wave 166.2 — spawn one block per matching weekday in
+            // the range. Skip the start day if it's not in the
+            // selected mask (user might have unchecked it).
+            final dates = _expandRepeatDates();
+            await actions.createBatch(
+              groupId: widget.groupId,
+              dates: dates,
+              startAt: _startAt,
+              endAt: _endAt,
+              activityId: _kind == BlockKind.onSite ||
+                      _kind == BlockKind.fieldTrip
+                  ? _activityId
+                  : null,
+              leadMemberId: _leadMemberId,
+              locationOverrideId: _locationOverrideId,
+              kind: _kind,
+              notes: notes.isEmpty ? null : notes,
+              curriculumSessionSlug: _curriculumSlug,
+            );
+          } else {
+            await actions.create(
+              groupId: widget.groupId,
+              startAt: _startAt,
+              endAt: _endAt,
+              activityId: _kind == BlockKind.onSite ||
+                      _kind == BlockKind.fieldTrip
+                  ? _activityId
+                  : null,
+              leadMemberId: _leadMemberId,
+              locationOverrideId: _locationOverrideId,
+              kind: _kind,
+              notes: notes.isEmpty ? null : notes,
+              curriculumSessionSlug: _curriculumSlug,
+            );
+          }
         } else {
           await actions.update_(
             id: widget.existing!.id,
@@ -482,6 +550,21 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
               border: const OutlineInputBorder(),
             ),
           ),
+          if (!widget.isEdit) ...[
+            const SizedBox(height: 16),
+            _RepeatSection(
+              startAt: _startAt,
+              endAt: _endAt,
+              repeatOn: _repeatOn,
+              repeatDays: _repeatDays,
+              repeatUntil: _repeatUntil,
+              onToggleRepeat: (v) => setState(() => _repeatOn = v),
+              onToggleDay: (i) =>
+                  setState(() => _repeatDays[i] = !_repeatDays[i]),
+              onPickUntil: _pickRepeatUntil,
+              expand: _expandRepeatDates,
+            ),
+          ],
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _saving ? null : _save,
@@ -492,7 +575,13 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.check),
-            label: Text(widget.isEdit ? 'Save changes' : 'Add block'),
+            label: Text(
+              widget.isEdit
+                  ? 'Save changes'
+                  : _repeatOn
+                      ? 'Add ${_expandRepeatDates().length} blocks'
+                      : 'Add block',
+            ),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -711,6 +800,176 @@ class _CurriculumLinkCard extends StatelessWidget {
               const Icon(Icons.chevron_right, size: 18),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Wave 166.2: the "Repeat…" UI block. When the switch is on, the
+/// caller spawns N blocks (one per matching weekday between the
+/// block's start date and `repeatUntil`).
+class _RepeatSection extends StatelessWidget {
+  const _RepeatSection({
+    required this.startAt,
+    required this.endAt,
+    required this.repeatOn,
+    required this.repeatDays,
+    required this.repeatUntil,
+    required this.onToggleRepeat,
+    required this.onToggleDay,
+    required this.onPickUntil,
+    required this.expand,
+  });
+
+  final DateTime startAt;
+  final DateTime endAt;
+  final bool repeatOn;
+  final List<bool> repeatDays;
+  final DateTime repeatUntil;
+  final ValueChanged<bool> onToggleRepeat;
+  final ValueChanged<int> onToggleDay;
+  final VoidCallback onPickUntil;
+  final List<DateTime> Function() expand;
+
+  static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  static const _dayFullLabels = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final count = repeatOn ? expand().length : 0;
+    return Material(
+      color: repeatOn
+          ? scheme.primaryContainer.withValues(alpha: 0.4)
+          : scheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 12, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.repeat, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Repeat',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Switch(value: repeatOn, onChanged: onToggleRepeat),
+              ],
+            ),
+            if (repeatOn) ...[
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'Spawn the same block on every matching day between '
+                  'now and the end date. Each instance is independent — '
+                  "editing one won't affect the others.",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'ON THESE DAYS',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                children: [
+                  for (var i = 0; i < 7; i++)
+                    FilterChip(
+                      selected: repeatDays[i],
+                      label: Text(_dayLabels[i]),
+                      onSelected: (_) => onToggleDay(i),
+                      tooltip: _dayFullLabels[i],
+                      showCheckmark: false,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'UNTIL',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              OutlinedButton.icon(
+                onPressed: onPickUntil,
+                icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                label: Text(
+                  '${repeatUntil.year}-'
+                  '${repeatUntil.month.toString().padLeft(2, '0')}-'
+                  '${repeatUntil.day.toString().padLeft(2, '0')}',
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: scheme.surface.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      count == 0 ? Icons.warning_amber : Icons.check_circle,
+                      size: 18,
+                      color: count == 0 ? scheme.error : scheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        count == 0
+                            ? 'No matching days in this range.'
+                            : 'Will spawn $count block${count == 1 ? '' : 's'}.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: count == 0
+                              ? scheme.error
+                              : scheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

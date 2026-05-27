@@ -90,6 +90,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     String kind = 'on_site',
     String? notes,
     String? curriculumSessionSlug,
+    String? recurrenceId,
   }) async {
     final id = _uuid.v4();
     final now = DateTime.now().toUtc().toIso8601String();
@@ -107,11 +108,66 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
         kind: kind,
         notes: Value(notes),
         curriculumSessionSlug: Value(curriculumSessionSlug),
+        recurrenceId: Value(recurrenceId),
         createdAt: now,
         updatedAt: now,
       ),
     );
     return id;
+  }
+
+  /// Wave 166.2 — spawn N blocks in one transaction, all sharing the
+  /// same `recurrenceId`. Each row is a fully independent
+  /// schedule_block — editing one doesn't affect the others. The
+  /// shared id is just a hook for future "edit all in series" or
+  /// "delete all in series" affordances.
+  ///
+  /// `templates` is the list of (date, startAt, endAt) tuples to
+  /// create — the caller computed which weekdays fall in the range.
+  /// All other fields (activity, lead, location, kind, notes,
+  /// curriculum slug) are identical across the batch.
+  Future<List<String>> createBatch({
+    required String spaceId,
+    required String groupId,
+    required List<({String date, DateTime startAt, DateTime endAt})>
+        templates,
+    String? activityId,
+    String? leadMemberId,
+    String? locationOverrideId,
+    String kind = 'on_site',
+    String? notes,
+    String? curriculumSessionSlug,
+  }) async {
+    if (templates.isEmpty) return const [];
+    final recurrenceId = _uuid.v4();
+    final now = DateTime.now().toUtc().toIso8601String();
+    final ids = <String>[];
+    await transaction(() async {
+      for (final t in templates) {
+        final id = _uuid.v4();
+        ids.add(id);
+        await into(scheduleBlocks).insert(
+          ScheduleBlocksCompanion.insert(
+            id: id,
+            spaceId: spaceId,
+            groupId: groupId,
+            date: t.date,
+            startAt: t.startAt.toUtc().toIso8601String(),
+            endAt: t.endAt.toUtc().toIso8601String(),
+            activityId: Value(activityId),
+            leadMemberId: Value(leadMemberId),
+            locationOverrideId: Value(locationOverrideId),
+            kind: kind,
+            notes: Value(notes),
+            curriculumSessionSlug: Value(curriculumSessionSlug),
+            recurrenceId: Value(recurrenceId),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
+    });
+    return ids;
   }
 
   Future<void> update_({

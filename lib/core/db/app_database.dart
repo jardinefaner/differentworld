@@ -596,6 +596,12 @@ class ScheduleBlocks extends Table {
   /// block-edit screen offers a deep-link to the curriculum session
   /// detail.
   TextColumn get curriculumSessionSlug => text().nullable()();
+
+  /// Wave 166.2: shared UUID for blocks that came out of one
+  /// "Repeat…" action. Null for ad-hoc one-off blocks. Future
+  /// "edit all in series" / "delete all in series" affordances key
+  /// on this column.
+  TextColumn get recurrenceId => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 
