@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
+import 'package:differentworld/features/toolkit/toolkit_recents.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -8,46 +11,44 @@ import 'package:differentworld/shared/widgets/master_detail_scaffold.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// `/settings/toolkit` — the Teacher Toolkit catalog surface.
 ///
-/// **Visual contract.** This screen MUST read as the same app as
-/// Today / Schedule / Captures / Settings. Concretely:
-///
-///   - Tool tiles are [FeatureCard]s. Same primitive every other
-///     drill-in row uses across the app.
-///   - Category sections are [SectionCard]s. The hide-when-empty
-///     primitive for grouped content, used by Today / Family /
-///     Schedule.
-///   - The Instead-of / Try-this / Why blocks on the detail screen
-///     are also `SectionCard`s with the appropriate tones (danger,
-///     featured, neutral).
-///   - Category COLOR is a small accent — the leading dot of a tool
-///     card, the leading chip of a section header — not a full
-///     surface wash. Background surfaces use the standard Material 3
-///     `surfaceContainer*` palette so a Maya-or-Jordan scrolling
-///     between Today and Toolkit doesn't feel like they entered a
-///     different app.
+/// **Visual contract.** Reads as the same app as Today / Schedule /
+/// Captures / Settings. Tool tiles are [FeatureCard]s, category
+/// sections are [SectionCard]s, the detail blocks are SectionCards
+/// with semantic tones (featured / neutral / danger). Category color
+/// is an accent only — a 10dp dot, a 28dp glyph chip, a tinted
+/// breadcrumb on the detail screen.
 ///
 /// **Form-factor strategy.**
 ///
 /// - Phone (<600dp): vertical feed of category SectionCards, each
-///   containing 6 FeatureCards. Tapping a tool card pushes
-///   `/settings/toolkit/:slug` so back-stack + deep-link work.
+///   containing 6 FeatureCards. Recently-viewed shelf surfaces at
+///   the top when non-empty. Tapping a tool card pushes
+///   `/settings/toolkit/:slug` so back-stack + deep-link both work.
 ///
 /// - Tablet / desktop (>=600dp): [MasterDetailScaffold]. Left rail
-///   holds search + Material `FilterChip` row + 6-tool list for the
-///   active category. Right pane shows the tool detail or a
-///   "pick a tool" SectionCard.
-class ToolkitScreen extends StatefulWidget {
+///   holds search + FilterChip row + the active category's tools.
+///   Right pane shows the tool detail or a "pick a tool" placeholder.
+///
+/// **In-the-moment ordering.** The detail screen surfaces the
+/// **Quick script** card immediately under the title — the line a
+/// teacher actually pulls out mid-crisis. "Instead of" (the
+/// anti-pattern) collapses to a small disclosure at the bottom of
+/// the screen so a kid sitting next to the teacher doesn't see harsh
+/// phrases by default.
+class ToolkitScreen extends ConsumerStatefulWidget {
   const ToolkitScreen({super.key});
 
   @override
-  State<ToolkitScreen> createState() => _ToolkitScreenState();
+  ConsumerState<ToolkitScreen> createState() => _ToolkitScreenState();
 }
 
-class _ToolkitScreenState extends State<ToolkitScreen> {
+class _ToolkitScreenState extends ConsumerState<ToolkitScreen> {
   String _query = '';
   String? _activeSlug;
   int _activeCatIndex = 0;
@@ -66,19 +67,35 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
         }
       }
     });
+    // Recents bump for wide form factor too — selecting a tool in the
+    // master-detail surface counts as "opening" it.
+    unawaited(ref.read(toolkitRecentsProvider.notifier).touch(slug));
+  }
+
+  /// Guarded push: if we're already at this slug's route we no-op.
+  /// Defends against the rapid-double-tap-double-push scenario the
+  /// Red Team flagged for mid-range Android devices.
+  void _pushToolPhone(String slug) {
+    final current =
+        GoRouterState.of(context).uri.path; // e.g. /settings/toolkit
+    final target = '/settings/toolkit/$slug';
+    if (current == target) return;
+    unawaited(context.push(target));
   }
 
   @override
   Widget build(BuildContext context) {
     final form = FormFactor.of(context);
+    final recents = ref.watch(toolkitRecentsProvider).value ?? const [];
     if (form == FormFactor.phone) {
       return EdgeScaffold(
         backFallbackRoute: '/settings',
         body: _MobileCatalog(
           categories: _categories,
           query: _query,
+          recents: recents,
           onQueryChanged: (q) => setState(() => _query = q),
-          onPickTool: (slug) => context.push('/settings/toolkit/$slug'),
+          onPickTool: _pushToolPhone,
         ),
       );
     }
@@ -95,6 +112,7 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
           activeCatIndex: _activeCatIndex,
           activeSlug: _activeSlug,
           query: _query,
+          recents: recents,
           onQueryChanged: (q) => setState(() => _query = q),
           onPickCategory: (i) => setState(() {
             _activeCatIndex = i;
@@ -121,12 +139,14 @@ class _MobileCatalog extends StatelessWidget {
   const _MobileCatalog({
     required this.categories,
     required this.query,
+    required this.recents,
     required this.onQueryChanged,
     required this.onPickTool,
   });
 
   final List<ToolkitCategory> categories;
   final String query;
+  final List<String> recents;
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<String> onPickTool;
 
@@ -156,7 +176,7 @@ class _MobileCatalog extends StatelessWidget {
           subtitle: 'Tools, not theory. In-the-moment moves you can make.',
         ),
         ToolkitSearchField(value: query, onChanged: onQueryChanged),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         if (searching) ...[
           if (hits.isEmpty)
             EmptyState(
@@ -172,7 +192,7 @@ class _MobileCatalog extends StatelessWidget {
           else
             for (final hit in hits)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: FeatureCard(
                   leading: _CategoryGlyphChip(category: hit.category),
                   title: hit.tool.name,
@@ -182,17 +202,20 @@ class _MobileCatalog extends StatelessWidget {
                 ),
               ),
         ] else ...[
-          for (final cat in categories)
+          if (recents.isNotEmpty) ...[
+            _RecentsShelf(slugs: recents, onPickTool: onPickTool),
+            const SizedBox(height: 12),
+          ],
+          for (final cat in categories) ...[
             SectionCard(
-
               title: _CategorySectionTitle(category: cat),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 14),
                 child: Column(
                   children: [
                     for (final tool in cat.tools)
                       Padding(
-                        padding: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.only(top: 8),
                         child: FeatureCard(
                           leading: _CategoryAccentDot(color: cat.color),
                           title: tool.name,
@@ -208,8 +231,139 @@ class _MobileCatalog extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       ],
+    );
+  }
+}
+
+/// "Recent" shelf — horizontal list of the last-5 tools the user
+/// opened. Surfaces only when non-empty. Tapping a chip pushes the
+/// per-tool route (same as a catalog tap).
+class _RecentsShelf extends StatelessWidget {
+  const _RecentsShelf({required this.slugs, required this.onPickTool});
+
+  final List<String> slugs;
+  final ValueChanged<String> onPickTool;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tools = [
+      for (final s in slugs)
+        if (findToolBySlug(s) != null) findToolBySlug(s)!,
+    ];
+    if (tools.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+          child: Row(
+            children: [
+              Icon(
+                Icons.history,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'RECENT',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 64,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            itemCount: tools.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              final tool = tools[i];
+              final cat = categoryById(tool.categoryId);
+              return _RecentChip(
+                tool: tool,
+                category: cat,
+                onTap: () => onPickTool(tool.slug),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentChip extends StatelessWidget {
+  const _RecentChip({
+    required this.tool,
+    required this.category,
+    required this.onTap,
+  });
+
+  final ToolkitTool tool;
+  final ToolkitCategory category;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      label: '${tool.name}, ${category.name}',
+      button: true,
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            width: 200,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    _CategoryAccentDot(color: category.color),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        category.name.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: category.color,
+                          letterSpacing: 1.1,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  tool.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -224,6 +378,7 @@ class _WideMasterPane extends StatelessWidget {
     required this.activeCatIndex,
     required this.activeSlug,
     required this.query,
+    required this.recents,
     required this.onQueryChanged,
     required this.onPickCategory,
     required this.onPickTool,
@@ -233,6 +388,7 @@ class _WideMasterPane extends StatelessWidget {
   final int activeCatIndex;
   final String? activeSlug;
   final String query;
+  final List<String> recents;
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<int> onPickCategory;
   final ValueChanged<String> onPickTool;
@@ -265,23 +421,22 @@ class _WideMasterPane extends StatelessWidget {
           subtitle: 'Tools, not theory.',
         ),
         ToolkitSearchField(value: query, onChanged: onQueryChanged),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         if (searching) ...[
           if (hits.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'No tools match.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontStyle: FontStyle.italic,
-                ),
+            EmptyState(
+              icon: Icons.search_off,
+              title: 'No tools match',
+              message: 'Try a different word.',
+              action: TextButton(
+                onPressed: () => onQueryChanged(''),
+                child: const Text('Clear search'),
               ),
             )
           else
             for (final hit in hits)
               Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: FeatureCard(
                   tone: hit.tool.slug == activeSlug
                       ? FeatureCardTone.selected
@@ -293,10 +448,6 @@ class _WideMasterPane extends StatelessWidget {
                 ),
               ),
         ] else ...[
-          // Material FilterChip row — same widget the rest of the
-          // app uses (e.g. captures inbox, surveys table). Use of
-          // the official chip means cursor + keyboard + selection
-          // semantics come for free.
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -310,9 +461,7 @@ class _WideMasterPane extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Inline italic tagline — keeps the editorial voice without
-          // any background washes.
+          const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
@@ -323,10 +472,10 @@ class _WideMasterPane extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           for (final tool in cat.tools)
             Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: 8),
               child: FeatureCard(
                 tone: tool.slug == activeSlug
                     ? FeatureCardTone.selected
@@ -337,6 +486,10 @@ class _WideMasterPane extends StatelessWidget {
                 onTap: () => onPickTool(tool.slug),
               ),
             ),
+          if (recents.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _RecentsShelf(slugs: recents, onPickTool: onPickTool),
+          ],
         ],
       ],
     );
@@ -357,10 +510,9 @@ class _WideDetailPlaceholder extends StatelessWidget {
         children: [
           const ContentHeader(
             title: 'Pick a tool',
-            subtitle: 'Choose one on the left to see how to use it.',
+            subtitle: 'When a moment hits, pick the tool that fits.',
           ),
           SectionCard(
-
             title: _CategorySectionTitle(category: category),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -380,10 +532,20 @@ class _WideDetailPlaceholder extends StatelessWidget {
 }
 
 // ───────────────────────────────────────────────────────────────────
-// Tool detail view — shared between phone screen and wide pane
+// Tool detail view — script-first, anti-pattern last
 // ───────────────────────────────────────────────────────────────────
 
-class ToolkitToolDetailView extends StatelessWidget {
+/// The narrative on this screen is intentional:
+///   1. Breadcrumb chip (category color tint) + tool name + when
+///   2. **Quick script** — the line for the moment, with a copy
+///      button. Featured tone, big type. Topmost so a stressed
+///      teacher finds it without scrolling.
+///   3. **Try this** — the recommended move, longer-form.
+///   4. **Why this works** — the rationale.
+///   5. **Instead of** — the anti-pattern. Collapsed by default so
+///      a kid sitting next to the teacher doesn't see the harsh
+///      phrase. Tap to expand.
+class ToolkitToolDetailView extends ConsumerStatefulWidget {
   const ToolkitToolDetailView({
     required this.tool,
     required this.category,
@@ -394,38 +556,88 @@ class ToolkitToolDetailView extends StatelessWidget {
   final ToolkitCategory category;
 
   @override
+  ConsumerState<ToolkitToolDetailView> createState() =>
+      _ToolkitToolDetailViewState();
+}
+
+class _ToolkitToolDetailViewState
+    extends ConsumerState<ToolkitToolDetailView> {
+  bool _showAntiPattern = false;
+  String? _touchedSlug;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Touch recents the first time this detail comes alive for a
+    // given slug. Guard with `_touchedSlug` so didChangeDependencies
+    // (which can fire multiple times across MediaQuery/theme changes)
+    // doesn't bump the same slug repeatedly within one mount.
+    if (_touchedSlug != widget.tool.slug) {
+      _touchedSlug = widget.tool.slug;
+      // Avoid setState-mid-build by deferring the notifier write.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          ref
+              .read(toolkitRecentsProvider.notifier)
+              .touch(widget.tool.slug),
+        );
+      });
+    }
+  }
+
+  Future<void> _copyScript() async {
+    await Clipboard.setData(ClipboardData(text: widget.tool.quick));
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text('Quick script copied. Paste into a note or text.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Reserve chrome inset for the wide-pane case (no ContentHeader)
-    // AND for the phone screen wrapping this in an EdgeScaffold —
-    // both contexts need the floating chrome to not overlap the
-    // first section header.
+    final tool = widget.tool;
+    final category = widget.category;
     final topInset = MediaQuery.paddingOf(context).top;
-    final chromeReservation = topInset + ShellMetrics.topChromeHeight + 8;
+    final chromeReservation =
+        topInset + ShellMetrics.topChromeHeight + 8;
     return ListView(
       padding: EdgeInsets.fromLTRB(16, chromeReservation, 16, 96),
       children: [
-        // Category chip — same shape as a filter chip elsewhere in
-        // the app, makes the tool's home category readable at a
-        // glance and ties this surface to the toolkit visual system.
+        // Category breadcrumb — small tinted pill. Color carries the
+        // category identity; the surface tint shifts to the category
+        // color so the destination is instantly readable in any
+        // context (wide pane, deep link, browser tab title).
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHigh,
+                color: category.color.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _CategoryAccentDot(color: category.color),
-                  const SizedBox(width: 8),
+                  ExcludeSemantics(
+                    child: Text(
+                      category.glyph,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: category.color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   Text(
                     category.name,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
+                      color: category.color,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -433,7 +645,7 @@ class ToolkitToolDetailView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         SelectableText(
           tool.name,
           style: theme.textTheme.headlineSmall?.copyWith(
@@ -441,7 +653,7 @@ class ToolkitToolDetailView extends StatelessWidget {
             height: 1.15,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         SelectableText(
           tool.when,
           style: theme.textTheme.bodyLarge?.copyWith(
@@ -449,57 +661,22 @@ class ToolkitToolDetailView extends StatelessWidget {
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 20),
-        SectionCard(
-          tone: SectionCardTone.danger,
-          icon: Icons.block_outlined,
-          title: 'Instead of',
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: SelectableText(
-              tool.instead,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onErrorContainer,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ),
-        SectionCard(
-          tone: SectionCardTone.featured,
-          icon: Icons.check_circle_outline,
-          title: 'Try this',
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: SelectableText(
-              tool.tryThis,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
-                height: 1.6,
-              ),
-            ),
-          ),
-        ),
-        SectionCard(
-          icon: Icons.psychology_outlined,
-          title: 'Why this works',
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-            child: SelectableText(
-              tool.why,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                height: 1.6,
-              ),
-            ),
-          ),
-        ),
+        const SizedBox(height: 22),
+
+        // 1. QUICK SCRIPT — front and center. Featured tone, big
+        // text, copy button. This is the line a teacher actually
+        // pulls out.
         SectionCard(
           tone: SectionCardTone.featured,
           icon: Icons.bolt,
           title: 'Quick script',
+          trailing: IconButton(
+            tooltip: 'Copy script',
+            icon: const Icon(Icons.copy_outlined, size: 20),
+            onPressed: _copyScript,
+          ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
             child: SelectableText(
               tool.quick,
               style: theme.textTheme.titleMedium?.copyWith(
@@ -510,7 +687,114 @@ class ToolkitToolDetailView extends StatelessWidget {
             ),
           ),
         ),
+
+        // 2. TRY THIS — neutral tone, the full move.
+        SectionCard(
+          icon: Icons.check_circle_outline,
+          title: 'Try this',
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: SelectableText(
+              tool.tryThis,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ),
+
+        // 3. WHY THIS WORKS — context for the teacher (not the kid).
+        SectionCard(
+          icon: Icons.psychology_outlined,
+          title: 'Why this works',
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: SelectableText(
+              tool.why,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ),
+
+        // 4. ANTI-PATTERN — collapsed by default. Educational
+        // (teachers benefit from seeing what to avoid) but not the
+        // first thing on screen since a kid sitting next to the
+        // teacher could read the harsh phrase verbatim.
+        _AntiPatternCard(
+          tool: tool,
+          expanded: _showAntiPattern,
+          onToggle: () =>
+              setState(() => _showAntiPattern = !_showAntiPattern),
+        ),
       ],
+    );
+  }
+}
+
+/// Collapsible "Instead of" card. Closed by default — the bad-day
+/// scenario where a kid is reading the teacher's phone over their
+/// shoulder is real, and the anti-pattern phrases are sometimes
+/// exactly the words the kid is trying to recover from. Teachers can
+/// expand it for self-study or training; in the moment, it stays
+/// closed.
+class _AntiPatternCard extends StatelessWidget {
+  const _AntiPatternCard({
+    required this.tool,
+    required this.expanded,
+    required this.onToggle,
+  });
+
+  final ToolkitTool tool;
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SectionCard(
+      tone: SectionCardTone.danger,
+      icon: Icons.block_outlined,
+      title: 'Instead of',
+      trailing: IconButton(
+        tooltip: expanded ? 'Hide' : 'Show',
+        icon: Icon(
+          expanded ? Icons.expand_less : Icons.expand_more,
+          size: 22,
+        ),
+        onPressed: onToggle,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: expanded
+              ? SelectableText(
+                  tool.instead,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onErrorContainer,
+                    height: 1.5,
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    "Tap to reveal the anti-pattern (hidden so it's "
+                    'not visible to nearby kids).',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onErrorContainer
+                          .withValues(alpha: 0.8),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
@@ -566,6 +850,7 @@ class _ToolkitSearchFieldState extends State<ToolkitSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextField(
       controller: _controller,
       onChanged: widget.onChanged,
@@ -579,7 +864,23 @@ class _ToolkitSearchFieldState extends State<ToolkitSearchField> {
                 onPressed: () => widget.onChanged(''),
               ),
         hintText: "Search by situation… ('angry', 'parent', 'morning')",
-        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: theme.colorScheme.surfaceContainerHigh,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 1.5,
+          ),
+        ),
         isDense: true,
       ),
       textInputAction: TextInputAction.search,
@@ -597,10 +898,6 @@ class _SearchHit {
   final ToolkitTool tool;
 }
 
-/// A 10-dp circle in the category color. Sits in the leading slot of
-/// each tool's FeatureCard. The smallest possible category signal —
-/// just enough to ride alongside the other tools in the same
-/// category without dominating the surface.
 class _CategoryAccentDot extends StatelessWidget {
   const _CategoryAccentDot({required this.color});
 
@@ -613,18 +910,12 @@ class _CategoryAccentDot extends StatelessWidget {
         width: 10,
         height: 10,
         margin: const EdgeInsets.only(top: 6),
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       ),
     );
   }
 }
 
-/// Category-color glyph in a small chip — used in search-result rows
-/// where the row needs to identify its category at a glance (the user
-/// could be looking at tools from multiple categories at once).
 class _CategoryGlyphChip extends StatelessWidget {
   const _CategoryGlyphChip({required this.category});
 
@@ -651,8 +942,6 @@ class _CategoryGlyphChip extends StatelessWidget {
   }
 }
 
-/// Smaller glyph for the FilterChip's avatar slot (Material limits
-/// the avatar to 24dp).
 class _CategoryGlyphSmall extends StatelessWidget {
   const _CategoryGlyphSmall({required this.category});
 
@@ -669,10 +958,6 @@ class _CategoryGlyphSmall extends StatelessWidget {
   }
 }
 
-/// Category section title row: glyph + name + small "6 tools" chip.
-/// Used as the `title:` slot of a SectionCard. Keeps the category
-/// identity visible while letting the SectionCard own the
-/// background/typography conventions the rest of the app uses.
 class _CategorySectionTitle extends StatelessWidget {
   const _CategorySectionTitle({required this.category});
 
@@ -714,8 +999,6 @@ class _CategorySectionTitle extends StatelessWidget {
               ),
               Text(
                 category.tagline,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontStyle: FontStyle.italic,
                   color: theme.colorScheme.onSurfaceVariant,

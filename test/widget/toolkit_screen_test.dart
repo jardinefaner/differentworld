@@ -161,7 +161,9 @@ void main() {
         find.text("We don't have a tool with that name."),
         findsOneWidget,
       );
-      expect(find.text('nonsense'), findsOneWidget);
+      // The raw slug is no longer echoed on screen — Red Team flagged
+      // it as an info leak for Wave 162 override slugs. Just verify
+      // the action affordance is present.
       expect(find.text('Back to toolkit'), findsOneWidget);
     });
   });

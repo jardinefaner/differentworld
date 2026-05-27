@@ -23,6 +23,7 @@ import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.d
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart'
     show startNewObservation;
+import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -168,32 +169,53 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       keywords: const ['locations', 'pool', 'barn', 'range', 'where'],
       onSelect: (ctx, _) => ctx.push('/settings/locations'),
     ),
-    OmniboxEntry(
-      id: 'page.toolkit',
-      label: 'Teacher Toolkit',
-      category: OmniboxCategory.setting,
-      icon: Icons.menu_book_outlined,
-      keywords: const [
-        'toolkit',
-        'tools',
-        'scripts',
-        'phrases',
-        'celebrate',
-        'praise',
-        'tough',
-        'angry',
-        'meltdown',
-        'parent text',
-        'morning',
-        'door greeting',
-        'cool down',
-        'repair',
-        'boundary',
-        'self care',
-        'burnout',
-      ],
-      onSelect: (ctx, _) => ctx.push('/settings/toolkit'),
-    ),
+    // Toolkit landing page — broad keywords surface the catalog
+    // itself when the user wants to browse rather than jump to a
+    // specific tool. Gated by viewer kind: guardians can't reach
+    // /settings/toolkit (router redirects them home), so omitting
+    // the entry for them avoids a silent bounce-back.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.toolkit',
+        label: 'Teacher Toolkit',
+        category: OmniboxCategory.setting,
+        icon: Icons.menu_book_outlined,
+        keywords: const [
+          'toolkit',
+          'tools',
+          'scripts',
+          'phrases',
+          'teaching moves',
+          'in the moment',
+        ],
+        onSelect: (ctx, _) => ctx.push('/settings/toolkit'),
+      ),
+    // Per-tool entries — typing "cool down" or "meltdown" should
+    // land directly on the Cool Down detail screen, not on the
+    // catalog top. Crisis-retrieval target is 1 tap from anywhere
+    // in the app. Auto-generated from the catalog so Wave 162
+    // overrides slot in for free.
+    if (viewer is! GuardianViewer)
+      for (final tool in allToolkitTools)
+        OmniboxEntry(
+          id: 'toolkit.tool.${tool.slug}',
+          label: tool.name,
+          subtitle: 'Toolkit · ${categoryById(tool.categoryId).name}',
+          category: OmniboxCategory.setting,
+          icon: Icons.bolt_outlined,
+          keywords: [
+            tool.name.toLowerCase(),
+            // Strip leading "The " when present so a search for
+            // "Cool Down" doesn't only match "The Cool Down".
+            if (tool.name.toLowerCase().startsWith('the '))
+              tool.name.toLowerCase().substring(4),
+            // Surface category + situation keywords.
+            categoryById(tool.categoryId).name.toLowerCase(),
+            ...tool.when.toLowerCase().split(' ').where((w) => w.length > 3),
+          ],
+          onSelect: (ctx, _) =>
+              ctx.push('/settings/toolkit/${tool.slug}'),
+        ),
     OmniboxEntry(
       id: 'page.roles',
       label: 'Roles & permissions',
