@@ -11,12 +11,20 @@ import 'package:printing/printing.dart';
 /// Builds a printable PDF that carries a QR code for [vehicle]'s
 /// checkout flow.
 ///
-/// The QR encodes the **custom-scheme** form
-/// (`differentworld://v/<id>/checkout`) so the scan works on both
-/// platforms today — no domain hosting required. Once
-/// `.well-known/assetlinks.json` + `apple-app-site-association` land
-/// at differentworld.app, switch to the HTTPS form so the QR also
-/// opens cleanly from camera apps that don't know our custom scheme.
+/// The QR encodes the **HTTPS** form
+/// (`https://differentworld.app/v/<id>/checkout`) — Wave 165.2.
+/// Earlier prints used the custom-scheme form, which several Android
+/// camera apps treat as plain text and fall through to a browser
+/// "we can't find that page." The HTTPS form lands on the static
+/// fallback page hosted at differentworld.app/404.html, which then
+/// JS-redirects into the custom scheme (`differentworld://v/...`) so
+/// the OS routes into the installed app. If the app isn't installed,
+/// the page surfaces an explicit "Open in app" affordance instead of
+/// a confusing browser 404.
+///
+/// The in-app scanner ([VehicleDeepLink.tryParse]) accepts both
+/// forms, so QRs printed under either format still scan correctly
+/// from inside the app.
 ///
 /// Layout (US Letter, portrait): big vehicle name centered, the QR
 /// square below it, instructions at the bottom. Sized so a director
@@ -30,9 +38,10 @@ Future<Uint8List> buildVehicleCheckoutQrPdf({
     creator: 'Different World',
   );
 
-  // Custom-scheme URL — works without owning differentworld.app.
-  // Swap to `VehicleDeepLink.httpsUri(...)` once the domain is hosted.
-  final uri = VehicleDeepLink.customSchemeUri(
+  // HTTPS form — the OS camera scans the URL cleanly, the static
+  // page at differentworld.app handles the deep-link handoff (with
+  // a fallback when the app isn't installed).
+  final uri = VehicleDeepLink.httpsUri(
     vehicleId: vehicle.id,
     kind: kind,
   );
