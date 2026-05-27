@@ -5,6 +5,7 @@ import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/master_detail_scaffold.dart';
+import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -516,8 +517,16 @@ class ToolkitToolDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Reserve the floating chrome (back-pill / action-pills layer the
+    // AppShell paints over the body) so the category hero doesn't
+    // tuck under it. The convention is that the FIRST item in a
+    // scrollable owns this reservation — usually `ContentHeader` does
+    // it; here `_CategoryHeader` is the visual title so we do it
+    // inline.
+    final topInset = MediaQuery.paddingOf(context).top;
+    final chromeReservation = topInset + ShellMetrics.topChromeHeight + 8;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+      padding: EdgeInsets.fromLTRB(20, chromeReservation, 20, 96),
       children: [
         _CategoryHeader(category: category),
         const SizedBox(height: 16),
