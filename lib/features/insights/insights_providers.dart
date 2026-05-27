@@ -7,8 +7,6 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/features/surveys/survey_templates.dart';
-import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter/material.dart';
@@ -435,34 +433,12 @@ List<Insight> _surveyInsights(
   String spaceId,
   List<Subject> subjects,
 ) {
-  final out = <Insight>[];
-  for (final template in SurveyTemplates.all) {
-    final responsesAsync = ref.watch(surveyResponsesProvider(
-      (spaceId: spaceId, templateId: template.id),
-    ));
-    final responses = responsesAsync.value ?? const <SurveyResponse>[];
-    final completedIds = responses
-        .where((r) => r.status == SurveyResponseStatus.completed)
-        .map((r) => r.subjectId)
-        .toSet();
-    final notStarted =
-        subjects.where((s) => !completedIds.contains(s.id)).length;
-    if (notStarted == 0) continue;
-    out.add(Insight(
-      id: 'survey_open_${template.id}',
-      kind: InsightKind.surveyOpen,
-      severity: InsightSeverity.info,
-      prompt: '${template.title} (${template.year}) has $notStarted '
-          '${notStarted == 1 ? 'student' : 'students'} left to complete.',
-      actions: [
-        InsightAction(
-          label: 'Open survey',
-          route: '/surveys/${template.id}',
-        ),
-      ],
-    ));
-  }
-  return out;
+  // Wave 138/140: surveys are anonymous now — responses don't link to
+  // a specific kid, so "X students left to complete" stopped being a
+  // computable signal. The whole insight is dropped until we design
+  // a new aggregate signal (e.g. "N responses recorded this week" or
+  // "low signal: only 2 responses to BASECamp 25-26 in 30 days").
+  return const <Insight>[];
 }
 
 // ---------------------------------------------------------------------------

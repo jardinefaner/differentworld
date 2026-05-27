@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' show Directory, File, HttpClient;
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
@@ -14,18 +14,27 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// 1. **In-memory** (this run): a player URI / file path we already
 ///    resolved for the active session.
-/// 2. **Local disk** (per device): `${appDocs}/tts/{voice}/{q_id}.mp3`.
-///    Survives restarts; lets the kid replay even fully offline once
-///    the audio's been downloaded once.
+/// 2. **Local disk** (per device, NATIVE ONLY): `${appDocs}/tts/
+///    {voice}/{q_id}.mp3`. Survives restarts; lets the kid replay
+///    even fully offline once the audio's been downloaded once.
 /// 3. **Supabase Storage** (shared across the program): the
 ///    `tts-cache` bucket. First kid in the program to pick Thalia
 ///    triggers a Deepgram call via the `tts-generate` Edge Function,
 ///    which writes to the bucket. Every subsequent kid (on any
 ///    device) reads the cached audio directly via the public URL.
 ///
-/// The lookup is `disk → bucket → generate`. The Edge Function
-/// internally does `bucket → deepgram` so we end up at one Deepgram
-/// call per unique (voice, cache_key) ever.
+/// The lookup is `disk → bucket → generate` on native, `bucket →
+/// generate` on web (the browser's own HTTP cache + Supabase CDN
+/// edge caching serve the role of the on-device disk cache).
+///
+/// **Wave 140 — web compat.** The original implementation used
+/// `dart:io` exclusively (File / Directory / HttpClient /
+/// getApplicationDocumentsDirectory) and crashed silently on web,
+/// which manifested as "no audio plays at all on the web build."
+/// `resolve()` now branches on `kIsWeb`: web returns the Supabase
+/// public URL directly and `play()` routes through `setUrl` so
+/// just_audio_web hands it to the browser's HTML5 Audio element.
+/// Native keeps the disk-cache path for offline replay.
 ///
 /// **Why a public bucket** (`tts-cache`): the audio is non-PII (the
 /// underlying question text already ships in the app bundle); making
@@ -43,22 +52,23 @@ class SurveyTtsService {
   /// stack voices).
   final AudioPlayer _player = AudioPlayer();
 
-  /// Cache directory on disk. Resolved lazily on first call.
+  /// Cache directory on disk (native only; null on web).
   Directory? _cacheDir;
 
   /// In-flight per-(voice, key) requests so two simultaneous calls
   /// for the same audio (e.g. the same question rendered twice for
   /// some reason) don't both hit the Edge Function.
-  final Map<String, Future<String>> _inFlight = {};
+  final Map<String, Future<TtsSource>> _inFlight = {};
 
-  /// Resolve the path for a cached audio file, fetching from the
-  /// Supabase cache or generating fresh if needed. Returns a file
-  /// PATH (local) — the caller passes it to `just_audio` via
-  /// `setFilePath`.
+  /// Resolve the source for a cached audio file. On native, returns
+  /// a local file path (downloads + caches under appDocs). On web,
+  /// returns the Supabase Storage URL directly (no disk caching).
+  /// The caller passes the [TtsSource] back to [play] which dispatches
+  /// to `setFilePath` or `setUrl` as appropriate.
   ///
   /// Throws if generation fails (no audio playable; caller should
   /// catch + degrade silently — surveys still work without voice).
-  Future<String> resolve({
+  Future<TtsSource> resolve({
     required String voiceId,
     required String text,
     required String cacheKey,
@@ -79,19 +89,21 @@ class SurveyTtsService {
     return future;
   }
 
-  Future<String> _resolveInner({
+  Future<TtsSource> _resolveInner({
     required String voiceId,
     required String text,
     required String cacheKey,
   }) async {
-    final dir = await _ensureCacheDir(voiceId);
-    final localPath = p.join(dir.path, '$cacheKey.mp3');
-    final localFile = File(localPath);
-
-    // 1. Local disk cache. existsSync is fine here — this fires
-    // once per question on display, not in a hot loop.
-    if (localFile.existsSync() && localFile.lengthSync() > 0) {
-      return localPath;
+    // 1. Local disk cache — native only. On web we skip straight to
+    //    the Edge Function (the browser's HTTP cache handles repeat
+    //    plays).
+    if (!kIsWeb) {
+      final dir = await _ensureCacheDir(voiceId);
+      final localPath = p.join(dir.path, '$cacheKey.mp3');
+      final localFile = File(localPath);
+      if (localFile.existsSync() && localFile.lengthSync() > 0) {
+        return TtsSource.file(localPath);
+      }
     }
 
     // 2. Ask the Edge Function — it'll check the Supabase bucket,
@@ -122,18 +134,26 @@ class SurveyTtsService {
       throw StateError('tts-generate returned no url');
     }
 
-    // 3. Download to local disk for offline replay + so subsequent
-    //    plays skip the network entirely. Use a plain HTTP GET via
-    //    Supabase storage's public CDN.
+    if (kIsWeb) {
+      // Web: hand the URL straight to just_audio_web. The browser's
+      // own HTTP cache will serve repeat plays from memory.
+      return TtsSource.url(url);
+    }
+
+    // 3. Native: download to local disk for offline replay + so
+    //    subsequent plays skip the network entirely. Use a plain
+    //    HTTP GET via Supabase Storage's public CDN.
     final response = await _httpGet(url);
     if (response == null || response.isEmpty) {
       throw StateError('TTS cache fetch returned empty body');
     }
-    await localFile.writeAsBytes(response, flush: true);
-    return localPath;
+    final dir = await _ensureCacheDir(voiceId);
+    final localPath = p.join(dir.path, '$cacheKey.mp3');
+    await File(localPath).writeAsBytes(response, flush: true);
+    return TtsSource.file(localPath);
   }
 
-  /// Play the audio for the given resolved file path. Stops any
+  /// Play the audio for the given resolved source. Stops any
   /// in-progress playback first; resolves when playback ends or
   /// the player is stopped.
   ///
@@ -146,14 +166,19 @@ class SurveyTtsService {
   /// loading, swallow the interruption silently (the newer play is
   /// the one the user wants). Only real failures bubble to the log.
   int _playToken = 0;
-  Future<void> play(String filePath) async {
+  Future<void> play(TtsSource source) async {
     final myToken = ++_playToken;
     try {
-      // Stop any in-progress playback BEFORE setFilePath so just_audio
-      // doesn't queue up an interrupt internally.
+      // Stop any in-progress playback BEFORE set{File,Url} so
+      // just_audio doesn't queue up an interrupt internally.
       await _player.stop();
       if (myToken != _playToken) return; // superseded mid-stop
-      await _player.setFilePath(filePath);
+      switch (source.kind) {
+        case TtsSourceKind.file:
+          await _player.setFilePath(source.value);
+        case TtsSourceKind.url:
+          await _player.setUrl(source.value);
+      }
       if (myToken != _playToken) return; // superseded mid-load
       await _player.play();
     } on PlayerInterruptedException catch (_) {
@@ -188,6 +213,7 @@ class SurveyTtsService {
   }
 
   Future<Directory> _ensureCacheDir(String voiceId) async {
+    assert(!kIsWeb, '_ensureCacheDir is native-only — web has no disk');
     var root = _cacheDir;
     if (root == null) {
       final appDocs = await getApplicationDocumentsDirectory();
@@ -202,6 +228,7 @@ class SurveyTtsService {
   }
 
   Future<List<int>?> _httpGet(String url) async {
+    assert(!kIsWeb, '_httpGet uses dart:io HttpClient — native only');
     try {
       final client = HttpClient();
       final req = await client.getUrl(Uri.parse(url));
@@ -222,6 +249,21 @@ class SurveyTtsService {
     }
   }
 }
+
+/// Tagged-union source for `SurveyTtsService.play`. On native the
+/// service returns a local file path (post-download); on web it
+/// returns the Supabase Storage URL directly. `play` dispatches
+/// to just_audio's `setFilePath` / `setUrl` accordingly.
+class TtsSource {
+  const TtsSource._(this.kind, this.value);
+  factory TtsSource.file(String path) => TtsSource._(TtsSourceKind.file, path);
+  factory TtsSource.url(String url) => TtsSource._(TtsSourceKind.url, url);
+
+  final TtsSourceKind kind;
+  final String value;
+}
+
+enum TtsSourceKind { file, url }
 
 // Wave 130: the `surveyTtsServiceProvider` used to live here as a
 // `Provider.autoDispose<SurveyTtsService>`. That was wrong: survey-

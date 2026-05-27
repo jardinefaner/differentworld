@@ -231,13 +231,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
     final myToken = ++_playRequestId;
     try {
-      final path = await _tts.resolve(
+      final source = await _tts.resolve(
         voiceId: voice,
         text: text,
         cacheKey: cacheKey,
       );
       if (!mounted || myToken != _playRequestId) return;
-      await _tts.play(path);
+      await _tts.play(source);
     } on Object catch (e, st) {
       if (kDebugMode) {
         debugPrint('[survey-tts] resolve/play failed: $e\n$st');

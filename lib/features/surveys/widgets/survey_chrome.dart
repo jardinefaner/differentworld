@@ -654,13 +654,13 @@ class _AboutYouPageState extends State<AboutYouPage> {
     await widget.onPickVoice(v.id);
     if (!mounted) return;
     try {
-      final path = await widget.ttsService.resolve(
+      final source = await widget.ttsService.resolve(
         voiceId: v.id,
         text: _sampleTextFor(v),
         cacheKey: _sampleKeyFor(v),
       );
       if (!mounted) return;
-      await widget.ttsService.play(path);
+      await widget.ttsService.play(source);
     } on Object catch (e, st) {
       if (kDebugMode) {
         debugPrint('[about-you] voice preview failed: $e\n$st');
