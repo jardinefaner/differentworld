@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
@@ -22,10 +23,16 @@ import 'package:go_router/go_router.dart';
 const String _kSentinelNew = '__new__';
 
 /// Args passed to the create/edit block route via go_router `extra`.
+///
+/// Wave 165 added `prefillCurriculumSlug` — when present, the screen
+/// pre-fills the notes + suggested duration from the matching
+/// curriculum session, and stamps the saved block with the slug so
+/// the grid renders a "Through My Eyes · S{N}" badge.
 typedef BlockEditArgs = ({
   String groupId,
   DateTime defaultStart,
   ScheduleBlock? existing,
+  String? prefillCurriculumSlug,
 });
 
 /// Create or edit a single schedule block — kind, time range,
@@ -42,12 +49,20 @@ class BlockEditScreen extends ConsumerStatefulWidget {
     required this.groupId,
     required this.defaultStart,
     this.existing,
+    this.prefillCurriculumSlug,
     super.key,
   });
 
   final String groupId;
   final DateTime defaultStart;
   final ScheduleBlock? existing;
+
+  /// Wave 165: when this screen is reached from a curriculum session
+  /// "Schedule this session" CTA, the slug arrives here. We use it on
+  /// initState to pre-fill the notes + suggested duration from the
+  /// session's data, and to stamp the saved block with the slug so
+  /// the schedule grid can render the curriculum badge later.
+  final String? prefillCurriculumSlug;
 
   bool get isEdit => existing != null;
 
@@ -65,6 +80,13 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   final _notes = TextEditingController();
   bool _saving = false;
 
+  /// The curriculum slug this block carries. For new blocks comes
+  /// from [BlockEditScreen.prefillCurriculumSlug]; for edits it
+  /// reads from the existing row. Persists unchanged on save — the
+  /// edit form doesn't expose a way to un-link or re-link (use
+  /// delete + re-create from the curriculum CTA for now).
+  String? _curriculumSlug;
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +95,22 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       _kind = 'on_site';
       _startAt = widget.defaultStart;
       _endAt = widget.defaultStart.add(const Duration(minutes: 60));
+      _curriculumSlug = widget.prefillCurriculumSlug;
+      // Wave 165: prefill from curriculum session metadata when the
+      // CTA-originated route arrives with a slug. The notes carry the
+      // session title + brief; the end-time gets nudged to a sensible
+      // default for the session (most photo sessions run 20-30 min).
+      final session = _curriculumSlug == null
+          ? null
+          : findSessionBySlug(_curriculumSlug!);
+      if (session != null) {
+        _notes.text =
+            '${session.title} (Session ${session.number} · '
+            'Through My Eyes)';
+        // Photo sessions trend ~30 min total. Keep the start the
+        // user picked, bump the end out from the default 60 min.
+        _endAt = _startAt.add(const Duration(minutes: 30));
+      }
     } else {
       _kind = e.kind;
       _startAt = DateTime.parse(e.startAt).toLocal();
@@ -81,6 +119,7 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       _leadMemberId = e.leadMemberId;
       _locationOverrideId = e.locationOverrideId;
       _notes.text = e.notes ?? '';
+      _curriculumSlug = e.curriculumSessionSlug;
     }
   }
 
@@ -180,6 +219,7 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
             locationOverrideId: _locationOverrideId,
             kind: _kind,
             notes: notes.isEmpty ? null : notes,
+            curriculumSessionSlug: _curriculumSlug,
           );
         } else {
           await actions.update_(
@@ -257,6 +297,8 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
           ContentHeader(
             title: widget.isEdit ? 'Edit block' : 'New block',
           ),
+          if (_curriculumSlug != null) _CurriculumLinkCard(slug: _curriculumSlug!),
+          if (_curriculumSlug != null) const SizedBox(height: 12),
           SegmentedButton<String>(
             segments: const [
               ButtonSegment(value: 'on_site', label: Text('Activity')),
@@ -595,6 +637,78 @@ class _TimePill extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Wave 165: small card surfaced at the top of the block-edit form
+/// when this block carries a curriculum session slug. Shows the
+/// session's category + title with a tap-to-open link back to the
+/// session detail in the curriculum surface. For a substitute
+/// teacher who opens the block in the moment, this gives a 1-tap
+/// path to the full session plan.
+class _CurriculumLinkCard extends StatelessWidget {
+  const _CurriculumLinkCard({required this.slug});
+
+  final String slug;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final session = findSessionBySlug(slug);
+    if (session == null) return const SizedBox.shrink();
+    return Material(
+      color: session.color.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/settings/curricula/photo'),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border(
+              left: BorderSide(color: session.color, width: 4),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+          child: Row(
+            children: [
+              const Icon(Icons.photo_camera_outlined, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'THROUGH MY EYES · SESSION ${session.number}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: session.color,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      session.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Tap to open the session plan',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 18),
             ],
           ),
         ),

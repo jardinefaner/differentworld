@@ -589,6 +589,13 @@ class ScheduleBlocks extends Table {
   // family lens shows the reason inline.
   TextColumn get status => text().withDefault(const Constant('planned'))();
   TextColumn get statusReason => text().nullable()();
+
+  /// Wave 165: optional link back to a curriculum session shipped in
+  /// the binary (e.g. 'photo.s1.click-game'). NULL for ad-hoc blocks.
+  /// When set, the schedule grid tiles render a small badge and the
+  /// block-edit screen offers a deep-link to the curriculum session
+  /// detail.
+  TextColumn get curriculumSessionSlug => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 

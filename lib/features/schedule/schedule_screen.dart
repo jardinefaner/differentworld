@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
@@ -637,7 +638,16 @@ class _BlockTile extends StatelessWidget {
 
     final isField = block.kind == BlockKind.fieldTrip;
     final isBreak = block.kind == BlockKind.breakBlock;
-    final title = activity?.name ?? (isBreak ? 'Break' : block.notes ?? '—');
+    // Wave 165: when a block is linked to a curriculum session, the
+    // session title wins over the (likely-empty) activity field. The
+    // session badge below tells the staff this isn't an ad-hoc
+    // activity, it's part of a structured program.
+    final curriculumSession = block.curriculumSessionSlug == null
+        ? null
+        : findSessionBySlug(block.curriculumSessionSlug!);
+    final title = curriculumSession?.title ??
+        activity?.name ??
+        (isBreak ? 'Break' : block.notes ?? '—');
 
     final container = isField
         ? scheme.tertiaryContainer
@@ -701,6 +711,40 @@ class _BlockTile extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (curriculumSession != null) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: curriculumSession.color
+                                .withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.photo_camera_outlined,
+                                size: 13,
+                                color: curriculumSession.color,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Through My Eyes · '
+                                'S${curriculumSession.number}',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: curriculumSession.color,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       if (location != null) ...[
                         const SizedBox(height: 2),
                         Text(
@@ -820,6 +864,7 @@ Future<void> _openBlockSheet(
       groupId: groupId,
       defaultStart: defaultStart,
       existing: existing,
+      prefillCurriculumSlug: null,
     ),
   );
 }

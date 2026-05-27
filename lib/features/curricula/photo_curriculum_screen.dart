@@ -1,8 +1,15 @@
+import 'dart:async';
+
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/settings/curricula/photo` — "Through My Eyes," the 3-week / 6-
 /// session photography curriculum for ages 5-7.
@@ -408,7 +415,145 @@ class _SessionBody extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
+        const SizedBox(height: 6),
+        _ScheduleSessionCta(session: session),
       ],
+    );
+  }
+}
+
+/// Primary CTA at the bottom of every session detail — "Schedule
+/// this session." Tapping it opens a glass bottom sheet that lists
+/// the program's cohorts; picking one pushes the block-edit screen
+/// with the session slug prefilled. The new block lands on TODAY by
+/// default at 2pm; the user picks the time / location / lead from
+/// the standard block-edit form.
+///
+/// Wave 166 will turn this into a richer "Apply curriculum starting
+/// `date` on `days`" bulk flow that spawns all 6 sessions at once;
+/// today it's one-at-a-time.
+class _ScheduleSessionCta extends ConsumerWidget {
+  const _ScheduleSessionCta({required this.session});
+
+  final PhotoSession session;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FilledButton.icon(
+      onPressed: () => _open(context, ref),
+      icon: const Icon(Icons.event_outlined),
+      label: const Text('Schedule this session'),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+      ),
+    );
+  }
+
+  Future<void> _open(BuildContext context, WidgetRef ref) async {
+    final groups = ref.read(groupsProvider).value ?? const <Group>[];
+    if (groups.isEmpty) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Add a cohort first, then come back to schedule the session.',
+          ),
+        ),
+      );
+      return;
+    }
+    final pickedGroupId = await showGlassSheet<String>(
+      context: context,
+      builder: (sheetCtx) => _CohortPicker(groups: groups, session: session),
+    );
+    if (pickedGroupId == null || !context.mounted) return;
+    // Default to today at 2pm — the most common after-school hour for
+    // this curriculum. The user can change it in the form.
+    final now = DateTime.now();
+    final defaultStart = DateTime(now.year, now.month, now.day, 14);
+    unawaited(
+      context.push<void>(
+        '/schedule/block',
+        extra: (
+          groupId: pickedGroupId,
+          defaultStart: defaultStart,
+          existing: null,
+          prefillCurriculumSlug: session.slug,
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom-sheet cohort picker for the schedule CTA. Lists each cohort
+/// once, vertically. Tapping a row pops with the group id.
+class _CohortPicker extends StatelessWidget {
+  const _CohortPicker({required this.groups, required this.session});
+
+  final List<Group> groups;
+  final PhotoSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+              child: Text(
+                'Schedule for which cohort?',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+              child: Text(
+                '${session.title} · Session ${session.number} · '
+                'Through My Eyes',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            for (final g in groups)
+              ListTile(
+                leading: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: session.color.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: ExcludeSemantics(
+                    child: Text(
+                      session.glyph,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: session.color,
+                      ),
+                    ),
+                  ),
+                ),
+                title: Text(g.name),
+                subtitle: Text(
+                  'Lands as a block at 2pm today',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).pop(g.id),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

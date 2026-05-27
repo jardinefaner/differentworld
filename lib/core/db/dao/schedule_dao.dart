@@ -89,6 +89,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     String? locationOverrideId,
     String kind = 'on_site',
     String? notes,
+    String? curriculumSessionSlug,
   }) async {
     final id = _uuid.v4();
     final now = DateTime.now().toUtc().toIso8601String();
@@ -105,6 +106,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
         locationOverrideId: Value(locationOverrideId),
         kind: kind,
         notes: Value(notes),
+        curriculumSessionSlug: Value(curriculumSessionSlug),
         createdAt: now,
         updatedAt: now,
       ),

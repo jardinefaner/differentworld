@@ -338,6 +338,9 @@ const appSchema = Schema([
     // 'cancelled' + optional free-text reason for the family lens.
     Column.text('status'),
     Column.text('status_reason'),
+    // Wave 165: optional link back to a curriculum session slug
+    // (e.g. 'photo.s1.click-game'). NULL for ad-hoc blocks.
+    Column.text('curriculum_session_slug'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),

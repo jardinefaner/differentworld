@@ -16149,6 +16149,17 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _curriculumSessionSlugMeta =
+      const VerificationMeta('curriculumSessionSlug');
+  @override
+  late final GeneratedColumn<String> curriculumSessionSlug =
+      GeneratedColumn<String>(
+        'curriculum_session_slug',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -16187,6 +16198,7 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     notes,
     status,
     statusReason,
+    curriculumSessionSlug,
     createdAt,
     updatedAt,
   ];
@@ -16309,6 +16321,15 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         ),
       );
     }
+    if (data.containsKey('curriculum_session_slug')) {
+      context.handle(
+        _curriculumSessionSlugMeta,
+        curriculumSessionSlug.isAcceptableOrUnknown(
+          data['curriculum_session_slug']!,
+          _curriculumSessionSlugMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -16390,6 +16411,10 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         DriftSqlType.string,
         data['${effectivePrefix}status_reason'],
       ),
+      curriculumSessionSlug: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}curriculum_session_slug'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -16427,6 +16452,13 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
   final String? notes;
   final String status;
   final String? statusReason;
+
+  /// Wave 165: optional link back to a curriculum session shipped in
+  /// the binary (e.g. 'photo.s1.click-game'). NULL for ad-hoc blocks.
+  /// When set, the schedule grid tiles render a small badge and the
+  /// block-edit screen offers a deep-link to the curriculum session
+  /// detail.
+  final String? curriculumSessionSlug;
   final String createdAt;
   final String updatedAt;
   const ScheduleBlock({
@@ -16444,6 +16476,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     this.notes,
     required this.status,
     this.statusReason,
+    this.curriculumSessionSlug,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -16478,6 +16511,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     if (!nullToAbsent || statusReason != null) {
       map['status_reason'] = Variable<String>(statusReason);
     }
+    if (!nullToAbsent || curriculumSessionSlug != null) {
+      map['curriculum_session_slug'] = Variable<String>(curriculumSessionSlug);
+    }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
@@ -16511,6 +16547,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       statusReason: statusReason == null && nullToAbsent
           ? const Value.absent()
           : Value(statusReason),
+      curriculumSessionSlug: curriculumSessionSlug == null && nullToAbsent
+          ? const Value.absent()
+          : Value(curriculumSessionSlug),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -16540,6 +16579,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       notes: serializer.fromJson<String?>(json['notes']),
       status: serializer.fromJson<String>(json['status']),
       statusReason: serializer.fromJson<String?>(json['statusReason']),
+      curriculumSessionSlug: serializer.fromJson<String?>(
+        json['curriculumSessionSlug'],
+      ),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -16564,6 +16606,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       'notes': serializer.toJson<String?>(notes),
       'status': serializer.toJson<String>(status),
       'statusReason': serializer.toJson<String?>(statusReason),
+      'curriculumSessionSlug': serializer.toJson<String?>(
+        curriculumSessionSlug,
+      ),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -16584,6 +16629,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     Value<String?> notes = const Value.absent(),
     String? status,
     Value<String?> statusReason = const Value.absent(),
+    Value<String?> curriculumSessionSlug = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => ScheduleBlock(
@@ -16605,6 +16651,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     notes: notes.present ? notes.value : this.notes,
     status: status ?? this.status,
     statusReason: statusReason.present ? statusReason.value : this.statusReason,
+    curriculumSessionSlug: curriculumSessionSlug.present
+        ? curriculumSessionSlug.value
+        : this.curriculumSessionSlug,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -16634,6 +16683,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       statusReason: data.statusReason.present
           ? data.statusReason.value
           : this.statusReason,
+      curriculumSessionSlug: data.curriculumSessionSlug.present
+          ? data.curriculumSessionSlug.value
+          : this.curriculumSessionSlug,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -16656,6 +16708,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           ..write('notes: $notes, ')
           ..write('status: $status, ')
           ..write('statusReason: $statusReason, ')
+          ..write('curriculumSessionSlug: $curriculumSessionSlug, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -16678,6 +16731,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     notes,
     status,
     statusReason,
+    curriculumSessionSlug,
     createdAt,
     updatedAt,
   );
@@ -16699,6 +16753,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           other.notes == this.notes &&
           other.status == this.status &&
           other.statusReason == this.statusReason &&
+          other.curriculumSessionSlug == this.curriculumSessionSlug &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -16718,6 +16773,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
   final Value<String?> notes;
   final Value<String> status;
   final Value<String?> statusReason;
+  final Value<String?> curriculumSessionSlug;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -16736,6 +16792,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.notes = const Value.absent(),
     this.status = const Value.absent(),
     this.statusReason = const Value.absent(),
+    this.curriculumSessionSlug = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -16755,6 +16812,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.notes = const Value.absent(),
     this.status = const Value.absent(),
     this.statusReason = const Value.absent(),
+    this.curriculumSessionSlug = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -16782,6 +16840,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Expression<String>? notes,
     Expression<String>? status,
     Expression<String>? statusReason,
+    Expression<String>? curriculumSessionSlug,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -16803,6 +16862,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       if (notes != null) 'notes': notes,
       if (status != null) 'status': status,
       if (statusReason != null) 'status_reason': statusReason,
+      if (curriculumSessionSlug != null)
+        'curriculum_session_slug': curriculumSessionSlug,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -16824,6 +16885,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Value<String?>? notes,
     Value<String>? status,
     Value<String?>? statusReason,
+    Value<String?>? curriculumSessionSlug,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -16844,6 +16906,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       notes: notes ?? this.notes,
       status: status ?? this.status,
       statusReason: statusReason ?? this.statusReason,
+      curriculumSessionSlug:
+          curriculumSessionSlug ?? this.curriculumSessionSlug,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -16897,6 +16961,11 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     if (statusReason.present) {
       map['status_reason'] = Variable<String>(statusReason.value);
     }
+    if (curriculumSessionSlug.present) {
+      map['curriculum_session_slug'] = Variable<String>(
+        curriculumSessionSlug.value,
+      );
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -16926,6 +16995,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
           ..write('notes: $notes, ')
           ..write('status: $status, ')
           ..write('statusReason: $statusReason, ')
+          ..write('curriculumSessionSlug: $curriculumSessionSlug, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -29173,6 +29243,7 @@ typedef $$ScheduleBlocksTableCreateCompanionBuilder =
       Value<String?> notes,
       Value<String> status,
       Value<String?> statusReason,
+      Value<String?> curriculumSessionSlug,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -29193,6 +29264,7 @@ typedef $$ScheduleBlocksTableUpdateCompanionBuilder =
       Value<String?> notes,
       Value<String> status,
       Value<String?> statusReason,
+      Value<String?> curriculumSessionSlug,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -29274,6 +29346,11 @@ class $$ScheduleBlocksTableFilterComposer
 
   ColumnFilters<String> get statusReason => $composableBuilder(
     column: $table.statusReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get curriculumSessionSlug => $composableBuilder(
+    column: $table.curriculumSessionSlug,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -29367,6 +29444,11 @@ class $$ScheduleBlocksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get curriculumSessionSlug => $composableBuilder(
+    column: $table.curriculumSessionSlug,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -29439,6 +29521,11 @@ class $$ScheduleBlocksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get curriculumSessionSlug => $composableBuilder(
+    column: $table.curriculumSessionSlug,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -29493,6 +29580,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> statusReason = const Value.absent(),
+                Value<String?> curriculumSessionSlug = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -29511,6 +29599,7 @@ class $$ScheduleBlocksTableTableManager
                 notes: notes,
                 status: status,
                 statusReason: statusReason,
+                curriculumSessionSlug: curriculumSessionSlug,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -29531,6 +29620,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> statusReason = const Value.absent(),
+                Value<String?> curriculumSessionSlug = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -29549,6 +29639,7 @@ class $$ScheduleBlocksTableTableManager
                 notes: notes,
                 status: status,
                 statusReason: statusReason,
+                curriculumSessionSlug: curriculumSessionSlug,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

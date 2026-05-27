@@ -467,6 +467,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   groupId: args.groupId,
                   defaultStart: args.defaultStart,
                   existing: args.existing,
+                  prefillCurriculumSlug: args.prefillCurriculumSlug,
                 ),
               );
             },

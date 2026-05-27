@@ -112,13 +112,11 @@ class ScheduleActions {
     String? locationOverrideId,
     String kind = 'on_site',
     String? notes,
+    String? curriculumSessionSlug,
   }) async {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.requireSpaceId(action: 'create a schedule block');
     final db = await _ref.read(appDatabaseProvider.future);
-    // Derive the date from the local start time so the index alignment
-    // is unambiguous. Stored as YYYY-MM-DD; not derived in SQL because
-    // PowerSync's sync rules need a string-equal match.
     final date = isoDateLocal(startAt);
     return db.scheduleDao.create(
       spaceId: spaceId,
@@ -131,6 +129,7 @@ class ScheduleActions {
       locationOverrideId: locationOverrideId,
       kind: kind,
       notes: notes,
+      curriculumSessionSlug: curriculumSessionSlug,
     );
   }
 
