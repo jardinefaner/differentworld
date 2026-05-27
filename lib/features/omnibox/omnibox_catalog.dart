@@ -190,6 +190,28 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/settings/toolkit'),
       ),
+    // Through My Eyes photo curriculum — landing entry. Subject-
+    // matter keywords (photo, camera, gallery) help directors and
+    // counselors who think of it by the activity rather than the
+    // catalog name.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.curriculum.photo',
+        label: 'Through My Eyes',
+        subtitle: 'Photo curriculum · 3 weeks, 6 sessions',
+        category: OmniboxCategory.setting,
+        icon: Icons.photo_camera_outlined,
+        keywords: const [
+          'through my eyes',
+          'photo curriculum',
+          'photography',
+          'camera',
+          'photo program',
+          'gallery',
+          'six games',
+        ],
+        onSelect: (ctx, _) => ctx.push('/settings/curricula/photo'),
+      ),
     // Per-tool entries — typing "cool down" or "meltdown" should
     // land directly on the Cool Down detail screen, not on the
     // catalog top. Crisis-retrieval target is 1 tap from anywhere

@@ -10,6 +10,7 @@ import 'package:differentworld/features/attendance/morning_checklist_screen.dart
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
+import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
 import 'package:differentworld/features/entries/observation_form_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
@@ -572,6 +573,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ),
             ],
+          ),
+          GoRoute(
+            path: 'curricula/photo',
+            builder: (_, _) => const RouteTitle(
+              title: 'Through My Eyes',
+              child: PhotoCurriculumScreen(),
+            ),
           ),
           GoRoute(
             path: 'team',

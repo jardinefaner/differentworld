@@ -190,6 +190,16 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/settings/toolkit'),
               ),
+              const _SettingsDivider(),
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Through My Eyes'),
+                subtitle: const Text(
+                  'A 3-week / 6-session photography curriculum for ages 5–7',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/settings/curricula/photo'),
+              ),
             ],
           ),
 
