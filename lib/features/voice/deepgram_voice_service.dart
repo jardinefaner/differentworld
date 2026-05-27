@@ -1,11 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+// Importing dart:io COMPILES on web (stubbed) but any call into
+// `WebSocket.connect` throws at runtime. We only reach it from the
+// `!kIsWeb` branch in `start()`, so the throw never fires on web.
+import 'dart:io' show WebSocket;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// What's currently happening with the user's voice session. Pumped
@@ -143,24 +148,37 @@ class DeepgramVoiceController {
         '&smart_format=true'
         '&endpointing=600',
       );
-      // Wave 150: Deepgram supports two auth shapes for live STT —
-      // an `Authorization: Token <key>` HTTP header or a
-      // `Sec-WebSocket-Protocol: token, <key>` subprotocol on the
-      // upgrade. The header path only works on native (dart:io
-      // WebSocket). The subprotocol path works on every platform
-      // including web, where the browser's WebSocket API doesn't
-      // let us set arbitrary headers. We use subprotocol on both
-      // platforms — single code path, and the short-lived
-      // (30 s, single-connection) token from `voice-token` bounds
-      // the exposure of the protocol-header plaintext.
-      final channel = WebSocketChannel.connect(
-        uri,
-        protocols: <String>['token', tempToken],
-      );
-      try {
-        await channel.ready;
-      } on Object {
-        rethrow; // caught by outer try/catch
+      // Wave 151: Deepgram's `/v1/auth/grant` returns a JWT-shaped
+      // access_token that authenticates via `Authorization: Bearer
+      // <token>`. The original code used `Token` (the project-key
+      // scheme), and Wave 150 tried the WebSocket subprotocol path
+      // which Deepgram only documents for project keys. Use Bearer
+      // on native (proven shape), keep subprotocol on web because
+      // browsers can't set arbitrary headers; the short-lived
+      // ≤30 s single-connection token bounds the credential
+      // exposure either way.
+      final WebSocketChannel channel;
+      if (kIsWeb) {
+        channel = WebSocketChannel.connect(
+          uri,
+          protocols: <String>['bearer', tempToken],
+        );
+        try {
+          await channel.ready;
+        } on Object catch (e, st) {
+          if (kDebugMode) {
+            debugPrint('[deepgram] web WS ready failed: $e\n$st');
+          }
+          rethrow;
+        }
+      } else {
+        final socket = await WebSocket.connect(
+          uri.toString(),
+          headers: <String, dynamic>{
+            'Authorization': 'Bearer $tempToken',
+          },
+        );
+        channel = IOWebSocketChannel(socket);
       }
       // If `cancel()` (or another `stop()`) fired while the connect
       // was in flight — possible on fast nav or low-memory eviction
@@ -172,6 +190,9 @@ class DeepgramVoiceController {
         return;
       }
       _channel = channel;
+      if (kDebugMode) {
+        debugPrint('[deepgram] WS open — listening for transcripts');
+      }
       _wsSub = _channel!.stream.listen(
         _onWsMessage,
         onError: (Object e, StackTrace st) {
