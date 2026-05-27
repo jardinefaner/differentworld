@@ -160,30 +160,38 @@ const _basecampQuestions = <SurveyQuestion>[
     kind: SurveyQuestionKind.multiselect,
     prompt: 'Check any of the activities you did this year in BASECamp.',
     options: [
-      SurveyOption(key: 'handed_supplies', label: 'Helped hand out supplies'),
+      // Wave 145: option labels rewritten as full "Did you...?"
+      // questions. Each option page renders this label as the main
+      // prompt + auto-plays it via TTS, so the kid hears a complete
+      // question instead of a sentence fragment. The same string
+      // appears as the column header in the table-view CSV export.
+      SurveyOption(
+        key: 'handed_supplies',
+        label: 'Did you help hand out supplies?',
+      ),
       SurveyOption(
         key: 'asked_friends',
-        label: 'Asked my friends to participate in an activity with me',
+        label: 'Did you ask friends to join an activity with you?',
       ),
       SurveyOption(
         key: 'line_leader',
-        label: 'Volunteered to be a line leader',
+        label: 'Did you volunteer to be a line leader?',
       ),
       SurveyOption(
         key: 'chose_activity',
-        label: 'Chose a group activity for everyone to do',
+        label: 'Did you choose a group activity for everyone to do?',
       ),
       SurveyOption(
         key: 'helped_friend',
-        label: 'Helped a friend when they were having a bad day',
+        label: 'Did you help a friend when they were having a bad day?',
       ),
       SurveyOption(
         key: 'shared_things',
-        label: 'Shared my things with others',
+        label: 'Did you share your things with others?',
       ),
       SurveyOption(
         key: 'reminded_rules',
-        label: 'Reminded others of rules',
+        label: 'Did you remind others of the rules?',
       ),
     ],
   ),

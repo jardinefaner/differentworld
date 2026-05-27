@@ -238,7 +238,16 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
       cacheSuffix = q.key;
     }
     if (text.isEmpty) return;
-    final cacheKey = '${t.id}__$cacheSuffix'
+    // Wave 145: incorporate a content fingerprint into the cache key
+    // so when we rewrite a prompt / option label (as we did in this
+    // wave for the activities yes/no labels), the next play resolves
+    // a fresh URL from the Edge Function instead of serving the
+    // STALE audio that was cached under the same (template, key)
+    // pair. The fingerprint is `String.hashCode` in base36 — small,
+    // deterministic across runs (within a single dart2js / AOT
+    // build), and changes whenever the text changes.
+    final tag = text.hashCode.toUnsigned(32).toRadixString(36);
+    final cacheKey = '${t.id}__${cacheSuffix}__$tag'
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
     final myToken = ++_playRequestId;
     try {

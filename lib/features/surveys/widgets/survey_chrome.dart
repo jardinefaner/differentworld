@@ -438,18 +438,12 @@ class SurveyOptionYesNoPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Smaller question prompt sits as a subtitle at the top so
-          // the kid remembers which prompt they're answering yes/no
-          // to (the activities multiselect's parent prompt is
-          // "Check any of the activities you did this year").
-          Text(
-            question.prompt,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
+          // Wave 145: parent prompt subtitle dropped. Option labels
+          // are now full "Did you...?" questions, so the parent
+          // "Check any of the activities you did this year" is
+          // redundant + confusing alongside a self-contained
+          // question. The option label IS the main prompt.
+          //
           // The option label is the main text of the page — tappable
           // to replay the TTS.
           Semantics(

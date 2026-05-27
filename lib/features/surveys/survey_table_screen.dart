@@ -290,8 +290,12 @@ class _MultiOptCol extends _Col {
   final SurveyQuestion q;
   final SurveyOption opt;
 
+  // Wave 145: option labels are now self-contained "Did you...?"
+  // questions, so the parent prompt prefix ("Check any of the
+  // activities…") is redundant noise in the CSV header. Use the
+  // option label directly.
   @override
-  String get header => '${q.prompt} — ${opt.label}';
+  String get header => opt.label;
 
   @override
   String display(SurveyAnswers? a) {
