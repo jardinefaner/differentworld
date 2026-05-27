@@ -399,4 +399,26 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  // Wave 154: weekly schedule template (per cohort × day-of-week).
+  Table('weekly_templates', [
+    Column.text('space_id'),
+    Column.text('name'),
+    Column.text('created_by'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
+  Table('weekly_template_blocks', [
+    Column.text('template_id'),
+    Column.text('space_id'),
+    Column.text('group_id'),
+    Column.integer('day_of_week'),
+    Column.text('start_time'),
+    Column.text('end_time'),
+    Column.text('activity_id'),
+    Column.text('lead_member_id'),
+    Column.text('location_override_id'),
+    Column.text('notes'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 ]);

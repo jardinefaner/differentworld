@@ -162,6 +162,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
       actions: (groups.isEmpty || !canEditSchedule)
           ? const <Widget>[]
           : [
+              // Wave 154: shortcut to the weekly-template author.
+              IconButton(
+                icon: const Icon(Icons.event_repeat),
+                tooltip: 'Weekly template',
+                onPressed: () => context.push('/schedule/template'),
+              ),
               PrimaryActionButton(
                 tooltip: 'New block',
                 icon: Icons.add,

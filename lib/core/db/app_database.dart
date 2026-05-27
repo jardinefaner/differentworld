@@ -21,6 +21,7 @@ import 'package:differentworld/core/db/dao/surveys_dao.dart';
 import 'package:differentworld/core/db/dao/tasks_dao.dart';
 import 'package:differentworld/core/db/dao/trips_dao.dart';
 import 'package:differentworld/core/db/dao/vehicles_dao.dart';
+import 'package:differentworld/core/db/dao/weekly_template_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
 import 'package:uuid/uuid.dart';
@@ -661,6 +662,42 @@ class Headcounts extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Wave 154: weekly schedule template. One row per (space, name).
+/// V1 ships with a single "Default week" template per space.
+class WeeklyTemplates extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get name => text()();
+  TextColumn get createdBy => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Wave 154: a single slot inside a weekly template — one row per
+/// (template, group, day_of_week, start_time). `dayOfWeek` is 0..6
+/// matching ISO Monday..Sunday.
+class WeeklyTemplateBlocks extends Table {
+  TextColumn get id => text()();
+  TextColumn get templateId => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get groupId => text()();
+  IntColumn get dayOfWeek => integer()();
+  TextColumn get startTime => text()();
+  TextColumn get endTime => text()();
+  TextColumn get activityId => text().nullable()();
+  TextColumn get leadMemberId => text().nullable()();
+  TextColumn get locationOverrideId => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Wave 158: one-off events that overlay or replace the regular
 /// schedule for a date. Distinct from activities (reusable catalog
 /// items) — events are the parties, guest speakers, fundraisers,
@@ -699,7 +736,9 @@ class Events extends Table {
           Locations, Activities, ScheduleBlocks, TripLogistics,
           TripVehicles, PermissionSlips, Headcounts,
           // Wave 158: one-off events.
-          Events],
+          Events,
+          // Wave 154: weekly template authoring.
+          WeeklyTemplates, WeeklyTemplateBlocks],
   daos: [
     AttachmentsDao,
     AttendanceDao,
@@ -725,6 +764,8 @@ class Events extends Table {
     ActivitiesDao,
     ScheduleDao,
     TripsDao,
+    // Wave 154: weekly template + generate-blocks.
+    WeeklyTemplateDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {

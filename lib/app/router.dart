@@ -35,6 +35,7 @@ import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
+import 'package:differentworld/features/schedule/weekly_template_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/roles_screen.dart';
@@ -420,6 +421,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'Schedule',
               child: ScheduleScreen(),
+            ),
+          ),
+          // Wave 154: weekly template authoring.
+          GoRoute(
+            path: 'schedule/template',
+            builder: (_, _) => const RouteTitle(
+              title: 'Weekly template',
+              child: WeeklyTemplateScreen(),
             ),
           ),
           // Block create/edit route (Wave 26, replaces

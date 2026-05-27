@@ -133,3 +133,8 @@ streams:
       - SELECT * FROM headcounts         WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       # Wave 158: one-off events overlaying the regular schedule.
       - SELECT * FROM events             WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Wave 154: weekly template — director's default recurring
+      # pattern per cohort × day-of-week. Generator reads these +
+      # writes schedule_blocks for a date range.
+      - SELECT * FROM weekly_templates       WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      - SELECT * FROM weekly_template_blocks WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
