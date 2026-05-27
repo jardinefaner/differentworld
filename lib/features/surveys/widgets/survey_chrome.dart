@@ -186,35 +186,34 @@ class SurveyQuestionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    // Wave 136: replace the Wave 133 LayoutBuilder+ConstrainedBox+
-    // IntrinsicHeight sandwich (which violated Flutter's contract —
-    // LayoutBuilder explicitly doesn't support intrinsic dimension
-    // queries) with the canonical full-bleed pattern:
-    // CustomScrollView+SliverFillRemaining(hasScrollBody: false).
-    // The sliver gives the inner Column an exact viewport-height
-    // constraint, so MainAxisAlignment.center works to float the
-    // content vertically. Tall content still scrolls because the
-    // CustomScrollView is the parent.
-    return CustomScrollView(
-      slivers: [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          // Wave 143: cap content width at 560 dp + center it. Without
-          // this, on a 1440 dp desktop window the three agree3 smileys
-          // clamped to 160 dp drift apart to the corners of a 1400 dp
-          // row (spaceEvenly across the full width) and the question
-          // prompt floats alone in the middle. That's the "web
-          // doesn't look like mobile" report. Matches AboutYouPage's
-          // ConstrainedBox(maxWidth: 560).
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+    // Wave 144: drop the CustomScrollView + SliverFillRemaining
+    // scaffold entirely. `SliverFillRemaining(hasScrollBody: false)`
+    // queries the intrinsic height of its child during layout —
+    // and `Agree3Row` (inside this page) uses a LayoutBuilder to
+    // size smileys responsively. LayoutBuilder explicitly does
+    // NOT support intrinsic-dimension queries, so the layout
+    // throws → every Text is NEEDS-LAYOUT → SelectionArea sorts
+    // a still-unlaid-out RenderParagraph → null-check operator
+    // explosion. Wave 136 swapped IntrinsicHeight for
+    // SliverFillRemaining thinking it was safer; both have the
+    // same problem.
+    //
+    // Replacement: plain `Center + ConstrainedBox + Padding +
+    // Column`. The parent (PageView page → Expanded → tight box
+    // constraints) gives a bounded height, so Column with
+    // mainAxisSize.max centers content within it. No intrinsic
+    // queries, no scroll wrapper. For the kid's typical content
+    // (prompt ~80 dp + spacer 32 + smileys ~144 dp) we're well
+    // under the viewport.
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
           if (question.isPractice)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -278,13 +277,10 @@ class SurveyQuestionPage extends StatelessWidget {
                 onAnswered: (next) => onAnswered(next, autoAdvance: false),
               ),
           },
-                  ],
-                ),
-              ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -430,21 +426,17 @@ class SurveyOptionYesNoPage extends StatelessWidget {
     // Variant rotates by page index across all 8 ChibiVariants. Two
     // adjacent options never look the same.
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    // Wave 136: same SliverFillRemaining replacement as
-    // SurveyQuestionPage — see comment there.
-    return CustomScrollView(
-      slivers: [
-        SliverFillRemaining(
-          hasScrollBody: false,
-          // Wave 143: same width cap as SurveyQuestionPage.
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    // Wave 144: same plain-Center scaffold as SurveyQuestionPage —
+    // see the comment there. ChibiSmiley doesn't use LayoutBuilder,
+    // but keep the structure identical for consistency.
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Smaller question prompt sits as a subtitle at the top so
           // the kid remembers which prompt they're answering yes/no
@@ -516,13 +508,10 @@ class SurveyOptionYesNoPage extends StatelessWidget {
               ),
             ],
           ),
-                  ],
-                ),
-              ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
