@@ -42,29 +42,31 @@ abstract final class InviteCode {
     return cleaned.toString();
   }
 
-  /// Custom-scheme deep link the app actually responds to today.
-  /// Registered in AndroidManifest.xml + ios/Runner/Info.plist.
-  ///
-  /// Why not https? — We don't own differentworld.app yet, so a Universal
-  /// Link / Android App Link can't be auto-verified by Apple/Google.
-  /// The custom scheme works without infrastructure; once the domain
-  /// is wired, we add a webHttpsLinkFor() helper alongside this and
-  /// embed both into the QR.
+  /// Custom-scheme form of the invite deep link — registered in
+  /// AndroidManifest.xml + ios/Runner/Info.plist. The in-app
+  /// listener still accepts this (via `extractFromUri`), but Wave
+  /// 165.3 stopped putting it in QR codes / share text because
+  /// several Android camera apps treat custom schemes as plain text
+  /// and fall through to a browser 404. Use [httpsLinkFor] instead
+  /// for anything that leaves the app.
   static String deepLinkFor(String code) => 'differentworld://invite/$code';
 
-  /// Web fallback URL — what we'd embed if/when Universal Links are wired.
-  /// Currently unused; kept here as a single source of truth so the
-  /// transition only needs one edit.
+  /// HTTPS form — what we put in QR codes, SMS share text, and email.
+  /// Pairs with the static fallback page hosted at
+  /// `differentworld.app/404.html`, which JS-redirects into the
+  /// custom scheme when the app is installed and falls back to an
+  /// "Open in app" affordance when it isn't.
   static String httpsLinkFor(String code) =>
       'https://differentworld.app/invite/$code';
 
   /// Plain-text share blurb a director can copy / SMS / paste.
-  /// Includes both the human-typeable code AND the deep link.
+  /// Includes both the human-typeable code AND the HTTPS link
+  /// (clickable from iMessage, SMS, email, Slack — anywhere).
   static String shareTextFor({required String code, String? programName}) {
     final lead = programName == null
         ? 'Join my Different World program.'
         : 'Join $programName on Different World.';
-    return '$lead\n\nCode: $code\n\n${deepLinkFor(code)}';
+    return '$lead\n\nCode: $code\n\n${httpsLinkFor(code)}';
   }
 
   /// Extract a code from an inbound deep link. Accepts both the custom
