@@ -221,7 +221,14 @@ serve(async (req) => {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info',
+  // Wave 147: `apikey` is added automatically by the supabase-js
+  // client on every functions.invoke() — without it in the
+  // Access-Control-Allow-Headers list, browsers reject the preflight
+  // and the call never reaches the function. That's the
+  // "no audio on web" report. Mobile bypassed CORS entirely so it
+  // worked there.
+  'Access-Control-Allow-Headers':
+      'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 

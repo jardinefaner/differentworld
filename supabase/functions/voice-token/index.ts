@@ -130,7 +130,14 @@ serve(async (req) => {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info',
+  // Wave 147: same fix as tts-generate. supabase-js auto-adds an
+  // `apikey` header on every functions.invoke; without it in the
+  // allow-list, web browsers reject the CORS preflight and the
+  // call never runs. Manifests on web as a silent "voice dictation
+  // doesn't work" because DeepgramVoiceController tries to mint a
+  // token via this function on first tap and the fetch errors out.
+  'Access-Control-Allow-Headers':
+      'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
