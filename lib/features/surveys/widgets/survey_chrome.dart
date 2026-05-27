@@ -199,12 +199,22 @@ class SurveyQuestionPage extends StatelessWidget {
       slivers: [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          // Wave 143: cap content width at 560 dp + center it. Without
+          // this, on a 1440 dp desktop window the three agree3 smileys
+          // clamped to 160 dp drift apart to the corners of a 1400 dp
+          // row (spaceEvenly across the full width) and the question
+          // prompt floats alone in the middle. That's the "web
+          // doesn't look like mobile" report. Matches AboutYouPage's
+          // ConstrainedBox(maxWidth: 560).
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
           if (question.isPractice)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -268,7 +278,9 @@ class SurveyQuestionPage extends StatelessWidget {
                 onAnswered: (next) => onAnswered(next, autoAdvance: false),
               ),
           },
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -424,11 +436,15 @@ class SurveyOptionYesNoPage extends StatelessWidget {
       slivers: [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          // Wave 143: same width cap as SurveyQuestionPage.
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Smaller question prompt sits as a subtitle at the top so
           // the kid remembers which prompt they're answering yes/no
@@ -500,7 +516,9 @@ class SurveyOptionYesNoPage extends StatelessWidget {
               ),
             ],
           ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),

@@ -354,6 +354,14 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
             school: _school,
           );
       if (!mounted) return;
+      // Wave 143: drop the kid-mode pin BEFORE popping. Otherwise
+      // the router's redirect (which runs synchronously on the
+      // pop's matchedLocation change) sees lockedRoute still =
+      // `/surveys/X/take`, returns it, and bounces the user right
+      // back into the survey. Dispose clears the pin too — but
+      // dispose runs AFTER the redirect resolves the pop, so it's
+      // too late.
+      ref.read(kidModeLockedRouteProvider.notifier).pin(null);
       context.pop();
     } on Object catch (e, st) {
       // Wave 142: catch Object, not Exception. SurveyActions.save
@@ -461,11 +469,17 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
           child: EdgeScaffold(
             body: Stack(
               children: [
-                // Hidden staff-corner: 48 dp invisible tap target in
-                // the top-right. Five fast taps unlocks.
+                // Hidden staff-corner: 48 dp invisible tap target.
+                // Wave 143: moved from top-RIGHT to top-LEFT. The
+                // top-right is where SurveyHeader renders the score
+                // ("11 / 11"); a kid tapping the score five times
+                // could accidentally unlock staff mode because the
+                // GestureDetector was HitTestBehavior.translucent
+                // (taps register here AND pass through to the
+                // header). The top-left has no content overlap.
                 Positioned(
                   top: 0,
-                  right: 0,
+                  left: 0,
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTap: _onStaffCornerTap,
@@ -475,10 +489,18 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                 Positioned.fill(
                   child: Column(
                     children: [
-                      // Survey-take is a KID-MODE surface — the
-                      // shell drops chrome insets, so a small
-                      // spacer keeps the header off the status bar.
-                      const SizedBox(height: 16),
+                      // Wave 143: real status-bar inset instead of
+                      // a fixed 16 dp. On phones with notches /
+                      // bigger status bars (Pixel 6: 24 dp; some
+                      // Androids 32+ dp), the fixed 16 dp left
+                      // the header drawing UNDER the status bar.
+                      // EdgeScaffold intentionally doesn't wrap the
+                      // body in SafeArea so the surface can draw
+                      // edge-to-edge — kid-mode surfaces handle the
+                      // top inset themselves.
+                      SizedBox(
+                        height: MediaQuery.paddingOf(context).top + 8,
+                      ),
                       // Wave 138: the header's "Subject" identity
                       // panel is dropped; the survey is anonymous,
                       // so the header just shows template + progress.
