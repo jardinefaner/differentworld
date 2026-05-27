@@ -222,6 +222,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                 onPickDate: () => _pickDate(context, date),
                 onJumpToday: () => _setDate(context, _today),
               ),
+              // Wave 158: events for this date appear as a banner
+              // above the cohort tabs. Built as a Consumer so a
+              // freshly-created event renders without rebuilding
+              // the parent. Drops silently when the day has none.
+              _EventBanner(date: dateKey(date)),
               TabBar(
                 controller: tabs,
                 isScrollable: true,
@@ -378,6 +383,15 @@ class _CohortDay extends ConsumerWidget {
     final activities = ref.watch(allActivitiesProvider).value ??
         const <Activity>[];
     final locations = ref.watch(locationsProvider).value ?? const <Location>[];
+    // Wave 156: every block in the program for this date + every
+    // group, so we can flag rooms that two cohorts share at
+    // overlapping times. Warning chip only — sometimes the director
+    // intentionally schedules shared rooms (combined-cohort outdoor
+    // play).
+    final dayBlocks =
+        ref.watch(scheduleDayProvider(date)).value ?? const <ScheduleBlock>[];
+    final allGroups = ref.watch(groupsProvider).value ?? const <Group>[];
+    final groupNameById = {for (final g in allGroups) g.id: g.name};
 
     return blocksAsync.when(
       loading: () => const LoadingSlot(),
@@ -430,10 +444,21 @@ class _CohortDay extends ConsumerWidget {
                       : locations
                           .where((l) => l.id == b.locationOverrideId)
                           .firstOrNull;
+                  // Wave 156: effective location = override OR
+                  // activity default. Conflict = same effective
+                  // location, different cohort, overlapping time.
+                  final conflictGroupNames = _conflictsForBlock(
+                    block: b,
+                    activity: activity,
+                    dayBlocks: dayBlocks,
+                    activities: activities,
+                    groupNameById: groupNameById,
+                  );
                   return _BlockTile(
                     block: b,
                     activity: activity,
                     location: loc,
+                    conflictWith: conflictGroupNames,
                     onTap: () => _openBlockSheet(
                       context,
                       ref,
@@ -538,18 +563,63 @@ class _CoverLeadStrip extends StatelessWidget {
   }
 }
 
+/// Wave 156: which OTHER cohort group-names this block conflicts with
+/// at this date+time, by sharing the effective location (override on
+/// the block OR the activity's default). Empty list = no conflict.
+///
+/// Effective overlap uses half-open intervals — block A from 14:00 to
+/// 15:00 doesn't conflict with block B from 15:00 to 16:00.
+List<String> _conflictsForBlock({
+  required ScheduleBlock block,
+  required Activity? activity,
+  required List<ScheduleBlock> dayBlocks,
+  required List<Activity> activities,
+  required Map<String, String> groupNameById,
+}) {
+  final myLocId = block.locationOverrideId ?? activity?.defaultLocationId;
+  if (myLocId == null) return const [];
+  final myStart = DateTime.parse(block.startAt);
+  final myEnd = DateTime.parse(block.endAt);
+  final out = <String>[];
+  for (final other in dayBlocks) {
+    if (other.id == block.id) continue;
+    if (other.groupId == block.groupId) continue;
+    final otherActivity = other.activityId == null
+        ? null
+        : activities.where((a) => a.id == other.activityId).firstOrNull;
+    final otherLocId =
+        other.locationOverrideId ?? otherActivity?.defaultLocationId;
+    if (otherLocId != myLocId) continue;
+    final otherStart = DateTime.parse(other.startAt);
+    final otherEnd = DateTime.parse(other.endAt);
+    // Half-open overlap: a starts before b ends AND b starts before
+    // a ends.
+    if (myStart.isBefore(otherEnd) && otherStart.isBefore(myEnd)) {
+      final name = groupNameById[other.groupId];
+      if (name != null && !out.contains(name)) out.add(name);
+    }
+  }
+  return out;
+}
+
 class _BlockTile extends StatelessWidget {
   const _BlockTile({
     required this.block,
     required this.activity,
     required this.location,
     required this.onTap,
+    this.conflictWith = const [],
   });
 
   final ScheduleBlock block;
   final Activity? activity;
   final Location? location;
   final VoidCallback onTap;
+
+  /// Wave 156: names of other cohorts sharing this block's room at
+  /// overlapping times. Renders as an amber chip; never blocks the
+  /// block from saving.
+  final List<String> conflictWith;
 
   @override
   Widget build(BuildContext context) {
@@ -626,6 +696,50 @@ class _BlockTile extends StatelessWidget {
                           ),
                         ),
                       ],
+                      if (conflictWith.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        // Wave 156: warning chip. Director sometimes
+                        // wants this (combined-cohort outdoor) so we
+                        // never block — just surface visibly.
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.amber.withValues(alpha: 0.5),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                size: 14,
+                                color: Colors.amber,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  conflictWith.length == 1
+                                      ? 'Shared room with ${conflictWith.first}'
+                                      : 'Shared room with '
+                                          '${conflictWith.join(", ")}',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: onContainer,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       if (block.notes != null &&
                           block.notes!.isNotEmpty &&
                           activity != null) ...[
@@ -678,4 +792,121 @@ Future<void> _openBlockSheet(
       existing: existing,
     ),
   );
+}
+
+/// Wave 158: banner showing one-off events for the current date.
+/// Renders as a colored card above the cohort tabs; tap-to-delete
+/// for now (full event-detail editor lands as a follow-up).
+class _EventBanner extends ConsumerWidget {
+  const _EventBanner({required this.date});
+
+  final String date;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final eventsAsync = ref.watch(eventsForDateProvider(date));
+    final events = eventsAsync.value ?? const <Event>[];
+    if (events.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Column(
+        children: [
+          for (final e in events)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Material(
+                color: _parseColor(e.color) ??
+                    theme.colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(12),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => _confirmDelete(context, ref, e),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          e.mode == 'closes_day'
+                              ? Icons.event_busy_outlined
+                              : e.mode == 'replaces'
+                                  ? Icons.event_repeat_outlined
+                                  : Icons.celebration_outlined,
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                e.title,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color:
+                                      theme.colorScheme.onSecondaryContainer,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              if (e.description != null &&
+                                  e.description!.isNotEmpty)
+                                Text(
+                                  e.description!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme
+                                        .onSecondaryContainer
+                                        .withValues(alpha: 0.85),
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    Event e,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(e.title),
+        content: const Text('Remove this event from the schedule?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(eventActionsProvider).delete_(e.id);
+    }
+  }
+
+  Color? _parseColor(String? hex) {
+    if (hex == null || hex.isEmpty) return null;
+    final cleaned = hex.replaceFirst('#', '');
+    if (cleaned.length != 6) return null;
+    final value = int.tryParse(cleaned, radix: 16);
+    if (value == null) return null;
+    return Color(0xFF000000 | value).withValues(alpha: 0.85);
+  }
 }

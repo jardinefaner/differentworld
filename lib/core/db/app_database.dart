@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/dao/captures_dao.dart';
 import 'package:differentworld/core/db/dao/certifications_dao.dart';
 import 'package:differentworld/core/db/dao/dismissed_insights_dao.dart';
 import 'package:differentworld/core/db/dao/entries_dao.dart';
+import 'package:differentworld/core/db/dao/events_dao.dart';
 import 'package:differentworld/core/db/dao/exports_dao.dart';
 import 'package:differentworld/core/db/dao/group_members_dao.dart';
 import 'package:differentworld/core/db/dao/groups_dao.dart';
@@ -660,6 +661,33 @@ class Headcounts extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Wave 158: one-off events that overlay or replace the regular
+/// schedule for a date. Distinct from activities (reusable catalog
+/// items) — events are the parties, guest speakers, fundraisers,
+/// closures. May span multiple cohorts.
+class Events extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get date => text()(); // ISO YYYY-MM-DD
+  TextColumn get startAt => text().nullable()();
+  TextColumn get endAt => text().nullable()();
+  TextColumn get title => text()();
+  TextColumn get description => text().nullable()();
+  TextColumn get color => text().nullable()();
+  /// JSON-encoded list of group IDs the event affects. Empty = all
+  /// cohorts in the space.
+  TextColumn get groupIds => text()();
+  /// One of 'overlay' / 'replaces' / 'closes_day'.
+  TextColumn get mode => text()();
+  TextColumn get locationId => text().nullable()();
+  TextColumn get createdBy => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
           GroupMembers, Entries, Guardians, SubjectGuardians,
@@ -669,7 +697,9 @@ class Headcounts extends Table {
           Exports, ExportRecipients,
           // Camp scheduling.
           Locations, Activities, ScheduleBlocks, TripLogistics,
-          TripVehicles, PermissionSlips, Headcounts],
+          TripVehicles, PermissionSlips, Headcounts,
+          // Wave 158: one-off events.
+          Events],
   daos: [
     AttachmentsDao,
     AttendanceDao,
@@ -677,6 +707,7 @@ class Headcounts extends Table {
     CertificationsDao,
     DismissedInsightsDao,
     EntriesDao,
+    EventsDao,
     ExportsDao,
     GroupMembersDao,
     GroupsDao,

@@ -4,6 +4,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 /// Kind discriminator for the `schedule_blocks` table — distinguishes
 /// on-site activities from field trips, breaks, and closed days.
@@ -62,6 +63,29 @@ final scheduleDayForLeadProvider = StreamProvider.autoDispose
     date: key.date,
   );
 });
+
+/// Wave 158: events on the given `date` for the current space.
+/// Drives the banner above the schedule grid and the
+/// `/schedule/events` list.
+// ignore: specify_nonobvious_property_types
+final eventsForDateProvider = StreamProvider.autoDispose
+    .family<List<Event>, String>((ref, date) async* {
+  final viewer = ref.watch(viewerProvider);
+  final spaceId = viewer.spaceId;
+  if (spaceId == null) {
+    yield const <Event>[];
+    return;
+  }
+  final db = await ref.watch(appDatabaseProvider.future);
+  yield* db.eventsDao.watchForDate(spaceId: spaceId, date: date);
+});
+
+/// Discriminator for `events.mode`.
+class EventMode {
+  static const String overlay = 'overlay';
+  static const String replaces = 'replaces';
+  static const String closesDay = 'closes_day';
+}
 
 class ScheduleActions {
   ScheduleActions(this._ref);
@@ -148,7 +172,76 @@ class ScheduleActions {
       substituteMemberId: substituteMemberId,
     );
   }
+
+  /// Wave 157: cross-cohort lead-out. "Pat called out today" — apply
+  /// the cover across every cohort she leads in this space on
+  /// [date]. Returns the total block count affected so the snackbar
+  /// can say "Covered 9 blocks across 3 cohorts."
+  Future<int> coverLeadForDayAcrossSpace({
+    required String date,
+    required String absentMemberId,
+    required String? substituteMemberId,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId = viewer.requireSpaceId(action: 'cover lead');
+    final db = await _ref.read(appDatabaseProvider.future);
+    return db.scheduleDao.assignDailySubstituteAcrossSpace(
+      spaceId: spaceId,
+      date: date,
+      absentMemberId: absentMemberId,
+      substituteMemberId: substituteMemberId,
+    );
+  }
 }
 
 final scheduleActionsProvider =
     Provider<ScheduleActions>(ScheduleActions.new);
+
+/// Wave 158: create / delete one-off events. Updates aren't wired
+/// yet — director's options on a created event are "use as is" or
+/// "delete + recreate," which is fine for v1.
+class EventActions {
+  EventActions(this._ref);
+  final Ref _ref;
+  final Uuid _uuid = const Uuid();
+
+  Future<String> create({
+    required DateTime date,
+    required String title,
+    String mode = 'overlay',
+    List<String> groupIds = const [],
+    DateTime? startAt,
+    DateTime? endAt,
+    String? description,
+    String? color,
+    String? locationId,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId = viewer.requireSpaceId(action: 'create an event');
+    final db = await _ref.read(appDatabaseProvider.future);
+    return db.eventsDao.create(
+      id: _uuid.v4(),
+      spaceId: spaceId,
+      date: dateKey(date),
+      title: title,
+      mode: mode,
+      groupIdsJson: _jsonEncodeList(groupIds),
+      startAt: startAt?.toUtc().toIso8601String(),
+      endAt: endAt?.toUtc().toIso8601String(),
+      description: description,
+      color: color,
+      locationId: locationId,
+      createdBy: viewer.memberId,
+    );
+  }
+
+  Future<void> delete_(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.eventsDao.delete_(id);
+  }
+
+  static String _jsonEncodeList(List<String> items) =>
+      '[${items.map((s) => '"$s"').join(',')}]';
+}
+
+final eventActionsProvider = Provider<EventActions>(EventActions.new);

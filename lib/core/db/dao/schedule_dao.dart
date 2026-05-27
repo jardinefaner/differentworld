@@ -188,4 +188,36 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
       ),
     );
   }
+
+  /// Wave 157: cross-cohort lead-out. Same as `assignDailySubstitute`
+  /// but covers `absentMemberId`'s planned blocks ANYWHERE in the
+  /// space on `date` — useful when the director hears "Pat called out
+  /// today" and wants to reassign every one of her blocks to one
+  /// cover without flipping into each cohort.
+  ///
+  /// Scoped on `space_id` rather than `group_id` so a director in a
+  /// program with multiple cohorts can reassign in one tap.
+  Future<int> assignDailySubstituteAcrossSpace({
+    required String spaceId,
+    required String date,
+    required String absentMemberId,
+    required String? substituteMemberId,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    return (update(scheduleBlocks)
+          ..where(
+            (b) =>
+                b.spaceId.equals(spaceId) &
+                b.date.equals(date) &
+                b.leadMemberId.equals(absentMemberId),
+          ))
+        .write(
+      ScheduleBlocksCompanion(
+        leadSubstituteMemberId: substituteMemberId == null
+            ? const Value<String?>(null)
+            : Value(substituteMemberId),
+        updatedAt: Value(now),
+      ),
+    );
+  }
 }

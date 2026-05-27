@@ -380,4 +380,23 @@ const appSchema = Schema([
     Column.text('notes'),
     Column.text('created_at'),
   ]),
+
+  // Wave 158: one-off events (Halloween party, guest speaker,
+  // closures). Overlay or replace the regular schedule for a
+  // specific date/cohorts.
+  Table('events', [
+    Column.text('space_id'),
+    Column.text('date'),
+    Column.text('start_at'),
+    Column.text('end_at'),
+    Column.text('title'),
+    Column.text('description'),
+    Column.text('color'),
+    Column.text('group_ids'),
+    Column.text('mode'),
+    Column.text('location_id'),
+    Column.text('created_by'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
 ]);
