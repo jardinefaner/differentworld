@@ -22,6 +22,7 @@ import 'package:differentworld/core/db/dao/trips_dao.dart';
 import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
+import 'package:uuid/uuid.dart';
 // Both drift and powersync export a `Column` class — only import what we
 // actually need from powersync to avoid the ambiguity.
 import 'package:powersync/powersync.dart' show PowerSyncDatabase;
@@ -548,6 +549,11 @@ class Activities extends Table {
   TextColumn get indoorAltActivityId => text().nullable()();
   TextColumn get capabilities => text()();
   TextColumn get archivedAt => text().nullable()();
+  // Wave 153: visual / filter fields. Both optional — programs with
+  // monotone palettes leave color null and we fall back to the theme
+  // primaryContainer on the grid.
+  TextColumn get color => text().nullable()();
+  TextColumn get category => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 
@@ -713,13 +719,17 @@ class AppDatabase extends _$AppDatabase {
   ///   1. INSERT the new space row.
   ///   2. UPDATE the current user's member row to point at it AND promote
   ///      them to director (the role bundle that gates space-admin writes).
-  /// PowerSync's CRUD queue picks both up and uploads to Supabase.
+  /// Wave 153: also seeds the activity catalog with ~30 starter items
+  /// so a brand-new program's `/schedule/template` and
+  /// `/activities` screens aren't empty on day one.
+  /// PowerSync's CRUD queue picks all writes up and uploads to Supabase.
   Future<void> createSpaceForMember({
     required String spaceId,
     required String spaceName,
     required String memberId,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
+    const uuid = Uuid();
     await transaction(() async {
       await into(spaces).insert(
         SpacesCompanion.insert(
@@ -738,6 +748,278 @@ class AppDatabase extends _$AppDatabase {
           updatedAt: Value(now),
         ),
       );
+      // Wave 153: seed the starter activity pack. Idempotent at the
+      // call-site level (we only run this on space creation), and
+      // each starter gets a freshly generated UUID — a director
+      // adding a custom "Reading" activity later won't collide.
+      for (final starter in _starterActivities) {
+        await into(activities).insert(
+          ActivitiesCompanion.insert(
+            id: uuid.v4(),
+            spaceId: spaceId,
+            name: starter.name,
+            description: Value(starter.description),
+            defaultDurationMinutes: Value(starter.duration),
+            supplies: Value(starter.supplies),
+            isOutdoor: starter.isOutdoor ? 1 : 0,
+            capabilities: '{}',
+            color: Value(starter.color),
+            category: Value(starter.category),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
     });
   }
 }
+
+/// Wave 153: starter activity pack seeded into every new program.
+/// Tuned for the afterschool 4-12 vertical (CLAUDE.md primary
+/// product context). A director can edit / archive any of them
+/// later; the point is to land on a populated catalog so the
+/// scheduler doesn't open empty.
+class _StarterActivity {
+  const _StarterActivity({
+    required this.name,
+    required this.description,
+    required this.duration,
+    required this.category,
+    required this.color,
+    this.supplies = '',
+    this.isOutdoor = false,
+  });
+  final String name;
+  final String description;
+  final int duration;
+  final String category;
+  final String color;
+  final String supplies;
+  final bool isOutdoor;
+}
+
+const _starterActivities = <_StarterActivity>[
+  // Snack / transition
+  _StarterActivity(
+    name: 'Snack',
+    description: 'Daily snack — handwashing first.',
+    duration: 15,
+    category: 'snack',
+    color: '#FFB74D',
+  ),
+  _StarterActivity(
+    name: 'Arrival',
+    description: 'Kids check in, drop off bags, settle in.',
+    duration: 15,
+    category: 'transition',
+    color: '#90A4AE',
+  ),
+  _StarterActivity(
+    name: 'Dismissal',
+    description: 'Pack up, line up, sign-out.',
+    duration: 15,
+    category: 'transition',
+    color: '#90A4AE',
+  ),
+  _StarterActivity(
+    name: 'Bathroom break',
+    description: 'Scheduled bathroom + water break.',
+    duration: 10,
+    category: 'transition',
+    color: '#90A4AE',
+  ),
+
+  // Quiet
+  _StarterActivity(
+    name: 'Reading hour',
+    description: 'Self-selected reading; teacher reads aloud on request.',
+    duration: 30,
+    category: 'quiet',
+    color: '#7986CB',
+    supplies: 'Books, cushions',
+  ),
+  _StarterActivity(
+    name: 'Homework help',
+    description: 'Teacher available for homework support.',
+    duration: 45,
+    category: 'quiet',
+    color: '#7986CB',
+    supplies: 'Pencils, paper, sharpeners',
+  ),
+  _StarterActivity(
+    name: 'Quiet choice',
+    description: 'Puzzles, drawing, journaling — kid picks.',
+    duration: 30,
+    category: 'quiet',
+    color: '#7986CB',
+  ),
+  _StarterActivity(
+    name: 'Story circle',
+    description: 'Teacher-led story with discussion.',
+    duration: 20,
+    category: 'quiet',
+    color: '#7986CB',
+  ),
+
+  // Creative
+  _StarterActivity(
+    name: 'Art studio',
+    description: 'Open art-making — paint, collage, clay, mixed media.',
+    duration: 45,
+    category: 'creative',
+    color: '#F06292',
+    supplies: 'Paint, brushes, paper, smocks',
+  ),
+  _StarterActivity(
+    name: 'Music & movement',
+    description: 'Songs, simple instruments, dance.',
+    duration: 30,
+    category: 'creative',
+    color: '#F06292',
+    supplies: 'Speaker, shakers, scarves',
+  ),
+  _StarterActivity(
+    name: 'Drama games',
+    description: 'Improv prompts, charades, freeze tag.',
+    duration: 30,
+    category: 'creative',
+    color: '#F06292',
+  ),
+  _StarterActivity(
+    name: 'Maker time',
+    description: 'Cardboard, tape, recycled materials — open build.',
+    duration: 45,
+    category: 'creative',
+    color: '#F06292',
+    supplies: 'Cardboard, tape, scissors, markers',
+  ),
+
+  // STEM / learning
+  _StarterActivity(
+    name: 'STEM challenge',
+    description: 'Weekly engineering / science prompt.',
+    duration: 45,
+    category: 'creative',
+    color: '#4DB6AC',
+    supplies: 'Per challenge',
+  ),
+  _StarterActivity(
+    name: 'Nature lesson',
+    description: 'Observation walk + journaling.',
+    duration: 30,
+    category: 'creative',
+    color: '#4DB6AC',
+    supplies: 'Journals, magnifying glasses',
+    isOutdoor: true,
+  ),
+  _StarterActivity(
+    name: 'Cooking',
+    description: 'Simple no-cook recipe; allergy check.',
+    duration: 45,
+    category: 'creative',
+    color: '#4DB6AC',
+    supplies: 'Per recipe',
+  ),
+
+  // Active / outdoor
+  _StarterActivity(
+    name: 'Outdoor play',
+    description: 'Open recess on the yard.',
+    duration: 45,
+    category: 'active',
+    color: '#81C784',
+    isOutdoor: true,
+  ),
+  _StarterActivity(
+    name: 'Sports rotation',
+    description: 'Teacher-led — soccer, basketball, kickball.',
+    duration: 45,
+    category: 'active',
+    color: '#81C784',
+    supplies: 'Balls, cones, pinnies',
+    isOutdoor: true,
+  ),
+  _StarterActivity(
+    name: 'Tag games',
+    description: 'Group games — sharks & minnows, freeze tag.',
+    duration: 30,
+    category: 'active',
+    color: '#81C784',
+    isOutdoor: true,
+  ),
+  _StarterActivity(
+    name: 'Obstacle course',
+    description: 'Teacher-set; rotate weekly.',
+    duration: 30,
+    category: 'active',
+    color: '#81C784',
+    supplies: 'Cones, hoops, mats',
+    isOutdoor: true,
+  ),
+  _StarterActivity(
+    name: 'Capoeira',
+    description: 'Instructor-led martial arts class.',
+    duration: 45,
+    category: 'active',
+    color: '#81C784',
+  ),
+  _StarterActivity(
+    name: 'Yoga',
+    description: 'Guided kid-friendly yoga.',
+    duration: 25,
+    category: 'active',
+    color: '#81C784',
+    supplies: 'Mats',
+  ),
+  _StarterActivity(
+    name: 'Indoor games',
+    description: 'Rain-day fallback — board games, gym games.',
+    duration: 45,
+    category: 'active',
+    color: '#81C784',
+  ),
+
+  // Free choice / special
+  _StarterActivity(
+    name: 'Free choice',
+    description: 'Kid picks from open stations.',
+    duration: 30,
+    category: 'special',
+    color: '#BA68C8',
+  ),
+  _StarterActivity(
+    name: 'Community circle',
+    description: 'Group share — highs / lows / questions.',
+    duration: 20,
+    category: 'special',
+    color: '#BA68C8',
+  ),
+  _StarterActivity(
+    name: 'Friday celebration',
+    description: 'Recap of the week + small group reward.',
+    duration: 30,
+    category: 'special',
+    color: '#BA68C8',
+  ),
+  _StarterActivity(
+    name: 'Special guest',
+    description: 'Visitor or themed program; teacher confirms day-of.',
+    duration: 45,
+    category: 'special',
+    color: '#BA68C8',
+  ),
+  _StarterActivity(
+    name: 'Movie / wind-down',
+    description: 'Calm activity to close the day.',
+    duration: 30,
+    category: 'special',
+    color: '#BA68C8',
+  ),
+  _StarterActivity(
+    name: 'Field trip',
+    description: 'Off-site visit — author through the trip wizard.',
+    duration: 120,
+    category: 'special',
+    color: '#FFD54F',
+  ),
+];

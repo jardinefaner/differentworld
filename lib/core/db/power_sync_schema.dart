@@ -313,6 +313,9 @@ const appSchema = Schema([
     Column.text('indoor_alt_activity_id'),
     Column.text('capabilities'),
     Column.text('archived_at'),
+    // Wave 153: visual fields for the schedule grid + filter chips.
+    Column.text('color'),
+    Column.text('category'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),

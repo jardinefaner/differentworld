@@ -15061,6 +15061,26 @@ class $ActivitiesTable extends Activities
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -15100,6 +15120,8 @@ class $ActivitiesTable extends Activities
     indoorAltActivityId,
     capabilities,
     archivedAt,
+    color,
+    category,
     createdAt,
     updatedAt,
   ];
@@ -15233,6 +15255,18 @@ class $ActivitiesTable extends Activities
         archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
       );
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -15318,6 +15352,14 @@ class $ActivitiesTable extends Activities
         DriftSqlType.string,
         data['${effectivePrefix}archived_at'],
       ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -15351,6 +15393,8 @@ class Activity extends DataClass implements Insertable<Activity> {
   final String? indoorAltActivityId;
   final String capabilities;
   final String? archivedAt;
+  final String? color;
+  final String? category;
   final String createdAt;
   final String updatedAt;
   const Activity({
@@ -15369,6 +15413,8 @@ class Activity extends DataClass implements Insertable<Activity> {
     this.indoorAltActivityId,
     required this.capabilities,
     this.archivedAt,
+    this.color,
+    this.category,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -15409,6 +15455,12 @@ class Activity extends DataClass implements Insertable<Activity> {
     map['capabilities'] = Variable<String>(capabilities);
     if (!nullToAbsent || archivedAt != null) {
       map['archived_at'] = Variable<String>(archivedAt);
+    }
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<String>(category);
     }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
@@ -15452,6 +15504,12 @@ class Activity extends DataClass implements Insertable<Activity> {
       archivedAt: archivedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(archivedAt),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -15484,6 +15542,8 @@ class Activity extends DataClass implements Insertable<Activity> {
       ),
       capabilities: serializer.fromJson<String>(json['capabilities']),
       archivedAt: serializer.fromJson<String?>(json['archivedAt']),
+      color: serializer.fromJson<String?>(json['color']),
+      category: serializer.fromJson<String?>(json['category']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -15507,6 +15567,8 @@ class Activity extends DataClass implements Insertable<Activity> {
       'indoorAltActivityId': serializer.toJson<String?>(indoorAltActivityId),
       'capabilities': serializer.toJson<String>(capabilities),
       'archivedAt': serializer.toJson<String?>(archivedAt),
+      'color': serializer.toJson<String?>(color),
+      'category': serializer.toJson<String?>(category),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -15528,6 +15590,8 @@ class Activity extends DataClass implements Insertable<Activity> {
     Value<String?> indoorAltActivityId = const Value.absent(),
     String? capabilities,
     Value<String?> archivedAt = const Value.absent(),
+    Value<String?> color = const Value.absent(),
+    Value<String?> category = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => Activity(
@@ -15554,6 +15618,8 @@ class Activity extends DataClass implements Insertable<Activity> {
         : this.indoorAltActivityId,
     capabilities: capabilities ?? this.capabilities,
     archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
+    color: color.present ? color.value : this.color,
+    category: category.present ? category.value : this.category,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -15590,6 +15656,8 @@ class Activity extends DataClass implements Insertable<Activity> {
       archivedAt: data.archivedAt.present
           ? data.archivedAt.value
           : this.archivedAt,
+      color: data.color.present ? data.color.value : this.color,
+      category: data.category.present ? data.category.value : this.category,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -15613,6 +15681,8 @@ class Activity extends DataClass implements Insertable<Activity> {
           ..write('indoorAltActivityId: $indoorAltActivityId, ')
           ..write('capabilities: $capabilities, ')
           ..write('archivedAt: $archivedAt, ')
+          ..write('color: $color, ')
+          ..write('category: $category, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -15636,6 +15706,8 @@ class Activity extends DataClass implements Insertable<Activity> {
     indoorAltActivityId,
     capabilities,
     archivedAt,
+    color,
+    category,
     createdAt,
     updatedAt,
   );
@@ -15658,6 +15730,8 @@ class Activity extends DataClass implements Insertable<Activity> {
           other.indoorAltActivityId == this.indoorAltActivityId &&
           other.capabilities == this.capabilities &&
           other.archivedAt == this.archivedAt &&
+          other.color == this.color &&
+          other.category == this.category &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -15678,6 +15752,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
   final Value<String?> indoorAltActivityId;
   final Value<String> capabilities;
   final Value<String?> archivedAt;
+  final Value<String?> color;
+  final Value<String?> category;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -15697,6 +15773,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
     this.indoorAltActivityId = const Value.absent(),
     this.capabilities = const Value.absent(),
     this.archivedAt = const Value.absent(),
+    this.color = const Value.absent(),
+    this.category = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -15717,6 +15795,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
     this.indoorAltActivityId = const Value.absent(),
     required String capabilities,
     this.archivedAt = const Value.absent(),
+    this.color = const Value.absent(),
+    this.category = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -15743,6 +15823,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
     Expression<String>? indoorAltActivityId,
     Expression<String>? capabilities,
     Expression<String>? archivedAt,
+    Expression<String>? color,
+    Expression<String>? category,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -15765,6 +15847,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
         'indoor_alt_activity_id': indoorAltActivityId,
       if (capabilities != null) 'capabilities': capabilities,
       if (archivedAt != null) 'archived_at': archivedAt,
+      if (color != null) 'color': color,
+      if (category != null) 'category': category,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -15787,6 +15871,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
     Value<String?>? indoorAltActivityId,
     Value<String>? capabilities,
     Value<String?>? archivedAt,
+    Value<String?>? color,
+    Value<String?>? category,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -15808,6 +15894,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
       indoorAltActivityId: indoorAltActivityId ?? this.indoorAltActivityId,
       capabilities: capabilities ?? this.capabilities,
       archivedAt: archivedAt ?? this.archivedAt,
+      color: color ?? this.color,
+      category: category ?? this.category,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -15866,6 +15954,12 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
     if (archivedAt.present) {
       map['archived_at'] = Variable<String>(archivedAt.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -15896,6 +15990,8 @@ class ActivitiesCompanion extends UpdateCompanion<Activity> {
           ..write('indoorAltActivityId: $indoorAltActivityId, ')
           ..write('capabilities: $capabilities, ')
           ..write('archivedAt: $archivedAt, ')
+          ..write('color: $color, ')
+          ..write('category: $category, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -26500,6 +26596,8 @@ typedef $$ActivitiesTableCreateCompanionBuilder =
       Value<String?> indoorAltActivityId,
       required String capabilities,
       Value<String?> archivedAt,
+      Value<String?> color,
+      Value<String?> category,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -26521,6 +26619,8 @@ typedef $$ActivitiesTableUpdateCompanionBuilder =
       Value<String?> indoorAltActivityId,
       Value<String> capabilities,
       Value<String?> archivedAt,
+      Value<String?> color,
+      Value<String?> category,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -26607,6 +26707,16 @@ class $$ActivitiesTableFilterComposer
 
   ColumnFilters<String> get archivedAt => $composableBuilder(
     column: $table.archivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -26705,6 +26815,16 @@ class $$ActivitiesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -26786,6 +26906,12 @@ class $$ActivitiesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -26836,6 +26962,8 @@ class $$ActivitiesTableTableManager
                 Value<String?> indoorAltActivityId = const Value.absent(),
                 Value<String> capabilities = const Value.absent(),
                 Value<String?> archivedAt = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<String?> category = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -26855,6 +26983,8 @@ class $$ActivitiesTableTableManager
                 indoorAltActivityId: indoorAltActivityId,
                 capabilities: capabilities,
                 archivedAt: archivedAt,
+                color: color,
+                category: category,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -26876,6 +27006,8 @@ class $$ActivitiesTableTableManager
                 Value<String?> indoorAltActivityId = const Value.absent(),
                 required String capabilities,
                 Value<String?> archivedAt = const Value.absent(),
+                Value<String?> color = const Value.absent(),
+                Value<String?> category = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -26895,6 +27027,8 @@ class $$ActivitiesTableTableManager
                 indoorAltActivityId: indoorAltActivityId,
                 capabilities: capabilities,
                 archivedAt: archivedAt,
+                color: color,
+                category: category,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
