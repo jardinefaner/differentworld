@@ -649,11 +649,15 @@ class _AboutYouPageState extends State<AboutYouPage> {
       'if you tap me.';
 
   Future<void> _onVoiceTap(AuraVoice v) async {
-    // Persist the pick first (parent updates state synchronously)
-    // so the tile highlights instantly; then kick off the preview.
-    await widget.onPickVoice(v.id);
-    if (!mounted) return;
+    // Wave 142: wrap the FULL function body so anything thrown by
+    // `onPickVoice` (parent autosave hitting a StateError, for one)
+    // is captured here instead of escaping into the InkWell's
+    // discarded onTap Future and becoming an uncaught web error.
     try {
+      // Persist the pick first (parent updates state synchronously)
+      // so the tile highlights instantly; then kick off the preview.
+      await widget.onPickVoice(v.id);
+      if (!mounted) return;
       final source = await widget.ttsService.resolve(
         voiceId: v.id,
         text: _sampleTextFor(v),
@@ -903,35 +907,43 @@ class _DimensionPicker extends StatelessWidget {
 
   Future<void> _promptAdd(BuildContext context) async {
     final controller = TextEditingController();
-    final value = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Add $label'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(hintText: addHint),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+    try {
+      final value = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Add $label'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(hintText: addHint),
+            onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: const Text('Add'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (value == null || value.isEmpty) return;
-    await onAdd(value);
-    // Auto-select the newly added option so the kid doesn't have to
-    // tap it after adding.
-    onPick(value);
+      );
+      if (value == null || value.isEmpty) return;
+      await onAdd(value);
+      // Auto-select the newly added option so the kid doesn't have to
+      // tap it after adding.
+      onPick(value);
+    } on Object catch (e, st) {
+      // Wave 142: same StateError-escapes-onTap risk as elsewhere.
+      if (kDebugMode) {
+        debugPrint('[dimension-picker] add failed: $e\n$st');
+      }
+    } finally {
+      controller.dispose();
+    }
   }
 
   @override
@@ -972,8 +984,21 @@ class _DimensionPicker extends StatelessWidget {
                 label: Text(opt),
                 selected: selected == opt,
                 onSelected: (_) async {
-                  await onAdd(opt);
-                  onPick(opt);
+                  // Wave 142: errors from `onAdd` (e.g. StateError on
+                  // missing Space) would otherwise escape this async
+                  // lambda — which the ChoiceChip's onSelected
+                  // (`ValueChanged<bool>?`) silently discards — and
+                  // surface as an uncaught web error.
+                  try {
+                    await onAdd(opt);
+                    onPick(opt);
+                  } on Object catch (e, st) {
+                    if (kDebugMode) {
+                      debugPrint(
+                        '[dimension-picker] graduate default failed: $e\n$st',
+                      );
+                    }
+                  }
                 },
               ),
             // Trailing "+" chip. Tapping opens a dialog to type the

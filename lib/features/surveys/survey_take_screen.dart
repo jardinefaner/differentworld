@@ -164,14 +164,25 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // "modified during build" assertion.
     unawaited(Future.microtask(() {
       if (!mounted) return;
-      ref.read(kidModeProvider.notifier).enter();
-      // Wave 106: pin the locked URL so the router redirect can
-      // bounce any navigation away (e.g. web browser back) back to
-      // this screen. `PopScope.canPop: false` only catches Flutter
-      // Navigator pops, not `window.history.back()`.
-      ref
-          .read(kidModeLockedRouteProvider.notifier)
-          .pin('/surveys/${widget.templateId}/take');
+      // Wave 142: try/catch around the microtask body. If either
+      // notifier ever throws, the surface-level unawaited Future
+      // would bubble up to the web's top-level error handler with
+      // no useful context. Catching here keeps survey-take usable
+      // even if one of these wires is briefly unhealthy.
+      try {
+        ref.read(kidModeProvider.notifier).enter();
+        // Wave 106: pin the locked URL so the router redirect can
+        // bounce any navigation away (e.g. web browser back) back to
+        // this screen. `PopScope.canPop: false` only catches Flutter
+        // Navigator pops, not `window.history.back()`.
+        ref
+            .read(kidModeLockedRouteProvider.notifier)
+            .pin('/surveys/${widget.templateId}/take');
+      } on Object catch (e, st) {
+        if (kDebugMode) {
+          debugPrint('[survey-take] initState microtask failed: $e\n$st');
+        }
+      }
     }));
   }
 
@@ -273,10 +284,20 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// Wave 135: "+" button on the About-you page — add a new label
   /// to the per-program catalog. Returns once persisted; the
   /// caller auto-selects it.
+  ///
+  /// Wave 142: try/catch so a no-Space StateError (the same one that
+  /// _autosave can hit) never escapes into the InkWell's discarded
+  /// Future and lands as an uncaught web error.
   Future<void> _onIdentityAddOption(String dimension, String label) async {
-    await ref
-        .read(surveyActionsProvider)
-        .addPickerOption(dimension: dimension, label: label);
+    try {
+      await ref
+          .read(surveyActionsProvider)
+          .addPickerOption(dimension: dimension, label: label);
+    } on Object catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'surveys'),
+      );
+    }
   }
 
   /// Wave 138: kid tapped Start on the About-you page. Flip into
@@ -302,7 +323,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
             grade: _grade,
             school: _school,
           );
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // Wave 142: catch Object, not Exception. SurveyActions.save
+      // throws StateError when spaceId is null (no Space yet, race
+      // during cold boot) — StateError is Error, not Exception, so
+      // `on Exception` misses it. An uncaught Error from an onTap
+      // lambda becomes a top-level uncaught web error.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'surveys'),
       );
@@ -329,7 +355,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
           );
       if (!mounted) return;
       context.pop();
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // Wave 142: catch Object, not Exception. SurveyActions.save
+      // throws StateError when spaceId is null (no Space yet, race
+      // during cold boot) — StateError is Error, not Exception, so
+      // `on Exception` misses it. An uncaught Error from an onTap
+      // lambda becomes a top-level uncaught web error.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'surveys'),
       );
