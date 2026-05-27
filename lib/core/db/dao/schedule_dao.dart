@@ -189,6 +189,26 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Wave 155: set the status of a single block. The on-screen
+  /// "Skip" button on the today view calls this with 'skipped';
+  /// the edit sheet exposes 'cancelled' for the director. Pass
+  /// 'planned' to clear the state.
+  Future<void> setBlockStatus({
+    required String id,
+    required String status,
+    String? reason,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(scheduleBlocks)..where((b) => b.id.equals(id))).write(
+      ScheduleBlocksCompanion(
+        status: Value(status),
+        statusReason:
+            reason == null ? const Value<String?>(null) : Value(reason),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   /// Wave 157: cross-cohort lead-out. Same as `assignDailySubstitute`
   /// but covers `absentMemberId`'s planned blocks ANYWHERE in the
   /// space on `date` — useful when the director hears "Pat called out

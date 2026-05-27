@@ -16128,6 +16128,27 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('planned'),
+  );
+  static const VerificationMeta _statusReasonMeta = const VerificationMeta(
+    'statusReason',
+  );
+  @override
+  late final GeneratedColumn<String> statusReason = GeneratedColumn<String>(
+    'status_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -16164,6 +16185,8 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     locationOverrideId,
     kind,
     notes,
+    status,
+    statusReason,
     createdAt,
     updatedAt,
   ];
@@ -16271,6 +16294,21 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('status_reason')) {
+      context.handle(
+        _statusReasonMeta,
+        statusReason.isAcceptableOrUnknown(
+          data['status_reason']!,
+          _statusReasonMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -16344,6 +16382,14 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      statusReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status_reason'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -16379,6 +16425,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
   final String? locationOverrideId;
   final String kind;
   final String? notes;
+  final String status;
+  final String? statusReason;
   final String createdAt;
   final String updatedAt;
   const ScheduleBlock({
@@ -16394,6 +16442,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     this.locationOverrideId,
     required this.kind,
     this.notes,
+    required this.status,
+    this.statusReason,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -16424,6 +16474,10 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || statusReason != null) {
+      map['status_reason'] = Variable<String>(statusReason);
+    }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
     return map;
@@ -16453,6 +16507,10 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      status: Value(status),
+      statusReason: statusReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(statusReason),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -16480,6 +16538,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       ),
       kind: serializer.fromJson<String>(json['kind']),
       notes: serializer.fromJson<String?>(json['notes']),
+      status: serializer.fromJson<String>(json['status']),
+      statusReason: serializer.fromJson<String?>(json['statusReason']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -16502,6 +16562,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       'locationOverrideId': serializer.toJson<String?>(locationOverrideId),
       'kind': serializer.toJson<String>(kind),
       'notes': serializer.toJson<String?>(notes),
+      'status': serializer.toJson<String>(status),
+      'statusReason': serializer.toJson<String?>(statusReason),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -16520,6 +16582,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     Value<String?> locationOverrideId = const Value.absent(),
     String? kind,
     Value<String?> notes = const Value.absent(),
+    String? status,
+    Value<String?> statusReason = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => ScheduleBlock(
@@ -16539,6 +16603,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
         : this.locationOverrideId,
     kind: kind ?? this.kind,
     notes: notes.present ? notes.value : this.notes,
+    status: status ?? this.status,
+    statusReason: statusReason.present ? statusReason.value : this.statusReason,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -16564,6 +16630,10 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           : this.locationOverrideId,
       kind: data.kind.present ? data.kind.value : this.kind,
       notes: data.notes.present ? data.notes.value : this.notes,
+      status: data.status.present ? data.status.value : this.status,
+      statusReason: data.statusReason.present
+          ? data.statusReason.value
+          : this.statusReason,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -16584,6 +16654,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           ..write('locationOverrideId: $locationOverrideId, ')
           ..write('kind: $kind, ')
           ..write('notes: $notes, ')
+          ..write('status: $status, ')
+          ..write('statusReason: $statusReason, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -16604,6 +16676,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     locationOverrideId,
     kind,
     notes,
+    status,
+    statusReason,
     createdAt,
     updatedAt,
   );
@@ -16623,6 +16697,8 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           other.locationOverrideId == this.locationOverrideId &&
           other.kind == this.kind &&
           other.notes == this.notes &&
+          other.status == this.status &&
+          other.statusReason == this.statusReason &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -16640,6 +16716,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
   final Value<String?> locationOverrideId;
   final Value<String> kind;
   final Value<String?> notes;
+  final Value<String> status;
+  final Value<String?> statusReason;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -16656,6 +16734,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.locationOverrideId = const Value.absent(),
     this.kind = const Value.absent(),
     this.notes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.statusReason = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -16673,6 +16753,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.locationOverrideId = const Value.absent(),
     required String kind,
     this.notes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.statusReason = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -16698,6 +16780,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Expression<String>? locationOverrideId,
     Expression<String>? kind,
     Expression<String>? notes,
+    Expression<String>? status,
+    Expression<String>? statusReason,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -16717,6 +16801,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
         'location_override_id': locationOverrideId,
       if (kind != null) 'kind': kind,
       if (notes != null) 'notes': notes,
+      if (status != null) 'status': status,
+      if (statusReason != null) 'status_reason': statusReason,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -16736,6 +16822,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Value<String?>? locationOverrideId,
     Value<String>? kind,
     Value<String?>? notes,
+    Value<String>? status,
+    Value<String?>? statusReason,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -16754,6 +16842,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       locationOverrideId: locationOverrideId ?? this.locationOverrideId,
       kind: kind ?? this.kind,
       notes: notes ?? this.notes,
+      status: status ?? this.status,
+      statusReason: statusReason ?? this.statusReason,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -16801,6 +16891,12 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (statusReason.present) {
+      map['status_reason'] = Variable<String>(statusReason.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -16828,6 +16924,8 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
           ..write('locationOverrideId: $locationOverrideId, ')
           ..write('kind: $kind, ')
           ..write('notes: $notes, ')
+          ..write('status: $status, ')
+          ..write('statusReason: $statusReason, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -29073,6 +29171,8 @@ typedef $$ScheduleBlocksTableCreateCompanionBuilder =
       Value<String?> locationOverrideId,
       required String kind,
       Value<String?> notes,
+      Value<String> status,
+      Value<String?> statusReason,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -29091,6 +29191,8 @@ typedef $$ScheduleBlocksTableUpdateCompanionBuilder =
       Value<String?> locationOverrideId,
       Value<String> kind,
       Value<String?> notes,
+      Value<String> status,
+      Value<String?> statusReason,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -29162,6 +29264,16 @@ class $$ScheduleBlocksTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get statusReason => $composableBuilder(
+    column: $table.statusReason,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -29245,6 +29357,16 @@ class $$ScheduleBlocksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get statusReason => $composableBuilder(
+    column: $table.statusReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -29309,6 +29431,14 @@ class $$ScheduleBlocksTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get statusReason => $composableBuilder(
+    column: $table.statusReason,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -29361,6 +29491,8 @@ class $$ScheduleBlocksTableTableManager
                 Value<String?> locationOverrideId = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> statusReason = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -29377,6 +29509,8 @@ class $$ScheduleBlocksTableTableManager
                 locationOverrideId: locationOverrideId,
                 kind: kind,
                 notes: notes,
+                status: status,
+                statusReason: statusReason,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -29395,6 +29529,8 @@ class $$ScheduleBlocksTableTableManager
                 Value<String?> locationOverrideId = const Value.absent(),
                 required String kind,
                 Value<String?> notes = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> statusReason = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -29411,6 +29547,8 @@ class $$ScheduleBlocksTableTableManager
                 locationOverrideId: locationOverrideId,
                 kind: kind,
                 notes: notes,
+                status: status,
+                statusReason: statusReason,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

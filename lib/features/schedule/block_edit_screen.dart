@@ -455,7 +455,100 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
           ),
+          // Wave 155: skip / restore. Only shown when editing an
+          // existing block — adding a brand-new block always starts
+          // as planned. The director's "cancel" with a reason lives
+          // here too: tap Skip → optional reason → snackbar.
+          if (widget.isEdit && widget.existing != null) ...[
+            const SizedBox(height: 12),
+            _SkipRestoreRow(block: widget.existing!),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// Wave 155: skip / restore action on the block edit sheet. Shows
+/// the current status (planned / skipped / cancelled), and a
+/// single button to toggle.
+class _SkipRestoreRow extends ConsumerWidget {
+  const _SkipRestoreRow({required this.block});
+  final ScheduleBlock block;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isSkipped = block.status == BlockStatus.skipped ||
+        block.status == BlockStatus.cancelled;
+    return OutlinedButton.icon(
+      onPressed: () async {
+        if (isSkipped) {
+          await ref.read(scheduleActionsProvider).setBlockStatus(
+                id: block.id,
+                status: BlockStatus.planned,
+              );
+          if (context.mounted) Navigator.of(context).maybePop();
+          return;
+        }
+        // Optional reason prompt — kid-mode friendly default.
+        final reason = await showDialog<String>(
+          context: context,
+          builder: (ctx) {
+            final ctrl = TextEditingController();
+            return AlertDialog(
+              title: const Text('Skip this block'),
+              content: TextField(
+                controller: ctrl,
+                decoration: const InputDecoration(
+                  labelText: 'Reason (optional)',
+                  hintText: 'Rain · low attendance · guest cancelled',
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                onSubmitted: (_) => Navigator.of(ctx).pop(ctrl.text.trim()),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(null),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(ctrl.text.trim()),
+                  child: const Text('Skip'),
+                ),
+              ],
+            );
+          },
+        );
+        if (reason == null) return;
+        await ref.read(scheduleActionsProvider).setBlockStatus(
+              id: block.id,
+              status: BlockStatus.skipped,
+              reason: reason.isEmpty ? null : reason,
+            );
+        if (context.mounted) Navigator.of(context).maybePop();
+      },
+      icon: Icon(
+        isSkipped ? Icons.replay : Icons.event_busy_outlined,
+        color: isSkipped ? theme.colorScheme.primary : theme.colorScheme.error,
+      ),
+      label: Text(
+        isSkipped
+            ? 'Restore (was: ${block.status})'
+            : 'Skip this block',
+        style: TextStyle(
+          color:
+              isSkipped ? theme.colorScheme.primary : theme.colorScheme.error,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        side: BorderSide(
+          color: (isSkipped
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.error)
+              .withValues(alpha: 0.4),
+        ),
       ),
     );
   }

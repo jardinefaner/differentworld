@@ -648,9 +648,17 @@ class _BlockTile extends StatelessWidget {
         ? scheme.onTertiaryContainer
         : scheme.onSurface;
 
+    // Wave 155: dim skipped / cancelled blocks so the today view
+    // visually fades them while still showing they were on the
+    // plan. The director / family can read the reason in the edit
+    // sheet.
+    final isSkipped = block.status == BlockStatus.skipped ||
+        block.status == BlockStatus.cancelled;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Material(
+      child: Opacity(
+        opacity: isSkipped ? 0.55 : 1.0,
+        child: Material(
         color: container,
         borderRadius: BorderRadius.circular(14),
         clipBehavior: Clip.antiAlias,
@@ -699,6 +707,21 @@ class _BlockTile extends StatelessWidget {
                           location!.name,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: onContainer.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                      if (isField) ...[
+                        const SizedBox(height: 4),
+                        TextButton.icon(
+                          onPressed: () =>
+                              context.push('/trips/${block.id}'),
+                          icon: const Icon(Icons.fact_check_outlined,
+                              size: 16),
+                          label: const Text('Trip details'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            minimumSize: const Size(0, 28),
                           ),
                         ),
                       ],
@@ -769,6 +792,7 @@ class _BlockTile extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

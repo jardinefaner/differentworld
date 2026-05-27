@@ -1,4 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -36,9 +38,21 @@ class NowNextStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final date = todayIsoLocal();
-    final blocksAsync = ref.watch(
-      scheduleDayForGroupProvider((groupId: groupId, date: date)),
-    );
+    // Wave 160: viewer-aware data source. Staff devices have
+    // schedule_blocks in local Drift via the by_space sync; guardian
+    // devices don't, so they fetch via the PostgREST fallback (same
+    // pattern as attendance / entries / attachments).
+    final viewer = ref.watch(viewerProvider);
+    final AsyncValue<List<ScheduleBlock>> blocksAsync;
+    if (viewer is GuardianViewer) {
+      blocksAsync = ref.watch(
+        familyScheduleForGroupProvider((groupId: groupId, dateIso: date)),
+      );
+    } else {
+      blocksAsync = ref.watch(
+        scheduleDayForGroupProvider((groupId: groupId, date: date)),
+      );
+    }
     final activities =
         ref.watch(allActivitiesProvider).value ?? const <Activity>[];
     final locations =

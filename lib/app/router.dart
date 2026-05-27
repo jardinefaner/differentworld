@@ -35,6 +35,7 @@ import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
+import 'package:differentworld/features/schedule/trip_detail_screen.dart';
 import 'package:differentworld/features/schedule/weekly_template_screen.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
@@ -429,6 +430,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'Weekly template',
               child: WeeklyTemplateScreen(),
+            ),
+          ),
+          // Wave 159: trip detail (MVP). One screen per
+          // field-trip schedule_block — destination, slips,
+          // vehicles. The full multi-step wizard sits on top later.
+          GoRoute(
+            path: 'trips/:blockId',
+            builder: (_, state) => RouteTitle(
+              title: 'Trip details',
+              child: TripDetailScreen(
+                blockId: state.pathParameters['blockId']!,
+              ),
             ),
           ),
           // Block create/edit route (Wave 26, replaces

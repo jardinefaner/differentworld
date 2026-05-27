@@ -175,6 +175,53 @@ final familyAttachmentsForEntityProvider =
   },
 );
 
+/// Wave 160: schedule blocks for a kid's group on a given date.
+/// Guardian devices don't have `schedule_blocks` in their local
+/// Drift (the by_space sync only delivers rows to members of the
+/// space, not guardians). Reads via PostgREST. Per-cohort 2-level
+/// filter not needed — we have `group_id` on the row itself.
+///
+/// Returns rows ordered by start_at ascending. Includes
+/// skipped/cancelled blocks; the consumer dims them visually.
+typedef FamilyScheduleKey = ({String groupId, String dateIso});
+
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final familyScheduleForGroupProvider = FutureProvider.autoDispose
+    .family<List<ScheduleBlock>, FamilyScheduleKey>((ref, key) async {
+  final viewer = ref.watch(viewerProvider);
+  if (viewer is! GuardianViewer) return const <ScheduleBlock>[];
+  final supabase = Supabase.instance.client;
+  final rows = await supabase
+      .from('schedule_blocks')
+      .select()
+      .eq('group_id', key.groupId)
+      .eq('date', key.dateIso)
+      .order('start_at', ascending: true);
+  return [
+    for (final r in rows) _scheduleBlockFromMap(r),
+  ];
+});
+
+ScheduleBlock _scheduleBlockFromMap(Map<String, dynamic> r) => ScheduleBlock(
+      id: r['id'] as String,
+      spaceId: r['space_id'] as String,
+      groupId: r['group_id'] as String,
+      date: r['date'] as String,
+      startAt: r['start_at'] as String,
+      endAt: r['end_at'] as String,
+      activityId: r['activity_id'] as String?,
+      leadMemberId: r['lead_member_id'] as String?,
+      leadSubstituteMemberId: r['lead_substitute_member_id'] as String?,
+      locationOverrideId: r['location_override_id'] as String?,
+      kind: r['kind'] as String? ?? 'on_site',
+      notes: r['notes'] as String?,
+      status: r['status'] as String? ?? 'planned',
+      statusReason: r['status_reason'] as String?,
+      createdAt: r['created_at'] as String,
+      updatedAt: r['updated_at'] as String,
+    );
+
 // ---------------------------------------------------------------------
 // Converters — PostgREST snake_case → Drift model. Each one mirrors the
 // table's Drift class field-for-field. `details` and `capabilities`

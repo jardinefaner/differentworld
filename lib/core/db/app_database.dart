@@ -584,6 +584,11 @@ class ScheduleBlocks extends Table {
   TextColumn get locationOverrideId => text().nullable()();
   TextColumn get kind => text()(); // on_site / field_trip / break / closed
   TextColumn get notes => text().nullable()();
+  // Wave 155: status of this block — 'planned' (default) / 'skipped'
+  // / 'cancelled'. The today view dims skipped/cancelled blocks; the
+  // family lens shows the reason inline.
+  TextColumn get status => text().withDefault(const Constant('planned'))();
+  TextColumn get statusReason => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 

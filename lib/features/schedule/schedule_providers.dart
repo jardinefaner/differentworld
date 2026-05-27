@@ -15,6 +15,15 @@ class BlockKind {
   static const String closed = 'closed';
 }
 
+/// Wave 155: status discriminator for the `schedule_blocks.status`
+/// column. `planned` is the default; `skipped` / `cancelled` are
+/// authored after the fact and dim the block on the today view.
+class BlockStatus {
+  static const String planned = 'planned';
+  static const String skipped = 'skipped';
+  static const String cancelled = 'cancelled';
+}
+
 /// Today's ISO date in the device's local zone — matches the way
 /// `schedule_blocks.date` is written. Stored as `YYYY-MM-DD`.
 String todayIsoLocal() => todayKey();
@@ -170,6 +179,22 @@ class ScheduleActions {
       date: date,
       absentMemberId: absentMemberId,
       substituteMemberId: substituteMemberId,
+    );
+  }
+
+  /// Wave 155: skip or cancel a block without deleting it. The
+  /// today view's skip button calls this with 'skipped'; the edit
+  /// sheet exposes 'cancelled' for the director.
+  Future<void> setBlockStatus({
+    required String id,
+    required String status,
+    String? reason,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.scheduleDao.setBlockStatus(
+      id: id,
+      status: status,
+      reason: reason,
     );
   }
 

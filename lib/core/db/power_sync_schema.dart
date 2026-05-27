@@ -334,6 +334,10 @@ const appSchema = Schema([
     Column.text('location_override_id'),
     Column.text('kind'),
     Column.text('notes'),
+    // Wave 155: status of this block — 'planned' / 'skipped' /
+    // 'cancelled' + optional free-text reason for the family lens.
+    Column.text('status'),
+    Column.text('status_reason'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
