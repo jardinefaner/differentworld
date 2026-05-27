@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -189,16 +187,17 @@ class _MobileCatalog extends StatelessWidget {
                 ),
               ),
         ] else ...[
-          _JumpToStrip(
-            categories: categories,
-            onTap: (i) => _scrollToCategory(context, categories[i].id),
-          ),
-          const SizedBox(height: 16),
+          // Wave 163.2: the JUMP TO chip strip was dropped after the
+          // Council review confirmed it scrolled under the floating
+          // chrome (by design across the app, but visually noisy on
+          // a navigation element). The 5 colored category heroes are
+          // the navigation — they scan well on mobile and naturally
+          // signal "scroll for more." If a future user research
+          // surface asks for quick category jumps, revisit as either
+          // a pinned sliver (with chrome-aware delegate) or an
+          // actions-slot bottom-sheet pattern.
           for (final cat in categories) ...[
-            _CategoryHeader(
-              key: ValueKey('cat-header-${cat.id.name}'),
-              category: cat,
-            ),
+            _CategoryHeader(category: cat),
             const SizedBox(height: 10),
             for (final tool in cat.tools)
               Padding(
@@ -214,37 +213,6 @@ class _MobileCatalog extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  /// Best-effort scroll to a category section. Uses the section
-  /// header's stable ValueKey to find its element and scroll it into
-  /// view. Silent no-op if the element isn't laid out yet.
-  void _scrollToCategory(BuildContext context, ToolkitCategoryId id) {
-    final key = ValueKey('cat-header-${id.name}');
-    void scrollIt(BuildContext ctx) {
-      final renderObject = ctx.findRenderObject();
-      if (renderObject == null) return;
-      unawaited(
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 360),
-          curve: Curves.easeOutCubic,
-          alignment: 0.05,
-        ),
-      );
-    }
-
-    BuildContext? matchCtx;
-    void visit(Element element) {
-      if (element.widget.key == key) {
-        matchCtx = element;
-        return;
-      }
-      element.visitChildren(visit);
-    }
-
-    (context as Element).visitChildren(visit);
-    if (matchCtx != null) scrollIt(matchCtx!);
   }
 }
 
@@ -714,108 +682,12 @@ class _SearchResultCard extends StatelessWidget {
   }
 }
 
-/// "Jump to" row above the mobile catalog feed. Horizontally
-/// scrollable list of small category chips that scroll the page to
-/// the matching section. Strictly affordance — the user can also
-/// just scroll the feed manually.
-class _JumpToStrip extends StatelessWidget {
-  const _JumpToStrip({required this.categories, required this.onTap});
-
-  final List<ToolkitCategory> categories;
-  final ValueChanged<int> onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.zero,
-        itemCount: categories.length + 1,
-        separatorBuilder: (_, _) => const SizedBox(width: 6),
-        itemBuilder: (context, i) {
-          if (i == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Center(
-                child: Text(
-                  'JUMP TO',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            );
-          }
-          final cat = categories[i - 1];
-          return _JumpChip(category: cat, onTap: () => onTap(i - 1));
-        },
-      ),
-    );
-  }
-}
-
-class _JumpChip extends StatelessWidget {
-  const _JumpChip({required this.category, required this.onTap});
-
-  final ToolkitCategory category;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      label: 'Jump to ${category.name}',
-      button: true,
-      child: Material(
-        color: category.color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: category.color.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ExcludeSemantics(
-                  child: Text(
-                    category.glyph,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: category.color,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  category.name,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: category.color,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Category-selector chip strip used in the WIDE master pane (gates
-/// which 6 tools the list below shows). Differs from `_JumpToStrip`
-/// (mobile) in behavior — that one scrolls; this one filters.
+/// Category-selector chip strip used in the WIDE master pane — gates
+/// which 6 tools the list below shows. Acts as a filter, not a jump
+/// (the wide pane has no long-scroll feed to jump within). Chip
+/// tap-target is 48dp tall per the project's accessibility floor;
+/// the visual chip is 32dp tall, centered inside a transparent 48dp
+/// strip so cursor/touch hits the same target the chip suggests.
 class _ChipStrip extends StatelessWidget {
   const _ChipStrip({
     required this.categories,
@@ -830,7 +702,7 @@ class _ChipStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 36,
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
@@ -865,45 +737,53 @@ class _FilterChip extends StatelessWidget {
       label: category.name,
       button: true,
       selected: active,
-      child: Material(
-        color: active
-            ? color.withValues(alpha: 0.16)
-            : theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
+      child: Center(
+        child: Material(
+          color: active
+              ? color.withValues(alpha: 0.16)
+              : theme.colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: active
-                    ? color.withValues(alpha: 0.5)
-                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: onTap,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: active
+                      ? color.withValues(alpha: 0.5)
+                      : theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.4),
+                ),
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ExcludeSemantics(
-                  child: Text(
-                    category.glyph,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: active ? color : theme.colorScheme.onSurfaceVariant,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ExcludeSemantics(
+                    child: Text(
+                      category.glyph,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: active
+                            ? color
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  category.name,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: active ? color : theme.colorScheme.onSurfaceVariant,
-                    fontWeight:
-                        active ? FontWeight.w700 : FontWeight.w500,
+                  const SizedBox(width: 6),
+                  Text(
+                    category.name,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: active
+                          ? color
+                          : theme.colorScheme.onSurfaceVariant,
+                      fontWeight:
+                          active ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -919,7 +799,6 @@ class _CategoryHeader extends StatelessWidget {
   const _CategoryHeader({
     required this.category,
     this.large = false,
-    super.key,
   });
 
   final ToolkitCategory category;

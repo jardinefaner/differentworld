@@ -78,7 +78,16 @@ class _UnknownTool extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => context.go('/settings/toolkit'),
+              // Prefer pop over go so we don't clobber the back-stack
+              // when the user reached here via a normal in-app push.
+              // Fall through to go for the cold-deep-link case.
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/settings/toolkit');
+                }
+              },
               icon: const Icon(Icons.arrow_back),
               label: const Text('Back to toolkit'),
             ),
