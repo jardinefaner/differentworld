@@ -56,11 +56,19 @@ const SUPABASE_SERVICE_ROLE_KEY =
 // using us as a free Deepgram-TTS proxy by spamming arbitrary voice
 // IDs. If we add a new voice to the cast, this list grows with it.
 const ALLOWED_VOICES = new Set<string>([
+  // English (Wave 120)
   'aura-2-thalia-en',
   'aura-2-hera-en',
   'aura-2-atlas-en',
   'aura-2-apollo-en',
   'aura-2-andromeda-en',
+  // Spanish — Latin American (Wave 149).
+  // Drift this list with `lib/features/voice/aura_voices.dart`.
+  'aura-2-celeste-es',
+  'aura-2-estrella-es',
+  'aura-2-nestor-es',
+  'aura-2-javier-es',
+  'aura-2-sirio-es',
 ]);
 
 const BUCKET = 'tts-cache';

@@ -286,7 +286,7 @@ pw.Widget _surveyQA(SurveyQuestion q, SurveyAnswers a) {
         return ks.map((k) {
           final opt = q.options.firstWhere(
             (o) => o.key == k,
-            orElse: () => SurveyOption(key: k, label: k),
+            orElse: () => SurveyOption(key: k, label: k, labelEs: k),
           );
           return opt.label;
         }).join('; ');

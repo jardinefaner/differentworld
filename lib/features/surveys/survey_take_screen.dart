@@ -5,6 +5,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
+import 'package:differentworld/features/surveys/survey_prefs.dart';
+import 'package:differentworld/features/surveys/survey_strings.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/survey_chrome.dart';
@@ -78,6 +80,13 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// then, the PageView stays hidden and the About-you surface
   /// fills the body.
   bool _started = false;
+
+  /// Wave 149: current survey language (EN / ES). Mirrors
+  /// `surveyLanguageProvider` but pulled into a field so non-build
+  /// methods (`_playQuestion`, autosave) can read it without doing
+  /// a ref.read each time. The build method writes this from the
+  /// AsyncValue; methods read `_language`.
+  SurveyLanguage _language = SurveyLanguage.en;
 
   /// Wave 130: TTS service held as a State field, not via a Riverpod
   /// autoDispose provider. The previous shape disposed the
@@ -226,26 +235,28 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     if (index < 0 || index >= pages.length) return;
     final page = pages[index];
     final q = page.question;
+    // Wave 149: choose the language-appropriate text for both the
+    // spoken narration and the cache key. The content-hash tag
+    // already separates EN vs ES audio under the same (template,
+    // question) pair, but `__${lang.code}` makes the bucket layout
+    // human-readable too.
+    final lang = _language;
 
     final String text;
     final String cacheSuffix;
     if (page.isOption) {
       final opt = q.options[page.optionIndex!];
-      text = opt.label.trim();
-      cacheSuffix = '${q.key}__${opt.key}';
+      text = opt.labelFor(lang).trim();
+      cacheSuffix = '${q.key}__${opt.key}__${lang.code}';
     } else {
-      text = q.prompt.trim();
-      cacheSuffix = q.key;
+      text = q.promptFor(lang).trim();
+      cacheSuffix = '${q.key}__${lang.code}';
     }
     if (text.isEmpty) return;
-    // Wave 145: incorporate a content fingerprint into the cache key
-    // so when we rewrite a prompt / option label (as we did in this
-    // wave for the activities yes/no labels), the next play resolves
-    // a fresh URL from the Edge Function instead of serving the
-    // STALE audio that was cached under the same (template, key)
-    // pair. The fingerprint is `String.hashCode` in base36 — small,
-    // deterministic across runs (within a single dart2js / AOT
-    // build), and changes whenever the text changes.
+    // Wave 145: content fingerprint so a copy edit invalidates the
+    // cached audio for that one option. Wave 149: the language code
+    // is now baked into cacheSuffix too, so EN and ES audio for the
+    // same question never collide.
     final tag = text.hashCode.toUnsigned(32).toRadixString(36);
     final cacheKey = '${t.id}__${cacheSuffix}__$tag'
         .replaceAll(RegExp(r'[^a-zA-Z0-9_\-.]'), '_');
@@ -306,6 +317,61 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'surveys'),
       );
+    }
+  }
+
+  /// Wave 149: language toggle on the About-you page. Switching
+  /// language clears the current voiceId (the EN cast and the ES
+  /// cast don't overlap), so the kid re-picks from the matching
+  /// cast before Start re-enables.
+  void _onPickLanguage(SurveyLanguage lang) {
+    if (lang == _language) return;
+    setState(() {
+      _language = lang;
+      _voiceId = null;
+    });
+    persistSurveyLanguage(ref, lang);
+    unawaited(_autosave());
+  }
+
+  /// Wave 149: volume slider on the About-you page. Apply to the
+  /// active player immediately + persist for the next session.
+  void _onVolumeChanged(double v) {
+    persistSurveyVolume(ref, v);
+    unawaited(_tts.setVolume(v));
+  }
+
+  /// Wave 149: required-question gate. Returns true if the current
+  /// page's question is answered (or is a practice — practices stay
+  /// optional). Page index 0..totalQuestions-1; the closeout has
+  /// its own logic.
+  bool _canAdvanceFromCurrent(
+      SurveyTemplate t, List<_SurveyPage> pages) {
+    if (_index >= pages.length) return true; // closeout
+    final page = pages[_index];
+    final q = page.question;
+    if (q.isPractice) return true;
+    switch (q.kind) {
+      case SurveyQuestionKind.agree3:
+        // Agree3 auto-advances on tap; the bottom Next is hidden for
+        // it anyway. Returning true means tap-Next stays harmless if
+        // ever exposed.
+        return _answers.agree3(q.key) != null;
+      case SurveyQuestionKind.multiselect:
+        // Each multiselect option page is its OWN yes/no choice. A
+        // yes adds the option to the picks list; a no removes it.
+        // We require an explicit tap (yes or no) on this option
+        // before advancing — i.e. the kid must have answered THIS
+        // option page, not just any option of the same question.
+        // Since both yes and no are valid, the only signal is that
+        // SOMETHING about this question has been touched. For the
+        // FIRST option page of a multiselect, we accept ANY tap on
+        // any option of the same question; for subsequent options
+        // we require the same. Effectively: the answers blob has a
+        // key for this question.
+        return _answers.isAnswered(q);
+      case SurveyQuestionKind.text:
+        return _answers.text(q.key).trim().isNotEmpty;
     }
   }
 
@@ -470,6 +536,25 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // gesture. The hidden top-right tap target is the staff unlock.
     final inKidMode = ref.watch(kidModeProvider);
     final blockPop = inKidMode && !_staffUnlocked;
+
+    // Wave 149: sync the current language + volume out of their
+    // providers into local state. `_language` is read by
+    // non-build methods like `_playQuestion`; volume is forwarded to
+    // the TTS service the moment it changes.
+    final lang = ref.watch(surveyLanguageProvider).value
+        ?? SurveyLanguage.en;
+    if (lang != _language) _language = lang;
+    final volume = ref.watch(surveyVolumeProvider).value ?? 1.0;
+    // Push volume to the player whenever it changes (also covers
+    // first build — initial player volume is 1.0 from the constructor,
+    // but if persisted volume is lower we want it applied).
+    unawaited(_tts.setVolume(volume));
+
+    // Wave 149: the bottom Next is gated on the current page's
+    // question being answered (required-question rule). Practice
+    // questions stay optional. Agree3 auto-advances on tap, so this
+    // really gates multiselect/text from being skipped blank.
+    final canAdvance = _canAdvanceFromCurrent(t, pages);
     return RouteTitle(
       title: t.title,
       child: PopScope(
@@ -549,9 +634,20 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                 onAddIdentityOption: _onIdentityAddOption,
                                 onStart: _identityComplete ? _onStart : null,
                                 ttsService: _tts,
+                                language: lang,
+                                onPickLanguage: _onPickLanguage,
+                                volume: volume,
+                                onVolumeChanged: _onVolumeChanged,
                               )
                             : PageView.builder(
                                 controller: _page,
+                                // Wave 149: disable user swipe. The
+                                // bottom Next button (and the agree3
+                                // auto-advance) are the ONLY way
+                                // forward, so the required-answer
+                                // gate can't be bypassed by a swipe.
+                                physics:
+                                    const NeverScrollableScrollPhysics(),
                                 onPageChanged: (i) {
                                   setState(() => _index = i);
                                   if (i < totalQuestions) {
@@ -575,6 +671,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                       scoredTotal: t.scored.length,
                                       saving: _saving,
                                       onFinish: _saving ? null : _submit,
+                                      language: lang,
                                     );
                                   }
                                   final page = pages[i];
@@ -607,6 +704,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                           .multiselect(q.key)
                                           .contains(opt.key),
                                       onReplayTts: onReplay,
+                                      language: lang,
                                       onPickYes: () {
                                         final picked = _answers
                                             .multiselect(q.key)
@@ -640,6 +738,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                     question: q,
                                     answers: _answers,
                                     onReplayTts: onReplay,
+                                    language: lang,
                                     onAnswered:
                                         (next, {required autoAdvance}) {
                                       setState(() => _answers = next);
@@ -683,7 +782,7 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                           ));
                                         },
                                   icon: const Icon(Icons.arrow_back),
-                                  label: const Text('Back'),
+                                  label: Text(SurveyStrings.of(lang).back),
                                 ),
                                 const Spacer(),
                                 if (!atCloseout)
@@ -691,11 +790,14 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                     question: t.questions[
                                         _safeQuestionIndex(t, _index)],
                                     atCloseout: false,
-                                    onTap: () {
-                                      unawaited(
-                                          HapticFeedback.selectionClick());
-                                      _advanceFrom(_index);
-                                    },
+                                    language: lang,
+                                    onTap: canAdvance
+                                        ? () {
+                                            unawaited(HapticFeedback
+                                                .selectionClick());
+                                            _advanceFrom(_index);
+                                          }
+                                        : null,
                                   ),
                               ],
                             ),
@@ -744,6 +846,10 @@ class _AboutYouBinding extends ConsumerWidget {
     required this.onAddIdentityOption,
     required this.onStart,
     required this.ttsService,
+    required this.language,
+    required this.onPickLanguage,
+    required this.volume,
+    required this.onVolumeChanged,
   });
 
   final String? voiceId;
@@ -756,6 +862,10 @@ class _AboutYouBinding extends ConsumerWidget {
       onAddIdentityOption;
   final VoidCallback? onStart;
   final SurveyTtsService ttsService;
+  final SurveyLanguage language;
+  final ValueChanged<SurveyLanguage> onPickLanguage;
+  final double volume;
+  final ValueChanged<double> onVolumeChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -795,6 +905,10 @@ class _AboutYouBinding extends ConsumerWidget {
       onAddIdentityOption: onAddIdentityOption,
       onStart: onStart,
       ttsService: ttsService,
+      language: language,
+      onPickLanguage: onPickLanguage,
+      volume: volume,
+      onVolumeChanged: onVolumeChanged,
     );
   }
 }

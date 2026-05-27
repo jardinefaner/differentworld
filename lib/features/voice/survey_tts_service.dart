@@ -205,6 +205,18 @@ class SurveyTtsService {
     }
   }
 
+  /// Wave 149: set output volume in the [0.0, 1.0] range. The
+  /// About-you page wires its slider here so a director can dial
+  /// down for a loud cohort. just_audio accepts setVolume even
+  /// before a source is loaded — safe to call at any time.
+  Future<void> setVolume(double volume) async {
+    try {
+      await _player.setVolume(volume.clamp(0.0, 1.0));
+    } on Object catch (_) {
+      // best-effort
+    }
+  }
+
   /// Dispose the player. Call from the survey-take screen's
   /// dispose. The service itself is one-per-screen via a Riverpod
   /// `autoDispose` provider, so this fires automatically.

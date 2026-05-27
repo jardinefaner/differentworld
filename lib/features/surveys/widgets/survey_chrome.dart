@@ -1,3 +1,4 @@
+import 'package:differentworld/features/surveys/survey_strings.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/features/surveys/widgets/chibi_smiley.dart';
@@ -10,17 +11,24 @@ import 'package:flutter/material.dart';
 
 /// Bottom-bar Next button. Hidden during agree3 (auto-advance handles
 /// that) and at the closeout page.
+///
+/// Wave 149: takes a language so the label localises, and accepts a
+/// nullable `onTap` so the parent can disable it until the current
+/// question's answer is recorded (required-question gate). Disabled
+/// state styling comes from FilledButton automatically.
 class SurveyForwardButton extends StatelessWidget {
   const SurveyForwardButton({
     required this.question,
     required this.atCloseout,
     required this.onTap,
+    required this.language,
     super.key,
   });
 
   final SurveyQuestion question;
   final bool atCloseout;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final SurveyLanguage language;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +39,7 @@ class SurveyForwardButton extends StatelessWidget {
     return FilledButton.icon(
       onPressed: onTap,
       icon: const Icon(Icons.arrow_forward),
-      label: const Text('Next'),
+      label: Text(SurveyStrings.of(language).next),
     );
   }
 }
@@ -169,6 +177,7 @@ class SurveyQuestionPage extends StatelessWidget {
     required this.question,
     required this.answers,
     required this.onAnswered,
+    required this.language,
     this.onReplayTts,
     super.key,
   });
@@ -178,6 +187,11 @@ class SurveyQuestionPage extends StatelessWidget {
   final SurveyAnswers answers;
   final void Function(SurveyAnswers next, {required bool autoAdvance})
       onAnswered;
+
+  /// Wave 149: which translation to render. Drives both the prompt
+  /// text on screen and the strings inside the input widgets (e.g.
+  /// the "Tap to hear it again" semantics hint).
+  final SurveyLanguage language;
 
   /// Wave 131: tapping the prompt text replays the TTS audio. Wired by
   /// survey_take_screen to call `_playQuestion(_index)`. Optional —
@@ -189,48 +203,39 @@ class SurveyQuestionPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    // Wave 144: drop the CustomScrollView + SliverFillRemaining
-    // scaffold entirely. `SliverFillRemaining(hasScrollBody: false)`
-    // queries the intrinsic height of its child during layout —
-    // and `Agree3Row` (inside this page) uses a LayoutBuilder to
-    // size smileys responsively. LayoutBuilder explicitly does
-    // NOT support intrinsic-dimension queries, so the layout
-    // throws → every Text is NEEDS-LAYOUT → SelectionArea sorts
-    // a still-unlaid-out RenderParagraph → null-check operator
-    // explosion. Wave 136 swapped IntrinsicHeight for
-    // SliverFillRemaining thinking it was safer; both have the
-    // same problem.
-    //
-    // Replacement: plain `Center + ConstrainedBox + Padding +
-    // Column`. The parent (PageView page → Expanded → tight box
-    // constraints) gives a bounded height, so Column with
-    // mainAxisSize.max centers content within it. No intrinsic
-    // queries, no scroll wrapper. For the kid's typical content
-    // (prompt ~80 dp + spacer 32 + smileys ~144 dp) we're well
-    // under the viewport.
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    final strings = SurveyStrings.of(language);
+    final promptText = question.promptFor(language);
+    // Wave 149: SingleChildScrollView wrapper handles 200 % text
+    // scale / small-phone viewports gracefully — content above the
+    // viewport limit becomes scrollable instead of overflowing. The
+    // inner ConstrainedBox(minHeight) keeps mainAxisAlignment.center
+    // working when the content IS shorter than the viewport.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
           if (question.isPractice)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _PracticeBadge(theme: theme),
+              child: _PracticeBadge(theme: theme, label: strings.practiceBadge),
             ),
           // Wave 131: prompt is tappable for replay. Wrapped in a
           // Semantics with a hint so screen readers announce the
           // tap target. Visual hint = subtle volume icon inline
           // when onReplayTts is wired.
           Semantics(
-            label: question.prompt,
-            hint: onReplayTts == null
-                ? null
-                : 'Tap to hear it again',
+            label: promptText,
+            hint: onReplayTts == null ? null : strings.tapToHearAgain,
             button: onReplayTts != null,
             child: InkWell(
               onTap: onReplayTts,
@@ -242,7 +247,7 @@ class SurveyQuestionPage extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        question.prompt,
+                        promptText,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall,
                       ),
@@ -280,17 +285,22 @@ class SurveyQuestionPage extends StatelessWidget {
                 onAnswered: (next) => onAnswered(next, autoAdvance: false),
               ),
           },
-            ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
 class _PracticeBadge extends StatelessWidget {
-  const _PracticeBadge({required this.theme});
+  const _PracticeBadge({required this.theme, required this.label});
   final ThemeData theme;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +312,7 @@ class _PracticeBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
-          'PRACTICE',
+          label,
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onTertiaryContainer,
             letterSpacing: 1.4,
@@ -317,6 +327,10 @@ class _PracticeBadge extends StatelessWidget {
 /// N+1 page after the last question — celebration chibi + finish
 /// button. Renders a warning copy if not every scored question is
 /// answered (the kid can still finish; partial saves are fine).
+///
+/// Wave 149: wrapped in a SingleChildScrollView so 200% text scale
+/// or short phones don't overflow the page (was the "the end has
+/// overflow on mobile" report); also language-aware.
 class SurveyCloseoutPage extends StatelessWidget {
   const SurveyCloseoutPage({
     required this.template,
@@ -324,6 +338,7 @@ class SurveyCloseoutPage extends StatelessWidget {
     required this.scoredTotal,
     required this.saving,
     required this.onFinish,
+    required this.language,
     super.key,
   });
 
@@ -332,60 +347,68 @@ class SurveyCloseoutPage extends StatelessWidget {
   final int scoredTotal;
   final bool saving;
   final VoidCallback? onFinish;
+  final SurveyLanguage language;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = SurveyStrings.of(language);
     final allAnswered = answeredScored == scoredTotal;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ChibiSmiley(
-              variant: ChibiVariant.circleGold,
-              expression: ChibiExpression.excited,
-              size: 160,
-              selected: true,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - 64,
             ),
-            const SizedBox(height: 16),
-            Text(
-              allAnswered ? 'All done!' : "You're almost there!",
-              style: theme.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              allAnswered
-                  ? 'Great job. Tap Finish to save your answers.'
-                  // Wave 146: the old "fill in the $scoredTotal — "
-                  // "$answeredScored" math used pre-page-explosion
-                  // counts and read wrong. Replaced with a simpler,
-                  // kid-friendly nudge that doesn't try to put a
-                  // number on what's missing.
-                  : 'Tap Back to look at any question again, or '
-                      "Finish to save what you've answered.",
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const ChibiSmiley(
+                    variant: ChibiVariant.circleGold,
+                    expression: ChibiExpression.excited,
+                    size: 160,
+                    selected: true,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    allAnswered
+                        ? strings.allDoneTitle
+                        : strings.almostThereTitle,
+                    style: theme.textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    allAnswered
+                        ? strings.allDoneBody
+                        : strings.almostThereBody,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: onFinish,
+                    icon: saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check_circle_outline),
+                    label: Text(strings.finish),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onFinish,
-              icon: saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.check_circle_outline),
-              label: const Text('Finish'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -408,6 +431,7 @@ class SurveyOptionYesNoPage extends StatelessWidget {
     required this.isYes,
     required this.onPickYes,
     required this.onPickNo,
+    required this.language,
     this.onReplayTts,
     super.key,
   });
@@ -427,23 +451,30 @@ class SurveyOptionYesNoPage extends StatelessWidget {
   final VoidCallback onPickNo;
   final VoidCallback? onReplayTts;
 
+  /// Wave 149: which translation to render.
+  final SurveyLanguage language;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = SurveyStrings.of(language);
+    final optionText = option.labelFor(language);
     // Variant rotates by page index across all 8 ChibiVariants. Two
     // adjacent options never look the same.
     final variant = ChibiVariant.forQuestionIndex(questionIndex);
-    // Wave 144: same plain-Center scaffold as SurveyQuestionPage —
-    // see the comment there. ChibiSmiley doesn't use LayoutBuilder,
-    // but keep the structure identical for consistency.
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Wave 145: parent prompt subtitle dropped. Option labels
           // are now full "Did you...?" questions, so the parent
@@ -454,8 +485,8 @@ class SurveyOptionYesNoPage extends StatelessWidget {
           // The option label is the main text of the page — tappable
           // to replay the TTS.
           Semantics(
-            label: option.label,
-            hint: onReplayTts == null ? null : 'Tap to hear it again',
+            label: optionText,
+            hint: onReplayTts == null ? null : strings.tapToHearAgain,
             button: onReplayTts != null,
             child: InkWell(
               onTap: onReplayTts,
@@ -467,7 +498,7 @@ class SurveyOptionYesNoPage extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        option.label,
+                        optionText,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall,
                       ),
@@ -494,14 +525,14 @@ class SurveyOptionYesNoPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _BigYesNoButton(
-                label: 'No',
+                label: language == SurveyLanguage.es ? 'No' : 'No',
                 variant: variant,
                 expression: ChibiExpression.sad,
                 selected: !isYes,
                 onTap: onPickNo,
               ),
               _BigYesNoButton(
-                label: 'Yes',
+                label: language == SurveyLanguage.es ? 'Sí' : 'Yes',
                 variant: variant,
                 expression: ChibiExpression.happy,
                 selected: isYes,
@@ -509,10 +540,14 @@ class SurveyOptionYesNoPage extends StatelessWidget {
               ),
             ],
           ),
-            ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -604,6 +639,10 @@ class AboutYouPage extends StatefulWidget {
     required this.onAddIdentityOption,
     required this.onStart,
     required this.ttsService,
+    required this.language,
+    required this.onPickLanguage,
+    required this.volume,
+    required this.onVolumeChanged,
     super.key,
   });
 
@@ -615,6 +654,17 @@ class AboutYouPage extends StatefulWidget {
   final List<String> ageBandOptions;
   final List<String> gradeOptions;
   final List<String> schoolOptions;
+
+  /// Wave 149: current language for both UI strings and voice
+  /// filtering, with the setter the toggle calls.
+  final SurveyLanguage language;
+  final ValueChanged<SurveyLanguage> onPickLanguage;
+
+  /// Wave 149: TTS playback volume in [0, 1]. The slider's onChanged
+  /// also feeds back into ttsService so an in-progress preview
+  /// reflects the new volume immediately.
+  final double volume;
+  final ValueChanged<double> onVolumeChanged;
 
   /// Called when a voice tile is tapped — the parent persists it
   /// onto the response row. The preview audio is played locally by
@@ -652,9 +702,14 @@ class _AboutYouPageState extends State<AboutYouPage> {
 
   String _sampleKeyFor(AuraVoice v) => 'sample_${v.id}';
 
-  String _sampleTextFor(AuraVoice v) =>
-      "Hi! I'm ${v.displayName}. I can read the questions to you "
-      'if you tap me.';
+  String _sampleTextFor(AuraVoice v) {
+    if (v.language == 'es') {
+      return '¡Hola! Soy ${v.displayName}. '
+          'Puedo leerte las preguntas si me eliges.';
+    }
+    return "Hi! I'm ${v.displayName}. I can read the questions to you "
+        'if you tap me.';
+  }
 
   Future<void> _onVoiceTap(AuraVoice v) async {
     // Wave 142: wrap the FULL function body so anything thrown by
@@ -683,12 +738,11 @@ class _AboutYouPageState extends State<AboutYouPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Web/desktop parity: the take screen runs full-bleed kid-mode,
-    // so without a width constraint the voice tiles and chip rows
-    // stretch edge-to-edge on a 1440 dp window. Cap at 560 dp +
-    // center — matches the template-detail landing's
-    // ConstrainedBox(maxWidth: 520) pattern so the kid sees the
-    // same vertical column on phone, tablet, and desktop.
+    final strings = SurveyStrings.of(widget.language);
+    // Voice cast filtered to the chosen language. If the kid switches
+    // EN→ES while a voice is already selected, the parent clears the
+    // voiceId so the picker re-engages.
+    final voices = auraVoicesForLanguage(widget.language.code);
     return SafeArea(
       child: Center(
         child: ConstrainedBox(
@@ -699,49 +753,64 @@ class _AboutYouPageState extends State<AboutYouPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'A few things about you',
+                  strings.aboutYouTitle,
                   style: theme.textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Pick a reader and tell us a little about you. Then '
-                  'tap Start.',
+                  strings.aboutYouSubtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                const _SectionLabel(label: 'Reader'),
+                _SectionLabel(label: strings.language),
+                const SizedBox(height: 8),
+                _LanguageToggle(
+                  selected: widget.language,
+                  onPick: widget.onPickLanguage,
+                ),
+                const SizedBox(height: 20),
+                _SectionLabel(label: strings.volume),
+                const SizedBox(height: 4),
+                _VolumeSlider(
+                  value: widget.volume,
+                  onChanged: widget.onVolumeChanged,
+                ),
+                const SizedBox(height: 12),
+                _SectionLabel(label: strings.reader),
                 const SizedBox(height: 8),
                 _VoiceTilesGrid(
+                  voices: voices,
                   previewing: _previewing,
                   onTap: _onVoiceTap,
                 ),
                 const SizedBox(height: 24),
                 _DimensionPicker(
-                  label: 'Age band',
+                  label: strings.ageBand,
                   dimension: 'age_band',
                   options: widget.ageBandOptions,
                   selected: widget.ageBand,
                   onPick: (l) => widget.onPickIdentity('age_band', l),
                   onAdd: (l) => widget.onAddIdentityOption('age_band', l),
-                  addHint: 'e.g. 7-9',
-                  // Wave 139: starter defaults so a fresh-install
-                  // program isn't blocked on the "+" button. Tapping
-                  // graduates the default into the program catalog.
+                  addHint: widget.language == SurveyLanguage.es
+                      ? 'p. ej. 7-9'
+                      : 'e.g. 7-9',
                   defaults: const ['4-6', '7-9', '10-12'],
                 ),
                 const SizedBox(height: 20),
                 _DimensionPicker(
-                  label: 'Grade',
+                  label: strings.grade,
                   dimension: 'grade',
                   options: widget.gradeOptions,
                   selected: widget.grade,
                   onPick: (l) => widget.onPickIdentity('grade', l),
                   onAdd: (l) => widget.onAddIdentityOption('grade', l),
-                  addHint: 'e.g. 2nd',
+                  addHint: widget.language == SurveyLanguage.es
+                      ? 'p. ej. 2°'
+                      : 'e.g. 2nd',
                   defaults: const [
                     'TK',
                     'K',
@@ -754,14 +823,15 @@ class _AboutYouPageState extends State<AboutYouPage> {
                 ),
                 const SizedBox(height: 20),
                 _DimensionPicker(
-                  label: 'School',
+                  label: strings.school,
                   dimension: 'school',
                   options: widget.schoolOptions,
                   selected: widget.school,
                   onPick: (l) => widget.onPickIdentity('school', l),
                   onAdd: (l) => widget.onAddIdentityOption('school', l),
-                  addHint: 'e.g. Lincoln Elementary',
-                  // No school defaults — schools are program-specific.
+                  addHint: widget.language == SurveyLanguage.es
+                      ? 'p. ej. Escuela Lincoln'
+                      : 'e.g. Lincoln Elementary',
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -771,8 +841,8 @@ class _AboutYouPageState extends State<AboutYouPage> {
                     icon: const Icon(Icons.play_arrow),
                     label: Text(
                       widget.onStart == null
-                          ? 'Choose a reader, age, grade, and school first'
-                          : 'Start',
+                          ? strings.startNeeds
+                          : strings.startReady,
                     ),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -784,6 +854,67 @@ class _AboutYouPageState extends State<AboutYouPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Wave 149: EN / ES segmented toggle at the top of the About-you
+/// page.
+class _LanguageToggle extends StatelessWidget {
+  const _LanguageToggle({required this.selected, required this.onPick});
+  final SurveyLanguage selected;
+  final ValueChanged<SurveyLanguage> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<SurveyLanguage>(
+      segments: const [
+        ButtonSegment(
+          value: SurveyLanguage.en,
+          label: Text('English'),
+          icon: Icon(Icons.translate),
+        ),
+        ButtonSegment(
+          value: SurveyLanguage.es,
+          label: Text('Español'),
+          icon: Icon(Icons.translate),
+        ),
+      ],
+      selected: {selected},
+      onSelectionChanged: (s) => onPick(s.first),
+    );
+  }
+}
+
+/// Wave 149: volume slider with mute / max icons.
+class _VolumeSlider extends StatelessWidget {
+  const _VolumeSlider({required this.value, required this.onChanged});
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = value <= 0.0;
+    return Row(
+      children: [
+        Icon(
+          muted ? Icons.volume_off_outlined : Icons.volume_down_outlined,
+          color: theme.colorScheme.onSurfaceVariant,
+          size: 20,
+        ),
+        Expanded(
+          child: Slider(
+            value: value.clamp(0.0, 1.0),
+            onChanged: onChanged,
+          ),
+        ),
+        Icon(
+          Icons.volume_up_outlined,
+          color: theme.colorScheme.onSurfaceVariant,
+          size: 20,
+        ),
+      ],
     );
   }
 }
@@ -805,8 +936,14 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _VoiceTilesGrid extends StatelessWidget {
-  const _VoiceTilesGrid({required this.previewing, required this.onTap});
+  const _VoiceTilesGrid({
+    required this.voices,
+    required this.previewing,
+    required this.onTap,
+  });
 
+  /// Voices to render — already filtered to the chosen language.
+  final List<AuraVoice> voices;
   final String? previewing;
   final Future<void> Function(AuraVoice voice) onTap;
 
@@ -815,7 +952,7 @@ class _VoiceTilesGrid extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        for (final v in kAuraCast)
+        for (final v in voices)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Material(
