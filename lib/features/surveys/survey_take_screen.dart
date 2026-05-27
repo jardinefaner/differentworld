@@ -363,6 +363,11 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
             school: _school,
           );
       if (!mounted) return;
+      // Wave 148: kill any in-flight audio BEFORE the pop animation
+      // starts. Dispose runs after pop and disposes the player,
+      // but on web that gap can be 200-300 ms of leftover voice
+      // playing into the survey-list screen.
+      unawaited(_tts.stop());
       // Wave 143: drop the kid-mode pin BEFORE popping. Otherwise
       // the router's redirect (which runs synchronously on the
       // pop's matchedLocation change) sees lockedRoute still =
@@ -418,6 +423,11 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
         case KidModeExitResult.unlocked:
         case KidModeExitResult.noPinConfigured:
           setState(() => _staffUnlocked = true);
+          // Wave 148: cut any in-flight TTS the moment staff
+          // unlocks. They're about to leave; the kid is no longer
+          // listening; the voice should not keep narrating
+          // questions on the way out.
+          unawaited(_tts.stop());
           ref.read(kidModeLockedRouteProvider.notifier).pin(null);
           ScaffoldMessenger.maybeOf(context)?.showSnackBar(
             const SnackBar(
@@ -546,6 +556,14 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                                   setState(() => _index = i);
                                   if (i < totalQuestions) {
                                     unawaited(_playQuestion(i));
+                                  } else {
+                                    // Wave 148: kid swiped to the
+                                    // closeout page. No new audio
+                                    // fires there, so without an
+                                    // explicit stop the last
+                                    // question's TTS keeps playing
+                                    // over the "All done!" surface.
+                                    unawaited(_tts.stop());
                                   }
                                 },
                                 itemCount: pageCount,
