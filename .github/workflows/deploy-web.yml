@@ -19,6 +19,32 @@ name: Deploy Flutter web
 on:
   push:
     branches: [main]
+    # Wave 169 — cost / latency hygiene. Skip the ~2.5-min web build
+    # when a push touches ONLY paths that don't change the bundle.
+    # Mobile-only changes (android/ios/macos), migrations
+    # (server-side only), markdown / docs, scripts, the editor /
+    # IDE config files, and gitignore all skip. Anything that
+    # touches lib/, web/, pubspec, the workflow itself, or the .env
+    # template still triggers a deploy.
+    #
+    # Manual `workflow_dispatch` still lets us force a build from
+    # the Actions tab — useful for re-running after a runner flake
+    # or pushing a re-build with no code change.
+    paths-ignore:
+      - 'android/**'
+      - 'ios/**'
+      - 'macos/**'
+      - 'windows/**'
+      - 'linux/**'
+      - 'supabase/**'
+      - 'docs/**'
+      - 'scripts/**'
+      - 'test/**'
+      - 'integration_test/**'
+      - '**/*.md'
+      - '.gitignore'
+      - '.idea/**'
+      - 'fastlane/**'
   workflow_dispatch:
 
 permissions:
@@ -28,7 +54,13 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  # Wave 169: was `false` — a stack of 4 pushes meant 4 full builds
+  # ran sequentially even though only the last one mattered. With
+  # cancel-in-progress, a new push interrupts the in-flight build
+  # and we go straight to building HEAD. Pages deploys serialize
+  # safely at the GitHub side, so this is purely a build-minutes
+  # win.
+  cancel-in-progress: true
 
 jobs:
   build:
