@@ -388,6 +388,34 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     await _playQuestion(0);
   }
 
+  /// Wave 167.2: user tapped Cancel on the About-you page. Exit
+  /// kid mode so the chrome reappears, then pop the route. Nothing
+  /// has been answered yet — the autosave provider hasn't even
+  /// fired — so the response row will be cleaned up via
+  /// `surveyActionsProvider.reset` on the way out.
+  Future<void> _onCancelBeforeStart() async {
+    if (!mounted) return;
+    final goRouter = GoRouter.of(context);
+    // Best-effort clear the empty draft row. Ignore failures —
+    // worst case is a never-completed draft hangs around and is
+    // deletable from the table view.
+    try {
+      await ref.read(surveyActionsProvider).reset(id: _responseId);
+    } on Object catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[survey-take] cancel reset failed: $e\n$st');
+      }
+    }
+    ref.read(kidModeProvider.notifier).exit();
+    ref.read(kidModeLockedRouteProvider.notifier).pin(null);
+    if (!mounted) return;
+    if (goRouter.canPop()) {
+      goRouter.pop();
+    } else {
+      goRouter.go('/surveys');
+    }
+  }
+
   Future<void> _autosave() async {
     final t = _template;
     if (t == null) return;
@@ -539,7 +567,12 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     // Kid-mode hardening: while locked, refuse the system back
     // gesture. The hidden top-right tap target is the staff unlock.
     final inKidMode = ref.watch(kidModeProvider);
-    final blockPop = inKidMode && !_staffUnlocked;
+    // Wave 167.2: only block-pop AFTER the kid has tapped Start.
+    // While still on the About-you page, nothing's been answered yet
+    // and there's no risk in letting the user back out — without
+    // this, the staff person who opened the wrong survey is stuck
+    // with the staff-corner 5-tap gesture as their only escape.
+    final blockPop = _started && inKidMode && !_staffUnlocked;
 
     // Wave 149: sync the current language + volume out of their
     // providers into local state. `_language` is read by
@@ -625,7 +658,29 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
                         atCloseout: atCloseout,
                         saving: _saving,
                       ),
-                      const SizedBox(height: 8),
+                      // Wave 167.2: visible Cancel chip on the
+                      // About-you page. Kid mode strips the AppShell
+                      // chrome (no back-pill, no drawer), so without
+                      // this the only escape was system-back — and
+                      // even that PopScope-blocked when kid mode
+                      // engaged. Now the back affordance is
+                      // explicit. Hidden once the kid taps Start.
+                      if (!_started)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+                            child: TextButton.icon(
+                              onPressed: _onCancelBeforeStart,
+                              icon: const Icon(Icons.arrow_back, size: 18),
+                              label: const Text('Cancel'),
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 4),
                       Expanded(
                         child: !_started
                             ? _AboutYouBinding(
