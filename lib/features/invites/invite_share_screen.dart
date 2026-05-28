@@ -69,9 +69,13 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
     final code = invite.code;
     // Wave 165.3: use the HTTPS form so OS-camera scans land on the
     // static fallback page (which handles the deep-link handoff with
-    // an "Open in app" affordance). The in-app listener still
-    // accepts the custom scheme too — see `InviteCode.extractFromUri`.
-    final deepLink = code == null ? null : InviteCode.httpsLinkFor(code);
+    // an "Open in app" affordance).
+    //
+    // Wave 170: encode the github.io project-page URL while DNS for
+    // differentworld.app is unresolved. The in-app listener still
+    // accepts the custom scheme + apex form too — see
+    // `InviteCode.extractFromUri`.
+    final deepLink = code == null ? null : InviteCode.pagesLinkFor(code);
     // Personalise the share blurb with the current program name. May
     // be null pre-sync; degrades to the generic copy in that case.
     final programName = ref.watch(currentSpaceProvider).value?.name;

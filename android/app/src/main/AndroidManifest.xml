@@ -97,6 +97,27 @@
                       android:host="differentworld.app"
                       android:pathPrefix="/v"/>
             </intent-filter>
+            <!-- Wave 170 — github.io project-page URLs while DNS for
+                 differentworld.app is unresolved. The QR generator
+                 encodes https://jardinefaner.github.io/differentworld-web/v/…
+                 so Android shows the "Open with" chooser on scan.
+                 Remove once we revert to the apex domain. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="jardinefaner.github.io"
+                      android:pathPrefix="/differentworld-web/v"/>
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="jardinefaner.github.io"
+                      android:pathPrefix="/differentworld-web/invite"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

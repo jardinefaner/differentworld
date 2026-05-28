@@ -59,35 +59,58 @@ abstract final class InviteCode {
   static String httpsLinkFor(String code) =>
       'https://differentworld.app/invite/$code';
 
+  /// Wave 170: github.io project-page URL used while DNS for
+  /// differentworld.app is unresolved. Revert callers to
+  /// [httpsLinkFor] once DNS lands.
+  static String pagesLinkFor(String code) =>
+      'https://jardinefaner.github.io/differentworld-web/invite/$code';
+
   /// Plain-text share blurb a director can copy / SMS / paste.
   /// Includes both the human-typeable code AND the HTTPS link
   /// (clickable from iMessage, SMS, email, Slack — anywhere).
+  ///
+  /// Wave 170: uses [pagesLinkFor] while DNS is unresolved. Swap
+  /// back to [httpsLinkFor] once differentworld.app routes.
   static String shareTextFor({required String code, String? programName}) {
     final lead = programName == null
         ? 'Join my Different World program.'
         : 'Join $programName on Different World.';
-    return '$lead\n\nCode: $code\n\n${httpsLinkFor(code)}';
+    return '$lead\n\nCode: $code\n\n${pagesLinkFor(code)}';
   }
 
-  /// Extract a code from an inbound deep link. Accepts both the custom
-  /// scheme (`differentworld://invite/ABC123`) and the https form
-  /// (`https://differentworld.app/invite/ABC123`). Returns null if the
-  /// URI doesn't match either shape.
+  /// Extract a code from an inbound deep link. Accepts:
+  ///   - the custom scheme `differentworld://invite/ABC123`
+  ///   - the apex HTTPS form `https://differentworld.app/invite/ABC123`
+  ///   - the github.io project-page form (Wave 170)
+  ///     `https://jardinefaner.github.io/differentworld-web/invite/ABC123`
+  /// Returns null if the URI doesn't match any of the three.
   static String? extractFromUri(Uri uri) {
     final isCustomScheme =
         uri.scheme == 'differentworld' && uri.host == 'invite';
-    final isHttpsLink = uri.scheme == 'https' &&
+    final isHttpsApex = uri.scheme == 'https' &&
         uri.host == 'differentworld.app' &&
         uri.pathSegments.isNotEmpty &&
         uri.pathSegments.first == 'invite';
-    if (!isCustomScheme && !isHttpsLink) return null;
+    final isHttpsPages = uri.scheme == 'https' &&
+        uri.host == 'jardinefaner.github.io' &&
+        uri.pathSegments.length >= 2 &&
+        uri.pathSegments[0] == 'differentworld-web' &&
+        uri.pathSegments[1] == 'invite';
+    if (!isCustomScheme && !isHttpsApex && !isHttpsPages) return null;
 
     final segments = uri.pathSegments;
     // For differentworld://invite/CODE the segments are ['CODE'].
-    // For https://.../invite/CODE the segments are ['invite', 'CODE'].
-    final raw = isCustomScheme
-        ? (segments.isEmpty ? '' : segments.last)
-        : (segments.length < 2 ? '' : segments[1]);
+    // For https://differentworld.app/invite/CODE: ['invite', 'CODE'].
+    // For https://jardinefaner.github.io/differentworld-web/invite/CODE:
+    // ['differentworld-web', 'invite', 'CODE'].
+    final String raw;
+    if (isCustomScheme) {
+      raw = segments.isEmpty ? '' : segments.last;
+    } else if (isHttpsApex) {
+      raw = segments.length < 2 ? '' : segments[1];
+    } else {
+      raw = segments.length < 3 ? '' : segments[2];
+    }
     if (raw.isEmpty) return null;
     final normalized = normalize(raw);
     return normalized.isEmpty ? null : normalized;

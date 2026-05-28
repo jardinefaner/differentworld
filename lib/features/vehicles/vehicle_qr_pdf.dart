@@ -38,10 +38,11 @@ Future<Uint8List> buildVehicleCheckoutQrPdf({
     creator: 'Different World',
   );
 
-  // HTTPS form — the OS camera scans the URL cleanly, the static
-  // page at differentworld.app handles the deep-link handoff (with
-  // a fallback when the app isn't installed).
-  final uri = VehicleDeepLink.httpsUri(
+  // Wave 170: encode the github.io URL while DNS for
+  // differentworld.app is unresolved. The OS camera scans this
+  // cleanly and the static page on GitHub Pages handles the
+  // deep-link handoff. Swap back to `httpsUri` once DNS lands.
+  final uri = VehicleDeepLink.pagesUri(
     vehicleId: vehicle.id,
     kind: kind,
   );
