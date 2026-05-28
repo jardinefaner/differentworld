@@ -4,6 +4,8 @@ import 'package:differentworld/core/capabilities/role_keys.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/core/viewer/viewer_override.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Who is looking at the app right now.
@@ -243,7 +245,21 @@ final viewerProvider = Provider<Viewer>((ref) {
     );
   }
   final member = ref.watch(currentMemberProvider).value;
-  return Viewer(member: member, space: space);
+  final base = Viewer(member: member, space: space);
+
+  // Wave 168 — dev-only role impersonation. The toggle in the chrome
+  // action pill writes to viewerKindOverrideProvider; when set + the
+  // real viewer has a member row, swap in a synthetic Viewer with the
+  // chosen role's default cap bundle. Gated on kDebugMode so a
+  // release build literally can't honor a stale override value.
+  if (kDebugMode) {
+    final override = ref.watch(viewerKindOverrideProvider);
+    if (override != null && override.isNotEmpty) {
+      final swapped = buildOverrideViewer(base, override);
+      if (swapped != null) return swapped;
+    }
+  }
+  return base;
 });
 
 /// Family lens — the viewer subclass for guardian accounts.

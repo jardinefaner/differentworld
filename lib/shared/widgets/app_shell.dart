@@ -15,6 +15,7 @@ import 'package:differentworld/features/omnibox/slash_commands.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/error_handling.dart';
+import 'package:differentworld/shared/widgets/debug_viewer_toggle.dart';
 import 'package:differentworld/shared/widgets/desktop_nav_rail.dart';
 import 'package:differentworld/shared/widgets/floating_actions.dart';
 import 'package:differentworld/shared/widgets/floating_back.dart';
@@ -254,13 +255,24 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
       );
     }
-    if (chrome.actions.isNotEmpty) {
+    // Wave 168: dev-only viewer-kind toggle ALWAYS renders in the
+    // action pill in debug builds, alongside any route-specific
+    // actions. Lets the developer impersonate a Teacher / Substitute
+    // / Specialist / Guardian etc. without signing out. Compiled
+    // out of release builds via the `if (kDebugMode)` guard on the
+    // widget side (the import itself stays; the toggle's build
+    // returns SizedBox.shrink in release so it costs nothing).
+    final actionsForPill = <Widget>[
+      if (kDebugMode) const DebugViewerToggle(),
+      ...chrome.actions,
+    ];
+    if (actionsForPill.isNotEmpty) {
       widgets.add(
         Positioned(
           key: const ValueKey('shell-chrome-actions'),
           top: topInset + 8,
           right: 8,
-          child: FloatingActions(children: chrome.actions),
+          child: FloatingActions(children: actionsForPill),
         ),
       );
     }
