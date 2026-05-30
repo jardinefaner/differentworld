@@ -11,20 +11,27 @@ import 'package:printing/printing.dart';
 /// Builds a printable PDF that carries a QR code for [vehicle]'s
 /// checkout flow.
 ///
-/// The QR encodes the **HTTPS** form
-/// (`https://differentworld.app/v/<id>/checkout`) — Wave 165.2.
-/// Earlier prints used the custom-scheme form, which several Android
-/// camera apps treat as plain text and fall through to a browser
-/// "we can't find that page." The HTTPS form lands on the static
-/// fallback page hosted at differentworld.app/404.html, which then
-/// JS-redirects into the custom scheme (`differentworld://v/...`) so
-/// the OS routes into the installed app. If the app isn't installed,
-/// the page surfaces an explicit "Open in app" affordance instead of
-/// a confusing browser 404.
+/// The QR encodes the **custom-scheme** form
+/// (`differentworld://v/<id>/checkout`) — Wave 171. Vehicle QRs are
+/// only ever scanned by staff, who always have the app installed, so
+/// the custom scheme is the right call: a scan opens the app
+/// *directly*, with no browser hop and no hosting / DNS dependency.
 ///
-/// The in-app scanner ([VehicleDeepLink.tryParse]) accepts both
-/// forms, so QRs printed under either format still scan correctly
-/// from inside the app.
+/// This reverses the Wave 165.2 → 170 detour through an HTTPS URL +
+/// GitHub Pages fallback page. That detour existed to gracefully
+/// handle "app not installed," but for a staff-scanned vehicle QR
+/// that case never happens — and the HTTPS path always flashed a web
+/// page first (the OS opens `https://` in the browser; an *unverified*
+/// App Link can't intercept it). The custom scheme skips all of that.
+/// The no-app fallback still matters for *invite* QRs (a guardian may
+/// not have the app yet), so those keep the HTTPS / App-Links path —
+/// see CLAUDE.md "QR deep links: vehicle = scheme, invite = https".
+///
+/// Backward-compatible: the in-app scanner ([VehicleDeepLink.tryParse])
+/// and the github.io intent filters still accept the apex + project-
+/// page HTTPS forms, so vehicle QRs printed under Waves 165–170 keep
+/// working — old stickers route via the web page, new stickers open
+/// straight into the app.
 ///
 /// Layout (US Letter, portrait): big vehicle name centered, the QR
 /// square below it, instructions at the bottom. Sized so a director
@@ -38,11 +45,13 @@ Future<Uint8List> buildVehicleCheckoutQrPdf({
     creator: 'Different World',
   );
 
-  // Wave 170: encode the github.io URL while DNS for
-  // differentworld.app is unresolved. The OS camera scans this
-  // cleanly and the static page on GitHub Pages handles the
-  // deep-link handoff. Swap back to `httpsUri` once DNS lands.
-  final uri = VehicleDeepLink.pagesUri(
+  // Wave 171: encode the custom scheme so a staff scan opens the app
+  // directly — no browser, no GitHub Pages hop, no DNS dependency.
+  // Do NOT swap this back to httpsUri/pagesUri: an https QR always
+  // opens the browser first until App Links are verified, which is the
+  // web flash we're removing here. (Invite QRs keep the https path for
+  // the genuine no-app-installed case.)
+  final uri = VehicleDeepLink.customSchemeUri(
     vehicleId: vehicle.id,
     kind: kind,
   );

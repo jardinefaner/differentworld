@@ -629,7 +629,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: Fleet management — create / edit vehicles, pre-trip checkout, post-trip checkin (inspection trail).
 **Personas served**: Maya (manages fleet), All staff with `can_drive` (checkout / checkin), Coach Sam (trip days).
 **Discovery surfaces**:
-- Routes: `/settings/vehicles`, `/settings/vehicles/new`, `/settings/vehicles/:id`, `/settings/vehicles/:id/edit`, `/settings/vehicles/:id/checkout`, `/settings/vehicles/:id/checkin`
+- Routes: `/vehicles`, `/vehicles/new`, `/vehicles/scan`, `/vehicles/:id`, `/vehicles/:id/edit`, `/vehicles/:id/checkout`, `/vehicles/:id/checkin` (old `/settings/vehicles*` paths redirect here — preserved for printed QR codes from before Wave 95)
 - Omnibox: yes — "Vehicles", "{Vehicle.name}" (per vehicle), "Check out · {Vehicle.name}" (action, gated by `can_drive`), "Check in · {Vehicle.name}" (action, gated by `can_drive`), "Add a vehicle" (action, gated by `can_manage_space`)
 - Slash: `/checkout {vehicle}` (alias `/co`), `/checkin {vehicle}` (aliases `/ci`, `/return`) — gated by `can_drive || can_manage_space`
 - Drawer: no
@@ -640,10 +640,11 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Vehicles list* — `lib/features/vehicles/vehicles_list_screen.dart`. Fleet roster.
 - *Vehicle detail* — `lib/features/vehicles/vehicle_detail_screen.dart`. One vehicle's record + recent log.
 - *Vehicle edit* — `lib/features/vehicles/vehicle_edit_screen.dart`. Create / update form.
-- *Vehicle inspection* — `lib/features/vehicles/vehicle_inspection_screen.dart`. Pre-trip + post-trip checklist (same screen, different mode).
+- *Vehicle scan* — `lib/features/vehicles/vehicle_scan_screen.dart`. Camera QR scanner that resolves a scanned vehicle deep link and routes to checkout / checkin.
+- *Vehicle inspection* — `lib/features/vehicles/vehicle_inspection_screen.dart`. Pre-trip + post-trip checklist (same screen, different mode). QR PDFs now encode the custom-scheme deep link (`differentworld://v/<id>/<kind>`) — staff always have the app, so the scheme opens the app directly with no browser hop (Wave 171). Invite QRs intentionally keep the HTTPS path for the no-app-installed case.
 **Depends on**: Members, Certifications.
 **Consumed by**: Schedule (trip assignment), Insights (stale-vehicle signal).
-**Last verified**: 2026-05-21
+**Last verified**: 2026-05-29
 
 ---
 
@@ -676,6 +677,11 @@ in. Run `Agent persona-audit` to refresh.
 ---
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
+
+_Run 2026-05-29 (Wave 171 vehicle QR scheme change)_ — one discovery drift corrected (see below). No new migrations; SCHEMA.md unchanged. No omnibox, slash, drawer, or settings claims changed. Updates applied this run:
+- **Vehicles** — Routes corrected from `/settings/vehicles*` to `/vehicles*` (Wave 95 moved the top-level path; `/settings/vehicles` still exists as a redirect, not a live route). `/vehicles/scan` surface added — `VehicleScanScreen` was in the router but absent from the doc.
+- **Vehicles** — Vehicle inspection surface note updated: QR PDFs now encode `differentworld://v/<id>/<kind>` (Wave 171), replacing the prior HTTPS github.io path. Invite QRs keep HTTPS — the distinction is documented inline.
+- Cross-link reconcile: no (feature → table) or (table → feature) drift found. SCHEMA.md Consumers lists for vehicles, vehicle_logs, and member_certifications already include Vehicles.
 
 _Run 2026-05-23 (family-lens sync fix)_ — no unresolved discovery drift; no route, omnibox, slash, drawer, or settings claims changed. Updates applied this run:
 - **Family** — `**Data**` field rewritten to distinguish offline-first tables (guardians, spaces, subject_guardians, messages, export_recipients — served by the new `by_guardian` PowerSync stream) from direct-PostgREST reads (subjects, attendance_records, entries, attachments — 2-level subquery deferred — and exports via `myReceivedExportsProvider`). The prior "latent bug" note removed; the `by_guardian` stream resolves it for the row-keyed tables. Per-subject tables remain PostgREST-only pending 2-level subquery verification.

@@ -671,6 +671,42 @@ flutter test        # all passing
 
 The ones we've already burned a turn on.
 
+### QR deep links: vehicle = custom scheme, invite = https (don't flip them)
+
+This choice flip-flopped across Waves 165→170 — settled in Wave 171.
+The rule splits by **who scans the QR**:
+
+- **Vehicle check-in/out QRs → `differentworld://v/<id>/<kind>`
+  (custom scheme).** Scanned only by staff, who always have the app.
+  A custom-scheme QR opens the app *directly* — no browser, no
+  GitHub Pages hop, no DNS. Generated in
+  [vehicle_qr_pdf.dart](lib/features/vehicles/vehicle_qr_pdf.dart)
+  via `VehicleDeepLink.customSchemeUri(...)`.
+- **Invite QRs → `https://…/invite/<code>` (apex or github.io).**
+  The scanner may NOT have the app yet, so the genuine "app not
+  installed" fallback (web landing page → store / explain) matters.
+  Keep these on the HTTPS path
+  ([invite_share_screen.dart](lib/features/invites/invite_share_screen.dart),
+  `InviteCode.pagesLinkFor`).
+
+**The trap (why this kept flip-flopping):** an `https://` QR ALWAYS
+opens the browser first until Android App Links / iOS Universal Links
+are *verified* (`autoVerify=true` + association files at the **domain
+root** + iOS entitlement + real Team ID — none of which are live yet;
+the files in `differentworld-web/.well-known/` sit at the project
+sub-path, which app-link verification ignores). So every "make the QR
+use https for a clean fallback" wave silently reintroduced a web-page
+flash on scan. Custom scheme is the only thing that opens the app with
+zero web hop *today*. Do NOT swap the vehicle generator back to
+`httpsUri`/`pagesUri` without first standing up verified App Links.
+
+`VehicleDeepLink.tryParse` + `InviteCode.extractFromUri` still accept
+ALL forms (custom scheme, apex https, github.io project-page), so the
+in-app scanner and QRs printed under older waves keep working — old
+stickers route via the web page, new ones open directly. The proper
+fix for invites (true App Links on a `jardinefaner.github.io` root
+repo) is the deferred "Recommended split" second half.
+
 ### Google OAuth's `name` claim, not `display_name` or `full_name`
 Supabase's docs / examples reference `raw_user_meta_data->>'display_name'`
 when reading the user's name out of an OAuth sign-in. That field is a
