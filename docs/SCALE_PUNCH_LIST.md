@@ -60,6 +60,54 @@ project).**
 
 ---
 
+### Row-level `°` scoping — staff see only assigned kids
+
+**Why.** The capability model already *intends* per-assignment scoping
+(`MemberViewer.seesAllClassrooms => isDirector`,
+[viewer.dart](../lib/core/viewer/viewer.dart)), and the data model
+supports it: `group_members` (staff↔room) + `subjects.group_id`
+(enrollment). But today non-director staff effectively see the whole
+program — reads gate on `space_id`, not assignment, and the relaxed
+write-RLS ("RLS re-tighten" above) means writes aren't per-user either.
+This is the `°` column in the RBAC permission matrix and the single
+most security-sensitive gap before a real multi-staff rollout. **Stays
+on the capability framework — this is enforcement, not a new model.**
+
+**Three layers, sequenced by what's blocked:**
+
+1. **Provider/UI scoping (UNBLOCKED — ship now, P0.1).** Add
+   `MemberViewer.assignedGroupIds` + `MemberViewer.canSeeSubject(id)`
+   (mirror the GuardianViewer method) driven by `group_members`; filter
+   the subject / roster / entry read providers for non-directors. This
+   is the "UI hides, backend re-checks" first half — defense, not yet a
+   boundary. **Watch-out:** it HIDES kids if `group_members` isn't
+   populated, so default non-directors to all-visible when they have
+   zero assignments (and ship a staff→room assignment UI before
+   flipping that default). Effort: M.
+2. **RLS enforcement (BLOCKED on "RLS re-tighten" above, P0.2).** Once
+   `auth.uid()` populates, tighten read policies to the
+   `subject → group → group_members` subquery so scoping is a real
+   boundary. Same 2-level-subquery concern as the family lens for the
+   PowerSync sync rule — verify the subset accepts it, else denorm
+   `assigned_member_ids` onto `subjects` via trigger. Effort: M/table.
+3. **Soft-delete + director-only delete (P0.3).** Extend the existing
+   `archived_at` pattern (activities, exports) to attendance / entries
+   / incidents so history survives; gate hard-delete behind
+   `isDirector`. Effort: S/M.
+
+**Related P1 — capability-surface completeness (model exists, UI/enforcement partial):**
+- **Capability-editing UI** — the "Abilities" checklist on member
+  invite/edit (model in [CAPABILITIES.md](CAPABILITIES.md); per-key
+  toggle UI is the deferred piece). Reuse `CapSwitch`. Effort: M.
+- **Specialist time-boxing** — session-date window on specialist caps;
+  `canSeeSubject` returns false outside it. Effort: S/M.
+- **Capture moderation** — formalize the `pending → approved` status
+  captures already carry + an `approve°` action gated by a cap. M.
+- **Audited medical/contact reads** — `can_view_audit_log` cap exists;
+  add an `audit_log` table + read hooks on health / contact surfaces. M.
+
+---
+
 ### Time-windowed sync via client parameters
 
 **Why.** `attendance_records`, `entries`, and `vehicle_logs` grow

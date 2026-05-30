@@ -69,6 +69,17 @@ work that doesn't need a feature decision.
 | Multi-program switcher in drawer | M (mis-classified as S earlier) | Single-program design today; needs schema migration to support a user belonging to multiple spaces (today `members.id = auth.uid()`, so one user = one member = one space). New table `user_spaces (user_id, space_id, role, caps)` would unblock it. Defer until a real multi-program use case lands. |
 | Family-side UI polish (`FamilyTodayScreen` outlined but partial) | M | Family-login model is in; UI bare |
 | Reports / exports depth (richer PDF templates) | M | Basic works |
+| Menu planning (Kitchen *authors* menus, not just meal logging) | M | Meal-log entries exist (`EntryKind.meal`); the authoring/publish side doesn't. New `feature_*` Space cap + Kitchen CRUD. RBAC-matrix row "Meals/Menus". |
+| Billing module | L | `feature_billing` flag reserved; build behind `can_view_billing`. Needs a payments-integration design first. |
+| Games & live-sessions engine | L | The only RBAC-matrix row needing a *runtime* role layer (host / participant / observer) on top of CRUD. Surveys cover the live-session-lite case today. |
+| General consent-forms module | M | Photo + field-trip consent exist as flags; this generalizes to signable forms with a pending→signed state. |
+| Authenticated child account | decision | RECOMMENDATION: stay with kid-mode (device lock), not child logins — large privacy surface for little gain. Logged as a decision, not a build. |
+
+> The RBAC **enforcement** gaps (row-level `°` scoping, soft-delete,
+> capability-editing UI, specialist time-boxing, capture moderation,
+> audited reads) are cross-cutting, not net-new features — they live in
+> [SCALE_PUNCH_LIST.md](SCALE_PUNCH_LIST.md) under "Row-level `°`
+> scoping". The capability framework stays; we're closing enforcement.
 
 ## Recommended order
 
