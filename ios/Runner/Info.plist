@@ -6,6 +6,17 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<!-- Deep links go EXCLUSIVELY through the app_links package
+	     (lib/features/invites/deep_link_listener.dart), which
+	     translates differentworld://v/<id>/<kind> and
+	     differentworld://invite/<code> into the right go_router route.
+	     Flutter 3.24+ otherwise enables its own deep-link routing,
+	     which feeds the raw differentworld:// URI into go_router and
+	     404s with "We can't find that page." Supabase's OAuth callback
+	     has its own listener and is unaffected. Keep in sync with the
+	     flutter_deeplinking_enabled meta-data in AndroidManifest.xml. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CFBundleDisplayName</key>
 	<string>Differentworld</string>
 	<key>CFBundleExecutable</key>

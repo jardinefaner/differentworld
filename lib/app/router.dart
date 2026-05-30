@@ -1019,48 +1019,88 @@ class _Home extends ConsumerWidget {
 
 /// Home is just Today — search is now inline (the chrome transforms
 /// into a search input on Today itself), so the PageView the omnibox
-/// used to occupy is gone. We still need a stateful host here because
-/// the home is where we listen for pending invite codes that arrive
-/// while the user already has a space (refuse cleanly + snackbar).
-class _SignedInHome extends ConsumerWidget {
+/// used to occupy is gone. It's a stateful host because Today is where
+/// pending deep links get consumed: invite codes that arrive while the
+/// user already has a space (refuse + snackbar), and vehicle QR links
+/// (push to the inspection route).
+///
+/// Two consumption paths, both required:
+/// - **Cold launch** (the QR case): `app_links` stashes the link during
+///   boot, before this post-sync home mounts, so a one-shot drain in
+///   `initState` handles a value that's already pending by mount time.
+/// - **Warm** (link arrives while we're already on Today): the
+///   `ref.listen`s in `build` catch the change.
+/// A `ref.listen` ALONE is not enough — it only fires on change, so it
+/// silently misses the cold-launch value. See the CLAUDE.md gotcha
+/// "Flutter 3.24+ deep-linking-by-default" + its cold-launch sibling.
+class _SignedInHome extends ConsumerStatefulWidget {
   const _SignedInHome({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // A signed-in user with a space can't redeem an invite — refuse
-    // cleanly and clear the pending code so they aren't bounced into
-    // some other state. Switching programs is a sign-out-and-back-in
-    // workflow for now.
+  ConsumerState<_SignedInHome> createState() => _SignedInHomeState();
+}
+
+class _SignedInHomeState extends ConsumerState<_SignedInHome> {
+  @override
+  void initState() {
+    super.initState();
+    // Drain a link that was already pending before we mounted (cold
+    // launch). Navigating during initState is illegal, so defer to
+    // after the first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final vehicle = ref.read(pendingVehicleDeepLinkProvider);
+      if (vehicle != null) {
+        _handleVehicleLink(vehicle);
+        return;
+      }
+      final invite = ref.read(pendingInviteCodeProvider);
+      if (invite != null && invite.isNotEmpty) _handleInviteCode();
+    });
+  }
+
+  // A signed-in user with a space can't redeem an invite — refuse
+  // cleanly and clear the pending code so they aren't bounced into some
+  // other state. Switching programs is a sign-out-and-back-in workflow
+  // for now.
+  void _handleInviteCode() {
+    ref.read(pendingInviteCodeProvider.notifier).clear();
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          "You're already in a program. Sign out first to join a "
+          'different one.',
+        ),
+      ),
+    );
+  }
+
+  // Vehicle deep links — driver scans the QR on the dashboard, OS opens
+  // the app, we land here, push to the inspection route. `canDrive` is
+  // enforced by the inspection screen itself; we don't gate here so a
+  // driver who's been temporarily off-duty still gets a clear "you
+  // can't submit" inside the form (rather than a silent no-op).
+  void _handleVehicleLink(VehicleDeepLink link) {
+    ref.read(pendingVehicleDeepLinkProvider.notifier).clear();
+    // Defer the push a microtask so we never push while a build/settle
+    // is in flight — same pattern AppShell uses for routeChromeProvider.
+    unawaited(Future<void>.microtask(() async {
+      if (mounted) await context.push(link.routePath);
+    }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen<String?>(pendingInviteCodeProvider, (prev, next) {
       if (next == null || next.isEmpty) return;
-      ref.read(pendingInviteCodeProvider.notifier).clear();
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      messenger?.showSnackBar(
-        const SnackBar(
-          content: Text(
-            "You're already in a program. Sign out first to join a "
-            'different one.',
-          ),
-        ),
-      );
+      _handleInviteCode();
     });
-
-    // Vehicle deep links — driver scans the QR on the dashboard,
-    // OS opens the app, we land here, push to the inspection route.
-    // `canDrive` is enforced by the inspection screen itself; the
-    // listener doesn't gate so a driver who's been temporarily off-
-    // duty still gets a clear "you can't submit" inside the form
-    // (rather than a silent no-op here).
+    // Two distinct listener registrations; a `ref..listen()..listen()`
+    // cascade would read worse than two plain statements.
     // ignore: cascade_invocations
     ref.listen<VehicleDeepLink?>(pendingVehicleDeepLinkProvider, (prev, next) {
       if (next == null) return;
-      ref.read(pendingVehicleDeepLinkProvider.notifier).clear();
-      // Defer the push through a microtask so the listen callback
-      // doesn't push while the widget tree is still settling — same
-      // microtask pattern AppShell uses for routeChromeProvider.
-      unawaited(Future<void>.microtask(() async {
-        if (context.mounted) await context.push(next.routePath);
-      }));
+      _handleVehicleLink(next);
     });
 
     return const TodayScreen();

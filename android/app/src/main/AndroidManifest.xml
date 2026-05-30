@@ -34,6 +34,28 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Deep links are handled EXCLUSIVELY by the app_links
+                 package (lib/features/invites/deep_link_listener.dart),
+                 which translates differentworld://v/<id>/<kind> and
+                 differentworld://invite/<code> into the right go_router
+                 route via the pending-link providers + the consumers on
+                 TodayScreen / the login flow.
+
+                 Flutter 3.24+ turns ON its OWN deep-link routing by
+                 default. That handler feeds the RAW custom-scheme URI
+                 straight to go_router, which can't match
+                 `differentworld://v/...` to any path and renders the
+                 "We can't find that page" 404 (echoing the raw URI).
+                 It was invisible for invites (scanned signed-out, where
+                 the redirect-to-login masks the 404) but breaks vehicle
+                 QRs (scanned signed-in by staff). Turn the framework
+                 handler OFF so app_links is the single source of truth.
+                 Supabase's OAuth callback has its own URI listener and
+                 is unaffected by this flag. -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false"
+              />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

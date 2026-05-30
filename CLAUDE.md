@@ -707,6 +707,56 @@ stickers route via the web page, new ones open directly. The proper
 fix for invites (true App Links on a `jardinefaner.github.io` root
 repo) is the deferred "Recommended split" second half.
 
+### Flutter 3.24+ deep-linking-by-default fights app_links → custom-scheme 404
+
+Symptom: scanning a `differentworld://v/<id>/checkout` (or
+`…/invite/<code>`) QR opens the app but lands on the in-app "We can't
+find that page" 404 ([router.dart](lib/app/router.dart) `errorBuilder`),
+echoing the raw custom-scheme URL.
+
+Cause: Flutter 3.24+ enables its OWN deep-link routing by default
+(`flutter_deeplinking_enabled` defaults to true on Android/iOS). The
+framework hands the RAW URI (`differentworld://v/<id>/checkout`) to
+go_router as a location; go_router can't match the custom scheme to any
+path and renders the 404. Meanwhile our `app_links` listener
+([deep_link_listener.dart](lib/features/invites/deep_link_listener.dart))
+ALSO receives the URI and correctly translates it to
+`/vehicles/<id>/checkout` via the pending-link providers — but on a
+cold launch the framework's 404 wins the initial route, so the consumer
+(a `ref.listen` on TodayScreen) never mounts to fire.
+
+Why it hid for so long: it only bites when the unmatched route ISN'T
+masked by go_router's redirect. Invites are scanned signed-OUT → the
+redirect-to-login swallows the bad route (and the login flow reads the
+pending code) → looked fine. Vehicle QRs are scanned signed-IN by staff
+→ no redirect mask → the 404 shows. Wave 171 (vehicle QR → custom
+scheme) didn't cause this; it just made the scheme actually reach the
+app, exposing a latent bug.
+
+Fix (Wave 172), two parts — BOTH were needed:
+
+1. **Disable the framework handler** so app_links is the single source
+   of truth — `flutter_deeplinking_enabled=false` meta-data in
+   AndroidManifest.xml + `FlutterDeepLinkingEnabled=false` in iOS
+   Info.plist. Supabase's OAuth callback has its own URI listener and is
+   unaffected. Native change → **full rebuild, not hot reload.**
+
+2. **Drain the pending link on mount, not just `ref.listen`.** With the
+   framework handler off, the cold-launch QR landed on Today but didn't
+   navigate. Verified on-device: `app_links` delivered, `_ingest` set
+   `pendingVehicleDeepLinkProvider` — but the consumer
+   (`_SignedInHome`) used only `ref.listen`, which fires on CHANGE.
+   On cold launch the value is set during boot, BEFORE the post-sync
+   home mounts, so the listener registered too late and never saw it.
+   (Warm — link arrives while already on Today — worked fine, which is
+   why it was confusing.) Fix: `_SignedInHome` is now a
+   `ConsumerStatefulWidget` that drains any already-pending vehicle /
+   invite link in a post-frame callback from `initState`, in addition
+   to the warm-path listeners. **Lesson: any "pending X set by a boot-
+   time service, consumed by a screen" handoff needs an initState read
+   of the current value — a `ref.listen` alone silently drops the
+   cold-start case.**
+
 ### Google OAuth's `name` claim, not `display_name` or `full_name`
 Supabase's docs / examples reference `raw_user_meta_data->>'display_name'`
 when reading the user's name out of an OAuth sign-in. That field is a
