@@ -17,6 +17,7 @@ import 'package:differentworld/features/subjects/widgets/observation_item.dart';
 import 'package:differentworld/features/subjects/widgets/pickup_list.dart';
 import 'package:differentworld/features/subjects/widgets/today_status_card.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -400,27 +401,28 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
         ),
         GuardiansList(subjectId: subject.id),
 
+        // Progressive disclosure (the "too much at once" fix): the
+        // rarely-opened sections default to collapsed, so the screen
+        // leads with Today / Alerts / Observations and the rest is one
+        // tap away. Section-anchor keys move onto the CollapsibleSection
+        // so the chip TOC still scrolls to the (collapsed) header.
         const _SectionGap(),
-        Padding(
+        CollapsibleSection(
           key: _pickupKey,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: Text(
-            'Authorized for pickup',
-            style: theme.textTheme.titleSmall,
-          ),
+          title: 'Authorized for pickup',
+          icon: Icons.directions_walk_outlined,
+          initiallyExpanded: false,
+          child: PickupList(subject: subject),
         ),
-        PickupList(subject: subject),
 
         const _SectionGap(),
-        Padding(
+        CollapsibleSection(
           key: _reportsKey,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: Text(
-            'Sent reports',
-            style: theme.textTheme.titleSmall,
-          ),
+          title: 'Sent reports',
+          icon: Icons.picture_as_pdf_outlined,
+          initiallyExpanded: false,
+          child: ExportsListForSubject(subjectId: subject.id),
         ),
-        ExportsListForSubject(subjectId: subject.id),
 
         // Notes always visible — placeholder when empty so the
         // director discovers the affordance instead of forgetting it

@@ -349,6 +349,61 @@ become two different things — one gets a polish pass, the other rots.
 
 ---
 
+## 10. Detail screens are the editor — inline, no edit mode, no entity forms
+
+**Rule.** A record's detail screen IS its editor. Editable fields are
+tap-to-edit IN PLACE and commit themselves (on blur / keyboard "done");
+there is no Edit button, no separate `/edit` route, no Save button, and
+no `DismissGuard` (nothing is ever unsaved). This extends §1 (toggles
+auto-save) and §4 (optimistic; reconcile via the stream) from booleans
+to text and the other field types. It does NOT contradict §2 (settings
+on screens) — inline editing happens ON the routable detail screen, not
+in a sheet, so it honors §2 more fully than the form route did.
+
+**Why.**
+- The §1 exception ("text fields still go through a form with a Save
+  button") was a stopgap, not a principle. Field-level optimistic
+  commit (the `InlineEditableText` `_pending` hold) closes the
+  draft/save race §1 worried about, the same way it did for toggles.
+- A separate edit route is a mode switch: read here, tap Edit, land on a
+  different screen, fill an N-field form, Save, come back. Every step is
+  friction and a place to lose state. Inline editing collapses
+  read+write into one calm surface — the §9 "edit-screen scaffold
+  repeated in ~5 files" note is resolved by DELETING the scaffold, not
+  sharing it.
+- Forms show every field at once (the "too much at once" stress). The
+  detail screen shows the data; editing is a quiet, in-context act.
+
+**How.**
+- Text → `InlineEditableText`
+  (`lib/shared/widgets/inline_editable_text.dart`). Read-only viewers
+  pass `editable: false` and just see styled text.
+- Create = stub-then-fill, not a blank form: insert the row with a
+  sensible default and drop the cursor on the first field in place —
+  don't route to an empty form.
+- Delete = archive + Undo SnackBar (pairs with the soft-delete punch-
+  list item); a confirm dialog only for the genuinely irreversible.
+- Density / noise: lead with the 20% used 80% of the time; tuck the rest
+  behind `CollapsibleSection`
+  (`lib/shared/widgets/collapsible_section.dart`), and let
+  `SectionCard(visible:)` drop sections that have nothing to say.
+
+**Migration.** The legacy `*EditScreen` forms (`SubjectEditScreen`,
+`GroupEditScreen`, `VehicleEditScreen`, `ActivityEditScreen`,
+`BlockEditScreen`) get absorbed into their detail screens field by
+field, then deleted. In progress: subject detail — Notes is inline,
+Reports/Pickup are collapsed (Waves 174-175). Still needs inline
+variants for chips (allergies/dietary), dates (dob), and the two-field
+name before `SubjectEditScreen` can be retired.
+
+**Exception.** A genuinely multi-step CREATE with interdependent fields
+that can't be partially valid (none in the app today) could still
+warrant a wizard. The bar is high — "it's several fields" is not it;
+fields commit independently.
+
+
+---
+
 ## Changelog
 
 - **2026-05-18** — §1 capability-toggle auto-save adopted after the
