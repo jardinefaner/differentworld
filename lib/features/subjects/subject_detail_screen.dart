@@ -21,6 +21,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -430,20 +431,23 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           child: Text('Notes', style: theme.textTheme.titleSmall),
         ),
+        // Formless inline editing (UX_DECISIONS §1 extended to text + §4
+        // optimistic). Tap the notes to edit in place — no Edit button,
+        // no form, commits on blur. Editable gate matches the legacy Edit
+        // form (canManageSpace), so guardians + non-editors still see
+        // read-only styled text, exactly as before.
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-          child: Text(
-            (subject.notes ?? '').isEmpty
-                ? 'Anything to remember about ${subject.firstName}?'
-                : subject.notes!,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: (subject.notes ?? '').isEmpty
-                  ? theme.colorScheme.onSurfaceVariant
-                  : null,
-              fontStyle: (subject.notes ?? '').isEmpty
-                  ? FontStyle.italic
-                  : null,
-            ),
+          child: InlineEditableText(
+            value: subject.notes ?? '',
+            placeholder: 'Anything to remember about ${subject.firstName}?',
+            editable: viewer.canManageSpace,
+            maxLines: 4,
+            semanticLabel: 'Notes about ${subject.firstName}',
+            style: theme.textTheme.bodyMedium,
+            onCommit: (text) => ref
+                .read(subjectActionsProvider)
+                .update(id: subject.id, notes: text),
           ),
         ),
       ],
