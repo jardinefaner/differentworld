@@ -6,6 +6,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_parts.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
@@ -506,11 +507,18 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       } else {
         // createObservation handles its own attachment writes from
         // photoUrls; it preserves order.
+        //
+        // Snapshot the live block at save-commit time (per the rules in
+        // docs/LIVE_BLOCK_CONTEXT.md — the block belongs to the moment,
+        // not the clock-tick). ref.read, not watch, so the save handler
+        // captures the block at this instant; no subscription overhead.
+        final liveBlock = ref.read(liveBlockProvider);
         await actions.createObservation(
           subjectId: _subjectId!,
           groupId: _effectiveGroupId,
           text: text,
           photoUrls: _photos,
+          scheduleBlockId: liveBlock?.blockId,
           id: _entryId,
         );
       }

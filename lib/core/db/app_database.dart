@@ -220,6 +220,9 @@ class Entries extends Table {
   TextColumn get spaceId => text()();
   TextColumn get groupId => text().nullable()();
   TextColumn get subjectId => text().nullable()();
+  // Live-block capture: the schedule block this moment happened during
+  // (null = untagged / nothing live). See docs/LIVE_BLOCK_CONTEXT.md.
+  TextColumn get scheduleBlockId => text().nullable()();
   TextColumn get kind => text()();
   TextColumn get body => text().named('text').nullable()();
   TextColumn get photoUrl => text().nullable()();

@@ -59,6 +59,19 @@ class EntriesDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Entries tagged to a schedule block, newest first — the reverse of
+  /// the live-block tag. Powers the block's "moments" sheet.
+  Stream<List<Entry>> watchForBlock({
+    required String scheduleBlockId,
+    int limit = 100,
+  }) {
+    return (select(entries)
+          ..where((e) => e.scheduleBlockId.equals(scheduleBlockId))
+          ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
+          ..limit(limit))
+        .watch();
+  }
+
   Future<void> create({
     required String id,
     required String spaceId,
@@ -66,6 +79,7 @@ class EntriesDao extends DatabaseAccessor<AppDatabase>
     required String recordedBy,
     String? groupId,
     String? subjectId,
+    String? scheduleBlockId,
     String? body,
     String? photoUrl,
     String detailsJson = '{}',
@@ -79,6 +93,9 @@ class EntriesDao extends DatabaseAccessor<AppDatabase>
         groupId: groupId == null ? const Value.absent() : Value(groupId),
         subjectId:
             subjectId == null ? const Value.absent() : Value(subjectId),
+        scheduleBlockId: scheduleBlockId == null
+            ? const Value.absent()
+            : Value(scheduleBlockId),
         body: body == null ? const Value.absent() : Value(body),
         photoUrl: photoUrl == null ? const Value.absent() : Value(photoUrl),
         details: detailsJson,

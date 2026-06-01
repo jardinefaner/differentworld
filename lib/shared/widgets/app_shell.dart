@@ -5,6 +5,8 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
+import 'package:differentworld/shared/widgets/live_block_strip.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/omnibox/omnibox_history.dart';
@@ -784,6 +786,19 @@ class _AppShellState extends ConsumerState<AppShell> {
           // tasks, observations, etc.) and the family lens has its
           // own navigation pattern via the Family Today header — and on
           // immersive /activity/* routes, which are full-screen surfaces.
+          // Live-block strip — sits directly above the omnibox bar,
+          // collapses to zero height when nothing is live. Same
+          // guards as the bar: staff only, not kid mode, not immersive.
+          if (!inKidMode && viewer is! GuardianViewer && !isImmersive)
+            Positioned(
+              key: const ValueKey('shell-live-strip'),
+              left: 0,
+              right: 0,
+              bottom: ShellMetrics.bottomOmniboxHeight,
+              child: LiveBlockStrip(
+                liveBlock: ref.watch(liveBlockProvider),
+              ),
+            ),
           if (!inKidMode && viewer is! GuardianViewer && !isImmersive)
             Positioned(
               key: const ValueKey('shell-omnibox-bar'),

@@ -106,6 +106,7 @@ class EntryActions {
     required String groupId,
     required String text,
     List<String> photoUrls = const [],
+    String? scheduleBlockId,
     String? id,
   }) async {
     final entryId = await _create(
@@ -113,6 +114,7 @@ class EntryActions {
       subjectId: subjectId,
       groupId: groupId,
       body: text,
+      scheduleBlockId: scheduleBlockId,
       id: id,
     );
     if (photoUrls.isNotEmpty) {
@@ -134,6 +136,7 @@ class EntryActions {
     required String kind,
     String? subjectId,
     String? groupId,
+    String? scheduleBlockId,
     String? body,
     String? id,
   }) async {
@@ -149,6 +152,7 @@ class EntryActions {
       recordedBy: memberId,
       subjectId: subjectId,
       groupId: groupId,
+      scheduleBlockId: scheduleBlockId,
       body: body,
     );
     return useId;

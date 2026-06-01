@@ -4275,6 +4275,17 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _scheduleBlockIdMeta = const VerificationMeta(
+    'scheduleBlockId',
+  );
+  @override
+  late final GeneratedColumn<String> scheduleBlockId = GeneratedColumn<String>(
+    'schedule_block_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _kindMeta = const VerificationMeta('kind');
   @override
   late final GeneratedColumn<String> kind = GeneratedColumn<String>(
@@ -4354,6 +4365,7 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     spaceId,
     groupId,
     subjectId,
+    scheduleBlockId,
     kind,
     body,
     photoUrl,
@@ -4397,6 +4409,15 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
       context.handle(
         _subjectIdMeta,
         subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    }
+    if (data.containsKey('schedule_block_id')) {
+      context.handle(
+        _scheduleBlockIdMeta,
+        scheduleBlockId.isAcceptableOrUnknown(
+          data['schedule_block_id']!,
+          _scheduleBlockIdMeta,
+        ),
       );
     }
     if (data.containsKey('kind')) {
@@ -4476,6 +4497,10 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
         DriftSqlType.string,
         data['${effectivePrefix}subject_id'],
       ),
+      scheduleBlockId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}schedule_block_id'],
+      ),
       kind: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}kind'],
@@ -4518,6 +4543,7 @@ class Entry extends DataClass implements Insertable<Entry> {
   final String spaceId;
   final String? groupId;
   final String? subjectId;
+  final String? scheduleBlockId;
   final String kind;
   final String? body;
   final String? photoUrl;
@@ -4530,6 +4556,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     required this.spaceId,
     this.groupId,
     this.subjectId,
+    this.scheduleBlockId,
     required this.kind,
     this.body,
     this.photoUrl,
@@ -4548,6 +4575,9 @@ class Entry extends DataClass implements Insertable<Entry> {
     }
     if (!nullToAbsent || subjectId != null) {
       map['subject_id'] = Variable<String>(subjectId);
+    }
+    if (!nullToAbsent || scheduleBlockId != null) {
+      map['schedule_block_id'] = Variable<String>(scheduleBlockId);
     }
     map['kind'] = Variable<String>(kind);
     if (!nullToAbsent || body != null) {
@@ -4573,6 +4603,9 @@ class Entry extends DataClass implements Insertable<Entry> {
       subjectId: subjectId == null && nullToAbsent
           ? const Value.absent()
           : Value(subjectId),
+      scheduleBlockId: scheduleBlockId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduleBlockId),
       kind: Value(kind),
       body: body == null && nullToAbsent ? const Value.absent() : Value(body),
       photoUrl: photoUrl == null && nullToAbsent
@@ -4595,6 +4628,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       spaceId: serializer.fromJson<String>(json['spaceId']),
       groupId: serializer.fromJson<String?>(json['groupId']),
       subjectId: serializer.fromJson<String?>(json['subjectId']),
+      scheduleBlockId: serializer.fromJson<String?>(json['scheduleBlockId']),
       kind: serializer.fromJson<String>(json['kind']),
       body: serializer.fromJson<String?>(json['body']),
       photoUrl: serializer.fromJson<String?>(json['photoUrl']),
@@ -4612,6 +4646,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       'spaceId': serializer.toJson<String>(spaceId),
       'groupId': serializer.toJson<String?>(groupId),
       'subjectId': serializer.toJson<String?>(subjectId),
+      'scheduleBlockId': serializer.toJson<String?>(scheduleBlockId),
       'kind': serializer.toJson<String>(kind),
       'body': serializer.toJson<String?>(body),
       'photoUrl': serializer.toJson<String?>(photoUrl),
@@ -4627,6 +4662,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     String? spaceId,
     Value<String?> groupId = const Value.absent(),
     Value<String?> subjectId = const Value.absent(),
+    Value<String?> scheduleBlockId = const Value.absent(),
     String? kind,
     Value<String?> body = const Value.absent(),
     Value<String?> photoUrl = const Value.absent(),
@@ -4639,6 +4675,9 @@ class Entry extends DataClass implements Insertable<Entry> {
     spaceId: spaceId ?? this.spaceId,
     groupId: groupId.present ? groupId.value : this.groupId,
     subjectId: subjectId.present ? subjectId.value : this.subjectId,
+    scheduleBlockId: scheduleBlockId.present
+        ? scheduleBlockId.value
+        : this.scheduleBlockId,
     kind: kind ?? this.kind,
     body: body.present ? body.value : this.body,
     photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
@@ -4653,6 +4692,9 @@ class Entry extends DataClass implements Insertable<Entry> {
       spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      scheduleBlockId: data.scheduleBlockId.present
+          ? data.scheduleBlockId.value
+          : this.scheduleBlockId,
       kind: data.kind.present ? data.kind.value : this.kind,
       body: data.body.present ? data.body.value : this.body,
       photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
@@ -4674,6 +4716,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           ..write('spaceId: $spaceId, ')
           ..write('groupId: $groupId, ')
           ..write('subjectId: $subjectId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
           ..write('kind: $kind, ')
           ..write('body: $body, ')
           ..write('photoUrl: $photoUrl, ')
@@ -4691,6 +4734,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     spaceId,
     groupId,
     subjectId,
+    scheduleBlockId,
     kind,
     body,
     photoUrl,
@@ -4707,6 +4751,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           other.spaceId == this.spaceId &&
           other.groupId == this.groupId &&
           other.subjectId == this.subjectId &&
+          other.scheduleBlockId == this.scheduleBlockId &&
           other.kind == this.kind &&
           other.body == this.body &&
           other.photoUrl == this.photoUrl &&
@@ -4721,6 +4766,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
   final Value<String> spaceId;
   final Value<String?> groupId;
   final Value<String?> subjectId;
+  final Value<String?> scheduleBlockId;
   final Value<String> kind;
   final Value<String?> body;
   final Value<String?> photoUrl;
@@ -4734,6 +4780,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     this.spaceId = const Value.absent(),
     this.groupId = const Value.absent(),
     this.subjectId = const Value.absent(),
+    this.scheduleBlockId = const Value.absent(),
     this.kind = const Value.absent(),
     this.body = const Value.absent(),
     this.photoUrl = const Value.absent(),
@@ -4748,6 +4795,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     required String spaceId,
     this.groupId = const Value.absent(),
     this.subjectId = const Value.absent(),
+    this.scheduleBlockId = const Value.absent(),
     required String kind,
     this.body = const Value.absent(),
     this.photoUrl = const Value.absent(),
@@ -4768,6 +4816,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Expression<String>? spaceId,
     Expression<String>? groupId,
     Expression<String>? subjectId,
+    Expression<String>? scheduleBlockId,
     Expression<String>? kind,
     Expression<String>? body,
     Expression<String>? photoUrl,
@@ -4782,6 +4831,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       if (spaceId != null) 'space_id': spaceId,
       if (groupId != null) 'group_id': groupId,
       if (subjectId != null) 'subject_id': subjectId,
+      if (scheduleBlockId != null) 'schedule_block_id': scheduleBlockId,
       if (kind != null) 'kind': kind,
       if (body != null) 'text': body,
       if (photoUrl != null) 'photo_url': photoUrl,
@@ -4798,6 +4848,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Value<String>? spaceId,
     Value<String?>? groupId,
     Value<String?>? subjectId,
+    Value<String?>? scheduleBlockId,
     Value<String>? kind,
     Value<String?>? body,
     Value<String?>? photoUrl,
@@ -4812,6 +4863,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       spaceId: spaceId ?? this.spaceId,
       groupId: groupId ?? this.groupId,
       subjectId: subjectId ?? this.subjectId,
+      scheduleBlockId: scheduleBlockId ?? this.scheduleBlockId,
       kind: kind ?? this.kind,
       body: body ?? this.body,
       photoUrl: photoUrl ?? this.photoUrl,
@@ -4837,6 +4889,9 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     }
     if (subjectId.present) {
       map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (scheduleBlockId.present) {
+      map['schedule_block_id'] = Variable<String>(scheduleBlockId.value);
     }
     if (kind.present) {
       map['kind'] = Variable<String>(kind.value);
@@ -4872,6 +4927,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
           ..write('spaceId: $spaceId, ')
           ..write('groupId: $groupId, ')
           ..write('subjectId: $subjectId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
           ..write('kind: $kind, ')
           ..write('body: $body, ')
           ..write('photoUrl: $photoUrl, ')
@@ -23749,6 +23805,7 @@ typedef $$EntriesTableCreateCompanionBuilder =
       required String spaceId,
       Value<String?> groupId,
       Value<String?> subjectId,
+      Value<String?> scheduleBlockId,
       required String kind,
       Value<String?> body,
       Value<String?> photoUrl,
@@ -23764,6 +23821,7 @@ typedef $$EntriesTableUpdateCompanionBuilder =
       Value<String> spaceId,
       Value<String?> groupId,
       Value<String?> subjectId,
+      Value<String?> scheduleBlockId,
       Value<String> kind,
       Value<String?> body,
       Value<String?> photoUrl,
@@ -23800,6 +23858,11 @@ class $$EntriesTableFilterComposer
 
   ColumnFilters<String> get subjectId => $composableBuilder(
     column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -23868,6 +23931,11 @@ class $$EntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get kind => $composableBuilder(
     column: $table.kind,
     builder: (column) => ColumnOrderings(column),
@@ -23924,6 +23992,11 @@ class $$EntriesTableAnnotationComposer
 
   GeneratedColumn<String> get subjectId =>
       $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get kind =>
       $composableBuilder(column: $table.kind, builder: (column) => column);
@@ -23983,6 +24056,7 @@ class $$EntriesTableTableManager
                 Value<String> spaceId = const Value.absent(),
                 Value<String?> groupId = const Value.absent(),
                 Value<String?> subjectId = const Value.absent(),
+                Value<String?> scheduleBlockId = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String?> body = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
@@ -23996,6 +24070,7 @@ class $$EntriesTableTableManager
                 spaceId: spaceId,
                 groupId: groupId,
                 subjectId: subjectId,
+                scheduleBlockId: scheduleBlockId,
                 kind: kind,
                 body: body,
                 photoUrl: photoUrl,
@@ -24011,6 +24086,7 @@ class $$EntriesTableTableManager
                 required String spaceId,
                 Value<String?> groupId = const Value.absent(),
                 Value<String?> subjectId = const Value.absent(),
+                Value<String?> scheduleBlockId = const Value.absent(),
                 required String kind,
                 Value<String?> body = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
@@ -24024,6 +24100,7 @@ class $$EntriesTableTableManager
                 spaceId: spaceId,
                 groupId: groupId,
                 subjectId: subjectId,
+                scheduleBlockId: scheduleBlockId,
                 kind: kind,
                 body: body,
                 photoUrl: photoUrl,

@@ -117,6 +117,9 @@ const appSchema = Schema([
     Column.text('space_id'),
     Column.text('group_id'),
     Column.text('subject_id'),
+    // Live-block capture: the block this moment happened during (null =
+    // untagged). See docs/LIVE_BLOCK_CONTEXT.md.
+    Column.text('schedule_block_id'),
     Column.text('kind'),
     Column.text('text'),
     Column.text('photo_url'),
