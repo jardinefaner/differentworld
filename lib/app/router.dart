@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
@@ -831,6 +832,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/starts-with',
             builder: (_, _) => const LetterWordsScreen(),
+          ),
+          // "As If" acting game — perform a line in an emotion/character.
+          GoRoute(
+            path: '/activity/as-if',
+            builder: (_, _) => const AsIfScreen(),
           ),
         ],
       ),

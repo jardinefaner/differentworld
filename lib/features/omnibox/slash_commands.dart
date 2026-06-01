@@ -222,6 +222,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     aliases: const ['letters', 'ck', 'words'],
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/starts-with')),
   ),
+  SlashCommand(
+    name: 'asif',
+    label: '/asif',
+    hint: 'Play As If — act a line out (emotions + imagination)',
+    icon: Icons.theater_comedy_outlined,
+    aliases: const ['acting', 'drama', 'act'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/as-if')),
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',

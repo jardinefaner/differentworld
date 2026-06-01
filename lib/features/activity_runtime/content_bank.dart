@@ -25,6 +25,13 @@ class ContentItem {
 abstract class ContentKind {
   static const thisOrThat = 'this_or_that';
   static const category = 'category';
+
+  /// A neutral sentence to perform (the "As If" acting game).
+  static const line = 'line';
+
+  /// An "as if" transformation — an emotion / character / situation to
+  /// perform a [line] in.
+  static const asIf = 'as_if';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -57,6 +64,8 @@ class LocalContentBank implements ContentSource {
   factory LocalContentBank.seeded() => LocalContentBank([
     ..._thisOrThatSeed,
     ..._categorySeed,
+    ..._lineSeed,
+    ..._asIfSeed,
   ]);
 
   final Map<String, List<ContentItem>> _byKind = {};
@@ -141,4 +150,44 @@ final List<ContentItem> _categorySeed = <ContentItem>[
   _categoryOf('a thing in nature'),
   _categoryOf('something you wear'),
   _categoryOf('a kind of music'),
+];
+
+ContentItem _lineOf(String s) => ContentItem(
+  kind: ContentKind.line,
+  fingerprint: s.toLowerCase(),
+  payload: {'text': s},
+);
+
+final List<ContentItem> _lineSeed = <ContentItem>[
+  _lineOf('I lost my keys'),
+  _lineOf('Look at that!'),
+  _lineOf('We need to talk'),
+  _lineOf('I made you something'),
+  _lineOf('It is right behind you'),
+  _lineOf("I can't believe it"),
+  _lineOf('Are you sure about this?'),
+  _lineOf("That's the one"),
+  _lineOf('Here we go again'),
+  _lineOf("I'll never forget this"),
+];
+
+ContentItem _asIfOf(String s) => ContentItem(
+  kind: ContentKind.asIf,
+  fingerprint: s.toLowerCase(),
+  payload: {'text': s},
+);
+
+final List<ContentItem> _asIfSeed = <ContentItem>[
+  _asIfOf("you're terrified"),
+  _asIfOf('you just won a prize'),
+  _asIfOf("you're a sleepy cat"),
+  _asIfOf('it is a giant secret'),
+  _asIfOf("you're a robot"),
+  _asIfOf("you're a tiny mouse"),
+  _asIfOf("you're SO excited"),
+  _asIfOf("you're a grumpy giant"),
+  _asIfOf("you're underwater"),
+  _asIfOf("you're a news reporter"),
+  _asIfOf("you're a wise old wizard"),
+  _asIfOf('you are trying not to laugh'),
 ];
