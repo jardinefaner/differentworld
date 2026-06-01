@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/activity_script.dart';
 import 'package:differentworld/features/activity_runtime/math_inverse.dart';
-import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
-import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,8 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// (docs/ACTIVITY_RUNTIME.md, Slice 2). Drives one Math inverse activity
 /// through its phases: present the target → the learner invents
 /// expressions that equal it (validated live) → reveal the room's variety
-/// → ponder. Kid-mode locked: the app conducts; the learner never
-/// navigates; exit is a staff 5-tap (+ PIN if configured).
+/// → ponder. A teacher-paced break (game-show-host model), NOT a locked
+/// kid surface — the floating back arrow exits like any other screen.
 ///
 /// Prototype scope: the room's answers live in screen state — a run's
 /// captures are NOT yet persisted as entries (deferred per the doc). No
@@ -28,8 +26,7 @@ class MathRunnerScreen extends ConsumerStatefulWidget {
   ConsumerState<MathRunnerScreen> createState() => _MathRunnerScreenState();
 }
 
-class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen>
-    with WidgetsBindingObserver {
+class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen> {
   late final ActivityRun _run = ActivityRun(mathInverseActivity(widget.target));
   final TextEditingController _ctl = TextEditingController();
   final FocusNode _focus = FocusNode();
@@ -42,56 +39,9 @@ class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen>
 
   Timer? _ponderTimer;
 
-  // Staff exit gesture — 5 taps on the hidden top-left corner.
-  int _staffTaps = 0;
-  Timer? _staffTapReset;
-  bool _staffUnlocked = false;
-  static const _staffTapTarget = 5;
-  static const _staffTapWindow = Duration(seconds: 2);
-
-  String get _route => '/activity/math?target=${widget.target}';
-
-  // Cached in initState — `ref` is unsafe in dispose (the element is
-  // deactivated by then), so the notifiers are saved as fields. This is
-  // the EdgeScaffold pattern; eager (not `late ... = ref.read`) so a
-  // dispose-before-first-frame can't trip the lazy init inside dispose.
-  late final KidMode _kidMode;
-  late final KidModeLockedRoute _lockedRoute;
-
-  @override
-  void initState() {
-    super.initState();
-    _kidMode = ref.read(kidModeProvider.notifier);
-    _lockedRoute = ref.read(kidModeLockedRouteProvider.notifier);
-    WidgetsBinding.instance.addObserver(this);
-    // Defer the provider writes out of the build phase (initState runs
-    // inside the parent's build; AppShell watches kidModeProvider).
-    unawaited(
-      Future.microtask(() {
-        if (!mounted) return;
-        _kidMode.enter();
-        _lockedRoute.pin(_route);
-      }),
-    );
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Re-engage the lock on resume unless staff already unlocked — a kid
-    // who backgrounds mid-activity reopens still locked.
-    if (state == AppLifecycleState.resumed && !_staffUnlocked && mounted) {
-      _kidMode.enter();
-      _lockedRoute.pin(_route);
-    }
-  }
-
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _ponderTimer?.cancel();
-    _staffTapReset?.cancel();
-    _kidMode.exit();
-    _lockedRoute.pin(null);
     _ctl.dispose();
     _focus.dispose();
     super.dispose();
@@ -150,100 +100,26 @@ class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen>
     unawaited(SystemChannels.textInput.invokeMethod<void>('TextInput.show'));
   }
 
-  Future<void> _onStaffCornerTap() async {
-    _staffTaps += 1;
-    _staffTapReset?.cancel();
-    if (_staffTaps >= _staffTapTarget) {
-      _staffTaps = 0;
-      // Release the IME before the dialog rotates focus scope (invariant
-      // #5: a modal during active text input steals the keyboard).
-      _focus.unfocus();
-      final result = await showKidModeExitDialog(context, ref);
-      if (!mounted) return;
-      switch (result) {
-        case KidModeExitResult.unlocked:
-        case KidModeExitResult.noPinConfigured:
-          setState(() => _staffUnlocked = true);
-          _lockedRoute.pin(null);
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            const SnackBar(content: Text('Unlocked. Press back to exit.')),
-          );
-        case KidModeExitResult.cancelled:
-          // Staying in the activity — if they were typing, give the
-          // keyboard back rather than leaving a dead, unfocused field.
-          if (_run.current.mode == ActivityMode.create) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted || _run.current.mode != ActivityMode.create) {
-                return;
-              }
-              _focus.requestFocus();
-              unawaited(
-                SystemChannels.textInput.invokeMethod<void>('TextInput.show'),
-              );
-            });
-          }
-      }
-      return;
-    }
-    _staffTapReset = Timer(_staffTapWindow, () {
-      if (mounted) _staffTaps = 0;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    // This screen drives its own lock — it blocks pop from mount until a
-    // staff unlock. We deliberately do NOT `ref.watch(kidModeProvider)`
-    // here: dispose mutates that provider (`exit()`), and notifying this
-    // very (defunct) element would assert. AppShell is the one that
-    // watches kid mode to strip chrome.
-    final blockPop = !_staffUnlocked;
-
-    return PopScope(
-      canPop: !blockPop,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          const SnackBar(
-            content: Text('Hand the device back to a teacher to exit.'),
-            duration: Duration(seconds: 2),
+    // A teacher-paced break (not a locked kid surface) — the floating
+    // back arrow exits like any other screen.
+    return EdgeScaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              // Keyed by phase id so swapping phases gives Flutter a clean
+              // identity — the create-phase TextField never gets matched to
+              // a sibling phase's widget (tearing down its input connection).
+              child: KeyedSubtree(
+                key: ValueKey('phase-${_run.current.id}'),
+                child: _phaseBody(context),
+              ),
+            ),
           ),
-        );
-      },
-      child: EdgeScaffold(
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: SafeArea(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      // Keyed by phase id so swapping phases gives Flutter a
-                      // clean identity — the create-phase TextField never
-                      // gets matched to a sibling phase's widget (which would
-                      // tear down its input connection).
-                      child: KeyedSubtree(
-                        key: ValueKey('phase-${_run.current.id}'),
-                        child: _phaseBody(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Hidden staff-corner exit (top-left — no content overlap).
-            Positioned(
-              top: 0,
-              left: 0,
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: _onStaffCornerTap,
-                child: const SizedBox(width: 56, height: 56),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -302,65 +178,67 @@ class _MathRunnerScreenState extends ConsumerState<MathRunnerScreen>
   Widget _create(BuildContext context, Phase phase) {
     final theme = Theme.of(context);
     final v = _verdict;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          phase.prompt,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.titleLarge,
-        ),
-        const SizedBox(height: 24),
-        TextField(
-          controller: _ctl,
-          focusNode: _focus,
-          autofocus: true,
-          textAlign: TextAlign.center,
-          textInputAction: TextInputAction.done,
-          style: theme.textTheme.headlineMedium,
-          decoration: const InputDecoration(
-            hintText: 'like  3 × 4',
-            border: OutlineInputBorder(),
-          ),
-          onChanged: _onChanged,
-          onSubmitted: (_) => _submit(),
-        ),
-        const SizedBox(height: 12),
-        _VerdictChip(verdict: v, target: widget.target),
-        const SizedBox(height: 12),
-        FilledButton(
-          onPressed: (v != null && v.valid && v.equals && v.novel)
-              ? () {
-                  unawaited(HapticFeedback.selectionClick());
-                  _submit();
-                }
-              : null,
-          child: const Text('Add this path'),
-        ),
-        const SizedBox(height: 24),
-        if (_answers.isNotEmpty) ...[
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-            'Your paths so far',
-            style: theme.textTheme.labelLarge,
+            phase.prompt,
             textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final a in _answers) Chip(label: Text(a)),
-            ],
+            style: theme.textTheme.titleLarge,
           ),
           const SizedBox(height: 24),
+          TextField(
+            controller: _ctl,
+            focusNode: _focus,
+            autofocus: true,
+            textAlign: TextAlign.center,
+            textInputAction: TextInputAction.done,
+            style: theme.textTheme.headlineMedium,
+            decoration: const InputDecoration(
+              hintText: 'like  3 × 4',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: _onChanged,
+            onSubmitted: (_) => _submit(),
+          ),
+          const SizedBox(height: 12),
+          _VerdictChip(verdict: v, target: widget.target),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: (v != null && v.valid && v.equals && v.novel)
+                ? () {
+                    unawaited(HapticFeedback.selectionClick());
+                    _submit();
+                  }
+                : null,
+            child: const Text('Add this path'),
+          ),
+          const SizedBox(height: 24),
+          if (_answers.isNotEmpty) ...[
+            Text(
+              'Your paths so far',
+              style: theme.textTheme.labelLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final a in _answers) Chip(label: Text(a)),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+          TextButton(
+            onPressed: _answers.isEmpty ? null : _advance,
+            child: const Text("I'm done — show the paths"),
+          ),
         ],
-        TextButton(
-          onPressed: _answers.isEmpty ? null : _advance,
-          child: const Text("I'm done — show the paths"),
-        ),
-      ],
+      ),
     );
   }
 
