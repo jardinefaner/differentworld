@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:differentworld/features/activity_runtime/activity_script.dart';
+import 'package:differentworld/features/activity_runtime/collage_gallery.dart';
 import 'package:differentworld/features/activity_runtime/justified_gallery.dart';
 import 'package:differentworld/features/activity_runtime/photography.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
@@ -642,7 +643,7 @@ class _PhotographyRunnerScreenState
                       size: 64,
                     ),
                   )
-                : JustifiedGallery(
+                : CollageGallery(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     tiles: [
                       for (var i = 0; i < _shots.length; i++)
@@ -769,9 +770,8 @@ class _PhotographyRunnerScreenState
                       style: TextStyle(color: Colors.white54),
                     ),
                   )
-                : JustifiedGallery(
+                : CollageGallery(
                     padding: const EdgeInsets.all(4),
-                    targetRowHeight: 170,
                     tiles: [
                       for (final i in sharedIdx)
                         JustifiedTile(
