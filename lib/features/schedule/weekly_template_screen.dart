@@ -165,6 +165,7 @@ class _NoTemplate extends ConsumerWidget {
               onPressed: () async {
                 final viewer = ref.read(viewerProvider);
                 final db = await ref.read(appDatabaseProvider.future);
+                if (!context.mounted) return;
                 await db.weeklyTemplateDao.createTemplate(
                   spaceId: spaceId,
                   createdBy: viewer.memberId,
@@ -345,7 +346,7 @@ class _SlotRow extends ConsumerWidget {
                 message: 'This removes the slot from the weekly template.',
                 confirmLabel: 'Remove',
               );
-              if (!confirmed) return;
+              if (!confirmed || !context.mounted) return;
               final db = await ref.read(appDatabaseProvider.future);
               await db.weeklyTemplateDao.deleteSlot(slot.id);
             },
