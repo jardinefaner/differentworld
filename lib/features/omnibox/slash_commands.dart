@@ -271,6 +271,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/breathe')),
   ),
   SlashCommand(
+    name: 'factorfib',
+    label: '/factorfib',
+    hint: 'Fact or Fib — the room votes true/false, you reveal',
+    icon: Icons.fact_check_outlined,
+    aliases: const ['fact', 'fib', 'trueorfalse', 'truefalse', 'trivia'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/fact-or-fib')),
+  ),
+  SlashCommand(
     name: 'pattern',
     label: '/pattern',
     hint: 'Make a Pattern — snap a tile, watch it repeat',

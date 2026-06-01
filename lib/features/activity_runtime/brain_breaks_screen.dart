@@ -95,6 +95,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFF26A69A),
       route: '/activity/breathe',
     ),
+    _BreakCard(
+      title: 'Fact or Fib',
+      tagline: 'True, or made up?',
+      icon: Icons.fact_check_outlined,
+      color: Color(0xFF7E57C2),
+      route: '/activity/fact-or-fib',
+    ),
   ];
 
   void _surprise(BuildContext context) {

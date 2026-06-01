@@ -9,6 +9,7 @@ import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
+import 'package:differentworld/features/activity_runtime/fact_or_fib_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
@@ -887,6 +888,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/breathe',
             builder: (_, _) => const BreatheScreen(),
+          ),
+          // Fact or Fib — host-run; the room votes true/false, you Reveal.
+          GoRoute(
+            path: '/activity/fact-or-fib',
+            builder: (_, _) => const FactOrFibScreen(),
           ),
           // Make a Pattern — draw/build a tile in real life, snap it, watch
           // it repeat (kaleidoscope mirroring → symmetry from any tile).

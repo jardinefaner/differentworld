@@ -36,6 +36,10 @@ abstract class ContentKind {
   /// A riddle to solve aloud — payload `{prompt, answer}`. Authored
   /// answer-first (the answer is the seed; the riddle points at it).
   static const riddle = 'riddle';
+
+  /// A true/false claim — payload `{statement, isTrue (bool), note}`.
+  /// The room votes; Reveal shows the verdict + the real fact.
+  static const factOrFib = 'fact_or_fib';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -71,6 +75,7 @@ class LocalContentBank implements ContentSource {
     ..._lineSeed,
     ..._asIfSeed,
     ..._riddleSeed,
+    ..._factOrFibSeed,
   ]);
 
   final Map<String, List<ContentItem>> _byKind = {};
@@ -206,7 +211,10 @@ ContentItem _riddleOf(String prompt, String answer) => ContentItem(
 // Classic, kid-safe riddles (ages 4–12). Authored answer-first.
 final List<ContentItem> _riddleSeed = <ContentItem>[
   _riddleOf('What has to be broken before you can use it?', 'An egg'),
-  _riddleOf("I'm tall when I'm young and short when I'm old. What am I?", 'A candle'),
+  _riddleOf(
+    "I'm tall when I'm young and short when I'm old. What am I?",
+    'A candle',
+  ),
   _riddleOf('What has hands but cannot clap?', 'A clock'),
   _riddleOf('What gets wetter the more it dries?', 'A towel'),
   _riddleOf('What has many teeth but cannot bite?', 'A comb'),
@@ -218,7 +226,101 @@ final List<ContentItem> _riddleSeed = <ContentItem>[
   _riddleOf('What has a thumb and four fingers but is not alive?', 'A glove'),
   _riddleOf('What can you catch but not throw?', 'A cold'),
   _riddleOf("What has keys but can't open locks?", 'A piano'),
-  _riddleOf('The more you take, the more you leave behind. What are they?', 'Footsteps'),
+  _riddleOf(
+    'The more you take, the more you leave behind. What are they?',
+    'Footsteps',
+  ),
   _riddleOf('What is full of holes but still holds water?', 'A sponge'),
   _riddleOf('What has a head and a tail but no body?', 'A coin'),
+];
+
+ContentItem _factOf(
+  String statement, {
+  required bool isTrue,
+  required String note,
+}) => ContentItem(
+  kind: ContentKind.factOrFib,
+  fingerprint: statement.toLowerCase(),
+  payload: {'statement': statement, 'isTrue': isTrue, 'note': note},
+);
+
+// Kid-safe true/false claims (ages 4–12). Mix of true + fib, each with the
+// real fact for the reveal.
+final List<ContentItem> _factOrFibSeed = <ContentItem>[
+  _factOf(
+    'A group of flamingos is called a flamboyance.',
+    isTrue: true,
+    note: 'True — a flamboyance of flamingos!',
+  ),
+  _factOf(
+    'Octopuses have three hearts.',
+    isTrue: true,
+    note: 'True — two pump blood to the gills, one to the body.',
+  ),
+  _factOf(
+    'The Great Wall of China is easily seen from space with your eyes.',
+    isTrue: false,
+    note: 'Fib — it is far too narrow to see unaided from orbit.',
+  ),
+  _factOf(
+    'Honey never spoils.',
+    isTrue: true,
+    note: 'True — sealed honey can last thousands of years.',
+  ),
+  _factOf(
+    'A goldfish only remembers things for three seconds.',
+    isTrue: false,
+    note: 'Fib — goldfish can remember things for months.',
+  ),
+  _factOf(
+    'Some turtles can breathe through their bottoms.',
+    isTrue: true,
+    note: 'True — through a back opening, in cold water.',
+  ),
+  _factOf(
+    'Bananas grow on trees.',
+    isTrue: false,
+    note: 'Fib — banana plants are giant herbs, not trees.',
+  ),
+  _factOf(
+    'A day on Venus is longer than a whole year on Venus.',
+    isTrue: true,
+    note: 'True — Venus spins very, very slowly.',
+  ),
+  _factOf(
+    'Carrots give you the power to see in the dark.',
+    isTrue: false,
+    note: 'Fib — good for you, but that was a wartime myth.',
+  ),
+  _factOf(
+    'Wombat poop is shaped like little cubes.',
+    isTrue: true,
+    note: 'True — really!',
+  ),
+  _factOf(
+    'Spiders are insects.',
+    isTrue: false,
+    note: 'Fib — spiders are arachnids (8 legs, not 6).',
+  ),
+  _factOf(
+    'A bolt of lightning is hotter than the surface of the sun.',
+    isTrue: true,
+    note: 'True — about five times hotter.',
+  ),
+  _factOf("A shrimp's heart is in its head.", isTrue: true, note: 'True!'),
+  _factOf(
+    'Lightning never strikes the same place twice.',
+    isTrue: false,
+    note: 'Fib — it often hits the same tall spot again.',
+  ),
+  _factOf(
+    'About 1.3 million Earths could fit inside the sun.',
+    isTrue: true,
+    note: 'True — the sun is enormous.',
+  ),
+  _factOf(
+    'Chameleons change color to hide against any background.',
+    isTrue: false,
+    note: 'Fib — mostly to show mood and temperature.',
+  ),
 ];

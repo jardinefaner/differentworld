@@ -31,7 +31,7 @@ for free.**
 ## Think — puzzles & logic
 - **✓ Riddle Me This** — a riddle to solve aloud.
   *Big:* the riddle. *Phone:* Reveal the answer · Next.
-- **+ Fact or Fib** — true, or made up?
+- **✓ Fact or Fib** — true, or made up?
   *Big:* the statement (room votes with hands / move to a side). *Phone:*
   Reveal "True!" / "Fib — here's the real fact" · Next.
 - **+ Odd One Out** — which doesn't belong, and why?
