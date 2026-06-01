@@ -15,6 +15,11 @@ class EntryKind {
   static const String diaper = 'diaper';
   static const String incident = 'incident';
   static const String medication = 'medication';
+
+  /// A mission completion — the room/kid did a real job (docs/MISSIONS.md).
+  /// `details` carries {missionId, missionName, builds, stepsDone,
+  /// stepsTotal}; feeds the track record + the growth book.
+  static const String mission = 'mission';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -23,26 +28,29 @@ typedef GroupEntriesKey = ({String groupId, String kind});
 /// per-classroom observations / meals / naps screens.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final entriesForGroupProvider =
-    StreamProvider.autoDispose.family<List<Entry>, GroupEntriesKey>(
-  (ref, key) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.entriesDao.watchForGroup(groupId: key.groupId, kind: key.kind);
-  },
-);
+final entriesForGroupProvider = StreamProvider.autoDispose
+    .family<List<Entry>, GroupEntriesKey>(
+      (ref, key) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.entriesDao.watchForGroup(
+          groupId: key.groupId,
+          kind: key.kind,
+        );
+      },
+    );
 
 /// Moments (entries of any kind) tied to one schedule block, newest first.
 /// Drives the live strip's ⊕ N counter and the block's moment sheet
 /// (live-block Slice 2). See docs/LIVE_BLOCK_CONTEXT.md.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final momentsForBlockProvider =
-    StreamProvider.autoDispose.family<List<Entry>, String>(
-  (ref, blockId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.entriesDao.watchForBlock(scheduleBlockId: blockId);
-  },
-);
+final momentsForBlockProvider = StreamProvider.autoDispose
+    .family<List<Entry>, String>(
+      (ref, blockId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.entriesDao.watchForBlock(scheduleBlockId: blockId);
+      },
+    );
 
 /// Every observation in the signed-in user's program, scoped to what
 /// the viewer can see (director: all; teacher: only entries in
@@ -53,8 +61,7 @@ final momentsForBlockProvider =
 /// through `groupsProvider` — Riverpod 3 removed `.stream` so
 /// composing provider streams is no longer the easy path. Raw Drift
 /// streams stay reactive the same way.
-final observationsInSpaceProvider =
-    StreamProvider<List<Entry>>((ref) async* {
+final observationsInSpaceProvider = StreamProvider<List<Entry>>((ref) async* {
   final viewer = ref.watch(viewerProvider);
   final spaceId = viewer.spaceId;
   final memberId = viewer.memberId;
@@ -88,16 +95,16 @@ typedef SubjectEntriesKey = ({String subjectId, String? kind});
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final entriesForSubjectProvider =
-    StreamProvider.autoDispose.family<List<Entry>, SubjectEntriesKey>(
-  (ref, key) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.entriesDao.watchForSubject(
-      subjectId: key.subjectId,
-      kind: key.kind,
+final entriesForSubjectProvider = StreamProvider.autoDispose
+    .family<List<Entry>, SubjectEntriesKey>(
+      (ref, key) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.entriesDao.watchForSubject(
+          subjectId: key.subjectId,
+          kind: key.kind,
+        );
+      },
     );
-  },
-);
 
 class EntryActions {
   EntryActions(this._ref);

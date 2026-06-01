@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart'
-    show Entry, Export, Invite, Subject;
+    show Entry, Export, Invite, Mission, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
@@ -43,6 +43,7 @@ import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/live_session_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
+import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
@@ -838,6 +839,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/this-or-that',
             builder: (_, _) => const LiveSessionScreen(),
+          ),
+          // Do a mission (docs/MISSIONS.md slice 2) — the Mission rides in
+          // `extra`; a bare deep-link bounces to the catalog.
+          GoRoute(
+            path: '/missions/do',
+            redirect: (_, state) =>
+                state.extra is Mission ? null : '/settings/missions',
+            builder: (_, state) =>
+                MissionDoScreen(mission: state.extra! as Mission),
           ),
           // The Math inverse activity — a conducted, kid-mode experience
           // (docs/ACTIVITY_RUNTIME.md, Slice 2). Under the ShellRoute so

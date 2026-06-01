@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/missions/mission_progress.dart';
 import 'package:differentworld/features/missions/mission_templates.dart';
 import 'package:differentworld/features/missions/missions_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -16,6 +17,7 @@ import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/settings/missions` — the program's mission catalog (docs/MISSIONS.md):
 /// real jobs with a manual + a checklist + the evidence they leave. The
@@ -179,6 +181,8 @@ class _MissionDetailSheet extends ConsumerWidget {
     final canEdit = ref.watch(viewerProvider).canManageSpace;
     final actions = decodeMissionActions(mission.actions);
     final evidence = MissionEvidenceKind.fromKey(mission.evidenceKind);
+    final completions = ref.watch(missionCompletionsProvider).value ?? const [];
+    final doneCount = missionCompletionCounts(completions)[mission.id] ?? 0;
     return SafeArea(
       top: false,
       child: SingleChildScrollView(
@@ -215,6 +219,12 @@ class _MissionDetailSheet extends ConsumerWidget {
                   label: Text(missionAgeLabel(mission)),
                   visualDensity: VisualDensity.compact,
                 ),
+                if (doneCount > 0)
+                  Chip(
+                    avatar: const Icon(Icons.check_circle, size: 16),
+                    label: Text('done $doneCount×'),
+                    visualDensity: VisualDensity.compact,
+                  ),
               ],
             ),
             if (mission.why != null && mission.why!.isNotEmpty) ...[
@@ -277,8 +287,20 @@ class _MissionDetailSheet extends ConsumerWidget {
                 Text(evidence.label, style: theme.textTheme.bodyLarge),
               ],
             ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                unawaited(context.push('/missions/do', extra: mission));
+              },
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+              ),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Do this mission'),
+            ),
             if (canEdit) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               FilledButton.tonalIcon(
                 onPressed: () {
                   Navigator.of(context).pop();

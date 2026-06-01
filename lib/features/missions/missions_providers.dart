@@ -1,6 +1,9 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entries/entries_providers.dart'
+    show EntryKind;
+import 'package:differentworld/features/missions/mission_progress.dart';
 import 'package:differentworld/features/missions/mission_templates.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:drift/drift.dart' show Value;
@@ -18,6 +21,19 @@ final missionsProvider = StreamProvider<List<Mission>>((ref) {
     return Stream<List<Mission>>.value(const []);
   }
   return db.missionsDao.watchInSpace(spaceId);
+});
+
+/// Mission completions (the save-progress record) — `entries` of kind
+/// 'mission' across the space, newest first. Drives the "done N times"
+/// track record on the catalog.
+final missionCompletionsProvider = StreamProvider<List<Entry>>((ref) {
+  final viewer = ref.watch(viewerProvider);
+  final spaceId = viewer.spaceId;
+  final db = ref.watch(appDatabaseProvider).value;
+  if (spaceId == null || db == null) {
+    return Stream<List<Entry>>.value(const []);
+  }
+  return db.entriesDao.watchInSpace(spaceId: spaceId, kind: EntryKind.mission);
 });
 
 const _uuid = Uuid();
@@ -129,6 +145,36 @@ class MissionActions {
       );
     }
     await db.missionsDao.createAll(rows);
+  }
+
+  /// Record a mission as DONE — the save-progress write. Lands an `entries`
+  /// row (kind 'mission') that feeds the track record + the growth book.
+  /// Optionally attributed to a [subjectId] (a kid); otherwise room-level.
+  Future<void> complete(
+    Mission mission, {
+    required int stepsDone,
+    required int stepsTotal,
+    String? subjectId,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId = viewer.requireSpaceId(action: 'complete a mission');
+    final memberId = viewer.memberId;
+    if (memberId == null) return;
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.entriesDao.create(
+      id: _uuid.v4(),
+      spaceId: spaceId,
+      kind: EntryKind.mission,
+      recordedBy: memberId,
+      subjectId: subjectId,
+      detailsJson: encodeMissionCompletion(
+        missionId: mission.id,
+        missionName: mission.name,
+        builds: mission.builds,
+        stepsDone: stepsDone,
+        stepsTotal: stepsTotal,
+      ),
+    );
   }
 }
 
