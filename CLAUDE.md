@@ -1516,6 +1516,26 @@ do / dictate. Some key invariants:
   capture-hero card (which sit ABOVE the list in the column) behind the
   chrome on first open. Route mode (pushed `/search`) clears chrome via
   `EdgeScaffold`; only overlay mode needs the explicit body inset.
+- **Top-chrome clearance is AUTOMATIC for every EdgeScaffold route —
+  don't add per-screen `topChromeHeight` math.** This used to regress
+  constantly ("new screens overlap the chrome") because clearance was
+  opt-in: a screen only cleared the floating pills if it remembered to
+  put a `ContentHeader` first (which reserved `statusBar +
+  topChromeHeight`). Grids, custom headers, and the host-run game
+  screens floated underneath. **Fixed for good:** `EdgeScaffold`
+  publishes the chrome band into the body's `MediaQuery.padding.top`
+  (kid-mode-gated → reserves 0 when AppShell hides the chrome). So any
+  `SafeArea` *or* `ContentHeader` in ANY body clears the pills with no
+  per-screen code — the reservation lives in the scaffold, not each
+  screen, so it can't be forgotten. Consequences for new code: (1)
+  `ContentHeader` reads `MediaQuery.padding.top` and does NOT add
+  `topChromeHeight` itself — re-adding it double-insets every screen by
+  56 dp. (2) A non-scrolling / centered body just needs a `SafeArea`
+  and it clears automatically. (3) A full-bleed body (the camera) opts
+  out by using NO `SafeArea` — chrome floats over it by design. (4) The
+  ONLY places that still add `topChromeHeight` by hand are the omnibox
+  *overlay* (not an EdgeScaffold) and anything rendered outside the
+  shell. Don't reintroduce the per-screen inset.
 - **The bar lives INSIDE the body Stack** at `Positioned(bottom: 0)`,
   not in `Scaffold.bottomNavigationBar`. The bottomNavigationBar slot
   does NOT ride the keyboard inset; the body does. Routes whose forms
