@@ -1,40 +1,40 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
-import 'package:differentworld/features/activity_runtime/kid_mode_lock.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// `/activity/this-or-that` — a kid-friendly binary-choice game
-/// (docs/ACTIVITY_RUNTIME.md). One pair fills the screen as two tappable
-/// halves; tap your pick, the next pair slides in; at the end, a recap of
-/// your choices. Content comes from the content bank (curated now, DB +
-/// AI-grown later) — served once, no repeats.
+/// `/activity/this-or-that` — a TEACHER-hosted brain break (game-show-host
+/// model, not handed to a kid). One session, two VIEWS by form factor:
 ///
-/// Single-device for now: the recap shows YOUR picks. The "room's split"
-/// (everyone's choices aggregated) lands when picks persist + sync
-/// (SUBMISSIONS-style), the same way photography uploads.
-class ThisOrThatScreen extends ConsumerStatefulWidget {
+///   - **Presentation** (wide screen / projector): the pair, big, for the
+///     room to see + react to (hands up, move to a side).
+///   - **Control** (phone): the host's remote — Back / Reveal / Next +
+///     progress. The phone drives the slides.
+///
+/// Single-device for now: a laptop shows presentation + a control bar; a
+/// phone shows the control with a preview. The LIVE two-device link (phone
+/// controls a separate projector via a realtime session) is the next
+/// layer — this proves the separation of concerns first.
+class ThisOrThatScreen extends StatefulWidget {
   const ThisOrThatScreen({super.key});
 
   @override
-  ConsumerState<ThisOrThatScreen> createState() => _ThisOrThatScreenState();
+  State<ThisOrThatScreen> createState() => _ThisOrThatScreenState();
 }
 
-class _ThisOrThatScreenState extends ConsumerState<ThisOrThatScreen>
-    with WidgetsBindingObserver, KidModeLock<ThisOrThatScreen> {
-  static const _route = '/activity/this-or-that';
-  static const _roundSize = 8;
+class _ThisOrThatScreenState extends State<ThisOrThatScreen> {
+  static const _wideBreakpoint = 720.0;
 
   final LocalContentBank _bank = LocalContentBank.seeded();
-  late List<ContentItem> _pairs;
+  late final List<ContentItem> _pairs = _bank.take(ContentKind.thisOrThat, 8);
 
-  /// fingerprint → 'a' | 'b'
-  final Map<String, String> _choice = {};
   int _index = 0;
+  bool _revealed = false; // the "why?" discussion prompt is showing
+  bool _done = false;
 
-  // A small playful palette; each pair gets its own two-tone split.
+  // Per-pair palette so each slide has its own two-tone split.
   static const _palette = <(Color, Color)>[
     (Color(0xFFEF5350), Color(0xFF42A5F5)),
     (Color(0xFFFFA726), Color(0xFF26A69A)),
@@ -43,178 +43,171 @@ class _ThisOrThatScreenState extends ConsumerState<ThisOrThatScreen>
     (Color(0xFFEC407A), Color(0xFF29B6F6)),
   ];
 
-  bool get _done => _index >= _pairs.length;
+  String get _a => _pairs[_index].payload['a']! as String;
+  String get _b => _pairs[_index].payload['b']! as String;
+  bool get _atEnd => _index >= _pairs.length - 1;
 
-  @override
-  void initState() {
-    super.initState();
-    _pairs = _bank.take(ContentKind.thisOrThat, _roundSize);
-    enterKidLock(_route);
-  }
-
-  @override
-  void dispose() {
-    exitKidLock();
-    super.dispose();
-  }
-
-  void _pick(String side) {
-    if (_done) return;
+  void _next() {
     unawaited(HapticFeedback.selectionClick());
+    if (_atEnd) {
+      setState(() => _done = true);
+      return;
+    }
     setState(() {
-      _choice[_pairs[_index].fingerprint] = side;
       _index++;
+      _revealed = false;
     });
   }
 
-  void _again() {
-    _bank.reset();
+  void _back() {
+    if (_done) {
+      setState(() => _done = false);
+      return;
+    }
+    if (_index == 0) return;
     setState(() {
-      _pairs = _bank.take(ContentKind.thisOrThat, _roundSize);
-      _choice.clear();
-      _index = 0;
+      _index--;
+      _revealed = false;
     });
   }
+
+  void _toggleReveal() => setState(() => _revealed = !_revealed);
+
+  void _restart() => setState(() {
+    _index = 0;
+    _revealed = false;
+    _done = false;
+  });
 
   @override
   Widget build(BuildContext context) {
-    return buildKidLock(child: _done ? _recap(context) : _round(context));
+    return EdgeScaffold(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= _wideBreakpoint;
+          return wide ? _wideLayout(context) : _phoneLayout(context);
+        },
+      ),
+    );
   }
 
-  Widget _round(BuildContext context) {
-    final pair = _pairs[_index];
-    final a = pair.payload['a']! as String;
-    final b = pair.payload['b']! as String;
-    final (colorA, colorB) = _palette[_index % _palette.length];
+  // Big screen: presentation fills, a slim control bar at the bottom so a
+  // single laptop both presents and is controlled.
+  Widget _wideLayout(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(child: _presentation(context)),
+        _ControlBar(
+          index: _index,
+          total: _pairs.length,
+          revealed: _revealed,
+          done: _done,
+          onBack: _back,
+          onReveal: _toggleReveal,
+          onNext: _next,
+          onRestart: _restart,
+        ),
+      ],
+    );
+  }
 
+  // Phone: the control IS the focus — a small preview on top, big controls
+  // below. ("The phone becomes the coordination + next-slide control.")
+  Widget _phoneLayout(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: [
+          SizedBox(height: 220, child: _presentation(context)),
+          Expanded(
+            child: _ControlPanel(
+              index: _index,
+              total: _pairs.length,
+              revealed: _revealed,
+              done: _done,
+              onBack: _back,
+              onReveal: _toggleReveal,
+              onNext: _next,
+              onRestart: _restart,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _presentation(BuildContext context) {
+    if (_done) return const _WrapSlide();
+    final (colorA, colorB) = _palette[_index % _palette.length];
     return Stack(
       fit: StackFit.expand,
       children: [
         Column(
           children: [
             Expanded(
-              child: _half(text: a, color: colorA, onTap: () => _pick('a')),
+              child: _Half(text: _a, color: colorA),
             ),
             Expanded(
-              child: _half(text: b, color: colorB, onTap: () => _pick('b')),
+              child: _Half(text: _b, color: colorB),
             ),
           ],
         ),
-        // The "OR" badge straddling the seam.
         const Center(child: _OrBadge()),
-        // Progress, top-center (clear of the staff corner at top-left).
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Center(
-                child: Text(
-                  '${_index + 1} / ${_pairs.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-                  ),
+        if (_revealed)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.75),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+              child: const Text(
+                'Why? Turn to a partner and tell them.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
+}
 
-  Widget _half({
-    required String text,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color, Color.lerp(color, Colors.black, 0.28)!],
-          ),
+class _Half extends StatelessWidget {
+  const _Half({required this.text, required this.color});
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color, Color.lerp(color, Colors.black, 0.28)!],
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: FittedBox(
             child: Text(
               text,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 34,
+                fontSize: 40,
                 fontWeight: FontWeight.w800,
-                height: 1.1,
                 shadows: [Shadow(color: Colors.black38, blurRadius: 6)],
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _recap(BuildContext context) {
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 4),
-            child: Text(
-              'Your picks',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              itemCount: _pairs.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (_, i) {
-                final pair = _pairs[i];
-                final chosen = _choice[pair.fingerprint];
-                final a = pair.payload['a']! as String;
-                final b = pair.payload['b']! as String;
-                return _RecapRow(
-                  a: a,
-                  b: b,
-                  chose: chosen, // 'a' | 'b' | null
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-            child: FilledButton.tonal(
-              onPressed: _again,
-              child: const Text('Play again'),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 20),
-            child: Text(
-              'Hand the device back to your teacher.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 13),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -232,10 +225,7 @@ class _OrBadge extends StatelessWidget {
         color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 12,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12),
         ],
       ),
       alignment: Alignment.center,
@@ -251,52 +241,193 @@ class _OrBadge extends StatelessWidget {
   }
 }
 
-class _RecapRow extends StatelessWidget {
-  const _RecapRow({required this.a, required this.b, required this.chose});
-
-  final String a;
-  final String b;
-  final String? chose;
+class _WrapSlide extends StatelessWidget {
+  const _WrapSlide();
 
   @override
   Widget build(BuildContext context) {
-    Widget side(String text, {required bool picked}) => Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: picked
-              ? Colors.pinkAccent.withValues(alpha: 0.9)
-              : Colors.white10,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
+    return const ColoredBox(
+      color: Color(0xFF1B1B2F),
+      child: Center(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (picked) ...[
-              const Icon(Icons.check_circle, color: Colors.white, size: 18),
-              const SizedBox(width: 6),
-            ],
-            Flexible(
-              child: Text(
-                text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: picked ? Colors.white : Colors.white60,
-                  fontWeight: picked ? FontWeight.w700 : FontWeight.w500,
-                ),
+            Text('🎉', style: TextStyle(fontSize: 56)),
+            SizedBox(height: 12),
+            Text(
+              "That's a wrap!",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+}
 
-    return Row(
-      children: [
-        side(a, picked: chose == 'a'),
-        const SizedBox(width: 8),
-        side(b, picked: chose == 'b'),
-      ],
+/// The host control — slim, for the bottom of the presentation (wide).
+class _ControlBar extends StatelessWidget {
+  const _ControlBar({
+    required this.index,
+    required this.total,
+    required this.revealed,
+    required this.done,
+    required this.onBack,
+    required this.onReveal,
+    required this.onNext,
+    required this.onRestart,
+  });
+
+  final int index;
+  final int total;
+  final bool revealed;
+  final bool done;
+  final VoidCallback onBack;
+  final VoidCallback onReveal;
+  final VoidCallback onNext;
+  final VoidCallback onRestart;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Text(
+                done ? 'Done' : '${index + 1} / $total',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              IconButton.filledTonal(
+                onPressed: (index == 0 && !done) ? null : onBack,
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Back',
+              ),
+              const SizedBox(width: 8),
+              if (done)
+                FilledButton.icon(
+                  onPressed: onRestart,
+                  icon: const Icon(Icons.replay),
+                  label: const Text('Again'),
+                )
+              else ...[
+                FilledButton.tonalIcon(
+                  onPressed: onReveal,
+                  icon: Icon(
+                    revealed ? Icons.visibility_off : Icons.lightbulb_outline,
+                  ),
+                  label: Text(revealed ? 'Hide' : 'Discuss'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: onNext,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Next'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The host control — big, phone-focused (the phone is the remote).
+class _ControlPanel extends StatelessWidget {
+  const _ControlPanel({
+    required this.index,
+    required this.total,
+    required this.revealed,
+    required this.done,
+    required this.onBack,
+    required this.onReveal,
+    required this.onNext,
+    required this.onRestart,
+  });
+
+  final int index;
+  final int total;
+  final bool revealed;
+  final bool done;
+  final VoidCallback onBack;
+  final VoidCallback onReveal;
+  final VoidCallback onNext;
+  final VoidCallback onRestart;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Text(
+            done ? 'Done' : 'Slide ${index + 1} of $total',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const Spacer(),
+          if (done)
+            SizedBox(
+              width: double.infinity,
+              height: 64,
+              child: FilledButton.icon(
+                onPressed: onRestart,
+                icon: const Icon(Icons.replay),
+                label: const Text('Start over'),
+              ),
+            )
+          else ...[
+            SizedBox(
+              width: double.infinity,
+              height: 72,
+              child: FilledButton.icon(
+                onPressed: onNext,
+                icon: const Icon(Icons.arrow_forward, size: 28),
+                label: const Text(
+                  'Next',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: (index == 0) ? null : onBack,
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Back'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onReveal,
+                    icon: Icon(
+                      revealed ? Icons.visibility_off : Icons.lightbulb_outline,
+                    ),
+                    label: Text(revealed ? 'Hide' : 'Discuss'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
