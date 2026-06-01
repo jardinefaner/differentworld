@@ -31,6 +31,19 @@ final entriesForGroupProvider =
   },
 );
 
+/// Moments (entries of any kind) tied to one schedule block, newest first.
+/// Drives the live strip's ⊕ N counter and the block's moment sheet
+/// (live-block Slice 2). See docs/LIVE_BLOCK_CONTEXT.md.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final momentsForBlockProvider =
+    StreamProvider.autoDispose.family<List<Entry>, String>(
+  (ref, blockId) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* db.entriesDao.watchForBlock(scheduleBlockId: blockId);
+  },
+);
+
 /// Every observation in the signed-in user's program, scoped to what
 /// the viewer can see (director: all; teacher: only entries in
 /// classrooms they're assigned to). Newest first.
