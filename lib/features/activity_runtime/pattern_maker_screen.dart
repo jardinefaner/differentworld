@@ -147,21 +147,23 @@ class _Intro extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        SizedBox(
-          height: 64,
-          child: FilledButton.icon(
-            onPressed: capturing ? null : onSnap,
-            icon: capturing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.photo_camera, size: 26),
-            label: Text(
-              capturing ? 'Opening…' : 'Snap your tile',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
+        FilledButton.icon(
+          onPressed: capturing ? null : onSnap,
+          // minimumSize (not a fixed-height SizedBox) so the label can grow
+          // at 200% text scale without clipping (rubric E3).
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(64),
+          ),
+          icon: capturing
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.photo_camera, size: 26),
+          label: Text(
+            capturing ? 'Opening…' : 'Snap your tile',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
         ),
         const SizedBox(height: 10),
@@ -209,6 +211,9 @@ class _Controls extends StatelessWidget {
                     ChoiceChip(
                       label: Text('$n×$n'),
                       selected: config.tilesPerRow == n,
+                      // Keep the hit-box ≥ 48 dp (rubric E1) — these are the
+                      // primary post-capture control, often a kid's target.
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
                       onSelected: (_) =>
                           onConfig(config.copyWith(tilesPerRow: n)),
                     ),

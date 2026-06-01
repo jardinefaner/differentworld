@@ -1296,8 +1296,8 @@ empty when you query them, step 7 is the culprit 99% of the time.
 ## Review pipeline — the council pattern
 
 Single-reviewer agents have correlated blind spots. The review
-pipeline runs THREE perspectives in parallel and a synthesizer
-that catches what they all missed:
+pipeline runs parallel perspectives and a synthesizer that catches
+what they all missed:
 
 1. **Flutter Preflight** — code-correctness via 9 specialist
    guards (lifecycle, state, async, platform, performance,
@@ -1308,11 +1308,20 @@ that catches what they all missed:
    conditions, edge data, kid-tap exploits, sync edge cases that
    pattern-matching alone misses.
 3. **UX Critic** — fresh-user review: IA, copy, discoverability,
-   flow, density, empty/loading/error states. Finds buried
-   features (vehicles-off-screen), confusing copy, friction.
+   flow, density. Finds buried features (vehicles-off-screen),
+   confusing copy, friction.
+4. **Screen Rubric** — structural per-screen gate against
+   [docs/SCREEN_RUBRIC.md](docs/SCREEN_RUBRIC.md): chrome/viewport
+   clearance, the four states (loading/empty/error/data),
+   composition primitives, interaction integrity, a11y,
+   offline-first. The mechanical "does this screen satisfy the
+   checklist" pass — the layer that ends recurring layout/state
+   defects (content under the chrome, a list with no empty state,
+   a tap that does nothing). Spawned only when a change touches a
+   screen. The rubric is the source of truth; the agent enforces it.
 
-Above all three: **Review Council** — orchestrator that spawns
-the three in parallel and synthesizes. The synthesizer looks for
+Above them: **Review Council** — orchestrator that spawns
+the relevant tracks in parallel and synthesizes. The synthesizer looks for
 CROSS-CUTTING findings — things no single reviewer flagged but
 that emerge from combining perspectives (e.g. UX says "user can
 re-tap fast" + Preflight finds no idempotency guard = real
@@ -1331,6 +1340,7 @@ When to invoke:
 The agents live in `~/.claude/agents/`:
 - `red-team.md`
 - `ux-critic.md`
+- `screen-rubric.md` (enforces [docs/SCREEN_RUBRIC.md](docs/SCREEN_RUBRIC.md))
 - `review-council.md`
 - `flutter-preflight.md` (plus 9 specialist guards)
 

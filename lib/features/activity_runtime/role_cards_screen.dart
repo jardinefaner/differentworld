@@ -56,7 +56,9 @@ class RoleCardsScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              // Bottom 96 clears the floating omnibox bar (~76) so the last
+              // grid row isn't hidden behind it (rubric A3).
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
               child: GridView.extent(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -94,40 +96,47 @@ class _RoleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(role.emoji, style: const TextStyle(fontSize: 40)),
-              const Spacer(),
-              Text(
-                role.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
+    // One clean announcement instead of three loose text fragments
+    // (rubric E2).
+    return Semantics(
+      button: true,
+      label: 'Role: ${role.name}, builds ${role.builds}',
+      excludeSemantics: true,
+      child: Material(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(role.emoji, style: const TextStyle(fontSize: 40)),
+                const Spacer(),
+                Text(
+                  role.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'builds ${role.builds}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 12,
+                const SizedBox(height: 2),
+                Text(
+                  'builds ${role.builds}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -154,7 +163,9 @@ class _RoleCardFace extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(child: Text(role.emoji, style: const TextStyle(fontSize: 64))),
+            Center(
+              child: Text(role.emoji, style: const TextStyle(fontSize: 64)),
+            ),
             const SizedBox(height: 8),
             Text(
               'Today I am ${role.article} ${role.name}',
