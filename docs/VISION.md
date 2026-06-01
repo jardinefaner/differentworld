@@ -261,6 +261,28 @@ happen in one place.
 - **Status:** seed → designing ([SUPPLIES.md](SUPPLIES.md))
 - **Lives in:** [SUPPLIES.md](SUPPLIES.md)
 
+### 16. Real missions — jobs you actually do, with real evidence
+
+> "roles that actually require real life evidence... helping maintain
+> supplies, helping clean around the program... their manuals, how they're
+> supposed to be put away... small missions they could truly do if they
+> want to save progress... equipment manager, lunch/snack helper... what
+> are the rules, what they look like, and actions they could practice"
+
+The **grounded sibling** of the imaginative Role Cards (#8). A *mission* is
+a real responsibility in the program — Equipment Manager, Snack Helper,
+Cleanup Crew, Supply Keeper — that a kid genuinely **does**. Each has
+**rules** (a manual: how it's done, where things go), **actions** to
+practice (a real checklist), and leaves **real evidence** (a photo of the
+tidy bin, a count). Missions wire into the actual app: the supplies they
+maintain (#15), the locations they tend, the manuals that say how. You can
+**take one, do it, save progress** — completions accrue into a track record
+that feeds the growth book (#1) and *proves* the identity story (#2).
+Opt-in and coordinated (who has which job today), never a chore chart.
+
+- **Status:** seed → designing ([MISSIONS.md](MISSIONS.md))
+- **Lives in:** [MISSIONS.md](MISSIONS.md)
+
 ---
 
 ## New dreams land here
@@ -277,6 +299,11 @@ once it has a home.
   (phone → web, no names) rides it (→ dream #5). And **supplies /
   inventory** as wired-in first-class data the activities consume
   (→ dream #15).
+- **2026-06-01 (cont.)** — **Real missions / jobs** with real-life
+  evidence (Equipment Manager, Snack Helper, Cleanup, Supply Keeper…):
+  rules + manual, practiceable actions, photo/count evidence, save-progress
+  + coordination, wired to supplies (#15) + locations + the growth book
+  (→ dream #16).
 
 ---
 
