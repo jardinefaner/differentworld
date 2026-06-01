@@ -486,13 +486,13 @@ surface — preferences + roster + fleet, not primary workflows.
 - Drawer: yes — "Schedule" (main destinations, position 2)
 - Settings: no
 **Capabilities**: Read: all members. Write: `can_manage_schedule` (director / lead-tier).
-**Data**: [schedule_blocks](SCHEMA.md#schedule_blocks), [activities](SCHEMA.md#activities), [locations](SCHEMA.md#locations), [trip_logistics](SCHEMA.md#trip_logistics), [trip_vehicles](SCHEMA.md#trip_vehicles), [permission_slips](SCHEMA.md#permission_slips), [headcounts](SCHEMA.md#headcounts), [entries](SCHEMA.md#entries) (reads via `schedule_block_id` back-reference — live-block capture tagging, see migration `20260531000002`)
+**Data**: [schedule_blocks](SCHEMA.md#schedule_blocks), [activities](SCHEMA.md#activities), [locations](SCHEMA.md#locations), [trip_logistics](SCHEMA.md#trip_logistics), [trip_vehicles](SCHEMA.md#trip_vehicles), [permission_slips](SCHEMA.md#permission_slips), [headcounts](SCHEMA.md#headcounts), [entries](SCHEMA.md#entries) (reads via `schedule_block_id` back-reference — live-block capture tagging, see migration `20260531000002`), [activity_supplies](SCHEMA.md#activity_supplies) (reads via `activitySupplyLinksProvider` in the activity editor), [supplies](SCHEMA.md#supplies) (reads via `suppliesProvider` to populate the pack-list picker in the activity editor)
 **Surfaces**:
 - *Schedule screen* — `lib/features/schedule/schedule_screen.dart`. Cohort tabs × time-of-day list (phone-friendly). Tablet grid deferred for Maya.
 - *Block edit screen* — `lib/features/schedule/block_edit_screen.dart`. Create / edit one block (start, end, activity, lead, location, kind).
 - *Substitute lead sheet* — `lib/features/schedule/widgets/substitute_lead_sheet.dart`. Modal bottom sheet: pick absent lead → pick cover. Bulk-writes `lead_substitute_member_id` for all matching blocks on the day. Surfaceable directly from the omnibox via "Cover today · {Group.name}" (Pat persona) without first entering the schedule editor.
 - *Leading-today card* — `lib/features/schedule/widgets/leading_today_card.dart`. Embedded on home; signed-in lead's blocks + cabin notes for today.
-**Depends on**: Groups, Members, Activities, Locations, Vehicles (trip assignment), Entries (reads `schedule_block_id` back-reference for live-block capture tagging).
+**Depends on**: Groups, Members, Activities, Locations, Vehicles (trip assignment), Entries (reads `schedule_block_id` back-reference for live-block capture tagging), Supplies (pack-list picker in `activity_edit_screen.dart` reads `suppliesProvider` + `activitySupplyLinksProvider`).
 **Consumed by**: Today (leading-today card), Attendance (block-context for headcounts), Captures (block-context tag), Omnibox (substitute-lead sheet invoked from the per-cohort "Cover today" entry).
 **Last verified**: 2026-06-01
 
@@ -548,7 +548,7 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Supplies
 **Path**: `lib/features/supplies/`
-**Purpose**: The program's real-world inventory catalog — track items (markers, paper, balls) once, flag low stock, and reference by id from activities (slice 2).
+**Purpose**: The program's real-world inventory catalog — track items (markers, paper, balls) once, flag low stock, and reference by id from activities.
 **Personas served**: Maya, Coach Sam, Brianna (directors/leads maintain via `canManageSpace`); All staff (view).
 **Discovery surfaces**:
 - Routes: `/settings/supplies`
@@ -557,14 +557,15 @@ surface — preferences + roster + fleet, not primary workflows.
 - Drawer: no — library surface (same convention as Locations, Activities)
 - Settings: no — omnibox is the canonical discovery entry; Settings screen is preferences-only per the library convention
 **Capabilities**: View: all signed-in staff. Create / edit / delete: `canManageSpace` (director / lead).
-**Data**: [supplies](SCHEMA.md#supplies)
+**Data**: [supplies](SCHEMA.md#supplies), [activity_supplies](SCHEMA.md#activity_supplies) (read via `activitySupplyLinksProvider` + written via `ActivitySuppliesActions`), [locations](SCHEMA.md#locations) (read for the Location lens — `location_id` FK added in migration `20260601000003`)
 **Surfaces**:
-- *Supplies list screen* — `lib/features/supplies/supplies_list_screen.dart`. EdgeScaffold; supplies grouped by category; all four states (loading / empty / error / data); add/edit via `openSupplyEditSheet`. Edit actions gated by `viewer.canManageSpace`. Low-stock highlighting via `isLowStock` helper.
-- *Supply edit sheet* — inline glass sheet opened from `SuppliesListScreen`. Create / update a supply row (name, category, quantity, unit, location, low_stock_threshold, notes, photo_url).
+- *Supplies list screen* — `lib/features/supplies/supplies_list_screen.dart`. EdgeScaffold; three-view toggle (Category / Location / Running low) backed by `_SuppliesView` enum; `groupSuppliesByLocation` groups by the `location_id` FK when in Location mode; all four states (loading / empty / error / data); add/edit via `openSupplyEditSheet`. Edit actions gated by `viewer.canManageSpace`. Low-stock highlighting via `isLowStock` helper.
+- *Supply edit sheet* — inline glass sheet opened from `SuppliesListScreen`. Create / update a supply row (name, category, quantity, unit, location_id → Locations FK, free-text sub-spot, low_stock_threshold, notes, photo_url).
+- *Activity supplies providers* — `lib/features/supplies/activity_supplies_providers.dart`. `activitySupplyLinksProvider` (StreamProvider.family by activityId → `db.activitySuppliesDao.watchForActivity`); `ActivitySuppliesActions` Notifier with `setForActivity` (replace-all write via `replaceForActivity`).
 - *Supplies providers* — `lib/features/supplies/supplies_providers.dart`. `suppliesProvider` (StreamProvider → `db.suppliesDao.watchInSpace`); `supplyActionsProvider` (`SupplyActions` Notifier with create / update_ / delete_).
-- *Supplies grouping helpers* — `lib/features/supplies/supplies_grouping.dart`. Pure functions: `supplyCategoryLabel`, `isLowStock`, `groupSuppliesByCategory`, `formatSupplyNumber`. No UI — consumed by the list screen.
-**Depends on**: Nothing — leaf catalog feature in slice 1.
-**Consumed by**: Activities (slice 2 will add an `activity_supplies` join so activities declare "you'll need 12 markers" + a derived block pack list).
+- *Supplies grouping helpers* — `lib/features/supplies/supplies_grouping.dart`. Pure functions: `supplyCategoryLabel`, `isLowStock`, `groupSuppliesByCategory`, `groupSuppliesByLocation`, `supplyLocationLabel`, `formatSupplyNumber`. No UI — consumed by the list screen.
+**Depends on**: Locations (Location lens reads `locationsProvider` for `location_id → name` resolution).
+**Consumed by**: Activities / Schedule (`activity_edit_screen.dart` imports `activity_supplies_providers.dart` and `supplies_providers.dart`; the structured "Supplies needed" picker writes `activity_supplies` rows on save).
 **Last verified**: 2026-06-01
 
 ---
@@ -754,6 +755,12 @@ in. Run `Agent persona-audit` to refresh.
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
 
+_Run 2026-06-01 (pack-list + Location lens)_ — no unresolved discovery drift. Updates applied this run:
+- **Supplies** — `**Data**` extended: `activity_supplies` (read + written via `activitySupplyLinksProvider` / `ActivitySuppliesActions`) and `locations` (read for the Location lens — `location_id` FK, migration `20260601000003`). `**Surfaces**` updated: list screen now documents the three-view toggle (Category / Location / Running low), the `groupSuppliesByLocation` helper, and the new Activity supplies providers surface. `**Depends on**` updated from "nothing" to Locations. `**Consumed by**` updated: Activities / Schedule now a real consumer via `activity_edit_screen.dart` importing `activity_supplies_providers.dart` + `supplies_providers.dart`.
+- **Schedule** — `**Data**` extended: `activity_supplies` and `supplies` (both read in `activity_edit_screen.dart`). `**Depends on**` extended to include Supplies.
+- **SCHEMA.md** — `activity_supplies` new table entry added. `supplies` key-columns updated with `location_id`. `activities` Consumers updated to include Schedule (was already listed; Activity edit screen is in the schedule folder). `locations` Consumers updated to include Supplies. `supplies` Consumers updated to include Schedule.
+- Cross-link reconcile: see below.
+
 _Run 2026-06-01 (Missions slice 1)_ — no unresolved discovery drift. Updates applied this run:
 - **Missions** — new feature entry added. Route `/settings/missions` confirmed in `router.dart` (nested under `/settings`, same pattern as `supplies`, `locations`). Omnibox entry `page.missions` confirmed in `omnibox_catalog.dart` with keywords: missions, jobs, helpers, chores, responsibilities, equipment manager, snack helper; `onSelect` pushes `/settings/missions`. No drawer entry, no Settings ListTile, no slash command — correct per the library-surface convention (same as Supplies, Locations). Claimed surfaces verified: all match code.
 - **SCHEMA.md** — `missions` table entry added.
@@ -880,7 +887,7 @@ All other discovery claims verified against `router.dart`,
 
 ---
 
-_Last full registry verification: 2026-06-01 (Missions slice 1)._
+_Last full registry verification: 2026-06-01 (pack-list + Location lens)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._

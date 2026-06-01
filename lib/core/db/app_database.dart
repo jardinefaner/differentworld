@@ -1,4 +1,5 @@
 import 'package:differentworld/core/db/dao/activities_dao.dart';
+import 'package:differentworld/core/db/dao/activity_supplies_dao.dart';
 import 'package:differentworld/core/db/dao/attachments_dao.dart';
 import 'package:differentworld/core/db/dao/attendance_dao.dart';
 import 'package:differentworld/core/db/dao/captures_dao.dart';
@@ -538,6 +539,21 @@ class Locations extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Join: which supplies an activity needs, and how many (docs/SUPPLIES.md
+/// pack lists). One row per (activity, supply); `quantity` nullable.
+class ActivitySupplies extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get activityId => text()();
+  TextColumn get supplyId => text()();
+  RealColumn get quantity => real().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Real jobs a kid (or counselor) actually does, with real evidence
 /// (docs/MISSIONS.md). The grounded counterpart to the imaginative Role
 /// Cards. `actions` is a JSON array string (parse client-side);
@@ -810,6 +826,8 @@ class Events extends Table {
           Supplies,
           // Missions — real jobs with evidence.
           Missions,
+          // Activity ↔ supplies pack-list join.
+          ActivitySupplies,
           // Camp scheduling.
           Locations, Activities, ScheduleBlocks, TripLogistics,
           TripVehicles, PermissionSlips, Headcounts,
@@ -842,6 +860,7 @@ class Events extends Table {
     // Camp scheduling.
     LocationsDao,
     ActivitiesDao,
+    ActivitySuppliesDao,
     ScheduleDao,
     TripsDao,
     // Wave 154: weekly template + generate-blocks.

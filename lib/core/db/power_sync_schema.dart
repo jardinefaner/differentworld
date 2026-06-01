@@ -306,6 +306,16 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  // ---- Activity supplies (docs/SUPPLIES.md) — pack-list join --------------
+  // See supabase/migrations/20260601000004_activity_supplies.sql.
+  Table('activity_supplies', [
+    Column.text('space_id'),
+    Column.text('activity_id'),
+    Column.text('supply_id'),
+    Column.real('quantity'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
   // ---- Missions (docs/MISSIONS.md) ----------------------------------------
   // See supabase/migrations/20260601000002_missions.sql.
   Table('missions', [

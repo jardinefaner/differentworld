@@ -4,6 +4,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
+import 'package:differentworld/features/supplies/activity_supplies_providers.dart';
+import 'package:differentworld/features/supplies/supplies_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -13,6 +15,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,6 +48,13 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
   bool _isOutdoor = false;
   bool _saving = false;
   bool _seeded = false;
+
+  // Structured pack list (docs/SUPPLIES.md): which catalog supplies this
+  // activity needs + how many. Seeded once from the links, edited locally,
+  // written on save.
+  List<SupplyPick> _picks = [];
+  bool _picksSeeded = false;
+  String _initialPicksSig = '';
 
   @override
   void initState() {
@@ -84,6 +94,23 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
     _seeded = true;
   }
 
+  void _seedPicks(List<ActivitySupply> links) {
+    if (_picksSeeded) return;
+    _picks = [
+      for (final l in links) (supplyId: l.supplyId, quantity: l.quantity),
+    ];
+    _initialPicksSig = _picksSig();
+    _picksSeeded = true;
+  }
+
+  /// Order-independent signature of the current picks, for dirty-checking.
+  String _picksSig() {
+    final parts = [
+      for (final p in _picks) '${p.supplyId}:${p.quantity ?? ''}',
+    ]..sort();
+    return parts.join('|');
+  }
+
   bool _isDirty(Activity? base) {
     if (base == null) {
       return _name.text.trim().isNotEmpty ||
@@ -94,7 +121,8 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
           _ageMax.text.trim().isNotEmpty ||
           _maxCapacity.text.trim().isNotEmpty ||
           _locationId != null ||
-          _isOutdoor;
+          _isOutdoor ||
+          _picks.isNotEmpty;
     }
     return _name.text.trim() != base.name ||
         _description.text.trim() != (base.description ?? '') ||
@@ -105,7 +133,8 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
         _ageMax.text.trim() != (base.ageMax?.toString() ?? '') ||
         _maxCapacity.text.trim() != (base.maxCapacity?.toString() ?? '') ||
         _locationId != base.defaultLocationId ||
-        _isOutdoor != (base.isOutdoor == 1);
+        _isOutdoor != (base.isOutdoor == 1) ||
+        _picksSig() != _initialPicksSig;
   }
 
   Future<void> _save() async {
@@ -157,6 +186,12 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
             isOutdoor: _isOutdoor,
           );
         }
+        final aid = createdOrEditedId;
+        if (aid != null) {
+          await ref
+              .read(activitySuppliesActionsProvider)
+              .setForActivity(aid, _picks);
+        }
       },
     );
     if (!mounted) return;
@@ -193,6 +228,125 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
     if (mounted) navigator.pop();
   }
 
+  // The structured pack-list editor — picks from the Supplies catalog with
+  // a per-item quantity stepper (docs/SUPPLIES.md). The grounded "you'll
+  // need…" for an activity.
+  Widget _packListSection(BuildContext context, List<Supply> supplies) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    Supply? byId(String id) {
+      for (final s in supplies) {
+        if (s.id == id) return s;
+      }
+      return null;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SUPPLIES NEEDED',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+            letterSpacing: 0.6,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Pick from your Supplies catalog so a block or day can show a '
+          'pack list.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (var i = 0; i < _picks.length; i++)
+          _packRow(i, byId(_picks[i].supplyId)),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: supplies.isEmpty ? null : () => _addSupply(supplies),
+            icon: const Icon(Icons.add),
+            label: Text(
+              supplies.isEmpty
+                  ? 'Add supplies to your catalog first'
+                  : 'Add supply',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _packRow(int i, Supply? supply) {
+    final theme = Theme.of(context);
+    final pick = _picks[i];
+    final qty = (pick.quantity ?? 1).round();
+    void setQty(int q) => setState(
+      () => _picks[i] = (supplyId: pick.supplyId, quantity: q.toDouble()),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              supply?.name ?? 'Removed supply',
+              style: supply == null
+                  ? theme.textTheme.bodyLarge?.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    )
+                  : theme.textTheme.bodyLarge,
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: qty <= 1 ? null : () => setQty(qty - 1),
+            icon: const Icon(Icons.remove_circle_outline),
+            tooltip: 'Fewer',
+          ),
+          Text('$qty', style: theme.textTheme.titleMedium),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () => setQty(qty + 1),
+            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'More',
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: () => setState(() => _picks.removeAt(i)),
+            icon: const Icon(Icons.close),
+            tooltip: 'Remove',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addSupply(List<Supply> supplies) async {
+    final picked = _picks.map((p) => p.supplyId).toSet();
+    final available = supplies.where((s) => !picked.contains(s.id)).toList();
+    if (available.isEmpty) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Everything in your catalog is already on the list.'),
+        ),
+      );
+      return;
+    }
+    final id = await showGlassSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _SupplyPickSheet(supplies: available),
+    );
+    if (id != null && mounted) {
+      setState(() => _picks.add((supplyId: id, quantity: 1)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -201,6 +355,13 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
         ? ref.watch(activityByIdProvider(widget.activityId!))
         : const AsyncValue<Activity?>.data(null);
     final base = (activityAsync..whenData(_seedFromActivity)).value;
+
+    final supplies = ref.watch(suppliesProvider).value ?? const <Supply>[];
+    if (widget.isEdit) {
+      ref
+          .watch(activitySupplyLinksProvider(widget.activityId!))
+          .whenData(_seedPicks);
+    }
 
     final locationsAsync = ref.watch(locationsProvider);
     final locations = locationsAsync.value ?? const <Location>[];
@@ -407,15 +568,16 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                         onChanged: (v) => setState(() => _isOutdoor = v),
                       ),
                       const SizedBox(height: 12),
+                      _packListSection(context, supplies),
+                      const SizedBox(height: 12),
                       TextFormField(
                         controller: _supplies,
-                        minLines: 2,
-                        maxLines: 4,
+                        minLines: 1,
+                        maxLines: 3,
                         textCapitalization: TextCapitalization.sentences,
                         decoration: const InputDecoration(
-                          labelText: 'Supplies (optional)',
-                          hintText:
-                              'Swimsuit · towel · water bottle · sunscreen',
+                          labelText: 'Anything not in your catalog? (optional)',
+                          hintText: 'Sunscreen · water bottle · permission slip',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -473,6 +635,43 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// The "Add a supply" picker — the activity's un-picked catalog supplies;
+/// tap one to add it to the pack list.
+class _SupplyPickSheet extends StatelessWidget {
+  const _SupplyPickSheet({required this.supplies});
+
+  final List<Supply> supplies;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Text(
+              'Add a supply',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          for (final s in supplies)
+            ListTile(
+              leading: const Icon(Icons.inventory_2_outlined),
+              title: Text(s.name),
+              subtitle: (s.category == null || s.category!.isEmpty)
+                  ? null
+                  : Text(s.category!),
+              onTap: () => Navigator.of(context).pop(s.id),
+            ),
+        ],
       ),
     );
   }

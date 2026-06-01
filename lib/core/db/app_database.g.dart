@@ -16095,6 +16095,473 @@ class MissionsCompanion extends UpdateCompanion<Mission> {
   }
 }
 
+class $ActivitySuppliesTable extends ActivitySupplies
+    with TableInfo<$ActivitySuppliesTable, ActivitySupply> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActivitySuppliesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _activityIdMeta = const VerificationMeta(
+    'activityId',
+  );
+  @override
+  late final GeneratedColumn<String> activityId = GeneratedColumn<String>(
+    'activity_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _supplyIdMeta = const VerificationMeta(
+    'supplyId',
+  );
+  @override
+  late final GeneratedColumn<String> supplyId = GeneratedColumn<String>(
+    'supply_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  @override
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
+    'quantity',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    activityId,
+    supplyId,
+    quantity,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'activity_supplies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ActivitySupply> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('activity_id')) {
+      context.handle(
+        _activityIdMeta,
+        activityId.isAcceptableOrUnknown(data['activity_id']!, _activityIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_activityIdMeta);
+    }
+    if (data.containsKey('supply_id')) {
+      context.handle(
+        _supplyIdMeta,
+        supplyId.isAcceptableOrUnknown(data['supply_id']!, _supplyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_supplyIdMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ActivitySupply map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ActivitySupply(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      activityId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}activity_id'],
+      )!,
+      supplyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}supply_id'],
+      )!,
+      quantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}quantity'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ActivitySuppliesTable createAlias(String alias) {
+    return $ActivitySuppliesTable(attachedDatabase, alias);
+  }
+}
+
+class ActivitySupply extends DataClass implements Insertable<ActivitySupply> {
+  final String id;
+  final String spaceId;
+  final String activityId;
+  final String supplyId;
+  final double? quantity;
+  final String createdAt;
+  final String updatedAt;
+  const ActivitySupply({
+    required this.id,
+    required this.spaceId,
+    required this.activityId,
+    required this.supplyId,
+    this.quantity,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['activity_id'] = Variable<String>(activityId);
+    map['supply_id'] = Variable<String>(supplyId);
+    if (!nullToAbsent || quantity != null) {
+      map['quantity'] = Variable<double>(quantity);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  ActivitySuppliesCompanion toCompanion(bool nullToAbsent) {
+    return ActivitySuppliesCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      activityId: Value(activityId),
+      supplyId: Value(supplyId),
+      quantity: quantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantity),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ActivitySupply.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ActivitySupply(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      activityId: serializer.fromJson<String>(json['activityId']),
+      supplyId: serializer.fromJson<String>(json['supplyId']),
+      quantity: serializer.fromJson<double?>(json['quantity']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'activityId': serializer.toJson<String>(activityId),
+      'supplyId': serializer.toJson<String>(supplyId),
+      'quantity': serializer.toJson<double?>(quantity),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  ActivitySupply copyWith({
+    String? id,
+    String? spaceId,
+    String? activityId,
+    String? supplyId,
+    Value<double?> quantity = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => ActivitySupply(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    activityId: activityId ?? this.activityId,
+    supplyId: supplyId ?? this.supplyId,
+    quantity: quantity.present ? quantity.value : this.quantity,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ActivitySupply copyWithCompanion(ActivitySuppliesCompanion data) {
+    return ActivitySupply(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      activityId: data.activityId.present
+          ? data.activityId.value
+          : this.activityId,
+      supplyId: data.supplyId.present ? data.supplyId.value : this.supplyId,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActivitySupply(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('activityId: $activityId, ')
+          ..write('supplyId: $supplyId, ')
+          ..write('quantity: $quantity, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    activityId,
+    supplyId,
+    quantity,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ActivitySupply &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.activityId == this.activityId &&
+          other.supplyId == this.supplyId &&
+          other.quantity == this.quantity &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ActivitySuppliesCompanion extends UpdateCompanion<ActivitySupply> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> activityId;
+  final Value<String> supplyId;
+  final Value<double?> quantity;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const ActivitySuppliesCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.activityId = const Value.absent(),
+    this.supplyId = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ActivitySuppliesCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String activityId,
+    required String supplyId,
+    this.quantity = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       activityId = Value(activityId),
+       supplyId = Value(supplyId),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<ActivitySupply> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? activityId,
+    Expression<String>? supplyId,
+    Expression<double>? quantity,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (activityId != null) 'activity_id': activityId,
+      if (supplyId != null) 'supply_id': supplyId,
+      if (quantity != null) 'quantity': quantity,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ActivitySuppliesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? activityId,
+    Value<String>? supplyId,
+    Value<double?>? quantity,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ActivitySuppliesCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      activityId: activityId ?? this.activityId,
+      supplyId: supplyId ?? this.supplyId,
+      quantity: quantity ?? this.quantity,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (activityId.present) {
+      map['activity_id'] = Variable<String>(activityId.value);
+    }
+    if (supplyId.present) {
+      map['supply_id'] = Variable<String>(supplyId.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<double>(quantity.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActivitySuppliesCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('activityId: $activityId, ')
+          ..write('supplyId: $supplyId, ')
+          ..write('quantity: $quantity, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LocationsTable extends Locations
     with TableInfo<$LocationsTable, Location> {
   @override
@@ -23319,6 +23786,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $SuppliesTable supplies = $SuppliesTable(this);
   late final $MissionsTable missions = $MissionsTable(this);
+  late final $ActivitySuppliesTable activitySupplies = $ActivitySuppliesTable(
+    this,
+  );
   late final $LocationsTable locations = $LocationsTable(this);
   late final $ActivitiesTable activities = $ActivitiesTable(this);
   late final $ScheduleBlocksTable scheduleBlocks = $ScheduleBlocksTable(this);
@@ -23365,6 +23835,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final VehiclesDao vehiclesDao = VehiclesDao(this as AppDatabase);
   late final LocationsDao locationsDao = LocationsDao(this as AppDatabase);
   late final ActivitiesDao activitiesDao = ActivitiesDao(this as AppDatabase);
+  late final ActivitySuppliesDao activitySuppliesDao = ActivitySuppliesDao(
+    this as AppDatabase,
+  );
   late final ScheduleDao scheduleDao = ScheduleDao(this as AppDatabase);
   late final TripsDao tripsDao = TripsDao(this as AppDatabase);
   late final WeeklyTemplateDao weeklyTemplateDao = WeeklyTemplateDao(
@@ -23399,6 +23872,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     exportRecipients,
     supplies,
     missions,
+    activitySupplies,
     locations,
     activities,
     scheduleBlocks,
@@ -31095,6 +31569,252 @@ typedef $$MissionsTableProcessedTableManager =
       Mission,
       PrefetchHooks Function()
     >;
+typedef $$ActivitySuppliesTableCreateCompanionBuilder =
+    ActivitySuppliesCompanion Function({
+      required String id,
+      required String spaceId,
+      required String activityId,
+      required String supplyId,
+      Value<double?> quantity,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ActivitySuppliesTableUpdateCompanionBuilder =
+    ActivitySuppliesCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> activityId,
+      Value<String> supplyId,
+      Value<double?> quantity,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ActivitySuppliesTableFilterComposer
+    extends Composer<_$AppDatabase, $ActivitySuppliesTable> {
+  $$ActivitySuppliesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get activityId => $composableBuilder(
+    column: $table.activityId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get supplyId => $composableBuilder(
+    column: $table.supplyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ActivitySuppliesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ActivitySuppliesTable> {
+  $$ActivitySuppliesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get activityId => $composableBuilder(
+    column: $table.activityId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get supplyId => $composableBuilder(
+    column: $table.supplyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ActivitySuppliesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ActivitySuppliesTable> {
+  $$ActivitySuppliesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get activityId => $composableBuilder(
+    column: $table.activityId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get supplyId =>
+      $composableBuilder(column: $table.supplyId, builder: (column) => column);
+
+  GeneratedColumn<double> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ActivitySuppliesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ActivitySuppliesTable,
+          ActivitySupply,
+          $$ActivitySuppliesTableFilterComposer,
+          $$ActivitySuppliesTableOrderingComposer,
+          $$ActivitySuppliesTableAnnotationComposer,
+          $$ActivitySuppliesTableCreateCompanionBuilder,
+          $$ActivitySuppliesTableUpdateCompanionBuilder,
+          (
+            ActivitySupply,
+            BaseReferences<
+              _$AppDatabase,
+              $ActivitySuppliesTable,
+              ActivitySupply
+            >,
+          ),
+          ActivitySupply,
+          PrefetchHooks Function()
+        > {
+  $$ActivitySuppliesTableTableManager(
+    _$AppDatabase db,
+    $ActivitySuppliesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ActivitySuppliesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ActivitySuppliesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ActivitySuppliesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> activityId = const Value.absent(),
+                Value<String> supplyId = const Value.absent(),
+                Value<double?> quantity = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ActivitySuppliesCompanion(
+                id: id,
+                spaceId: spaceId,
+                activityId: activityId,
+                supplyId: supplyId,
+                quantity: quantity,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String activityId,
+                required String supplyId,
+                Value<double?> quantity = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ActivitySuppliesCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                activityId: activityId,
+                supplyId: supplyId,
+                quantity: quantity,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ActivitySuppliesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ActivitySuppliesTable,
+      ActivitySupply,
+      $$ActivitySuppliesTableFilterComposer,
+      $$ActivitySuppliesTableOrderingComposer,
+      $$ActivitySuppliesTableAnnotationComposer,
+      $$ActivitySuppliesTableCreateCompanionBuilder,
+      $$ActivitySuppliesTableUpdateCompanionBuilder,
+      (
+        ActivitySupply,
+        BaseReferences<_$AppDatabase, $ActivitySuppliesTable, ActivitySupply>,
+      ),
+      ActivitySupply,
+      PrefetchHooks Function()
+    >;
 typedef $$LocationsTableCreateCompanionBuilder =
     LocationsCompanion Function({
       required String id,
@@ -34518,6 +35238,8 @@ class $AppDatabaseManager {
       $$SuppliesTableTableManager(_db, _db.supplies);
   $$MissionsTableTableManager get missions =>
       $$MissionsTableTableManager(_db, _db.missions);
+  $$ActivitySuppliesTableTableManager get activitySupplies =>
+      $$ActivitySuppliesTableTableManager(_db, _db.activitySupplies);
   $$LocationsTableTableManager get locations =>
       $$LocationsTableTableManager(_db, _db.locations);
   $$ActivitiesTableTableManager get activities =>

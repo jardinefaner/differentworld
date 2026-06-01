@@ -55,8 +55,24 @@ of the SQL.
 - `default_duration_minutes` (integer)
 **RLS gist**: relaxed; reads open to all members.
 **Sync rule**: `by_space`.
-**Consumers**: [Schedule](FEATURES.md#schedule).
-**Last verified**: 2026-05-21
+**Consumers**: [Schedule](FEATURES.md#schedule) (blocks reference activities; `activity_edit_screen.dart` in the schedule folder owns the edit UI).
+**Last verified**: 2026-06-01
+
+---
+
+## activity_supplies
+**Purpose**: Activity ↔ Supply pack-list join — an activity declares which catalog supplies it needs and how many.
+**Key columns**:
+- `id` (uuid PK — explicit, for PowerSync compat)
+- `space_id` (uuid NOT NULL → spaces.id, on delete cascade)
+- `activity_id` (uuid NOT NULL → activities.id, on delete cascade)
+- `supply_id` (uuid NOT NULL → supplies.id, on delete cascade)
+- `quantity` (real, nullable — NULL means "some / see notes")
+- UNIQUE(activity_id, supply_id)
+**RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); GRANT-level + space-scoped sync rule are the real gate.
+**Sync rule**: `by_space` stream; `SELECT * FROM activity_supplies WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`. Dashboard deploy + device local-recreate required after adding this table.
+**Consumers**: [Supplies](FEATURES.md#supplies) (provides `activitySupplyLinksProvider` + `ActivitySuppliesActions`), [Schedule](FEATURES.md#schedule) (activity editor reads + writes links via those providers).
+**Last verified**: 2026-06-01
 
 ---
 
@@ -256,8 +272,8 @@ of the SQL.
 - `notes` (text, nullable)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
-**Consumers**: [Schedule](FEATURES.md#schedule), [Settings](FEATURES.md#settings) (locations list).
-**Last verified**: 2026-05-21
+**Consumers**: [Schedule](FEATURES.md#schedule), [Settings](FEATURES.md#settings) (locations list), [Supplies](FEATURES.md#supplies) (Location lens reads `locationsProvider` to resolve `location_id → name`).
+**Last verified**: 2026-06-01
 
 ---
 
@@ -447,12 +463,13 @@ of the SQL.
 - `category` (text, nullable — free-text shelf label, e.g. "Art", "Sports")
 - `quantity` (real, nullable — NULL = uncounted)
 - `unit` (text, nullable — "boxes", "reams", "balls")
-- `location` (text, nullable — free text, NOT a FK to locations; this is a storage location, not a scheduling place)
+- `location_id` (uuid, nullable → locations.id on delete set null — the Location-catalog lens; added in migration `20260601000003`)
+- `location` (text, nullable — free-text sub-spot within the location, e.g. "Cabinet B"; NOT a FK)
 - `low_stock_threshold` (real, nullable — flags "running low" when quantity drops below)
 - `photo_url` (text, nullable — Storage bucket-relative path; bytes in Supabase Storage)
 **RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); GRANT-level + space-scoped sync rule are the real gate.
 **Sync rule**: `by_space` stream; `SELECT * FROM supplies WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`. Dashboard deploy + device local-recreate still pending.
-**Consumers**: [Supplies](FEATURES.md#supplies).
+**Consumers**: [Supplies](FEATURES.md#supplies), [Schedule](FEATURES.md#schedule) (activity editor reads all space supplies to populate the pack-list picker).
 **Last verified**: 2026-06-01
 
 ---
@@ -540,7 +557,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-01 (Missions slice 1)._
+_Last full registry verification: 2026-06-01 (pack-list + Location lens)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
