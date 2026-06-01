@@ -79,3 +79,12 @@ List<Supply> lowStockSupplies(List<Supply> supplies) =>
 /// "12" not "12.0"; "1.5" stays "1.5".
 String formatSupplyNumber(double v) =>
     v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
+/// Parse a quantity / threshold from user text: a non-negative, FINITE
+/// number, else null ("unset"). Rejects 'Infinity', '-1', and overflowing
+/// exponentials that `double.tryParse` would otherwise accept and that would
+/// break the low-stock comparison.
+double? parseSupplyAmount(String text) {
+  final v = double.tryParse(text.trim());
+  return (v != null && v.isFinite && v >= 0) ? v : null;
+}

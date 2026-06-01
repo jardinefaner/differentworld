@@ -11,7 +11,8 @@ enum MissionEvidenceKind {
   photo('photo', 'Photo', Icons.photo_camera_outlined),
   count('count', 'A count', Icons.tag),
   note('note', 'A note', Icons.edit_note_outlined),
-  check('check', 'Just a check', Icons.check_circle_outline);
+  check('check', 'Just a check', Icons.check_circle_outline)
+  ;
 
   const MissionEvidenceKind(this.key, this.label, this.icon);
 
@@ -46,8 +47,9 @@ List<String> decodeMissionActions(String? json) {
 }
 
 /// Encode a list of step strings into the `actions` column (drops blanks).
-String encodeMissionActions(List<String> actions) =>
-    jsonEncode(actions.map((s) => s.trim()).where((s) => s.isNotEmpty).toList());
+String encodeMissionActions(List<String> actions) => jsonEncode(
+  actions.map((s) => s.trim()).where((s) => s.isNotEmpty).toList(),
+);
 
 /// A shipped starter mission — added (editable) to a program's catalog.
 class MissionTemplate {
@@ -166,7 +168,8 @@ const missionTemplates = <MissionTemplate>[
     tagline: 'Walking feet, count the heads',
     why: 'We stay together when someone leads the way.',
     builds: 'leadership',
-    rules: 'Lead from the front. Walking feet. Wait at every door. Count heads.',
+    rules:
+        'Lead from the front. Walking feet. Wait at every door. Count heads.',
     actions: [
       'Line everyone up',
       'Count heads',

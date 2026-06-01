@@ -7,6 +7,7 @@ import 'package:differentworld/features/missions/missions_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -445,29 +446,16 @@ class _MissionEditSheetState extends ConsumerState<_MissionEditSheet> {
   Future<void> _delete() async {
     final existingId = widget.existing?.id;
     if (existingId == null) return;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Remove this mission?'),
-        content: const Text('It disappears from the catalog.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
-    if (!mounted) return;
     final navigator = Navigator.of(context);
+    final confirm = await confirmDestructive(
+      context,
+      title: 'Remove this mission?',
+      message:
+          'This permanently deletes the mission and its checklist. '
+          'It cannot be undone.',
+      confirmLabel: 'Remove',
+    );
+    if (!confirm || !mounted) return;
     await ref.read(missionActionsProvider).delete_(existingId);
     if (mounted) navigator.pop();
   }

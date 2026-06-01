@@ -63,6 +63,7 @@ class _BreatheScreenState extends State<BreatheScreen>
   }
 
   void _onTick() {
+    if (!mounted) return; // listener can fire on the stop tick during dispose
     // Detect the wrap (value drops ~1 → ~0) = one full breath completed.
     if (_controller.value < _prev - 0.5) {
       setState(() => _breaths++);
@@ -72,7 +73,11 @@ class _BreatheScreenState extends State<BreatheScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
+    // stop() before dispose() so the listener can't fire on the stopping tick
+    // after the widget unmounts.
+    _controller
+      ..stop()
+      ..dispose();
     super.dispose();
   }
 
@@ -97,19 +102,26 @@ class _BreatheScreenState extends State<BreatheScreen>
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     return EdgeScaffold(
-      body: GestureDetector(
-        onTap: reduceMotion ? null : _toggle,
-        behavior: HitTestBehavior.opaque,
-        child: DecoratedBox(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF12343B), Color(0xFF1B5159)],
+      body: Semantics(
+        button: !reduceMotion,
+        label: reduceMotion
+            ? 'Breathing guide — follow the words at your own pace'
+            : (_running ? 'Pause breathing' : 'Start breathing'),
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: reduceMotion ? null : _toggle,
+          behavior: HitTestBehavior.opaque,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF12343B), Color(0xFF1B5159)],
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: reduceMotion ? _staticGuide(context) : _animated(context),
+            child: SafeArea(
+              child: reduceMotion ? _staticGuide(context) : _animated(context),
+            ),
           ),
         ),
       ),

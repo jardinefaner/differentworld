@@ -113,7 +113,8 @@ class AttendanceRecords extends Table {
   TextColumn get groupId => text().nullable()();
   TextColumn get subjectId => text()();
   TextColumn get date => text()(); // YYYY-MM-DD
-  TextColumn get status => text()(); // present / absent / late / early_pickup / excused
+  TextColumn get status =>
+      text()(); // present / absent / late / early_pickup / excused
   TextColumn get notes => text().nullable()();
   TextColumn get recordedBy => text()();
   TextColumn get recordedAt => text()();
@@ -135,6 +136,7 @@ class Invites extends Table {
   TextColumn get email => text().nullable()();
   TextColumn get code => text().nullable()();
   TextColumn get role => text()();
+
   /// Set for guardian-intent invites — the child this guardian is
   /// being invited as a parent / family member for. Null for staff.
   TextColumn get subjectId => text().nullable()();
@@ -362,6 +364,7 @@ class SurveyResponses extends Table {
 class SurveyPickerOptions extends Table {
   TextColumn get id => text()();
   TextColumn get spaceId => text()();
+
   /// One of 'age_band' / 'grade' / 'school' (server-side CHECK).
   TextColumn get dimension => text()();
   TextColumn get label => text()();
@@ -801,9 +804,11 @@ class Events extends Table {
   TextColumn get title => text()();
   TextColumn get description => text().nullable()();
   TextColumn get color => text().nullable()();
+
   /// JSON-encoded list of group IDs the event affects. Empty = all
   /// cohorts in the space.
   TextColumn get groupIds => text()();
+
   /// One of 'overlay' / 'replaces' / 'closes_day'.
   TextColumn get mode => text()();
   TextColumn get locationId => text().nullable()();
@@ -816,25 +821,27 @@ class Events extends Table {
 }
 
 @DriftDatabase(
-  tables: [Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
-          GroupMembers, Entries, Guardians, SubjectGuardians,
-          Vehicles, VehicleLogs, MemberCertifications, Attachments,
-          SurveyResponses, SurveyPickerOptions,
-          DismissedInsights, Captures, Tasks, Messages,
-          Exports, ExportRecipients,
-          // Supplies inventory.
-          Supplies,
-          // Missions — real jobs with evidence.
-          Missions,
-          // Activity ↔ supplies pack-list join.
-          ActivitySupplies,
-          // Camp scheduling.
-          Locations, Activities, ScheduleBlocks, TripLogistics,
-          TripVehicles, PermissionSlips, Headcounts,
-          // Wave 158: one-off events.
-          Events,
-          // Wave 154: weekly template authoring.
-          WeeklyTemplates, WeeklyTemplateBlocks],
+  tables: [
+    Spaces, Members, Groups, Subjects, AttendanceRecords, Invites,
+    GroupMembers, Entries, Guardians, SubjectGuardians,
+    Vehicles, VehicleLogs, MemberCertifications, Attachments,
+    SurveyResponses, SurveyPickerOptions,
+    DismissedInsights, Captures, Tasks, Messages,
+    Exports, ExportRecipients,
+    // Supplies inventory.
+    Supplies,
+    // Missions — real jobs with evidence.
+    Missions,
+    // Activity ↔ supplies pack-list join.
+    ActivitySupplies,
+    // Camp scheduling.
+    Locations, Activities, ScheduleBlocks, TripLogistics,
+    TripVehicles, PermissionSlips, Headcounts,
+    // Wave 158: one-off events.
+    Events,
+    // Wave 154: weekly template authoring.
+    WeeklyTemplates, WeeklyTemplateBlocks,
+  ],
   daos: [
     AttachmentsDao,
     AttendanceDao,
@@ -869,22 +876,36 @@ class Events extends Table {
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
-      : super(SqliteAsyncDriftConnection(powerSync));
+    : super(SqliteAsyncDriftConnection(powerSync));
 
   @override
   int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          // PowerSync owns the schema; do not create tables here.
-        },
-        onUpgrade: (m, from, to) async {
-          // PowerSync-managed; schema changes flow from server.
-        },
-      );
+    onCreate: (m) async {
+      // PowerSync owns the schema; do not create tables here.
+    },
+    onUpgrade: (m, from, to) async {
+      // PowerSync-managed; schema changes flow from server.
+    },
+  );
 
-  // -- Cross-table writes (members + spaces) -------------------------------
+  // -- Cross-table writes -------------------------------------------------
+
+  /// Delete a supply AND its activity_supplies links in one transaction.
+  /// Local SQLite does not enforce FK cascade (PRAGMA foreign_keys is off);
+  /// the server cascades, so without this the local links orphan and a later
+  /// delete-then-reinsert would reference a server-deleted supply_id and stall
+  /// the CRUD queue. Both deletes route through the queue (typed Drift APIs).
+  Future<void> deleteSupplyCascade(String supplyId) async {
+    await transaction(() async {
+      await (delete(
+        activitySupplies,
+      )..where((r) => r.supplyId.equals(supplyId))).go();
+      await (delete(supplies)..where((s) => s.id.equals(supplyId))).go();
+    });
+  }
 
   /// Two writes in one transaction:
   ///   1. INSERT the new space row.

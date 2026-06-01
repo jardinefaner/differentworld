@@ -99,6 +99,10 @@ class MissionActions {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.requireSpaceId(action: 'add the starter missions');
     final db = await _ref.read(appDatabaseProvider.future);
+    // Idempotency: never double-seed. A fast double-tap (or a re-tap after a
+    // slow sync) must not insert 11 duplicate missions — there's no
+    // UNIQUE(space_id, name), so dedup has to happen here.
+    if (await db.missionsDao.countInSpace(spaceId) > 0) return;
     final now = DateTime.now().toUtc().toIso8601String();
     final rows = <MissionsCompanion>[];
     for (var i = 0; i < missionTemplates.length; i++) {

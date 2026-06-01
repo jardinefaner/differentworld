@@ -135,6 +135,22 @@ void main() {
     });
   });
 
+  group('parseSupplyAmount', () {
+    test('accepts non-negative finite numbers', () {
+      expect(parseSupplyAmount('12'), 12.0);
+      expect(parseSupplyAmount(' 1.5 '), 1.5);
+      expect(parseSupplyAmount('0'), 0.0);
+    });
+
+    test('rejects blanks, negatives, and non-finite junk', () {
+      expect(parseSupplyAmount(''), isNull);
+      expect(parseSupplyAmount('abc'), isNull);
+      expect(parseSupplyAmount('-1'), isNull);
+      expect(parseSupplyAmount('Infinity'), isNull);
+      expect(parseSupplyAmount('-Infinity'), isNull);
+    });
+  });
+
   group('lowStockSupplies', () {
     test('keeps only the low ones', () {
       final low = lowStockSupplies([

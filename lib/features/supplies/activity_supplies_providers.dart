@@ -11,16 +11,19 @@ typedef SupplyPick = ({String supplyId, double? quantity});
 /// the editor seeds from it and the activity's "you'll need…" reflects edits.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final activitySupplyLinksProvider =
-    StreamProvider.autoDispose.family<List<ActivitySupply>, String>((
+final activitySupplyLinksProvider = StreamProvider.autoDispose
+    .family<List<ActivitySupply>, String>((
       ref,
       activityId,
     ) async* {
       final db = ref.watch(appDatabaseProvider).value;
-      if (db == null) {
-        yield const [];
-        return;
-      }
+      // Do NOT yield an empty sentinel before the DB is ready: the editor's
+      // seed-once guard (_picksSeeded) would latch onto [] and silently drop
+      // the real links when they arrive — and a save would then wipe the
+      // pack list. Stay in loading; this provider re-runs when
+      // appDatabaseProvider resolves. A genuinely link-less activity still
+      // gets a real [] from the Drift query below (correct seed).
+      if (db == null) return;
       yield* db.activitySuppliesDao.watchForActivity(activityId);
     });
 

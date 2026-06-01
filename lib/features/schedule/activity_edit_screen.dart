@@ -30,8 +30,7 @@ class ActivityEditScreen extends ConsumerStatefulWidget {
   bool get isEdit => activityId != null;
 
   @override
-  ConsumerState<ActivityEditScreen> createState() =>
-      _ActivityEditScreenState();
+  ConsumerState<ActivityEditScreen> createState() => _ActivityEditScreenState();
 }
 
 class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
@@ -287,6 +286,9 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
       () => _picks[i] = (supplyId: pick.supplyId, quantity: q.toDouble()),
     );
     return Padding(
+      // Key by supply so removing a row doesn't shift the stepper state onto
+      // the wrong sibling (dynamic-child reconciliation; CLAUDE.md gotcha).
+      key: ValueKey('pack-${pick.supplyId}'),
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
@@ -388,8 +390,7 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     children: [
                       ContentHeader(
-                        title:
-                            widget.isEdit ? 'Edit activity' : 'New activity',
+                        title: widget.isEdit ? 'Edit activity' : 'New activity',
                         subtitle: widget.isEdit
                             ? null
                             : 'Something kids can do during a block.',
@@ -479,8 +480,7 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                         ],
                         onChanged: (v) async {
                           if (v == '__new__') {
-                            final newId =
-                                await openLocationEditSheet(context);
+                            final newId = await openLocationEditSheet(context);
                             if (!mounted || newId == null) return;
                             setState(() => _locationId = newId);
                             return;
@@ -577,7 +577,8 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                         textCapitalization: TextCapitalization.sentences,
                         decoration: const InputDecoration(
                           labelText: 'Anything not in your catalog? (optional)',
-                          hintText: 'Sunscreen · water bottle · permission slip',
+                          hintText:
+                              'Sunscreen · water bottle · permission slip',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -623,8 +624,7 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                             widget.isEdit ? 'Save changes' : 'Create activity',
                           ),
                           style: FilledButton.styleFrom(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),
                       ),

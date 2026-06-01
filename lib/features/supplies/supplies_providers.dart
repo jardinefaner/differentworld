@@ -77,7 +77,9 @@ class SupplyActions {
 
   Future<void> delete_(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
-    await db.suppliesDao.delete_(id);
+    // Cascade the local activity_supplies links too — SQLite has no FK
+    // cascade, and orphaned links would stall the sync queue.
+    await db.deleteSupplyCascade(id);
   }
 }
 

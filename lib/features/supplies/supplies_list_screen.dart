@@ -8,6 +8,7 @@ import 'package:differentworld/features/supplies/supplies_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -76,8 +77,9 @@ class _SuppliesListScreenState extends ConsumerState<SuppliesListScreen> {
           final rows = switch (_view) {
             _SuppliesView.category => groupSuppliesByCategory(supplies),
             _SuppliesView.location => groupSuppliesByLocation(supplies, names),
-            _SuppliesView.runningLow =>
-              lowStockSupplies(supplies).cast<Object>(),
+            _SuppliesView.runningLow => lowStockSupplies(
+              supplies,
+            ).cast<Object>(),
           };
           // "Running low" with nothing low → a positive note, not an empty
           // scroll.
@@ -331,8 +333,8 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
     final unit = trimOrNull(_unit);
     final location = trimOrNull(_location);
     final notes = trimOrNull(_notes);
-    final quantity = double.tryParse(_quantity.text.trim());
-    final lowStock = double.tryParse(_lowStock.text.trim());
+    final quantity = parseSupplyAmount(_quantity.text);
+    final lowStock = parseSupplyAmount(_lowStock.text);
     final pickedLoc = _locationId;
     String? savedId;
     final ok = await runReported(
@@ -376,32 +378,16 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
   Future<void> _delete() async {
     final existingId = widget.existing?.id;
     if (existingId == null) return;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Remove this supply?'),
-        content: const Text(
-          'It disappears from the inventory. Activities that referenced it '
-          '(later) would lose the link.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
-    if (!mounted) return;
     final navigator = Navigator.of(context);
+    final confirm = await confirmDestructive(
+      context,
+      title: 'Remove this supply?',
+      message:
+          'It disappears from the inventory, and any activities that '
+          'reference it lose the link.',
+      confirmLabel: 'Remove',
+    );
+    if (!confirm || !mounted) return;
     await ref.read(supplyActionsProvider).delete_(existingId);
     if (mounted) navigator.pop();
   }

@@ -123,9 +123,7 @@ class SupabaseConnector extends PowerSyncBackendConnector {
               await table.upsert(payload);
             }
           case UpdateType.patch:
-            await table
-                .update(patched ?? <String, dynamic>{})
-                .eq('id', op.id);
+            await table.update(patched ?? <String, dynamic>{}).eq('id', op.id);
           case UpdateType.delete:
             await table.delete().eq('id', op.id);
         }
@@ -179,6 +177,10 @@ class SupabaseConnector extends PowerSyncBackendConnector {
     'dismissed_insights': 'member_id,insight_id',
     'member_certifications': 'member_id,cert_key',
     'attendance_records': 'subject_id,date',
+    // activity_supplies has UNIQUE(activity_id, supply_id); replaceForActivity
+    // delete-then-inserts, so concurrent multi-device edits could collide on
+    // the natural key — upsert on it instead of hard-failing (23505 → queue stall).
+    'activity_supplies': 'activity_id,supply_id',
   };
 
   /// PowerSync's local schema stores jsonb columns as TEXT (the raw JSON

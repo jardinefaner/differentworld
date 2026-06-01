@@ -18,7 +18,12 @@ class RiddlesScreen extends StatefulWidget {
 
 class _RiddlesScreenState extends State<RiddlesScreen> {
   final LocalContentBank _bank = LocalContentBank.seeded();
-  late final List<ContentItem> _riddles = _bank.take(ContentKind.riddle, 10);
+  // Take the whole pool, shuffle, keep 10 — so repeat sessions don't always
+  // surface the same first ten of the seed.
+  late final List<ContentItem> _riddles = (_bank.take(
+    ContentKind.riddle,
+    1000,
+  )..shuffle()).take(10).toList();
 
   int _index = 0;
   bool _revealed = false;
@@ -45,14 +50,16 @@ class _RiddlesScreenState extends State<RiddlesScreen> {
   }
 
   void _again() {
+    if (!_done) return; // idempotent: only reachable from the recap
+    _bank.reset();
+    final fresh = (_bank.take(ContentKind.riddle, 1000)..shuffle()).take(10);
     setState(() {
-      _bank.reset();
       _riddles
         ..clear()
-        ..addAll(_bank.take(ContentKind.riddle, 10));
+        ..addAll(fresh);
       _index = 0;
       _revealed = false;
-      _done = false;
+      _done = false; // last: a mid-transition re-tap finds _done already false
     });
   }
 
@@ -117,7 +124,9 @@ class _RiddlesScreenState extends State<RiddlesScreen> {
                           : Icons.visibility_outlined,
                     ),
                     label: Text(
-                      _revealed ? (_atEnd ? 'See the round' : 'Next') : 'Reveal',
+                      _revealed
+                          ? (_atEnd ? 'See the round' : 'Next')
+                          : 'Reveal',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
