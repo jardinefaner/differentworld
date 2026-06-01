@@ -557,7 +557,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-01 (pack-list + Location lens)._
+_Last full registry verification: 2026-06-01 (Live Sessions — no new table; ephemeral Realtime coordination)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._

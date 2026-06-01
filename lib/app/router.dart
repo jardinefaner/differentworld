@@ -41,6 +41,7 @@ import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
+import 'package:differentworld/features/live_session/live_session_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
@@ -831,6 +832,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/breaks',
             builder: (_, _) => const BrainBreaksScreen(),
+          ),
+          // Live present/control for This-or-That (docs/LIVE_SESSIONS.md):
+          // present on a big screen, control from a phone over Realtime.
+          GoRoute(
+            path: '/live/this-or-that',
+            builder: (_, _) => const LiveSessionScreen(),
           ),
           // The Math inverse activity — a conducted, kid-mode experience
           // (docs/ACTIVITY_RUNTIME.md, Slice 2). Under the ShellRoute so

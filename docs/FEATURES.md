@@ -77,7 +77,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Kid mode lock mixin* — `lib/features/activity_runtime/kid_mode_lock.dart`. Shared `KidModeLock<T>` mixin used ONLY by Photography; other activities do not use it.
 - *Content bank* — `lib/features/activity_runtime/content_bank.dart`. Shared catalog source for This-or-That and Beat-the-Letter prompts.
 **Depends on**: Kid mode (Photography only), Photos (pattern_maker uses image_picker; bytes are not stored in any synced table).
-**Consumed by**: Nothing — ActivityRuntime is a leaf.
+**Consumed by**: LiveSession (`live_session_screen.dart` imports `content_bank.dart` to seed the This-or-That pairs for the live deck).
 **Last verified**: 2026-06-01
 
 ---
@@ -339,6 +339,30 @@ surface — preferences + roster + fleet, not primary workflows.
 **Depends on**: AppShell.
 **Consumed by**: Surveys (auto-enter + exit dialog), future Kid journal.
 **Last verified**: 2026-05-22
+
+---
+
+## LiveSession
+**Path**: `lib/features/live_session/`
+**Purpose**: Phone-as-remote / screen-as-presentation mode for host-run brain-break games, starting with This-or-That; one device presents on a projector while another device controls the slides over Supabase Realtime.
+**Personas served**: All staff (any teacher running a brain break on a big screen with their phone as the remote).
+**Discovery surfaces**:
+- Routes: `/live/this-or-that` → `LiveSessionScreen`
+- Omnibox: no direct catalog entry — reached via the This-or-That screen's "Present on a big screen" action or via `/live` slash command
+- Slash: `/live` (aliases: `present`, `projector`, `remote`, `session`) → `/live/this-or-that`
+- Drawer: no — mode of a brain break, not a top-level destination
+- Settings: no
+**Capabilities**: None — open to all signed-in staff.
+**Data**: None persisted. Uses Supabase Realtime broadcast + presence on channel `dw-session-<CODE>` — a documented ephemeral-coordination exception (same documented-exception class as auth and Storage). No Drift tables, no PowerSync sync, no migration.
+**Surfaces**:
+- *Live session lobby* — `lib/features/live_session/live_session_screen.dart`. Lobby view: "Present here" card (generates a 4-char session code) + "Control a session" join-by-code card.
+- *Presenter view* — same file, `_presentView`. Big-screen layout: join-code header + presence count + status pill + the full This-or-That split-screen slides + local control bar (Back / Discuss / Next / Again). Presenter is authoritative: applies `LiveState.reduce()`, then rebroadcasts canonical state to all controllers.
+- *Controller view* — same file, `_controlView`. Phone-remote layout: status pill, current slide mirror (option labels + "Discussing why?" indicator), oversized Next button, Back + Reveal/Hide row. Sends intents to the presenter; mirrors state it receives.
+- *LiveSession / LiveState / SessionRole / LiveStatus* — `lib/features/live_session/live_session.dart`. Protocol layer: wraps a Supabase Realtime channel, manages broadcast + presence streams, exposes `states` / `peers` / `status` streams and `sendIntent` / `applyLocal` / `dispose`.
+- *Entry action on Quick Picks* — `lib/features/activity_runtime/this_or_that_screen.dart`. `SecondaryActionButton` (cast icon, tooltip "Present on a big screen") → `context.push('/live/this-or-that')`. The primary discovery path for the feature.
+**Depends on**: ActivityRuntime (`content_bank.dart` — seeds the This-or-That pairs for the live deck).
+**Consumed by**: Nothing — LiveSession is a leaf.
+**Last verified**: 2026-06-01
 
 ---
 
@@ -754,6 +778,12 @@ in. Run `Agent persona-audit` to refresh.
 ---
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
+
+_Run 2026-06-01 (Live Sessions)_ — no unresolved discovery drift. Updates applied this run:
+- **LiveSession** — new feature entry added. Route `/live/this-or-that` confirmed in `router.dart` (top-level GoRoute nested under the shell). Slash `/live` with aliases `present`, `projector`, `remote`, `session` confirmed in `slash_commands.dart`. "Present on a big screen" `SecondaryActionButton` (cast icon → `context.push('/live/this-or-that')`) confirmed in `this_or_that_screen.dart`. No drawer entry, no Settings ListTile — correct: this is a mode of a brain break, not a standalone destination. All claimed surfaces verified.
+- **ActivityRuntime** — `**Consumed by**` updated from "Nothing — ActivityRuntime is a leaf" to include LiveSession (`live_session_screen.dart` imports `content_bank.dart`).
+- **SCHEMA.md** — no new table entry. Feature uses Supabase Realtime broadcast + presence (ephemeral coordination, not durable data — same documented-exception class as auth and Storage). A note confirming the absence is in the LiveSession `**Data**` field.
+- Cross-link reconcile: LiveSession claims no synced tables; no (feature → table) or (table → feature) additions. ActivityRuntime ↔ LiveSession dependency link is now bidirectional (LiveSession `**Depends on**` includes ActivityRuntime; ActivityRuntime `**Consumed by**` includes LiveSession).
 
 _Run 2026-06-01 (pack-list + Location lens)_ — no unresolved discovery drift. Updates applied this run:
 - **Supplies** — `**Data**` extended: `activity_supplies` (read + written via `activitySupplyLinksProvider` / `ActivitySuppliesActions`) and `locations` (read for the Location lens — `location_id` FK, migration `20260601000003`). `**Surfaces**` updated: list screen now documents the three-view toggle (Category / Location / Running low), the `groupSuppliesByLocation` helper, and the new Activity supplies providers surface. `**Depends on**` updated from "nothing" to Locations. `**Consumed by**` updated: Activities / Schedule now a real consumer via `activity_edit_screen.dart` importing `activity_supplies_providers.dart` + `supplies_providers.dart`.

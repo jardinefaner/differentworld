@@ -132,12 +132,19 @@ The only places that talk to Supabase directly are:
   [lib/features/exports/exports_providers.dart](lib/features/exports/exports_providers.dart) —
   Storage uploads for person photos + exported PDFs (same binary-
   media exception).
+- [lib/features/live_session/live_session.dart](lib/features/live_session/live_session.dart) —
+  Supabase **Realtime** channels (`client.channel(...)`, broadcast +
+  presence) for the present/control layer (docs/LIVE_SESSIONS.md). This
+  is **ephemeral coordination** (which slide is up, a join code), NOT
+  durable child data — it deliberately does NOT go through PowerSync, the
+  same way auth doesn't. No row is read or written here; nothing persists.
 
 Any other `Supabase.instance.client.from(...)` /
 `.storage.from(...)` call from UI / providers / repositories is a
 bug — route the read through Drift or the appropriate fallback
 provider, and route the binary upload through the photo / export
-helpers above.
+helpers above. (Realtime `.channel(...)` is the one allowed
+non-Drift live surface — for coordination only, never data.)
 
 **Writes are optimistic.** A user tap commits to local SQLite in one frame
 and the UI reflects it immediately. PowerSync uploads later. Never `await`

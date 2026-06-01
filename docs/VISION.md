@@ -242,9 +242,13 @@ shared board (#5). Ephemeral by design: this rides **Supabase Realtime**
 (broadcast + presence), NOT PowerSync — coordination state isn't durable
 child data. Join by a short code (or QR — we already have the rails).
 
-- **Status:** seed → designing (This-or-That already built the
-  present/control split on one device; the two-device link is next)
-- **Lives in:** [LIVE_SESSIONS.md](LIVE_SESSIONS.md)
+- **Status:** building → **shipped (first game)**: This-or-That now runs
+  end-to-end present/control over Supabase Realtime — present on a big
+  screen, control from a phone by a join code (`/live`). The same
+  `LiveSession` seam generalizes to the rest of the deck + the anonymous
+  board (#5) next.
+- **Lives in:** [LIVE_SESSIONS.md](LIVE_SESSIONS.md),
+  lib/features/live_session/
 
 ### 15. The program's supplies, wired into everything
 

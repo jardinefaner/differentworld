@@ -318,6 +318,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     aliases: const ['break', 'brainbreaks', 'games', 'play'],
     exec: (ctx, _, _) => unawaited(ctx.push('/breaks')),
   ),
+  SlashCommand(
+    name: 'live',
+    label: '/live',
+    hint: 'This or That — Live: present on a big screen, control from a phone',
+    icon: Icons.cast,
+    aliases: const ['present', 'projector', 'remote', 'session'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/live/this-or-that')),
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',

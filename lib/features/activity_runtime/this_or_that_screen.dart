@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/activity/this-or-that` — a TEACHER-hosted brain break (game-show-host
 /// model, not handed to a kid). One session, two VIEWS by form factor:
@@ -82,6 +84,13 @@ class _ThisOrThatScreenState extends State<ThisOrThatScreen> {
   @override
   Widget build(BuildContext context) {
     return EdgeScaffold(
+      actions: [
+        SecondaryActionButton(
+          tooltip: 'Present on a big screen',
+          icon: Icons.cast,
+          onPressed: () => unawaited(context.push('/live/this-or-that')),
+        ),
+      ],
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= _wideBreakpoint;
