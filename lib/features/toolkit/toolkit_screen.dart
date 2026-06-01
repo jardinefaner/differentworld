@@ -9,7 +9,6 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/master_detail_scaffold.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
-import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -602,9 +601,10 @@ class _ToolkitToolDetailViewState
     final theme = Theme.of(context);
     final tool = widget.tool;
     final category = widget.category;
+    // EdgeScaffold injects the floating-chrome band into padding.top, so
+    // topInset already clears the pills; +8 is just breathing room.
     final topInset = MediaQuery.paddingOf(context).top;
-    final chromeReservation =
-        topInset + ShellMetrics.topChromeHeight + 8;
+    final chromeReservation = topInset + 8;
     return ListView(
       padding: EdgeInsets.fromLTRB(16, chromeReservation, 16, 96),
       children: [

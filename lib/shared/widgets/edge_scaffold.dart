@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/shared/widgets/route_chrome.dart';
+import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -182,6 +184,11 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // The floating chrome (hamburger + back + actions) is painted by
+    // AppShell over the body — EXCEPT in kid mode, where AppShell hides
+    // it (app_shell.dart `if (!inKidMode)`). So we reserve its band only
+    // when it's actually shown.
+    final inKidMode = ref.watch(kidModeProvider);
     // System UI icons: dark icons over light scaffold, light over dark.
     // Per-screen AnnotatedRegion so each screen gets the right contrast
     // even if it's themed against the opposite scheme.
@@ -205,20 +212,59 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
         resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
         drawer: widget.drawer,
         // True edge-to-edge (Wave 53). The body fills the entire
-        // Scaffold area — no SafeArea wrapper, no top padding. The
-        // floating chrome pills (top) + omnibox bar (bottom) are
-        // translucent glass overlays rendered by AppShell on top of
-        // the body; the system status bar icons paint on top of the
-        // body too, with contrast set via `AnnotatedRegion` above.
+        // Scaffold area; the floating chrome pills (top) + omnibox bar
+        // (bottom) are translucent glass overlays AppShell paints on top.
         //
-        // Per-screen padding decisions live on each route's first
-        // scrollable, NOT here — putting the inset in this wrapper
-        // would create a solid-coloured strip at the screen top
-        // (the user's "appbar background color" complaint).
-        body: widget.body,
+        // The ONE thing this wrapper does is publish the top-chrome band
+        // into the body's `MediaQuery.padding.top` ([_ChromeInsetBody]).
+        // That makes the chrome a real system inset, so any `SafeArea`
+        // or `ContentHeader` inside ANY body clears the pills
+        // automatically — no per-screen `topChromeHeight` math to
+        // remember (and forget). It does NOT wrap the body in a SafeArea:
+        // that would paint a solid scaffold-coloured strip behind the
+        // chrome (the old "appbar background color" complaint) and block
+        // content from scrolling under the glass. Full-bleed bodies that
+        // opt out of SafeArea (the camera) are unaffected.
+        body: _ChromeInsetBody(
+          reserve: inKidMode ? 0 : ShellMetrics.topChromeHeight,
+          child: widget.body,
+        ),
         floatingActionButton: widget.floatingActionButton,
         bottomSheet: widget.bottomSheet,
       ),
+    );
+  }
+}
+
+/// Publishes the floating top-chrome band into the body's
+/// `MediaQuery.padding.top`, so a `SafeArea` / `ContentHeader` anywhere
+/// in the body clears the pills with no per-screen math.
+///
+/// Built as a child of the Scaffold's `body`, so it reads the
+/// MediaQuery the body actually sees (after Scaffold's own adjustments)
+/// and layers the chrome reservation on top. [reserve] is 0 in kid mode
+/// (AppShell hides the chrome there) — then this is a pass-through.
+class _ChromeInsetBody extends StatelessWidget {
+  const _ChromeInsetBody({required this.reserve, required this.child});
+
+  final double reserve;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (reserve == 0) return child;
+    final mq = MediaQuery.of(context);
+    final p = mq.padding;
+    return MediaQuery(
+      data: mq.copyWith(
+        padding: EdgeInsets.only(
+          left: p.left,
+          top: p.top + reserve,
+          right: p.right,
+          bottom: p.bottom,
+        ),
+      ),
+      child: child,
     );
   }
 }

@@ -1,22 +1,21 @@
-import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/material.dart';
 
 /// In-content title + subtitle that lives at the top of a screen's
 /// scrollable body. Scrolls away with the rest of the content — no
 /// persistent top chrome.
 ///
-/// **Chrome clearance** is reserved by THIS widget when it's the
-/// first item in the scrollable (which is the convention across
-/// every screen). EdgeScaffold no longer pads the body for chrome —
-/// the body extends fully edge-to-edge, the chrome pills float as
-/// translucent glass overlays. To keep the title from sitting
-/// behind the chrome on initial paint, ContentHeader reserves the
-/// status bar inset + chrome pill row internally.
+/// **Chrome clearance** is automatic: EdgeScaffold publishes the
+/// floating-chrome band into the body's `MediaQuery.padding.top`, so
+/// this header (like any `SafeArea`) simply honours that inset and
+/// starts below the pills. No per-screen `topChromeHeight` math — the
+/// reservation can't be forgotten, because it lives in the scaffold,
+/// not in each screen's first child.
 ///
-/// Wave 53 made this the single place that knows about chrome — the
-/// EdgeScaffold's old SafeArea wrapper was removed because layering
-/// it on top of this reservation produced a solid-coloured strip
-/// (the "appbar background color" the user reported).
+/// The body is still NOT wrapped in a SafeArea by EdgeScaffold — that
+/// would paint a solid scaffold-coloured strip behind the chrome (the
+/// "appbar background color" complaint) and stop content from scrolling
+/// under the glass. The header reserves only the inset; the content
+/// scrolls under the translucent pills as it moves up.
 ///
 /// [topGap] stays as the breathing room ABOVE the title (between
 /// the chrome edge and the first text). Set to 0 if a screen wants
@@ -71,11 +70,12 @@ class ContentHeader extends StatelessWidget {
     final s = subtitleColor == null
         ? baseS
         : baseS?.copyWith(color: subtitleColor);
-    // Chrome clearance — Wave 52. The status bar height plus the
-    // floating-chrome pill row are added so the title doesn't render
-    // behind either. `topGap` stacks on top as breathing room.
-    final topInset = MediaQuery.paddingOf(context).top;
-    final chromeReservation = topInset + ShellMetrics.topChromeHeight;
+    // Chrome clearance. EdgeScaffold publishes the floating-chrome band
+    // into `MediaQuery.padding.top`, so the status bar + chrome pill row
+    // are BOTH already in this inset — we just honour it (`topGap` stacks
+    // on top as breathing room). Used outside the shell (no EdgeScaffold
+    // ancestor → no injection), this is just the status bar, still right.
+    final chromeReservation = MediaQuery.paddingOf(context).top;
     return Padding(
       padding: EdgeInsets.only(
         top: chromeReservation + topGap,
