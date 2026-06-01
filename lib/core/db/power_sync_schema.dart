@@ -325,6 +325,9 @@ const appSchema = Schema([
     Column.text('date'),
     Column.text('start_at'),
     Column.text('end_at'),
+    // Wave A (formless create): free-text block name. Card shows this
+    // when set; an activity link (color/defaults) can attach later.
+    Column.text('title'),
     Column.text('activity_id'),
     Column.text('lead_member_id'),
     // Per-day override — when the originally-planned lead is out, the

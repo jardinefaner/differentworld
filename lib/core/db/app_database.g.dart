@@ -16066,6 +16066,15 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _activityIdMeta = const VerificationMeta(
     'activityId',
   );
@@ -16201,6 +16210,7 @@ class $ScheduleBlocksTable extends ScheduleBlocks
     date,
     startAt,
     endAt,
+    title,
     activityId,
     leadMemberId,
     leadSubstituteMemberId,
@@ -16270,6 +16280,12 @@ class $ScheduleBlocksTable extends ScheduleBlocks
       );
     } else if (isInserting) {
       context.missing(_endAtMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
     }
     if (data.containsKey('activity_id')) {
       context.handle(
@@ -16400,6 +16416,10 @@ class $ScheduleBlocksTable extends ScheduleBlocks
         DriftSqlType.string,
         data['${effectivePrefix}end_at'],
       )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
       activityId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}activity_id'],
@@ -16464,6 +16484,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
   final String date;
   final String startAt;
   final String endAt;
+  final String? title;
   final String? activityId;
   final String? leadMemberId;
 
@@ -16499,6 +16520,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     required this.date,
     required this.startAt,
     required this.endAt,
+    this.title,
     this.activityId,
     this.leadMemberId,
     this.leadSubstituteMemberId,
@@ -16521,6 +16543,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     map['date'] = Variable<String>(date);
     map['start_at'] = Variable<String>(startAt);
     map['end_at'] = Variable<String>(endAt);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
     if (!nullToAbsent || activityId != null) {
       map['activity_id'] = Variable<String>(activityId);
     }
@@ -16562,6 +16587,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       date: Value(date),
       startAt: Value(startAt),
       endAt: Value(endAt),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
       activityId: activityId == null && nullToAbsent
           ? const Value.absent()
           : Value(activityId),
@@ -16605,6 +16633,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       date: serializer.fromJson<String>(json['date']),
       startAt: serializer.fromJson<String>(json['startAt']),
       endAt: serializer.fromJson<String>(json['endAt']),
+      title: serializer.fromJson<String?>(json['title']),
       activityId: serializer.fromJson<String?>(json['activityId']),
       leadMemberId: serializer.fromJson<String?>(json['leadMemberId']),
       leadSubstituteMemberId: serializer.fromJson<String?>(
@@ -16635,6 +16664,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       'date': serializer.toJson<String>(date),
       'startAt': serializer.toJson<String>(startAt),
       'endAt': serializer.toJson<String>(endAt),
+      'title': serializer.toJson<String?>(title),
       'activityId': serializer.toJson<String?>(activityId),
       'leadMemberId': serializer.toJson<String?>(leadMemberId),
       'leadSubstituteMemberId': serializer.toJson<String?>(
@@ -16661,6 +16691,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     String? date,
     String? startAt,
     String? endAt,
+    Value<String?> title = const Value.absent(),
     Value<String?> activityId = const Value.absent(),
     Value<String?> leadMemberId = const Value.absent(),
     Value<String?> leadSubstituteMemberId = const Value.absent(),
@@ -16680,6 +16711,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     date: date ?? this.date,
     startAt: startAt ?? this.startAt,
     endAt: endAt ?? this.endAt,
+    title: title.present ? title.value : this.title,
     activityId: activityId.present ? activityId.value : this.activityId,
     leadMemberId: leadMemberId.present ? leadMemberId.value : this.leadMemberId,
     leadSubstituteMemberId: leadSubstituteMemberId.present
@@ -16707,6 +16739,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       date: data.date.present ? data.date.value : this.date,
       startAt: data.startAt.present ? data.startAt.value : this.startAt,
       endAt: data.endAt.present ? data.endAt.value : this.endAt,
+      title: data.title.present ? data.title.value : this.title,
       activityId: data.activityId.present
           ? data.activityId.value
           : this.activityId,
@@ -16745,6 +16778,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           ..write('date: $date, ')
           ..write('startAt: $startAt, ')
           ..write('endAt: $endAt, ')
+          ..write('title: $title, ')
           ..write('activityId: $activityId, ')
           ..write('leadMemberId: $leadMemberId, ')
           ..write('leadSubstituteMemberId: $leadSubstituteMemberId, ')
@@ -16769,6 +16803,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     date,
     startAt,
     endAt,
+    title,
     activityId,
     leadMemberId,
     leadSubstituteMemberId,
@@ -16792,6 +16827,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
           other.date == this.date &&
           other.startAt == this.startAt &&
           other.endAt == this.endAt &&
+          other.title == this.title &&
           other.activityId == this.activityId &&
           other.leadMemberId == this.leadMemberId &&
           other.leadSubstituteMemberId == this.leadSubstituteMemberId &&
@@ -16813,6 +16849,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
   final Value<String> date;
   final Value<String> startAt;
   final Value<String> endAt;
+  final Value<String?> title;
   final Value<String?> activityId;
   final Value<String?> leadMemberId;
   final Value<String?> leadSubstituteMemberId;
@@ -16833,6 +16870,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     this.date = const Value.absent(),
     this.startAt = const Value.absent(),
     this.endAt = const Value.absent(),
+    this.title = const Value.absent(),
     this.activityId = const Value.absent(),
     this.leadMemberId = const Value.absent(),
     this.leadSubstituteMemberId = const Value.absent(),
@@ -16854,6 +16892,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     required String date,
     required String startAt,
     required String endAt,
+    this.title = const Value.absent(),
     this.activityId = const Value.absent(),
     this.leadMemberId = const Value.absent(),
     this.leadSubstituteMemberId = const Value.absent(),
@@ -16883,6 +16922,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Expression<String>? date,
     Expression<String>? startAt,
     Expression<String>? endAt,
+    Expression<String>? title,
     Expression<String>? activityId,
     Expression<String>? leadMemberId,
     Expression<String>? leadSubstituteMemberId,
@@ -16904,6 +16944,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       if (date != null) 'date': date,
       if (startAt != null) 'start_at': startAt,
       if (endAt != null) 'end_at': endAt,
+      if (title != null) 'title': title,
       if (activityId != null) 'activity_id': activityId,
       if (leadMemberId != null) 'lead_member_id': leadMemberId,
       if (leadSubstituteMemberId != null)
@@ -16930,6 +16971,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Value<String>? date,
     Value<String>? startAt,
     Value<String>? endAt,
+    Value<String?>? title,
     Value<String?>? activityId,
     Value<String?>? leadMemberId,
     Value<String?>? leadSubstituteMemberId,
@@ -16951,6 +16993,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
       date: date ?? this.date,
       startAt: startAt ?? this.startAt,
       endAt: endAt ?? this.endAt,
+      title: title ?? this.title,
       activityId: activityId ?? this.activityId,
       leadMemberId: leadMemberId ?? this.leadMemberId,
       leadSubstituteMemberId:
@@ -16989,6 +17032,9 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     }
     if (endAt.present) {
       map['end_at'] = Variable<String>(endAt.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
     }
     if (activityId.present) {
       map['activity_id'] = Variable<String>(activityId.value);
@@ -17045,6 +17091,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
           ..write('date: $date, ')
           ..write('startAt: $startAt, ')
           ..write('endAt: $endAt, ')
+          ..write('title: $title, ')
           ..write('activityId: $activityId, ')
           ..write('leadMemberId: $leadMemberId, ')
           ..write('leadSubstituteMemberId: $leadSubstituteMemberId, ')
@@ -29294,6 +29341,7 @@ typedef $$ScheduleBlocksTableCreateCompanionBuilder =
       required String date,
       required String startAt,
       required String endAt,
+      Value<String?> title,
       Value<String?> activityId,
       Value<String?> leadMemberId,
       Value<String?> leadSubstituteMemberId,
@@ -29316,6 +29364,7 @@ typedef $$ScheduleBlocksTableUpdateCompanionBuilder =
       Value<String> date,
       Value<String> startAt,
       Value<String> endAt,
+      Value<String?> title,
       Value<String?> activityId,
       Value<String?> leadMemberId,
       Value<String?> leadSubstituteMemberId,
@@ -29367,6 +29416,11 @@ class $$ScheduleBlocksTableFilterComposer
 
   ColumnFilters<String> get endAt => $composableBuilder(
     column: $table.endAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -29470,6 +29524,11 @@ class $$ScheduleBlocksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get activityId => $composableBuilder(
     column: $table.activityId,
     builder: (column) => ColumnOrderings(column),
@@ -29557,6 +29616,9 @@ class $$ScheduleBlocksTableAnnotationComposer
 
   GeneratedColumn<String> get endAt =>
       $composableBuilder(column: $table.endAt, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
 
   GeneratedColumn<String> get activityId => $composableBuilder(
     column: $table.activityId,
@@ -29648,6 +29710,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String> date = const Value.absent(),
                 Value<String> startAt = const Value.absent(),
                 Value<String> endAt = const Value.absent(),
+                Value<String?> title = const Value.absent(),
                 Value<String?> activityId = const Value.absent(),
                 Value<String?> leadMemberId = const Value.absent(),
                 Value<String?> leadSubstituteMemberId = const Value.absent(),
@@ -29668,6 +29731,7 @@ class $$ScheduleBlocksTableTableManager
                 date: date,
                 startAt: startAt,
                 endAt: endAt,
+                title: title,
                 activityId: activityId,
                 leadMemberId: leadMemberId,
                 leadSubstituteMemberId: leadSubstituteMemberId,
@@ -29690,6 +29754,7 @@ class $$ScheduleBlocksTableTableManager
                 required String date,
                 required String startAt,
                 required String endAt,
+                Value<String?> title = const Value.absent(),
                 Value<String?> activityId = const Value.absent(),
                 Value<String?> leadMemberId = const Value.absent(),
                 Value<String?> leadSubstituteMemberId = const Value.absent(),
@@ -29710,6 +29775,7 @@ class $$ScheduleBlocksTableTableManager
                 date: date,
                 startAt: startAt,
                 endAt: endAt,
+                title: title,
                 activityId: activityId,
                 leadMemberId: leadMemberId,
                 leadSubstituteMemberId: leadSubstituteMemberId,

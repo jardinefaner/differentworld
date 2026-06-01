@@ -84,6 +84,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     required String date,
     required DateTime startAt,
     required DateTime endAt,
+    String? title,
     String? activityId,
     String? leadMemberId,
     String? locationOverrideId,
@@ -102,6 +103,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
         date: date,
         startAt: startAt.toUtc().toIso8601String(),
         endAt: endAt.toUtc().toIso8601String(),
+        title: Value(title),
         activityId: Value(activityId),
         leadMemberId: Value(leadMemberId),
         locationOverrideId: Value(locationOverrideId),
@@ -172,6 +174,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> update_({
     required String id,
+    String? title,
     String? activityId,
     String? leadMemberId,
     String? locationOverrideId,
@@ -183,6 +186,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     final now = DateTime.now().toUtc().toIso8601String();
     await (update(scheduleBlocks)..where((b) => b.id.equals(id))).write(
       ScheduleBlocksCompanion(
+        title: title == null ? const Value.absent() : Value(title),
         activityId:
             activityId == null ? const Value.absent() : Value(activityId),
         leadMemberId: leadMemberId == null

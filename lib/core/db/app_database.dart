@@ -573,6 +573,9 @@ class ScheduleBlocks extends Table {
   TextColumn get date => text()(); // YYYY-MM-DD
   TextColumn get startAt => text()(); // ISO 8601 timestamptz
   TextColumn get endAt => text()();
+  // Wave A (formless create): free-text block name. Shown on the card
+  // when set; an activity link (color/defaults) can attach later.
+  TextColumn get title => text().nullable()();
   TextColumn get activityId => text().nullable()();
   TextColumn get leadMemberId => text().nullable()();
 
