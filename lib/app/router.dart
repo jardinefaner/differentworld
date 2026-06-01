@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
+import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
@@ -818,6 +819,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               prompt:
                   state.uri.queryParameters['prompt'] ?? 'Capture what you see',
             ),
+          ),
+          // This or That — a kid-mode binary-choice game, content from the
+          // content bank (docs/ACTIVITY_RUNTIME.md + CONTENT_BANK.md).
+          GoRoute(
+            path: '/activity/this-or-that',
+            builder: (_, _) => const ThisOrThatScreen(),
           ),
         ],
       ),

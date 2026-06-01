@@ -206,6 +206,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
       unawaited(ctx.push('/activity/photo$q'));
     },
   ),
+  SlashCommand(
+    name: 'thisorthat',
+    label: '/thisorthat',
+    hint: 'Play This or That',
+    icon: Icons.swap_horiz,
+    aliases: const ['this', 'tot', 'wouldyourather'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/this-or-that')),
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',
