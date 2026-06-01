@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
-import 'package:drift/drift.dart' show Value;
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -106,7 +107,10 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
       backFallbackRoute: '/schedule',
       body: dbAsync.when(
         loading: () => const LoadingSlot(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => ErrorState(
+          title: 'Could not load trip details',
+          onRetry: () => ref.invalidate(appDatabaseProvider),
+        ),
         data: (db) {
           return StreamBuilder<TripLogistic?>(
             stream: db.tripsDao.watchByBlockId(widget.blockId),

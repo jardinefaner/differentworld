@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,13 @@ class _InviteShareScreenState extends ConsumerState<InviteShareScreen> {
 
   Future<void> _revoke() async {
     if (_revoking) return;
+    final confirmed = await confirmDestructive(
+      context,
+      title: 'Revoke invite?',
+      message: "This invite link stops working immediately. You can't undo it.",
+      confirmLabel: 'Revoke',
+    );
+    if (!confirmed || !mounted) return;
     setState(() => _revoking = true);
     final messenger = ScaffoldMessenger.of(context);
     final goRouter = GoRouter.of(context);

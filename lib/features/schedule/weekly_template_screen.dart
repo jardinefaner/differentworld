@@ -8,8 +8,10 @@ import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +55,10 @@ class WeeklyTemplateScreen extends ConsumerWidget {
       ],
       body: dbAsync.when(
         loading: () => const LoadingSlot(),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => ErrorState(
+          title: 'Could not load the schedule',
+          onRetry: () => ref.invalidate(appDatabaseProvider),
+        ),
         data: (db) {
           if (spaceId == null) {
             return const EmptyState(
@@ -334,6 +339,13 @@ class _SlotRow extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 20),
             onPressed: () async {
+              final confirmed = await confirmDestructive(
+                context,
+                title: 'Remove slot?',
+                message: 'This removes the slot from the weekly template.',
+                confirmLabel: 'Remove',
+              );
+              if (!confirmed) return;
               final db = await ref.read(appDatabaseProvider.future);
               await db.weeklyTemplateDao.deleteSlot(slot.id);
             },
@@ -433,6 +445,7 @@ class _SlotEditSheetState extends ConsumerState<_SlotEditSheet> {
             onPressed: () async {
               final viewer = ref.read(viewerProvider);
               final spaceId = viewer.requireSpaceId(action: 'save slot');
+              final navigator = Navigator.of(context);
               final db = await ref.read(appDatabaseProvider.future);
               await db.weeklyTemplateDao.addSlot(
                 templateId: widget.template.id,
@@ -444,7 +457,7 @@ class _SlotEditSheetState extends ConsumerState<_SlotEditSheet> {
                 activityId: _activity?.id,
               );
               if (!mounted) return;
-              Navigator.of(context).pop();
+              navigator.pop();
             },
             child: const Text('Save slot'),
           ),
