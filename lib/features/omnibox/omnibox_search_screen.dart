@@ -106,8 +106,8 @@ class OmniboxSearchScreen extends ConsumerWidget {
     final showRecentCaptures = q.isEmpty && !isCapture && !isSlash;
     final recentCaptures = showRecentCaptures
         ? (ref.watch(openCapturesProvider).value ?? const <Capture>[])
-            .take(5)
-            .toList()
+              .take(5)
+              .toList()
         : const <Capture>[];
 
     final activeNodes = q.isEmpty ? idleNodes : nodes;
@@ -119,8 +119,7 @@ class OmniboxSearchScreen extends ConsumerWidget {
     // never fires. The root navigator's context lives for the
     // lifetime of the app, so we grab it BEFORE closing and use it
     // post-close.
-    final dispatchCtx =
-        Navigator.of(context, rootNavigator: true).context;
+    final dispatchCtx = Navigator.of(context, rootNavigator: true).context;
 
     // Close the panel — overlay onClose if provided, else route pop.
     // Both flavors return the user to the previous surface and the
@@ -172,100 +171,108 @@ class OmniboxSearchScreen extends ConsumerWidget {
 
     final body = Center(
       child: ConstrainedBox(
-          // Same max width the bar uses — keeps the line lengths
-          // readable on tablet / desktop.
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (isCapture)
-                _CaptureHeroCard(text: query, onSave: saveAsCapture),
-              if (recentCaptures.isNotEmpty)
-                _RecentCapturesStrip(
-                  captures: recentCaptures,
-                  onOpenInbox: () {
-                    ref.read(omniboxQueryProvider.notifier).clear();
-                    close();
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!dispatchCtx.mounted) return;
-                      unawaited(dispatchCtx.push('/captures'));
-                    });
-                  },
+        // Same max width the bar uses — keeps the line lengths
+        // readable on tablet / desktop.
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isCapture) _CaptureHeroCard(text: query, onSave: saveAsCapture),
+            if (recentCaptures.isNotEmpty)
+              _RecentCapturesStrip(
+                captures: recentCaptures,
+                onOpenInbox: () {
+                  ref.read(omniboxQueryProvider.notifier).clear();
+                  close();
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!dispatchCtx.mounted) return;
+                    unawaited(dispatchCtx.push('/captures'));
+                  });
+                },
+              ),
+            if (isSlash)
+              Expanded(
+                child: _SlashCommandList(
+                  matches: slashMatches,
+                  parsedArgs: parsedSlash?.args,
+                  onPick: runSlash,
                 ),
-              if (isSlash)
-                Expanded(
-                  child: _SlashCommandList(
-                    matches: slashMatches,
-                    parsedArgs: parsedSlash?.args,
-                    onPick: runSlash,
-                  ),
-                )
-              else if (activeNodes.isEmpty && !isCapture)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: Center(
-                      child: Text(
-                        q.isEmpty
-                            ? 'Type anything you want to do.'
-                            : 'No matches for "$query".',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+              )
+            else if (activeNodes.isEmpty && !isCapture)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Center(
+                    child: Text(
+                      q.isEmpty
+                          ? 'Type anything you want to do.'
+                          : 'No matches for "$query".',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    // In overlay-mode the suggestion list extends
-                    // edge-to-edge behind the floating chrome (the
-                    // BackdropFilter wrapping us in AppShell takes
-                    // care of the visual). Reserve the chrome height
-                    // + status bar inset HERE so the first row is
-                    // clear of the pills while the scrolling surface
-                    // itself still fills behind them. Route-mode
-                    // (onClose == null) has EdgeScaffold handling
-                    // chrome reservation differently — fall back to
-                    // the original symmetric padding.
-                    padding: onClose == null
-                        ? const EdgeInsets.symmetric(vertical: 6)
-                        : EdgeInsets.only(
-                            top: MediaQuery.paddingOf(context).top +
-                                ShellMetrics.topChromeHeight + 6,
-                            bottom: 6,
-                          ),
-                    itemCount: activeNodes.length,
-                    itemBuilder: (_, i) {
-                      final n = activeNodes[i];
-                      if (n is _SectionHeader) {
-                        return _SectionHeaderWidget(label: n.label);
-                      }
-                      if (n is _Entry) {
-                        return _EntryTile(
-                          entry: n.entry,
-                          isPinned: pinnedIds.contains(n.entry.id),
-                          onTap: () => selectEntry(n.entry),
-                          onTogglePin: () => ref
-                              .read(pinnedOmniboxIdsProvider.notifier)
-                              .toggle(n.entry.id),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
                 ),
-            ],
-          ),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  // In overlay-mode the suggestion list extends
+                  // edge-to-edge behind the floating chrome (the
+                  // BackdropFilter wrapping us in AppShell takes
+                  // care of the visual). Reserve the chrome height
+                  // + status bar inset HERE so the first row is
+                  // clear of the pills while the scrolling surface
+                  // itself still fills behind them. Route-mode
+                  // (onClose == null) has EdgeScaffold handling
+                  // chrome reservation differently — fall back to
+                  // the original symmetric padding.
+                  // Chrome clearance is handled once, for the whole
+                  // overlay body, by the top inset on the wrapper below
+                  // (overlay mode) / by EdgeScaffold (route mode) — so
+                  // the recent-captures strip + capture hero ABOVE this
+                  // list clear the chrome too, not just the rows. The
+                  // list itself just needs its own breathing room.
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  itemCount: activeNodes.length,
+                  itemBuilder: (_, i) {
+                    final n = activeNodes[i];
+                    if (n is _SectionHeader) {
+                      return _SectionHeaderWidget(label: n.label);
+                    }
+                    if (n is _Entry) {
+                      return _EntryTile(
+                        entry: n.entry,
+                        isPinned: pinnedIds.contains(n.entry.id),
+                        onTap: () => selectEntry(n.entry),
+                        onTogglePin: () => ref
+                            .read(pinnedOmniboxIdsProvider.notifier)
+                            .toggle(n.entry.id),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+          ],
         ),
+      ),
     );
 
     // Route-mode wraps in EdgeScaffold for the layout law + chrome.
-    // Overlay-mode skips it (AppShell already provides the
-    // chrome/insets, and EdgeScaffold inside a Stack creates
-    // nested-Scaffold weirdness).
-    return onClose == null ? EdgeScaffold(body: body) : body;
+    // Overlay-mode floats inside AppShell's Stack with the glass already
+    // full-bleed behind the chrome — so inset the whole CONTENT below the
+    // chrome here. This is the regression fix: previously only the inner
+    // suggestion list reserved the chrome height, so the recent-captures
+    // strip / capture hero above it rendered behind the floating pills on
+    // first open. Inset once, at the body, and everything clears.
+    if (onClose == null) return EdgeScaffold(body: body);
+    return Padding(
+      padding: EdgeInsets.only(
+        top: MediaQuery.paddingOf(context).top + ShellMetrics.topChromeHeight,
+      ),
+      child: body,
+    );
   }
 }
 
@@ -548,9 +555,7 @@ class _CaptureHeroCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  trimmed.isEmpty
-                      ? 'Start typing a thought…'
-                      : trimmed,
+                  trimmed.isEmpty ? 'Start typing a thought…' : trimmed,
                   maxLines: 5,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyLarge?.copyWith(
@@ -712,9 +717,7 @@ class _SlashCommandList extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            parsedArgs == null
-                ? c.hint
-                : '${c.hint} — args: $parsedArgs',
+            parsedArgs == null ? c.hint : '${c.hint} — args: $parsedArgs',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(

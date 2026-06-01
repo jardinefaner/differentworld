@@ -1502,6 +1502,20 @@ the diff or a file path.
 The bottom omnibox bar in AppShell is the canonical surface for find /
 do / dictate. Some key invariants:
 
+- **The suggestion overlay's CONTENT must clear the top chrome as a
+  whole — inset the body, not just the list.** The overlay glass
+  (`GlassPanelShape.overlay`, the full-bleed BackdropFilter in
+  app_shell) intentionally fills `top: 0` so the blur covers everything
+  with no seam; the floating chrome pills paint on top of it. But the
+  *content* (`OmniboxSearchScreen`'s `body`) must start BELOW the
+  chrome, or anything at the top of its column renders behind the
+  pills. This has regressed more than once: the fix is a single top
+  inset (`MediaQuery.paddingOf(context).top + ShellMetrics.topChromeHeight`)
+  on the WHOLE overlay body — NOT on the inner suggestion `ListView`
+  alone. Insetting only the list leaves the recent-captures strip + the
+  capture-hero card (which sit ABOVE the list in the column) behind the
+  chrome on first open. Route mode (pushed `/search`) clears chrome via
+  `EdgeScaffold`; only overlay mode needs the explicit body inset.
 - **The bar lives INSIDE the body Stack** at `Positioned(bottom: 0)`,
   not in `Scaffold.bottomNavigationBar`. The bottomNavigationBar slot
   does NOT ride the keyboard inset; the body does. Routes whose forms
