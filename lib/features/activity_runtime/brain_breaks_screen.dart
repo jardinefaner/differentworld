@@ -40,6 +40,13 @@ class BrainBreaksScreen extends StatelessWidget {
       route: '/activity/starts-with',
     ),
     _BreakCard(
+      title: 'Math Game',
+      tagline: 'One question at a time',
+      icon: Icons.quiz_outlined,
+      color: Color(0xFF42A5F5),
+      route: '/activity/math-game',
+    ),
+    _BreakCard(
       title: 'Many Paths',
       tagline: 'How many ways to a number?',
       icon: Icons.calculate,

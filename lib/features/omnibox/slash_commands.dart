@@ -186,13 +186,21 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
   SlashCommand(
     name: 'math',
     label: '/math {answer}',
-    hint: 'Start the Math paths activity (default answer 12)',
+    hint: 'Many Paths — how many ways to a number (default 12)',
     icon: Icons.calculate_outlined,
     aliases: const ['paths'],
     exec: (ctx, _, args) {
       final n = int.tryParse(args?.trim() ?? '') ?? 12;
       unawaited(ctx.push('/activity/math?target=$n'));
     },
+  ),
+  SlashCommand(
+    name: 'mathgame',
+    label: '/mathgame',
+    hint: 'Math game — one question at a time',
+    icon: Icons.quiz_outlined,
+    aliases: const ['quiz', 'quickmath'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/math-game')),
   ),
   SlashCommand(
     name: 'photo',

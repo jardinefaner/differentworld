@@ -8,6 +8,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
+import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
@@ -817,6 +818,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               target:
                   int.tryParse(state.uri.queryParameters['target'] ?? '') ?? 12,
             ),
+          ),
+          // Math GAME — one question at a time, mixed mechanics.
+          GoRoute(
+            path: '/activity/math-game',
+            builder: (_, _) => const MathGameScreen(),
           ),
           // The Photography activity — opens straight to a full-screen
           // camera, kid-mode locked (docs/ACTIVITY_RUNTIME.md). `?prompt=`
