@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:differentworld/features/activity_runtime/activity_script.dart';
@@ -14,17 +15,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// `/activity/photo?prompt=...` — the Photography activity (docs/
-/// ACTIVITY_RUNTIME.md §5 + SUBMISSIONS.md). Opens straight to a
-/// full-screen camera with the instruction in the overlay; shoot as many
-/// as you like; Done → a gallery that's a **curate** surface: pick which
-/// photos to share, and tap any photo for a full-screen view laid out with
+/// ACTIVITY_RUNTIME.md §5 + SUBMISSIONS.md). Opens straight into a
+/// kid-friendly camera: the prompt is an immersive "mission", a filmstrip
+/// of your shots rides above the shutter, and flash / flip / pinch-zoom /
+/// tap-to-focus enhance the capture. Done → a dynamic masonry gallery
+/// (photos kept whole, varied sizes); tap any for a full-screen view with
 /// its context + an editable reflection. Kid-mode locked.
 ///
 /// SUBMISSIONS model (offline-first): every capture stays on the device;
-/// only the ones the learner marks "share" become the submission. This
-/// slice is on-device / in-session — the upload of shared photos to
-/// Storage + the entries/attachments rows + the teacher aggregate are the
-/// next slices. Photos are held as in-memory bytes (web-safe, no dart:io).
+/// only the ones marked "share" become the submission. This slice is
+/// on-device / in-session — upload + the teacher aggregate are next.
+/// Photos are in-memory bytes (web-safe, no dart:io).
 class PhotographyRunnerScreen extends ConsumerStatefulWidget {
   const PhotographyRunnerScreen({
     this.prompt = 'Capture what you see',
@@ -40,12 +41,14 @@ class PhotographyRunnerScreen extends ConsumerStatefulWidget {
 
 enum _CamStatus { initializing, ready, denied, unavailable }
 
-/// One captured photo + the learner's choices about it. Local + mutable;
-/// `shared` is the opt-in that decides what becomes the submission.
+/// One captured photo + the learner's choices about it. `aspectRatio`
+/// (width/height) drives the masonry so photos show whole at their true
+/// shape. `shared` is the opt-in that becomes the submission.
 class _Shot {
-  _Shot(this.bytes) : capturedAt = DateTime.now();
+  _Shot(this.bytes, {required this.aspectRatio}) : capturedAt = DateTime.now();
 
   final Uint8List bytes;
+  final double aspectRatio;
   final DateTime capturedAt;
   String reflection = '';
   bool shared = false;
@@ -63,14 +66,23 @@ class _PhotographyRunnerScreenState
   bool _initInFlight = false;
   bool _shooting = false;
 
-  /// Everything captured this session (newest last). Offline-first: these
-  /// never leave the device unless `shared` is set and a future submit
-  /// uploads them.
+  // Camera capabilities.
+  CameraLensDirection _lens = CameraLensDirection.back;
+  FlashMode _flash = FlashMode.off;
+  double _zoom = 1;
+  double _minZoom = 1;
+  double _maxZoom = 1;
+  double _baseZoom = 1;
+  Offset? _focusPoint; // local tap point for the focus ring
+  Timer? _focusTimer;
+
+  final ScrollController _filmstrip = ScrollController();
+
+  /// Everything captured this session (newest last). Offline-first.
   final List<_Shot> _shots = <_Shot>[];
 
   /// When non-null, the full-screen contextual viewer is open at this
-  /// index. The viewer is an in-screen overlay (NOT a route push — the
-  /// kid-mode redirect pins us to this route).
+  /// index (an in-screen overlay, NOT a route — kid-mode pins the route).
   int? _viewingIndex;
   PageController? _viewerPage;
 
@@ -108,8 +120,6 @@ class _PhotographyRunnerScreenState
       _kidMode.enter();
       _lockedRoute.pin(_route);
     }
-    // The camera plugin requires releasing the controller when the app is
-    // backgrounded, and re-acquiring on resume (only while still shooting).
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
       _disposeCamera();
@@ -123,7 +133,9 @@ class _PhotographyRunnerScreenState
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _staffTapReset?.cancel();
+    _focusTimer?.cancel();
     _viewerPage?.dispose();
+    _filmstrip.dispose();
     _kidMode.exit();
     _lockedRoute.pin(null);
     _disposeCamera();
@@ -144,16 +156,29 @@ class _PhotographyRunnerScreenState
         if (mounted) setState(() => _cam = _CamStatus.unavailable);
         return;
       }
-      final back = cams.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
+      final cam = cams.firstWhere(
+        (c) => c.lensDirection == _lens,
         orElse: () => cams.first,
       );
       final controller = CameraController(
-        back,
+        cam,
         ResolutionPreset.high,
         enableAudio: false,
       );
       await controller.initialize();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      // Capability ranges + restore flash for the new controller.
+      _minZoom = await controller.getMinZoomLevel();
+      _maxZoom = await controller.getMaxZoomLevel();
+      _zoom = _minZoom;
+      try {
+        await controller.setFlashMode(_flash);
+      } on Object catch (_) {
+        // Some lenses (front) don't support flash — ignore.
+      }
       if (!mounted) {
         await controller.dispose();
         return;
@@ -163,7 +188,6 @@ class _PhotographyRunnerScreenState
         _cam = _CamStatus.ready;
       });
     } on Object catch (_) {
-      // No camera plugin (web/desktop/test) or init failure → degrade.
       if (mounted) setState(() => _cam = _CamStatus.unavailable);
     } finally {
       _initInFlight = false;
@@ -174,6 +198,21 @@ class _PhotographyRunnerScreenState
     final c = _controller;
     _controller = null;
     unawaited(c?.dispose());
+  }
+
+  Future<double> _aspectRatioOf(Uint8List bytes) async {
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final w = frame.image.width;
+      final h = frame.image.height;
+      frame.image.dispose();
+      codec.dispose();
+      if (w <= 0 || h <= 0) return 0.75;
+      return w / h;
+    } on Object catch (_) {
+      return 0.75; // sensible portrait default
+    }
   }
 
   Future<void> _shoot() async {
@@ -188,9 +227,22 @@ class _PhotographyRunnerScreenState
     try {
       final shot = await c.takePicture();
       final bytes = await shot.readAsBytes();
+      final ar = await _aspectRatioOf(bytes);
       if (!mounted) return;
-      setState(() => _shots.add(_Shot(bytes)));
+      setState(() => _shots.add(_Shot(bytes, aspectRatio: ar)));
       unawaited(HapticFeedback.mediumImpact());
+      // Slide the filmstrip to the freshest shot.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _filmstrip.hasClients) {
+          unawaited(
+            _filmstrip.animateTo(
+              _filmstrip.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOut,
+            ),
+          );
+        }
+      });
     } on Object catch (_) {
       // A single dropped frame isn't fatal — keep the camera live.
     } finally {
@@ -198,9 +250,56 @@ class _PhotographyRunnerScreenState
     }
   }
 
-  void _finishShooting() {
+  Future<void> _switchCamera() async {
+    _lens = _lens == CameraLensDirection.back
+        ? CameraLensDirection.front
+        : CameraLensDirection.back;
     _disposeCamera();
-    setState(() => _run.advance()); // → gallery / curate
+    setState(() => _cam = _CamStatus.initializing);
+    await _initCamera();
+  }
+
+  Future<void> _cycleFlash() async {
+    const order = [FlashMode.off, FlashMode.auto, FlashMode.always];
+    final next = order[(order.indexOf(_flash) + 1) % order.length];
+    setState(() => _flash = next);
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    try {
+      await c.setFlashMode(next);
+    } on Object catch (_) {
+      // Lens doesn't support it — the icon still reflects intent.
+    }
+  }
+
+  Future<void> _applyZoom(double target) async {
+    final clamped = target.clamp(_minZoom, _maxZoom);
+    if (clamped == _zoom) return;
+    setState(() => _zoom = clamped);
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    try {
+      await c.setZoomLevel(clamped);
+    } on Object catch (_) {}
+  }
+
+  Future<void> _focusAt(Offset local, Size size) async {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    if (size.width <= 0 || size.height <= 0) return;
+    setState(() => _focusPoint = local);
+    _focusTimer?.cancel();
+    _focusTimer = Timer(const Duration(milliseconds: 900), () {
+      if (mounted) setState(() => _focusPoint = null);
+    });
+    final p = Offset(
+      (local.dx / size.width).clamp(0.0, 1.0),
+      (local.dy / size.height).clamp(0.0, 1.0),
+    );
+    try {
+      await c.setFocusPoint(p);
+      await c.setExposurePoint(p);
+    } on Object catch (_) {}
   }
 
   void _openViewer(int i) {
@@ -248,8 +347,6 @@ class _PhotographyRunnerScreenState
       canPop: !blockPop,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        // Back closes the viewer first; only then is it blocked at the
-        // activity level.
         if (_viewingIndex != null) {
           _closeViewer();
           return;
@@ -273,7 +370,6 @@ class _PhotographyRunnerScreenState
               ),
               if (_viewingIndex != null && _viewingIndex! < _shots.length)
                 Positioned.fill(child: _viewer(context)),
-              // Staff corner stays topmost so it works even over the viewer.
               Positioned(
                 top: 0,
                 left: 0,
@@ -296,13 +392,28 @@ class _PhotographyRunnerScreenState
     final c = _controller;
     switch (_cam) {
       case _CamStatus.ready when c != null && c.value.isInitialized:
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            _preview(c),
-            Positioned(top: 0, left: 0, right: 0, child: _instructionBar()),
-            Positioned(bottom: 0, left: 0, right: 0, child: _shootControls()),
-          ],
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final size = constraints.biggest;
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                GestureDetector(
+                  onScaleStart: (_) => _baseZoom = _zoom,
+                  onScaleUpdate: (d) {
+                    if (d.pointerCount >= 2) {
+                      unawaited(_applyZoom(_baseZoom * d.scale));
+                    }
+                  },
+                  onTapUp: (d) => unawaited(_focusAt(d.localPosition, size)),
+                  child: _preview(c),
+                ),
+                if (_focusPoint != null) _FocusRing(point: _focusPoint!),
+                Positioned(top: 0, left: 0, right: 0, child: _topBar()),
+                Positioned(bottom: 0, left: 0, right: 0, child: _bottomBar()),
+              ],
+            );
+          },
         );
       case _CamStatus.denied:
         return _CamMessage(
@@ -332,8 +443,6 @@ class _PhotographyRunnerScreenState
   Widget _preview(CameraController c) {
     final size = c.value.previewSize;
     if (size == null) return const ColoredBox(color: Colors.black);
-    // Full-bleed cover. previewSize is landscape-oriented; swap for the
-    // portrait surface so the preview fills without distortion.
     return ClipRect(
       child: SizedBox.expand(
         child: FittedBox(
@@ -348,7 +457,7 @@ class _PhotographyRunnerScreenState
     );
   }
 
-  Widget _instructionBar() {
+  Widget _topBar() {
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -360,48 +469,28 @@ class _PhotographyRunnerScreenState
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 12, 24),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  widget.prompt,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              Expanded(child: _MissionBanner(prompt: widget.prompt)),
+              const SizedBox(width: 8),
+              _CapButton(
+                icon: _flash == FlashMode.off
+                    ? Icons.flash_off
+                    : _flash == FlashMode.auto
+                    ? Icons.flash_auto
+                    : Icons.flash_on,
+                active: _flash != FlashMode.off,
+                tooltip: 'Flash',
+                onTap: () => unawaited(_cycleFlash()),
               ),
-              if (_shots.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.photo_library_outlined,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${_shots.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              const SizedBox(width: 8),
+              _CapButton(
+                icon: Icons.cameraswitch_outlined,
+                tooltip: 'Flip camera',
+                onTap: () => unawaited(_switchCamera()),
+              ),
             ],
           ),
         ),
@@ -409,7 +498,7 @@ class _PhotographyRunnerScreenState
     );
   }
 
-  Widget _shootControls() {
+  Widget _bottomBar() {
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -420,34 +509,92 @@ class _PhotographyRunnerScreenState
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-          child: Row(
-            children: [
-              const SizedBox(width: 72),
-              Expanded(
-                child: Center(
-                  child: _ShutterButton(busy: _shooting, onTap: _shoot),
-                ),
-              ),
-              SizedBox(
-                width: 72,
-                child: TextButton(
-                  onPressed: _finishShooting,
-                  child: const Text(
-                    'Done',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_shots.isNotEmpty) _filmstripRow(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
+              child: Row(
+                children: [
+                  const SizedBox(width: 64),
+                  Expanded(
+                    child: Center(
+                      child: _ShutterButton(busy: _shooting, onTap: _shoot),
                     ),
                   ),
-                ),
+                  SizedBox(
+                    width: 64,
+                    child: TextButton(
+                      onPressed: _finishShooting,
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _filmstripRow() {
+    return SizedBox(
+      height: 64,
+      child: ListView.separated(
+        controller: _filmstrip,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: _shots.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final s = _shots[i];
+          return GestureDetector(
+            onTap: () => _openViewer(i),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.memory(
+                    s.bytes,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    errorBuilder: (_, _, _) => const SizedBox(
+                      width: 56,
+                      height: 56,
+                    ),
+                  ),
+                ),
+                if (s.shared)
+                  const Positioned(
+                    right: 3,
+                    top: 3,
+                    child: Icon(
+                      Icons.favorite,
+                      size: 14,
+                      color: Colors.pinkAccent,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _finishShooting() {
+    _disposeCamera();
+    setState(() => _run.advance()); // → gallery / curate
   }
 
   // ── Gallery / curate phase ───────────────────────────────────────────
@@ -489,7 +636,10 @@ class _PhotographyRunnerScreenState
                       size: 64,
                     ),
                   )
-                : _curateGrid(),
+                : LayoutBuilder(
+                    builder: (context, constraints) =>
+                        _masonry(constraints.maxWidth),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(20),
@@ -508,65 +658,47 @@ class _PhotographyRunnerScreenState
     );
   }
 
-  Widget _curateGrid() {
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 180,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: _shots.length,
-      itemBuilder: (context, i) {
-        final s = _shots[i];
-        return GestureDetector(
+  /// Two-column masonry: each photo keeps its true aspect ratio (so the
+  /// gallery reads as varied sizes, every photo whole), greedily packed
+  /// into the shorter column.
+  Widget _masonry(double maxWidth) {
+    const gap = 10.0;
+    final colWidth = (maxWidth - gap * 3) / 2;
+    final left = <Widget>[];
+    final right = <Widget>[];
+    var leftH = 0.0;
+    var rightH = 0.0;
+    for (var i = 0; i < _shots.length; i++) {
+      final s = _shots[i];
+      final ar = s.aspectRatio <= 0 ? 0.75 : s.aspectRatio;
+      final h = colWidth / ar; // display height in this column
+      final tile = Padding(
+        padding: const EdgeInsets.only(bottom: gap),
+        child: _MasonryTile(
+          shot: s,
+          aspectRatio: ar,
           onTap: () => _openViewer(i),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Image.memory(
-                  s.bytes,
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  errorBuilder: (_, _, _) =>
-                      const ColoredBox(color: Colors.white12),
-                ),
-              ),
-              if (s.shared)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.pinkAccent, width: 3),
-                      ),
-                    ),
-                  ),
-                ),
-              if (s.reflection.trim().isNotEmpty)
-                const Positioned(
-                  left: 8,
-                  bottom: 8,
-                  child: Icon(
-                    Icons.sticky_note_2,
-                    size: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              Positioned(
-                top: 6,
-                right: 6,
-                child: _ShareBadge(
-                  shared: s.shared,
-                  onTap: () => setState(() => s.shared = !s.shared),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+          onToggleShare: () => setState(() => s.shared = !s.shared),
+        ),
+      );
+      if (leftH <= rightH) {
+        left.add(tile);
+        leftH += h + gap;
+      } else {
+        right.add(tile);
+        rightH += h + gap;
+      }
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(gap, 0, gap, gap),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Column(children: left)),
+          const SizedBox(width: gap),
+          Expanded(child: Column(children: right)),
+        ],
+      ),
     );
   }
 
@@ -580,8 +712,7 @@ class _PhotographyRunnerScreenState
       child: Stack(
         children: [
           // Commit any in-progress reflection before a swipe moves the
-          // page — unfocusing fires InlineEditableText's commit + tears
-          // down its dim overlay, so a mid-edit swipe can't orphan it.
+          // page — unfocusing tears down InlineEditableText's overlay.
           NotificationListener<ScrollStartNotification>(
             onNotification: (_) {
               FocusManager.instance.primaryFocus?.unfocus();
@@ -616,7 +747,7 @@ class _PhotographyRunnerScreenState
         Center(
           child: Image.memory(
             s.bytes,
-            fit: BoxFit.contain,
+            fit: BoxFit.contain, // whole photo, full screen
             gaplessPlayback: true,
             errorBuilder: (_, _, _) => const ColoredBox(color: Colors.black),
           ),
@@ -627,8 +758,6 @@ class _PhotographyRunnerScreenState
   }
 
   Widget _viewerContext(_Shot s) {
-    // The context the photo is laid out WITH: the activity, its prompt,
-    // when it was taken — plus the learner's editable reflection.
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -692,6 +821,173 @@ class _PhotographyRunnerScreenState
   }
 }
 
+/// The immersive prompt — a warm "mission" card the kid reads on open.
+class _MissionBanner extends StatelessWidget {
+  const _MissionBanner({required this.prompt});
+
+  final String prompt;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.auto_awesome,
+              color: Colors.amberAccent,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'YOUR MISSION',
+                  style: TextStyle(
+                    color: Colors.amberAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  prompt,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A round translucent camera-capability button (flash, flip).
+class _CapButton extends StatelessWidget {
+  const _CapButton({
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: active
+                ? Colors.amberAccent.withValues(alpha: 0.85)
+                : Colors.black.withValues(alpha: 0.4),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: active ? Colors.black : Colors.white,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A masonry tile: the photo whole at its aspect ratio + a share heart.
+class _MasonryTile extends StatelessWidget {
+  const _MasonryTile({
+    required this.shot,
+    required this.aspectRatio,
+    required this.onTap,
+    required this.onToggleShare,
+  });
+
+  final _Shot shot;
+  final double aspectRatio;
+  final VoidCallback onTap;
+  final VoidCallback onToggleShare;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AspectRatio(
+        aspectRatio: aspectRatio,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.memory(
+                shot.bytes,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) =>
+                    const ColoredBox(color: Colors.white12),
+              ),
+            ),
+            if (shot.shared)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.pinkAccent, width: 3),
+                    ),
+                  ),
+                ),
+              ),
+            if (shot.reflection.trim().isNotEmpty)
+              const Positioned(
+                left: 8,
+                bottom: 8,
+                child: Icon(
+                  Icons.sticky_note_2,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
+            Positioned(
+              top: 6,
+              right: 6,
+              child: _ShareBadge(shared: shot.shared, onTap: onToggleShare),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A read-only grid of photo bytes — reserved for the teacher / family
 /// aggregate views (SUBMISSIONS.md Slice C). Public + bytes-in so it's
 /// testable without a camera.
@@ -723,6 +1019,31 @@ class PhotoGalleryView extends StatelessWidget {
   }
 }
 
+/// A brief focus ring drawn where the learner tapped to focus.
+class _FocusRing extends StatelessWidget {
+  const _FocusRing({required this.point});
+
+  final Offset point;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: point.dx - 36,
+      top: point.dy - 36,
+      child: IgnorePointer(
+        child: Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.amberAccent, width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ShareBadge extends StatelessWidget {
   const _ShareBadge({required this.shared, required this.onTap});
 
@@ -732,6 +1053,7 @@ class _ShareBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(6),
@@ -758,6 +1080,7 @@ class _ShutterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: busy ? null : onTap,
       child: Container(
         width: 76,
