@@ -10,6 +10,7 @@ import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/semantics/noun_scope.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -58,6 +59,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
   /// blocks on purpose.
   bool _creatingBlock = false;
 
+  /// The frame registry for this screen (docs/SEMANTIC_GRAPH.md). Every
+  /// NounScope under the body registers here, so a structural UiFrame of
+  /// the schedule — where each block sits, in what state — can be
+  /// captured without a screenshot.
+  late final NounRegistry _registry = NounRegistry();
+
   /// Today's date — used as the fallback when the URL has nothing.
   DateTime get _today {
     final n = DateTime.now();
@@ -69,8 +76,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
   /// `build` — the URL is the source of truth, no `setState` needed
   /// when the user picks a different day.
   DateTime _dateFromUri(BuildContext context) {
-    final raw = GoRouterState.of(context).uri.queryParameters[
-        ScheduleScreen._dateParam];
+    final raw = GoRouterState.of(
+      context,
+    ).uri.queryParameters[ScheduleScreen._dateParam];
     if (raw != null && raw.isNotEmpty) {
       final parsed = DateTime.tryParse(raw);
       if (parsed != null) {
@@ -126,9 +134,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
 
   bool _isToday(DateTime date) {
     final t = _today;
-    return date.year == t.year &&
-        date.month == t.month &&
-        date.day == t.day;
+    return date.year == t.year && date.month == t.month && date.day == t.day;
   }
 
   String _dateLabel(DateTime date) {
@@ -165,103 +171,106 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     // cap doesn't tap into a sheet they can't save from.
     final viewer = ref.watch(viewerProvider);
     final canEditSchedule = viewer.canManageSchedule || viewer.canManageSpace;
-    return EdgeScaffold(
-      showBack: false,
-      actions: (groups.isEmpty || !canEditSchedule)
-          ? const <Widget>[]
-          : [
-              // Wave 154: shortcut to the weekly-template author.
-              IconButton(
-                icon: const Icon(Icons.event_repeat),
-                tooltip: 'Weekly template',
-                onPressed: () => context.push('/schedule/template'),
-              ),
-              PrimaryActionButton(
-                tooltip: 'New block',
-                icon: Icons.add,
-                onPressed: () {
-                  final cohort = groups[_activeTabIndex.clamp(
-                    0,
-                    groups.length - 1,
-                  )];
-                  unawaited(_createBlockFormless(cohort, date));
-                },
-              ),
-            ],
-      body: groupsAsync.when(
-        loading: () => const LoadingSlot(),
-        error: (err, stack) {
-          // Wave 165.1 — surface the actual cause so we can tell
-          // "PowerSync hasn't synced yet" from "Drift query failed
-          // because the local schema is missing a column" from
-          // "guardian viewer hit /schedule which isn't gated."
-          if (kDebugMode) {
-            debugPrint('[schedule] groupsProvider failed: $err');
-            debugPrint('[schedule] stack: $stack');
-          }
-          return ErrorState(
-            title: 'Could not load schedule',
-            detail: '$err',
-            onRetry: () => ref.invalidate(groupsProvider),
-          );
-        },
-        data: (gs) {
-          if (gs.isEmpty) {
-            final labels = ref.read(verticalLabelsProvider);
-            final groupLower = labels.group.toLowerCase();
-            return EmptyState(
-              icon: Icons.meeting_room_outlined,
-              title: 'No ${labels.groupPlural.toLowerCase()} yet',
-              message:
-                  'Add a $groupLower first; schedule blocks belong '
-                  'to a specific $groupLower.',
+    return NounRegistryScope(
+      registry: _registry,
+      child: EdgeScaffold(
+        showBack: false,
+        actions: (groups.isEmpty || !canEditSchedule)
+            ? const <Widget>[]
+            : [
+                // Wave 154: shortcut to the weekly-template author.
+                IconButton(
+                  icon: const Icon(Icons.event_repeat),
+                  tooltip: 'Weekly template',
+                  onPressed: () => context.push('/schedule/template'),
+                ),
+                PrimaryActionButton(
+                  tooltip: 'New block',
+                  icon: Icons.add,
+                  onPressed: () {
+                    final cohort =
+                        groups[_activeTabIndex.clamp(
+                          0,
+                          groups.length - 1,
+                        )];
+                    unawaited(_createBlockFormless(cohort, date));
+                  },
+                ),
+              ],
+        body: groupsAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (err, stack) {
+            // Wave 165.1 — surface the actual cause so we can tell
+            // "PowerSync hasn't synced yet" from "Drift query failed
+            // because the local schema is missing a column" from
+            // "guardian viewer hit /schedule which isn't gated."
+            if (kDebugMode) {
+              debugPrint('[schedule] groupsProvider failed: $err');
+              debugPrint('[schedule] stack: $stack');
+            }
+            return ErrorState(
+              title: 'Could not load schedule',
+              detail: '$err',
+              onRetry: () => ref.invalidate(groupsProvider),
             );
-          }
-          return Column(
-            children: [
-              // Shell reserves the top chrome height; ContentHeader's
-              // own topGap (default 8) is just breathing room.
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ContentHeader(
-                  title: 'Schedule',
-                  subtitle: _dateLabel(date),
-                  bottomGap: 8,
+          },
+          data: (gs) {
+            if (gs.isEmpty) {
+              final labels = ref.read(verticalLabelsProvider);
+              final groupLower = labels.group.toLowerCase();
+              return EmptyState(
+                icon: Icons.meeting_room_outlined,
+                title: 'No ${labels.groupPlural.toLowerCase()} yet',
+                message:
+                    'Add a $groupLower first; schedule blocks belong '
+                    'to a specific $groupLower.',
+              );
+            }
+            return Column(
+              children: [
+                // Shell reserves the top chrome height; ContentHeader's
+                // own topGap (default 8) is just breathing room.
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ContentHeader(
+                    title: 'Schedule',
+                    subtitle: _dateLabel(date),
+                    bottomGap: 8,
+                  ),
                 ),
-              ),
-              _DateScrubber(
-                label: _dateLabel(date),
-                isToday: _isToday(date),
-                onPrev: () =>
-                    _setDate(context, date.subtract(const Duration(days: 1))),
-                onNext: () =>
-                    _setDate(context, date.add(const Duration(days: 1))),
-                onPickDate: () => _pickDate(context, date),
-                onJumpToday: () => _setDate(context, _today),
-              ),
-              // Wave 158: events for this date appear as a banner
-              // above the cohort tabs. Built as a Consumer so a
-              // freshly-created event renders without rebuilding
-              // the parent. Drops silently when the day has none.
-              _EventBanner(date: dateKey(date)),
-              TabBar(
-                controller: tabs,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                tabs: [for (final g in gs) Tab(text: g.name)],
-              ),
-              Expanded(
-                child: TabBarView(
+                _DateScrubber(
+                  label: _dateLabel(date),
+                  isToday: _isToday(date),
+                  onPrev: () =>
+                      _setDate(context, date.subtract(const Duration(days: 1))),
+                  onNext: () =>
+                      _setDate(context, date.add(const Duration(days: 1))),
+                  onPickDate: () => _pickDate(context, date),
+                  onJumpToday: () => _setDate(context, _today),
+                ),
+                // Wave 158: events for this date appear as a banner
+                // above the cohort tabs. Built as a Consumer so a
+                // freshly-created event renders without rebuilding
+                // the parent. Drops silently when the day has none.
+                _EventBanner(date: dateKey(date)),
+                TabBar(
                   controller: tabs,
-                  children: [
-                    for (final g in gs)
-                      _CohortDay(group: g, date: dateIso),
-                  ],
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  tabs: [for (final g in gs) Tab(text: g.name)],
                 ),
-              ),
-            ],
-          );
-        },
+                Expanded(
+                  child: TabBarView(
+                    controller: tabs,
+                    children: [
+                      for (final g in gs) _CohortDay(group: g, date: dateIso),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -435,8 +444,8 @@ class _CohortDay extends ConsumerWidget {
     final blocksAsync = ref.watch(
       scheduleDayForGroupProvider((groupId: group.id, date: date)),
     );
-    final activities = ref.watch(allActivitiesProvider).value ??
-        const <Activity>[];
+    final activities =
+        ref.watch(allActivitiesProvider).value ?? const <Activity>[];
     final locations = ref.watch(locationsProvider).value ?? const <Location>[];
     // Wave 156: every block in the program for this date + every
     // group, so we can flag rooms that two cohorts share at
@@ -492,8 +501,7 @@ class _CohortDay extends ConsumerWidget {
                 groupId: group.id,
                 groupName: group.name,
                 date: date,
-                anyCovered: blocks
-                    .any((b) => b.leadSubstituteMemberId != null),
+                anyCovered: blocks.any((b) => b.leadSubstituteMemberId != null),
               ),
             Expanded(
               child: ListView.builder(
@@ -504,13 +512,13 @@ class _CohortDay extends ConsumerWidget {
                   final activity = b.activityId == null
                       ? null
                       : activities
-                          .where((a) => a.id == b.activityId)
-                          .firstOrNull;
+                            .where((a) => a.id == b.activityId)
+                            .firstOrNull;
                   final loc = b.locationOverrideId == null
                       ? null
                       : locations
-                          .where((l) => l.id == b.locationOverrideId)
-                          .firstOrNull;
+                            .where((l) => l.id == b.locationOverrideId)
+                            .firstOrNull;
                   // Wave 156: effective location = override OR
                   // activity default. Conflict = same effective
                   // location, different cohort, overlapping time.
@@ -592,9 +600,7 @@ class _CoverLeadStrip extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  anyCovered
-                      ? Icons.swap_horiz
-                      : Icons.person_off_outlined,
+                  anyCovered ? Icons.swap_horiz : Icons.person_off_outlined,
                   size: 18,
                   color: anyCovered
                       ? scheme.onTertiaryContainer
@@ -618,8 +624,7 @@ class _CoverLeadStrip extends StatelessWidget {
                   Icons.chevron_right,
                   size: 18,
                   color: anyCovered
-                      ? scheme.onTertiaryContainer
-                          .withValues(alpha: 0.7)
+                      ? scheme.onTertiaryContainer.withValues(alpha: 0.7)
                       : scheme.onSurfaceVariant,
                 ),
               ],
@@ -718,204 +723,222 @@ class _BlockTile extends ConsumerWidget {
     final title = blockTitle.isNotEmpty
         ? blockTitle
         : (curriculumSession?.title ??
-            activity?.name ??
-            (isBreak ? 'Break' : ''));
+              activity?.name ??
+              (isBreak ? 'Break' : ''));
 
     final container = isField
         ? scheme.tertiaryContainer
         : (isBreak
-            ? scheme.surfaceContainerHigh
-            : scheme.surfaceContainerHighest);
-    final onContainer = isField
-        ? scheme.onTertiaryContainer
-        : scheme.onSurface;
+              ? scheme.surfaceContainerHigh
+              : scheme.surfaceContainerHighest);
+    final onContainer = isField ? scheme.onTertiaryContainer : scheme.onSurface;
 
     // Wave 155: dim skipped / cancelled blocks so the today view
     // visually fades them while still showing they were on the
     // plan. The director / family can read the reason in the edit
     // sheet.
-    final isSkipped = block.status == BlockStatus.skipped ||
+    final isSkipped =
+        block.status == BlockStatus.skipped ||
         block.status == BlockStatus.cancelled;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Opacity(
-        opacity: isSkipped ? 0.55 : 1.0,
-        child: Material(
-        color: container,
-        borderRadius: BorderRadius.circular(14),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () {
-            unawaited(HapticFeedback.selectionClick());
-            onTap();
-          },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  isField
-                      ? Icons.directions_bus_outlined
-                      : isBreak
+    return NounScope(
+      noun: 'ScheduleBlock',
+      id: block.id,
+      actions: <String>['tap', if (editable) 'edit'],
+      state: <String, Object?>{
+        'kind': block.kind,
+        'named': blockTitle.isNotEmpty,
+        if (isSkipped) 'skipped': true,
+        if (conflictWith.isNotEmpty) 'conflict': true,
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+        child: Opacity(
+          opacity: isSkipped ? 0.55 : 1.0,
+          child: Material(
+            color: container,
+            borderRadius: BorderRadius.circular(14),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () {
+                unawaited(HapticFeedback.selectionClick());
+                onTap();
+              },
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      isField
+                          ? Icons.directions_bus_outlined
+                          : isBreak
                           ? Icons.local_cafe_outlined
                           : Icons.local_activity_outlined,
-                  color: onContainer,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        timeLabel,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: onContainer.withValues(alpha: 0.75),
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      InlineEditableText(
-                        value: title,
-                        placeholder: 'Name this block',
-                        editable: editable,
-                        clearable: false,
-                        semanticLabel: 'Block name',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: onContainer,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        onCommit: (text) => ref
-                            .read(scheduleActionsProvider)
-                            .update_(id: block.id, title: text),
-                      ),
-                      if (curriculumSession != null) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: curriculumSession.color
-                                .withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.photo_camera_outlined,
-                                size: 13,
-                                color: curriculumSession.color,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Through My Eyes · '
-                                'S${curriculumSession.number}',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: curriculumSession.color,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (location != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          location!.name,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: onContainer.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                      if (isField) ...[
-                        const SizedBox(height: 4),
-                        TextButton.icon(
-                          onPressed: () =>
-                              context.push('/trips/${block.id}'),
-                          icon: const Icon(Icons.fact_check_outlined,
-                              size: 16),
-                          label: const Text('Trip details'),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            minimumSize: const Size(0, 28),
-                          ),
-                        ),
-                      ],
-                      if (conflictWith.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        // Wave 156: warning chip. Director sometimes
-                        // wants this (combined-cohort outdoor) so we
-                        // never block — just surface visibly.
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.amber.withValues(alpha: 0.5),
-                              width: 0.5,
+                      color: onContainer,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            timeLabel,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: onContainer.withValues(alpha: 0.75),
+                              fontWeight: FontWeight.w700,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.warning_amber_rounded,
-                                size: 14,
-                                color: Colors.amber,
+                          const SizedBox(height: 2),
+                          InlineEditableText(
+                            value: title,
+                            placeholder: 'Name this block',
+                            editable: editable,
+                            clearable: false,
+                            semanticLabel: 'Block name',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: onContainer,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            onCommit: (text) => ref
+                                .read(scheduleActionsProvider)
+                                .update_(id: block.id, title: text),
+                          ),
+                          if (curriculumSession != null) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
                               ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  conflictWith.length == 1
-                                      ? 'Shared room with ${conflictWith.first}'
-                                      : 'Shared room with '
-                                          '${conflictWith.join(", ")}',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: onContainer,
-                                    fontWeight: FontWeight.w600,
+                              decoration: BoxDecoration(
+                                color: curriculumSession.color.withValues(
+                                  alpha: 0.18,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.photo_camera_outlined,
+                                    size: 13,
+                                    color: curriculumSession.color,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Through My Eyes · '
+                                    'S${curriculumSession.number}',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: curriculumSession.color,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (location != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              location!.name,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: onContainer.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                          if (isField) ...[
+                            const SizedBox(height: 4),
+                            TextButton.icon(
+                              onPressed: () =>
+                                  context.push('/trips/${block.id}'),
+                              icon: const Icon(
+                                Icons.fact_check_outlined,
+                                size: 16,
+                              ),
+                              label: const Text('Trip details'),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                minimumSize: const Size(0, 28),
+                              ),
+                            ),
+                          ],
+                          if (conflictWith.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            // Wave 156: warning chip. Director sometimes
+                            // wants this (combined-cohort outdoor) so we
+                            // never block — just surface visibly.
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.amber.withValues(alpha: 0.5),
+                                  width: 0.5,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (block.notes != null &&
-                          block.notes!.isNotEmpty &&
-                          activity != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          block.notes!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: onContainer.withValues(alpha: 0.8),
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.warning_amber_rounded,
+                                    size: 14,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      conflictWith.length == 1
+                                          ? 'Shared room with ${conflictWith.first}'
+                                          : 'Shared room with '
+                                                '${conflictWith.join(", ")}',
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: onContainer,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (block.notes != null &&
+                              block.notes!.isNotEmpty &&
+                              activity != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              block.notes!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: onContainer.withValues(alpha: 0.8),
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: onContainer.withValues(alpha: 0.6),
+                    ),
+                  ],
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  color: onContainer.withValues(alpha: 0.6),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
         ),
       ),
     );
@@ -970,23 +993,26 @@ class _EventBanner extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Material(
-                color: _parseColor(e.color) ??
+                color:
+                    _parseColor(e.color) ??
                     theme.colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(12),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: () => _confirmDelete(context, ref, e),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
                         Icon(
                           e.mode == 'closes_day'
                               ? Icons.event_busy_outlined
                               : e.mode == 'replaces'
-                                  ? Icons.event_repeat_outlined
-                                  : Icons.celebration_outlined,
+                              ? Icons.event_repeat_outlined
+                              : Icons.celebration_outlined,
                           color: theme.colorScheme.onSecondaryContainer,
                         ),
                         const SizedBox(width: 10),
@@ -997,8 +1023,7 @@ class _EventBanner extends ConsumerWidget {
                               Text(
                                 e.title,
                                 style: theme.textTheme.titleSmall?.copyWith(
-                                  color:
-                                      theme.colorScheme.onSecondaryContainer,
+                                  color: theme.colorScheme.onSecondaryContainer,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -1007,7 +1032,8 @@ class _EventBanner extends ConsumerWidget {
                                 Text(
                                   e.description!,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme
+                                    color: theme
+                                        .colorScheme
                                         .onSecondaryContainer
                                         .withValues(alpha: 0.85),
                                   ),
