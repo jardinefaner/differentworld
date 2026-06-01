@@ -79,6 +79,21 @@ Mark inapplicable items **n/a**; don't force them.
   *Blocker.* (This is the rule that the trapped Photography gallery
   violated — it shipped because the rubric didn't name it. Now it does.)
 
+- **A7 — Chrome is floating glass, never a solid bar.** Any persistent
+  chrome surface — back/actions pills, control bars, reveal banners,
+  strips that butt the omnibox bar, modal sheets — routes through
+  `GlassPanel` / `GlassPill` / `showGlassSheet`, OR the omnibox bar's
+  inline pattern (`transparent Material → BackdropFilter(blur ~18) →
+  low-alpha `surface` tint + a hairline border`). A solid or near-solid
+  `surface*` / `black` fill with **no `BackdropFilter`** on a chrome
+  surface is a defect — even if a comment claims it's "glass" (the
+  live-strip shipped exactly that lie). Immersive *content* fills (a
+  This-or-That color half, a colored prompt card, a role tile) are
+  EXEMPT — the rule governs chrome, not content. Verify: every chrome
+  surface has a `BackdropFilter` or goes through the glass primitives.
+  *Blocker for a persistent chrome surface; the immersive-content
+  exemption is the common false-positive to avoid.*
+
 ## B. The four states (every data / list screen)
 
 - **B1 — Loading is a skeleton, not a bare spinner**, and only on first

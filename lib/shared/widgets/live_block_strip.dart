@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:differentworld/core/db/app_database.dart' show Entry;
 import 'package:differentworld/features/entries/entries_providers.dart';
@@ -79,72 +80,82 @@ class _Strip extends ConsumerWidget {
     final count =
         ref.watch(momentsForBlockProvider(block.blockId)).value?.length ?? 0;
 
-    return Material(
-      // Same translucent glass surface as the omnibox bar.
-      color: scheme.surface.withValues(alpha: 0.92),
-      child: InkWell(
-        // Tap the strip to review the moments tied to this block.
-        onTap: () => unawaited(showBlockMomentsSheet(context, block)),
-        child: Container(
-          height: 36,
-          decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(color: scheme.outline.withValues(alpha: 0.12)),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              // Breathing green dot — RepaintBoundary so only the dot
-              // repaints on each animation tick.
-              RepaintBoundary(
-                child: AnimatedBuilder(
-                  animation: alpha,
-                  builder: (_, _) => Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.green.withValues(alpha: alpha.value),
+    // REAL floating glass — a translucent tint OVER a backdrop blur,
+    // matching the omnibox bar it butts against (not a solid fill). Flush
+    // band with a top hairline, no rounded pill (it reads continuous with
+    // the bar). Rubric: chrome is floating glass, never a solid bar.
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Material(
+          color: scheme.surface.withValues(alpha: 0.55),
+          child: InkWell(
+            // Tap the strip to review the moments tied to this block.
+            onTap: () => unawaited(showBlockMomentsSheet(context, block)),
+            child: Container(
+              height: 36,
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // Breathing green dot — RepaintBoundary so only the dot
+                  // repaints on each animation tick.
+                  RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation: alpha,
+                      builder: (_, _) => Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.green.withValues(alpha: alpha.value),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'LIVE',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: Colors.green,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Separator dot.
-              Text(
-                '·',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  block.title,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: scheme.onSurface,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(width: 8),
+                  Text(
+                    'LIVE',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(width: 6),
+                  // Separator dot.
+                  Text(
+                    '·',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      block.title,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (count > 0) ...[
+                    _MomentCount(count: count),
+                    const SizedBox(width: 10),
+                  ],
+                  // Time remaining — shows how long until the block ends.
+                  _TimeRemaining(endAt: block.endAt),
+                ],
               ),
-              if (count > 0) ...[
-                _MomentCount(count: count),
-                const SizedBox(width: 10),
-              ],
-              // Time remaining — shows how long until the block ends.
-              _TimeRemaining(endAt: block.endAt),
-            ],
+            ),
           ),
         ),
       ),
