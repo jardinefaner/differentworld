@@ -15,6 +15,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     with TickerProviderStateMixin {
   TabController? _tabs;
   int _activeTabIndex = 0;
+
+  /// Guards the formless `+` against a fat-finger double/triple tap
+  /// spawning two blank blocks. Held from the tap until the (local-first,
+  /// sub-frame) create resolves; further taps after that create more
+  /// blocks on purpose.
+  bool _creatingBlock = false;
 
   /// Today's date — used as the fallback when the URL has nothing.
   DateTime get _today {
@@ -149,7 +156,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     final date = _dateFromUri(context);
     final dateIso = isoDateLocal(date);
     final groupsAsync = ref.watch(groupsProvider);
-    final blocksAsync = ref.watch(scheduleDayProvider(dateIso));
     final groups = groupsAsync.value ?? const <Group>[];
     final tabs = groups.isEmpty ? null : _ensureTabController(groups.length);
 
@@ -178,15 +184,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                     0,
                     groups.length - 1,
                   )];
-                  unawaited(_openBlockSheet(
-                    context,
-                    ref,
-                    groupId: cohort.id,
-                    date: date,
-                    defaultStart: _defaultStartTime(date),
-                    existingBlocks:
-                        blocksAsync.value ?? const <ScheduleBlock>[],
-                  ));
+                  unawaited(_createBlockFormless(cohort, date));
                 },
               ),
             ],
@@ -271,6 +269,44 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
   /// Next round half-hour from now (or 9 a.m. on a future date). The
   /// scheduler can override; this just seeds the time picker so the
   /// teacher doesn't start at "12:00 a.m." by default.
+  /// Formless create (option B): make the block NOW at a smart default
+  /// time with an empty title. It appears as a card in the cohort
+  /// column; tap its name to fill it in. The block is real immediately
+  /// (local-first), so a mis-tap or a "phone rang, walked away" would
+  /// otherwise leave a permanent blank block — the Undo snackbar gives
+  /// that a one-tap escape hatch. [_creatingBlock] debounces a
+  /// double-tap so a single intent can't spawn two blanks.
+  Future<void> _createBlockFormless(Group cohort, DateTime date) async {
+    if (_creatingBlock) return;
+    _creatingBlock = true;
+    final messenger = ScaffoldMessenger.of(context);
+    final actions = ref.read(scheduleActionsProvider);
+    final start = _defaultStartTime(date);
+    unawaited(HapticFeedback.selectionClick());
+    try {
+      final id = await actions.create(
+        groupId: cohort.id,
+        startAt: start,
+        endAt: start.add(const Duration(minutes: 30)),
+      );
+      if (!mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: const Text('Block added — tap its name to fill it in'),
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => unawaited(actions.delete_(id)),
+            ),
+          ),
+        );
+    } finally {
+      _creatingBlock = false;
+    }
+  }
+
   DateTime _defaultStartTime(DateTime date) {
     final now = DateTime.now();
     if (now.year != date.year ||
@@ -411,6 +447,8 @@ class _CohortDay extends ConsumerWidget {
         ref.watch(scheduleDayProvider(date)).value ?? const <ScheduleBlock>[];
     final allGroups = ref.watch(groupsProvider).value ?? const <Group>[];
     final groupNameById = {for (final g in allGroups) g.id: g.name};
+    final viewer = ref.watch(viewerProvider);
+    final canEdit = viewer.canManageSchedule || viewer.canManageSpace;
 
     return blocksAsync.when(
       loading: () => const LoadingSlot(),
@@ -487,6 +525,7 @@ class _CohortDay extends ConsumerWidget {
                     block: b,
                     activity: activity,
                     location: loc,
+                    editable: canEdit,
                     conflictWith: conflictGroupNames,
                     onTap: () => _openBlockSheet(
                       context,
@@ -631,12 +670,13 @@ List<String> _conflictsForBlock({
   return out;
 }
 
-class _BlockTile extends StatelessWidget {
+class _BlockTile extends ConsumerWidget {
   const _BlockTile({
     required this.block,
     required this.activity,
     required this.location,
     required this.onTap,
+    this.editable = false,
     this.conflictWith = const [],
   });
 
@@ -645,13 +685,17 @@ class _BlockTile extends StatelessWidget {
   final Location? location;
   final VoidCallback onTap;
 
+  /// When true the block's name is tap-to-edit inline (the formless
+  /// create / rename — option B). False → plain read-only text.
+  final bool editable;
+
   /// Wave 156: names of other cohorts sharing this block's room at
   /// overlapping times. Renders as an amber chip; never blocks the
   /// block from saving.
   final List<String> conflictWith;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final start = DateTime.parse(block.startAt).toLocal();
@@ -667,9 +711,15 @@ class _BlockTile extends StatelessWidget {
     final curriculumSession = block.curriculumSessionSlug == null
         ? null
         : findSessionBySlug(block.curriculumSessionSlug!);
-    final title = curriculumSession?.title ??
-        activity?.name ??
-        (isBreak ? 'Break' : block.notes ?? '—');
+    // Free-text title wins (the formless name you typed); else fall back
+    // to the linked session / activity; else empty so the inline field
+    // shows its "Name this block" placeholder for a bare new card.
+    final blockTitle = block.title?.trim() ?? '';
+    final title = blockTitle.isNotEmpty
+        ? blockTitle
+        : (curriculumSession?.title ??
+            activity?.name ??
+            (isBreak ? 'Break' : ''));
 
     final container = isField
         ? scheme.tertiaryContainer
@@ -726,12 +776,19 @@ class _BlockTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        title,
+                      InlineEditableText(
+                        value: title,
+                        placeholder: 'Name this block',
+                        editable: editable,
+                        clearable: false,
+                        semanticLabel: 'Block name',
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: onContainer,
                           fontWeight: FontWeight.w600,
                         ),
+                        onCommit: (text) => ref
+                            .read(scheduleActionsProvider)
+                            .update_(id: block.id, title: text),
                       ),
                       if (curriculumSession != null) ...[
                         const SizedBox(height: 4),

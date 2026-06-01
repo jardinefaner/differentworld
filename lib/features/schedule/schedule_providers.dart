@@ -107,6 +107,7 @@ class ScheduleActions {
     required String groupId,
     required DateTime startAt,
     required DateTime endAt,
+    String? title,
     String? activityId,
     String? leadMemberId,
     String? locationOverrideId,
@@ -124,6 +125,7 @@ class ScheduleActions {
       date: date,
       startAt: startAt,
       endAt: endAt,
+      title: title,
       activityId: activityId,
       leadMemberId: leadMemberId,
       locationOverrideId: locationOverrideId,
@@ -188,6 +190,7 @@ class ScheduleActions {
 
   Future<void> update_({
     required String id,
+    String? title,
     String? activityId,
     String? leadMemberId,
     String? locationOverrideId,
@@ -199,6 +202,7 @@ class ScheduleActions {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.scheduleDao.update_(
       id: id,
+      title: title,
       activityId: activityId,
       leadMemberId: leadMemberId,
       locationOverrideId: locationOverrideId,
