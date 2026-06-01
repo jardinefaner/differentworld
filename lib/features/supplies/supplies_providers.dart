@@ -28,6 +28,7 @@ class SupplyActions {
     double? quantity,
     String? unit,
     String? location,
+    String? locationId,
     double? lowStockThreshold,
     String? notes,
   }) async {
@@ -41,6 +42,7 @@ class SupplyActions {
       quantity: quantity,
       unit: unit,
       location: location,
+      locationId: locationId,
       lowStockThreshold: lowStockThreshold,
       notes: notes,
     );
@@ -53,6 +55,8 @@ class SupplyActions {
     double? quantity,
     String? unit,
     String? location,
+    String? locationId,
+    bool clearLocationId = false,
     double? lowStockThreshold,
     String? notes,
   }) async {
@@ -64,6 +68,8 @@ class SupplyActions {
       quantity: quantity,
       unit: unit,
       location: location,
+      locationId: locationId,
+      clearLocationId: clearLocationId,
       lowStockThreshold: lowStockThreshold,
       notes: notes,
     );

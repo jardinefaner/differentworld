@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/supplies/supplies_grouping.dart';
 import 'package:differentworld/features/supplies/supplies_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -16,17 +17,27 @@ import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// `/settings/supplies` — the program's inventory catalog
-/// (docs/SUPPLIES.md). Maintain it once; slice 2 lets activities reference
-/// items by id ("you'll need 12 markers"). Reached via the omnibox
-/// (type "supplies" / "inventory"), matching the Locations / Activities
-/// libraries.
-class SuppliesListScreen extends ConsumerWidget {
+/// `/settings/supplies` — the program's inventory catalog (docs/SUPPLIES.md).
+/// Three lenses on the same data: by **category**, by **location** (the
+/// real Locations catalog — "what's in the Art Barn?"), and **running low**
+/// (the restock list). Reached via the omnibox ("supplies" / "inventory").
+enum _SuppliesView { category, location, runningLow }
+
+class SuppliesListScreen extends ConsumerStatefulWidget {
   const SuppliesListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SuppliesListScreen> createState() => _SuppliesListScreenState();
+}
+
+class _SuppliesListScreenState extends ConsumerState<SuppliesListScreen> {
+  _SuppliesView _view = _SuppliesView.category;
+
+  @override
+  Widget build(BuildContext context) {
     final suppliesAsync = ref.watch(suppliesProvider);
+    final locations = ref.watch(locationsProvider).value ?? const <Location>[];
+    final names = {for (final l in locations) l.id: l.name};
     final canEdit = ref.watch(viewerProvider).canManageSpace;
     return EdgeScaffold(
       backFallbackRoute: '/settings',
@@ -62,35 +73,109 @@ class SuppliesListScreen extends ConsumerWidget {
                   : null,
             );
           }
-          // Flatten into header + tile rows (a header whenever the
-          // category changes — the DAO orders by category then name).
-          final rows = groupSuppliesByCategory(supplies);
+          final rows = switch (_view) {
+            _SuppliesView.category => groupSuppliesByCategory(supplies),
+            _SuppliesView.location => groupSuppliesByLocation(supplies, names),
+            _SuppliesView.runningLow =>
+              lowStockSupplies(supplies).cast<Object>(),
+          };
+          // "Running low" with nothing low → a positive note, not an empty
+          // scroll.
+          if (_view == _SuppliesView.runningLow && rows.isEmpty) {
+            return ResponsivePage.builder(
+              itemCount: 2,
+              itemBuilder: (_, i) =>
+                  i == 0 ? _header(context) : const _AllStockedNote(),
+            );
+          }
           return ResponsivePage.builder(
             itemCount: rows.length + 1,
             itemBuilder: (_, i) {
-              if (i == 0) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: 'Supplies',
-                    subtitle: 'What your program keeps on hand',
-                    bottomGap: 8,
-                  ),
-                );
-              }
+              if (i == 0) return _header(context);
               final row = rows[i - 1];
-              if (row is String) return _CategoryHeader(label: row);
-              return _SupplyTile(supply: row as Supply, canEdit: canEdit);
+              if (row is String) return _GroupHeader(label: row);
+              return _SupplyTile(
+                supply: row as Supply,
+                canEdit: canEdit,
+                locationNames: names,
+              );
             },
           );
         },
       ),
     );
   }
+
+  Widget _header(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ContentHeader(
+            title: 'Supplies',
+            subtitle: 'What your program keeps on hand',
+            bottomGap: 8,
+          ),
+          SegmentedButton<_SuppliesView>(
+            segments: const [
+              ButtonSegment(
+                value: _SuppliesView.category,
+                label: Text('Category'),
+              ),
+              ButtonSegment(
+                value: _SuppliesView.location,
+                label: Text('Location'),
+              ),
+              ButtonSegment(
+                value: _SuppliesView.runningLow,
+                label: Text('Low'),
+              ),
+            ],
+            selected: {_view},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) => setState(() => _view = s.first),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _CategoryHeader extends StatelessWidget {
-  const _CategoryHeader({required this.label});
+class _AllStockedNote extends StatelessWidget {
+  const _AllStockedNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+      child: Column(
+        children: [
+          const Text('✅', style: TextStyle(fontSize: 40)),
+          const SizedBox(height: 8),
+          Text(
+            'Nothing is running low',
+            style: theme.textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Set a "flag when below" amount on a supply and it will show up '
+            'here when it runs down.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({required this.label});
 
   final String label;
 
@@ -112,10 +197,15 @@ class _CategoryHeader extends StatelessWidget {
 }
 
 class _SupplyTile extends StatelessWidget {
-  const _SupplyTile({required this.supply, required this.canEdit});
+  const _SupplyTile({
+    required this.supply,
+    required this.canEdit,
+    required this.locationNames,
+  });
 
   final Supply supply;
   final bool canEdit;
+  final Map<String, String> locationNames;
 
   @override
   Widget build(BuildContext context) {
@@ -125,14 +215,16 @@ class _SupplyTile extends StatelessWidget {
     final qtyLabel = qty == null
         ? null
         : '${formatSupplyNumber(qty)}${supply.unit != null && supply.unit!.isNotEmpty ? ' ${supply.unit}' : ''}';
+    final loc = supplyLocationLabel(supply, locationNames);
     final subtitle = [
       ?qtyLabel,
-      if (supply.location != null && supply.location!.isNotEmpty)
-        supply.location!,
+      if (loc != 'No location set') loc,
     ].join(' · ');
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: low ? scheme.errorContainer : scheme.surfaceContainerHighest,
+        backgroundColor: low
+            ? scheme.errorContainer
+            : scheme.surfaceContainerHighest,
         child: Icon(
           Icons.inventory_2_outlined,
           color: low ? scheme.onErrorContainer : scheme.onSurfaceVariant,
@@ -157,10 +249,7 @@ class _SupplyTile extends StatelessWidget {
   }
 }
 
-Future<String?> openSupplyEditSheet(
-  BuildContext context, {
-  Supply? existing,
-}) {
+Future<String?> openSupplyEditSheet(BuildContext context, {Supply? existing}) {
   return showGlassSheet<String?>(
     context: context,
     isScrollControlled: true,
@@ -190,6 +279,7 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
   late final TextEditingController _location;
   late final TextEditingController _lowStock;
   late final TextEditingController _notes;
+  String? _locationId;
   bool _saving = false;
 
   @override
@@ -209,6 +299,7 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
           : formatSupplyNumber(e!.lowStockThreshold!),
     );
     _notes = TextEditingController(text: e?.notes ?? '');
+    _locationId = e?.locationId;
   }
 
   @override
@@ -242,6 +333,7 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
     final notes = trimOrNull(_notes);
     final quantity = double.tryParse(_quantity.text.trim());
     final lowStock = double.tryParse(_lowStock.text.trim());
+    final pickedLoc = _locationId;
     String? savedId;
     final ok = await runReported(
       library: 'supplies',
@@ -255,6 +347,7 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
             quantity: quantity,
             unit: unit,
             location: location,
+            locationId: pickedLoc,
             lowStockThreshold: lowStock,
             notes: notes,
           );
@@ -267,6 +360,8 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
             quantity: quantity,
             unit: unit,
             location: location,
+            locationId: pickedLoc,
+            clearLocationId: pickedLoc == null,
             lowStockThreshold: lowStock,
             notes: notes,
           );
@@ -315,6 +410,12 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final insets = MediaQuery.of(context).viewInsets;
+    final locations = ref.watch(locationsProvider).value ?? const <Location>[];
+    // Guard against a stale link to a since-deleted location (the dropdown
+    // asserts if `value` isn't among its items).
+    final validLocId = locations.any((l) => l.id == _locationId)
+        ? _locationId
+        : null;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + insets.bottom),
       child: SingleChildScrollView(
@@ -378,12 +479,32 @@ class _SupplyEditSheetState extends ConsumerState<_SupplyEditSheet> {
               ],
             ),
             const SizedBox(height: 12),
+            // Location lens: link to a real Location (so it shows in that
+            // Location's inventory + the "by location" view), plus a
+            // free-text sub-spot for the fine detail.
+            DropdownButtonFormField<String?>(
+              initialValue: validLocId,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: locations.isEmpty
+                    ? 'Location (add Locations first)'
+                    : 'Location (optional)',
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<String?>(child: Text('— None —')),
+                for (final l in locations)
+                  DropdownMenuItem<String?>(value: l.id, child: Text(l.name)),
+              ],
+              onChanged: (v) => setState(() => _locationId = v),
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: _location,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
-                labelText: 'Where it lives (optional)',
-                hintText: 'Cabinet B · Gym closet',
+                labelText: 'Spot (optional)',
+                hintText: 'Cabinet B · shelf 2',
                 border: OutlineInputBorder(),
               ),
             ),

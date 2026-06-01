@@ -575,6 +575,7 @@ class Supplies extends Table {
   RealColumn get quantity => real().nullable()();
   TextColumn get unit => text().nullable()();
   TextColumn get location => text().nullable()();
+  TextColumn get locationId => text().nullable()();
   RealColumn get lowStockThreshold => real().nullable()();
   TextColumn get photoUrl => text().nullable()();
   TextColumn get notes => text().nullable()();

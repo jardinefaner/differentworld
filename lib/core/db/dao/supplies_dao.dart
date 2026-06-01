@@ -38,6 +38,7 @@ class SuppliesDao extends DatabaseAccessor<AppDatabase>
     double? quantity,
     String? unit,
     String? location,
+    String? locationId,
     double? lowStockThreshold,
     String? photoUrl,
     String? notes,
@@ -53,6 +54,7 @@ class SuppliesDao extends DatabaseAccessor<AppDatabase>
         quantity: Value(quantity),
         unit: Value(unit),
         location: Value(location),
+        locationId: Value(locationId),
         lowStockThreshold: Value(lowStockThreshold),
         photoUrl: Value(photoUrl),
         notes: Value(notes),
@@ -63,6 +65,9 @@ class SuppliesDao extends DatabaseAccessor<AppDatabase>
     return id;
   }
 
+  /// `clearLocationId: true` explicitly unsets the location link (the
+  /// nullable-update escape hatch the trailing-null convention can't
+  /// express — used when the picker is set back to "None").
   Future<void> update_({
     required String id,
     String? name,
@@ -70,6 +75,8 @@ class SuppliesDao extends DatabaseAccessor<AppDatabase>
     double? quantity,
     String? unit,
     String? location,
+    String? locationId,
+    bool clearLocationId = false,
     double? lowStockThreshold,
     String? photoUrl,
     String? notes,
@@ -82,6 +89,9 @@ class SuppliesDao extends DatabaseAccessor<AppDatabase>
         quantity: quantity == null ? const Value.absent() : Value(quantity),
         unit: unit == null ? const Value.absent() : Value(unit),
         location: location == null ? const Value.absent() : Value(location),
+        locationId: clearLocationId
+            ? const Value(null)
+            : (locationId == null ? const Value.absent() : Value(locationId)),
         lowStockThreshold: lowStockThreshold == null
             ? const Value.absent()
             : Value(lowStockThreshold),

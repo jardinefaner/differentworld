@@ -299,6 +299,7 @@ const appSchema = Schema([
     Column.real('quantity'),
     Column.text('unit'),
     Column.text('location'),
+    Column.text('location_id'),
     Column.real('low_stock_threshold'),
     Column.text('photo_url'),
     Column.text('notes'),

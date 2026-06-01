@@ -14520,6 +14520,17 @@ class $SuppliesTable extends Supplies with TableInfo<$SuppliesTable, Supply> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _locationIdMeta = const VerificationMeta(
+    'locationId',
+  );
+  @override
+  late final GeneratedColumn<String> locationId = GeneratedColumn<String>(
+    'location_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _lowStockThresholdMeta = const VerificationMeta(
     'lowStockThreshold',
   );
@@ -14583,6 +14594,7 @@ class $SuppliesTable extends Supplies with TableInfo<$SuppliesTable, Supply> {
     quantity,
     unit,
     location,
+    locationId,
     lowStockThreshold,
     photoUrl,
     notes,
@@ -14644,6 +14656,12 @@ class $SuppliesTable extends Supplies with TableInfo<$SuppliesTable, Supply> {
       context.handle(
         _locationMeta,
         location.isAcceptableOrUnknown(data['location']!, _locationMeta),
+      );
+    }
+    if (data.containsKey('location_id')) {
+      context.handle(
+        _locationIdMeta,
+        locationId.isAcceptableOrUnknown(data['location_id']!, _locationIdMeta),
       );
     }
     if (data.containsKey('low_stock_threshold')) {
@@ -14720,6 +14738,10 @@ class $SuppliesTable extends Supplies with TableInfo<$SuppliesTable, Supply> {
         DriftSqlType.string,
         data['${effectivePrefix}location'],
       ),
+      locationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}location_id'],
+      ),
       lowStockThreshold: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}low_stock_threshold'],
@@ -14757,6 +14779,7 @@ class Supply extends DataClass implements Insertable<Supply> {
   final double? quantity;
   final String? unit;
   final String? location;
+  final String? locationId;
   final double? lowStockThreshold;
   final String? photoUrl;
   final String? notes;
@@ -14770,6 +14793,7 @@ class Supply extends DataClass implements Insertable<Supply> {
     this.quantity,
     this.unit,
     this.location,
+    this.locationId,
     this.lowStockThreshold,
     this.photoUrl,
     this.notes,
@@ -14793,6 +14817,9 @@ class Supply extends DataClass implements Insertable<Supply> {
     }
     if (!nullToAbsent || location != null) {
       map['location'] = Variable<String>(location);
+    }
+    if (!nullToAbsent || locationId != null) {
+      map['location_id'] = Variable<String>(locationId);
     }
     if (!nullToAbsent || lowStockThreshold != null) {
       map['low_stock_threshold'] = Variable<double>(lowStockThreshold);
@@ -14823,6 +14850,9 @@ class Supply extends DataClass implements Insertable<Supply> {
       location: location == null && nullToAbsent
           ? const Value.absent()
           : Value(location),
+      locationId: locationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(locationId),
       lowStockThreshold: lowStockThreshold == null && nullToAbsent
           ? const Value.absent()
           : Value(lowStockThreshold),
@@ -14850,6 +14880,7 @@ class Supply extends DataClass implements Insertable<Supply> {
       quantity: serializer.fromJson<double?>(json['quantity']),
       unit: serializer.fromJson<String?>(json['unit']),
       location: serializer.fromJson<String?>(json['location']),
+      locationId: serializer.fromJson<String?>(json['locationId']),
       lowStockThreshold: serializer.fromJson<double?>(
         json['lowStockThreshold'],
       ),
@@ -14870,6 +14901,7 @@ class Supply extends DataClass implements Insertable<Supply> {
       'quantity': serializer.toJson<double?>(quantity),
       'unit': serializer.toJson<String?>(unit),
       'location': serializer.toJson<String?>(location),
+      'locationId': serializer.toJson<String?>(locationId),
       'lowStockThreshold': serializer.toJson<double?>(lowStockThreshold),
       'photoUrl': serializer.toJson<String?>(photoUrl),
       'notes': serializer.toJson<String?>(notes),
@@ -14886,6 +14918,7 @@ class Supply extends DataClass implements Insertable<Supply> {
     Value<double?> quantity = const Value.absent(),
     Value<String?> unit = const Value.absent(),
     Value<String?> location = const Value.absent(),
+    Value<String?> locationId = const Value.absent(),
     Value<double?> lowStockThreshold = const Value.absent(),
     Value<String?> photoUrl = const Value.absent(),
     Value<String?> notes = const Value.absent(),
@@ -14899,6 +14932,7 @@ class Supply extends DataClass implements Insertable<Supply> {
     quantity: quantity.present ? quantity.value : this.quantity,
     unit: unit.present ? unit.value : this.unit,
     location: location.present ? location.value : this.location,
+    locationId: locationId.present ? locationId.value : this.locationId,
     lowStockThreshold: lowStockThreshold.present
         ? lowStockThreshold.value
         : this.lowStockThreshold,
@@ -14916,6 +14950,9 @@ class Supply extends DataClass implements Insertable<Supply> {
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
       unit: data.unit.present ? data.unit.value : this.unit,
       location: data.location.present ? data.location.value : this.location,
+      locationId: data.locationId.present
+          ? data.locationId.value
+          : this.locationId,
       lowStockThreshold: data.lowStockThreshold.present
           ? data.lowStockThreshold.value
           : this.lowStockThreshold,
@@ -14936,6 +14973,7 @@ class Supply extends DataClass implements Insertable<Supply> {
           ..write('quantity: $quantity, ')
           ..write('unit: $unit, ')
           ..write('location: $location, ')
+          ..write('locationId: $locationId, ')
           ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('photoUrl: $photoUrl, ')
           ..write('notes: $notes, ')
@@ -14954,6 +14992,7 @@ class Supply extends DataClass implements Insertable<Supply> {
     quantity,
     unit,
     location,
+    locationId,
     lowStockThreshold,
     photoUrl,
     notes,
@@ -14971,6 +15010,7 @@ class Supply extends DataClass implements Insertable<Supply> {
           other.quantity == this.quantity &&
           other.unit == this.unit &&
           other.location == this.location &&
+          other.locationId == this.locationId &&
           other.lowStockThreshold == this.lowStockThreshold &&
           other.photoUrl == this.photoUrl &&
           other.notes == this.notes &&
@@ -14986,6 +15026,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
   final Value<double?> quantity;
   final Value<String?> unit;
   final Value<String?> location;
+  final Value<String?> locationId;
   final Value<double?> lowStockThreshold;
   final Value<String?> photoUrl;
   final Value<String?> notes;
@@ -15000,6 +15041,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
     this.quantity = const Value.absent(),
     this.unit = const Value.absent(),
     this.location = const Value.absent(),
+    this.locationId = const Value.absent(),
     this.lowStockThreshold = const Value.absent(),
     this.photoUrl = const Value.absent(),
     this.notes = const Value.absent(),
@@ -15015,6 +15057,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
     this.quantity = const Value.absent(),
     this.unit = const Value.absent(),
     this.location = const Value.absent(),
+    this.locationId = const Value.absent(),
     this.lowStockThreshold = const Value.absent(),
     this.photoUrl = const Value.absent(),
     this.notes = const Value.absent(),
@@ -15034,6 +15077,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
     Expression<double>? quantity,
     Expression<String>? unit,
     Expression<String>? location,
+    Expression<String>? locationId,
     Expression<double>? lowStockThreshold,
     Expression<String>? photoUrl,
     Expression<String>? notes,
@@ -15049,6 +15093,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
       if (quantity != null) 'quantity': quantity,
       if (unit != null) 'unit': unit,
       if (location != null) 'location': location,
+      if (locationId != null) 'location_id': locationId,
       if (lowStockThreshold != null) 'low_stock_threshold': lowStockThreshold,
       if (photoUrl != null) 'photo_url': photoUrl,
       if (notes != null) 'notes': notes,
@@ -15066,6 +15111,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
     Value<double?>? quantity,
     Value<String?>? unit,
     Value<String?>? location,
+    Value<String?>? locationId,
     Value<double?>? lowStockThreshold,
     Value<String?>? photoUrl,
     Value<String?>? notes,
@@ -15081,6 +15127,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
       quantity: quantity ?? this.quantity,
       unit: unit ?? this.unit,
       location: location ?? this.location,
+      locationId: locationId ?? this.locationId,
       lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       photoUrl: photoUrl ?? this.photoUrl,
       notes: notes ?? this.notes,
@@ -15114,6 +15161,9 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
     if (location.present) {
       map['location'] = Variable<String>(location.value);
     }
+    if (locationId.present) {
+      map['location_id'] = Variable<String>(locationId.value);
+    }
     if (lowStockThreshold.present) {
       map['low_stock_threshold'] = Variable<double>(lowStockThreshold.value);
     }
@@ -15145,6 +15195,7 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
           ..write('quantity: $quantity, ')
           ..write('unit: $unit, ')
           ..write('location: $location, ')
+          ..write('locationId: $locationId, ')
           ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('photoUrl: $photoUrl, ')
           ..write('notes: $notes, ')
@@ -30298,6 +30349,7 @@ typedef $$SuppliesTableCreateCompanionBuilder =
       Value<double?> quantity,
       Value<String?> unit,
       Value<String?> location,
+      Value<String?> locationId,
       Value<double?> lowStockThreshold,
       Value<String?> photoUrl,
       Value<String?> notes,
@@ -30314,6 +30366,7 @@ typedef $$SuppliesTableUpdateCompanionBuilder =
       Value<double?> quantity,
       Value<String?> unit,
       Value<String?> location,
+      Value<String?> locationId,
       Value<double?> lowStockThreshold,
       Value<String?> photoUrl,
       Value<String?> notes,
@@ -30363,6 +30416,11 @@ class $$SuppliesTableFilterComposer
 
   ColumnFilters<String> get location => $composableBuilder(
     column: $table.location,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get locationId => $composableBuilder(
+    column: $table.locationId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -30436,6 +30494,11 @@ class $$SuppliesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get locationId => $composableBuilder(
+    column: $table.locationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get lowStockThreshold => $composableBuilder(
     column: $table.lowStockThreshold,
     builder: (column) => ColumnOrderings(column),
@@ -30492,6 +30555,11 @@ class $$SuppliesTableAnnotationComposer
   GeneratedColumn<String> get location =>
       $composableBuilder(column: $table.location, builder: (column) => column);
 
+  GeneratedColumn<String> get locationId => $composableBuilder(
+    column: $table.locationId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get lowStockThreshold => $composableBuilder(
     column: $table.lowStockThreshold,
     builder: (column) => column,
@@ -30545,6 +30613,7 @@ class $$SuppliesTableTableManager
                 Value<double?> quantity = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
                 Value<String?> location = const Value.absent(),
+                Value<String?> locationId = const Value.absent(),
                 Value<double?> lowStockThreshold = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -30559,6 +30628,7 @@ class $$SuppliesTableTableManager
                 quantity: quantity,
                 unit: unit,
                 location: location,
+                locationId: locationId,
                 lowStockThreshold: lowStockThreshold,
                 photoUrl: photoUrl,
                 notes: notes,
@@ -30575,6 +30645,7 @@ class $$SuppliesTableTableManager
                 Value<double?> quantity = const Value.absent(),
                 Value<String?> unit = const Value.absent(),
                 Value<String?> location = const Value.absent(),
+                Value<String?> locationId = const Value.absent(),
                 Value<double?> lowStockThreshold = const Value.absent(),
                 Value<String?> photoUrl = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -30589,6 +30660,7 @@ class $$SuppliesTableTableManager
                 quantity: quantity,
                 unit: unit,
                 location: location,
+                locationId: locationId,
                 lowStockThreshold: lowStockThreshold,
                 photoUrl: photoUrl,
                 notes: notes,
