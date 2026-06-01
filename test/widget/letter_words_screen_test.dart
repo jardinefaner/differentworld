@@ -1,6 +1,7 @@
-// Widget test for the "starts with a letter" word game
-// (docs/ACTIVITY_RUNTIME.md). Deterministic: the first category is the
-// seed order's first ("an animal"), the first letter is 'C'.
+// Widget test for "Beat the Letter" (docs/ACTIVITY_ROADMAP.md Wave 2).
+// Teacher-paced, NO typing, NO grading: a big letter + category the room
+// reads, and a tally the teacher taps. The letter is random per round, so
+// these assert the FLOW, not a fixed letter.
 
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:flutter/material.dart';
@@ -25,52 +26,40 @@ void main() {
     return ProviderScope(child: MaterialApp.router(routerConfig: router));
   }
 
-  testWidgets('opens with the letter C and the first category', (tester) async {
-    await tester.pumpWidget(harness());
-    await tester.pump();
-
-    expect(find.text('C'), findsOneWidget); // the letter chip
-    expect(find.text('Name an animal that starts with C'), findsOneWidget);
-  });
-
-  testWidgets('validates the starting letter live', (tester) async {
-    await tester.pumpWidget(harness());
-    await tester.pump();
-
-    await tester.enterText(find.byType(TextField), 'Dog');
-    await tester.pump();
-    expect(find.text('Oops — it needs to start with C'), findsOneWidget);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNull,
-    );
-
-    await tester.enterText(find.byType(TextField), 'Cat');
-    await tester.pump();
-    expect(find.text('Nice! tap Add it'), findsOneWidget);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNotNull,
-    );
-  });
-
-  testWidgets('adding banks the word as a chip and rejects a repeat', (
+  testWidgets('opens with a letter + category + a tally at 0 — no input', (
     tester,
   ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
 
-    await tester.enterText(find.byType(TextField), 'Cat');
-    await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Add it'));
+    expect(find.byType(TextField), findsNothing); // no typing
+    expect(find.textContaining('that starts with'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Someone said it'), findsOneWidget);
+    expect(find.text('0'), findsOneWidget); // the tally
+  });
+
+  testWidgets('tapping the tally increments the count (no right/wrong)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(harness());
     await tester.pump();
 
-    expect(find.widgetWithText(Chip, 'Cat'), findsOneWidget);
-    expect(find.text("I'm done (1)"), findsOneWidget);
-
-    // Same word again → not novel.
-    await tester.enterText(find.byType(TextField), 'Cat');
+    await tester.tap(find.widgetWithText(FilledButton, 'Someone said it'));
     await tester.pump();
-    expect(find.text('You already have that one!'), findsOneWidget);
+
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('0'), findsNothing);
+  });
+
+  testWidgets('Done recaps the room tally', (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Someone said it'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Done'));
+    await tester.pump();
+
+    expect(find.text('The room found 1!'), findsOneWidget);
   });
 }
