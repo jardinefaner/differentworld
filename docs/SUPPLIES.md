@@ -117,6 +117,52 @@ dashboard + Deploy** → regen → **clear local storage on every device**
 (uninstall on mobile). Until the dashboard deploy + local wipe, the table
 works locally (offline-first) but won't propagate.
 
+## Making it more useful — the connections (roadmap)
+
+A flat list of things is a notebook. Supplies earn their keep when they're
+**connected** to the rest of the app along the dimensions that already
+exist — *where* (locations), *what needs them* (activities), *who tends
+them* (missions), and *what's running out* (low-stock). In rough
+value-per-effort order:
+
+1. **Location lens** — the dimension the user named ("different
+   locations"). Each supply optionally points at a **real location** from
+   the Locations catalog (Art Barn, Gym, Pool) *plus* a free-text sub-spot
+   ("Cabinet B"). Then:
+   - The supplies list gains a **"By location"** view → *"what's in the Art
+     Barn?"*
+   - Each **Location** shows **its own inventory** (Locations + Supplies
+     become two views of one truth).
+   - Schema: add nullable `location_id` (→ locations) beside the existing
+     free-text `location`. Keep free-text for fine spots / programs that
+     don't model locations.
+   - *Low-fork, unblocked, makes two features richer at once.*
+
+2. **Restock list** — the low-stock flag (already stored) becomes a
+   one-screen **shopping list**: "Running low (5)". Pairs with the **Supply
+   Keeper mission** — the kid who flags low items feeds the director's
+   reorder list. *Pure UI over existing data; no migration.*
+
+3. **Quick adjust** — a `−1 / +restock` tap on a supply so counts stay
+   real without opening the editor. Deliberately light — not a warehouse
+   ledger, just "we used some."
+
+4. **Activity bill-of-materials** (the original "used by our other
+   things") — `activity_supplies` join → an activity declares *"needs 12
+   markers"*; a schedule block / day rolls up a **pack list**; a trip gets
+   a **checklist**. Linked by id, never copied names.
+
+5. **Recognize-it photos + "how it's put away"** — a photo per supply so
+   anyone can identify it; the *putaway* shot doubles as the **Mission
+   manual** image ("this is how the bin should look when done"). The
+   `photo_url` column already exists.
+
+The throughline: **location · activity · mission · low-stock** are the four
+wires. The Location lens (#1) is the natural next build — it's exactly what
+the user pointed at, it's unblocked + solo-testable, and it makes the
+Locations catalog and Supplies reinforce each other instead of sitting
+apart.
+
 ## Privacy
 
 Supplies are program property, not child data — low sensitivity. Still
