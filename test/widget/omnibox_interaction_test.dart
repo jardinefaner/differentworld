@@ -194,6 +194,10 @@ void main() {
       expect(controller.text, equals('a'));
     });
 
+    // The bar uses a SOLID icon-weight vocabulary for its glyphs
+    // (bolt / terminal / mic / close) — not the outlined/navigation
+    // variants other surfaces use. These assertions must track the
+    // constants in bottom_omnibox_bar.dart; update both together.
     testWidgets('capture mode renders the lightning-bolt leading icon',
         (tester) async {
       final controller = TextEditingController();
@@ -209,10 +213,10 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.bolt_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.bolt), findsOneWidget);
     });
 
-    testWidgets('slash mode renders the chevron leading icon',
+    testWidgets('slash mode renders the terminal leading icon',
         (tester) async {
       final controller = TextEditingController();
       final focus = FocusNode();
@@ -227,7 +231,7 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      expect(find.byIcon(Icons.terminal), findsOneWidget);
     });
 
     testWidgets('mic button calls onMicTap', (tester) async {
@@ -245,7 +249,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byIcon(Icons.mic_none_outlined));
+      await tester.tap(find.byIcon(Icons.mic));
       await tester.pump();
 
       expect(taps, equals(1));
