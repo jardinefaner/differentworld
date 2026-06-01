@@ -304,6 +304,11 @@ once it has a home.
   rules + manual, practiceable actions, photo/count evidence, save-progress
   + coordination, wired to supplies (#15) + locations + the growth book
   (→ dream #16).
+- **2026-06-01 (cont.)** — **More games**: shipped Riddles + Mindful Minute,
+  then designed a **20-game deck** around *phone-as-remote, desktop/web-as-
+  presentation* — every game a (Presentation, Control, sometimes Secret)
+  trio. Catalog + the two-device model in [GAMES.md](GAMES.md); Charades is
+  the standout two-device unlock (→ dreams #4 + #14).
 
 ---
 
