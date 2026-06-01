@@ -117,10 +117,11 @@ of the SQL.
 - `payload` (jsonb — schema depends on kind)
 - `author_id` (uuid → members.id)
 - `occurred_at` (timestamptz)
+- `schedule_block_id` (uuid, nullable — no FK; see migration `20260531000002_entry_schedule_block.sql`. Intentionally FK-free so entries survive block deletion with their tag intact.)
 **RLS gist**: relaxed.
-**Sync rule**: `by_space`.
-**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family), [Review](FEATURES.md#review).
-**Last verified**: 2026-05-21
+**Sync rule**: `by_space` (no publication/sync-rule change needed — entries was already replicated and `SELECT *` covers the new column).
+**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family), [Review](FEATURES.md#review), [Schedule](FEATURES.md#schedule) (live-block capture tagging — see docs/LIVE_BLOCK_CONTEXT.md).
+**Last verified**: 2026-06-01
 
 ---
 
@@ -499,7 +500,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-05-23._
+_Last full registry verification: 2026-06-01._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._

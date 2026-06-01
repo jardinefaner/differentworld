@@ -3,6 +3,7 @@
 // one tile into a grid of mirrored cells.
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:differentworld/features/activity_runtime/pattern_maker.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
@@ -12,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 // A valid 1×1 transparent PNG — enough for the cells to mount.
-final _png = base64Decode(
+final Uint8List _png = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk'
   '+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
 );

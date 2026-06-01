@@ -43,11 +43,62 @@ class RoleCard {
       'aeiou'.contains(name.isEmpty ? '' : name[0].toLowerCase()) ? 'an' : 'a';
 }
 
-/// The shipped catalog — 23 roles across two families (animals + nature),
-/// curated for trait breadth so a kid can be a *bee* one day and a *river*
-/// the next without it feeling like the same card reskinned
-/// (docs/ROLES_SMART_PRACTICE.md §2).
-const roleCatalog = <RoleCard>[
+/// A themed deck of role cards. The role-card mechanic (3 habits, 3
+/// artifacts, 1 trait) is theme-agnostic, so the catalog is a *set of
+/// decks* — animals & nature, people & jobs, and (next) space, books,
+/// games (docs/VISION.md dream #8). A kid can be a Bee one day and an
+/// Astronaut the next.
+class RoleDeck {
+  const RoleDeck({
+    required this.id,
+    required this.name,
+    required this.emoji,
+    required this.tagline,
+    required this.cards,
+  });
+
+  /// Stable id (the switcher key, and the future content-bank deck tag).
+  final String id;
+
+  /// Display name for the switcher chip ("Animals & Nature").
+  final String name;
+
+  /// A single glyph for the switcher chip.
+  final String emoji;
+
+  /// One-line subtitle shown under the screen title for this deck.
+  final String tagline;
+
+  final List<RoleCard> cards;
+}
+
+/// All shipped decks, in switcher order. Add a deck here to surface it.
+const roleDecks = <RoleDeck>[_animalsDeck, _peopleDeck];
+
+const _animalsDeck = RoleDeck(
+  id: 'animals',
+  name: 'Animals & Nature',
+  emoji: '🦊',
+  tagline: 'Be an animal for the day — pick a card',
+  cards: _animalCards,
+);
+
+const _peopleDeck = RoleDeck(
+  id: 'people',
+  name: 'People & Jobs',
+  emoji: '🧑‍🚀',
+  tagline: 'Be someone who does big things — pick a card',
+  cards: _peopleCards,
+);
+
+/// Back-compat alias — the original flat catalog name resolves to the
+/// animals deck (kept so existing call-sites + tests don't break).
+const List<RoleCard> roleCatalog = _animalCards;
+
+/// The animals & nature deck — 23 roles curated for trait breadth so a kid
+/// can be a *bee* one day and a *river* the next without it feeling like
+/// the same card reskinned (docs/ROLES_SMART_PRACTICE.md §2).
+const _animalCards = <RoleCard>[
   RoleCard(
     emoji: '🐜',
     name: 'Ant',
@@ -316,5 +367,143 @@ const roleCatalog = <RoleCard>[
       'a recorded "here you go" passing help',
     ],
     builds: 'connection',
+  ),
+];
+
+/// The people & jobs deck — 12 roles, one per trait, so a kid can try on a
+/// way of working in the world. Same shape as the animal deck; profession
+/// glyphs as the "icon" (docs/VISION.md dream #8).
+const _peopleCards = <RoleCard>[
+  RoleCard(
+    emoji: '🧑‍🚀',
+    name: 'Astronaut',
+    habits: ['explore somewhere new', 'check every step', 'stay brave in the dark'],
+    artifacts: [
+      'drawing of the planet I explored',
+      'photo of the bravest thing I tried',
+      'a launch countdown I recorded',
+    ],
+    builds: 'courage',
+  ),
+  RoleCard(
+    emoji: '🧑‍🔬',
+    name: 'Scientist',
+    habits: ['ask "what if?"', 'test my idea', 'write down what I saw'],
+    artifacts: [
+      'drawing of my experiment',
+      'note about what surprised me',
+      'photo of the thing I tested',
+    ],
+    builds: 'curiosity',
+  ),
+  RoleCard(
+    emoji: '👩‍⚕️',
+    name: 'Doctor',
+    habits: ['listen first', 'be gentle', 'help it feel better'],
+    artifacts: [
+      'note naming who I helped',
+      'drawing of my care kit',
+      'a get-well message I recorded',
+    ],
+    builds: 'kindness',
+  ),
+  RoleCard(
+    emoji: '🧑‍🚒',
+    name: 'Firefighter',
+    habits: ['stay calm in a rush', 'help fast', 'never leave a friend behind'],
+    artifacts: [
+      'photo of me helping fast',
+      'drawing of my brave plan',
+      'note about staying calm',
+    ],
+    builds: 'calm',
+  ),
+  RoleCard(
+    emoji: '👷',
+    name: 'Builder',
+    habits: ['measure before I cut', 'stack it strong', 'finish what I start'],
+    artifacts: [
+      'photo of what I built',
+      'drawing of my blueprint',
+      'note about the hard part I finished',
+    ],
+    builds: 'perseverance',
+  ),
+  RoleCard(
+    emoji: '👩‍🏫',
+    name: 'Teacher',
+    habits: ['explain it kindly', 'wait for everyone', 'cheer a friend on'],
+    artifacts: [
+      'note about what I taught a friend',
+      'drawing of my lesson',
+      'a cheer I recorded',
+    ],
+    builds: 'patience',
+  ),
+  RoleCard(
+    emoji: '🧑‍🌾',
+    name: 'Farmer',
+    habits: ['tend it every day', 'wait for it to grow', 'share the harvest'],
+    artifacts: [
+      'photo of what I cared for',
+      'drawing of my garden',
+      'note about what I shared',
+    ],
+    builds: 'responsibility',
+  ),
+  RoleCard(
+    emoji: '🧑‍🎨',
+    name: 'Artist',
+    habits: ['see colors everywhere', 'try it my own way', 'share what I made'],
+    artifacts: [
+      'photo of my art',
+      'a drawing only I would make',
+      'note about my idea',
+    ],
+    builds: 'creativity',
+  ),
+  RoleCard(
+    emoji: '🕵️',
+    name: 'Detective',
+    habits: ['notice the tiny clue', 'ask good questions', 'piece it together'],
+    artifacts: [
+      'drawing of the clue I found',
+      'note with my biggest question',
+      'photo of what I figured out',
+    ],
+    builds: 'focus',
+  ),
+  RoleCard(
+    emoji: '👨‍🍳',
+    name: 'Chef',
+    habits: ['follow the recipe', 'taste and adjust', 'serve with care'],
+    artifacts: [
+      'drawing of my recipe',
+      'photo of what I made',
+      'note naming who I served',
+    ],
+    builds: 'generosity',
+  ),
+  RoleCard(
+    emoji: '🧑‍🔧',
+    name: 'Inventor',
+    habits: ['find what is broken', 'try a new fix', 'make it better'],
+    artifacts: [
+      'drawing of my invention',
+      'note of 3 fixes I tried',
+      'photo of what I improved',
+    ],
+    builds: 'problem-solving',
+  ),
+  RoleCard(
+    emoji: '🎻',
+    name: 'Musician',
+    habits: ['practice a little daily', 'keep the beat', 'play together'],
+    artifacts: [
+      'a tune I recorded',
+      'drawing of my instrument',
+      'note about what I practiced',
+    ],
+    builds: 'practice',
   ),
 ];

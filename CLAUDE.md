@@ -20,6 +20,11 @@ runs one program with many classrooms, shared automatically with every
 teacher on the team. Children's data is sensitive PII — every decision
 that touches it should reflect that.
 
+**The dream behind it lives in [docs/VISION.md](docs/VISION.md)** — the
+*why* this exists, in the user's own words, kept as a living document.
+Read it to understand what we're building toward before the *how*. When
+the user voices a new dream, it lands there the same turn.
+
 **Primary product context (2026-05): afterschool program for ages 4-12.**
 Decisions about labels, age bands, default group capabilities, activity
 catalogs, and pickup rules should optimize for this segment first. Other
@@ -272,6 +277,10 @@ keep the map fresh, and three agents maintain + query them.
 
 ### The docs
 
+- **[docs/VISION.md](docs/VISION.md)** — the *why*: a living document of
+  what the user dreams this app to be, in their own words. Not a feature
+  list — the north star the features serve. New dreams land here the
+  same turn they're spoken. **Authoritative for intent.**
 - **[docs/FEATURES.md](docs/FEATURES.md)** — folder-grained list of
   every feature in `lib/features/`. Each entry has a fixed shape:
   purpose, personas served, discovery surfaces (routes / omnibox /

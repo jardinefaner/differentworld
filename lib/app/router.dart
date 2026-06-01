@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
+import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
@@ -864,6 +865,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/pattern',
             builder: (_, _) => const PatternMakerScreen(),
+          ),
+          // Group Discussions — host-present talk by topic + age band, from
+          // the kid-safe discussion library (docs/VISION.md dream #6).
+          GoRoute(
+            path: '/activity/discussions',
+            builder: (_, _) => const GroupDiscussionScreen(),
           ),
         ],
       ),

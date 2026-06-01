@@ -241,9 +241,17 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
   SlashCommand(
     name: 'roles',
     label: '/roles',
-    hint: 'Open the animal & nature Role Cards',
+    hint: 'Open Role Cards — animals, people & jobs',
     icon: Icons.pets,
-    aliases: const ['role', 'animal', 'animals', 'cards', 'pretend'],
+    aliases: const [
+      'role',
+      'animal',
+      'animals',
+      'people',
+      'jobs',
+      'cards',
+      'pretend',
+    ],
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/roles')),
   ),
   SlashCommand(
@@ -253,6 +261,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     icon: Icons.grid_on,
     aliases: const ['patterns', 'tile', 'kaleidoscope', 'symmetry', 'repeat'],
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/pattern')),
+  ),
+  SlashCommand(
+    name: 'discuss',
+    label: '/discuss',
+    hint: 'Group Discussion — talk by topic + age',
+    icon: Icons.forum_outlined,
+    aliases: const ['discussion', 'talk', 'circle', 'grouptalk', 'conversation'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/discussions')),
   ),
   SlashCommand(
     name: 'breaks',

@@ -62,7 +62,7 @@ class BrainBreaksScreen extends StatelessWidget {
     ),
     _BreakCard(
       title: 'Role Cards',
-      tagline: 'Be an animal for the day',
+      tagline: 'Be an animal — or an astronaut',
       icon: Icons.pets,
       color: Color(0xFF66BB6A),
       route: '/activity/roles',
@@ -73,6 +73,13 @@ class BrainBreaksScreen extends StatelessWidget {
       icon: Icons.grid_on,
       color: Color(0xFF7E57C2),
       route: '/activity/pattern',
+    ),
+    _BreakCard(
+      title: 'Group Talk',
+      tagline: 'Discuss — by topic & age',
+      icon: Icons.forum_outlined,
+      color: Color(0xFF26C6DA),
+      route: '/activity/discussions',
     ),
   ];
 

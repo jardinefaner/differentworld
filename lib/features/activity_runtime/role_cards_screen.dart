@@ -16,10 +16,15 @@ import 'package:flutter/material.dart';
 /// phone IS the card. Next slices: the immersive "Today I am ___" pick that
 /// records a habit-mark per habit, the printable card (the PDF path), and
 /// artifact capture into the showcase.
-class RoleCardsScreen extends StatelessWidget {
+class RoleCardsScreen extends StatefulWidget {
   const RoleCardsScreen({super.key});
 
-  // A calm nature palette, cycled by index so neighbours never clash.
+  @override
+  State<RoleCardsScreen> createState() => _RoleCardsScreenState();
+}
+
+class _RoleCardsScreenState extends State<RoleCardsScreen> {
+  // A calm palette, cycled by index so neighbours never clash.
   static const _palette = <Color>[
     Color(0xFF66BB6A), // leaf green
     Color(0xFF42A5F5), // sky
@@ -30,6 +35,8 @@ class RoleCardsScreen extends StatelessWidget {
     Color(0xFFEC407A), // bloom
     Color(0xFF5C6BC0), // dusk
   ];
+
+  int _deckIndex = 0;
 
   void _open(BuildContext context, RoleCard role) {
     unawaited(
@@ -43,22 +50,29 @@ class RoleCardsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final deck = roleDecks[_deckIndex];
     return EdgeScaffold(
       body: SafeArea(
         bottom: false,
         child: ListView(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ContentHeader(
                 title: 'Role Cards',
-                subtitle: 'Be an animal for the day — pick a card',
+                subtitle: deck.tagline,
               ),
             ),
+            if (roleDecks.length > 1)
+              _DeckSwitcher(
+                decks: roleDecks,
+                selected: _deckIndex,
+                onSelect: (i) => setState(() => _deckIndex = i),
+              ),
             Padding(
               // Bottom 96 clears the floating omnibox bar (~76) so the last
               // grid row isn't hidden behind it (rubric A3).
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               child: GridView.extent(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -67,17 +81,53 @@ class RoleCardsScreen extends StatelessWidget {
                 crossAxisSpacing: 12,
                 childAspectRatio: 0.82,
                 children: [
-                  for (var i = 0; i < roleCatalog.length; i++)
+                  for (var i = 0; i < deck.cards.length; i++)
                     _RoleTile(
-                      role: roleCatalog[i],
+                      role: deck.cards[i],
                       color: _palette[i % _palette.length],
-                      onTap: () => _open(context, roleCatalog[i]),
+                      onTap: () => _open(context, deck.cards[i]),
                     ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A horizontally-scrolling row of deck chips ("Animals & Nature",
+/// "People & Jobs", …). Scales as new theme decks land.
+class _DeckSwitcher extends StatelessWidget {
+  const _DeckSwitcher({
+    required this.decks,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<RoleDeck> decks;
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: decks.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final deck = decks[i];
+          return ChoiceChip(
+            label: Text('${deck.emoji}  ${deck.name}'),
+            selected: i == selected,
+            showCheckmark: false,
+            onSelected: (_) => onSelect(i),
+          );
+        },
       ),
     );
   }

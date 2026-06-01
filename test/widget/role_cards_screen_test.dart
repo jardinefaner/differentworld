@@ -42,4 +42,23 @@ void main() {
     expect(find.text('Today I am an Ant'), findsOneWidget);
     expect(find.text('I carry something heavy'), findsOneWidget);
   });
+
+  testWidgets('switching to the People deck swaps the cards', (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    // Animals are showing first.
+    expect(find.text('Ant'), findsOneWidget);
+    expect(find.text('Astronaut'), findsNothing);
+
+    await tester.tap(find.text('🧑‍🚀  People & Jobs'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Astronaut'), findsOneWidget);
+    expect(find.text('Ant'), findsNothing);
+
+    await tester.tap(find.text('Astronaut'));
+    await tester.pumpAndSettle();
+    expect(find.text('Today I am an Astronaut'), findsOneWidget);
+  });
 }

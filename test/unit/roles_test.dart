@@ -40,4 +40,44 @@ void main() {
       expect(at('Giraffe').article, 'a');
     });
   });
+
+  group('roleDecks', () {
+    test('ships at least the animals + people decks', () {
+      expect(roleDecks.length, greaterThanOrEqualTo(2));
+      final ids = roleDecks.map((d) => d.id).toSet();
+      expect(ids, containsAll(<String>['animals', 'people']));
+    });
+
+    test('roleCatalog stays the animals deck (back-compat alias)', () {
+      final animals = roleDecks.firstWhere((d) => d.id == 'animals');
+      expect(roleCatalog, same(animals.cards));
+    });
+
+    test('every deck card has 3 habits + 3 artifacts + a trait + an icon', () {
+      for (final deck in roleDecks) {
+        expect(deck.cards, isNotEmpty, reason: '${deck.name} has cards');
+        expect(deck.emoji.trim(), isNotEmpty, reason: '${deck.name} icon');
+        expect(deck.tagline.trim(), isNotEmpty, reason: '${deck.name} tagline');
+        final fps = deck.cards.map((c) => c.fingerprint).toSet();
+        expect(
+          fps,
+          hasLength(deck.cards.length),
+          reason: '${deck.name} fingerprints unique within the deck',
+        );
+        for (final c in deck.cards) {
+          expect(c.habits, hasLength(3), reason: '${c.name} habits');
+          expect(c.artifacts, hasLength(3), reason: '${c.name} artifacts');
+          expect(c.emoji.trim(), isNotEmpty, reason: '${c.name} emoji');
+          expect(c.builds.trim(), isNotEmpty, reason: '${c.name} builds');
+        }
+      }
+    });
+
+    test('people deck has an Astronaut that builds courage', () {
+      final people = roleDecks.firstWhere((d) => d.id == 'people');
+      final astro = people.cards.firstWhere((c) => c.name == 'Astronaut');
+      expect(astro.builds, 'courage');
+      expect(astro.habits, hasLength(3));
+    });
+  });
 }

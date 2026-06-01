@@ -54,18 +54,19 @@ surface — preferences + roster + fleet, not primary workflows.
 ## ActivityRuntime
 **Path**: `lib/features/activity_runtime/`
 **Purpose**: Short, card-shaped brain-break activities that a teacher (or a kid) can launch mid-session to reset the room.
-**Personas served**: All staff (Jordan, Coach Sam, Brianna launch breaks), Ava (Photography is kid-locked; Role Cards and Pattern Maker are teacher-paced).
+**Personas served**: All staff (Jordan, Coach Sam, Brianna launch breaks), Ava (Photography is kid-locked; Role Cards, Group Discussions, and Pattern Maker are teacher-paced).
 **Discovery surfaces**:
-- Routes: `/breaks` (deck), `/activity/math` (Many Paths), `/activity/math-game` (Math Game), `/activity/photo` (Photo Studio), `/activity/this-or-that` (Quick Picks), `/activity/starts-with` (Beat the Letter), `/activity/as-if` (Act It Out), `/activity/roles` (Role Cards), `/activity/pattern` (Make a Pattern)
+- Routes: `/breaks` (deck), `/activity/math` (Many Paths), `/activity/math-game` (Math Game), `/activity/photo` (Photo Studio), `/activity/this-or-that` (Quick Picks), `/activity/starts-with` (Beat the Letter), `/activity/as-if` (Act It Out), `/activity/roles` (Role Cards), `/activity/pattern` (Make a Pattern), `/activity/discussions` (Group Discussions)
 - Omnibox: no direct entry for individual activities — all activity routes are reachable through the Brain Breaks deck (`/breaks`) which is in the drawer; individual `/activity/*` routes are also reachable from their slash commands
-- Slash: `/breaks` (aliases: `break`, `brainbreaks`, `games`, `play`), `/math {answer}` (aliases: `paths`), `/mathgame` (aliases: `quiz`, `quickmath`), `/photo {prompt}` (aliases: `camera`, `photos`), `/thisorthat` (aliases: `this`, `tot`, `wouldyourather`), `/startswith` (aliases: `letters`, `ck`, `words`), `/asif` (aliases: `acting`, `drama`, `act`), `/roles` (aliases: `role`, `animal`, `animals`, `cards`, `pretend`), `/pattern` (aliases: `patterns`, `tile`, `kaleidoscope`, `symmetry`, `repeat`)
+- Slash: `/breaks` (aliases: `break`, `brainbreaks`, `games`, `play`), `/math {answer}` (aliases: `paths`), `/mathgame` (aliases: `quiz`, `quickmath`), `/photo {prompt}` (aliases: `camera`, `photos`), `/thisorthat` (aliases: `this`, `tot`, `wouldyourather`), `/startswith` (aliases: `letters`, `ck`, `words`), `/asif` (aliases: `acting`, `drama`, `act`), `/roles` (aliases: `role`, `animal`, `animals`, `people`, `jobs`, `cards`, `pretend`), `/pattern` (aliases: `patterns`, `tile`, `kaleidoscope`, `symmetry`, `repeat`), `/discuss` (aliases: `discussion`, `talk`, `circle`, `grouptalk`, `conversation`)
 - Drawer: yes — "Brain Breaks" (main destinations, position between Tasks and Settings)
 - Settings: no
-**Capabilities**: None — open to all signed-in staff. Photography is the only kid-locked activity; all others (Math Game, Many Paths, Beat the Letter, Act It Out, Role Cards, Make a Pattern) are teacher-paced and exit via the back arrow.
+**Capabilities**: None — open to all signed-in staff. Photography is the only kid-locked activity; all others (Math Game, Many Paths, Beat the Letter, Act It Out, Role Cards, Make a Pattern, Group Discussions) are teacher-paced and exit via the back arrow.
 **Data**: None — all activity catalogs are pure-Dart const lists. Pattern Maker captures a photo via `image_picker` camera but does not write to any synced table.
 **Surfaces**:
-- *Brain Breaks deck* — `lib/features/activity_runtime/brain_breaks_screen.dart`. Eight cards + a Surprise button; each card pushes its activity route.
-- *Role Cards screen* — `lib/features/activity_runtime/role_cards_screen.dart`. 23 animal/nature role cards (emoji + 3 habits + 3 artifacts + a trait); tap a card to flip to its face via a glass sheet. Catalog in `roles.dart`. Not kid-locked — teacher-paced.
+- *Brain Breaks deck* — `lib/features/activity_runtime/brain_breaks_screen.dart`. Nine cards + a Surprise button; each card pushes its activity route.
+- *Role Cards screen* — `lib/features/activity_runtime/role_cards_screen.dart`. Deck-switcher chip row; Animals & Nature deck (23 cards) + People & Jobs deck (12 profession cards: Astronaut, Scientist, Doctor, Firefighter, Builder, Teacher, Farmer, Artist, Detective, Chef, Inventor, Musician); tap a card to flip to its face via a glass sheet. Catalog + `RoleDeck` struct in `roles.dart`; `roleCatalog` kept as back-compat alias for the animals deck. Not kid-locked — teacher-paced.
+- *Group Discussions screen* — `lib/features/activity_runtime/discussions_screen.dart`. Teacher picks a topic + age band (`DiscussionBand`: early 4–6 / middle 7–9 / older 10–12); the room talks through one curated open-ended prompt at a time; optional "Go deeper" follow-up; teacher-paced wrap-up. Discussion library + helpers (`discussionsFor`, `topicsFor`, `topicById`) in `discussions.dart`. Pure-Dart catalog for now; realises VISION.md dream #6.
 - *Make a Pattern screen* — `lib/features/activity_runtime/pattern_maker_screen.dart`. Snap a tile → kaleidoscope-tiled repeating pattern. `image_picker` camera, configurable tile count (2/3/4/6), kaleidoscope toggle. Not kid-locked — teacher-paced. Core config + mirror math in `pattern_maker.dart`.
 - *Photo Studio* — `lib/features/activity_runtime/photography_runner_screen.dart`. Full-screen camera with a teacher-provided prompt. The ONLY kid-locked break (enters kid mode in `initState`, exits in `dispose`; 5-tap top-left staff exit).
 - *Many Paths (math runner)* — `lib/features/activity_runtime/math_runner_screen.dart`. How many ways to a target number? Teacher-paced, previously kid-locked (de-locked this session). `?target=N` seeds the answer; defaults to 12.
@@ -485,15 +486,15 @@ surface — preferences + roster + fleet, not primary workflows.
 - Drawer: yes — "Schedule" (main destinations, position 2)
 - Settings: no
 **Capabilities**: Read: all members. Write: `can_manage_schedule` (director / lead-tier).
-**Data**: [schedule_blocks](SCHEMA.md#schedule_blocks), [activities](SCHEMA.md#activities), [locations](SCHEMA.md#locations), [trip_logistics](SCHEMA.md#trip_logistics), [trip_vehicles](SCHEMA.md#trip_vehicles), [permission_slips](SCHEMA.md#permission_slips), [headcounts](SCHEMA.md#headcounts)
+**Data**: [schedule_blocks](SCHEMA.md#schedule_blocks), [activities](SCHEMA.md#activities), [locations](SCHEMA.md#locations), [trip_logistics](SCHEMA.md#trip_logistics), [trip_vehicles](SCHEMA.md#trip_vehicles), [permission_slips](SCHEMA.md#permission_slips), [headcounts](SCHEMA.md#headcounts), [entries](SCHEMA.md#entries) (reads via `schedule_block_id` back-reference — live-block capture tagging, see migration `20260531000002`)
 **Surfaces**:
 - *Schedule screen* — `lib/features/schedule/schedule_screen.dart`. Cohort tabs × time-of-day list (phone-friendly). Tablet grid deferred for Maya.
 - *Block edit screen* — `lib/features/schedule/block_edit_screen.dart`. Create / edit one block (start, end, activity, lead, location, kind).
 - *Substitute lead sheet* — `lib/features/schedule/widgets/substitute_lead_sheet.dart`. Modal bottom sheet: pick absent lead → pick cover. Bulk-writes `lead_substitute_member_id` for all matching blocks on the day. Surfaceable directly from the omnibox via "Cover today · {Group.name}" (Pat persona) without first entering the schedule editor.
 - *Leading-today card* — `lib/features/schedule/widgets/leading_today_card.dart`. Embedded on home; signed-in lead's blocks + cabin notes for today.
-**Depends on**: Groups, Members, Activities, Locations, Vehicles (trip assignment).
+**Depends on**: Groups, Members, Activities, Locations, Vehicles (trip assignment), Entries (reads `schedule_block_id` back-reference for live-block capture tagging).
 **Consumed by**: Today (leading-today card), Attendance (block-context for headcounts), Captures (block-context tag), Omnibox (substitute-lead sheet invoked from the per-cohort "Cover today" entry).
-**Last verified**: 2026-05-22
+**Last verified**: 2026-06-01
 
 ---
 
@@ -708,6 +709,13 @@ in. Run `Agent persona-audit` to refresh.
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
 
+_Run 2026-06-01 (Group Discussions + Role Cards deck-switcher)_ — no unresolved discovery drift. Updates applied this run:
+- **ActivityRuntime** — Group Discussions added: route `/activity/discussions` → `GroupDiscussionScreen`; Brain Breaks deck card "Group Talk / Discuss — by topic & age" confirmed in `brain_breaks_screen.dart`; slash `/discuss` (aliases: discussion, talk, circle, grouptalk, conversation) confirmed in `slash_commands.dart`. Not in drawer (surface is a deck card, same pattern as all other individual activities) or settings. No new synced tables — `discussions.dart` is a pure-Dart catalog.
+- **ActivityRuntime** — Role Cards deck-switcher: `roles.dart` now defines `RoleDeck {id, name, emoji, tagline, cards}` and `roleDecks` (animals 23 cards, people 12 cards). `roleCatalog` kept as back-compat alias. Surfaces sublist updated; `/roles` slash hint updated to "animals, people & jobs"; aliases updated to include `people` and `jobs`.
+- **ActivityRuntime** — Brain Breaks deck card count updated from eight to nine.
+- No new synced tables. All new content is pure-Dart. SCHEMA.md unchanged.
+- Cross-link reconcile: ActivityRuntime has no Data tables. No (feature → table) or (table → feature) drift found.
+
 _Run 2026-06-01 (Wave A — Role Cards + Make a Pattern)_ — no unresolved discovery drift for the new surfaces (they follow the established activity-runtime pattern: drawer via Brain Breaks deck, slash commands for direct access, no separate omnibox or settings entries). Updates applied this run:
 - **ActivityRuntime** — new feature entry added. Covers all eight break surfaces, including the two new ones (Role Cards at `/activity/roles`, Make a Pattern at `/activity/pattern`). Kid-lock status corrected: Photography remains the only kid-locked break; Math Game, Many Paths, Beat the Letter, and Act It Out were de-locked this session (teacher-paced exit via back arrow).
 - **ActivityRuntime** — discovery surfaces verified: `/breaks` drawer entry confirmed in `main_drawer.dart` at line 263; `/activity/roles` and `/activity/pattern` routes confirmed in `router.dart`; `/roles` and `/pattern` slash commands confirmed in `slash_commands.dart`. Omnibox catalog has NO direct entries for individual activities or for the Brain Breaks deck — this is the established precedent (same as Toolkit), not a drift. The deck is the discovery surface; slash is the power-user shortcut.
@@ -817,7 +825,7 @@ All other discovery claims verified against `router.dart`,
 
 ---
 
-_Last full registry verification: 2026-06-01 (Wave A — Role Cards + Make a Pattern)._
+_Last full registry verification: 2026-06-01 (Group Discussions + Role Cards deck-switcher)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._
