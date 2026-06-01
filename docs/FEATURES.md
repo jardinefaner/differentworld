@@ -524,6 +524,29 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Supplies
+**Path**: `lib/features/supplies/`
+**Purpose**: The program's real-world inventory catalog — track items (markers, paper, balls) once, flag low stock, and reference by id from activities (slice 2).
+**Personas served**: Maya, Coach Sam, Brianna (directors/leads maintain via `canManageSpace`); All staff (view).
+**Discovery surfaces**:
+- Routes: `/settings/supplies`
+- Omnibox: yes — "Supplies" (id `page.supplies`), keywords: supplies, inventory, materials, stock, markers, paper → `/settings/supplies`
+- Slash: none
+- Drawer: no — library surface (same convention as Locations, Activities)
+- Settings: no — omnibox is the canonical discovery entry; Settings screen is preferences-only per the library convention
+**Capabilities**: View: all signed-in staff. Create / edit / delete: `canManageSpace` (director / lead).
+**Data**: [supplies](SCHEMA.md#supplies)
+**Surfaces**:
+- *Supplies list screen* — `lib/features/supplies/supplies_list_screen.dart`. EdgeScaffold; supplies grouped by category; all four states (loading / empty / error / data); add/edit via `openSupplyEditSheet`. Edit actions gated by `viewer.canManageSpace`. Low-stock highlighting via `isLowStock` helper.
+- *Supply edit sheet* — inline glass sheet opened from `SuppliesListScreen`. Create / update a supply row (name, category, quantity, unit, location, low_stock_threshold, notes, photo_url).
+- *Supplies providers* — `lib/features/supplies/supplies_providers.dart`. `suppliesProvider` (StreamProvider → `db.suppliesDao.watchInSpace`); `supplyActionsProvider` (`SupplyActions` Notifier with create / update_ / delete_).
+- *Supplies grouping helpers* — `lib/features/supplies/supplies_grouping.dart`. Pure functions: `supplyCategoryLabel`, `isLowStock`, `groupSuppliesByCategory`, `formatSupplyNumber`. No UI — consumed by the list screen.
+**Depends on**: Nothing — leaf catalog feature in slice 1.
+**Consumed by**: Activities (slice 2 will add an `activity_supplies` join so activities declare "you'll need 12 markers" + a derived block pack list).
+**Last verified**: 2026-06-01
+
+---
+
 ## Subjects
 **Path**: `lib/features/subjects/`
 **Purpose**: The child / student / patient record. Profile, health intake, photo, drop-off / pickup, guardian links.
@@ -709,6 +732,11 @@ in. Run `Agent persona-audit` to refresh.
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
 
+_Run 2026-06-01 (Supplies slice 1)_ — no unresolved discovery drift. Updates applied this run:
+- **Supplies** — new feature entry added. Route `/settings/supplies` confirmed in `router.dart` (nested under `/settings` alongside `locations`, same pattern). Omnibox entry `page.supplies` confirmed in `omnibox_catalog.dart` with keywords: supplies, inventory, materials, stock, markers, paper; `onSelect` pushes `/settings/supplies`. No drawer entry, no Settings ListTile, no slash command — correct per the library-surface convention (same as Locations, Toolkit, Curricula). Claimed surfaces verified: all match code.
+- **SCHEMA.md** — `supplies` table entry added.
+- Cross-link reconcile: Supplies claims `supplies` table; `supplies` Consumers lists Supplies. Bidirectional. No other (feature → table) or (table → feature) drift.
+
 _Run 2026-06-01 (Group Discussions + Role Cards deck-switcher)_ — no unresolved discovery drift. Updates applied this run:
 - **ActivityRuntime** — Group Discussions added: route `/activity/discussions` → `GroupDiscussionScreen`; Brain Breaks deck card "Group Talk / Discuss — by topic & age" confirmed in `brain_breaks_screen.dart`; slash `/discuss` (aliases: discussion, talk, circle, grouptalk, conversation) confirmed in `slash_commands.dart`. Not in drawer (surface is a deck card, same pattern as all other individual activities) or settings. No new synced tables — `discussions.dart` is a pure-Dart catalog.
 - **ActivityRuntime** — Role Cards deck-switcher: `roles.dart` now defines `RoleDeck {id, name, emoji, tagline, cards}` and `roleDecks` (animals 23 cards, people 12 cards). `roleCatalog` kept as back-compat alias. Surfaces sublist updated; `/roles` slash hint updated to "animals, people & jobs"; aliases updated to include `people` and `jobs`.
@@ -825,7 +853,7 @@ All other discovery claims verified against `router.dart`,
 
 ---
 
-_Last full registry verification: 2026-06-01 (Group Discussions + Role Cards deck-switcher)._
+_Last full registry verification: 2026-06-01 (Supplies slice 1)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._

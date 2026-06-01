@@ -290,6 +290,21 @@ const appSchema = Schema([
     Column.text('created_at'),
   ]),
 
+  // ---- Supplies (docs/SUPPLIES.md) ----------------------------------------
+  // See supabase/migrations/20260601000001_supplies.sql.
+  Table('supplies', [
+    Column.text('space_id'),
+    Column.text('name'),
+    Column.text('category'),
+    Column.real('quantity'),
+    Column.text('unit'),
+    Column.text('location'),
+    Column.real('low_stock_threshold'),
+    Column.text('photo_url'),
+    Column.text('notes'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
   // ---- Camp scheduling ----------------------------------------------------
   // See supabase/migrations/20260519000003_camp_scheduling.sql.
   Table('locations', [

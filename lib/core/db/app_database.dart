@@ -17,6 +17,7 @@ import 'package:differentworld/core/db/dao/messages_dao.dart';
 import 'package:differentworld/core/db/dao/schedule_dao.dart';
 import 'package:differentworld/core/db/dao/spaces_dao.dart';
 import 'package:differentworld/core/db/dao/subjects_dao.dart';
+import 'package:differentworld/core/db/dao/supplies_dao.dart';
 import 'package:differentworld/core/db/dao/surveys_dao.dart';
 import 'package:differentworld/core/db/dao/tasks_dao.dart';
 import 'package:differentworld/core/db/dao/trips_dao.dart';
@@ -536,6 +537,27 @@ class Locations extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// The program's real-world inventory (docs/SUPPLIES.md). A catalog
+/// referenced by id from the things that consume it. `quantity` /
+/// `lowStockThreshold` are doubles; `photoUrl` is a Storage path.
+class Supplies extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get name => text()();
+  TextColumn get category => text().nullable()();
+  RealColumn get quantity => real().nullable()();
+  TextColumn get unit => text().nullable()();
+  TextColumn get location => text().nullable()();
+  RealColumn get lowStockThreshold => real().nullable()();
+  TextColumn get photoUrl => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// A defined activity that can be scheduled. Owned by the staff member
 /// who created it. Activities are reusable across blocks.
 class Activities extends Table {
@@ -756,6 +778,8 @@ class Events extends Table {
           SurveyResponses, SurveyPickerOptions,
           DismissedInsights, Captures, Tasks, Messages,
           Exports, ExportRecipients,
+          // Supplies inventory.
+          Supplies,
           // Camp scheduling.
           Locations, Activities, ScheduleBlocks, TripLogistics,
           TripVehicles, PermissionSlips, Headcounts,
@@ -780,6 +804,7 @@ class Events extends Table {
     MessagesDao,
     SpacesDao,
     SubjectsDao,
+    SuppliesDao,
     SurveysDao,
     TasksDao,
     VehiclesDao,

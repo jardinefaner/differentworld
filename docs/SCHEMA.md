@@ -417,6 +417,25 @@ of the SQL.
 
 ---
 
+## supplies
+**Purpose**: The program's real-world inventory catalog — items (markers, paper, balls) with quantity, unit, location, and an optional low-stock threshold.
+**Key columns**:
+- `id` (uuid PK)
+- `space_id` (uuid NOT NULL → spaces.id, on delete cascade)
+- `name` (text NOT NULL)
+- `category` (text, nullable — free-text shelf label, e.g. "Art", "Sports")
+- `quantity` (real, nullable — NULL = uncounted)
+- `unit` (text, nullable — "boxes", "reams", "balls")
+- `location` (text, nullable — free text, NOT a FK to locations; this is a storage location, not a scheduling place)
+- `low_stock_threshold` (real, nullable — flags "running low" when quantity drops below)
+- `photo_url` (text, nullable — Storage bucket-relative path; bytes in Supabase Storage)
+**RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); GRANT-level + space-scoped sync rule are the real gate.
+**Sync rule**: `by_space` stream; `SELECT * FROM supplies WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`. Dashboard deploy + device local-recreate still pending.
+**Consumers**: [Supplies](FEATURES.md#supplies).
+**Last verified**: 2026-06-01
+
+---
+
 ## tasks
 **Purpose**: To-do list. Optional `subject_id` link for kid-specific tasks (follow up with X's parent). Captures promote into tasks; tasks can also be created standalone.
 **Key columns**:
@@ -500,7 +519,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-01._
+_Last full registry verification: 2026-06-01 (Supplies slice 1)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._

@@ -56,6 +56,7 @@ import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
+import 'package:differentworld/features/supplies/supplies_list_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
 import 'package:differentworld/features/surveys/survey_table_screen.dart';
 import 'package:differentworld/features/surveys/survey_take_screen.dart';
@@ -558,6 +559,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Locations',
                   child: LocationsListScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'supplies',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Supplies',
+                  child: SuppliesListScreen(),
                 ),
               ),
               GoRoute(

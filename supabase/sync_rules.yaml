@@ -124,6 +124,8 @@ streams:
       # and 8 blocks/day produces ~40 schedule_blocks/day. The full
       # season fits comfortably in a space-scoped full sync; we'll
       # add a date-window parameter once it actually matters.
+      # Supplies — the program's inventory catalog (docs/SUPPLIES.md).
+      - SELECT * FROM supplies           WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM locations          WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM activities         WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM schedule_blocks    WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())

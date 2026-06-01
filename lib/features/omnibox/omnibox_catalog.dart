@@ -169,6 +169,21 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       keywords: const ['locations', 'pool', 'barn', 'range', 'where'],
       onSelect: (ctx, _) => ctx.push('/settings/locations'),
     ),
+    OmniboxEntry(
+      id: 'page.supplies',
+      label: 'Supplies',
+      category: OmniboxCategory.page,
+      icon: Icons.inventory_2_outlined,
+      keywords: const [
+        'supplies',
+        'inventory',
+        'materials',
+        'stock',
+        'markers',
+        'paper',
+      ],
+      onSelect: (ctx, _) => ctx.push('/settings/supplies'),
+    ),
     // Toolkit landing page — broad keywords surface the catalog
     // itself when the user wants to browse rather than jump to a
     // specific tool. Gated by viewer kind: guardians can't reach
