@@ -255,6 +255,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/roles')),
   ),
   SlashCommand(
+    name: 'riddles',
+    label: '/riddles',
+    hint: 'Riddle Me This — the room guesses, you reveal',
+    icon: Icons.lightbulb_outline,
+    aliases: const ['riddle', 'brainteaser', 'brainteasers', 'guess'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/riddles')),
+  ),
+  SlashCommand(
     name: 'pattern',
     label: '/pattern',
     hint: 'Make a Pattern — snap a tile, watch it repeat',

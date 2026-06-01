@@ -81,6 +81,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFF26C6DA),
       route: '/activity/discussions',
     ),
+    _BreakCard(
+      title: 'Riddle Me This',
+      tagline: 'Guess the answer',
+      icon: Icons.lightbulb_outline,
+      color: Color(0xFFFFCA28),
+      route: '/activity/riddles',
+    ),
   ];
 
   void _surprise(BuildContext context) {

@@ -32,6 +32,10 @@ abstract class ContentKind {
   /// An "as if" transformation — an emotion / character / situation to
   /// perform a [line] in.
   static const asIf = 'as_if';
+
+  /// A riddle to solve aloud — payload `{prompt, answer}`. Authored
+  /// answer-first (the answer is the seed; the riddle points at it).
+  static const riddle = 'riddle';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -66,6 +70,7 @@ class LocalContentBank implements ContentSource {
     ..._categorySeed,
     ..._lineSeed,
     ..._asIfSeed,
+    ..._riddleSeed,
   ]);
 
   final Map<String, List<ContentItem>> _byKind = {};
@@ -190,4 +195,30 @@ final List<ContentItem> _asIfSeed = <ContentItem>[
   _asIfOf("you're a news reporter"),
   _asIfOf("you're a wise old wizard"),
   _asIfOf('you are trying not to laugh'),
+];
+
+ContentItem _riddleOf(String prompt, String answer) => ContentItem(
+  kind: ContentKind.riddle,
+  fingerprint: answer.toLowerCase(),
+  payload: {'prompt': prompt, 'answer': answer},
+);
+
+// Classic, kid-safe riddles (ages 4–12). Authored answer-first.
+final List<ContentItem> _riddleSeed = <ContentItem>[
+  _riddleOf('What has to be broken before you can use it?', 'An egg'),
+  _riddleOf("I'm tall when I'm young and short when I'm old. What am I?", 'A candle'),
+  _riddleOf('What has hands but cannot clap?', 'A clock'),
+  _riddleOf('What gets wetter the more it dries?', 'A towel'),
+  _riddleOf('What has many teeth but cannot bite?', 'A comb'),
+  _riddleOf('What has a neck but no head?', 'A bottle'),
+  _riddleOf('What has legs but cannot walk?', 'A table'),
+  _riddleOf('What goes up but never comes down?', 'Your age'),
+  _riddleOf('What has an eye but cannot see?', 'A needle'),
+  _riddleOf('What kind of room has no doors or windows?', 'A mushroom'),
+  _riddleOf('What has a thumb and four fingers but is not alive?', 'A glove'),
+  _riddleOf('What can you catch but not throw?', 'A cold'),
+  _riddleOf("What has keys but can't open locks?", 'A piano'),
+  _riddleOf('The more you take, the more you leave behind. What are they?', 'Footsteps'),
+  _riddleOf('What is full of holes but still holds water?', 'A sponge'),
+  _riddleOf('What has a head and a tail but no body?', 'A coin'),
 ];
