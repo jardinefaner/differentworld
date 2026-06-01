@@ -51,6 +51,36 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## ActivityRuntime
+**Path**: `lib/features/activity_runtime/`
+**Purpose**: Short, card-shaped brain-break activities that a teacher (or a kid) can launch mid-session to reset the room.
+**Personas served**: All staff (Jordan, Coach Sam, Brianna launch breaks), Ava (Photography is kid-locked; Role Cards and Pattern Maker are teacher-paced).
+**Discovery surfaces**:
+- Routes: `/breaks` (deck), `/activity/math` (Many Paths), `/activity/math-game` (Math Game), `/activity/photo` (Photo Studio), `/activity/this-or-that` (Quick Picks), `/activity/starts-with` (Beat the Letter), `/activity/as-if` (Act It Out), `/activity/roles` (Role Cards), `/activity/pattern` (Make a Pattern)
+- Omnibox: no direct entry for individual activities — all activity routes are reachable through the Brain Breaks deck (`/breaks`) which is in the drawer; individual `/activity/*` routes are also reachable from their slash commands
+- Slash: `/breaks` (aliases: `break`, `brainbreaks`, `games`, `play`), `/math {answer}` (aliases: `paths`), `/mathgame` (aliases: `quiz`, `quickmath`), `/photo {prompt}` (aliases: `camera`, `photos`), `/thisorthat` (aliases: `this`, `tot`, `wouldyourather`), `/startswith` (aliases: `letters`, `ck`, `words`), `/asif` (aliases: `acting`, `drama`, `act`), `/roles` (aliases: `role`, `animal`, `animals`, `cards`, `pretend`), `/pattern` (aliases: `patterns`, `tile`, `kaleidoscope`, `symmetry`, `repeat`)
+- Drawer: yes — "Brain Breaks" (main destinations, position between Tasks and Settings)
+- Settings: no
+**Capabilities**: None — open to all signed-in staff. Photography is the only kid-locked activity; all others (Math Game, Many Paths, Beat the Letter, Act It Out, Role Cards, Make a Pattern) are teacher-paced and exit via the back arrow.
+**Data**: None — all activity catalogs are pure-Dart const lists. Pattern Maker captures a photo via `image_picker` camera but does not write to any synced table.
+**Surfaces**:
+- *Brain Breaks deck* — `lib/features/activity_runtime/brain_breaks_screen.dart`. Eight cards + a Surprise button; each card pushes its activity route.
+- *Role Cards screen* — `lib/features/activity_runtime/role_cards_screen.dart`. 23 animal/nature role cards (emoji + 3 habits + 3 artifacts + a trait); tap a card to flip to its face via a glass sheet. Catalog in `roles.dart`. Not kid-locked — teacher-paced.
+- *Make a Pattern screen* — `lib/features/activity_runtime/pattern_maker_screen.dart`. Snap a tile → kaleidoscope-tiled repeating pattern. `image_picker` camera, configurable tile count (2/3/4/6), kaleidoscope toggle. Not kid-locked — teacher-paced. Core config + mirror math in `pattern_maker.dart`.
+- *Photo Studio* — `lib/features/activity_runtime/photography_runner_screen.dart`. Full-screen camera with a teacher-provided prompt. The ONLY kid-locked break (enters kid mode in `initState`, exits in `dispose`; 5-tap top-left staff exit).
+- *Many Paths (math runner)* — `lib/features/activity_runtime/math_runner_screen.dart`. How many ways to a target number? Teacher-paced, previously kid-locked (de-locked this session). `?target=N` seeds the answer; defaults to 12.
+- *Math Game* — `lib/features/activity_runtime/math_game_screen.dart`. Mixed-mechanic one-question-at-a-time arithmetic. Teacher-paced.
+- *Beat the Letter* — `lib/features/activity_runtime/letter_words_screen.dart`. Words that start with a given letter. Teacher-paced.
+- *Act It Out* — `lib/features/activity_runtime/as_if_screen.dart`. Perform a line in an emotion/character. Teacher-paced.
+- *Quick Picks* — `lib/features/activity_runtime/this_or_that_screen.dart`. Binary this-or-that questions. Teacher-paced.
+- *Kid mode lock mixin* — `lib/features/activity_runtime/kid_mode_lock.dart`. Shared `KidModeLock<T>` mixin used ONLY by Photography; other activities do not use it.
+- *Content bank* — `lib/features/activity_runtime/content_bank.dart`. Shared catalog source for This-or-That and Beat-the-Letter prompts.
+**Depends on**: Kid mode (Photography only), Photos (pattern_maker uses image_picker; bytes are not stored in any synced table).
+**Consumed by**: Nothing — ActivityRuntime is a leaf.
+**Last verified**: 2026-06-01
+
+---
+
 ## Attendance
 **Path**: `lib/features/attendance/`
 **Purpose**: Daily check-in / check-out for one cohort at a time.
@@ -678,6 +708,12 @@ in. Run `Agent persona-audit` to refresh.
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
 
+_Run 2026-06-01 (Wave A — Role Cards + Make a Pattern)_ — no unresolved discovery drift for the new surfaces (they follow the established activity-runtime pattern: drawer via Brain Breaks deck, slash commands for direct access, no separate omnibox or settings entries). Updates applied this run:
+- **ActivityRuntime** — new feature entry added. Covers all eight break surfaces, including the two new ones (Role Cards at `/activity/roles`, Make a Pattern at `/activity/pattern`). Kid-lock status corrected: Photography remains the only kid-locked break; Math Game, Many Paths, Beat the Letter, and Act It Out were de-locked this session (teacher-paced exit via back arrow).
+- **ActivityRuntime** — discovery surfaces verified: `/breaks` drawer entry confirmed in `main_drawer.dart` at line 263; `/activity/roles` and `/activity/pattern` routes confirmed in `router.dart`; `/roles` and `/pattern` slash commands confirmed in `slash_commands.dart`. Omnibox catalog has NO direct entries for individual activities or for the Brain Breaks deck — this is the established precedent (same as Toolkit), not a drift. The deck is the discovery surface; slash is the power-user shortcut.
+- No new synced tables. `roles.dart` and `pattern_maker.dart` are pure-Dart catalogs. `pattern_maker_screen.dart` uses `image_picker` but writes no row. SCHEMA.md unchanged.
+- Cross-link reconcile: ActivityRuntime has no Data tables. Kid mode **Consumed by** does not need ActivityRuntime added — only Photography uses the lock (not the whole feature folder), and the kid-mode entry already lists Surveys as the canonical consumer; the per-screen note in ActivityRuntime's Surfaces is sufficient.
+
 _Run 2026-05-29 (Wave 171 vehicle QR scheme change)_ — one discovery drift corrected (see below). No new migrations; SCHEMA.md unchanged. No omnibox, slash, drawer, or settings claims changed. Updates applied this run:
 - **Vehicles** — Routes corrected from `/settings/vehicles*` to `/vehicles*` (Wave 95 moved the top-level path; `/settings/vehicles` still exists as a redirect, not a live route). `/vehicles/scan` surface added — `VehicleScanScreen` was in the router but absent from the doc.
 - **Vehicles** — Vehicle inspection surface note updated: QR PDFs now encode `differentworld://v/<id>/<kind>` (Wave 171), replacing the prior HTTPS github.io path. Invite QRs keep HTTPS — the distinction is documented inline.
@@ -781,7 +817,7 @@ All other discovery claims verified against `router.dart`,
 
 ---
 
-_Last full registry verification: 2026-05-23 (family-lens sync fix)._
+_Last full registry verification: 2026-06-01 (Wave A — Role Cards + Make a Pattern)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._
