@@ -60,6 +60,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFFFFA726),
       route: '/activity/photo',
     ),
+    _BreakCard(
+      title: 'Role Cards',
+      tagline: 'Be an animal for the day',
+      icon: Icons.pets,
+      color: Color(0xFF66BB6A),
+      route: '/activity/roles',
+    ),
   ];
 
   void _surprise(BuildContext context) {

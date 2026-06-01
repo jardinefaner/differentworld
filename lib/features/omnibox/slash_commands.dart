@@ -239,6 +239,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/as-if')),
   ),
   SlashCommand(
+    name: 'roles',
+    label: '/roles',
+    hint: 'Open the animal & nature Role Cards',
+    icon: Icons.pets,
+    aliases: const ['role', 'animal', 'animals', 'cards', 'pretend'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/roles')),
+  ),
+  SlashCommand(
     name: 'breaks',
     label: '/breaks',
     hint: 'Open the Brain Breaks deck',

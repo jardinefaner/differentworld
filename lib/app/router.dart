@@ -11,6 +11,7 @@ import 'package:differentworld/features/activity_runtime/letter_words_screen.dar
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
+import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
@@ -849,6 +850,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/as-if',
             builder: (_, _) => const AsIfScreen(),
+          ),
+          // Role Cards — animal & nature roles as SMART daily practices
+          // (docs/ROLES_SMART_PRACTICE.md). Browse the catalog; each card is
+          // 3 habits + 3 artifacts + a trait.
+          GoRoute(
+            path: '/activity/roles',
+            builder: (_, _) => const RoleCardsScreen(),
           ),
         ],
       ),
