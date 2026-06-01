@@ -88,6 +88,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFFFFCA28),
       route: '/activity/riddles',
     ),
+    _BreakCard(
+      title: 'Mindful Minute',
+      tagline: 'Breathe together',
+      icon: Icons.spa_outlined,
+      color: Color(0xFF26A69A),
+      route: '/activity/breathe',
+    ),
   ];
 
   void _surprise(BuildContext context) {

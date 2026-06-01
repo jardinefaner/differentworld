@@ -263,6 +263,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/riddles')),
   ),
   SlashCommand(
+    name: 'breathe',
+    label: '/breathe',
+    hint: 'Mindful Minute — a calm breathing break',
+    icon: Icons.spa_outlined,
+    aliases: const ['breath', 'calm', 'mindful', 'relax', 'breathing'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/breathe')),
+  ),
+  SlashCommand(
     name: 'pattern',
     label: '/pattern',
     hint: 'Make a Pattern — snap a tile, watch it repeat',

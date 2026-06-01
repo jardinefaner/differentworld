@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
+import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
@@ -881,6 +882,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/riddles',
             builder: (_, _) => const RiddlesScreen(),
+          ),
+          // Mindful Minute — a calm breathing break (the regulation gap).
+          GoRoute(
+            path: '/activity/breathe',
+            builder: (_, _) => const BreatheScreen(),
           ),
           // Make a Pattern — draw/build a tile in real life, snap it, watch
           // it repeat (kaleidoscope mirroring → symmetry from any tile).
