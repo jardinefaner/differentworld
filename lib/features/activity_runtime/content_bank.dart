@@ -47,6 +47,9 @@ abstract class ContentKind {
   /// A "plot twist!" card to drop into a story in progress — payload
   /// `{text}`.
   static const storyTwist = 'story_twist';
+
+  /// A word for the room to rhyme with — payload `{word}`.
+  static const rhymeWord = 'rhyme_word';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -85,6 +88,7 @@ class LocalContentBank implements ContentSource {
     ..._factOrFibSeed,
     ..._storyStarterSeed,
     ..._storyTwistSeed,
+    ..._rhymeWordSeed,
   ]);
 
   final Map<String, List<ContentItem>> _byKind = {};
@@ -372,4 +376,30 @@ final List<ContentItem> _storyTwistSeed = <ContentItem>[
   _twistOf('The map was upside down the whole time.'),
   _twistOf('The answer was hiding in plain sight.'),
   _twistOf('A door opens that was never there before.'),
+];
+
+ContentItem _rhymeOf(String word) => ContentItem(
+  kind: ContentKind.rhymeWord,
+  fingerprint: word.toLowerCase(),
+  payload: {'word': word},
+);
+
+// Rhyme-friendly words (ages 4–12) — each has lots of easy rhymes.
+final List<ContentItem> _rhymeWordSeed = <ContentItem>[
+  _rhymeOf('cat'),
+  _rhymeOf('day'),
+  _rhymeOf('light'),
+  _rhymeOf('star'),
+  _rhymeOf('blue'),
+  _rhymeOf('tree'),
+  _rhymeOf('song'),
+  _rhymeOf('run'),
+  _rhymeOf('snow'),
+  _rhymeOf('ball'),
+  _rhymeOf('hop'),
+  _rhymeOf('ring'),
+  _rhymeOf('bee'),
+  _rhymeOf('cake'),
+  _rhymeOf('fun'),
+  _rhymeOf('top'),
 ];

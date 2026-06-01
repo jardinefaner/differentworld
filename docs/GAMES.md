@@ -54,7 +54,7 @@ for free.**
 - **✓ Beat the Letter** — name things that start with the letter.
   *Big:* the giant letter + category. *Phone:* tally ("someone said it") ·
   New letter. *(Two-device: the count climbs live on the big screen.)*
-- **+ Rhyme Time** — how many rhymes can the room find?
+- **✓ Rhyme Time** — how many rhymes can the room find?
   *Big:* the word + the live count. *Phone:* tally · New word.
 - **+ Categories** — name as many as you can before time's up.
   *Big:* the category + a big countdown. *Phone:* start the timer · tally ·

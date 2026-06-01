@@ -109,6 +109,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFF5C6BC0),
       route: '/activity/story',
     ),
+    _BreakCard(
+      title: 'Rhyme Time',
+      tagline: 'How many rhymes?',
+      icon: Icons.music_note_outlined,
+      color: Color(0xFFEC407A),
+      route: '/activity/rhyme-time',
+    ),
   ];
 
   void _surprise(BuildContext context) {

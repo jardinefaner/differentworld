@@ -15,6 +15,7 @@ import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
+import 'package:differentworld/features/activity_runtime/rhyme_time_screen.dart';
 import 'package:differentworld/features/activity_runtime/riddles_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
@@ -899,6 +900,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/story',
             builder: (_, _) => const StoryStartersScreen(),
+          ),
+          // Rhyme Time — host-run; the room shouts rhymes, you tally.
+          GoRoute(
+            path: '/activity/rhyme-time',
+            builder: (_, _) => const RhymeTimeScreen(),
           ),
           // Make a Pattern — draw/build a tile in real life, snap it, watch
           // it repeat (kaleidoscope mirroring → symmetry from any tile).

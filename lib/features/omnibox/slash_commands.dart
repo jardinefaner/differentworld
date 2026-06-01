@@ -287,6 +287,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/story')),
   ),
   SlashCommand(
+    name: 'rhyme',
+    label: '/rhyme',
+    hint: 'Rhyme Time — how many rhymes can the room find?',
+    icon: Icons.music_note_outlined,
+    aliases: const ['rhymes', 'rhymetime', 'words'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/rhyme-time')),
+  ),
+  SlashCommand(
     name: 'pattern',
     label: '/pattern',
     hint: 'Make a Pattern — snap a tile, watch it repeat',
