@@ -247,6 +247,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/roles')),
   ),
   SlashCommand(
+    name: 'pattern',
+    label: '/pattern',
+    hint: 'Make a Pattern — snap a tile, watch it repeat',
+    icon: Icons.grid_on,
+    aliases: const ['patterns', 'tile', 'kaleidoscope', 'symmetry', 'repeat'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/pattern')),
+  ),
+  SlashCommand(
     name: 'breaks',
     label: '/breaks',
     hint: 'Open the Brain Breaks deck',

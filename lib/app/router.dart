@@ -10,6 +10,7 @@ import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dar
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
+import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
@@ -857,6 +858,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/roles',
             builder: (_, _) => const RoleCardsScreen(),
+          ),
+          // Make a Pattern — draw/build a tile in real life, snap it, watch
+          // it repeat (kaleidoscope mirroring → symmetry from any tile).
+          GoRoute(
+            path: '/activity/pattern',
+            builder: (_, _) => const PatternMakerScreen(),
           ),
         ],
       ),

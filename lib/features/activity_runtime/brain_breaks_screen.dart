@@ -67,6 +67,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFF66BB6A),
       route: '/activity/roles',
     ),
+    _BreakCard(
+      title: 'Make a Pattern',
+      tagline: 'Snap a tile, watch it repeat',
+      icon: Icons.grid_on,
+      color: Color(0xFF7E57C2),
+      route: '/activity/pattern',
+    ),
   ];
 
   void _surprise(BuildContext context) {

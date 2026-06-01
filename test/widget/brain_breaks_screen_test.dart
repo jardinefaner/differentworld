@@ -33,6 +33,7 @@ void main() {
     expect(find.text('Many Paths'), findsOneWidget);
     expect(find.text('Photo Studio'), findsOneWidget);
     expect(find.text('Role Cards'), findsOneWidget);
+    expect(find.text('Make a Pattern'), findsOneWidget);
   });
 
   testWidgets('tapping a card launches that activity', (tester) async {
