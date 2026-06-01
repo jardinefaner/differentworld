@@ -6,8 +6,6 @@ import 'package:differentworld/features/activity_runtime/activity_script.dart';
 import 'package:differentworld/features/activity_runtime/collage_gallery.dart';
 import 'package:differentworld/features/activity_runtime/justified_gallery.dart';
 import 'package:differentworld/features/activity_runtime/photography.dart';
-import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
-import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
@@ -22,7 +20,9 @@ import 'package:permission_handler/permission_handler.dart';
 /// of your shots rides above the shutter, and flash / flip / pinch-zoom /
 /// tap-to-focus enhance the capture. Done → a dynamic masonry gallery
 /// (photos kept whole, varied sizes); tap any for a full-screen view with
-/// its context + an editable reflection. Kid-mode locked.
+/// its context + an editable reflection. Teacher-paced (game-show-host
+/// model), NOT a locked kid surface — the floating back arrow exits, and
+/// back closes an open viewer/presentation first (rubric A6).
 ///
 /// SUBMISSIONS model (offline-first): every capture stays on the device;
 /// only the ones marked "share" become the submission. This slice is
@@ -84,47 +84,26 @@ class _PhotographyRunnerScreenState
   final List<_Shot> _shots = <_Shot>[];
 
   /// When non-null, the full-screen contextual viewer is open at this
-  /// index (an in-screen overlay, NOT a route — kid-mode pins the route).
+  /// index (an in-screen overlay, not a route; back closes it first).
   int? _viewingIndex;
   PageController? _viewerPage;
 
   /// Showing the shared photos full-screen as "the findings".
   bool _presenting = false;
 
-  // Kid-mode lockdown — notifiers cached in initState (ref is unsafe in
-  // dispose); the screen drives its own lock via _staffUnlocked.
-  late final KidMode _kidMode;
-  late final KidModeLockedRoute _lockedRoute;
-  bool _staffUnlocked = false;
-  int _staffTaps = 0;
-  Timer? _staffTapReset;
-  static const _staffTapTarget = 5;
-  static const _staffTapWindow = Duration(seconds: 2);
-
-  static const String _route = '/activity/photo';
-
   @override
   void initState() {
     super.initState();
-    _kidMode = ref.read(kidModeProvider.notifier);
-    _lockedRoute = ref.read(kidModeLockedRouteProvider.notifier);
+    // Observe lifecycle for the CAMERA only (release on background,
+    // re-init on resume) — this is a teacher-paced break, not a locked
+    // kid surface; the floating back arrow exits.
     WidgetsBinding.instance.addObserver(this);
-    unawaited(
-      Future.microtask(() {
-        if (!mounted) return;
-        _kidMode.enter();
-        _lockedRoute.pin(_route);
-      }),
-    );
     unawaited(_initCamera());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && !_staffUnlocked && mounted) {
-      _kidMode.enter();
-      _lockedRoute.pin(_route);
-    }
+    // Release the camera when backgrounded; re-init on resume if shooting.
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
       _disposeCamera();
@@ -137,12 +116,9 @@ class _PhotographyRunnerScreenState
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _staffTapReset?.cancel();
     _focusTimer?.cancel();
     _viewerPage?.dispose();
     _filmstrip.dispose();
-    _kidMode.exit();
-    _lockedRoute.pin(null);
     _disposeCamera();
     super.dispose();
   }
@@ -320,48 +296,21 @@ class _PhotographyRunnerScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
   }
 
-  Future<void> _onStaffCornerTap() async {
-    _staffTaps += 1;
-    _staffTapReset?.cancel();
-    if (_staffTaps >= _staffTapTarget) {
-      _staffTaps = 0;
-      final result = await showKidModeExitDialog(context, ref);
-      if (!mounted) return;
-      switch (result) {
-        case KidModeExitResult.unlocked:
-        case KidModeExitResult.noPinConfigured:
-          setState(() => _staffUnlocked = true);
-          _lockedRoute.pin(null);
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            const SnackBar(content: Text('Unlocked. Press back to exit.')),
-          );
-        case KidModeExitResult.cancelled:
-          break;
-      }
-      return;
-    }
-    _staffTapReset = Timer(_staffTapWindow, () {
-      if (mounted) _staffTaps = 0;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final blockPop = !_staffUnlocked;
+    // Back closes an open overlay first (the full-screen viewer, then the
+    // presentation), and otherwise exits the activity — no lock; the
+    // floating back arrow gets you out from any phase.
+    final canExit = _viewingIndex == null && !_presenting;
     return PopScope(
-      canPop: !blockPop,
+      canPop: canExit,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         if (_viewingIndex != null) {
           _closeViewer();
-          return;
+        } else if (_presenting) {
+          setState(() => _presenting = false);
         }
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          const SnackBar(
-            content: Text('Hand the device back to a teacher to exit.'),
-            duration: Duration(seconds: 2),
-          ),
-        );
       },
       child: EdgeScaffold(
         body: ColoredBox(
@@ -377,15 +326,6 @@ class _PhotographyRunnerScreenState
               ),
               if (_viewingIndex != null && _viewingIndex! < _shots.length)
                 Positioned.fill(child: _viewer(context)),
-              Positioned(
-                top: 0,
-                left: 0,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: _onStaffCornerTap,
-                  child: const SizedBox(width: 56, height: 56),
-                ),
-              ),
             ],
           ),
         ),

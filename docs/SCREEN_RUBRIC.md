@@ -65,6 +65,19 @@ Mark inapplicable items **n/a**; don't force them.
   desktop look intentional. Master-detail screens use a `LayoutBuilder` or
   the shared `Breakpoints`; nothing assumes phone width. Verify: no
   `MediaQuery.sizeOf` math in `build` that only works at one size. *Warn.*
+- **A6 — No dead-end: there is ALWAYS a visible way out.** Every screen
+  has a back affordance the user can SEE — the EdgeScaffold floating back
+  arrow (the default), a Close button, or a Done/finish action that pops.
+  A screen that hides the back arrow (`showBack: false`) must be a
+  top-level drawer destination (the hamburger is the way out) OR document
+  why. A `PopScope(canPop: false)` that blocks the back gesture is a
+  **blocker** unless paired with a *visible, discoverable* exit — a hidden
+  N-tap corner does NOT count. Kid-mode lockdown is the one allowed
+  exception and only for a genuinely kid-in-hand surface, with the exit
+  documented in the feature entry. Verify: trace how a first-time user
+  leaves THIS screen in one obvious tap; if you can't, it's a dead-end.
+  *Blocker.* (This is the rule that the trapped Photography gallery
+  violated — it shipped because the rubric didn't name it. Now it does.)
 
 ## B. The four states (every data / list screen)
 
