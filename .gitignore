@@ -56,6 +56,11 @@ app.*.map.json
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 
+# Cross-session handoff snapshots — auto-written by the handoff-snapshot
+# Stop hook when the tree is dirty. Local safety net for unfinished work;
+# describes uncommitted (local) state, so it stays local too.
+docs/handoff/
+
 # Supabase CLI working state (cached credentials, link config)
 supabase/.temp/
 

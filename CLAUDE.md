@@ -1352,6 +1352,44 @@ For exploratory / scoping conversations: no gate, just answer.
 
 ---
 
+## Pausing & handoff — the baton lives in the repo, never the chat
+
+An unfinished task survives a session boundary only if its resume-state
+is durable, discoverable, and co-located with the code. The conversation
+is the WORST place to store it: transcripts are ephemeral, transcript
+search is permission-gated, and a session rarely surfaces by an obvious
+title. We retrieved a whole in-flight wave (Wave B) purely from repo
+artifacts — the previous commit's `Next:` line, the diff, and a design
+doc — because the repo, not the chat, was the system of record. Keep it
+that way.
+
+**When you pause mid-task (or sense a session may end), leave a baton:**
+
+1. **The handoff IS a commit.** A wave that lands gets a body with a
+   `Done / Next / Risks / Verify` block — not a one-line "what". The
+   `Next:` line is the single most valuable breadcrumb; it's what lets
+   the next session pick up cold. (See commit `da4c9cc` for the shape.)
+   - **Done** — what changed, grouped by concern, with the *why*.
+   - **Next** — the very next concrete step (the unstarted slice).
+   - **Risks** — knowingly-deferred issues, each marked as deferred (not
+     a regression), so a reviewer doesn't re-discover them as "bugs".
+   - **Verify** — what you ran (analyze / tests / reviewers) and what's
+     still unexercised (e.g. on-device tap-through).
+
+2. **The safety net is automatic.** The `handoff-snapshot` Stop hook
+   (`~/.claude/hooks/handoff-snapshot.sh`, wired in `~/.claude/settings.json`)
+   writes `docs/handoff/<branch>.md` on every dirty turn and deletes it
+   when the tree goes clean. It's gitignored (describes local uncommitted
+   state, so it stays local) and scoped to this repo by pubspec name. It
+   holds the last commit, the changed-file list, and the working diff —
+   so even a hard crash before a clean exit leaves a snapshot on disk.
+   **On resume, if `docs/handoff/<branch>.md` exists, the tree was dirty
+   when the last session ended — read it first**, then the last commit's
+   body. It is the net BELOW the commit, never a replacement: a snapshot
+   has no "why" and no "Next". Commit the real baton when you can.
+
+---
+
 ## What's intentionally deferred
 
 - **Native `google_sign_in`** for smoother mobile UX (current flow opens
