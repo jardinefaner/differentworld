@@ -108,16 +108,20 @@ shape; Beat the Letter and Math Game were reshaped to match.
 
 > "for teachers we're going to create our own rules... when
 > brainstorming, we see all comments but not from who... like a
-> blackboard but on the phone and tv/projector"
+> blackboard but on the phone and tv/projector" / "for agenda/meeting...
+> the anonymous comments/ideas on phone to the web"
 
 Staff aren't just executing a program — they're authoring it. A
 **make-our-own-rules / structures** engine, and an **anonymous
-brainstorm board**: ideas appear on the phone and the projected
-blackboard with no name attached, so the room can "look at things
-together" without ego. Psychological safety as a feature.
+brainstorm board for meetings + agendas**: each person drops ideas from
+their phone and they appear on the shared web / projected blackboard
+with no name attached, so the room can "look at things together"
+without ego. Psychological safety as a feature. It rides the
+live-session layer (#14).
 
-- **Status:** seed (rule engine + anonymous board both undesigned)
-- **Lives in:** here (to be promoted to a design doc when we start)
+- **Status:** seed → designing (anonymous board rides Live Sessions;
+  the rule engine is still undesigned)
+- **Lives in:** [LIVE_SESSIONS.md](LIVE_SESSIONS.md)
 
 ### 6. Group discussions, by topic and age
 
@@ -225,6 +229,38 @@ forking. Afterschool feels right on day one; the rest is reachable.
 - **Status:** shipped (universal rename done; afterschool defaults first)
 - **Lives in:** [NAMING.md](NAMING.md), CLAUDE.md
 
+### 14. Live sessions — present big, control small
+
+> "if i start a math game... how can i present it through desktop and use
+> the phone to coordinate / as a control... do we need sessions?"
+
+A lightweight real-time link between devices: one screen **presents**
+(desktop / projector / TV), phones **join to control or contribute**.
+For a game, the phone is the remote — it advances slides, the big screen
+shows them. For a meeting, every phone is an anonymous voice on the
+shared board (#5). Ephemeral by design: this rides **Supabase Realtime**
+(broadcast + presence), NOT PowerSync — coordination state isn't durable
+child data. Join by a short code (or QR — we already have the rails).
+
+- **Status:** seed → designing (This-or-That already built the
+  present/control split on one device; the two-device link is next)
+- **Lives in:** [LIVE_SESSIONS.md](LIVE_SESSIONS.md)
+
+### 15. The program's supplies, wired into everything
+
+> "we have a list of our inventory... the best way of storing them and
+> having them be used by our other things in here"
+
+The program's real-world inventory — markers, paper, balls, craft kits —
+as first-class data, not a sticky note. A catalog you maintain once, then
+**referenced** by the things that consume it: an activity declares "needs
+12 markers," a schedule block surfaces its pack list, a trip its
+checklist. Linked by id, never by copied name, so restocking + renaming
+happen in one place.
+
+- **Status:** seed → designing ([SUPPLIES.md](SUPPLIES.md))
+- **Lives in:** [SUPPLIES.md](SUPPLIES.md)
+
 ---
 
 ## New dreams land here
@@ -235,6 +271,12 @@ once it has a home.
 - **2026-06-01** — **Group discussions** by topic + age-appropriateness,
   with a library to back them (→ dream #6). **People role deck** —
   professions/people with their own icons + habits (→ dream #8).
+- **2026-06-01 (cont.)** — **Live sessions**: present a game on the
+  desktop/projector, control + coordinate from the phone — the shared
+  real-time layer (→ dream #14). The **anonymous meeting/agenda board**
+  (phone → web, no names) rides it (→ dream #5). And **supplies /
+  inventory** as wired-in first-class data the activities consume
+  (→ dream #15).
 
 ---
 
