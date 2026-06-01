@@ -313,6 +313,27 @@ of the SQL.
 
 ---
 
+## missions
+**Purpose**: The program's editable catalog of real jobs kids do — each carrying a manual (rules), a checklist (actions JSON), an evidence kind, and optional age suitability.
+**Key columns**:
+- `id` (uuid PK)
+- `space_id` (uuid NOT NULL → spaces.id, on delete cascade)
+- `name` (text NOT NULL)
+- `icon` (text, nullable — single emoji glyph)
+- `builds` (text, nullable — trait the job grows, e.g. "responsibility")
+- `rules` (text, nullable — the manual: how it's done + where things go)
+- `actions` (text, nullable — ordered checklist as JSON array of strings)
+- `evidence_kind` (text NOT NULL default 'check' — `photo` / `count` / `note` / `check`)
+- `min_age` / `max_age` (int, nullable — age suitability; NULL = any age)
+- `is_active` (boolean NOT NULL default true)
+- `sort` (int NOT NULL default 0)
+**RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); space-scoped sync rule + GRANT are the real gate.
+**Sync rule**: `by_space` stream; `SELECT * FROM missions WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`. Dashboard deploy + device local-recreate pending as a user step.
+**Consumers**: [Missions](FEATURES.md#missions).
+**Last verified**: 2026-06-01
+
+---
+
 ## permission_slips
 **Purpose**: Field-trip parent consent. One row per (subject, trip); status tracks consent and audit.
 **Key columns**:
@@ -519,7 +540,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-01 (Supplies slice 1)._
+_Last full registry verification: 2026-06-01 (Missions slice 1)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._

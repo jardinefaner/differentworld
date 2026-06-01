@@ -37,6 +37,7 @@ import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
+import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
@@ -566,6 +567,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Supplies',
                   child: SuppliesListScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'missions',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Missions',
+                  child: MissionsListScreen(),
                 ),
               ),
               GoRoute(

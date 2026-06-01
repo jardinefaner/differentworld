@@ -126,6 +126,8 @@ streams:
       # add a date-window parameter once it actually matters.
       # Supplies — the program's inventory catalog (docs/SUPPLIES.md).
       - SELECT * FROM supplies           WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Missions — real jobs a kid does, with evidence (docs/MISSIONS.md).
+      - SELECT * FROM missions           WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM locations          WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM activities         WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
       - SELECT * FROM schedule_blocks    WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())

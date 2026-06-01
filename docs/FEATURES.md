@@ -524,6 +524,28 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Missions
+**Path**: `lib/features/missions/`
+**Purpose**: The program's catalog of real jobs kids do — each with a manual (rules), a practiceable checklist (actions), and an evidence kind — so responsibility is concrete, doable, and verifiable.
+**Personas served**: Maya, Coach Sam, Brianna (directors/leads maintain catalog via `canManageSpace`); Ava and all kids (will claim + do missions in slice 2); All staff (view).
+**Discovery surfaces**:
+- Routes: `/settings/missions`
+- Omnibox: yes — "Missions" (id `page.missions`), keywords: missions, jobs, helpers, chores, responsibilities, equipment manager, snack helper → `/settings/missions`
+- Slash: none
+- Drawer: no — library surface (same convention as Locations, Activities, Supplies)
+- Settings: no — omnibox is the canonical discovery entry; Settings screen is preferences-only per the library convention
+**Capabilities**: View: all signed-in staff. Create / edit / delete: `canManageSpace` (director / lead). Slice 2 will add kid-side claim with no cap gate.
+**Data**: [missions](SCHEMA.md#missions)
+**Surfaces**:
+- *Missions list screen* — `lib/features/missions/missions_list_screen.dart`. EdgeScaffold; four states (loading / empty / error / data); empty state offers "Add the starter set (11)" + "Add your own"; mission tiles; tap → read-only detail sheet (icon, builds, age, rules, numbered steps, evidence kind); edit sheet. Edit actions gated by `viewer.canManageSpace`.
+- *Missions providers* — `lib/features/missions/missions_providers.dart`. `missionsProvider` (StreamProvider → `db.missionsDao.watchInSpace`); `MissionActions` Notifier with create / update_ / delete_ / addStarterSet (one-tap seed from templates).
+- *Mission templates* — `lib/features/missions/mission_templates.dart`. `MissionTemplate` + `missionTemplates` (11 starter jobs: Equipment Manager, Snack Helper, Cleanup Crew, Supply Keeper, Line Leader, Greeter, Library Keeper, Lights & Doors, Recycle Captain, Plant & Pet Caretaker, Peace Buddy); `MissionEvidenceKind` enum (photo/count/note/check); actions JSON codec (encode/decodeMissionActions).
+**Depends on**: Nothing — leaf catalog feature in slice 1.
+**Consumed by**: Nothing in slice 1. Slice 2 will add mission_assignments + Entries/Attachments as the evidence destination.
+**Last verified**: 2026-06-01
+
+---
+
 ## Supplies
 **Path**: `lib/features/supplies/`
 **Purpose**: The program's real-world inventory catalog — track items (markers, paper, balls) once, flag low stock, and reference by id from activities (slice 2).
@@ -732,6 +754,11 @@ in. Run `Agent persona-audit` to refresh.
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
 
+_Run 2026-06-01 (Missions slice 1)_ — no unresolved discovery drift. Updates applied this run:
+- **Missions** — new feature entry added. Route `/settings/missions` confirmed in `router.dart` (nested under `/settings`, same pattern as `supplies`, `locations`). Omnibox entry `page.missions` confirmed in `omnibox_catalog.dart` with keywords: missions, jobs, helpers, chores, responsibilities, equipment manager, snack helper; `onSelect` pushes `/settings/missions`. No drawer entry, no Settings ListTile, no slash command — correct per the library-surface convention (same as Supplies, Locations). Claimed surfaces verified: all match code.
+- **SCHEMA.md** — `missions` table entry added.
+- Cross-link reconcile: Missions claims `missions` table; `missions` Consumers lists Missions. Bidirectional. No other (feature → table) or (table → feature) drift.
+
 _Run 2026-06-01 (Supplies slice 1)_ — no unresolved discovery drift. Updates applied this run:
 - **Supplies** — new feature entry added. Route `/settings/supplies` confirmed in `router.dart` (nested under `/settings` alongside `locations`, same pattern). Omnibox entry `page.supplies` confirmed in `omnibox_catalog.dart` with keywords: supplies, inventory, materials, stock, markers, paper; `onSelect` pushes `/settings/supplies`. No drawer entry, no Settings ListTile, no slash command — correct per the library-surface convention (same as Locations, Toolkit, Curricula). Claimed surfaces verified: all match code.
 - **SCHEMA.md** — `supplies` table entry added.
@@ -853,7 +880,7 @@ All other discovery claims verified against `router.dart`,
 
 ---
 
-_Last full registry verification: 2026-06-01 (Supplies slice 1)._
+_Last full registry verification: 2026-06-01 (Missions slice 1)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._

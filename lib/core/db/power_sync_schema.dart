@@ -305,6 +305,25 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  // ---- Missions (docs/MISSIONS.md) ----------------------------------------
+  // See supabase/migrations/20260601000002_missions.sql.
+  Table('missions', [
+    Column.text('space_id'),
+    Column.text('name'),
+    Column.text('icon'),
+    Column.text('tagline'),
+    Column.text('why'),
+    Column.text('builds'),
+    Column.text('rules'),
+    Column.text('actions'),
+    Column.text('evidence_kind'),
+    Column.integer('min_age'),
+    Column.integer('max_age'),
+    Column.integer('is_active'),
+    Column.integer('sort'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
   // ---- Camp scheduling ----------------------------------------------------
   // See supabase/migrations/20260519000003_camp_scheduling.sql.
   Table('locations', [

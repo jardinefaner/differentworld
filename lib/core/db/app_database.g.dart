@@ -15156,6 +15156,894 @@ class SuppliesCompanion extends UpdateCompanion<Supply> {
   }
 }
 
+class $MissionsTable extends Missions with TableInfo<$MissionsTable, Mission> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MissionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _iconMeta = const VerificationMeta('icon');
+  @override
+  late final GeneratedColumn<String> icon = GeneratedColumn<String>(
+    'icon',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _taglineMeta = const VerificationMeta(
+    'tagline',
+  );
+  @override
+  late final GeneratedColumn<String> tagline = GeneratedColumn<String>(
+    'tagline',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _whyMeta = const VerificationMeta('why');
+  @override
+  late final GeneratedColumn<String> why = GeneratedColumn<String>(
+    'why',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _buildsMeta = const VerificationMeta('builds');
+  @override
+  late final GeneratedColumn<String> builds = GeneratedColumn<String>(
+    'builds',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _rulesMeta = const VerificationMeta('rules');
+  @override
+  late final GeneratedColumn<String> rules = GeneratedColumn<String>(
+    'rules',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _actionsMeta = const VerificationMeta(
+    'actions',
+  );
+  @override
+  late final GeneratedColumn<String> actions = GeneratedColumn<String>(
+    'actions',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _evidenceKindMeta = const VerificationMeta(
+    'evidenceKind',
+  );
+  @override
+  late final GeneratedColumn<String> evidenceKind = GeneratedColumn<String>(
+    'evidence_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _minAgeMeta = const VerificationMeta('minAge');
+  @override
+  late final GeneratedColumn<int> minAge = GeneratedColumn<int>(
+    'min_age',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _maxAgeMeta = const VerificationMeta('maxAge');
+  @override
+  late final GeneratedColumn<int> maxAge = GeneratedColumn<int>(
+    'max_age',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<int> isActive = GeneratedColumn<int>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortMeta = const VerificationMeta('sort');
+  @override
+  late final GeneratedColumn<int> sort = GeneratedColumn<int>(
+    'sort',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    name,
+    icon,
+    tagline,
+    why,
+    builds,
+    rules,
+    actions,
+    evidenceKind,
+    minAge,
+    maxAge,
+    isActive,
+    sort,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'missions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Mission> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('icon')) {
+      context.handle(
+        _iconMeta,
+        icon.isAcceptableOrUnknown(data['icon']!, _iconMeta),
+      );
+    }
+    if (data.containsKey('tagline')) {
+      context.handle(
+        _taglineMeta,
+        tagline.isAcceptableOrUnknown(data['tagline']!, _taglineMeta),
+      );
+    }
+    if (data.containsKey('why')) {
+      context.handle(
+        _whyMeta,
+        why.isAcceptableOrUnknown(data['why']!, _whyMeta),
+      );
+    }
+    if (data.containsKey('builds')) {
+      context.handle(
+        _buildsMeta,
+        builds.isAcceptableOrUnknown(data['builds']!, _buildsMeta),
+      );
+    }
+    if (data.containsKey('rules')) {
+      context.handle(
+        _rulesMeta,
+        rules.isAcceptableOrUnknown(data['rules']!, _rulesMeta),
+      );
+    }
+    if (data.containsKey('actions')) {
+      context.handle(
+        _actionsMeta,
+        actions.isAcceptableOrUnknown(data['actions']!, _actionsMeta),
+      );
+    }
+    if (data.containsKey('evidence_kind')) {
+      context.handle(
+        _evidenceKindMeta,
+        evidenceKind.isAcceptableOrUnknown(
+          data['evidence_kind']!,
+          _evidenceKindMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_evidenceKindMeta);
+    }
+    if (data.containsKey('min_age')) {
+      context.handle(
+        _minAgeMeta,
+        minAge.isAcceptableOrUnknown(data['min_age']!, _minAgeMeta),
+      );
+    }
+    if (data.containsKey('max_age')) {
+      context.handle(
+        _maxAgeMeta,
+        maxAge.isAcceptableOrUnknown(data['max_age']!, _maxAgeMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isActiveMeta);
+    }
+    if (data.containsKey('sort')) {
+      context.handle(
+        _sortMeta,
+        sort.isAcceptableOrUnknown(data['sort']!, _sortMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Mission map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Mission(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      icon: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}icon'],
+      ),
+      tagline: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tagline'],
+      ),
+      why: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}why'],
+      ),
+      builds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}builds'],
+      ),
+      rules: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rules'],
+      ),
+      actions: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}actions'],
+      ),
+      evidenceKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}evidence_kind'],
+      )!,
+      minAge: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_age'],
+      ),
+      maxAge: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}max_age'],
+      ),
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_active'],
+      )!,
+      sort: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MissionsTable createAlias(String alias) {
+    return $MissionsTable(attachedDatabase, alias);
+  }
+}
+
+class Mission extends DataClass implements Insertable<Mission> {
+  final String id;
+  final String spaceId;
+  final String name;
+  final String? icon;
+  final String? tagline;
+  final String? why;
+  final String? builds;
+  final String? rules;
+  final String? actions;
+  final String evidenceKind;
+  final int? minAge;
+  final int? maxAge;
+  final int isActive;
+  final int sort;
+  final String createdAt;
+  final String updatedAt;
+  const Mission({
+    required this.id,
+    required this.spaceId,
+    required this.name,
+    this.icon,
+    this.tagline,
+    this.why,
+    this.builds,
+    this.rules,
+    this.actions,
+    required this.evidenceKind,
+    this.minAge,
+    this.maxAge,
+    required this.isActive,
+    required this.sort,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || icon != null) {
+      map['icon'] = Variable<String>(icon);
+    }
+    if (!nullToAbsent || tagline != null) {
+      map['tagline'] = Variable<String>(tagline);
+    }
+    if (!nullToAbsent || why != null) {
+      map['why'] = Variable<String>(why);
+    }
+    if (!nullToAbsent || builds != null) {
+      map['builds'] = Variable<String>(builds);
+    }
+    if (!nullToAbsent || rules != null) {
+      map['rules'] = Variable<String>(rules);
+    }
+    if (!nullToAbsent || actions != null) {
+      map['actions'] = Variable<String>(actions);
+    }
+    map['evidence_kind'] = Variable<String>(evidenceKind);
+    if (!nullToAbsent || minAge != null) {
+      map['min_age'] = Variable<int>(minAge);
+    }
+    if (!nullToAbsent || maxAge != null) {
+      map['max_age'] = Variable<int>(maxAge);
+    }
+    map['is_active'] = Variable<int>(isActive);
+    map['sort'] = Variable<int>(sort);
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  MissionsCompanion toCompanion(bool nullToAbsent) {
+    return MissionsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      name: Value(name),
+      icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
+      tagline: tagline == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tagline),
+      why: why == null && nullToAbsent ? const Value.absent() : Value(why),
+      builds: builds == null && nullToAbsent
+          ? const Value.absent()
+          : Value(builds),
+      rules: rules == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rules),
+      actions: actions == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actions),
+      evidenceKind: Value(evidenceKind),
+      minAge: minAge == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minAge),
+      maxAge: maxAge == null && nullToAbsent
+          ? const Value.absent()
+          : Value(maxAge),
+      isActive: Value(isActive),
+      sort: Value(sort),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Mission.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Mission(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      name: serializer.fromJson<String>(json['name']),
+      icon: serializer.fromJson<String?>(json['icon']),
+      tagline: serializer.fromJson<String?>(json['tagline']),
+      why: serializer.fromJson<String?>(json['why']),
+      builds: serializer.fromJson<String?>(json['builds']),
+      rules: serializer.fromJson<String?>(json['rules']),
+      actions: serializer.fromJson<String?>(json['actions']),
+      evidenceKind: serializer.fromJson<String>(json['evidenceKind']),
+      minAge: serializer.fromJson<int?>(json['minAge']),
+      maxAge: serializer.fromJson<int?>(json['maxAge']),
+      isActive: serializer.fromJson<int>(json['isActive']),
+      sort: serializer.fromJson<int>(json['sort']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'name': serializer.toJson<String>(name),
+      'icon': serializer.toJson<String?>(icon),
+      'tagline': serializer.toJson<String?>(tagline),
+      'why': serializer.toJson<String?>(why),
+      'builds': serializer.toJson<String?>(builds),
+      'rules': serializer.toJson<String?>(rules),
+      'actions': serializer.toJson<String?>(actions),
+      'evidenceKind': serializer.toJson<String>(evidenceKind),
+      'minAge': serializer.toJson<int?>(minAge),
+      'maxAge': serializer.toJson<int?>(maxAge),
+      'isActive': serializer.toJson<int>(isActive),
+      'sort': serializer.toJson<int>(sort),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  Mission copyWith({
+    String? id,
+    String? spaceId,
+    String? name,
+    Value<String?> icon = const Value.absent(),
+    Value<String?> tagline = const Value.absent(),
+    Value<String?> why = const Value.absent(),
+    Value<String?> builds = const Value.absent(),
+    Value<String?> rules = const Value.absent(),
+    Value<String?> actions = const Value.absent(),
+    String? evidenceKind,
+    Value<int?> minAge = const Value.absent(),
+    Value<int?> maxAge = const Value.absent(),
+    int? isActive,
+    int? sort,
+    String? createdAt,
+    String? updatedAt,
+  }) => Mission(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    name: name ?? this.name,
+    icon: icon.present ? icon.value : this.icon,
+    tagline: tagline.present ? tagline.value : this.tagline,
+    why: why.present ? why.value : this.why,
+    builds: builds.present ? builds.value : this.builds,
+    rules: rules.present ? rules.value : this.rules,
+    actions: actions.present ? actions.value : this.actions,
+    evidenceKind: evidenceKind ?? this.evidenceKind,
+    minAge: minAge.present ? minAge.value : this.minAge,
+    maxAge: maxAge.present ? maxAge.value : this.maxAge,
+    isActive: isActive ?? this.isActive,
+    sort: sort ?? this.sort,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Mission copyWithCompanion(MissionsCompanion data) {
+    return Mission(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      name: data.name.present ? data.name.value : this.name,
+      icon: data.icon.present ? data.icon.value : this.icon,
+      tagline: data.tagline.present ? data.tagline.value : this.tagline,
+      why: data.why.present ? data.why.value : this.why,
+      builds: data.builds.present ? data.builds.value : this.builds,
+      rules: data.rules.present ? data.rules.value : this.rules,
+      actions: data.actions.present ? data.actions.value : this.actions,
+      evidenceKind: data.evidenceKind.present
+          ? data.evidenceKind.value
+          : this.evidenceKind,
+      minAge: data.minAge.present ? data.minAge.value : this.minAge,
+      maxAge: data.maxAge.present ? data.maxAge.value : this.maxAge,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      sort: data.sort.present ? data.sort.value : this.sort,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Mission(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('icon: $icon, ')
+          ..write('tagline: $tagline, ')
+          ..write('why: $why, ')
+          ..write('builds: $builds, ')
+          ..write('rules: $rules, ')
+          ..write('actions: $actions, ')
+          ..write('evidenceKind: $evidenceKind, ')
+          ..write('minAge: $minAge, ')
+          ..write('maxAge: $maxAge, ')
+          ..write('isActive: $isActive, ')
+          ..write('sort: $sort, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    name,
+    icon,
+    tagline,
+    why,
+    builds,
+    rules,
+    actions,
+    evidenceKind,
+    minAge,
+    maxAge,
+    isActive,
+    sort,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Mission &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.name == this.name &&
+          other.icon == this.icon &&
+          other.tagline == this.tagline &&
+          other.why == this.why &&
+          other.builds == this.builds &&
+          other.rules == this.rules &&
+          other.actions == this.actions &&
+          other.evidenceKind == this.evidenceKind &&
+          other.minAge == this.minAge &&
+          other.maxAge == this.maxAge &&
+          other.isActive == this.isActive &&
+          other.sort == this.sort &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class MissionsCompanion extends UpdateCompanion<Mission> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> name;
+  final Value<String?> icon;
+  final Value<String?> tagline;
+  final Value<String?> why;
+  final Value<String?> builds;
+  final Value<String?> rules;
+  final Value<String?> actions;
+  final Value<String> evidenceKind;
+  final Value<int?> minAge;
+  final Value<int?> maxAge;
+  final Value<int> isActive;
+  final Value<int> sort;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const MissionsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.tagline = const Value.absent(),
+    this.why = const Value.absent(),
+    this.builds = const Value.absent(),
+    this.rules = const Value.absent(),
+    this.actions = const Value.absent(),
+    this.evidenceKind = const Value.absent(),
+    this.minAge = const Value.absent(),
+    this.maxAge = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.sort = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MissionsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String name,
+    this.icon = const Value.absent(),
+    this.tagline = const Value.absent(),
+    this.why = const Value.absent(),
+    this.builds = const Value.absent(),
+    this.rules = const Value.absent(),
+    this.actions = const Value.absent(),
+    required String evidenceKind,
+    this.minAge = const Value.absent(),
+    this.maxAge = const Value.absent(),
+    required int isActive,
+    required int sort,
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       name = Value(name),
+       evidenceKind = Value(evidenceKind),
+       isActive = Value(isActive),
+       sort = Value(sort),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<Mission> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? name,
+    Expression<String>? icon,
+    Expression<String>? tagline,
+    Expression<String>? why,
+    Expression<String>? builds,
+    Expression<String>? rules,
+    Expression<String>? actions,
+    Expression<String>? evidenceKind,
+    Expression<int>? minAge,
+    Expression<int>? maxAge,
+    Expression<int>? isActive,
+    Expression<int>? sort,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (name != null) 'name': name,
+      if (icon != null) 'icon': icon,
+      if (tagline != null) 'tagline': tagline,
+      if (why != null) 'why': why,
+      if (builds != null) 'builds': builds,
+      if (rules != null) 'rules': rules,
+      if (actions != null) 'actions': actions,
+      if (evidenceKind != null) 'evidence_kind': evidenceKind,
+      if (minAge != null) 'min_age': minAge,
+      if (maxAge != null) 'max_age': maxAge,
+      if (isActive != null) 'is_active': isActive,
+      if (sort != null) 'sort': sort,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MissionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? name,
+    Value<String?>? icon,
+    Value<String?>? tagline,
+    Value<String?>? why,
+    Value<String?>? builds,
+    Value<String?>? rules,
+    Value<String?>? actions,
+    Value<String>? evidenceKind,
+    Value<int?>? minAge,
+    Value<int?>? maxAge,
+    Value<int>? isActive,
+    Value<int>? sort,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return MissionsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      name: name ?? this.name,
+      icon: icon ?? this.icon,
+      tagline: tagline ?? this.tagline,
+      why: why ?? this.why,
+      builds: builds ?? this.builds,
+      rules: rules ?? this.rules,
+      actions: actions ?? this.actions,
+      evidenceKind: evidenceKind ?? this.evidenceKind,
+      minAge: minAge ?? this.minAge,
+      maxAge: maxAge ?? this.maxAge,
+      isActive: isActive ?? this.isActive,
+      sort: sort ?? this.sort,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (icon.present) {
+      map['icon'] = Variable<String>(icon.value);
+    }
+    if (tagline.present) {
+      map['tagline'] = Variable<String>(tagline.value);
+    }
+    if (why.present) {
+      map['why'] = Variable<String>(why.value);
+    }
+    if (builds.present) {
+      map['builds'] = Variable<String>(builds.value);
+    }
+    if (rules.present) {
+      map['rules'] = Variable<String>(rules.value);
+    }
+    if (actions.present) {
+      map['actions'] = Variable<String>(actions.value);
+    }
+    if (evidenceKind.present) {
+      map['evidence_kind'] = Variable<String>(evidenceKind.value);
+    }
+    if (minAge.present) {
+      map['min_age'] = Variable<int>(minAge.value);
+    }
+    if (maxAge.present) {
+      map['max_age'] = Variable<int>(maxAge.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<int>(isActive.value);
+    }
+    if (sort.present) {
+      map['sort'] = Variable<int>(sort.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MissionsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('name: $name, ')
+          ..write('icon: $icon, ')
+          ..write('tagline: $tagline, ')
+          ..write('why: $why, ')
+          ..write('builds: $builds, ')
+          ..write('rules: $rules, ')
+          ..write('actions: $actions, ')
+          ..write('evidenceKind: $evidenceKind, ')
+          ..write('minAge: $minAge, ')
+          ..write('maxAge: $maxAge, ')
+          ..write('isActive: $isActive, ')
+          ..write('sort: $sort, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LocationsTable extends Locations
     with TableInfo<$LocationsTable, Location> {
   @override
@@ -22379,6 +23267,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $SuppliesTable supplies = $SuppliesTable(this);
+  late final $MissionsTable missions = $MissionsTable(this);
   late final $LocationsTable locations = $LocationsTable(this);
   late final $ActivitiesTable activities = $ActivitiesTable(this);
   late final $ScheduleBlocksTable scheduleBlocks = $ScheduleBlocksTable(this);
@@ -22416,6 +23305,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final InvitesDao invitesDao = InvitesDao(this as AppDatabase);
   late final MembersDao membersDao = MembersDao(this as AppDatabase);
   late final MessagesDao messagesDao = MessagesDao(this as AppDatabase);
+  late final MissionsDao missionsDao = MissionsDao(this as AppDatabase);
   late final SpacesDao spacesDao = SpacesDao(this as AppDatabase);
   late final SubjectsDao subjectsDao = SubjectsDao(this as AppDatabase);
   late final SuppliesDao suppliesDao = SuppliesDao(this as AppDatabase);
@@ -22457,6 +23347,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     exports,
     exportRecipients,
     supplies,
+    missions,
     locations,
     activities,
     scheduleBlocks,
@@ -29727,6 +30618,411 @@ typedef $$SuppliesTableProcessedTableManager =
       Supply,
       PrefetchHooks Function()
     >;
+typedef $$MissionsTableCreateCompanionBuilder =
+    MissionsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String name,
+      Value<String?> icon,
+      Value<String?> tagline,
+      Value<String?> why,
+      Value<String?> builds,
+      Value<String?> rules,
+      Value<String?> actions,
+      required String evidenceKind,
+      Value<int?> minAge,
+      Value<int?> maxAge,
+      required int isActive,
+      required int sort,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$MissionsTableUpdateCompanionBuilder =
+    MissionsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> name,
+      Value<String?> icon,
+      Value<String?> tagline,
+      Value<String?> why,
+      Value<String?> builds,
+      Value<String?> rules,
+      Value<String?> actions,
+      Value<String> evidenceKind,
+      Value<int?> minAge,
+      Value<int?> maxAge,
+      Value<int> isActive,
+      Value<int> sort,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$MissionsTableFilterComposer
+    extends Composer<_$AppDatabase, $MissionsTable> {
+  $$MissionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tagline => $composableBuilder(
+    column: $table.tagline,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get why => $composableBuilder(
+    column: $table.why,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get builds => $composableBuilder(
+    column: $table.builds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rules => $composableBuilder(
+    column: $table.rules,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actions => $composableBuilder(
+    column: $table.actions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get evidenceKind => $composableBuilder(
+    column: $table.evidenceKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minAge => $composableBuilder(
+    column: $table.minAge,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get maxAge => $composableBuilder(
+    column: $table.maxAge,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MissionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MissionsTable> {
+  $$MissionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tagline => $composableBuilder(
+    column: $table.tagline,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get why => $composableBuilder(
+    column: $table.why,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get builds => $composableBuilder(
+    column: $table.builds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rules => $composableBuilder(
+    column: $table.rules,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actions => $composableBuilder(
+    column: $table.actions,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get evidenceKind => $composableBuilder(
+    column: $table.evidenceKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minAge => $composableBuilder(
+    column: $table.minAge,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get maxAge => $composableBuilder(
+    column: $table.maxAge,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MissionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MissionsTable> {
+  $$MissionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get icon =>
+      $composableBuilder(column: $table.icon, builder: (column) => column);
+
+  GeneratedColumn<String> get tagline =>
+      $composableBuilder(column: $table.tagline, builder: (column) => column);
+
+  GeneratedColumn<String> get why =>
+      $composableBuilder(column: $table.why, builder: (column) => column);
+
+  GeneratedColumn<String> get builds =>
+      $composableBuilder(column: $table.builds, builder: (column) => column);
+
+  GeneratedColumn<String> get rules =>
+      $composableBuilder(column: $table.rules, builder: (column) => column);
+
+  GeneratedColumn<String> get actions =>
+      $composableBuilder(column: $table.actions, builder: (column) => column);
+
+  GeneratedColumn<String> get evidenceKind => $composableBuilder(
+    column: $table.evidenceKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get minAge =>
+      $composableBuilder(column: $table.minAge, builder: (column) => column);
+
+  GeneratedColumn<int> get maxAge =>
+      $composableBuilder(column: $table.maxAge, builder: (column) => column);
+
+  GeneratedColumn<int> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<int> get sort =>
+      $composableBuilder(column: $table.sort, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$MissionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MissionsTable,
+          Mission,
+          $$MissionsTableFilterComposer,
+          $$MissionsTableOrderingComposer,
+          $$MissionsTableAnnotationComposer,
+          $$MissionsTableCreateCompanionBuilder,
+          $$MissionsTableUpdateCompanionBuilder,
+          (Mission, BaseReferences<_$AppDatabase, $MissionsTable, Mission>),
+          Mission,
+          PrefetchHooks Function()
+        > {
+  $$MissionsTableTableManager(_$AppDatabase db, $MissionsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MissionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MissionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MissionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> icon = const Value.absent(),
+                Value<String?> tagline = const Value.absent(),
+                Value<String?> why = const Value.absent(),
+                Value<String?> builds = const Value.absent(),
+                Value<String?> rules = const Value.absent(),
+                Value<String?> actions = const Value.absent(),
+                Value<String> evidenceKind = const Value.absent(),
+                Value<int?> minAge = const Value.absent(),
+                Value<int?> maxAge = const Value.absent(),
+                Value<int> isActive = const Value.absent(),
+                Value<int> sort = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MissionsCompanion(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                icon: icon,
+                tagline: tagline,
+                why: why,
+                builds: builds,
+                rules: rules,
+                actions: actions,
+                evidenceKind: evidenceKind,
+                minAge: minAge,
+                maxAge: maxAge,
+                isActive: isActive,
+                sort: sort,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String name,
+                Value<String?> icon = const Value.absent(),
+                Value<String?> tagline = const Value.absent(),
+                Value<String?> why = const Value.absent(),
+                Value<String?> builds = const Value.absent(),
+                Value<String?> rules = const Value.absent(),
+                Value<String?> actions = const Value.absent(),
+                required String evidenceKind,
+                Value<int?> minAge = const Value.absent(),
+                Value<int?> maxAge = const Value.absent(),
+                required int isActive,
+                required int sort,
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MissionsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                name: name,
+                icon: icon,
+                tagline: tagline,
+                why: why,
+                builds: builds,
+                rules: rules,
+                actions: actions,
+                evidenceKind: evidenceKind,
+                minAge: minAge,
+                maxAge: maxAge,
+                isActive: isActive,
+                sort: sort,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MissionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MissionsTable,
+      Mission,
+      $$MissionsTableFilterComposer,
+      $$MissionsTableOrderingComposer,
+      $$MissionsTableAnnotationComposer,
+      $$MissionsTableCreateCompanionBuilder,
+      $$MissionsTableUpdateCompanionBuilder,
+      (Mission, BaseReferences<_$AppDatabase, $MissionsTable, Mission>),
+      Mission,
+      PrefetchHooks Function()
+    >;
 typedef $$LocationsTableCreateCompanionBuilder =
     LocationsCompanion Function({
       required String id,
@@ -33148,6 +34444,8 @@ class $AppDatabaseManager {
       $$ExportRecipientsTableTableManager(_db, _db.exportRecipients);
   $$SuppliesTableTableManager get supplies =>
       $$SuppliesTableTableManager(_db, _db.supplies);
+  $$MissionsTableTableManager get missions =>
+      $$MissionsTableTableManager(_db, _db.missions);
   $$LocationsTableTableManager get locations =>
       $$LocationsTableTableManager(_db, _db.locations);
   $$ActivitiesTableTableManager get activities =>

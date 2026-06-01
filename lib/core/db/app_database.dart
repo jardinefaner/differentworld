@@ -14,6 +14,7 @@ import 'package:differentworld/core/db/dao/invites_dao.dart';
 import 'package:differentworld/core/db/dao/locations_dao.dart';
 import 'package:differentworld/core/db/dao/members_dao.dart';
 import 'package:differentworld/core/db/dao/messages_dao.dart';
+import 'package:differentworld/core/db/dao/missions_dao.dart';
 import 'package:differentworld/core/db/dao/schedule_dao.dart';
 import 'package:differentworld/core/db/dao/spaces_dao.dart';
 import 'package:differentworld/core/db/dao/subjects_dao.dart';
@@ -537,6 +538,32 @@ class Locations extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Real jobs a kid (or counselor) actually does, with real evidence
+/// (docs/MISSIONS.md). The grounded counterpart to the imaginative Role
+/// Cards. `actions` is a JSON array string (parse client-side);
+/// `isActive` is 0/1; `evidenceKind` is photo/count/note/check.
+class Missions extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get name => text()();
+  TextColumn get icon => text().nullable()();
+  TextColumn get tagline => text().nullable()();
+  TextColumn get why => text().nullable()();
+  TextColumn get builds => text().nullable()();
+  TextColumn get rules => text().nullable()();
+  TextColumn get actions => text().nullable()();
+  TextColumn get evidenceKind => text()();
+  IntColumn get minAge => integer().nullable()();
+  IntColumn get maxAge => integer().nullable()();
+  IntColumn get isActive => integer()(); // 0/1
+  IntColumn get sort => integer()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The program's real-world inventory (docs/SUPPLIES.md). A catalog
 /// referenced by id from the things that consume it. `quantity` /
 /// `lowStockThreshold` are doubles; `photoUrl` is a Storage path.
@@ -780,6 +807,8 @@ class Events extends Table {
           Exports, ExportRecipients,
           // Supplies inventory.
           Supplies,
+          // Missions — real jobs with evidence.
+          Missions,
           // Camp scheduling.
           Locations, Activities, ScheduleBlocks, TripLogistics,
           TripVehicles, PermissionSlips, Headcounts,
@@ -802,6 +831,7 @@ class Events extends Table {
     InvitesDao,
     MembersDao,
     MessagesDao,
+    MissionsDao,
     SpacesDao,
     SubjectsDao,
     SuppliesDao,
