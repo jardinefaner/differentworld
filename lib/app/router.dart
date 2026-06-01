@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
@@ -825,6 +826,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/this-or-that',
             builder: (_, _) => const ThisOrThatScreen(),
+          ),
+          // "Starts with" word game — content from the content bank.
+          GoRoute(
+            path: '/activity/starts-with',
+            builder: (_, _) => const LetterWordsScreen(),
           ),
         ],
       ),

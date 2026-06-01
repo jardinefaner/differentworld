@@ -214,6 +214,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     aliases: const ['this', 'tot', 'wouldyourather'],
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/this-or-that')),
   ),
+  SlashCommand(
+    name: 'startswith',
+    label: '/startswith',
+    hint: 'Play the starts-with-a-letter word game',
+    icon: Icons.abc,
+    aliases: const ['letters', 'ck', 'words'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/starts-with')),
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',
