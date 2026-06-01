@@ -49,227 +49,230 @@ class MainDrawer extends ConsumerWidget {
       shape: const RoundedRectangleBorder(),
       child: GlassPanel(
         child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header — program breadcrumb + profile row.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (space != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
-                      child: Text(
-                        space.name,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          letterSpacing: 0.4,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header — program breadcrumb + profile row.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (space != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          space.name,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            letterSpacing: 0.4,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  // Profile row: tap the row → your own member detail;
-                  // tap the icon at the right → sign out.
-                  Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: member == null
-                          ? null
-                          : () {
-                              Navigator.of(context).pop(); // close drawer
-                              unawaited(
-                                context.push('/settings/team/${member.id}'),
-                              );
-                            },
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                        child: Row(
-                          children: [
-                            PersonAvatar(
-                              // viewer.displayName routes through
-                              // GuardianViewer for guardians (returns
-                              // guardian.name) and falls back to
-                              // member.displayName for staff. Using the
-                              // member field directly was leaving the
-                              // guardian avatar with a "?" because the
-                              // staff member row carries an email-local-
-                              // part placeholder, not their real name.
-                              name: () {
-                                final n = viewer.displayName;
-                                return n.isEmpty ? '?' : n;
-                              }(),
-                              photoUrl: member?.avatarUrl,
-                              radius: 22,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    viewer.displayName.isEmpty
-                                        ? '—'
-                                        : viewer.displayName,
-                                    style: theme.textTheme.titleMedium,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    viewer is GuardianViewer
-                                        ? 'Family'
-                                        : RoleLabels.of(
-                                            viewer.roleKey,
-                                            vertical: vertical,
-                                          ),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: 'Sign out',
-                              icon: Icon(
-                                Icons.logout,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              onPressed: () async {
-                                final navigator = Navigator.of(context);
-                                final auth = ref.read(authActionsProvider);
-                                navigator.pop(); // close drawer
-                                await auth.signOut();
+                    // Profile row: tap the row → your own member detail;
+                    // tap the icon at the right → sign out.
+                    Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: member == null
+                            ? null
+                            : () {
+                                Navigator.of(context).pop(); // close drawer
+                                unawaited(
+                                  context.push('/settings/team/${member.id}'),
+                                );
                               },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Hero "Search anything" tile — the canonical entry point
-            // to the omnibox spine. Lives at the top of the drawer so
-            // the affordance is the first thing a user sees. The
-            // drawer below shrinks to a 5-item top-level orientation
-            // list; everything else is in the omnibox.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-              child: Material(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(14),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).pop(); // close drawer first
-                    unawaited(showOmnibox(context));
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.search,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onPrimaryContainer,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                          child: Row(
                             children: [
-                              Text(
-                                'Search anything',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleSmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                              PersonAvatar(
+                                // viewer.displayName routes through
+                                // GuardianViewer for guardians (returns
+                                // guardian.name) and falls back to
+                                // member.displayName for staff. Using the
+                                // member field directly was leaving the
+                                // guardian avatar with a "?" because the
+                                // staff member row carries an email-local-
+                                // part placeholder, not their real name.
+                                name: () {
+                                  final n = viewer.displayName;
+                                  return n.isEmpty ? '?' : n;
+                                }(),
+                                photoUrl: member?.avatarUrl,
+                                radius: 22,
                               ),
-                              Text(
-                                'Pages, actions, kids, vehicles · Cmd+K',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer
-                                          .withValues(alpha: 0.8),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      viewer.displayName.isEmpty
+                                          ? '—'
+                                          : viewer.displayName,
+                                      style: theme.textTheme.titleMedium,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
+                                    Text(
+                                      viewer is GuardianViewer
+                                          ? 'Family'
+                                          : RoleLabels.of(
+                                              viewer.roleKey,
+                                              vertical: vertical,
+                                            ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Sign out',
+                                icon: Icon(
+                                  Icons.logout,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                onPressed: () async {
+                                  final navigator = Navigator.of(context);
+                                  final auth = ref.read(authActionsProvider);
+                                  navigator.pop(); // close drawer
+                                  await auth.signOut();
+                                },
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Hero "Search anything" tile — the canonical entry point
+              // to the omnibox spine. Lives at the top of the drawer so
+              // the affordance is the first thing a user sees. The
+              // drawer below shrinks to a 5-item top-level orientation
+              // list; everything else is in the omnibox.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: Material(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop(); // close drawer first
+                      unawaited(showOmnibox(context));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.search,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Search anything',
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                Text(
+                                  'Pages, actions, kids, vehicles · Cmd+K',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer
+                                            .withValues(alpha: 0.8),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // The five top-level orientation destinations. Everything
-            // else (Classrooms, Team, Program settings, Billing,
-            // Activities, Locations, etc.) lives in the omnibox.
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.only(bottom: 16),
-                children: [
-                  _DrawerTile(
-                    icon: Icons.today_outlined,
-                    label: 'Today',
-                    onTap: () => _go(context, '/'),
-                  ),
-                  _DrawerTile(
-                    icon: Icons.calendar_month_outlined,
-                    label: 'Schedule',
-                    onTap: () => _go(context, '/schedule'),
-                  ),
-                  _DrawerTile(
-                    icon: Icons.inbox_outlined,
-                    label: 'Captures',
-                    onTap: () => _go(context, '/captures'),
-                    // Open captures = items awaiting triage. Shown as
-                    // a primary-tinted badge so the user sees the
-                    // inbox depth without opening the screen (Wave
-                    // 65, addresses "inbox is hidden" feedback).
-                    count: ref.watch(openCapturesProvider).value?.length ?? 0,
-                  ),
-                  _DrawerTile(
-                    icon: Icons.check_circle_outline,
-                    label: 'Tasks',
-                    onTap: () => _go(context, '/tasks'),
-                    count: ref.watch(openTasksProvider).value?.length ?? 0,
-                  ),
-                  _DrawerTile(
-                    icon: Icons.settings_outlined,
-                    label: 'Settings',
-                    onTap: () => _go(context, '/settings'),
-                  ),
-                ],
+              // The five top-level orientation destinations. Everything
+              // else (Classrooms, Team, Program settings, Billing,
+              // Activities, Locations, etc.) lives in the omnibox.
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  children: [
+                    _DrawerTile(
+                      icon: Icons.today_outlined,
+                      label: 'Today',
+                      onTap: () => _go(context, '/'),
+                    ),
+                    _DrawerTile(
+                      icon: Icons.calendar_month_outlined,
+                      label: 'Schedule',
+                      onTap: () => _go(context, '/schedule'),
+                    ),
+                    _DrawerTile(
+                      icon: Icons.inbox_outlined,
+                      label: 'Captures',
+                      onTap: () => _go(context, '/captures'),
+                      // Open captures = items awaiting triage. Shown as
+                      // a primary-tinted badge so the user sees the
+                      // inbox depth without opening the screen (Wave
+                      // 65, addresses "inbox is hidden" feedback).
+                      count: ref.watch(openCapturesProvider).value?.length ?? 0,
+                    ),
+                    _DrawerTile(
+                      icon: Icons.check_circle_outline,
+                      label: 'Tasks',
+                      onTap: () => _go(context, '/tasks'),
+                      count: ref.watch(openTasksProvider).value?.length ?? 0,
+                    ),
+                    _DrawerTile(
+                      icon: Icons.bubble_chart_outlined,
+                      label: 'Brain Breaks',
+                      onTap: () => _go(context, '/breaks'),
+                    ),
+                    _DrawerTile(
+                      icon: Icons.settings_outlined,
+                      label: 'Settings',
+                      onTap: () => _go(context, '/settings'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

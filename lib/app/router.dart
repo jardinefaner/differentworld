@@ -6,6 +6,7 @@ import 'package:differentworld/core/db/app_database.dart'
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
+import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
@@ -800,6 +801,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (_, _) => const NoTransitionPage<void>(
               child: OmniboxSearchScreen(),
             ),
+          ),
+          // The Brain Breaks deck — the home for the activity e-cards.
+          GoRoute(
+            path: '/breaks',
+            builder: (_, _) => const BrainBreaksScreen(),
           ),
           // The Math inverse activity — a conducted, kid-mode experience
           // (docs/ACTIVITY_RUNTIME.md, Slice 2). Under the ShellRoute so

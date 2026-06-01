@@ -230,6 +230,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     aliases: const ['acting', 'drama', 'act'],
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/as-if')),
   ),
+  SlashCommand(
+    name: 'breaks',
+    label: '/breaks',
+    hint: 'Open the Brain Breaks deck',
+    icon: Icons.bubble_chart_outlined,
+    aliases: const ['break', 'brainbreaks', 'games', 'play'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/breaks')),
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',
