@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
@@ -117,8 +118,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Once the staff exit dance completes, the surface's dispose
       // clears the locked route, and navigation resumes normally.
       final lockedRoute = ref.read(kidModeLockedRouteProvider);
-      if (lockedRoute != null &&
-          state.matchedLocation != lockedRoute) {
+      if (lockedRoute != null && state.matchedLocation != lockedRoute) {
         return lockedRoute;
       }
       return null;
@@ -132,274 +132,397 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, _, child) => AppShell(child: child),
         routes: [
-      GoRoute(
-        path: '/',
-        builder: (_, _) => const RouteTitle(title: 'Today', child: _Home()),
-        routes: [
           GoRoute(
-            path: 'checklist',
-            builder: (_, state) => RouteTitle(
-              title: 'Morning checklist',
-              child: MorningChecklistScreen(
-                initialFilter: state.uri.queryParameters['filter'],
-              ),
-            ),
-          ),
-          GoRoute(
-            path: 'groups/new',
-            builder: (_, _) => const RouteTitle(
-              title: 'New classroom',
-              child: GroupEditScreen(),
-            ),
-          ),
-          GoRoute(
-            path: 'groups/:id',
-            // Dynamic title (group name) is set INSIDE GroupDetailScreen
-            // — see its build method. Same pattern for student detail
-            // and member detail below.
-            builder: (_, state) => GroupDetailScreen(
-              groupId: state.pathParameters['id']!,
-            ),
+            path: '/',
+            builder: (_, _) => const RouteTitle(title: 'Today', child: _Home()),
             routes: [
               GoRoute(
-                path: 'edit',
+                path: 'checklist',
                 builder: (_, state) => RouteTitle(
-                  title: 'Edit classroom',
-                  child: GroupEditScreen(
-                    groupId: state.pathParameters['id'],
+                  title: 'Morning checklist',
+                  child: MorningChecklistScreen(
+                    initialFilter: state.uri.queryParameters['filter'],
                   ),
                 ),
               ),
               GoRoute(
-                path: 'attendance',
-                builder: (_, state) => RouteTitle(
-                  title: 'Attendance',
-                  child: AttendanceScreen(
-                    groupId: state.pathParameters['id']!,
-                  ),
+                path: 'groups/new',
+                builder: (_, _) => const RouteTitle(
+                  title: 'New classroom',
+                  child: GroupEditScreen(),
                 ),
               ),
               GoRoute(
-                path: 'observations',
-                builder: (_, state) => RouteTitle(
-                  title: 'Observations',
-                  child: ObservationsScreen(
-                    groupId: state.pathParameters['id']!,
-                  ),
-                ),
-              ),
-              GoRoute(
-                path: 'students/new',
-                builder: (_, state) => RouteTitle(
-                  title: 'New student',
-                  child: SubjectEditScreen(
-                    groupId: state.pathParameters['id']!,
-                  ),
-                ),
-              ),
-              GoRoute(
-                path: 'students/:sid',
-                // Dynamic title set in SubjectDetailScreen.
-                builder: (_, state) => SubjectDetailScreen(
-                  subjectId: state.pathParameters['sid']!,
+                path: 'groups/:id',
+                // Dynamic title (group name) is set INSIDE GroupDetailScreen
+                // — see its build method. Same pattern for student detail
+                // and member detail below.
+                builder: (_, state) => GroupDetailScreen(
+                  groupId: state.pathParameters['id']!,
                 ),
                 routes: [
                   GoRoute(
                     path: 'edit',
                     builder: (_, state) => RouteTitle(
-                      title: 'Edit student',
+                      title: 'Edit classroom',
+                      child: GroupEditScreen(
+                        groupId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'attendance',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Attendance',
+                      child: AttendanceScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'observations',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Observations',
+                      child: ObservationsScreen(
+                        groupId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'students/new',
+                    builder: (_, state) => RouteTitle(
+                      title: 'New student',
                       child: SubjectEditScreen(
                         groupId: state.pathParameters['id']!,
-                        subjectId: state.pathParameters['sid'],
                       ),
                     ),
                   ),
-                  // Progress-report PDF — preview + share/print.
-                  // Reached from the staff subject detail screen.
                   GoRoute(
-                    path: 'progress-report',
-                    builder: (_, state) => RouteTitle(
-                      title: 'Progress report',
-                      child: ProgressReportScreen(
-                        subjectId: state.pathParameters['sid']!,
-                      ),
+                    path: 'students/:sid',
+                    // Dynamic title set in SubjectDetailScreen.
+                    builder: (_, state) => SubjectDetailScreen(
+                      subjectId: state.pathParameters['sid']!,
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        builder: (_, state) => RouteTitle(
+                          title: 'Edit student',
+                          child: SubjectEditScreen(
+                            groupId: state.pathParameters['id']!,
+                            subjectId: state.pathParameters['sid'],
+                          ),
+                        ),
+                      ),
+                      // Progress-report PDF — preview + share/print.
+                      // Reached from the staff subject detail screen.
+                      GoRoute(
+                        path: 'progress-report',
+                        builder: (_, state) => RouteTitle(
+                          title: 'Progress report',
+                          child: ProgressReportScreen(
+                            subjectId: state.pathParameters['sid']!,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          // Top-level observations index — every observation the
-          // viewer can see, newest first. See UX_DECISIONS §8.
-          GoRoute(
-            path: 'observations',
-            builder: (_, _) => const RouteTitle(
-              title: 'Observations',
-              child: ObservationsIndexScreen(),
-            ),
-            routes: [
-              // Create-observation route (Wave 21, replaces the old
-              // `ObservationFormSheet.show`). Query params let the
-              // caller pre-fill groupId + subjectId.
+              // Top-level observations index — every observation the
+              // viewer can see, newest first. See UX_DECISIONS §8.
               GoRoute(
-                path: 'new',
-                builder: (_, state) {
-                  final q = state.uri.queryParameters;
-                  return RouteTitle(
-                    title: 'New observation',
-                    child: ObservationFormScreen(
-                      groupId: q['groupId'],
-                      initialSubjectId: q['subjectId'],
-                    ),
-                  );
-                },
-              ),
-              // Edit-observation route. The Entry is passed via
-              // go_router `extra` so we don't re-fetch by id (the
-              // caller already has the row in memory).
-              GoRoute(
-                path: ':id/edit',
-                builder: (_, state) {
-                  final entry = state.extra;
-                  return RouteTitle(
-                    title: 'Edit observation',
-                    child: ObservationFormScreen(
-                      existing: entry is Entry ? entry : null,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-          // Insights — questions surfaced by the upward loop from
-          // patterns in existing data (attendance / certs / vehicles
-          // / observations / surveys). No new schema; pure derivation.
-          GoRoute(
-            path: 'insights',
-            builder: (_, _) => const RouteTitle(
-              title: 'Insights',
-              child: InsightsScreen(),
-            ),
-          ),
-          // Capture inbox — the upward loop's *input* side. Quick
-          // "I noticed…" notes awaiting triage into observations
-          // or dismissal.
-          GoRoute(
-            path: 'captures',
-            builder: (_, _) => const RouteTitle(
-              title: 'Captures',
-              child: CaptureInboxScreen(),
-            ),
-            routes: [
-              // New-capture surface as a real route (Wave 21,
-              // replaces the old `showCaptureSheet` bottom-sheet).
-              GoRoute(
-                path: 'new',
+                path: 'observations',
                 builder: (_, _) => const RouteTitle(
-                  title: 'New capture',
-                  child: CaptureScreen(),
-                ),
-              ),
-            ],
-          ),
-          // Tasks — the third capture-promotion destination, and a
-          // standalone to-do list for the program.
-          GoRoute(
-            path: 'tasks',
-            builder: (_, _) => const RouteTitle(
-              title: 'Tasks',
-              child: TasksScreen(),
-            ),
-            routes: [
-              // New-task surface as a real route (Wave 21,
-              // replaces the old `showNewTaskSheet` bottom-sheet).
-              GoRoute(
-                path: 'new',
-                builder: (_, _) => const RouteTitle(
-                  title: 'New task',
-                  child: TaskScreen(),
-                ),
-              ),
-            ],
-          ),
-          // Messages — `/messages` is the family-side index (one row
-          // per linked child). Threads themselves are reached at
-          // `/messages/:subjectId/:guardianId` from either the family
-          // index or the staff subject_detail.
-          GoRoute(
-            path: 'messages',
-            builder: (_, _) => const RouteTitle(
-              title: 'Messages',
-              child: FamilyMessagesScreen(),
-            ),
-          ),
-          GoRoute(
-            path: 'messages/:subjectId/:guardianId',
-            // Dynamic title set in MessageThreadScreen.
-            builder: (_, state) => MessageThreadScreen(
-              subjectId: state.pathParameters['subjectId']!,
-              guardianId: state.pathParameters['guardianId']!,
-            ),
-          ),
-          // Weekly review — same data as /insights but presented as a
-          // guided one-question-per-page flow. The framework's
-          // medium-tempo surface.
-          GoRoute(
-            path: 'review',
-            builder: (_, _) => const RouteTitle(
-              title: 'Weekly review',
-              child: WeeklyReviewScreen(),
-            ),
-            routes: [
-              // Yearly review — the long-tempo Foundation re-grounding.
-              // A calm snapshot + three open-ended prompts; no data to
-              // submit, just orientation.
-              GoRoute(
-                path: 'year',
-                builder: (_, _) => const RouteTitle(
-                  title: 'Yearly review',
-                  child: YearlyReviewScreen(),
-                ),
-              ),
-            ],
-          ),
-          // Surveys — index of templates + per-template list of kids
-          // + take-survey flow.
-          GoRoute(
-            path: 'surveys',
-            builder: (_, _) => const RouteTitle(
-              title: 'Surveys',
-              child: SurveyIndexScreen(),
-            ),
-            routes: [
-              GoRoute(
-                path: ':templateId',
-                // Dynamic title set in SurveyTemplateDetailScreen.
-                builder: (_, state) => SurveyTemplateDetailScreen(
-                  templateId: state.pathParameters['templateId']!,
+                  title: 'Observations',
+                  child: ObservationsIndexScreen(),
                 ),
                 routes: [
-                  // Wave 138: anonymous take. The screen owns the
-                  // response id (generated in initState) so the
-                  // route itself doesn't carry one — every
-                  // navigation to `/surveys/:templateId/take`
-                  // starts a fresh session. No resume by design;
-                  // the user's "Start a new survey" button always
-                  // lands here.
+                  // Create-observation route (Wave 21, replaces the old
+                  // `ObservationFormSheet.show`). Query params let the
+                  // caller pre-fill groupId + subjectId.
                   GoRoute(
-                    path: 'take',
-                    builder: (_, state) => SurveyTakeScreen(
-                      templateId: state.pathParameters['templateId']!,
+                    path: 'new',
+                    builder: (_, state) {
+                      final q = state.uri.queryParameters;
+                      return RouteTitle(
+                        title: 'New observation',
+                        child: ObservationFormScreen(
+                          groupId: q['groupId'],
+                          initialSubjectId: q['subjectId'],
+                        ),
+                      );
+                    },
+                  ),
+                  // Edit-observation route. The Entry is passed via
+                  // go_router `extra` so we don't re-fetch by id (the
+                  // caller already has the row in memory).
+                  GoRoute(
+                    path: ':id/edit',
+                    builder: (_, state) {
+                      final entry = state.extra;
+                      return RouteTitle(
+                        title: 'Edit observation',
+                        child: ObservationFormScreen(
+                          existing: entry is Entry ? entry : null,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              // Insights — questions surfaced by the upward loop from
+              // patterns in existing data (attendance / certs / vehicles
+              // / observations / surveys). No new schema; pure derivation.
+              GoRoute(
+                path: 'insights',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Insights',
+                  child: InsightsScreen(),
+                ),
+              ),
+              // Capture inbox — the upward loop's *input* side. Quick
+              // "I noticed…" notes awaiting triage into observations
+              // or dismissal.
+              GoRoute(
+                path: 'captures',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Captures',
+                  child: CaptureInboxScreen(),
+                ),
+                routes: [
+                  // New-capture surface as a real route (Wave 21,
+                  // replaces the old `showCaptureSheet` bottom-sheet).
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'New capture',
+                      child: CaptureScreen(),
                     ),
                   ),
-                  // Spreadsheet review across kids — director scans
-                  // patterns and exports CSV.
+                ],
+              ),
+              // Tasks — the third capture-promotion destination, and a
+              // standalone to-do list for the program.
+              GoRoute(
+                path: 'tasks',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Tasks',
+                  child: TasksScreen(),
+                ),
+                routes: [
+                  // New-task surface as a real route (Wave 21,
+                  // replaces the old `showNewTaskSheet` bottom-sheet).
                   GoRoute(
-                    path: 'table',
+                    path: 'new',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'New task',
+                      child: TaskScreen(),
+                    ),
+                  ),
+                ],
+              ),
+              // Messages — `/messages` is the family-side index (one row
+              // per linked child). Threads themselves are reached at
+              // `/messages/:subjectId/:guardianId` from either the family
+              // index or the staff subject_detail.
+              GoRoute(
+                path: 'messages',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Messages',
+                  child: FamilyMessagesScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'messages/:subjectId/:guardianId',
+                // Dynamic title set in MessageThreadScreen.
+                builder: (_, state) => MessageThreadScreen(
+                  subjectId: state.pathParameters['subjectId']!,
+                  guardianId: state.pathParameters['guardianId']!,
+                ),
+              ),
+              // Weekly review — same data as /insights but presented as a
+              // guided one-question-per-page flow. The framework's
+              // medium-tempo surface.
+              GoRoute(
+                path: 'review',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Weekly review',
+                  child: WeeklyReviewScreen(),
+                ),
+                routes: [
+                  // Yearly review — the long-tempo Foundation re-grounding.
+                  // A calm snapshot + three open-ended prompts; no data to
+                  // submit, just orientation.
+                  GoRoute(
+                    path: 'year',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'Yearly review',
+                      child: YearlyReviewScreen(),
+                    ),
+                  ),
+                ],
+              ),
+              // Surveys — index of templates + per-template list of kids
+              // + take-survey flow.
+              GoRoute(
+                path: 'surveys',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Surveys',
+                  child: SurveyIndexScreen(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: ':templateId',
+                    // Dynamic title set in SurveyTemplateDetailScreen.
+                    builder: (_, state) => SurveyTemplateDetailScreen(
+                      templateId: state.pathParameters['templateId']!,
+                    ),
+                    routes: [
+                      // Wave 138: anonymous take. The screen owns the
+                      // response id (generated in initState) so the
+                      // route itself doesn't carry one — every
+                      // navigation to `/surveys/:templateId/take`
+                      // starts a fresh session. No resume by design;
+                      // the user's "Start a new survey" button always
+                      // lands here.
+                      GoRoute(
+                        path: 'take',
+                        builder: (_, state) => SurveyTakeScreen(
+                          templateId: state.pathParameters['templateId']!,
+                        ),
+                      ),
+                      // Spreadsheet review across kids — director scans
+                      // patterns and exports CSV.
+                      GoRoute(
+                        path: 'table',
+                        builder: (_, state) => RouteTitle(
+                          title: 'Survey table',
+                          child: SurveyTableScreen(
+                            templateId: state.pathParameters['templateId']!,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              // Family-side direct route: a guardian navigates to a child
+              // without going through a classroom they don't see. Renders
+              // a read-only family-tailored detail (no admin chrome) —
+              // staff hitting their kid's profile use the nested staff
+              // route at /groups/:id/students/:sid instead.
+              GoRoute(
+                path: 'children/:sid',
+                // Dynamic title (kid name) set in FamilySubjectDetailScreen.
+                builder: (_, state) => FamilySubjectDetailScreen(
+                  subjectId: state.pathParameters['sid']!,
+                ),
+              ),
+              // Camp scheduling — staff-facing.
+              GoRoute(
+                path: 'schedule',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Schedule',
+                  child: ScheduleScreen(),
+                ),
+              ),
+              // Wave 154: weekly template authoring.
+              GoRoute(
+                path: 'schedule/template',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Weekly template',
+                  child: WeeklyTemplateScreen(),
+                ),
+              ),
+              // Wave 159: trip detail (MVP). One screen per
+              // field-trip schedule_block — destination, slips,
+              // vehicles. The full multi-step wizard sits on top later.
+              GoRoute(
+                path: 'trips/:blockId',
+                builder: (_, state) => RouteTitle(
+                  title: 'Trip details',
+                  child: TripDetailScreen(
+                    blockId: state.pathParameters['blockId']!,
+                  ),
+                ),
+              ),
+              // Block create/edit route (Wave 26, replaces
+              // `BlockEditSheet`). Args ride via go_router `extra` as
+              // a `BlockEditArgs` record; missing-extra falls back to
+              // the schedule screen (the only valid entry path).
+              GoRoute(
+                path: 'schedule/block',
+                builder: (_, state) {
+                  final args = state.extra;
+                  if (args is! BlockEditArgs) {
+                    return const RouteTitle(
+                      title: 'Schedule',
+                      child: ScheduleScreen(),
+                    );
+                  }
+                  return RouteTitle(
+                    title: args.existing == null ? 'New block' : 'Edit block',
+                    child: BlockEditScreen(
+                      groupId: args.groupId,
+                      defaultStart: args.defaultStart,
+                      existing: args.existing,
+                      prefillCurriculumSlug: args.prefillCurriculumSlug,
+                    ),
+                  );
+                },
+              ),
+              // Send-export route (Wave 25, replaces
+              // `showSendExportSheet`). Export passed via `extra`;
+              // missing-extra falls back to a small error screen.
+              GoRoute(
+                path: 'exports/:id/send',
+                builder: (_, state) {
+                  final export = state.extra;
+                  if (export is! Export) {
+                    return const _MissingExportScreen();
+                  }
+                  return RouteTitle(
+                    title: 'Send report',
+                    child: SendExportScreen(export: export),
+                  );
+                },
+              ),
+              // Subject health profile (Wave 27, replaces
+              // `HealthProfileSheet`). Subject passed via `extra`.
+              GoRoute(
+                path: 'subjects/:id/health',
+                builder: (_, state) {
+                  final subject = state.extra;
+                  if (subject is! Subject) {
+                    return const _MissingSubjectScreen();
+                  }
+                  return RouteTitle(
+                    title: 'Health profile',
+                    child: HealthProfileScreen(subject: subject),
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'activities',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Activities',
+                  child: ActivitiesListScreen(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'New activity',
+                      child: ActivityEditScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':id',
                     builder: (_, state) => RouteTitle(
-                      title: 'Survey table',
-                      child: SurveyTableScreen(
-                        templateId: state.pathParameters['templateId']!,
+                      title: 'Edit activity',
+                      child: ActivityEditScreen(
+                        activityId: state.pathParameters['id'],
                       ),
                     ),
                   ),
@@ -407,390 +530,284 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Family-side direct route: a guardian navigates to a child
-          // without going through a classroom they don't see. Renders
-          // a read-only family-tailored detail (no admin chrome) —
-          // staff hitting their kid's profile use the nested staff
-          // route at /groups/:id/students/:sid instead.
           GoRoute(
-            path: 'children/:sid',
-            // Dynamic title (kid name) set in FamilySubjectDetailScreen.
-            builder: (_, state) => FamilySubjectDetailScreen(
-              subjectId: state.pathParameters['sid']!,
-            ),
-          ),
-          // Camp scheduling — staff-facing.
-          GoRoute(
-            path: 'schedule',
+            path: '/settings',
             builder: (_, _) => const RouteTitle(
-              title: 'Schedule',
-              child: ScheduleScreen(),
+              title: 'Settings',
+              child: SettingsScreen(),
             ),
-          ),
-          // Wave 154: weekly template authoring.
-          GoRoute(
-            path: 'schedule/template',
-            builder: (_, _) => const RouteTitle(
-              title: 'Weekly template',
-              child: WeeklyTemplateScreen(),
-            ),
-          ),
-          // Wave 159: trip detail (MVP). One screen per
-          // field-trip schedule_block — destination, slips,
-          // vehicles. The full multi-step wizard sits on top later.
-          GoRoute(
-            path: 'trips/:blockId',
-            builder: (_, state) => RouteTitle(
-              title: 'Trip details',
-              child: TripDetailScreen(
-                blockId: state.pathParameters['blockId']!,
-              ),
-            ),
-          ),
-          // Block create/edit route (Wave 26, replaces
-          // `BlockEditSheet`). Args ride via go_router `extra` as
-          // a `BlockEditArgs` record; missing-extra falls back to
-          // the schedule screen (the only valid entry path).
-          GoRoute(
-            path: 'schedule/block',
-            builder: (_, state) {
-              final args = state.extra;
-              if (args is! BlockEditArgs) {
-                return const RouteTitle(
-                  title: 'Schedule',
-                  child: ScheduleScreen(),
-                );
-              }
-              return RouteTitle(
-                title: args.existing == null ? 'New block' : 'Edit block',
-                child: BlockEditScreen(
-                  groupId: args.groupId,
-                  defaultStart: args.defaultStart,
-                  existing: args.existing,
-                  prefillCurriculumSlug: args.prefillCurriculumSlug,
+            routes: [
+              GoRoute(
+                path: 'program',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Program',
+                  child: ProgramSettingsScreen(),
                 ),
-              );
-            },
+              ),
+              GoRoute(
+                path: 'locations',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Locations',
+                  child: LocationsListScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'roles',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Roles',
+                  child: RolesScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'toolkit',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Teacher Toolkit',
+                  child: ToolkitScreen(),
+                ),
+                routes: [
+                  // Per-tool detail as its own route — phone canvases push
+                  // here from the catalog feed; deep-links land here too.
+                  GoRoute(
+                    path: ':slug',
+                    builder: (_, state) => ToolkitToolScreen(
+                      slug: state.pathParameters['slug']!,
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'curricula/photo',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Through My Eyes',
+                  child: PhotoCurriculumScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'team',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Team',
+                  child: TeamScreen(),
+                ),
+                routes: [
+                  // Invite flow (Wave 24, replaces InviteCreateSheet +
+                  // InviteShareSheet bottom-sheets). Create → push-replace
+                  // to share so back from share returns to Team, not to
+                  // the create form.
+                  GoRoute(
+                    path: 'invite/new',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'New invite',
+                      child: InviteCreateScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'invite/:id',
+                    builder: (_, state) {
+                      final invite = state.extra;
+                      if (invite is! Invite) {
+                        return const _MissingInviteScreen();
+                      }
+                      return RouteTitle(
+                        title: 'Invite',
+                        child: InviteShareScreen(invite: invite),
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    // Dynamic title set in MemberDetailScreen.
+                    builder: (_, state) => MemberDetailScreen(
+                      memberId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          // Send-export route (Wave 25, replaces
-          // `showSendExportSheet`). Export passed via `extra`;
-          // missing-extra falls back to a small error screen.
+          // Vehicles live at /vehicles (not /settings/vehicles).
+          // Wave 95: driving is a daily operation, not a configuration —
+          // burying it under settings made the route taxonomy lie about
+          // the surface's role. Old /settings/vehicles* URLs still
+          // resolve via a redirect (preserves any printed QR codes that
+          // were generated before this rename).
           GoRoute(
-            path: 'exports/:id/send',
-            builder: (_, state) {
-              final export = state.extra;
-              if (export is! Export) {
-                return const _MissingExportScreen();
-              }
-              return RouteTitle(
-                title: 'Send report',
-                child: SendExportScreen(export: export),
-              );
-            },
-          ),
-          // Subject health profile (Wave 27, replaces
-          // `HealthProfileSheet`). Subject passed via `extra`.
-          GoRoute(
-            path: 'subjects/:id/health',
-            builder: (_, state) {
-              final subject = state.extra;
-              if (subject is! Subject) {
-                return const _MissingSubjectScreen();
-              }
-              return RouteTitle(
-                title: 'Health profile',
-                child: HealthProfileScreen(subject: subject),
-              );
-            },
-          ),
-          GoRoute(
-            path: 'activities',
+            path: '/vehicles',
             builder: (_, _) => const RouteTitle(
-              title: 'Activities',
-              child: ActivitiesListScreen(),
+              title: 'Vehicles',
+              child: VehiclesListScreen(),
             ),
             routes: [
               GoRoute(
                 path: 'new',
                 builder: (_, _) => const RouteTitle(
-                  title: 'New activity',
-                  child: ActivityEditScreen(),
+                  title: 'New vehicle',
+                  child: VehicleEditScreen(),
                 ),
               ),
               GoRoute(
-                path: ':id',
-                builder: (_, state) => RouteTitle(
-                  title: 'Edit activity',
-                  child: ActivityEditScreen(
-                    activityId: state.pathParameters['id'],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (_, _) => const RouteTitle(
-          title: 'Settings',
-          child: SettingsScreen(),
-        ),
-        routes: [
-          GoRoute(
-            path: 'program',
-            builder: (_, _) => const RouteTitle(
-              title: 'Program',
-              child: ProgramSettingsScreen(),
-            ),
-          ),
-          GoRoute(
-            path: 'locations',
-            builder: (_, _) => const RouteTitle(
-              title: 'Locations',
-              child: LocationsListScreen(),
-            ),
-          ),
-          GoRoute(
-            path: 'roles',
-            builder: (_, _) => const RouteTitle(
-              title: 'Roles',
-              child: RolesScreen(),
-            ),
-          ),
-          GoRoute(
-            path: 'toolkit',
-            builder: (_, _) => const RouteTitle(
-              title: 'Teacher Toolkit',
-              child: ToolkitScreen(),
-            ),
-            routes: [
-              // Per-tool detail as its own route — phone canvases push
-              // here from the catalog feed; deep-links land here too.
-              GoRoute(
-                path: ':slug',
-                builder: (_, state) => ToolkitToolScreen(
-                  slug: state.pathParameters['slug']!,
-                ),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: 'curricula/photo',
-            builder: (_, _) => const RouteTitle(
-              title: 'Through My Eyes',
-              child: PhotoCurriculumScreen(),
-            ),
-          ),
-          GoRoute(
-            path: 'team',
-            builder: (_, _) => const RouteTitle(
-              title: 'Team',
-              child: TeamScreen(),
-            ),
-            routes: [
-              // Invite flow (Wave 24, replaces InviteCreateSheet +
-              // InviteShareSheet bottom-sheets). Create → push-replace
-              // to share so back from share returns to Team, not to
-              // the create form.
-              GoRoute(
-                path: 'invite/new',
+                path: 'scan',
                 builder: (_, _) => const RouteTitle(
-                  title: 'New invite',
-                  child: InviteCreateScreen(),
+                  title: 'Scan vehicle',
+                  child: VehicleScanScreen(),
                 ),
-              ),
-              GoRoute(
-                path: 'invite/:id',
-                builder: (_, state) {
-                  final invite = state.extra;
-                  if (invite is! Invite) {
-                    return const _MissingInviteScreen();
-                  }
-                  return RouteTitle(
-                    title: 'Invite',
-                    child: InviteShareScreen(invite: invite),
-                  );
-                },
               ),
               GoRoute(
                 path: ':id',
-                // Dynamic title set in MemberDetailScreen.
-                builder: (_, state) => MemberDetailScreen(
-                  memberId: state.pathParameters['id']!,
+                // Dynamic title (vehicle name) set in VehicleDetailScreen.
+                builder: (_, state) => VehicleDetailScreen(
+                  vehicleId: state.pathParameters['id']!,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Edit vehicle',
+                      child: VehicleEditScreen(
+                        vehicleId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'checkout',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Check out vehicle',
+                      child: VehicleInspectionScreen(
+                        vehicleId: state.pathParameters['id']!,
+                        kind: VehicleLogKind.checkout,
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'checkin',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Check in vehicle',
+                      child: VehicleInspectionScreen(
+                        vehicleId: state.pathParameters['id']!,
+                        kind: VehicleLogKind.checkin,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-      // Vehicles live at /vehicles (not /settings/vehicles).
-      // Wave 95: driving is a daily operation, not a configuration —
-      // burying it under settings made the route taxonomy lie about
-      // the surface's role. Old /settings/vehicles* URLs still
-      // resolve via a redirect (preserves any printed QR codes that
-      // were generated before this rename).
-      GoRoute(
-        path: '/vehicles',
-        builder: (_, _) => const RouteTitle(
-          title: 'Vehicles',
-          child: VehiclesListScreen(),
-        ),
-        routes: [
+          // Compatibility redirect: anything under /settings/vehicles
+          // routes to the equivalent path under /vehicles. Keeps old
+          // QR codes, bookmarks, and shared links working.
           GoRoute(
-            path: 'new',
+            path: '/settings/vehicles',
+            redirect: (_, state) {
+              final tail = state.uri.path.replaceFirst(
+                '/settings/vehicles',
+                '',
+              );
+              final query = state.uri.hasQuery ? '?${state.uri.query}' : '';
+              return '/vehicles$tail$query';
+            },
+          ),
+          // Convenience aliases — the URL space a user would naturally
+          // type or share. Each is a no-op redirect to the canonical
+          // path. Keeps the route tree small while letting people
+          // bookmark `/today` or share `/team` without remembering the
+          // exact route.
+          GoRoute(
+            path: '/today',
+            redirect: (_, _) => '/',
+          ),
+          GoRoute(
+            path: '/home',
+            redirect: (_, _) => '/',
+          ),
+          GoRoute(
+            path: '/team',
+            redirect: (_, _) => '/settings/team',
+          ),
+          GoRoute(
+            path: '/program',
+            redirect: (_, _) => '/settings/program',
+          ),
+          // Subjects-by-id alias: the staff path to a kid's profile lives
+          // at /groups/:gid/students/:sid because the group context is
+          // useful when you got there via a roster. But /subjects/:id
+          // (engine-canonical) and /students/:id (vertical-label) are
+          // both natural URLs to type or share. We look up the subject's
+          // group at redirect time so the canonical URL still works.
+          GoRoute(
+            path: '/subjects/:id',
+            redirect: (context, state) {
+              final id = state.pathParameters['id']!;
+              return '/students/$id';
+            },
+          ),
+          GoRoute(
+            path: '/students/:id',
+            redirect: (context, state) async {
+              final id = state.pathParameters['id']!;
+              final container = ProviderScope.containerOf(
+                context,
+                listen: false,
+              );
+              // Wave 102 (Red Team #4): guardians have no subjects in
+              // local Drift (their data comes via PostgREST fallback at
+              // the family lens), so the Drift lookup below would always
+              // return null and silently redirect to /. A director who
+              // texts `/students/<id>` to a parent expects them to land
+              // on the kid's profile. Detect the guardian path and route
+              // to the family-side surface instead.
+              final viewer = container.read(viewerProvider);
+              if (viewer is GuardianViewer) {
+                return '/children/$id';
+              }
+              try {
+                final db = await container.read(appDatabaseProvider.future);
+                final row = await (db.select(
+                  db.subjects,
+                )..where((s) => s.id.equals(id))).getSingleOrNull();
+                final gid = row?.groupId;
+                if (gid == null) return '/';
+                return '/groups/$gid/students/$id';
+              } on Object {
+                // Any failure during the lookup → home, with the URL
+                // change as the user's signal that something didn't
+                // find what they wanted.
+                return '/';
+              }
+            },
+          ),
+          GoRoute(
+            path: '/login',
             builder: (_, _) => const RouteTitle(
-              title: 'New vehicle',
-              child: VehicleEditScreen(),
+              title: 'Sign in',
+              child: LoginScreen(),
             ),
           ),
+          // The omnibox search screen — pushed when the user taps the
+          // bottom composer. Lives inside the ShellRoute so the persistent
+          // omnibox bar + chrome stay mounted across the push. See Wave 17.
+          //
+          // **NoTransitionPage is load-bearing.** A standard MaterialPage
+          // slide-in transition rotates focus scope mid-flight, which
+          // dismisses the keyboard the user just raised by tapping the
+          // bar. With no transition, focus stays put and the keyboard
+          // stays up — tap-to-search opens the route AND the keyboard
+          // in one step. (Wave 20.)
           GoRoute(
-            path: 'scan',
-            builder: (_, _) => const RouteTitle(
-              title: 'Scan vehicle',
-              child: VehicleScanScreen(),
+            path: '/search',
+            pageBuilder: (_, _) => const NoTransitionPage<void>(
+              child: OmniboxSearchScreen(),
             ),
           ),
+          // The Math inverse activity — a conducted, kid-mode experience
+          // (docs/ACTIVITY_RUNTIME.md, Slice 2). Under the ShellRoute so
+          // AppShell strips its chrome while kid mode is locked. `?target=N`
+          // seeds the answer; defaults to 12.
           GoRoute(
-            path: ':id',
-            // Dynamic title (vehicle name) set in VehicleDetailScreen.
-            builder: (_, state) => VehicleDetailScreen(
-              vehicleId: state.pathParameters['id']!,
+            path: '/activity/math',
+            builder: (_, state) => MathRunnerScreen(
+              target:
+                  int.tryParse(state.uri.queryParameters['target'] ?? '') ?? 12,
             ),
-            routes: [
-              GoRoute(
-                path: 'edit',
-                builder: (_, state) => RouteTitle(
-                  title: 'Edit vehicle',
-                  child: VehicleEditScreen(
-                    vehicleId: state.pathParameters['id'],
-                  ),
-                ),
-              ),
-              GoRoute(
-                path: 'checkout',
-                builder: (_, state) => RouteTitle(
-                  title: 'Check out vehicle',
-                  child: VehicleInspectionScreen(
-                    vehicleId: state.pathParameters['id']!,
-                    kind: VehicleLogKind.checkout,
-                  ),
-                ),
-              ),
-              GoRoute(
-                path: 'checkin',
-                builder: (_, state) => RouteTitle(
-                  title: 'Check in vehicle',
-                  child: VehicleInspectionScreen(
-                    vehicleId: state.pathParameters['id']!,
-                    kind: VehicleLogKind.checkin,
-                  ),
-                ),
-              ),
-            ],
           ),
-        ],
-      ),
-      // Compatibility redirect: anything under /settings/vehicles
-      // routes to the equivalent path under /vehicles. Keeps old
-      // QR codes, bookmarks, and shared links working.
-      GoRoute(
-        path: '/settings/vehicles',
-        redirect: (_, state) {
-          final tail = state.uri.path.replaceFirst('/settings/vehicles', '');
-          final query = state.uri.hasQuery ? '?${state.uri.query}' : '';
-          return '/vehicles$tail$query';
-        },
-      ),
-      // Convenience aliases — the URL space a user would naturally
-      // type or share. Each is a no-op redirect to the canonical
-      // path. Keeps the route tree small while letting people
-      // bookmark `/today` or share `/team` without remembering the
-      // exact route.
-      GoRoute(
-        path: '/today',
-        redirect: (_, _) => '/',
-      ),
-      GoRoute(
-        path: '/home',
-        redirect: (_, _) => '/',
-      ),
-      GoRoute(
-        path: '/team',
-        redirect: (_, _) => '/settings/team',
-      ),
-      GoRoute(
-        path: '/program',
-        redirect: (_, _) => '/settings/program',
-      ),
-      // Subjects-by-id alias: the staff path to a kid's profile lives
-      // at /groups/:gid/students/:sid because the group context is
-      // useful when you got there via a roster. But /subjects/:id
-      // (engine-canonical) and /students/:id (vertical-label) are
-      // both natural URLs to type or share. We look up the subject's
-      // group at redirect time so the canonical URL still works.
-      GoRoute(
-        path: '/subjects/:id',
-        redirect: (context, state) {
-          final id = state.pathParameters['id']!;
-          return '/students/$id';
-        },
-      ),
-      GoRoute(
-        path: '/students/:id',
-        redirect: (context, state) async {
-          final id = state.pathParameters['id']!;
-          final container = ProviderScope.containerOf(context, listen: false);
-          // Wave 102 (Red Team #4): guardians have no subjects in
-          // local Drift (their data comes via PostgREST fallback at
-          // the family lens), so the Drift lookup below would always
-          // return null and silently redirect to /. A director who
-          // texts `/students/<id>` to a parent expects them to land
-          // on the kid's profile. Detect the guardian path and route
-          // to the family-side surface instead.
-          final viewer = container.read(viewerProvider);
-          if (viewer is GuardianViewer) {
-            return '/children/$id';
-          }
-          try {
-            final db = await container.read(appDatabaseProvider.future);
-            final row = await (db.select(db.subjects)
-                  ..where((s) => s.id.equals(id)))
-                .getSingleOrNull();
-            final gid = row?.groupId;
-            if (gid == null) return '/';
-            return '/groups/$gid/students/$id';
-          } on Object {
-            // Any failure during the lookup → home, with the URL
-            // change as the user's signal that something didn't
-            // find what they wanted.
-            return '/';
-          }
-        },
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (_, _) => const RouteTitle(
-          title: 'Sign in',
-          child: LoginScreen(),
-        ),
-      ),
-      // The omnibox search screen — pushed when the user taps the
-      // bottom composer. Lives inside the ShellRoute so the persistent
-      // omnibox bar + chrome stay mounted across the push. See Wave 17.
-      //
-      // **NoTransitionPage is load-bearing.** A standard MaterialPage
-      // slide-in transition rotates focus scope mid-flight, which
-      // dismisses the keyboard the user just raised by tapping the
-      // bar. With no transition, focus stays put and the keyboard
-      // stays up — tap-to-search opens the route AND the keyboard
-      // in one step. (Wave 20.)
-      GoRoute(
-        path: '/search',
-        pageBuilder: (_, _) => const NoTransitionPage<void>(
-          child: OmniboxSearchScreen(),
-        ),
-      ),
         ],
       ),
     ],
@@ -904,8 +921,9 @@ class _NotFoundScreen extends StatelessWidget {
                   Icon(
                     Icons.travel_explore_outlined,
                     size: 72,
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.6),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.6,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -1084,9 +1102,11 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
     ref.read(pendingVehicleDeepLinkProvider.notifier).clear();
     // Defer the push a microtask so we never push while a build/settle
     // is in flight — same pattern AppShell uses for routeChromeProvider.
-    unawaited(Future<void>.microtask(() async {
-      if (mounted) await context.push(link.routePath);
-    }));
+    unawaited(
+      Future<void>.microtask(() async {
+        if (mounted) await context.push(link.routePath);
+      }),
+    );
   }
 
   @override

@@ -183,6 +183,17 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     icon: Icons.calendar_view_week_outlined,
     exec: (ctx, _, _) => unawaited(ctx.push('/schedule')),
   ),
+  SlashCommand(
+    name: 'math',
+    label: '/math {answer}',
+    hint: 'Start the Math paths activity (default answer 12)',
+    icon: Icons.calculate_outlined,
+    aliases: const ['paths'],
+    exec: (ctx, _, args) {
+      final n = int.tryParse(args?.trim() ?? '') ?? 12;
+      unawaited(ctx.push('/activity/math?target=$n'));
+    },
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',
@@ -242,8 +253,7 @@ void _execLog(BuildContext ctx, WidgetRef ref, String? args) {
     unawaited(ctx.push('/observations'));
     return;
   }
-  final subjects =
-      ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
+  final subjects = ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
   final q = args.toLowerCase();
   Subject? hit;
   for (final s in subjects) {
