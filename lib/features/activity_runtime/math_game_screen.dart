@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:differentworld/features/activity_runtime/kid_mode_lock.dart';
 import 'package:differentworld/features/activity_runtime/math_game.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,10 +19,7 @@ class MathGameScreen extends ConsumerStatefulWidget {
   ConsumerState<MathGameScreen> createState() => _MathGameScreenState();
 }
 
-class _MathGameScreenState extends ConsumerState<MathGameScreen>
-    with WidgetsBindingObserver, KidModeLock<MathGameScreen> {
-  static const _route = '/activity/math-game';
-
+class _MathGameScreenState extends ConsumerState<MathGameScreen> {
   late List<MathQuestion> _questions;
   int _index = 0;
   int _score = 0;
@@ -39,12 +36,10 @@ class _MathGameScreenState extends ConsumerState<MathGameScreen>
   void initState() {
     super.initState();
     _questions = generateMathRound(Random());
-    enterKidLock(_route);
   }
 
   @override
   void dispose() {
-    exitKidLock();
     _ctl.dispose();
     _focus.dispose();
     super.dispose();
@@ -96,7 +91,12 @@ class _MathGameScreenState extends ConsumerState<MathGameScreen>
 
   @override
   Widget build(BuildContext context) {
-    return buildKidLock(child: _done ? _recap(context) : _game(context));
+    return EdgeScaffold(
+      body: ColoredBox(
+        color: Colors.black,
+        child: _done ? _recap(context) : _game(context),
+      ),
+    );
   }
 
   Widget _game(BuildContext context) {

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
-import 'package:differentworld/features/activity_runtime/kid_mode_lock.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,10 +23,7 @@ class AsIfScreen extends ConsumerStatefulWidget {
   ConsumerState<AsIfScreen> createState() => _AsIfScreenState();
 }
 
-class _AsIfScreenState extends ConsumerState<AsIfScreen>
-    with WidgetsBindingObserver, KidModeLock<AsIfScreen> {
-  static const _route = '/activity/as-if';
-
+class _AsIfScreenState extends ConsumerState<AsIfScreen> {
   final LocalContentBank _bank = LocalContentBank.seeded();
   late final List<String> _lines;
   late final List<String> _asIfs;
@@ -51,13 +48,6 @@ class _AsIfScreenState extends ConsumerState<AsIfScreen>
       for (final c in _bank.take(ContentKind.asIf, 999))
         c.payload['text']! as String,
     ];
-    enterKidLock(_route);
-  }
-
-  @override
-  void dispose() {
-    exitKidLock();
-    super.dispose();
   }
 
   void _next({required bool counted}) {
@@ -85,7 +75,12 @@ class _AsIfScreenState extends ConsumerState<AsIfScreen>
 
   @override
   Widget build(BuildContext context) {
-    return buildKidLock(child: _done ? _recap(context) : _challenge(context));
+    return EdgeScaffold(
+      body: ColoredBox(
+        color: Colors.black,
+        child: _done ? _recap(context) : _challenge(context),
+      ),
+    );
   }
 
   Widget _challenge(BuildContext context) {

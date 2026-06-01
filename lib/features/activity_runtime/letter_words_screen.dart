@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
-import 'package:differentworld/features/activity_runtime/kid_mode_lock.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,10 +23,7 @@ class LetterWordsScreen extends ConsumerStatefulWidget {
   ConsumerState<LetterWordsScreen> createState() => _LetterWordsScreenState();
 }
 
-class _LetterWordsScreenState extends ConsumerState<LetterWordsScreen>
-    with WidgetsBindingObserver, KidModeLock<LetterWordsScreen> {
-  static const _route = '/activity/starts-with';
-
+class _LetterWordsScreenState extends ConsumerState<LetterWordsScreen> {
   // Kid-friendly letters (skips the near-impossible X/Z/Q).
   static const _letters = ['C', 'K', 'B', 'S', 'T', 'P', 'M', 'D', 'F', 'R'];
 
@@ -45,12 +42,10 @@ class _LetterWordsScreenState extends ConsumerState<LetterWordsScreen>
     super.initState();
     _category = _bank.next(ContentKind.category) ?? _fallbackCategory();
     _letter = _letters[0];
-    enterKidLock(_route);
   }
 
   @override
   void dispose() {
-    exitKidLock();
     _ctl.dispose();
     _focus.dispose();
     super.dispose();
@@ -115,7 +110,12 @@ class _LetterWordsScreenState extends ConsumerState<LetterWordsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return buildKidLock(child: _done ? _recap(context) : _play(context));
+    return EdgeScaffold(
+      body: ColoredBox(
+        color: Colors.black,
+        child: _done ? _recap(context) : _play(context),
+      ),
+    );
   }
 
   Widget _play(BuildContext context) {
