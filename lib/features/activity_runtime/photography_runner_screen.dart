@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:differentworld/features/activity_runtime/activity_script.dart';
+import 'package:differentworld/features/activity_runtime/justified_gallery.dart';
 import 'package:differentworld/features/activity_runtime/photography.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
@@ -85,6 +86,9 @@ class _PhotographyRunnerScreenState
   /// index (an in-screen overlay, NOT a route — kid-mode pins the route).
   int? _viewingIndex;
   PageController? _viewerPage;
+
+  /// Showing the shared photos full-screen as "the findings".
+  bool _presenting = false;
 
   // Kid-mode lockdown — notifiers cached in initState (ref is unsafe in
   // dispose); the screen drives its own lock via _staffUnlocked.
@@ -366,7 +370,9 @@ class _PhotographyRunnerScreenState
               Positioned.fill(
                 child: _run.current.mode == ActivityMode.shoot
                     ? _shootView(context)
-                    : _galleryView(context),
+                    : (_presenting
+                          ? _presentation(context)
+                          : _galleryView(context)),
               ),
               if (_viewingIndex != null && _viewingIndex! < _shots.length)
                 Positioned.fill(child: _viewer(context)),
@@ -626,7 +632,7 @@ class _PhotographyRunnerScreenState
                 ),
               ),
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Expanded(
             child: _shots.isEmpty
                 ? const Center(
@@ -636,13 +642,30 @@ class _PhotographyRunnerScreenState
                       size: 64,
                     ),
                   )
-                : LayoutBuilder(
-                    builder: (context, constraints) =>
-                        _masonry(constraints.maxWidth),
+                : JustifiedGallery(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    tiles: [
+                      for (var i = 0; i < _shots.length; i++)
+                        JustifiedTile(
+                          aspectRatio: _ar(_shots[i]),
+                          child: _galleryTile(_shots[i], i),
+                        ),
+                    ],
                   ),
           ),
+          if (shared > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+              child: FilledButton.icon(
+                onPressed: () => setState(() => _presenting = true),
+                icon: const Icon(Icons.slideshow_outlined),
+                label: Text(
+                  'Present $shared ${shared == 1 ? 'photo' : 'photos'}',
+                ),
+              ),
+            ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: Text(
               shared == 0
                   ? 'Tap a photo to look closer; tap the heart to share it.'
@@ -658,45 +681,115 @@ class _PhotographyRunnerScreenState
     );
   }
 
-  /// Two-column masonry: each photo keeps its true aspect ratio (so the
-  /// gallery reads as varied sizes, every photo whole), greedily packed
-  /// into the shorter column.
-  Widget _masonry(double maxWidth) {
-    const gap = 10.0;
-    final colWidth = (maxWidth - gap * 3) / 2;
-    final left = <Widget>[];
-    final right = <Widget>[];
-    var leftH = 0.0;
-    var rightH = 0.0;
-    for (var i = 0; i < _shots.length; i++) {
-      final s = _shots[i];
-      final ar = s.aspectRatio <= 0 ? 0.75 : s.aspectRatio;
-      final h = colWidth / ar; // display height in this column
-      final tile = Padding(
-        padding: const EdgeInsets.only(bottom: gap),
-        child: _MasonryTile(
-          shot: s,
-          aspectRatio: ar,
-          onTap: () => _openViewer(i),
-          onToggleShare: () => setState(() => s.shared = !s.shared),
-        ),
-      );
-      if (leftH <= rightH) {
-        left.add(tile);
-        leftH += h + gap;
-      } else {
-        right.add(tile);
-        rightH += h + gap;
-      }
-    }
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(gap, 0, gap, gap),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  double _ar(_Shot s) => s.aspectRatio <= 0 ? 0.75 : s.aspectRatio;
+
+  /// A curate tile: the photo whole (the justified gallery sizes the box to
+  /// the photo's aspect ratio, so cover == no crop) + a share heart + a
+  /// note dot. Square edges so the rows pack tight (the Google-Photos look).
+  Widget _galleryTile(_Shot s, int i) {
+    return GestureDetector(
+      onTap: () => _openViewer(i),
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(child: Column(children: left)),
-          const SizedBox(width: gap),
-          Expanded(child: Column(children: right)),
+          Image.memory(
+            s.bytes,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            errorBuilder: (_, _, _) => const ColoredBox(color: Colors.white12),
+          ),
+          if (s.shared)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.pinkAccent, width: 3),
+                  ),
+                ),
+              ),
+            ),
+          if (s.reflection.trim().isNotEmpty)
+            const Positioned(
+              left: 6,
+              bottom: 6,
+              child: Icon(Icons.sticky_note_2, size: 16, color: Colors.white),
+            ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: _ShareBadge(
+              shared: s.shared,
+              onTap: () => setState(() => s.shared = !s.shared),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The findings presentation — the SHARED photos, full-screen, in the
+  /// justified gallery (the "show everyone" view). Single-device for now;
+  /// cross-device when submissions sync (SUBMISSIONS.md Slice B/C).
+  Widget _presentation(BuildContext context) {
+    final theme = Theme.of(context);
+    final sharedIdx = [
+      for (var i = 0; i < _shots.length; i++)
+        if (_shots[i].shared) i,
+    ];
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => setState(() => _presenting = false),
+                ),
+                Expanded(
+                  child: Text(
+                    widget.prompt,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: sharedIdx.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Nothing shared yet',
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  )
+                : JustifiedGallery(
+                    padding: const EdgeInsets.all(4),
+                    targetRowHeight: 170,
+                    tiles: [
+                      for (final i in sharedIdx)
+                        JustifiedTile(
+                          aspectRatio: _ar(_shots[i]),
+                          child: GestureDetector(
+                            onTap: () => _openViewer(i),
+                            child: Image.memory(
+                              _shots[i].bytes,
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              errorBuilder: (_, _, _) =>
+                                  const ColoredBox(color: Colors.white12),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
         ],
       ),
     );
@@ -729,9 +822,35 @@ class _PhotographyRunnerScreenState
             top: 0,
             right: 0,
             child: SafeArea(
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                onPressed: _closeViewer,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_viewingIndex != null && _viewingIndex! < _shots.length)
+                    IconButton(
+                      tooltip: 'Share this',
+                      icon: Icon(
+                        _shots[_viewingIndex!].shared
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: _shots[_viewingIndex!].shared
+                            ? Colors.pinkAccent
+                            : Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: () => setState(
+                        () => _shots[_viewingIndex!].shared =
+                            !_shots[_viewingIndex!].shared,
+                      ),
+                    ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    onPressed: _closeViewer,
+                  ),
+                ],
               ),
             ),
           ),
@@ -801,17 +920,6 @@ class _PhotographyRunnerScreenState
                 ),
                 maxLines: 3,
                 onCommit: (t) async => setState(() => s.reflection = t),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.tonalIcon(
-                  onPressed: () => setState(() => s.shared = !s.shared),
-                  icon: Icon(
-                    s.shared ? Icons.favorite : Icons.favorite_border,
-                  ),
-                  label: Text(s.shared ? 'Sharing this' : 'Share this'),
-                ),
               ),
             ],
           ),
@@ -923,71 +1031,6 @@ class _CapButton extends StatelessWidget {
 }
 
 /// A masonry tile: the photo whole at its aspect ratio + a share heart.
-class _MasonryTile extends StatelessWidget {
-  const _MasonryTile({
-    required this.shot,
-    required this.aspectRatio,
-    required this.onTap,
-    required this.onToggleShare,
-  });
-
-  final _Shot shot;
-  final double aspectRatio;
-  final VoidCallback onTap;
-  final VoidCallback onToggleShare;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.memory(
-                shot.bytes,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-                errorBuilder: (_, _, _) =>
-                    const ColoredBox(color: Colors.white12),
-              ),
-            ),
-            if (shot.shared)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.pinkAccent, width: 3),
-                    ),
-                  ),
-                ),
-              ),
-            if (shot.reflection.trim().isNotEmpty)
-              const Positioned(
-                left: 8,
-                bottom: 8,
-                child: Icon(
-                  Icons.sticky_note_2,
-                  size: 18,
-                  color: Colors.white,
-                ),
-              ),
-            Positioned(
-              top: 6,
-              right: 6,
-              child: _ShareBadge(shared: shot.shared, onTap: onToggleShare),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// A read-only grid of photo bytes — reserved for the teacher / family
 /// aggregate views (SUBMISSIONS.md Slice C). Public + bytes-in so it's
 /// testable without a camera.
