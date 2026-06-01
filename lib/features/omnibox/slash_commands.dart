@@ -194,6 +194,18 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
       unawaited(ctx.push('/activity/math?target=$n'));
     },
   ),
+  SlashCommand(
+    name: 'photo',
+    label: '/photo {prompt}',
+    hint: 'Open the photo studio (optional prompt)',
+    icon: Icons.photo_camera_outlined,
+    aliases: const ['camera', 'photos'],
+    exec: (ctx, _, args) {
+      final p = (args ?? '').trim();
+      final q = p.isEmpty ? '' : '?prompt=${Uri.encodeComponent(p)}';
+      unawaited(ctx.push('/activity/photo$q'));
+    },
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',
