@@ -1,22 +1,19 @@
 import 'dart:math';
 
 /// The Math GAME (distinct from the "Many Paths" inverse exercise): a
-/// sequence of quick questions, one at a time, with VARIED mechanics —
-/// some with buttons, some you type, plus number sequences. All generated
-/// LOCALLY (arithmetic is free + infinite — no AI, no bank, per
-/// CONTENT_BANK.md §1).
+/// sequence of quick questions, one at a time — pick-an-option, true/false,
+/// what-comes-next sequences. Host-paced: the room answers ALOUD, the
+/// teacher Reveals (no typing, no grading). All generated LOCALLY
+/// (arithmetic is free + infinite — no AI, no bank, per CONTENT_BANK.md §1).
 
 enum MathMechanic {
-  /// Pick the answer from buttons.
+  /// Pick the answer from options.
   choose,
 
-  /// Type the answer (no buttons).
-  type,
-
-  /// Is the statement true? (True / False buttons.)
+  /// Is the statement true? (True / False.)
   trueFalse,
 
-  /// What comes next in the sequence? (buttons)
+  /// What comes next in the sequence?
   sequence,
 }
 
@@ -56,7 +53,6 @@ class MathQuestion {
 List<MathQuestion> generateMathRound(Random rng, {int count = 8}) {
   const order = [
     MathMechanic.choose,
-    MathMechanic.type,
     MathMechanic.sequence,
     MathMechanic.trueFalse,
   ];
@@ -65,7 +61,6 @@ List<MathQuestion> generateMathRound(Random rng, {int count = 8}) {
 
 MathQuestion _gen(MathMechanic m, Random rng) => switch (m) {
   MathMechanic.choose => _choose(rng),
-  MathMechanic.type => _type(rng),
   MathMechanic.sequence => _sequence(rng),
   MathMechanic.trueFalse => _trueFalse(rng),
 };
@@ -98,16 +93,6 @@ MathQuestion _choose(Random rng) {
     prompt: '$a + $b',
     answer: ans,
     choices: _withDistractors(rng, ans),
-  );
-}
-
-MathQuestion _type(Random rng) {
-  final a = _r(rng, 2, 9);
-  final b = _r(rng, 2, 9);
-  return MathQuestion(
-    mechanic: MathMechanic.type,
-    prompt: '$a × $b',
-    answer: a * b,
   );
 }
 

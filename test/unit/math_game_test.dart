@@ -1,5 +1,6 @@
-// The Math game generator (docs/ACTIVITY_RUNTIME.md). Pure + local — no
-// AI. Deterministic for a seeded Random.
+// The Math game generator (docs/ACTIVITY_ROADMAP.md Wave 2). Pure + local
+// — no AI. Three host-present mechanics (choose / sequence / true-false);
+// no typed input. Deterministic for a seeded Random.
 
 import 'dart:math';
 
@@ -8,14 +9,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('generateMathRound', () {
-    test('produces `count` questions cycling the mechanics', () {
+    test('produces `count` questions cycling the three mechanics', () {
       final qs = generateMathRound(Random(7)); // default count 8
       expect(qs, hasLength(8));
       expect(qs[0].mechanic, MathMechanic.choose);
-      expect(qs[1].mechanic, MathMechanic.type);
-      expect(qs[2].mechanic, MathMechanic.sequence);
-      expect(qs[3].mechanic, MathMechanic.trueFalse);
-      expect(qs[4].mechanic, MathMechanic.choose);
+      expect(qs[1].mechanic, MathMechanic.sequence);
+      expect(qs[2].mechanic, MathMechanic.trueFalse);
+      expect(qs[3].mechanic, MathMechanic.choose);
     });
 
     test('choose: the answer is among 4 distinct choices', () {
@@ -28,22 +28,21 @@ void main() {
 
     test('sequence: the next term is among the choices', () {
       final qs = generateMathRound(Random(5), count: 3);
-      final seq = qs[2];
+      final seq = qs[1];
+      expect(seq.mechanic, MathMechanic.sequence);
       expect(seq.choices, contains(seq.answer));
     });
 
-    test(
-      'isCorrect: numeric for choose/type/sequence, bool for true/false',
-      () {
-        final qs = generateMathRound(Random(9), count: 4);
-        final choose = qs[0];
-        expect(choose.isCorrect(choose.answer), isTrue);
-        expect(choose.isCorrect(choose.answer + 1), isFalse);
+    test('isCorrect still resolves the answer (drives the Reveal highlight)', () {
+      final qs = generateMathRound(Random(9), count: 4);
+      final choose = qs[0];
+      expect(choose.isCorrect(choose.answer), isTrue);
+      expect(choose.isCorrect(choose.answer + 1), isFalse);
 
-        final tf = qs[3];
-        expect(tf.isCorrect(tf.statementTrue!), isTrue);
-        expect(tf.isCorrect(!tf.statementTrue!), isFalse);
-      },
-    );
+      final tf = qs[2];
+      expect(tf.mechanic, MathMechanic.trueFalse);
+      expect(tf.isCorrect(tf.statementTrue!), isTrue);
+      expect(tf.isCorrect(!tf.statementTrue!), isFalse);
+    });
   });
 }
