@@ -494,8 +494,19 @@ class _AppShellState extends ConsumerState<AppShell> {
     //
     // In kid mode the shell delegates to the kid-mode handler; don't
     // double-intercept.
-    final atRoot =
-        GoRouterState.of(context).matchedLocation == '/' && !inKidMode;
+    final routerState = GoRouterState.of(context);
+    final location = routerState.matchedLocation;
+    final atRoot = location == '/' && !inKidMode;
+    // Immersive activity routes (games, This or That, pattern, role cards)
+    // hide the omnibox bar + reclaim its bottom space — like kid mode but
+    // WITHOUT the lock (back still exits). They're full-screen surfaces;
+    // the bar both clutters them and steals the ~76 dp their layouts need
+    // (which is what overflowed once they were de-locked from kid mode).
+    //
+    // Use the full URI path, NOT matchedLocation — inside a ShellRoute
+    // builder matchedLocation reflects the SHELL's match (verified on
+    // device: it stays at `/breaks` while uri.path is the child route).
+    final isImmersive = routerState.uri.path.startsWith('/activity/');
 
     // When the suggestion overlay is open, the system back gesture
     // (swipe-from-left-edge on Android, swipe-back on iOS) should
@@ -595,6 +606,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                   mode: mode,
                   showDrawer: false, // hamburger pill hidden at desktop
                   atRoot: atRoot,
+                  isImmersive: isImmersive,
                   context: context,
                 )),
               ],
@@ -608,6 +620,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               mode: mode,
               showDrawer: showDrawer,
               atRoot: atRoot,
+              isImmersive: isImmersive,
               context: context,
             ),
     ),
@@ -629,6 +642,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     required OmniboxMode mode,
     required bool showDrawer,
     required bool atRoot,
+    required bool isImmersive,
     required BuildContext context,
   }) {
     return Stack(
@@ -659,10 +673,10 @@ class _AppShellState extends ConsumerState<AppShell> {
           Padding(
             key: const ValueKey('shell-route-content'),
             padding: EdgeInsets.only(
-              // No omnibox bar for guardians or in kid mode → no
-              // bottom reservation needed; route content can fill all
-              // the way to the gesture inset.
-              bottom: (inKidMode || viewer is GuardianViewer)
+              // No omnibox bar for guardians, in kid mode, or on immersive
+              // activity routes → no bottom reservation; route content can
+              // fill all the way to the gesture inset.
+              bottom: (inKidMode || viewer is GuardianViewer || isImmersive)
                   ? 0
                   : ShellMetrics.bottomOmniboxHeight,
             ),
@@ -768,8 +782,9 @@ class _AppShellState extends ConsumerState<AppShell> {
           // staff-facing affordance. Also hidden for guardians —
           // the omnibox catalog is staff-only (settings, captures,
           // tasks, observations, etc.) and the family lens has its
-          // own navigation pattern via the Family Today header.
-          if (!inKidMode && viewer is! GuardianViewer)
+          // own navigation pattern via the Family Today header — and on
+          // immersive /activity/* routes, which are full-screen surfaces.
+          if (!inKidMode && viewer is! GuardianViewer && !isImmersive)
             Positioned(
               key: const ValueKey('shell-omnibox-bar'),
               left: 0,

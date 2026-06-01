@@ -707,6 +707,22 @@ stickers route via the web page, new ones open directly. The proper
 fix for invites (true App Links on a `jardinefaner.github.io` root
 repo) is the deferred "Recommended split" second half.
 
+### `matchedLocation` is shell-relative inside a ShellRoute builder — use `uri.path`
+
+In AppShell (the `ShellRoute` builder),
+`GoRouterState.of(context).matchedLocation` reflects the **shell's**
+match, NOT the active child route. Verified on device (2026-06-01): on
+`/activity/this-or-that` it stayed at `/breaks` (the last top-level
+match), so `matchedLocation.startsWith('/activity/')` was always false
+and the "hide the omnibox bar on immersive activity routes" gate never
+fired. `atRoot` (matchedLocation == '/') happens to work only because
+`/` is the shell's own base.
+
+Rule: to detect the CURRENT route from inside the shell (hide chrome,
+theme by section, etc.), read **`GoRouterState.of(context).uri.path`**
+— that's the full active location (`/activity/this-or-that`).
+`matchedLocation` is for per-segment matching, not "where am I."
+
 ### Flutter 3.24+ deep-linking-by-default fights app_links → custom-scheme 404
 
 Symptom: scanning a `differentworld://v/<id>/checkout` (or

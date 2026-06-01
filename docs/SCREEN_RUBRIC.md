@@ -43,12 +43,19 @@ Mark inapplicable items **n/a**; don't force them.
   add `+ ShellMetrics.topChromeHeight` by hand** — that double-insets.
   Verify: no manual `topChromeHeight` in the screen; a `ContentHeader` or
   `SafeArea` is present (or the body is intentionally full-bleed). *Blocker.*
-- **A3 — Bottom content clears the omnibox bar.** The bottom ~76 dp is the
-  floating composer. A scroll view needs bottom padding (`fromLTRB(.., 96)`
-  is the convention) so the last row/button isn't hidden; a fixed bottom
-  control needs to sit above the bar. Verify: scroll padding bottom ≥ ~76,
-  or content is short enough never to reach the bar. *Blocker for screens
-  with bottom-anchored controls; warn otherwise.*
+- **A3 — Bottom content clears the omnibox bar.** AppShell ALREADY wraps
+  every non-immersive route's body in `Padding(bottom:
+  ShellMetrics.bottomOmniboxHeight)` (app_shell.dart) — so a normal scroll
+  view's last item is *not* hidden by the bar, and you do **not** need to
+  add 76 dp yourself (a `fromLTRB(.., 96)` just adds harmless breathing
+  room, not a fix). A3 fails only when: **(a)** a `Stack` /
+  `Positioned(bottom: 0)` / fixed bottom control draws THROUGH that
+  reservation into the bar's strip, or **(b)** the route is immersive
+  (`/activity/*` — the bar is hidden and the body fills to the gesture
+  inset) and its bottom content needs a `SafeArea(bottom: true)` or small
+  bottom pad to clear the home indicator. Check those two cases — do NOT
+  flag a plain scroll view for "padding < 76." *Blocker for a fixed bottom
+  control that overlaps; warn otherwise.*
 - **A4 — Uses the full viewport; long text is constrained for reading.**
   Content fills the width (no accidental narrow column, no large dead
   gutters), but long-form text / forms are wrapped in
