@@ -59,7 +59,7 @@ for free.**
 - **+ Categories** — name as many as you can before time's up.
   *Big:* the category + a big countdown. *Phone:* start the timer · tally ·
   Next. *(Two-device: the countdown belongs on the room's screen.)*
-- **+ Story Starters** — build a story aloud, one line each.
+- **✓ Story Starters** — build a story aloud, one line each.
   *Big:* the opener (and a surprise "Twist!" card). *Phone:* Next starter ·
   Add a twist.
 

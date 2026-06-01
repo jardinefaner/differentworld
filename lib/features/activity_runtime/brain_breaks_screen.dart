@@ -102,6 +102,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFF7E57C2),
       route: '/activity/fact-or-fib',
     ),
+    _BreakCard(
+      title: 'Story Starters',
+      tagline: 'Build a story together',
+      icon: Icons.auto_stories_outlined,
+      color: Color(0xFF5C6BC0),
+      route: '/activity/story',
+    ),
   ];
 
   void _surprise(BuildContext context) {

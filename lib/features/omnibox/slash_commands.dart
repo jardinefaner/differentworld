@@ -279,6 +279,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/fact-or-fib')),
   ),
   SlashCommand(
+    name: 'story',
+    label: '/story',
+    hint: 'Story Starters — build a story aloud, with plot twists',
+    icon: Icons.auto_stories_outlined,
+    aliases: const ['stories', 'storytime', 'imagine', 'tale', 'twist'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/story')),
+  ),
+  SlashCommand(
     name: 'pattern',
     label: '/pattern',
     hint: 'Make a Pattern — snap a tile, watch it repeat',

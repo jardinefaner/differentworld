@@ -17,6 +17,7 @@ import 'package:differentworld/features/activity_runtime/pattern_maker_screen.da
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/riddles_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
+import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
 import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
@@ -893,6 +894,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/fact-or-fib',
             builder: (_, _) => const FactOrFibScreen(),
+          ),
+          // Story Starters — host-run; the room builds a story aloud.
+          GoRoute(
+            path: '/activity/story',
+            builder: (_, _) => const StoryStartersScreen(),
           ),
           // Make a Pattern — draw/build a tile in real life, snap it, watch
           // it repeat (kaleidoscope mirroring → symmetry from any tile).

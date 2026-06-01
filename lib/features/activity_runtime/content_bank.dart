@@ -40,6 +40,13 @@ abstract class ContentKind {
   /// A true/false claim — payload `{statement, isTrue (bool), note}`.
   /// The room votes; Reveal shows the verdict + the real fact.
   static const factOrFib = 'fact_or_fib';
+
+  /// A story opener the room builds on aloud — payload `{text}`.
+  static const storyStarter = 'story_starter';
+
+  /// A "plot twist!" card to drop into a story in progress — payload
+  /// `{text}`.
+  static const storyTwist = 'story_twist';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -76,6 +83,8 @@ class LocalContentBank implements ContentSource {
     ..._asIfSeed,
     ..._riddleSeed,
     ..._factOrFibSeed,
+    ..._storyStarterSeed,
+    ..._storyTwistSeed,
   ]);
 
   final Map<String, List<ContentItem>> _byKind = {};
@@ -323,4 +332,44 @@ final List<ContentItem> _factOrFibSeed = <ContentItem>[
     isTrue: false,
     note: 'Fib — mostly to show mood and temperature.',
   ),
+];
+
+ContentItem _starterOf(String text) => ContentItem(
+  kind: ContentKind.storyStarter,
+  fingerprint: text.toLowerCase(),
+  payload: {'text': text},
+);
+
+// Story openers the room builds on aloud — one line each, around the circle.
+final List<ContentItem> _storyStarterSeed = <ContentItem>[
+  _starterOf('One morning, a kid woke up and could talk to animals.'),
+  _starterOf('A tiny door appeared at the back of the room.'),
+  _starterOf('The new kid had a backpack that was bigger on the inside.'),
+  _starterOf("Everyone's shadow started doing its own thing."),
+  _starterOf('A paper airplane landed on the desk with a secret map.'),
+  _starterOf("The class pet left a note that said 'meet me at midnight.'"),
+  _starterOf('It started raining something that was not water.'),
+  _starterOf('A robot showed up asking for help finding its way home.'),
+  _starterOf('The oldest tree in the yard whispered a name.'),
+  _starterOf('A treasure chest washed up at recess.'),
+  _starterOf('Everyone could fly — but only for one minute a day.'),
+  _starterOf('The cafeteria food turned out to be a little bit magic.'),
+];
+
+ContentItem _twistOf(String text) => ContentItem(
+  kind: ContentKind.storyTwist,
+  fingerprint: text.toLowerCase(),
+  payload: {'text': text},
+);
+
+// "Plot twist!" cards to drop into a story in progress.
+final List<ContentItem> _storyTwistSeed = <ContentItem>[
+  _twistOf('Suddenly, the smallest one saves the day.'),
+  _twistOf('It turns out someone has been keeping a secret.'),
+  _twistOf('All the lights go out.'),
+  _twistOf('A brand-new friend appears from nowhere.'),
+  _twistOf('Everything starts happening backward.'),
+  _twistOf('The map was upside down the whole time.'),
+  _twistOf('The answer was hiding in plain sight.'),
+  _twistOf('A door opens that was never there before.'),
 ];
