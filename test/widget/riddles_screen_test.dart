@@ -1,21 +1,18 @@
-// Widget test for Riddles (more games wave). Host-present: NO typing, NO
-// grading — the room guesses aloud, the teacher Reveals then advances.
+// Widget test for Riddle Me This — now on the unified Game framework
+// (docs/GAMES.md Wave 1b): GameRunner + RiddlesGame. Host-present, NO typing,
+// NO grading — the room guesses aloud, the teacher Reveals then advances.
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
-import 'package:differentworld/features/activity_runtime/riddles_screen.dart';
+import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 
 void main() {
-  Widget harness() {
-    final router = GoRouter(
-      initialLocation: '/',
-      routes: [GoRoute(path: '/', builder: (_, _) => const RiddlesScreen())],
-    );
-    return ProviderScope(child: MaterialApp.router(routerConfig: router));
-  }
+  Widget harness() => const ProviderScope(
+    child: MaterialApp(home: GameRunner(def: RiddlesGame())),
+  );
 
   testWidgets('opens on the first riddle with a Reveal — no typing', (
     tester,
@@ -34,12 +31,11 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.widgetWithText(FilledButton, 'Reveal'));
-    await tester.pump();
-    expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);
+    await tester.pumpAndSettle();
     expect(find.text('?'), findsNothing); // answer is now showing
 
     await tester.tap(find.widgetWithText(FilledButton, 'Next'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('2 / 10'), findsOneWidget);
   });
 

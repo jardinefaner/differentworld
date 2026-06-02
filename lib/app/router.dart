@@ -16,7 +16,6 @@ import 'package:differentworld/features/activity_runtime/math_runner_screen.dart
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/rhyme_time_screen.dart';
-import 'package:differentworld/features/activity_runtime/riddles_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
@@ -34,6 +33,7 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
@@ -843,6 +843,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/live/this-or-that',
             builder: (_, _) => const LiveGameScreen(def: ThisOrThatGame()),
           ),
+          GoRoute(
+            path: '/live/riddles',
+            builder: (_, _) => const LiveGameScreen(def: RiddlesGame()),
+          ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.
           GoRoute(
@@ -916,7 +920,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Riddles — host-run, answer-first; the room guesses, you Reveal.
           GoRoute(
             path: '/activity/riddles',
-            builder: (_, _) => const RiddlesScreen(),
+            builder: (_, _) => const GameRunner(def: RiddlesGame()),
           ),
           // Mindful Minute — a calm breathing break (the regulation gap).
           GoRoute(
