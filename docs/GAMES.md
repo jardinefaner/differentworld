@@ -126,6 +126,61 @@ Build the seam once → every game on this page gains present-on-the-big-
 screen / control-from-the-phone. New games are authored as a
 (Presentation, Control) pair from the start.
 
+## The Game contract — decided 2026-06-01 (VISION #17)
+
+The `SessionController` seam above, made concrete. A design-council pass
+(architecture + art-direction + UX) settled it: **the contract already
+exists** inside `LiveSession` (every live game is already
+`(state, intent) → state`), so unifying is a *harvest*, not an invention.
+Lives in `lib/features/games/`.
+
+- **A game is a `GameDefinition`:** a `state` + a pure reducer
+  `(state, intent, args) → state` over a closed vocabulary —
+  **next · back · reveal · pick · tally · capture · reset** — plus a
+  presentation builder + a vibe. The reducer is shaped to *be* a
+  `LiveReducer`, so it drives both the single-device and live paths with no
+  adapter. (`pick`/`capture` are near-future intents — real today: next,
+  back, reveal, tally, reset.)
+- **One reducer, four control surfaces.** A `GameController` sits between
+  controls and reducer: `LocalGameController` (single device, reduces in
+  memory) and `LiveGameController` (wraps `LiveSession`). Tap, **keyboard**
+  (`PresenterShortcuts`), and **phone remote** all call
+  `controller.send(intent)` → the same `def.reduce`. A game is controllable
+  *and* live the moment its reducer exists.
+- **`GameScaffold` = the familiar shell; the stage + `GameVibe` = the
+  character.** The scaffold owns what's copy-pasted across the deck today —
+  the control bar/panel (built from the game's *active* intents), progress,
+  the live join/header (code · status · peers), the keyboard wiring, and an
+  on-screen **keyboard hint** (the missing discoverability). Each game owns
+  its stage widget + vibe.
+- **`capture` = durable evidence, offline-first.** The intent is pure
+  (counts in-memory); the *write* is a runner side-effect →
+  `bankCrowdItem` (crowd-grow, #7 — its first caller) + an `entries` row of
+  kind `game_capture` (the growth-book artifact, VISION #1). Presenter-only
+  in a live session (one write, not per-controller).
+
+### Decisions (user, 2026-06-01)
+- **Wrap beat → per-game vibe.** Each game's "game over" matches its
+  character; the vibe carries it (not one shared recap).
+- **Game identity → a distinct hero shape per game.** Each stage gets a
+  signature shape (Beat-the-Letter's big circle is the model), not accent
+  colour alone (too weak at classroom distance). Resolve today's accent
+  collisions: Riddles/Fact-or-Fib both green; Story/Letter/As-If all amber.
+- **Capture → tap, not type.** Capture by tapping a kid's name (roster) or a
+  pre-filled grid, never free-typing mid-room (keeps #4's "no typing,
+  teacher-paced"). A text field is the opt-in last resort.
+
+### Migration (one shippable PR each; commit between waves)
+0. Extract the framework; port **This-or-That** (already reducer-shaped) so
+   both `/activity` + `/live` run the new runner. Golden-locked.
+1. Reveal/slideshow games — Riddles, Fact-or-Fib, Math, Story, Discussions.
+2. Tally games — Rhyme Time, Beat the Letter (**Rhyme Time lands `capture`**).
+3. Charades (the live/secret role).
+4. As-If (validates the contract bends to a non-slideshow shape).
+- **Out of scope:** creation tools / timers — Pattern Maker, Photo Studio,
+  Breathe, Collage, Role Cards — are not host-paced state-machines; forcing
+  them onto next/reveal would be damage.
+
 ## Build order (suggested)
 
 - **Now (single-device, unblocked):** the 9 `+` games, same host-present
