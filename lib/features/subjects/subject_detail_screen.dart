@@ -16,6 +16,7 @@ import 'package:differentworld/features/subjects/widgets/health_profile_card.dar
 import 'package:differentworld/features/subjects/widgets/observation_item.dart';
 import 'package:differentworld/features/subjects/widgets/pickup_list.dart';
 import 'package:differentworld/features/subjects/widgets/today_status_card.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -132,7 +133,18 @@ class SubjectDetailScreen extends ConsumerWidget {
               title: 'Student not found.',
             );
           }
-          return _SubjectBody(subject: subject, viewer: viewer);
+          // Cap + center on wide windows so the per-child timeline doesn't
+          // run edge-to-edge on a desktop monitor (docs/PLATFORM_RUBRIC.md
+          // flagged subjects as the worst adaptive offender). Phone is
+          // unchanged — the cap isn't binding below 1200dp.
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: Breakpoints.splitMaxWidth,
+              ),
+              child: _SubjectBody(subject: subject, viewer: viewer),
+            ),
+          );
         },
       ),
     ),
