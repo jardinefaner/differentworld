@@ -9,7 +9,6 @@ import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
-import 'package:differentworld/features/activity_runtime/fact_or_fib_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
@@ -33,6 +32,7 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
@@ -847,6 +847,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/live/riddles',
             builder: (_, _) => const LiveGameScreen(def: RiddlesGame()),
           ),
+          GoRoute(
+            path: '/live/fact-or-fib',
+            builder: (_, _) => const LiveGameScreen(def: FactOrFibGame()),
+          ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.
           GoRoute(
@@ -930,7 +934,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Fact or Fib — host-run; the room votes true/false, you Reveal.
           GoRoute(
             path: '/activity/fact-or-fib',
-            builder: (_, _) => const FactOrFibScreen(),
+            builder: (_, _) => const GameRunner(def: FactOrFibGame()),
           ),
           // Story Starters — host-run; the room builds a story aloud.
           GoRoute(
