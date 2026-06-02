@@ -55,6 +55,9 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
   String get id => 'this-or-that';
 
   @override
+  String get title => 'This or That';
+
+  @override
   GameVibe get vibe => const GameVibe(accent: Color(0xFF42A5F5));
 
   @override

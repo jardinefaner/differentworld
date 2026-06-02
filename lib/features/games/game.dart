@@ -107,6 +107,9 @@ abstract class GameDefinition<S> {
   /// Stable id — matches the route + the `ContentKind` where 1:1.
   String get id;
 
+  /// Human title for the lobby / live header (e.g. "This or That").
+  String get title;
+
   /// Per-game character (color/surface). The stage carries the rest.
   GameVibe get vibe;
 

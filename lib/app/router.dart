@@ -44,7 +44,7 @@ import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/charades_live_screen.dart';
-import 'package:differentworld/features/live_session/live_session_screen.dart';
+import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
@@ -841,7 +841,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // present on a big screen, control from a phone over Realtime.
           GoRoute(
             path: '/live/this-or-that',
-            builder: (_, _) => const LiveSessionScreen(),
+            builder: (_, _) => const LiveGameScreen(def: ThisOrThatGame()),
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.

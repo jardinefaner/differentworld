@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/features/live_session/board_session.dart';
+import 'package:differentworld/features/live_session/live_game_screen.dart'
+    show generateSessionCode;
 import 'package:differentworld/features/live_session/live_session.dart'
     show LiveStatus;
-import 'package:differentworld/features/live_session/live_session_screen.dart'
-    show generateSessionCode;
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
