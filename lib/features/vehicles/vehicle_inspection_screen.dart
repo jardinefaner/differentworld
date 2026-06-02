@@ -283,6 +283,14 @@ class _VehicleInspectionScreenState
     );
   }
 
+  void _markAllOk() {
+    setState(() {
+      for (final item in InspectionChecklist.items) {
+        _results.setStatus(item, InspectionStatus.ok);
+      }
+    });
+  }
+
   String? _emptyToNull(String input) {
     final t = input.trim();
     return t.isEmpty ? null : t;
@@ -341,9 +349,16 @@ class _VehicleInspectionScreenState
                         ContentHeader(
                           title:
                               widget.isCheckout ? 'Check out' : 'Check in',
-                          subtitle: '${v.name} · pre-trip safety check',
+                          subtitle: widget.isCheckout
+                              ? '${v.name} · pre-trip safety check'
+                              : '${v.name} · post-trip safety check',
                           bottomGap: 12,
                         ),
+                        // Photos FIRST — capture the required shots at the
+                        // vehicle (the empty-cabin sweep the moment you park)
+                        // before the checklist (docs/VISION.md vehicle ritual).
+                        _photosCard(v.capabilities),
+                        const SizedBox(height: 16),
                         // Trip header — odometer + fuel
                         Row(
                           children: [
@@ -397,11 +412,12 @@ class _VehicleInspectionScreenState
                                 style: theme.textTheme.titleMedium,
                               ),
                               const Spacer(),
-                              Text(
-                                'Mark each item OK / Repair / Unsafe',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
+                              // Real pre-trip checks are mostly all-good — one
+                              // tap marks every item OK, then flag exceptions.
+                              TextButton.icon(
+                                onPressed: _markAllOk,
+                                icon: const Icon(Icons.done_all, size: 18),
+                                label: const Text('Mark all OK'),
                               ),
                             ],
                           ),
@@ -421,8 +437,6 @@ class _VehicleInspectionScreenState
                               setState(() => _results.setStatus(item, st));
                             },
                           ),
-                        const SizedBox(height: 16),
-                        _photosCard(v.capabilities),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _bodyDamage,
