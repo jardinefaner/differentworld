@@ -1188,6 +1188,22 @@ should be stale until the next sync round-trip (it usually shouldn't).
 
 ---
 
+## Branch workflow
+
+**All feature work happens on branches, never directly on `main`.**
+
+- Start a new session: `git checkout -b <feature>` (e.g. `feat/missions-phase3`,
+  `feat/live-sessions`, `fix/review-council-bugs`). One branch per logical
+  feature cluster — not per commit.
+- Commit freely on the branch. Push with `git push -u origin <branch>`.
+- When the cluster is done + reviewed + tests pass: open a PR or merge into
+  `main` explicitly. Never `git push origin main` from an in-progress branch.
+- `main` = releasable at all times. The branch is where the work lives.
+
+**For migrations:** `supabase db push` can be run on a branch — the dashboard
+is the runtime and doesn't care about git branches. Just don't forget to push
+the migration file to the branch before merging.
+
 ## Tooling permissions granted
 
 - `Bash(supabase db push:*)` — run migrations directly after writing
