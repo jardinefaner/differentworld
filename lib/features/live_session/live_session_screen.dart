@@ -3,16 +3,24 @@ import 'dart:math';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// `/live/this-or-that` — the end-to-end present/control flow for This-or-That
-/// (docs/LIVE_SESSIONS.md). Pick a role: **Present here** (the big screen —
-/// shows a join code + the slides) or **Control** (the phone — a remote that
-/// drives the presenter over Realtime). Same content as the single-device
-/// game, so a laptop presents while a phone advances.
+/// `/live/this-or-that` — the present/control flow over Realtime, now driven
+/// by the unified Game framework (docs/GAMES.md Wave 0c). The SAME
+/// `ThisOrThatGame` reducer + stage as the single-device
+/// `/activity/this-or-that` runs here over a [LiveGameController] — one
+/// source of truth for the game's logic and visuals. Only the lobby / join
+/// code / presence chrome is live-specific and lives here.
+///
+/// Pick a role: **Present here** (the big screen — a join code + the slides)
+/// or **Control** (the phone — a remote that drives the presenter).
 class LiveSessionScreen extends ConsumerStatefulWidget {
   const LiveSessionScreen({super.key});
 
@@ -30,61 +38,63 @@ String generateSessionCode() {
 }
 
 class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
-  static const _palette = <(Color, Color)>[
-    (Color(0xFFEF5350), Color(0xFF42A5F5)),
-    (Color(0xFFFFA726), Color(0xFF26A69A)),
-    (Color(0xFFAB47BC), Color(0xFF66BB6A)),
-    (Color(0xFF5C6BC0), Color(0xFFFFCA28)),
-    (Color(0xFFEC407A), Color(0xFF29B6F6)),
-  ];
-
-  late final List<ContentItem> _pairs = LocalContentBank.seeded().take(
-    ContentKind.thisOrThat,
-    8,
-  );
+  static const _def = ThisOrThatGame();
 
   _Mode _mode = _Mode.lobby;
-  LiveSession? _session;
+  LiveGameController? _controller;
   final _subs = <StreamSubscription<dynamic>>[];
   final _codeCtrl = TextEditingController();
 
-  LiveState _live = const LiveState();
+  Map<String, dynamic> _wire = const {};
   int _peers = 0;
   LiveStatus _status = LiveStatus.connecting;
 
-  int get _total => _pairs.length;
+  ThisOrThatState get _state => _def.decode(_wire);
 
   void _open(SessionRole role, String code) {
-    final s = LiveSession.open(
+    if (_controller != null) return; // re-entrancy: ignore a double-tap
+    // Curated ∪ synced AI/crowd, falling back to curated-only — the same
+    // source the single-device runner reads. The resolved pairs ride in the
+    // session state (presenter authoritative), so the controller renders
+    // them from the broadcast with no content-ordering assumption.
+    final snapshot = ref.read(bankedContentProvider).value ?? curatedSeeds;
+    final c = LiveGameController.open(
       client: ref.read(supabaseProvider),
       role: role,
       code: code,
-      initialState: const LiveState().toMap(),
-      reduce: LiveState.reducer(_total),
+      def: _def,
+      content: LocalContentBank(snapshot),
     );
+    // mounted-guard each listener: a broadcast event can already be in the
+    // microtask queue when the sub is cancelled (cancel is unawaited).
     _subs
-      ..add(
-        s.states.listen((v) => setState(() => _live = LiveState.fromMap(v))),
-      )
-      ..add(s.peers.listen((v) => setState(() => _peers = v)))
-      ..add(s.status.listen((v) => setState(() => _status = v)));
+      ..add(c.states.listen((v) {
+        if (mounted) setState(() => _wire = v);
+      }))
+      ..add(c.peers.listen((v) {
+        if (mounted) setState(() => _peers = v);
+      }))
+      ..add(c.status.listen((v) {
+        if (mounted) setState(() => _status = v);
+      }));
     setState(() {
-      _session = s;
+      _controller = c;
+      _wire = c.state;
       _mode = role == SessionRole.present ? _Mode.present : _Mode.control;
     });
   }
 
-  Future<void> _leave() async {
+  void _leave() {
     for (final sub in _subs) {
       unawaited(sub.cancel());
     }
     _subs.clear();
-    await _session?.dispose();
+    _controller?.dispose();
+    _controller = null; // null BEFORE the mounted check so dispose() no-ops
     if (!mounted) return;
     setState(() {
-      _session = null;
       _mode = _Mode.lobby;
-      _live = const LiveState();
+      _wire = const {};
       _peers = 0;
       _status = LiveStatus.connecting;
     });
@@ -95,7 +105,7 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
     for (final sub in _subs) {
       unawaited(sub.cancel());
     }
-    unawaited(_session?.dispose());
+    _controller?.dispose();
     _codeCtrl.dispose();
     super.dispose();
   }
@@ -162,28 +172,20 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
 
   // ── Presenter (the big screen) ───────────────────────────────────────────
   Widget _presentView(BuildContext context) {
+    final c = _controller!;
     return Column(
       children: [
         _PresenterHeader(
-          code: _session?.code ?? '',
+          code: c.code,
           peers: _peers,
           status: _status,
           onEnd: _leave,
         ),
-        Expanded(
-          child: _Presentation(
-            pair: _pairs[_live.index],
-            state: _live,
-            palette: _palette[_live.index % _palette.length],
-          ),
-        ),
-        _ControlBar(
-          state: _live,
-          total: _total,
-          onBack: () => _session?.applyLocal('back'),
-          onReveal: () => _session?.applyLocal('reveal'),
-          onNext: () => _session?.applyLocal('next'),
-          onRestart: () => _session?.applyLocal('restart'),
+        Expanded(child: _def.buildStage(context, _state)),
+        _LiveControlBar(
+          wire: _wire,
+          revealLabel: _def.revealLabel(revealed: _wire['r'] == true),
+          onIntent: c.send,
         ),
       ],
     );
@@ -192,8 +194,11 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
   // ── Controller (the phone remote) ─────────────────────────────────────────
   Widget _controlView(BuildContext context) {
     final theme = Theme.of(context);
-    final a = _pairs[_live.index].payload['a']! as String;
-    final b = _pairs[_live.index].payload['b']! as String;
+    final c = _controller!;
+    final state = _state;
+    final (a, b) = state.current;
+    final synced = _wire['n'] != null; // false until the first broadcast lands
+    final total = (_wire['n'] as num?)?.toInt() ?? state.pairs.length;
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -214,13 +219,15 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
           ),
           const Spacer(),
           Text(
-            _live.done
+            !synced
+                ? 'Waiting for the presenter…'
+                : state.done
                 ? 'Wrapped up 🎉'
-                : 'Slide ${_live.index + 1} of $_total',
+                : 'Slide ${state.index + 1} of $total',
             style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 12),
-          if (!_live.done)
+          if (synced && !state.done)
             Text(
               '$a   ·   $b',
               textAlign: TextAlign.center,
@@ -229,7 +236,7 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
                 fontWeight: FontWeight.w800,
               ),
             ),
-          if (_live.revealed && !_live.done) ...[
+          if (state.revealed && !state.done) ...[
             const SizedBox(height: 8),
             const Text(
               'Discussing "why?"',
@@ -241,7 +248,7 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
             width: double.infinity,
             height: 72,
             child: FilledButton.icon(
-              onPressed: () => _session?.sendIntent('next'),
+              onPressed: () => c.send(GameIntent.next),
               icon: const Icon(Icons.arrow_forward, size: 28),
               label: const Text(
                 'Next',
@@ -254,7 +261,7 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _session?.sendIntent('back'),
+                  onPressed: () => c.send(GameIntent.back),
                   icon: const Icon(Icons.arrow_back),
                   label: const Text('Back'),
                 ),
@@ -262,13 +269,13 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _session?.sendIntent('reveal'),
+                  onPressed: () => c.send(GameIntent.reveal),
                   icon: Icon(
-                    _live.revealed
+                    state.revealed
                         ? Icons.visibility_off
                         : Icons.lightbulb_outline,
                   ),
-                  label: Text(_live.revealed ? 'Hide' : 'Discuss'),
+                  label: Text(state.revealed ? 'Hide' : 'Discuss'),
                 ),
               ),
             ],
@@ -507,165 +514,26 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-class _Presentation extends StatelessWidget {
-  const _Presentation({
-    required this.pair,
-    required this.state,
-    required this.palette,
+/// The presenter's host control bar — dark-themed for the big screen, driven
+/// by the same [GameIntent] vocabulary as everything else. Reads the
+/// conventional wire keys (i/n/d/r) for progress + the done state.
+class _LiveControlBar extends StatelessWidget {
+  const _LiveControlBar({
+    required this.wire,
+    required this.revealLabel,
+    required this.onIntent,
   });
 
-  final ContentItem pair;
-  final LiveState state;
-  final (Color, Color) palette;
+  final Map<String, dynamic> wire;
+  final String revealLabel;
+  final void Function(GameIntent) onIntent;
 
   @override
   Widget build(BuildContext context) {
-    if (state.done) {
-      return const ColoredBox(
-        color: Color(0xFF1B1B2F),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('🎉', style: TextStyle(fontSize: 64)),
-              SizedBox(height: 12),
-              Text(
-                "That's a wrap!",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    final a = pair.payload['a']! as String;
-    final b = pair.payload['b']! as String;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Column(
-          children: [
-            Expanded(
-              child: _Half(text: a, color: palette.$1),
-            ),
-            Expanded(
-              child: _Half(text: b, color: palette.$2),
-            ),
-          ],
-        ),
-        const Center(child: _OrBadge()),
-        if (state.revealed)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.75),
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-              child: const Text(
-                'Why? Turn to a partner and tell them.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _Half extends StatelessWidget {
-  const _Half({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color, Color.lerp(color, Colors.black, 0.28)!],
-        ),
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: FittedBox(
-            child: Text(
-              text,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 40,
-                fontWeight: FontWeight.w800,
-                shadows: [Shadow(color: Colors.black38, blurRadius: 6)],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OrBadge extends StatelessWidget {
-  const _OrBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        'OR',
-        style: TextStyle(
-          color: Colors.black87,
-          fontWeight: FontWeight.w900,
-          fontSize: 16,
-        ),
-      ),
-    );
-  }
-}
-
-class _ControlBar extends StatelessWidget {
-  const _ControlBar({
-    required this.state,
-    required this.total,
-    required this.onBack,
-    required this.onReveal,
-    required this.onNext,
-    required this.onRestart,
-  });
-
-  final LiveState state;
-  final int total;
-  final VoidCallback onBack;
-  final VoidCallback onReveal;
-  final VoidCallback onNext;
-  final VoidCallback onRestart;
-
-  @override
-  Widget build(BuildContext context) {
+    final index = (wire['i'] as num?)?.toInt() ?? 0;
+    final total = (wire['n'] as num?)?.toInt() ?? 1;
+    final done = wire['d'] == true;
+    final revealed = wire['r'] == true;
     return Material(
       color: Colors.white.withValues(alpha: 0.06),
       child: Padding(
@@ -673,38 +541,36 @@ class _ControlBar extends StatelessWidget {
         child: Row(
           children: [
             Text(
-              state.done ? 'Done' : '${state.index + 1} / $total',
+              done ? 'Done' : '${index + 1} / $total',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const Spacer(),
-            if (state.done)
+            if (done)
               FilledButton.icon(
-                onPressed: onRestart,
+                onPressed: () => onIntent(GameIntent.reset),
                 icon: const Icon(Icons.replay),
                 label: const Text('Again'),
               )
             else ...[
               IconButton.filledTonal(
-                onPressed: state.index == 0 ? null : onBack,
+                onPressed: index == 0 ? null : () => onIntent(GameIntent.back),
                 icon: const Icon(Icons.arrow_back),
                 tooltip: 'Back',
               ),
               const SizedBox(width: 8),
               FilledButton.tonalIcon(
-                onPressed: onReveal,
+                onPressed: () => onIntent(GameIntent.reveal),
                 icon: Icon(
-                  state.revealed
-                      ? Icons.visibility_off
-                      : Icons.lightbulb_outline,
+                  revealed ? Icons.visibility_off : Icons.lightbulb_outline,
                 ),
-                label: Text(state.revealed ? 'Hide' : 'Discuss'),
+                label: Text(revealLabel),
               ),
               const SizedBox(width: 8),
               FilledButton.icon(
-                onPressed: onNext,
+                onPressed: () => onIntent(GameIntent.next),
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Next'),
               ),

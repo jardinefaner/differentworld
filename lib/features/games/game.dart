@@ -125,7 +125,7 @@ abstract class GameDefinition<S> {
   /// bar for free; one that doesn't overrides [buildControlBody].
   Map<String, dynamic> initialState(ContentSource content);
 
-  /// Typed lens over the wire-state — the role `LiveState.fromMap` plays.
+  /// Typed lens over the wire-state — what a `fromMap` factory does.
   S decode(Map<String, dynamic> state);
 
   /// THE reducer — pure `(state, intent, args) -> state`. One function for
