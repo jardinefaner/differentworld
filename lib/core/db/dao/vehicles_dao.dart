@@ -154,6 +154,7 @@ class VehiclesDao extends DatabaseAccessor<AppDatabase>
     String itemsJson = '{}',
     String? notes,
     String? bodyDamageNotes,
+    String roster = '[]',
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await into(vehicleLogs).insert(
@@ -168,6 +169,8 @@ class VehiclesDao extends DatabaseAccessor<AppDatabase>
         items: itemsJson,
         notes: Value(notes),
         bodyDamageNotes: Value(bodyDamageNotes),
+        // Always set explicitly — a server default is a no-op over PowerSync.
+        roster: Value(roster),
         createdAt: now,
       ),
     );

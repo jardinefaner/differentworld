@@ -229,6 +229,7 @@ class VehicleLogActions {
     String? fuelLevel,
     String? notes,
     String? bodyDamageNotes,
+    String roster = '[]', // JSON array of boarded subject ids (headcount)
   }) async {
     if (kind != 'checkout' && kind != 'checkin') {
       throw ArgumentError('kind must be checkout or checkin, got $kind');
@@ -252,6 +253,7 @@ class VehicleLogActions {
       itemsJson: itemsJson,
       notes: notes,
       bodyDamageNotes: bodyDamageNotes,
+      roster: roster,
     );
     return id;
   }

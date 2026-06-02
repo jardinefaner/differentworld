@@ -277,6 +277,12 @@ class VehicleLogs extends Table {
   TextColumn get items => text()(); // JSON string of inspection results
   TextColumn get notes => text().nullable()();
   TextColumn get bodyDamageNotes => text().nullable()();
+
+  /// JSON array of boarded subject ids — the trip headcount (board at
+  /// check-out, tap each off at check-in). Nullable + always set explicitly
+  /// by the client (a server `default` is a no-op over PowerSync); read as
+  /// null → empty list.
+  TextColumn get roster => text().nullable()();
   TextColumn get createdAt => text()();
 
   @override

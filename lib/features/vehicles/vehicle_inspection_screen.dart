@@ -1,9 +1,14 @@
+import 'dart:convert';
+
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/vehicles/guided_capture_screen.dart';
 import 'package:differentworld/features/vehicles/inspection_checklist.dart';
 import 'package:differentworld/features/vehicles/vehicle_photo_shots.dart';
+import 'package:differentworld/features/vehicles/vehicle_roster.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -62,8 +67,18 @@ class _VehicleInspectionScreenState
   String? _pendingLogId;
   final Set<String> _attachedKeys = {};
 
+  // Roster headcount (docs/VISION.md vehicle safety ritual). Check-out: the
+  // driver picks who boards (_boardedIds). Check-in: _boardedIds is seeded
+  // from the open check-out's roster, and _offIds tracks who's been tapped
+  // off; complete is blocked until everyone's off (_boardedIds ⊆ _offIds).
+  final Set<String> _boardedIds = {};
+  final Set<String> _offIds = {};
+  bool _rosterSeeded = false;
+
   bool _saving = false;
   String? _error;
+
+  Set<String> get _stillOnBoard => _boardedIds.difference(_offIds);
 
   @override
   void initState() {
@@ -86,6 +101,9 @@ class _VehicleInspectionScreenState
         _notes.text.trim().isNotEmpty ||
         _bodyDamage.text.trim().isNotEmpty ||
         _captures.isNotEmpty ||
+        // Check-out: boarding picks are a change. Check-in: only tap-offs
+        // are (the boarded list is seeded from the open check-out, not typed).
+        (widget.isCheckout ? _boardedIds.isNotEmpty : _offIds.isNotEmpty) ||
         _results.toJson() != '{}';
   }
 
@@ -115,6 +133,16 @@ class _VehicleInspectionScreenState
       return;
     }
 
+    // Headcount gate (check-in): every child who boarded must be tapped off.
+    // The act that prevents leaving a child — pairs with the empty-cabin photo.
+    if (!widget.isCheckout &&
+        _boardedIds.isNotEmpty &&
+        !headcountCleared(_boardedIds, _offIds)) {
+      setState(() => _error =
+          'Confirm every child is out — ${_stillOnBoard.length} still on board.');
+      return;
+    }
+
     setState(() {
       _saving = true;
       _error = null;
@@ -132,6 +160,9 @@ class _VehicleInspectionScreenState
         itemsJson: _results.toJson(),
         notes: _emptyToNull(_notes.text),
         bodyDamageNotes: _emptyToNull(_bodyDamage.text),
+        // Record the trip's occupancy on both logs (check-out: who boarded;
+        // check-in: the same list, all confirmed off by the gate above).
+        roster: jsonEncode(_boardedIds.toList()),
       );
       // Attach each photo once. Upload the bytes (online → Storage path;
       // offline → queued, returns a pending token), then create the
@@ -283,6 +314,172 @@ class _VehicleInspectionScreenState
     );
   }
 
+  /// Seed the check-in tap-off list from the open check-out's roster (once).
+  void _seedRosterIfNeeded(AsyncValue<VehicleLog?> latest) {
+    if (_rosterSeeded || widget.isCheckout) return;
+    // Wait for the provider to RESOLVE. On cold launch the first build sees
+    // AsyncLoading (value == null); marking seeded then would lock in an
+    // EMPTY roster, and the check-in gate (`_boardedIds.isNotEmpty && …`)
+    // would vacuously pass — a child could be left on board. Only seed once
+    // the real log has loaded. (Preflight BLOCKER, 2026-06-02.)
+    if (!latest.hasValue) return;
+    _rosterSeeded = true;
+    final log = latest.value;
+    if (log != null && log.kind == VehicleLogKind.checkout) {
+      _boardedIds.addAll(parseRoster(log.roster));
+    }
+  }
+
+  /// Check-out: pick who boards. Check-in: tap each boarded child off; the
+  /// submit gate blocks until everyone's off (paired with the empty-cabin
+  /// photo — the actual hot-car prevention).
+  Widget _rosterCard() {
+    final theme = Theme.of(context);
+    final subjects = ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
+    final nameById = {for (final s in subjects) s.id: s.firstName};
+
+    if (widget.isCheckout) {
+      return Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.groups_outlined, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text("Who's on board?", style: theme.textTheme.titleMedium),
+                  const Spacer(),
+                  Text(
+                    _boardedIds.isEmpty ? 'Optional' : '${_boardedIds.length} boarding',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (subjects.isEmpty)
+                Text(
+                  'No children in the roster yet.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final s in subjects)
+                      FilterChip(
+                        label: Text(s.firstName),
+                        selected: _boardedIds.contains(s.id),
+                        onSelected: (sel) => setState(() {
+                          if (sel) {
+                            _boardedIds.add(s.id);
+                          } else {
+                            _boardedIds.remove(s.id);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Check-in.
+    if (_boardedIds.isEmpty) {
+      return Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'No boarding record for this trip — confirm the cabin is '
+                  'empty with the photo.',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    final stillOn = _stillOnBoard;
+    final allOut = stillOn.isEmpty;
+    return Card(
+      margin: EdgeInsets.zero,
+      color: allOut ? null : theme.colorScheme.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  allOut ? Icons.check_circle : Icons.warning_amber_rounded,
+                  color: allOut ? Colors.green : theme.colorScheme.error,
+                ),
+                const SizedBox(width: 8),
+                Text('Everyone out?', style: theme.textTheme.titleMedium),
+                const Spacer(),
+                Text(
+                  allOut
+                      ? 'All out ✓'
+                      : '${stillOn.length} of ${_boardedIds.length} still on board',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: allOut ? Colors.green : theme.colorScheme.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Tap each child as they step off.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final id in _boardedIds)
+                  FilterChip(
+                    label: Text(nameById[id] ?? 'Child'),
+                    selected: _offIds.contains(id),
+                    avatar: _offIds.contains(id)
+                        ? const Icon(Icons.check, size: 18)
+                        : null,
+                    onSelected: (off) => setState(() {
+                      if (off) {
+                        _offIds.add(id);
+                      } else {
+                        _offIds.remove(id);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _markAllOk() {
     setState(() {
       for (final item in InspectionChecklist.items) {
@@ -315,6 +512,9 @@ class _VehicleInspectionScreenState
     }
 
     final vehicleAsync = ref.watch(vehicleByIdProvider(widget.vehicleId));
+    // Check-in seeds the tap-off list from the open check-out's roster (only
+    // once the provider has RESOLVED — see _seedRosterIfNeeded).
+    _seedRosterIfNeeded(ref.watch(latestVehicleLogProvider(widget.vehicleId)));
 
     return DismissGuard(
       isDirty: _isDirty,
@@ -358,6 +558,8 @@ class _VehicleInspectionScreenState
                         // vehicle (the empty-cabin sweep the moment you park)
                         // before the checklist (docs/VISION.md vehicle ritual).
                         _photosCard(v.capabilities),
+                        const SizedBox(height: 16),
+                        _rosterCard(),
                         const SizedBox(height: 16),
                         // Trip header — odometer + fuel
                         Row(
