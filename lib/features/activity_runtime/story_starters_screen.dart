@@ -18,14 +18,9 @@ class StoryStartersScreen extends ConsumerStatefulWidget {
 
 class _StoryStartersScreenState extends ConsumerState<StoryStartersScreen> {
   late final LocalContentBank _bank;
-  late final List<ContentItem> _starters = (_bank.take(
-    ContentKind.storyStarter,
-    1000,
-  )..shuffle()).take(8).toList();
-  late final List<ContentItem> _twists = _bank.take(
-    ContentKind.storyTwist,
-    1000,
-  )..shuffle();
+  // Assigned in initState (after _bank), not as field initializers.
+  late final List<ContentItem> _starters;
+  late final List<ContentItem> _twists;
 
   @override
   void initState() {
@@ -35,6 +30,10 @@ class _StoryStartersScreenState extends ConsumerState<StoryStartersScreen> {
     _bank = LocalContentBank(
       ref.read(bankedContentProvider).value ?? curatedSeeds,
     );
+    _starters = (_bank.take(ContentKind.storyStarter, 1000)..shuffle())
+        .take(8)
+        .toList();
+    _twists = _bank.take(ContentKind.storyTwist, 1000)..shuffle();
   }
 
   int _index = 0;

@@ -21,11 +21,9 @@ class RiddlesScreen extends ConsumerStatefulWidget {
 class _RiddlesScreenState extends ConsumerState<RiddlesScreen> {
   late final LocalContentBank _bank;
   // Take the whole pool, shuffle, keep 10 — so repeat sessions don't always
-  // surface the same first ten of the seed.
-  late final List<ContentItem> _riddles = (_bank.take(
-    ContentKind.riddle,
-    1000,
-  )..shuffle()).take(10).toList();
+  // surface the same first ten. Assigned in initState (after _bank), not as
+  // a field initializer, so the read order is obvious.
+  late final List<ContentItem> _riddles;
 
   @override
   void initState() {
@@ -35,6 +33,9 @@ class _RiddlesScreenState extends ConsumerState<RiddlesScreen> {
     _bank = LocalContentBank(
       ref.read(bankedContentProvider).value ?? curatedSeeds,
     );
+    _riddles = (_bank.take(ContentKind.riddle, 1000)..shuffle())
+        .take(10)
+        .toList();
   }
 
   int _index = 0;

@@ -17,8 +17,8 @@ class RhymeTimeScreen extends ConsumerStatefulWidget {
 
 class _RhymeTimeScreenState extends ConsumerState<RhymeTimeScreen> {
   late final LocalContentBank _bank;
-  late final List<ContentItem> _words = _bank.take(ContentKind.rhymeWord, 1000)
-    ..shuffle();
+  // Assigned in initState (after _bank), not as a field initializer.
+  late final List<ContentItem> _words;
 
   @override
   void initState() {
@@ -28,6 +28,7 @@ class _RhymeTimeScreenState extends ConsumerState<RhymeTimeScreen> {
     _bank = LocalContentBank(
       ref.read(bankedContentProvider).value ?? curatedSeeds,
     );
+    _words = _bank.take(ContentKind.rhymeWord, 1000)..shuffle();
   }
 
   int _index = 0;

@@ -20,10 +20,8 @@ class FactOrFibScreen extends ConsumerStatefulWidget {
 
 class _FactOrFibScreenState extends ConsumerState<FactOrFibScreen> {
   late final LocalContentBank _bank;
-  late final List<ContentItem> _claims = (_bank.take(
-    ContentKind.factOrFib,
-    1000,
-  )..shuffle()).take(10).toList();
+  // Assigned in initState (after _bank), not as a field initializer.
+  late final List<ContentItem> _claims;
 
   @override
   void initState() {
@@ -33,6 +31,9 @@ class _FactOrFibScreenState extends ConsumerState<FactOrFibScreen> {
     _bank = LocalContentBank(
       ref.read(bankedContentProvider).value ?? curatedSeeds,
     );
+    _claims = (_bank.take(ContentKind.factOrFib, 1000)..shuffle())
+        .take(10)
+        .toList();
   }
 
   int _index = 0;

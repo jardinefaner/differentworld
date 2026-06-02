@@ -54,28 +54,33 @@ class ContentBankDao extends DatabaseAccessor<AppDatabase>
     required String payload,
     String? createdBy,
   }) async {
-    final existing =
-        await (select(contentItems)..where(
-              (c) =>
-                  c.kind.equals(kind) &
-                  c.fingerprint.equals(fingerprint) &
-                  (c.spaceId.isNull() | c.spaceId.equals(spaceId)),
-            ))
-            .getSingleOrNull();
-    if (existing != null) return existing.id;
-    final id = _uuid.v4();
-    await into(contentItems).insert(
-      ContentItemsCompanion.insert(
-        id: id,
-        spaceId: Value(spaceId),
-        kind: kind,
-        payload: payload,
-        fingerprint: fingerprint,
-        source: 'crowd',
-        createdBy: Value(createdBy),
-        createdAt: DateTime.now().toUtc().toIso8601String(),
-      ),
-    );
-    return id;
+    // Check-then-insert in one transaction so a same-device double-tap can't
+    // slip a duplicate past the SELECT. (Cross-device races are still caught
+    // by the server's partial unique index — uniqueness is the bank's job.)
+    return transaction(() async {
+      final existing =
+          await (select(contentItems)..where(
+                (c) =>
+                    c.kind.equals(kind) &
+                    c.fingerprint.equals(fingerprint) &
+                    (c.spaceId.isNull() | c.spaceId.equals(spaceId)),
+              ))
+              .getSingleOrNull();
+      if (existing != null) return existing.id;
+      final id = _uuid.v4();
+      await into(contentItems).insert(
+        ContentItemsCompanion.insert(
+          id: id,
+          spaceId: Value(spaceId),
+          kind: kind,
+          payload: payload,
+          fingerprint: fingerprint,
+          source: 'crowd',
+          createdBy: Value(createdBy),
+          createdAt: DateTime.now().toUtc().toIso8601String(),
+        ),
+      );
+      return id;
+    });
   }
 }

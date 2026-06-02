@@ -31,13 +31,20 @@ final bankedContentProvider = StreamProvider<List<ContentItem>>((ref) async* {
   final rows = spaceId == null
       ? db.contentBankDao.watchGlobal()
       : db.contentBankDao.watchForSpace(spaceId);
-  await for (final banked in rows) {
-    yield <ContentItem>[
-      ...curatedSeeds,
-      for (final r in banked)
-        if (_decodePayload(r.payload) case final Map<String, Object?> p)
-          ContentItem(kind: r.kind, fingerprint: r.fingerprint, payload: p),
-    ];
+  try {
+    await for (final banked in rows) {
+      yield <ContentItem>[
+        ...curatedSeeds,
+        for (final r in banked)
+          if (_decodePayload(r.payload) case final Map<String, Object?> p)
+            ContentItem(kind: r.kind, fingerprint: r.fingerprint, payload: p),
+      ];
+    }
+  } on Object {
+    // If the Drift watch errors (e.g. DB torn down during a hot restart),
+    // degrade to the curated offline floor instead of leaving this
+    // keepAlive provider stuck in an error state. Activities keep working.
+    yield curatedSeeds;
   }
 });
 
