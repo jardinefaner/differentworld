@@ -88,7 +88,7 @@ void main() {
         ContentKind.thisOrThat,
       );
       final bank = LocalContentBank.seededWith([
-        ContentItem(
+        const ContentItem(
           kind: ContentKind.thisOrThat,
           fingerprint: 'robots|aliens',
           payload: {'a': 'Robots', 'b': 'Aliens'},
@@ -103,7 +103,7 @@ void main() {
       );
       final bank = LocalContentBank.seededWith([
         // Same (kind, fingerprint) as the curated 'Pizza' | 'Tacos' seed.
-        ContentItem(
+        const ContentItem(
           kind: ContentKind.thisOrThat,
           fingerprint: 'pizza|tacos',
           payload: {'a': 'Pizza', 'b': 'Tacos'},

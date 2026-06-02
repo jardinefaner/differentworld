@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `/activity/starts-with` — "name things that start with this letter."
 ///
@@ -13,20 +15,20 @@ import 'package:flutter/services.dart';
 /// the teacher taps the tally as they come, then advances. A count, never
 /// a graded word-list. All 26 letters — the teacher just Nexts past any
 /// that are too hard for the room.
-class LetterWordsScreen extends StatefulWidget {
+class LetterWordsScreen extends ConsumerStatefulWidget {
   const LetterWordsScreen({super.key});
 
   @override
-  State<LetterWordsScreen> createState() => _LetterWordsScreenState();
+  ConsumerState<LetterWordsScreen> createState() => _LetterWordsScreenState();
 }
 
-class _LetterWordsScreenState extends State<LetterWordsScreen> {
+class _LetterWordsScreenState extends ConsumerState<LetterWordsScreen> {
   static const _letters = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', //
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
   ];
 
-  final LocalContentBank _bank = LocalContentBank.seeded();
+  late final LocalContentBank _bank;
   final Random _rng = Random();
 
   late ContentItem _category;
@@ -37,6 +39,11 @@ class _LetterWordsScreenState extends State<LetterWordsScreen> {
   @override
   void initState() {
     super.initState();
+    // Curated ∪ synced AI/crowd (docs/CONTENT_BANK.md); curated-only until
+    // the DB tier syncs. Our own bank instance → independent seen-tracking.
+    _bank = LocalContentBank(
+      ref.read(bankedContentProvider).value ?? curatedSeeds,
+    );
     _category = _bank.next(ContentKind.category) ?? _fallbackCategory();
     _letter = _letters[_rng.nextInt(_letters.length)];
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +25,7 @@ class AsIfScreen extends ConsumerStatefulWidget {
 }
 
 class _AsIfScreenState extends ConsumerState<AsIfScreen> {
-  final LocalContentBank _bank = LocalContentBank.seeded();
+  late final LocalContentBank _bank;
   late final List<String> _lines;
   late final List<String> _asIfs;
 
@@ -40,6 +41,11 @@ class _AsIfScreenState extends ConsumerState<AsIfScreen> {
   @override
   void initState() {
     super.initState();
+    // Curated ∪ synced AI/crowd (docs/CONTENT_BANK.md); curated-only until
+    // the DB tier syncs. Our own bank instance → independent seen-tracking.
+    _bank = LocalContentBank(
+      ref.read(bankedContentProvider).value ?? curatedSeeds,
+    );
     _lines = [
       for (final c in _bank.take(ContentKind.line, 999))
         c.payload['text']! as String,

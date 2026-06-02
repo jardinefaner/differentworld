@@ -1,29 +1,41 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `/activity/riddles` — a host-run brain break. TEACHER-paced, NO typing,
 /// NO grading: one riddle at a time, big; the room shouts guesses ALOUD;
 /// the teacher taps **Reveal** (the answer appears, celebratory) then
 /// **Next**. Content is curated + answer-first (docs/CONTENT_BANK.md).
-class RiddlesScreen extends StatefulWidget {
+class RiddlesScreen extends ConsumerStatefulWidget {
   const RiddlesScreen({super.key});
 
   @override
-  State<RiddlesScreen> createState() => _RiddlesScreenState();
+  ConsumerState<RiddlesScreen> createState() => _RiddlesScreenState();
 }
 
-class _RiddlesScreenState extends State<RiddlesScreen> {
-  final LocalContentBank _bank = LocalContentBank.seeded();
+class _RiddlesScreenState extends ConsumerState<RiddlesScreen> {
+  late final LocalContentBank _bank;
   // Take the whole pool, shuffle, keep 10 — so repeat sessions don't always
   // surface the same first ten of the seed.
   late final List<ContentItem> _riddles = (_bank.take(
     ContentKind.riddle,
     1000,
   )..shuffle()).take(10).toList();
+
+  @override
+  void initState() {
+    super.initState();
+    // Curated ∪ synced AI/crowd (docs/CONTENT_BANK.md); curated-only until
+    // the DB tier syncs. Our own bank instance → independent seen-tracking.
+    _bank = LocalContentBank(
+      ref.read(bankedContentProvider).value ?? curatedSeeds,
+    );
+  }
 
   int _index = 0;
   bool _revealed = false;

@@ -1,22 +1,34 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `/activity/rhyme-time` — a host-run word break. TEACHER-paced, NO typing,
 /// NO grading: a word shows big, the room shouts rhymes ALOUD, the teacher
 /// taps the tally each time. Change the word any time; the count climbs for
 /// the whole room. (Same spirit as Beat the Letter.)
-class RhymeTimeScreen extends StatefulWidget {
+class RhymeTimeScreen extends ConsumerStatefulWidget {
   const RhymeTimeScreen({super.key});
 
   @override
-  State<RhymeTimeScreen> createState() => _RhymeTimeScreenState();
+  ConsumerState<RhymeTimeScreen> createState() => _RhymeTimeScreenState();
 }
 
-class _RhymeTimeScreenState extends State<RhymeTimeScreen> {
-  final LocalContentBank _bank = LocalContentBank.seeded();
+class _RhymeTimeScreenState extends ConsumerState<RhymeTimeScreen> {
+  late final LocalContentBank _bank;
   late final List<ContentItem> _words = _bank.take(ContentKind.rhymeWord, 1000)
     ..shuffle();
+
+  @override
+  void initState() {
+    super.initState();
+    // Curated ∪ synced AI/crowd (docs/CONTENT_BANK.md); curated-only until
+    // the DB tier syncs. Our own bank instance → independent seen-tracking.
+    _bank = LocalContentBank(
+      ref.read(bankedContentProvider).value ?? curatedSeeds,
+    );
+  }
 
   int _index = 0;
   int _count = 0;

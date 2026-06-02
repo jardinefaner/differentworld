@@ -1,20 +1,23 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `/activity/story` — Story Starters. A host-run imagination break: an
 /// opener shows big, the room builds the story aloud one line each around
 /// the circle, and the teacher can drop a "Plot twist!" card any time, then
 /// move to a new start. No typing, no grading — pure invention.
-class StoryStartersScreen extends StatefulWidget {
+class StoryStartersScreen extends ConsumerStatefulWidget {
   const StoryStartersScreen({super.key});
 
   @override
-  State<StoryStartersScreen> createState() => _StoryStartersScreenState();
+  ConsumerState<StoryStartersScreen> createState() =>
+      _StoryStartersScreenState();
 }
 
-class _StoryStartersScreenState extends State<StoryStartersScreen> {
-  final LocalContentBank _bank = LocalContentBank.seeded();
+class _StoryStartersScreenState extends ConsumerState<StoryStartersScreen> {
+  late final LocalContentBank _bank;
   late final List<ContentItem> _starters = (_bank.take(
     ContentKind.storyStarter,
     1000,
@@ -23,6 +26,16 @@ class _StoryStartersScreenState extends State<StoryStartersScreen> {
     ContentKind.storyTwist,
     1000,
   )..shuffle();
+
+  @override
+  void initState() {
+    super.initState();
+    // Curated ∪ synced AI/crowd (docs/CONTENT_BANK.md); curated-only until
+    // the DB tier syncs. Our own bank instance → independent seen-tracking.
+    _bank = LocalContentBank(
+      ref.read(bankedContentProvider).value ?? curatedSeeds,
+    );
+  }
 
   int _index = 0;
   int _twistI = 0;

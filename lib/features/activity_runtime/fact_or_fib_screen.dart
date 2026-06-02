@@ -1,27 +1,39 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `/activity/fact-or-fib` — a host-run brain break. TEACHER-paced, NO
 /// typing, NO grading: a claim shows big, the room votes True or Fib (hands
 /// up / move to a side), the teacher taps **Reveal** (the verdict glows + the
 /// real fact appears) then **Next**. Curated content (docs/CONTENT_BANK.md).
-class FactOrFibScreen extends StatefulWidget {
+class FactOrFibScreen extends ConsumerStatefulWidget {
   const FactOrFibScreen({super.key});
 
   @override
-  State<FactOrFibScreen> createState() => _FactOrFibScreenState();
+  ConsumerState<FactOrFibScreen> createState() => _FactOrFibScreenState();
 }
 
-class _FactOrFibScreenState extends State<FactOrFibScreen> {
-  final LocalContentBank _bank = LocalContentBank.seeded();
+class _FactOrFibScreenState extends ConsumerState<FactOrFibScreen> {
+  late final LocalContentBank _bank;
   late final List<ContentItem> _claims = (_bank.take(
     ContentKind.factOrFib,
     1000,
   )..shuffle()).take(10).toList();
+
+  @override
+  void initState() {
+    super.initState();
+    // Curated ∪ synced AI/crowd (docs/CONTENT_BANK.md); curated-only until
+    // the DB tier syncs. Our own bank instance → independent seen-tracking.
+    _bank = LocalContentBank(
+      ref.read(bankedContentProvider).value ?? curatedSeeds,
+    );
+  }
 
   int _index = 0;
   bool _revealed = false;
