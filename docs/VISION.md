@@ -327,6 +327,47 @@ to finish it so the seams *are* the framework:
 - **Lives in:** lib/features/activity_runtime/, lib/features/live_session/,
   [LIVE_SESSIONS.md](LIVE_SESSIONS.md), [CONTENT_BANK.md](CONTENT_BANK.md)
 
+### 18. The classroom remote — present/control for *everything*, not just games
+
+> "the point of this is the presentation aspect of it, and the ability to
+> control the screen with your phone... even though they're not games, i want
+> all of these to be controllable by phone... let's think of more ways we
+> could utilize this mechanic"
+
+The phone-as-remote + screen-as-stage isn't a *games* engine — it's a
+**classroom remote control** for the shared screen. The teacher walks the
+room with the control in their pocket; the projector / TV / desktop is the
+stage the whole room watches; nobody's tethered to a laptop. Games were just
+the first apps for it. The same contract behind the deck — a *state* + a
+reducer over **next · back · reveal · pick · tally** + a stage, present/
+control over Realtime (`LiveGameScreen`) — already powers non-game surfaces:
+
+- **Run the day** — a **Now & Next** board (the schedule, big; advance from
+  the phone), a room-watchable **visual timer** ("10 min left", start/pause/
+  +time from the phone), one-tap **transition cues** (Eyes up / Clean up /
+  Line up / Breathe together), a fair-turns **random picker / spotlight**.
+- **Decide together** — a **poll / vote** on the real choice (snack, activity,
+  book): options big, hands up, the teacher taps the count, the winner glows;
+  a **mood / SEL check-in** the same way.
+- **Celebrate & connect** — a **photo-of-the-day slideshow / day-in-review**
+  (perfect at pickup as families walk in), **shout-outs**, a morning
+  **welcome board**.
+- **Learn** — **read-aloud** pages (TTS-narrated for the pre-readers),
+  **word / action-word of the day** (#9), a **circle-time board** (day / date
+  / weather / helper-of-the-day).
+
+The only new primitive any of these needs is **time** (the timer's clock);
+everything else is the tap-driven vocabulary that already exists. The work is
+to (1) name it for what it is — a **"Present" / "Room screen"** capability,
+not "games" — and (2) give existing content (the schedule, the photo feed) a
+**Present mode** rather than rebuilding it.
+
+- **Status:** seed (the engine — `GameDefinition` + `LiveGameScreen` — exists
+  and is proven live on This-or-That, Riddles, Fact or Fib; the non-game
+  surfaces are the next build)
+- **Lives in:** lib/features/games/, lib/features/live_session/,
+  [GAMES.md](GAMES.md)
+
 ---
 
 ## New dreams land here
@@ -353,6 +394,14 @@ once it has a home.
   presentation* — every game a (Presentation, Control, sometimes Secret)
   trio. Catalog + the two-device model in [GAMES.md](GAMES.md); Charades is
   the standout two-device unlock (→ dreams #4 + #14).
+- **2026-06-02** — **The classroom remote**: the *present/control mechanic*
+  is the product, not the games. ALL shared-screen moments should be phone-
+  driven — a Now & Next schedule board, a visual timer, real polls/votes, a
+  mood check, a photo day-in-review, transition cues, read-aloud, a random
+  picker. The `GameDefinition` + `LiveGameScreen` engine already supports
+  all of them but the timer (which needs a clock primitive); the move is to
+  reframe it as a "Present / Room screen" capability and give existing
+  content a Present mode (→ dream #18).
 
 ---
 
