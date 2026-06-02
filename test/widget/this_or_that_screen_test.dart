@@ -1,15 +1,20 @@
-// Widget test for the host-run This or That (game-show-host model).
-// The teacher drives slides; the room sees the pair. Default test surface
-// is 800x600 → the wide (presentation + control bar) layout.
+// Widget test for This or That — now running on the unified Game framework
+// (docs/GAMES.md Wave 0b): GameRunner + LocalGameController + GameScaffold +
+// ThisOrThatGame. These assertions are the behavioral LOCK on the port — the
+// same expectations the bespoke screen met, so green here = equivalent.
+// Default test surface is 800x600 → the wide (presentation + control bar)
+// layout.
 
-import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
+import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  Widget harness() =>
-      const ProviderScope(child: MaterialApp(home: ThisOrThatScreen()));
+  Widget harness() => const ProviderScope(
+    child: MaterialApp(home: GameRunner(def: ThisOrThatGame())),
+  );
 
   testWidgets('presents the first pair with host controls', (tester) async {
     await tester.pumpWidget(harness());
@@ -43,6 +48,27 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Why?'), findsOneWidget);
+  });
+
+  testWidgets('Back is inactive on slide 1, active after Next', (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    // Wide layout's Back is a filledTonal IconButton (no text label).
+    final back = find.widgetWithIcon(IconButton, Icons.arrow_back);
+    expect(
+      tester.widget<IconButton>(back).onPressed,
+      isNull,
+      reason: 'Back inactive on slide 1',
+    );
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Next'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<IconButton>(back).onPressed,
+      isNotNull,
+      reason: 'Back active after advancing',
+    );
   });
 
   testWidgets('phone width shows the big control panel', (tester) async {

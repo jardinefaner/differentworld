@@ -111,10 +111,18 @@ abstract class GameDefinition<S> {
   GameVibe get vibe;
 
   /// Build the initial wire-state. THE ONE place a game reads content, so
-  /// the reducer stays pure + content-free. Stash content-derived
-  /// constants (e.g. the item count under `'n'`) into the state here so
-  /// the reducer needs no closure over content (and the presenter is the
-  /// single source of truth for them on the live path).
+  /// the reducer stays pure + content-free. Stash content-derived data
+  /// (e.g. the resolved pairs/words AND the item count under `'n'`) into
+  /// the state here so the reducer needs no closure over content — and so
+  /// the wire-state is self-describing on the live path (the presenter
+  /// builds it from content + broadcasts it; controllers render the same
+  /// data with no cross-device content-ordering assumption).
+  ///
+  /// The default control bar `GameScaffold` renders reads four CONVENTIONAL
+  /// keys when present: `'i'` (current index, int), `'n'` (total, int),
+  /// `'d'` (done, bool), `'r'` (revealed, bool). A game that follows the
+  /// convention inherits the standard progress + Back/Reveal/Next/Again
+  /// bar for free; one that doesn't overrides [buildControlBody].
   Map<String, dynamic> initialState(ContentSource content);
 
   /// Typed lens over the wire-state — the role `LiveState.fromMap` plays.
@@ -144,6 +152,15 @@ abstract class GameDefinition<S> {
   /// the scaffold's standard affordances from [activeIntents]. Tally games
   /// supply a big "+1"; Charades supplies "Got it / Skip".
   Widget? buildControlBody(BuildContext context, S state) => null;
+
+  /// The label for the [GameIntent.reveal] button in the default control
+  /// bar. Most games "Reveal"; This-or-That "Discuss" (it reveals a
+  /// discussion prompt, not an answer).
+  String revealLabel({required bool revealed}) => revealed ? 'Hide' : 'Reveal';
+
+  /// If non-null, the scaffold shows a "cast" action that pushes this route
+  /// — the live present/control variant (docs/LIVE_SESSIONS.md).
+  String? get liveRoute => null;
 
   /// If non-null, `capture` / `submit` produce durable evidence and the
   /// runner routes the write here (crowd-grow + a growth-book entry).

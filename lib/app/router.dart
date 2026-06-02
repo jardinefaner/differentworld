@@ -19,7 +19,6 @@ import 'package:differentworld/features/activity_runtime/rhyme_time_screen.dart'
 import 'package:differentworld/features/activity_runtime/riddles_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
-import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
@@ -34,6 +33,8 @@ import 'package:differentworld/features/exports/send_export_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
+import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
@@ -893,7 +894,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // content bank (docs/ACTIVITY_RUNTIME.md + CONTENT_BANK.md).
           GoRoute(
             path: '/activity/this-or-that',
-            builder: (_, _) => const ThisOrThatScreen(),
+            builder: (_, _) => const GameRunner(def: ThisOrThatGame()),
           ),
           // "Starts with" word game — content from the content bank.
           GoRoute(
