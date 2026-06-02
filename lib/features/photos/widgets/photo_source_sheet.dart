@@ -1,6 +1,6 @@
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -171,15 +171,12 @@ class _PhotoSourceSheetState extends ConsumerState<PhotoSourceSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          // Wave 107: hide the "Take a photo" tile on web. The
-          // image_picker ImageSource.camera path on web requires
-          // getUserMedia() which only works on HTTPS desktops with
-          // an attached webcam, and ranges from awkward (Chrome) to
-          // broken (Safari/Firefox). The "Choose from library" path
-          // on web uses an <input type=file> picker — the correct
-          // file-upload UX on desktop. On phones (kIsWeb=false in a
-          // Flutter native build) we keep both.
-          if (!kIsWeb)
+          // Show "Take a photo" only on native mobile — the one place
+          // with a usable in-app camera. On web the camera path needs
+          // flaky getUserMedia, and on desktop image_picker has no
+          // camera at all (tapping it just errored). Web + desktop get
+          // the file-picker path instead (docs/PLATFORM_RUBRIC.md, P1).
+          if (isMobileCapturePlatform)
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
               title: const Text('Take a photo'),
@@ -188,11 +185,11 @@ class _PhotoSourceSheetState extends ConsumerState<PhotoSourceSheet> {
             ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            // Wave 107: copy varies by platform — "library" reads as
-            // mobile, "file" reads as desktop. The handler still
-            // routes through ImageSource.gallery either way.
-            title: const Text(
-              kIsWeb ? 'Choose a file…' : 'Choose from library',
+            // Copy varies by platform — "library" reads as mobile, "file"
+            // reads as web/desktop. The handler routes through
+            // ImageSource.gallery either way (a file picker off-mobile).
+            title: Text(
+              isMobileCapturePlatform ? 'Choose from library' : 'Choose a file…',
             ),
             enabled: !_busy,
             onTap: () => _pick(ImageSource.gallery),

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -29,7 +31,10 @@ class VehicleScanScreen extends StatefulWidget {
 }
 
 class _VehicleScanScreenState extends State<VehicleScanScreen> {
-  late final MobileScannerController _controller;
+  // Null off-mobile: mobile_scanner has no web/desktop implementation, so
+  // we never construct the controller there (it'd throw) and the build
+  // shows a "scan on your phone" fallback instead.
+  MobileScannerController? _controller;
 
   /// True between the moment we recognized a valid QR and the moment
   /// the pop+push completes. Prevents double-fires when the scanner
@@ -40,14 +45,16 @@ class _VehicleScanScreenState extends State<VehicleScanScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = MobileScannerController(
-      formats: const [BarcodeFormat.qrCode],
-    );
+    if (isMobileCapturePlatform) {
+      _controller = MobileScannerController(
+        formats: const [BarcodeFormat.qrCode],
+      );
+    }
   }
 
   @override
   void dispose() {
-    unawaited(_controller.dispose());
+    unawaited(_controller?.dispose());
     super.dispose();
   }
 
@@ -79,12 +86,28 @@ class _VehicleScanScreenState extends State<VehicleScanScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final controller = _controller;
+    if (controller == null) {
+      // No camera/QR scanner off-mobile. Guide the user rather than
+      // crashing on mobile_scanner (docs/PLATFORM_RUBRIC.md, P1). The
+      // vehicle list + per-vehicle checkout still work here.
+      return const EdgeScaffold(
+        backFallbackRoute: '/vehicles',
+        body: EmptyState(
+          icon: Icons.qr_code_scanner_outlined,
+          title: 'Scan on your phone',
+          message: 'QR scanning needs a device camera. Open Different World '
+              'on a phone or tablet to scan a vehicle code — or pick the '
+              'vehicle from the list to check it out here.',
+        ),
+      );
+    }
     return EdgeScaffold(
       backFallbackRoute: '/vehicles',
       body: Stack(
         children: [
           MobileScanner(
-            controller: _controller,
+            controller: controller,
             onDetect: _onDetect,
           ),
           // Aiming overlay — square cutout in the center so the user

@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -33,15 +34,17 @@ class VehiclesListScreen extends ConsumerWidget {
       // team / etc. Empty state has its own CTA too; that's fine, the
       // chrome '+' is the GROUND for the verb.
       actions: [
-        // Scan-to-check-out is the backup path for the OS deep link.
-        // Every signed-in user gets it — the inspection screen
-        // self-gates submit on `canDrive`, so a non-driver can still
-        // scan and see the form but can't write a log.
-        SecondaryActionButton(
-          tooltip: 'Scan vehicle QR',
-          icon: Icons.qr_code_scanner_outlined,
-          onPressed: () => context.push('/vehicles/scan'),
-        ),
+        // Scan-to-check-out is the backup path for the OS deep link —
+        // mobile-only, since QR scanning needs a camera (no usable
+        // scanner on web/desktop; docs/PLATFORM_RUBRIC.md, P1). The
+        // inspection screen self-gates submit on `canDrive`, so a
+        // non-driver can still scan + see the form but can't write a log.
+        if (isMobileCapturePlatform)
+          SecondaryActionButton(
+            tooltip: 'Scan vehicle QR',
+            icon: Icons.qr_code_scanner_outlined,
+            onPressed: () => context.push('/vehicles/scan'),
+          ),
         if (canEditFleet)
           PrimaryActionButton(
             tooltip: 'New vehicle',
