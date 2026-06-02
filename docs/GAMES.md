@@ -176,20 +176,30 @@ Lives in `lib/features/games/`.
    `GameDefinition<S>` with the first-class `buildStage` slot, `GameVibe`,
    `CaptureSpec`) + `game_controller.dart` (`GameController` +
    `LocalGameController`) + a unit test. Analyze clean, 3/3 pass.
-0b. **Next.** `GameScaffold` (control bar from `activeIntents` + progress +
-   keyboard hint + `PresenterShortcuts` wiring + live header) +
-   `LiveGameController` (wraps `LiveSession` — note: `LiveSession.sendIntent`
-   speaks **String** intents + has its own `LiveState.reducer(total)`, so
-   the controller maps `GameIntent.name` ↔ String) + `GameRunner` + port
-   **This-or-That**. ⚠ This-or-That is NOT greenfield — it's a working,
-   **golden-locked** feature on **two routes** (`/activity/this-or-that`
-   builds `ThisOrThatScreen`; `/live/this-or-that` is the live variant) with
-   two widget tests (`this_or_that_screen_test`, `brain_breaks_screen_test`)
-   to keep green. So 0b REPLACES a working showcase — do it with the widget
-   tests + golden as the safety net, and verify the **live two-device flow
-   on the Pixel + a desktop window** before merging. Best as its own focused
-   PR, not a tail-of-session cram.
+0b. **DONE (`feat/game-framework` 78f0f1b).** `GameScaffold` (control
+   bar/panel from `activeIntents` + a per-game reveal label + progress +
+   `PresenterShortcuts` wiring + responsive present/control split + cast
+   action) + `GameRunner` (single-device) + `ThisOrThatGame`. `/activity/
+   this-or-that` now builds `GameRunner(def: ThisOrThatGame())`; the bespoke
+   `this_or_that_screen.dart` is deleted. Reducer = the old logic over
+   `GameIntent`; the resolved pairs ride IN the wire-state (self-describing,
+   sets up the live path). 8/8 widget + core tests, preflight 0/0/3.
+0c. **DONE (`feat/game-framework` 8d54aab).** `LiveGameController` (wraps
+   `LiveSession`; maps `GameIntent.name` ↔ String; present→`applyLocal` /
+   control→`sendIntent`; idempotent dispose) + `/live/this-or-that` rewritten
+   to drive `ThisOrThatGame` over it. The duplicate `LiveState` reducer +
+   `_Presentation`/`_Half`/`_OrBadge` are DELETED — `/activity` + `/live`
+   now share one source of truth. The `LiveState.reduce` test moved to
+   `this_or_that_game_test.dart`. Preflight 0 blockers / 3 warnings (double-
+   dispose, missing `_peers`/`_status` isClosed guards, setState-without-
+   mounted) — ALL fixed. 108/108 unit, analyze clean. ⚠ The **live two-device
+   flow is unverified from here** — verify on the Pixel + a desktop window
+   (present on desktop, scan/join code on the Pixel, drive slides) before
+   merging to main. Behavior is preserved (same reducer + stage), so the risk
+   is wiring, not logic.
 1. Reveal/slideshow games — Riddles, Fact-or-Fib, Math, Story, Discussions.
+   **These reuse `GameScaffold` for free — each is a `GameDefinition` (state
+   + reducer + stage) + a route swap; no new chrome.**
 2. Tally games — Rhyme Time, Beat the Letter (**Rhyme Time lands `capture`**).
 3. Charades (the live/secret role).
 4. As-If (validates the contract bends to a non-slideshow shape).
