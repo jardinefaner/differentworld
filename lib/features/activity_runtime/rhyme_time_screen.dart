@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -62,9 +63,15 @@ class _RhymeTimeScreenState extends ConsumerState<RhymeTimeScreen> {
   @override
   Widget build(BuildContext context) {
     return EdgeScaffold(
-      body: ColoredBox(
-        color: Colors.black,
-        child: SafeArea(child: _done ? _recap(context) : _play(context)),
+      // Presenter keyboard controls (docs/PLATFORM_RUBRIC.md, P3):
+      // Space / + tallies a rhyme, → / Enter is a new word.
+      body: PresenterShortcuts(
+        onTally: _done ? null : _rhymed,
+        onNext: _done ? null : _newWord,
+        child: ColoredBox(
+          color: Colors.black,
+          child: SafeArea(child: _done ? _recap(context) : _play(context)),
+        ),
       ),
     );
   }

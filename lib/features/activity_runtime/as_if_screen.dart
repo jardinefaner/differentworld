@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -82,9 +83,14 @@ class _AsIfScreenState extends ConsumerState<AsIfScreen> {
   @override
   Widget build(BuildContext context) {
     return EdgeScaffold(
-      body: ColoredBox(
-        color: Colors.black,
-        child: _done ? _recap(context) : _challenge(context),
+      // Presenter keyboard control (docs/PLATFORM_RUBRIC.md, P3): → / Enter
+      // performs "I did it!" and moves to the next challenge.
+      body: PresenterShortcuts(
+        onNext: _done ? null : () => _next(counted: true),
+        child: ColoredBox(
+          color: Colors.black,
+          child: _done ? _recap(context) : _challenge(context),
+        ),
       ),
     );
   }

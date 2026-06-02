@@ -9,6 +9,8 @@ import 'package:flutter/services.dart';
 ///   - **→ / Enter** → next ([onNext])
 ///   - **←** → back ([onBack])
 ///   - **Space / R** → reveal / discuss ([onReveal])
+///   - **Space / +** → tally a contribution ([onTally], for counting games
+///     like Rhyme Time / Beat the Letter — it owns Space when set)
 ///
 /// Wraps [child] in a focused `CallbackShortcuts` so the keys fire
 /// without a tap-to-focus first. Every callback is optional — bind only
@@ -22,6 +24,7 @@ class PresenterShortcuts extends StatelessWidget {
     this.onNext,
     this.onBack,
     this.onReveal,
+    this.onTally,
     super.key,
   });
 
@@ -29,6 +32,11 @@ class PresenterShortcuts extends StatelessWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
   final VoidCallback? onReveal;
+
+  /// Counting games (Rhyme Time, Beat the Letter): the frequent "+1" beat.
+  /// When set it owns the Space key (and + / =); a game is either a reveal
+  /// game or a tally game, so the two never collide on Space.
+  final VoidCallback? onTally;
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +51,17 @@ class PresenterShortcuts extends StatelessWidget {
     if (back != null) {
       bindings[const SingleActivator(LogicalKeyboardKey.arrowLeft)] = back;
     }
-    if (reveal != null) {
-      bindings[const SingleActivator(LogicalKeyboardKey.space)] = reveal;
+    final tally = onTally;
+    // Space is the game's primary beat: tally a contribution in a counting
+    // game, else reveal in a reveal game (a game is one or the other).
+    final space = tally ?? reveal;
+    if (space != null) {
+      bindings[const SingleActivator(LogicalKeyboardKey.space)] = space;
+    }
+    if (tally != null) {
+      bindings[const SingleActivator(LogicalKeyboardKey.equal)] = tally;
+      bindings[const SingleActivator(LogicalKeyboardKey.numpadAdd)] = tally;
+    } else if (reveal != null) {
       bindings[const SingleActivator(LogicalKeyboardKey.keyR)] = reveal;
     }
     return CallbackShortcuts(
