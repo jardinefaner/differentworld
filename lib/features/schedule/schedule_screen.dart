@@ -253,18 +253,60 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                 // freshly-created event renders without rebuilding
                 // the parent. Drops silently when the day has none.
                 _EventBanner(date: dateKey(date)),
-                TabBar(
-                  controller: tabs,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  tabs: [for (final g in gs) Tab(text: g.name)],
-                ),
                 Expanded(
-                  child: TabBarView(
-                    controller: tabs,
-                    children: [
-                      for (final g in gs) _CohortDay(group: g, date: dateIso),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // The schedule matrix (docs/PLATFORM_RUBRIC.md): on a
+                      // wide screen a director planning the day sees EVERY
+                      // cohort at once as side-by-side columns, instead of
+                      // flipping one-at-a-time tabs. Phones — and narrow
+                      // windows with many cohorts (columns would be too
+                      // thin) — keep the tabs. Reuses _CohortDay verbatim,
+                      // so blocks / conflicts / cover-lead match exactly.
+                      const minTotalWidth = 720.0;
+                      const minColumnWidth = 300.0;
+                      final showMatrix = gs.length > 1 &&
+                          constraints.maxWidth >= minTotalWidth &&
+                          constraints.maxWidth / gs.length >= minColumnWidth;
+                      if (showMatrix) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (var i = 0; i < gs.length; i++) ...[
+                              if (i > 0) const VerticalDivider(width: 1),
+                              Expanded(
+                                // Keyed by cohort so a roster change can't
+                                // mis-route a column's provider subscription.
+                                key: ValueKey('matrix-col-${gs[i].id}'),
+                                child: _CohortColumn(
+                                  group: gs[i],
+                                  date: dateIso,
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      }
+                      return Column(
+                        children: [
+                          TabBar(
+                            controller: tabs,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            tabs: [for (final g in gs) Tab(text: g.name)],
+                          ),
+                          Expanded(
+                            child: TabBarView(
+                              controller: tabs,
+                              children: [
+                                for (final g in gs)
+                                  _CohortDay(group: g, date: dateIso),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -424,6 +466,41 @@ class _DateScrubber extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One cohort's column in the wide-screen schedule matrix — a cohort-name
+/// header over that cohort's day. Reuses [_CohortDay] so block rendering,
+/// conflict chips, and the cover-lead strip match the phone tab view
+/// exactly; the matrix is purely a wide-screen arrangement of the same
+/// per-cohort view side by side (docs/PLATFORM_RUBRIC.md).
+class _CohortColumn extends StatelessWidget {
+  const _CohortColumn({required this.group, required this.date});
+
+  final Group group;
+  final String date;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: Text(
+            group.name,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Expanded(child: _CohortDay(group: group, date: date)),
+      ],
     );
   }
 }
