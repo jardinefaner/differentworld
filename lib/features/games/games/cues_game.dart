@@ -1,0 +1,140 @@
+import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/games/game.dart';
+import 'package:flutter/material.dart';
+
+/// Attention Signals — a non-game presentable (docs/VISION.md #18). One-tap
+/// full-screen room cues the teacher throws up from their phone to move the
+/// room: Eyes up, Quiet, Clean up, Line up, Breathe, Freeze. The first use of
+/// the `pick` intent. Cues are STATIC (in code), so only the picked index
+/// rides the wire — the controller renders the same buttons from this list.
+class _Cue {
+  const _Cue(this.emoji, this.label, this.color);
+  final String emoji;
+  final String label;
+  final Color color;
+}
+
+const _cues = <_Cue>[
+  _Cue('👀', 'Eyes up', Color(0xFF42A5F5)),
+  _Cue('🤫', 'Quiet please', Color(0xFF7E57C2)),
+  _Cue('👂', 'Listen', Color(0xFF26A69A)),
+  _Cue('✋', 'Hands up', Color(0xFFEC407A)),
+  _Cue('🧹', 'Clean up', Color(0xFFFFA726)),
+  _Cue('🚶', 'Line up', Color(0xFF5C6BC0)),
+  _Cue('🧊', 'Freeze', Color(0xFF29B6F6)),
+  _Cue('🌬️', 'Breathe', Color(0xFF66BB6A)),
+];
+
+class CueState {
+  const CueState({required this.index});
+
+  factory CueState.fromMap(Map<String, dynamic> m) =>
+      CueState(index: (m['i'] as num?)?.toInt() ?? 0);
+
+  final int index;
+}
+
+class CuesGame extends GameDefinition<CueState> {
+  const CuesGame();
+
+  @override
+  String get id => 'cues';
+
+  @override
+  String get title => 'Signals';
+
+  @override
+  GameVibe get vibe => const GameVibe(accent: Color(0xFF42A5F5));
+
+  @override
+  String? get liveRoute => '/live/cues';
+
+  @override
+  Map<String, dynamic> initialState(ContentSource content) => {'i': 0};
+
+  @override
+  CueState decode(Map<String, dynamic> state) => CueState.fromMap(state);
+
+  @override
+  Map<String, dynamic> reduce(
+    Map<String, dynamic> state,
+    GameIntent intent,
+    Map<String, dynamic> args,
+  ) {
+    final s = Map<String, dynamic>.from(state);
+    final i = (s['i'] as num?)?.toInt() ?? 0;
+    switch (intent) {
+      case GameIntent.pick:
+        final c = (args['cue'] as num?)?.toInt();
+        if (c != null && c >= 0 && c < _cues.length) s['i'] = c;
+      case GameIntent.next:
+        s['i'] = (i + 1) % _cues.length;
+      case GameIntent.reset:
+        s['i'] = 0;
+      case GameIntent.back:
+      case GameIntent.reveal:
+      case GameIntent.tally:
+      case GameIntent.capture:
+      case GameIntent.submit:
+        break;
+    }
+    return s;
+  }
+
+  @override
+  Set<GameIntent> activeIntents(CueState s) => {GameIntent.pick, GameIntent.next};
+
+  @override
+  Widget buildStage(BuildContext context, CueState s) {
+    final cue = _cues[s.index % _cues.length];
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 240),
+      color: cue.color,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(cue.emoji, style: const TextStyle(fontSize: 140)),
+            const SizedBox(height: 16),
+            Text(
+              cue.label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 52,
+                fontWeight: FontWeight.w900,
+                shadows: [Shadow(color: Colors.black26, blurRadius: 8)],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget? buildControls(
+    BuildContext context,
+    CueState state,
+    void Function(GameIntent intent, [Map<String, dynamic> args]) send,
+  ) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (var i = 0; i < _cues.length; i++)
+          FilledButton.tonal(
+            onPressed: () => send(GameIntent.pick, {'cue': i}),
+            style: i == state.index
+                ? FilledButton.styleFrom(
+                    backgroundColor: vibe.accent,
+                    foregroundColor: Colors.white,
+                  )
+                : null,
+            child: Text('${_cues[i].emoji} ${_cues[i].label}'),
+          ),
+      ],
+    );
+  }
+}

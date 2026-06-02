@@ -32,6 +32,7 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
@@ -861,6 +862,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/poll',
             builder: (_, _) => const LiveGameScreen(def: PollGame()),
+          ),
+          GoRoute(
+            path: '/present/cues',
+            builder: (_, _) => const GameRunner(def: CuesGame()),
+          ),
+          GoRoute(
+            path: '/live/cues',
+            builder: (_, _) => const LiveGameScreen(def: CuesGame()),
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.
