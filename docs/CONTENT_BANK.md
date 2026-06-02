@@ -20,10 +20,17 @@ bank at all — it's infinite and free.
 2. **Curated** — a human-written seed list (this-or-that pairs, categories,
    interview-question starters). Kid-safe by construction; ships in the
    app. The first fill of the bank.
-3. **AI-generated** — for variety at scale, a *brokered* model (never a key
-   on the device — Edge Function, per docs/SECRETS.md; no child identifiers
-   in the prompt) generates a batch, which is **reviewed/filtered, then
-   banked.** Amortizes to ≈ 0 cost per play.
+3. **AI-authored, committed (the global library)** — for variety at scale,
+   content is generated **through Claude Code at dev time** and committed as
+   a seed migration into `content_items` as GLOBAL rows (`space_id IS NULL`,
+   `source = 'ai'`), shared across every program via the `global_content`
+   sync stream. The kid-safety review is the **commit review** (the batch is
+   readable SQL in the PR — you see exactly what ships), so there is no
+   runtime model call, no vendor key on the device or server, and no
+   per-play cost. **The table is a living document**: each session can add
+   another seed migration to grow it. (We chose this over a runtime brokered
+   Edge Function — same end state, far less surface area and zero ongoing
+   cost. A runtime generator can still be added later if scale demands it.)
 4. **Crowd-grown** — the kids' own creations feed the bank: the clever
    "paths to 12", the funny this-or-that pairs they invent, the novel
    "C animals" they find. Play makes the bank richer.
@@ -112,6 +119,9 @@ backend.
 synced table; `DriftContentBank` behind the same `ContentSource`; the
 crowd-grow path (kids' creations insert deduped).
 
-**Slice C — brokered AI refill.** `ensureBank` calls an Edge Function to
-top up a kind when low; a review/approve step before AI/crowd items serve
-to kids.
+**Slice C — the global library, authored through Claude Code.** Content is
+generated at dev time and committed as seed migrations into `content_items`
+(global rows, `source='ai'`), grown over time as a living document. The
+kid-safety gate is the commit review. No runtime model, no vendor key, no
+per-play cost. (Superseded the original "brokered AI Edge Function" plan —
+see §1.3.)
