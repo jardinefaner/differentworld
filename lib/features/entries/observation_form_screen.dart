@@ -5,12 +5,12 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/entries/widgets/observation_form_parts.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/multi_shot_camera.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -98,6 +98,13 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
   /// Map URL → existing attachment id, for the delete diff on save.
   /// New photos uploaded in this session won't appear here.
   Map<String, String> _attachmentIdByUrl = const {};
+
+  /// Map URL → the attachment id we PRE-GENERATED for a photo uploaded this
+  /// session. The same id was passed to `uploadOnly(entityId:)`, so the
+  /// attachment row MUST be created with it — otherwise the upload queue's
+  /// `updateUrl(id)` can't patch a deferred (offline) upload and the photo is
+  /// silently lost. Keyed by url (uploadOnly returns a unique path/token).
+  Map<String, String> _newAttIds = const {};
 
   /// True once we've seeded `_photos` from the stream (edit mode).
   /// New-observation mode flips this true immediately in initState.
@@ -377,23 +384,31 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       _error = null;
     });
     try {
-      final urls = await Future.wait(
-        picks.map(
-          (pick) => service.uploadOnly(
-            // Wave 99: was 'observation' — the upload queue only has a
-            // resolver for 'attachment', so offline uploads landed in
-            // Storage but the row stayed `pending:<id>` forever (silent
-            // photo loss). Attachments are what we actually create in
-            // createObservation; align the kind so the queue can patch
-            // the URL when the bytes finally upload.
+      // Pre-generate each attachment's id and pass it to uploadOnly AS the
+      // entityId, so a deferred (offline) upload's queue-side `updateUrl(id)`
+      // patches the SAME attachment row we create on save. (Wave 99 aligned
+      // the kind to 'attachment' so the queue had a resolver; this fixes the
+      // id — passing `_entryId` here meant the queue patched a non-existent
+      // row and offline-captured photos were silently lost forever.)
+      final newPairs = await Future.wait(
+        picks.map((pick) async {
+          final attId = const Uuid().v4();
+          final url = await service.uploadOnly(
             entityKind: 'attachment',
-            entityId: _entryId,
+            entityId: attId,
             picked: pick,
-          ),
-        ),
+          );
+          return (url: url, id: attId);
+        }),
       );
       if (!mounted) return;
-      setState(() => _photos = [..._photos, ...urls]);
+      setState(() {
+        _photos = [..._photos, ...newPairs.map((p) => p.url)];
+        _newAttIds = {
+          ..._newAttIds,
+          for (final p in newPairs) p.url: p.id,
+        };
+      });
     } on Exception catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(
@@ -496,6 +511,10 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
             await attachments.reorder(id: existingId, sortOrder: i);
           } else {
             await attachments.add(
+              // Pin the id we uploaded under, so a deferred offline upload
+              // patches THIS row (else silent loss). Always set for a
+              // session-uploaded photo; null → a fresh id (defensive).
+              id: _newAttIds[url],
               entityKind: 'entry',
               entityId: _entryId,
               url: url,
@@ -517,6 +536,11 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
           groupId: _effectiveGroupId,
           text: text,
           photoUrls: _photos,
+          // Aligned with photoUrls — the pre-generated ids so deferred
+          // offline uploads patch the right attachment rows.
+          photoIds: [
+            for (final url in _photos) _newAttIds[url] ?? const Uuid().v4(),
+          ],
           scheduleBlockId: liveBlock?.blockId,
           id: _entryId,
         );

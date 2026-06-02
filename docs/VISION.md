@@ -409,8 +409,25 @@ once it has a home.
   every-child-out sweep, fuel, any damage), each with a named prompt, before
   the checklist can complete. Pairs with the planned shared
   `face_aligned_camera.dart` / on-device camera widget + the Storage photo
-  path (photo_url on the row, bytes in the bucket). Not built yet — captured
-  so it's not lost. (→ vehicles feature; relates to the camera infra.)
+  path (photo_url on the row, bytes in the bucket). BUILT (Waves A–C,
+  `feat/vehicle-photos`): configurable per-vehicle shot list + the guided
+  camera + the gate + review. (→ vehicles feature.)
+- **2026-06-02 (cont.)** — **Vehicle check as a safety RITUAL, not paperwork.**
+  > "for the vehicle, picture first, then the checklist, with an 'all check'
+  > capability, etc... what else"
+
+  Reshape the check-in/out flow: **photos FIRST** (capture the required shots
+  at the vehicle — esp. the empty-cabin sweep the moment you arrive), THEN the
+  checklist. A **"Mark all OK"** bulk action (real inspections are mostly all-
+  good; tapping 10 items is friction) + **configurable checklist items** per
+  vehicle (capabilities, like the photo shots). The STAR addition: a
+  **roster headcount** — confirm WHO boards at check-out and tap each child
+  OFF at check-in; the count must hit zero and match the empty-cabin photo.
+  That's the actual hot-car prevention (the photo is proof; the name-by-name
+  sweep is the act). More candidates: destination/field-trip link + expected-
+  return alert, odometer carry-forward + validation (trip miles), Unsafe →
+  block + notify the director, maintenance/registration-expiry reminders at
+  check-out, optional two-person co-sign on the empty-cabin. (→ vehicles.)
 
 ---
 

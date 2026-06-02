@@ -1057,6 +1057,29 @@ Distinguishing the two RLS-related errors:
   `auth.uid()` was null at evaluation time — almost always because the
   upload ran without a valid session.
 
+### Offline attachment uploads: `uploadOnly`'s `entityId` MUST be the attachment row's `id`
+
+`PhotoService.uploadOnly(entityKind: 'attachment', entityId: X, picked: …)`
+returns the real Storage path when online, but a `pending:<id>` token when
+offline (it enqueues the bytes for later). When that deferred upload lands,
+`PhotoUploadQueue` patches the row via
+`attachmentsDao.updateUrl(entityId, realPath)` — i.e. `UPDATE … WHERE
+attachments.id == entityId`. So the `entityId` you pass to `uploadOnly`
+**must be the SAME id the attachment row is created with**
+(`AttachmentActions.add(id: …)`). Pass anything else (e.g. the parent
+entry/log id) and the queue patches a non-existent row: the attachment keeps
+`pending:` forever and the photo is **silently lost** — but ONLY offline
+(online returns the real path immediately, which is why the bug hides).
+
+Pattern: pre-generate `final attId = const Uuid().v4();` and pass it to BOTH
+`uploadOnly(entityId: attId)` AND `attachments.add(id: attId, …)`. When the
+upload and the row-create are decoupled in time (observation form: upload at
+photo-pick, add at save), thread the id between them (a `url → attId` map),
+or for `createObservation` pass `photoIds:` aligned with `photoUrls:`.
+Reference impls: `vehicle_inspection_screen._submit`,
+`observation_form_screen` + `EntryActions.createObservation`. This bit
+observations (offline obs photos lost) until 2026-06-02.
+
 ### PowerSync join tables still need an explicit `id` column
 
 PowerSync auto-adds `id TEXT PRIMARY KEY NOT NULL` to every replicated
