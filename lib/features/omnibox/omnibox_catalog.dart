@@ -200,6 +200,21 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ],
       onSelect: (ctx, _) => ctx.push('/settings/missions'),
     ),
+    OmniboxEntry(
+      id: 'page.board',
+      label: 'Brainstorm Board',
+      category: OmniboxCategory.page,
+      icon: Icons.tv,
+      keywords: const [
+        'board',
+        'brainstorm',
+        'meeting',
+        'agenda',
+        'ideas',
+        'anonymous',
+      ],
+      onSelect: (ctx, _) => ctx.push('/board'),
+    ),
     // Toolkit landing page — broad keywords surface the catalog
     // itself when the user wants to browse rather than jump to a
     // specific tool. Gated by viewer kind: guardians can't reach

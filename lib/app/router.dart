@@ -41,6 +41,7 @@ import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
+import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/charades_live_screen.dart';
 import 'package:differentworld/features/live_session/live_session_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
@@ -846,6 +847,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/charades',
             builder: (_, _) => const CharadesLiveScreen(),
+          ),
+          // Anonymous brainstorm / agenda board (docs/VISION.md #5): phones
+          // post ideas to a projected wall, no names, over Realtime.
+          GoRoute(
+            path: '/board',
+            builder: (_, _) => const BoardScreen(),
           ),
           // Do a mission (docs/MISSIONS.md slice 2) — the Mission rides in
           // `extra`; a bare deep-link bounces to the catalog.

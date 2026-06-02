@@ -334,6 +334,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     aliases: const ['act', 'acting', 'mime', 'guess'],
     exec: (ctx, _, _) => unawaited(ctx.push('/live/charades')),
   ),
+  SlashCommand(
+    name: 'board',
+    label: '/board',
+    hint: 'Brainstorm Board — everyone posts ideas, no names, on a big screen',
+    icon: Icons.tv,
+    aliases: const ['brainstorm', 'meeting', 'agenda', 'ideas'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/board')),
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',

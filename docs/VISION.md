@@ -119,9 +119,11 @@ with no name attached, so the room can "look at things together"
 without ego. Psychological safety as a feature. It rides the
 live-session layer (#14).
 
-- **Status:** seed → designing (anonymous board rides Live Sessions;
-  the rule engine is still undesigned)
-- **Lives in:** [LIVE_SESSIONS.md](LIVE_SESSIONS.md)
+- **Status:** **anonymous board shipped** (`/board`): phones post ideas to a
+  projected wall over Realtime, no names on the wire. The make-our-own-rules
+  engine is still undesigned.
+- **Lives in:** [LIVE_SESSIONS.md](LIVE_SESSIONS.md),
+  lib/features/live_session/board_session.dart
 
 ### 6. Group discussions, by topic and age
 
