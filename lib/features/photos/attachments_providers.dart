@@ -58,6 +58,7 @@ class AttachmentActions {
     String? thumbUrl,
     String? caption,
     int? sortOrder,
+    String? id,
   }) async {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.spaceId;
@@ -65,10 +66,14 @@ class AttachmentActions {
       throw StateError('No Space — cannot attach a photo.');
     }
     final db = await _ref.read(appDatabaseProvider.future);
-    final id = _uuid.v4();
+    // The caller may pass an explicit id — needed when the bytes were
+    // uploaded via `uploadOnly(entityKind:'attachment', entityId: <this id>)`
+    // so a deferred (offline) upload's queue-side `updateUrl(id)` patches THIS
+    // row. Default: a fresh id.
+    final attachmentId = id ?? _uuid.v4();
     final effectiveSort = sortOrder ?? await _nextSortOrder(db, entityKind, entityId);
     await db.attachmentsDao.create(
-      id: id,
+      id: attachmentId,
       spaceId: spaceId,
       entityKind: entityKind,
       entityId: entityId,
@@ -80,7 +85,7 @@ class AttachmentActions {
       uploadedBy: viewer.memberId,
       takenAt: DateTime.now().toUtc().toIso8601String(),
     );
-    return id;
+    return attachmentId;
   }
 
   Future<void> updateCaption({required String id, String? caption}) async {

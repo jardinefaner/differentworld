@@ -1,0 +1,601 @@
+import 'dart:async';
+
+import 'package:camera/camera.dart';
+import 'package:differentworld/features/vehicles/vehicle_photo_shots.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+/// One captured photo, tied to the shot it satisfies.
+class CapturedShot {
+  CapturedShot({
+    required this.key,
+    required this.label,
+    required this.file,
+    required this.bytes,
+  });
+
+  final String key;
+  final String label;
+  final XFile file;
+  final Uint8List bytes;
+}
+
+/// A guided, stay-open camera that walks a named shot list (docs/VISION.md —
+/// vehicle guided-photo capture). The prompt names exactly what to shoot; a
+/// tap captures it and AUTO-ADVANCES to the next un-captured shot without
+/// leaving the camera. A filmstrip of slots shows progress; tap a slot to
+/// retake. Done (enabled once every `required` shot is captured) pops the
+/// captures back to the caller, which uploads them.
+///
+/// Returns `List<CapturedShot>` via `Navigator.pop` (ordered by shot);
+/// the close (X) pops `null` (cancelled).
+class GuidedCaptureScreen extends StatefulWidget {
+  const GuidedCaptureScreen({
+    required this.shots,
+    required this.title,
+    super.key,
+  });
+
+  final List<VehiclePhotoShot> shots;
+  final String title;
+
+  @override
+  State<GuidedCaptureScreen> createState() => _GuidedCaptureScreenState();
+}
+
+enum _CamStatus { initializing, ready, denied, unavailable }
+
+class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
+    with WidgetsBindingObserver {
+  CameraController? _controller;
+  _CamStatus _cam = _CamStatus.initializing;
+  bool _initInFlight = false;
+  bool _shooting = false;
+
+  CameraLensDirection _lens = CameraLensDirection.back;
+  FlashMode _flash = FlashMode.off;
+
+  /// Captures keyed by shot key (null = not yet taken).
+  final Map<String, CapturedShot> _captured = {};
+  int _current = 0;
+
+  List<VehiclePhotoShot> get _shots => widget.shots;
+  VehiclePhotoShot get _shot => _shots[_current];
+  int get _capturedCount => _captured.length;
+  bool get _allRequiredDone =>
+      _shots.where((s) => s.required).every((s) => _captured.containsKey(s.key));
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_initCamera());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      _disposeCamera();
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(_initCamera());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _disposeCamera();
+    super.dispose();
+  }
+
+  Future<void> _initCamera() async {
+    if (_initInFlight || _controller != null) return;
+    _initInFlight = true;
+    try {
+      final status = await Permission.camera.request();
+      if (!status.isGranted) {
+        if (mounted) setState(() => _cam = _CamStatus.denied);
+        return;
+      }
+      final cams = await availableCameras();
+      if (cams.isEmpty) {
+        if (mounted) setState(() => _cam = _CamStatus.unavailable);
+        return;
+      }
+      final cam = cams.firstWhere(
+        (c) => c.lensDirection == _lens,
+        orElse: () => cams.first,
+      );
+      final controller = CameraController(
+        cam,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      await controller.initialize();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      try {
+        await controller.setFlashMode(_flash);
+      } on Object catch (_) {
+        // Some lenses don't support flash — ignore.
+      }
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      setState(() {
+        _controller = controller;
+        _cam = _CamStatus.ready;
+      });
+    } on Object catch (_) {
+      if (mounted) setState(() => _cam = _CamStatus.unavailable);
+    } finally {
+      _initInFlight = false;
+    }
+  }
+
+  void _disposeCamera() {
+    final c = _controller;
+    _controller = null;
+    unawaited(c?.dispose());
+  }
+
+  /// After a capture, jump to the next un-captured shot (search forward,
+  /// then wrap); if everything's captured, stay put.
+  void _advance() {
+    for (var step = 1; step <= _shots.length; step++) {
+      final i = (_current + step) % _shots.length;
+      if (!_captured.containsKey(_shots[i].key)) {
+        _current = i;
+        return;
+      }
+    }
+  }
+
+  Future<void> _shoot() async {
+    final c = _controller;
+    if (c == null ||
+        !c.value.isInitialized ||
+        c.value.isTakingPicture ||
+        _shooting) {
+      return;
+    }
+    setState(() => _shooting = true);
+    try {
+      final file = await c.takePicture();
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      final shot = _shot;
+      setState(() {
+        _captured[shot.key] = CapturedShot(
+          key: shot.key,
+          label: shot.label,
+          file: file,
+          bytes: bytes,
+        );
+        _advance();
+      });
+      unawaited(HapticFeedback.mediumImpact());
+    } on Object catch (_) {
+      // A dropped frame isn't fatal — the shot just isn't recorded.
+    } finally {
+      if (mounted) setState(() => _shooting = false);
+    }
+  }
+
+  Future<void> _switchCamera() async {
+    _lens = _lens == CameraLensDirection.back
+        ? CameraLensDirection.front
+        : CameraLensDirection.back;
+    _disposeCamera();
+    setState(() => _cam = _CamStatus.initializing);
+    await _initCamera();
+  }
+
+  Future<void> _cycleFlash() async {
+    const order = [FlashMode.off, FlashMode.auto, FlashMode.always];
+    final next = order[(order.indexOf(_flash) + 1) % order.length];
+    setState(() => _flash = next);
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    try {
+      await c.setFlashMode(next);
+    } on Object catch (_) {}
+  }
+
+  void _done() {
+    final ordered = <CapturedShot>[
+      for (final s in _shots) ?_captured[s.key],
+    ];
+    Navigator.of(context).pop(ordered);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: switch (_cam) {
+        _CamStatus.ready when _controller?.value.isInitialized ?? false =>
+          _cameraView(context),
+        _CamStatus.denied => _Message(
+          icon: Icons.no_photography_outlined,
+          title: 'Camera access needed',
+          message: 'Allow the camera to take the required vehicle photos.',
+          actionLabel: 'Try again',
+          onAction: () {
+            setState(() => _cam = _CamStatus.initializing);
+            unawaited(_initCamera());
+          },
+        ),
+        _CamStatus.unavailable => const _Message(
+          icon: Icons.videocam_off_outlined,
+          title: 'No camera here',
+          message: 'This device has no camera available.',
+        ),
+        _ => const Center(child: CircularProgressIndicator(color: Colors.white)),
+      },
+    );
+  }
+
+  Widget _cameraView(BuildContext context) {
+    final c = _controller!;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _preview(c),
+        Positioned(top: 0, left: 0, right: 0, child: _topBar()),
+        Positioned(bottom: 0, left: 0, right: 0, child: _bottomBar()),
+      ],
+    );
+  }
+
+  Widget _preview(CameraController c) {
+    final size = c.value.previewSize;
+    if (size == null) return const ColoredBox(color: Colors.black);
+    return ClipRect(
+      child: SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: size.height,
+            height: size.width,
+            child: CameraPreview(c),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _topBar() {
+    final total = _shots.length;
+    final captured = _captured.containsKey(_shot.key);
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.black87, Colors.transparent],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 8, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Close',
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '$_capturedCount of $total captured',
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ),
+                  _CapButton(
+                    icon: _flash == FlashMode.off
+                        ? Icons.flash_off
+                        : _flash == FlashMode.auto
+                        ? Icons.flash_auto
+                        : Icons.flash_on,
+                    active: _flash != FlashMode.off,
+                    tooltip: 'Flash',
+                    onTap: () => unawaited(_cycleFlash()),
+                  ),
+                  const SizedBox(width: 8),
+                  _CapButton(
+                    icon: Icons.cameraswitch_outlined,
+                    tooltip: 'Flip camera',
+                    onTap: () => unawaited(_switchCamera()),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+                child: Row(
+                  children: [
+                    if (captured)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8, top: 2),
+                        child: Icon(Icons.check_circle, color: Colors.greenAccent),
+                      ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _shot.label,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (_shot.hint.isNotEmpty)
+                            Text(
+                              _shot.hint,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (_shot.required)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Required',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _bottomBar() {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: [Colors.black87, Colors.transparent],
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _slotStrip(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
+              child: Row(
+                children: [
+                  const SizedBox(width: 72),
+                  Expanded(
+                    child: Center(
+                      child: _Shutter(busy: _shooting, onTap: _shoot),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 72,
+                    child: TextButton(
+                      onPressed: _allRequiredDone ? _done : null,
+                      child: Text(
+                        'Done',
+                        style: TextStyle(
+                          color: _allRequiredDone
+                              ? Colors.white
+                              : Colors.white38,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _slotStrip() {
+    return SizedBox(
+      height: 72,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _shots.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final s = _shots[i];
+          final cap = _captured[s.key];
+          final isCurrent = i == _current;
+          return GestureDetector(
+            onTap: () => setState(() => _current = i),
+            child: Container(
+              width: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isCurrent ? Colors.white : Colors.white24,
+                  width: isCurrent ? 2 : 1,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: cap != null
+                  ? Image.memory(
+                      cap.bytes,
+                      width: 56,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      errorBuilder: (_, _, _) => const SizedBox(),
+                    )
+                  : Center(
+                      child: Icon(
+                        s.required
+                            ? Icons.error_outline
+                            : Icons.radio_button_unchecked,
+                        color: s.required ? Colors.amberAccent : Colors.white38,
+                        size: 20,
+                      ),
+                    ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CapButton extends StatelessWidget {
+  const _CapButton({
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: active
+                ? Colors.amberAccent.withValues(alpha: 0.85)
+                : Colors.black.withValues(alpha: 0.4),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: active ? Colors.black : Colors.white,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Shutter extends StatelessWidget {
+  const _Shutter({required this.busy, required this.onTap});
+
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: busy ? null : onTap,
+      child: Container(
+        width: 76,
+        height: 76,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 4),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: busy ? Colors.white54 : Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white38, size: 56),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 24),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
