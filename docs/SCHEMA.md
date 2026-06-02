@@ -557,6 +557,24 @@ of the SQL.
 
 ---
 
+## content_items
+**Purpose**: The content bank — activity prompts (this-or-that pairs, riddles, fact-or-fib claims, story starters, rhyme words, act-it-out lines, charades words, etc.) made once and reused, so no AI model is called on the hot path of a play. `space_id IS NULL` rows are global (shared across every program); `space_id` set rows belong to one program's crowd-grown library.
+**Key columns**:
+- `id` (uuid PK)
+- `space_id` (uuid, NULLABLE → `spaces.id` on delete cascade; NULL = global/shared, non-null = this program's crowd content)
+- `kind` (text — `this_or_that` / `riddle` / `fact_or_fib` / `story_starter` / `story_twist` / `rhyme_word` / `line` / `as_if` / `charades` / `category` / …)
+- `payload` (jsonb as text on device — shape varies by kind: `{a,b}` for this-or-that, `{prompt,answer}` for riddles, `{statement,isTrue,note}` for fact-or-fib, `{text}` for starters/twists/lines/as-if/rhyme, `{word,category}` for charades)
+- `fingerprint` (text — de-dupe key; normalized payload hash; global items: `UNIQUE(kind,fingerprint) WHERE space_id IS NULL`; per-space items: `UNIQUE(kind,space_id,fingerprint) WHERE space_id IS NOT NULL`)
+- `source` (text — `curated` / `ai` / `crowd` / `local`)
+- `created_by` (uuid, nullable — member/auth id for crowd rows; null for AI)
+- `created_at` (timestamptz)
+**RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); non-PII game prompts — broad read is intentional. AI rows are inserted server-side with the service role (bypasses RLS). ES256 workaround in effect (see CLAUDE.md).
+**Sync rule**: rides TWO streams — `by_space` delivers per-space crowd rows (`WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`); `global_content` auto-subscribes and delivers all global rows (`WHERE space_id IS NULL`). This is the second multi-stream table after `guardians`/`messages`/etc. in `by_guardian`. Growing the bank = adding seed migrations through Claude Code — the seed migration is the kid-safety review (content is plain SQL, human-readable before it ships; see `docs/CONTENT_BANK.md §1.3`). Dashboard deploy required after adding this table.
+**Consumers**: [ActivityRuntime](FEATURES.md#activityruntime) — seven single-device screens read `bankedContentProvider` (`this_or_that`, `letter_words`, `as_if`, `riddles`, `fact_or_fib`, `story_starters`, `rhyme_time`); written via `ContentBankDao.bankCrowdItem` for crowd-grown items. Live multi-device activities (Charades, live This-or-That) intentionally bypass this table and use the curated Dart floor only.
+**Last verified**: 2026-06-01
+
+---
+
 _Last full registry verification: 2026-06-01 (Live Sessions — no new table; ephemeral Realtime coordination)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
