@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,9 +83,15 @@ class _StoryStartersScreenState extends ConsumerState<StoryStartersScreen> {
   @override
   Widget build(BuildContext context) {
     return EdgeScaffold(
-      body: ColoredBox(
-        color: const Color(0xFF1B1430),
-        child: SafeArea(child: _done ? _recap(context) : _game(context)),
+      // Presenter keyboard controls (docs/PLATFORM_RUBRIC.md, P3):
+      // Space/R drops a plot twist, → / Enter starts a new story.
+      body: PresenterShortcuts(
+        onReveal: _done ? null : _addTwist,
+        onNext: _done ? null : _nextStart,
+        child: ColoredBox(
+          color: const Color(0xFF1B1430),
+          child: SafeArea(child: _done ? _recap(context) : _game(context)),
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -79,9 +80,15 @@ class _RiddlesScreenState extends ConsumerState<RiddlesScreen> {
   @override
   Widget build(BuildContext context) {
     return EdgeScaffold(
-      body: ColoredBox(
-        color: Colors.black,
-        child: SafeArea(child: _done ? _recap(context) : _game(context)),
+      // Presenter keyboard controls (docs/PLATFORM_RUBRIC.md, P3):
+      // Space/R reveals the answer, → / Enter advances.
+      body: PresenterShortcuts(
+        onReveal: _done ? null : _reveal,
+        onNext: _done ? null : _next,
+        child: ColoredBox(
+          color: Colors.black,
+          child: SafeArea(child: _done ? _recap(context) : _game(context)),
+        ),
       ),
     );
   }
