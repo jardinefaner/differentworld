@@ -159,6 +159,24 @@ Lives in `lib/features/games/`.
   kind `game_capture` (the growth-book artifact, VISION #1). Presenter-only
   in a live session (one write, not per-controller).
 
+### Cost (measured 2026-06-02)
+Live runs over Supabase **Realtime**, billed on **message count + concurrent
+peak connections** (NOT bytes): Free = 2M msgs/mo + 200 peak; Pro = 5M + 500;
+overage $2.50/M msgs, ~$10/1,000 connections. Measured This-or-That footprint:
+- **~234 bytes per broadcast** (the pairs ride in the state — 6.3× the bare
+  `{i,r,d}`, but egress is free-tier-trivial and Supabase doesn't bill bytes,
+  so pairs-in-state is **cost-neutral** and we keep it for correctness).
+- **~2 messages per remote tap** (controller send + presenter rebroadcast),
+  +1 rebroadcast per presence join; **2 connections** per two-device session.
+- One program at heavy use (≈150 sessions/mo) ≈ **4.5K messages, ≤20 peak,
+  ~1 MB egress → $0** (0.2% of the free tier). The free ceiling isn't reached
+  until **hundreds of simultaneously-active programs**, and the binding
+  constraint there is **concurrent connections, not messages**.
+- **Watch item for new games:** `initialState` stashes content in the
+  wire-state and it **rebroadcasts on every intent** — keep it small (lists,
+  not long bodies). Connections are held for the whole session, so prompt
+  dispose on leave matters (the 0c double-dispose fix covers it).
+
 ### Decisions (user, 2026-06-01)
 - **Wrap beat → per-game vibe.** Each game's "game over" matches its
   character; the vibe carries it (not one shared recap).
