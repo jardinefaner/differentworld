@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -104,11 +105,19 @@ class _ThisOrThatScreenState extends ConsumerState<ThisOrThatScreen> {
           onPressed: () => unawaited(context.push('/live/this-or-that')),
         ),
       ],
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= _wideBreakpoint;
-          return wide ? _wideLayout(context) : _phoneLayout(context);
-        },
+      // Presenter keyboard controls for a laptop/projector host
+      // (docs/PLATFORM_RUBRIC.md, P3): ← back, Space reveal/discuss,
+      // → / Enter next.
+      body: PresenterShortcuts(
+        onBack: _done ? null : _back,
+        onReveal: _done ? null : _toggleReveal,
+        onNext: _done ? null : _next,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= _wideBreakpoint;
+            return wide ? _wideLayout(context) : _phoneLayout(context);
+          },
+        ),
       ),
     );
   }
