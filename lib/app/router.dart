@@ -85,6 +85,7 @@ import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_inspection_screen.dart';
+import 'package:differentworld/features/vehicles/vehicle_photo_shots_edit_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_scan_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart'
@@ -704,6 +705,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                       title: 'Edit vehicle',
                       child: VehicleEditScreen(
                         vehicleId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'photo-checklist',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Photo checklist',
+                      child: VehiclePhotoShotsEditScreen(
+                        vehicleId: state.pathParameters['id']!,
                       ),
                     ),
                   ),

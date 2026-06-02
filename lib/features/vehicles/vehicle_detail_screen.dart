@@ -75,6 +75,13 @@ class VehicleDetailScreen extends ConsumerWidget {
           ),
         if (canEdit && vehicleAsync.value != null)
           SecondaryActionButton(
+            tooltip: 'Photo checklist',
+            icon: Icons.add_a_photo_outlined,
+            onPressed: () =>
+                context.push('/vehicles/$vehicleId/photo-checklist'),
+          ),
+        if (canEdit && vehicleAsync.value != null)
+          SecondaryActionButton(
             tooltip: 'Edit',
             icon: Icons.edit_outlined,
             onPressed: () =>

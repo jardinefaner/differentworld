@@ -198,6 +198,13 @@ class VehicleActions {
     );
   }
 
+  /// Persist the vehicle's `capabilities` JSON (e.g. the per-vehicle guided
+  /// photo shot-list — see vehicle_photo_shots.dart `withPhotoShots`).
+  Future<void> setCapabilities(String id, String capabilitiesJson) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.vehiclesDao.updateCapabilities(id, capabilitiesJson);
+  }
+
   Future<void> delete(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.vehiclesDao.deleteById(id);
