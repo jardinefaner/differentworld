@@ -1057,6 +1057,30 @@ Distinguishing the two RLS-related errors:
   `auth.uid()` was null at evaluation time — almost always because the
   upload ran without a valid session.
 
+### `PdfGoogleFonts.*()` downloads at print time — breaks offline-first
+
+`PdfGoogleFonts.interMedium()` (and every `PdfGoogleFonts.*` helper from
+the `printing` package) **fetches the TTF from Google's Fonts CDN over the
+network the first time it's called**, then caches it. In a PDF builder this
+reads like innocuous local code, but it silently violates the
+offline-first invariant: a teacher generating a PDF (poster, QR sticker,
+report) on a device that's offline — or just behind a captive portal /
+slow tower — gets a hung or thrown future, surfaced as a generic
+"couldn't build" error with no recovery path. It hides in dev because
+your machine is always online and the font caches after the first fetch.
+
+Rule: **never call `PdfGoogleFonts.*` (or the `google_fonts` package's
+runtime fetch) in code that must work offline.** For PDF text, use a
+built-in standard font — `pw.Font.helvetica()` / `.helveticaBold()` /
+`.times()` / `.courier()` — which is embedded in every PDF reader, needs
+zero network and zero asset. If you genuinely need a branded typeface,
+bundle the `.ttf` as a Flutter asset and load it via
+`pw.Font.ttf(await rootBundle.load('assets/fonts/X.ttf'))`. The poster
+engine (`lib/features/poster/poster_engine.dart`) uses Helvetica for this
+reason. (`vehicle_qr_pdf.dart` still uses `PdfGoogleFonts` — lower-impact
+since QR stickers are printed at online setup time, but it's the same
+hole; fix when touched.)
+
 ### Offline attachment uploads: `uploadOnly`'s `entityId` MUST be the attachment row's `id`
 
 `PhotoService.uploadOnly(entityKind: 'attachment', entityId: X, picked: …)`

@@ -304,6 +304,31 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/present/cues'),
       ),
+    // The Poster tool — tile one image across N×N letter pages and print
+    // big to tape together. Staff-facing maker utility. Broad keywords so
+    // it surfaces by whatever the user calls it.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.poster',
+        label: 'Poster — print big',
+        category: OmniboxCategory.page,
+        icon: Icons.grid_view_rounded,
+        keywords: const [
+          'poster',
+          'print big',
+          'blow up',
+          'enlarge',
+          'banner',
+          'big print',
+          'large print',
+          'tile',
+          'engineer print',
+          'wall art',
+          'welcome sign',
+          'sign',
+        ],
+        onSelect: (ctx, _) => ctx.push('/poster'),
+      ),
     // Toolkit landing page — broad keywords surface the catalog
     // itself when the user wants to browse rather than jump to a
     // specific tool. Gated by viewer kind: guardians can't reach

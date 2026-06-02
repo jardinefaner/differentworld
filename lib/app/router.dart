@@ -55,6 +55,7 @@ import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
+import 'package:differentworld/features/poster/poster_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
@@ -903,6 +904,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/now-next',
             builder: (_, _) => const NowNextScreen(live: true),
+          ),
+          // The Poster tool — tile one image across N×N letter pages to
+          // print + tape into a big poster.
+          GoRoute(
+            path: '/poster',
+            builder: (_, _) => const PosterScreen(),
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.

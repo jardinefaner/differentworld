@@ -474,6 +474,28 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Poster
+**Path**: `lib/features/poster/`
+**Purpose**: Tile one image across a 2×2 / 3×3 / 4×4 grid of US-Letter pages — print all of them and tape them into one big poster (a kid's drawing blown up, a welcome banner, a giant map).
+**Personas served**: All staff (a maker / room-decoration utility). Not guardians — staff-only; the router allow-list bounces guardians off `/poster`.
+**Discovery surfaces**:
+- Routes: `/poster`
+- Omnibox: yes — "Poster — print big" (keywords: poster, print big, blow up, enlarge, banner, big print, large print, tile, engineer print, wall art, welcome sign, sign). Gated `viewer is! GuardianViewer`.
+- Slash: none
+- Drawer: no
+- Settings: yes — "Poster" row in the Resources `_SettingsGroup`.
+**Capabilities**: None — open to all signed-in staff. No child data touched.
+**Data**: None — fully local. The picked image bytes never persist (no DB row, no Storage upload); the PDF is generated on-device and handed to the OS print / share sheet.
+**Surfaces**:
+- *PosterScreen* — `lib/features/poster/poster_screen.dart`. Pick image (gallery/camera, capped at 4096 px), live WYSIWYG grid preview, grid/fit/labels controls, Print + Share, working/error banners.
+- *Poster engine* — `lib/features/poster/poster_engine.dart`. Pure tiling geometry + `renderPosterTiles` (heavy decode/crop/resize in an isolate; web falls back to the main thread) + `buildPosterPdf` (letter pages, built-in Helvetica corner labels — no network).
+- *Poster options* — `lib/features/poster/poster_models.dart`. `PosterFit {fill, whole}`, `PosterOptions {grid, fit, labels}`.
+**Depends on**: `image` (decode/crop/resize), `pdf` + `printing` (PDF + OS print/share), `image_picker`, EdgeScaffold + shared chrome primitives.
+**Consumed by**: none.
+**Last verified**: 2026-06-02
+
+---
+
 ## Pickup
 **Path**: `lib/features/pickup/`
 **Purpose**: Authorized-pickup records — who's allowed to take a child home.
