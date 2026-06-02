@@ -10,13 +10,13 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('defaults', () {
     test('checkout requires front + odometer', () {
-      final shots = defaultShotsFor(VehicleLogKind.checkout);
+      final shots = defaultShotsFor('checkout');
       final required = shots.where((s) => s.required).map((s) => s.key).toSet();
       expect(required, containsAll(<String>['front', 'odometer']));
     });
 
     test('check-in requires the empty-cabin safety shot', () {
-      final shots = defaultShotsFor(VehicleLogKind.checkin);
+      final shots = defaultShotsFor('checkin');
       final cabin = shots.firstWhere((s) => s.key == 'empty_cabin');
       expect(cabin.required, isTrue);
     });
@@ -24,12 +24,12 @@ void main() {
 
   group('shotsFor — config resolution', () {
     test('blank / invalid capabilities → defaults', () {
-      expect(shotsFor('', VehicleLogKind.checkout).map((s) => s.key),
-          defaultShotsFor(VehicleLogKind.checkout).map((s) => s.key));
-      expect(shotsFor('not json', VehicleLogKind.checkout).length,
-          defaultShotsFor(VehicleLogKind.checkout).length);
-      expect(shotsFor('{}', VehicleLogKind.checkout).length,
-          defaultShotsFor(VehicleLogKind.checkout).length);
+      expect(shotsFor('', 'checkout').map((s) => s.key),
+          defaultShotsFor('checkout').map((s) => s.key));
+      expect(shotsFor('not json', 'checkout').length,
+          defaultShotsFor('checkout').length);
+      expect(shotsFor('{}', 'checkout').length,
+          defaultShotsFor('checkout').length);
     });
 
     test('a per-vehicle config overrides the defaults', () {
@@ -41,7 +41,7 @@ void main() {
           ],
         },
       });
-      final shots = shotsFor(caps, VehicleLogKind.checkout);
+      final shots = shotsFor(caps, 'checkout');
       expect(shots.map((s) => s.key), ['front', 'tires']);
       expect(shots[1].label, 'Tires');
     });
@@ -54,7 +54,7 @@ void main() {
           ],
         },
       });
-      final shots = shotsFor(caps, VehicleLogKind.checkin);
+      final shots = shotsFor(caps, 'checkin');
       final cabin = shots.where((s) => s.key == 'empty_cabin');
       expect(cabin, hasLength(1), reason: 'safety floor — cannot be configured away');
       expect(cabin.first.required, isTrue);
@@ -69,8 +69,8 @@ void main() {
         },
       });
       // checkout has no override → defaults
-      expect(shotsFor(caps, VehicleLogKind.checkout).length,
-          defaultShotsFor(VehicleLogKind.checkout).length);
+      expect(shotsFor(caps, 'checkout').length,
+          defaultShotsFor('checkout').length);
     });
   });
 
@@ -86,12 +86,12 @@ void main() {
         ),
         const VehiclePhotoShot(key: 'roof', label: 'Roof', hint: ''),
       ];
-      final updated = withPhotoShots(original, VehicleLogKind.checkout, newShots);
+      final updated = withPhotoShots(original, 'checkout', newShots);
 
       // other capability keys survive
       expect((jsonDecode(updated) as Map)['canDrive'], true);
       // and the shots read back
-      final readBack = shotsFor(updated, VehicleLogKind.checkout);
+      final readBack = shotsFor(updated, 'checkout');
       expect(readBack.map((s) => s.key), ['front', 'roof']);
       expect(readBack.first.required, isTrue);
     });

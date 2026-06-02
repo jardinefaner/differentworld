@@ -40,12 +40,6 @@ class VehiclePhotoShot {
   };
 }
 
-/// `vehicle_logs.kind` values the shot-lists key off.
-abstract final class VehicleLogKind {
-  static const checkout = 'checkout';
-  static const checkin = 'checkin';
-}
-
 /// The safety-critical check-in shot. Always present on check-in even if a
 /// custom config omits it — leaving a child in a vehicle is the exact
 /// failure this whole feature exists to prevent.
@@ -89,7 +83,7 @@ const _defaultCheckin = <VehiclePhotoShot>[
 /// Built-in defaults for a kind (a copy of the const list).
 List<VehiclePhotoShot> defaultShotsFor(String kind) =>
     List<VehiclePhotoShot>.of(
-      kind == VehicleLogKind.checkin ? _defaultCheckin : _defaultCheckout,
+      kind == 'checkin' ? _defaultCheckin : _defaultCheckout,
     );
 
 /// Resolve the shot-list for [kind] from a vehicle's `capabilities` JSON,
@@ -114,7 +108,7 @@ List<VehiclePhotoShot> shotsFor(String capabilitiesJson, String kind) {
     shots = defaultShotsFor(kind);
   }
   // Safety floor: check-in always includes the empty-cabin shot.
-  if (kind == VehicleLogKind.checkin &&
+  if (kind == 'checkin' &&
       !shots.any((s) => s.key == emptyCabinShot.key)) {
     shots = [...shots, emptyCabinShot];
   }

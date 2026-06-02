@@ -141,6 +141,12 @@ class _GuidedCaptureScreenState extends State<GuidedCaptureScreen>
   void _disposeCamera() {
     final c = _controller;
     _controller = null;
+    // Reset the in-flight guard too: if we backgrounded DURING init (the
+    // permission dialog was up, _controller still null), leaving this true
+    // would make the resume-time _initCamera early-return forever — camera
+    // stuck on the spinner. The init's own `if (!mounted)` guards already
+    // dispose a controller that finishes after we're gone.
+    _initInFlight = false;
     unawaited(c?.dispose());
   }
 

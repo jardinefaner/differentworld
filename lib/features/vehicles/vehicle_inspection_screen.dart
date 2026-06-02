@@ -1,5 +1,9 @@
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/vehicles/guided_capture_screen.dart';
 import 'package:differentworld/features/vehicles/inspection_checklist.dart';
+import 'package:differentworld/features/vehicles/vehicle_photo_shots.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -13,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
 
 /// The FACES-style pre/post-trip inspection. Same screen for both
 /// `kind` values — the only differences are the screen title and
@@ -48,6 +53,15 @@ class _VehicleInspectionScreenState
 
   late InspectionResults _results;
 
+  /// Guided-capture photos taken for this inspection (ordered by shot).
+  final List<CapturedShot> _captures = [];
+
+  // Make submit RESUMABLE so a mid-upload failure + retry doesn't create a
+  // second log or duplicate attachments: the log is created once
+  // (_pendingLogId), and each photo is attached once (_attachedKeys).
+  String? _pendingLogId;
+  final Set<String> _attachedKeys = {};
+
   bool _saving = false;
   String? _error;
 
@@ -71,10 +85,11 @@ class _VehicleInspectionScreenState
         _fuelLevel.text.trim().isNotEmpty ||
         _notes.text.trim().isNotEmpty ||
         _bodyDamage.text.trim().isNotEmpty ||
+        _captures.isNotEmpty ||
         _results.toJson() != '{}';
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(String capabilitiesJson) async {
     if (_saving) return;
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
@@ -87,6 +102,19 @@ class _VehicleInspectionScreenState
       return;
     }
 
+    // Gate on the required photos — the empty-cabin check-in shot is the
+    // one this whole feature exists for (vehicle_photo_shots.dart).
+    final shots = shotsFor(capabilitiesJson, widget.kind);
+    final missing = shots
+        .where((s) => s.required && !_captures.any((c) => c.key == s.key))
+        .toList();
+    if (missing.isNotEmpty) {
+      setState(() => _error =
+          'Take the required photos first: '
+          '${missing.map((s) => s.label).join(', ')}.');
+      return;
+    }
+
     setState(() {
       _saving = true;
       _error = null;
@@ -94,7 +122,9 @@ class _VehicleInspectionScreenState
 
     try {
       final actions = ref.read(vehicleLogActionsProvider);
-      await actions.log(
+      // Create the log ONCE — reused across retries so a failed photo
+      // upload can't spawn a duplicate check-in/out row.
+      final logId = _pendingLogId ??= await actions.log(
         vehicleId: widget.vehicleId,
         kind: widget.kind,
         odometer: int.tryParse(_odometer.text.trim()),
@@ -103,9 +133,37 @@ class _VehicleInspectionScreenState
         notes: _emptyToNull(_notes.text),
         bodyDamageNotes: _emptyToNull(_bodyDamage.text),
       );
+      // Attach each photo once. Upload the bytes (online → Storage path;
+      // offline → queued, returns a pending token), then create the
+      // attachment with the SAME id so a deferred upload's queue-side
+      // updateUrl(id) patches THIS row — no silent loss of a safety photo.
+      // _attachedKeys makes a retry resume where it failed (no duplicates).
+      final photoService = ref.read(photoServiceProvider);
+      final attachments = ref.read(attachmentActionsProvider);
+      for (var i = 0; i < _captures.length; i++) {
+        final cap = _captures[i];
+        if (_attachedKeys.contains(cap.key)) continue;
+        final attId = const Uuid().v4();
+        final url = await photoService.uploadOnly(
+          entityKind: 'attachment',
+          entityId: attId,
+          picked: cap.file,
+        );
+        await attachments.add(
+          id: attId,
+          entityKind: 'vehicle_log',
+          entityId: logId,
+          url: url,
+          caption: cap.label,
+          sortOrder: i,
+        );
+        _attachedKeys.add(cap.key);
+      }
       if (!mounted) return;
       context.pop();
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // on Object (not Exception) — uploadOnly / attachments.add can throw a
+      // StateError (no Space), which is an Error, not an Exception.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'vehicles'),
       );
@@ -114,6 +172,115 @@ class _VehicleInspectionScreenState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  /// Launch the guided camera for this kind's shot list, storing the result.
+  Future<void> _takePhotos(String capabilitiesJson) async {
+    final shots = shotsFor(capabilitiesJson, widget.kind);
+    final result = await Navigator.of(context).push<List<CapturedShot>>(
+      MaterialPageRoute(
+        builder: (_) => GuidedCaptureScreen(
+          shots: shots,
+          title: widget.isCheckout ? 'Check-out photos' : 'Check-in photos',
+        ),
+        fullscreenDialog: true,
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _captures
+          ..clear()
+          ..addAll(result);
+      });
+    }
+  }
+
+  Widget _photosCard(String capabilitiesJson) {
+    final theme = Theme.of(context);
+    final shots = shotsFor(capabilitiesJson, widget.kind);
+    final requiredShots = shots.where((s) => s.required).toList();
+    final capturedKeys = _captures.map((c) => c.key).toSet();
+    final missing =
+        requiredShots.where((s) => !capturedKeys.contains(s.key)).toList();
+    final taken = _captures.length;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.photo_camera_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text('Required photos', style: theme.textTheme.titleMedium),
+                const Spacer(),
+                if (taken > 0)
+                  Text(
+                    '$taken of ${shots.length}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              missing.isEmpty
+                  ? (taken > 0
+                        ? 'Required photos captured.'
+                        : 'Walk the guided camera to capture the required photos.')
+                  : 'Still needed: ${missing.map((s) => s.label).join(', ')}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: missing.isEmpty
+                    ? theme.colorScheme.onSurfaceVariant
+                    : theme.colorScheme.error,
+              ),
+            ),
+            if (_captures.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 64,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _captures.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) => ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      _captures[i].bytes,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                      errorBuilder: (_, _, _) =>
+                          const SizedBox(width: 64, height: 64),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _takePhotos(capabilitiesJson),
+                icon: Icon(
+                  taken > 0
+                      ? Icons.replay_outlined
+                      : Icons.photo_camera_outlined,
+                ),
+                label: Text(taken > 0 ? 'Review / retake' : 'Take photos'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String? _emptyToNull(String input) {
@@ -255,6 +422,8 @@ class _VehicleInspectionScreenState
                             },
                           ),
                         const SizedBox(height: 16),
+                        _photosCard(v.capabilities),
+                        const SizedBox(height: 16),
                         TextFormField(
                           controller: _bodyDamage,
                           minLines: 2,
@@ -329,7 +498,7 @@ class _VehicleInspectionScreenState
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: _saving ? null : _submit,
+                        onPressed: _saving ? null : () => _submit(v.capabilities),
                         icon: _saving
                             ? const SizedBox(
                                 width: 16,
