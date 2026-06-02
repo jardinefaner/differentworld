@@ -33,6 +33,7 @@ import 'package:differentworld/features/family/family_subject_detail_screen.dart
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
@@ -850,6 +851,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/fact-or-fib',
             builder: (_, _) => const LiveGameScreen(def: FactOrFibGame()),
+          ),
+          // Non-game presentables (docs/VISION.md #18 — the classroom remote):
+          // same engine, /present = single-device, /live = two-device.
+          GoRoute(
+            path: '/present/poll',
+            builder: (_, _) => const GameRunner(def: PollGame()),
+          ),
+          GoRoute(
+            path: '/live/poll',
+            builder: (_, _) => const LiveGameScreen(def: PollGame()),
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.

@@ -167,6 +167,9 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
   Widget _stageView(BuildContext context, {required bool isPresenter}) {
     final c = _controller!;
     final state = _def.decode(_wire);
+    // A game with custom controls (poll, timer) owns the bar; otherwise the
+    // standard intents bar. Same override the single-device scaffold honors.
+    final custom = _def.buildControls(context, state, c.send);
     return Column(
       children: [
         if (isPresenter)
@@ -179,8 +182,32 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
         else
           _ControllerHeader(status: _status, onLeave: _leave),
         Expanded(child: _def.buildStage(context, state)),
-        _LiveControls<S>(def: _def, wire: _wire, onIntent: c.send),
+        if (custom != null)
+          _CustomLiveBar(child: custom)
+        else
+          _LiveControls<S>(def: _def, wire: _wire, onIntent: c.send),
       ],
+    );
+  }
+}
+
+/// Wraps a game's custom `buildControls` in the dark live-bar chrome.
+class _CustomLiveBar extends StatelessWidget {
+  const _CustomLiveBar({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.06),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: child,
+        ),
+      ),
     );
   }
 }

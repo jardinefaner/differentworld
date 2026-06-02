@@ -125,7 +125,7 @@ abstract class GameDefinition<S> {
   /// keys when present: `'i'` (current index, int), `'n'` (total, int),
   /// `'d'` (done, bool), `'r'` (revealed, bool). A game that follows the
   /// convention inherits the standard progress + Back/Reveal/Next/Again
-  /// bar for free; one that doesn't overrides [buildControlBody].
+  /// bar for free; one that doesn't overrides [buildControls].
   Map<String, dynamic> initialState(ContentSource content);
 
   /// Typed lens over the wire-state — what a `fromMap` factory does.
@@ -151,10 +151,18 @@ abstract class GameDefinition<S> {
   /// its own per-game wrap / done beat (docs/GAMES.md decision).
   Widget buildStage(BuildContext context, S state);
 
-  /// Optional override for the middle of the control bar. Default (null) =
-  /// the scaffold's standard affordances from [activeIntents]. Tally games
-  /// supply a big "+1"; Charades supplies "Got it / Skip".
-  Widget? buildControlBody(BuildContext context, S state) => null;
+  /// Optional FULL override of the control region. When non-null the game
+  /// renders its own buttons — a poll's per-option +1, a timer's start/pause,
+  /// Charades' Got it/Skip — and calls `send` with the intent (+ optional
+  /// args, e.g. `{'choice': i}`). Null = the scaffold's standard bar built
+  /// from [activeIntents]. The scaffold supplies the bar chrome; the game
+  /// owns what's inside. Used identically on the single-device and live
+  /// control surfaces, so a custom-control game is controllable AND live.
+  Widget? buildControls(
+    BuildContext context,
+    S state,
+    void Function(GameIntent intent, [Map<String, dynamic> args]) send,
+  ) => null;
 
   /// The label for the [GameIntent.reveal] button in the default control
   /// bar. Most games "Reveal"; This-or-That "Discuss" (it reveals a

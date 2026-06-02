@@ -72,7 +72,18 @@ class GameScaffold<S> extends StatelessWidget {
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= _wideBreakpoint;
                   final stage = def.buildStage(context, state);
-                  final controlBody = def.buildControlBody(context, state);
+                  final revealLabel = def.revealLabel(revealed: wire['r'] == true);
+                  // Full control override (poll, timer, …): one layout — the
+                  // stage fills, the game's own controls sit in the bar.
+                  final custom = def.buildControls(context, state, controller.send);
+                  if (custom != null) {
+                    return Column(
+                      children: [
+                        Expanded(child: stage),
+                        _CustomControlBar(child: custom),
+                      ],
+                    );
+                  }
                   return wide
                       ? Column(
                           children: [
@@ -81,10 +92,7 @@ class GameScaffold<S> extends StatelessWidget {
                               wire: wire,
                               done: done,
                               active: active,
-                              revealLabel: def.revealLabel(
-                                revealed: wire['r'] == true,
-                              ),
-                              controlBody: controlBody,
+                              revealLabel: revealLabel,
                               onIntent: _send,
                             ),
                           ],
@@ -98,10 +106,7 @@ class GameScaffold<S> extends StatelessWidget {
                                   wire: wire,
                                   done: done,
                                   active: active,
-                                  revealLabel: def.revealLabel(
-                                    revealed: wire['r'] == true,
-                                  ),
-                                  controlBody: controlBody,
+                                  revealLabel: revealLabel,
                                   onIntent: _send,
                                 ),
                               ),
@@ -123,15 +128,15 @@ int _intOf(Map<String, dynamic> m, String k, int fallback) =>
 
 /// Default wide control bar — slim, for the bottom of the presentation.
 /// Standard affordances (Back · Reveal · Next, or Again when done) gated by
-/// the game's [active] intents; a game can replace the middle via
-/// [controlBody]. Faithful to the archetype so progress reads "i / n".
+/// the game's [active] intents. A game that needs custom controls overrides
+/// `buildControls` instead. Faithful to the archetype so progress reads
+/// "i / n".
 class _GameControlBar extends StatelessWidget {
   const _GameControlBar({
     required this.wire,
     required this.done,
     required this.active,
     required this.revealLabel,
-    required this.controlBody,
     required this.onIntent,
   });
 
@@ -139,7 +144,6 @@ class _GameControlBar extends StatelessWidget {
   final bool done;
   final Set<GameIntent> active;
   final String revealLabel;
-  final Widget? controlBody;
   final void Function(GameIntent) onIntent;
 
   @override
@@ -178,18 +182,15 @@ class _GameControlBar extends StatelessWidget {
                   label: const Text('Again'),
                 )
               else ...[
-                controlBody ??
-                    FilledButton.tonalIcon(
-                      onPressed: active.contains(GameIntent.reveal)
-                          ? () => onIntent(GameIntent.reveal)
-                          : null,
-                      icon: Icon(
-                        revealed
-                            ? Icons.visibility_off
-                            : Icons.lightbulb_outline,
-                      ),
-                      label: Text(revealLabel),
-                    ),
+                FilledButton.tonalIcon(
+                  onPressed: active.contains(GameIntent.reveal)
+                      ? () => onIntent(GameIntent.reveal)
+                      : null,
+                  icon: Icon(
+                    revealed ? Icons.visibility_off : Icons.lightbulb_outline,
+                  ),
+                  label: Text(revealLabel),
+                ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: active.contains(GameIntent.next)
@@ -214,7 +215,6 @@ class _GameControlPanel extends StatelessWidget {
     required this.done,
     required this.active,
     required this.revealLabel,
-    required this.controlBody,
     required this.onIntent,
   });
 
@@ -222,7 +222,6 @@ class _GameControlPanel extends StatelessWidget {
   final bool done;
   final Set<GameIntent> active;
   final String revealLabel;
-  final Widget? controlBody;
   final void Function(GameIntent) onIntent;
 
   @override
@@ -281,24 +280,43 @@ class _GameControlPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child:
-                      controlBody ??
-                      OutlinedButton.icon(
-                        onPressed: active.contains(GameIntent.reveal)
-                            ? () => onIntent(GameIntent.reveal)
-                            : null,
-                        icon: Icon(
-                          revealed
-                              ? Icons.visibility_off
-                              : Icons.lightbulb_outline,
-                        ),
-                        label: Text(revealLabel),
-                      ),
+                  child: OutlinedButton.icon(
+                    onPressed: active.contains(GameIntent.reveal)
+                        ? () => onIntent(GameIntent.reveal)
+                        : null,
+                    icon: Icon(
+                      revealed
+                          ? Icons.visibility_off
+                          : Icons.lightbulb_outline,
+                    ),
+                    label: Text(revealLabel),
+                  ),
                 ),
               ],
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Wraps a game's custom `buildControls` widget in the standard bar chrome.
+class _CustomControlBar extends StatelessWidget {
+  const _CustomControlBar({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: child,
+        ),
       ),
     );
   }
