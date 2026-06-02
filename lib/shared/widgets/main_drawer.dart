@@ -4,10 +4,9 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
-import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +33,11 @@ class MainDrawer extends ConsumerWidget {
     // Vertical-aware role label so a construction PM doesn't read as
     // "Project manager" in childcare strings or vice versa.
     final vertical = ref.watch(verticalLabelsProvider).vertical;
+
+    // Canonical nav — the SAME list the desktop rail renders, so the
+    // two can never drift. Capability gates + badge counts live in
+    // buildNavDestinations; the drawer just renders each entry.
+    final destinations = buildNavDestinations(viewer);
 
     // Wave 54: drawer surface uses the shared GlassPanel so the
     // staff drawer reads as part of the same floating-chrome
@@ -224,49 +228,31 @@ class MainDrawer extends ConsumerWidget {
                 ),
               ),
 
-              // The five top-level orientation destinations. Everything
-              // else (Classrooms, Team, Program settings, Billing,
-              // Activities, Locations, etc.) lives in the omnibox.
+              // Canonical top-level destinations (shared with the
+              // desktop rail). Everything narrower (Classrooms, Team,
+              // Program settings, Billing, Activities, Locations, etc.)
+              // lives in the omnibox. A `dividerBefore` entry becomes
+              // whitespace here — the drawer has no divider lines by
+              // design (the rail renders the same break as a Divider).
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 16),
                   children: [
-                    _DrawerTile(
-                      icon: Icons.today_outlined,
-                      label: 'Today',
-                      onTap: () => _go(context, '/'),
-                    ),
-                    _DrawerTile(
-                      icon: Icons.calendar_month_outlined,
-                      label: 'Schedule',
-                      onTap: () => _go(context, '/schedule'),
-                    ),
-                    _DrawerTile(
-                      icon: Icons.inbox_outlined,
-                      label: 'Captures',
-                      onTap: () => _go(context, '/captures'),
-                      // Open captures = items awaiting triage. Shown as
-                      // a primary-tinted badge so the user sees the
-                      // inbox depth without opening the screen (Wave
-                      // 65, addresses "inbox is hidden" feedback).
-                      count: ref.watch(openCapturesProvider).value?.length ?? 0,
-                    ),
-                    _DrawerTile(
-                      icon: Icons.check_circle_outline,
-                      label: 'Tasks',
-                      onTap: () => _go(context, '/tasks'),
-                      count: ref.watch(openTasksProvider).value?.length ?? 0,
-                    ),
-                    _DrawerTile(
-                      icon: Icons.bubble_chart_outlined,
-                      label: 'Brain Breaks',
-                      onTap: () => _go(context, '/breaks'),
-                    ),
-                    _DrawerTile(
-                      icon: Icons.settings_outlined,
-                      label: 'Settings',
-                      onTap: () => _go(context, '/settings'),
-                    ),
+                    for (final d in destinations) ...[
+                      if (d.dividerBefore) const SizedBox(height: 12),
+                      _DrawerTile(
+                        // Stable per-route key: the list grows / shrinks
+                        // with capability gates, so without keys Flutter
+                        // would match tiles by position and hand a row's
+                        // count subscription to the wrong destination
+                        // when a gated item toggles.
+                        key: ValueKey('nav-${d.route}'),
+                        icon: d.icon,
+                        label: d.label,
+                        onTap: () => _go(context, d.route),
+                        countProvider: d.countProvider,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -285,51 +271,35 @@ class MainDrawer extends ConsumerWidget {
   }
 }
 
-class _DrawerTile extends StatelessWidget {
+class _DrawerTile extends ConsumerWidget {
   const _DrawerTile({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.count = 0,
+    this.countProvider,
+    super.key,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
-  /// Open-item count shown as a pill on the right. Zero hides it
-  /// entirely so the destination reads as quiet when there's
-  /// nothing pending.
-  final int count;
+  /// Source of the open-item count badge. The tile watches it itself
+  /// so only this row rebuilds when the count changes (not the whole
+  /// drawer), and the parent's watch set stays static regardless of
+  /// which destinations the viewer can see. Null → no badge; a zero
+  /// count also hides the badge so the row reads as quiet.
+  final Provider<int>? countProvider;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = countProvider == null ? 0 : ref.watch(countProvider!);
     return ListTile(
       leading: Icon(icon),
       title: Text(label),
       dense: true,
       onTap: onTap,
-      trailing: count == 0
-          ? null
-          : Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 2,
-              ),
-              decoration: BoxDecoration(
-                color: scheme.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                count > 99 ? '99+' : '$count',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+      trailing: count == 0 ? null : NavCountBadge(count: count),
     );
   }
 }

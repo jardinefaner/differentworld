@@ -1,5 +1,7 @@
+import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,11 +13,11 @@ import 'package:go_router/go_router.dart';
 /// Mobile keeps the existing `MainDrawer` (overlay drawer + hamburger
 /// pill); desktop gets this — a fixed 240dp column with the canonical
 /// nav destinations pinned in view. The two have separate widget
-/// trees so we can iterate on each without touching the other. The
-/// destinations + capability gates here mirror what `MainDrawer`
-/// surfaces; the slimmer presentation just trades the full identity
-/// header / sign-out for a compact icon-row layout that doesn't
-/// dominate the page.
+/// trees so we can iterate on each without touching the other, but
+/// they pull their destinations, order, capability gates, and badge
+/// counts from the SAME source ([buildNavDestinations]) so the two
+/// can never drift. Only the presentation differs — the rail is a
+/// compact always-on column, the drawer an overlay.
 ///
 /// Why not just `NavigationRail`? NavigationRail is built for app-
 /// shell-with-tabs where a single index drives which screen is on
@@ -30,9 +32,13 @@ class DesktopNavRail extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
-    final canManage = viewer.canManageSpace;
-    final canObserve = viewer.canObserve;
-    final canDrive = viewer.canDrive;
+
+    // Canonical nav — the SAME list the mobile drawer renders, so the
+    // two can never drift. Capability gates + badge counts live in
+    // buildNavDestinations; the rail just renders each entry. A
+    // `dividerBefore` entry becomes a [Divider] here (the drawer
+    // renders the same break as whitespace).
+    final destinations = buildNavDestinations(viewer);
 
     return GlassPanel(
       child: SafeArea(
@@ -42,7 +48,7 @@ class DesktopNavRail extends ConsumerWidget {
           children: [
             // Profile header — compact identity strip at the top, tap
             // to drill into "my member detail" the same way the mobile
-            // drawer does.
+            // drawer does; sign-out lives on the trailing edge.
             if (viewer.member != null)
               _ProfileHeader(viewer: viewer),
             const Divider(height: 1),
@@ -51,54 +57,21 @@ class DesktopNavRail extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  _NavTile(
-                    icon: Icons.today_outlined,
-                    label: 'Today',
-                    onTap: () => context.go('/'),
-                  ),
-                  _NavTile(
-                    icon: Icons.calendar_month_outlined,
-                    label: 'Schedule',
-                    onTap: () => context.push('/schedule'),
-                  ),
-                  if (canObserve)
+                  for (final d in destinations) ...[
+                    if (d.dividerBefore) const Divider(height: 16),
                     _NavTile(
-                      icon: Icons.menu_book_outlined,
-                      label: 'Observations',
-                      onTap: () => context.push('/observations'),
+                      // Stable per-route key — the list grows / shrinks
+                      // with capability gates; without keys Flutter would
+                      // match tiles by position and hand a row's count
+                      // subscription to the wrong destination when a
+                      // gated item toggles.
+                      key: ValueKey('nav-${d.route}'),
+                      icon: d.icon,
+                      label: d.label,
+                      onTap: () => context.go(d.route),
+                      countProvider: d.countProvider,
                     ),
-                  _NavTile(
-                    icon: Icons.bolt_outlined,
-                    label: 'Captures',
-                    onTap: () => context.push('/captures'),
-                  ),
-                  _NavTile(
-                    icon: Icons.checklist_outlined,
-                    label: 'Tasks',
-                    onTap: () => context.push('/tasks'),
-                  ),
-                  _NavTile(
-                    icon: Icons.insights_outlined,
-                    label: 'Insights',
-                    onTap: () => context.push('/insights'),
-                  ),
-                  _NavTile(
-                    icon: Icons.quiz_outlined,
-                    label: 'Surveys',
-                    onTap: () => context.push('/surveys'),
-                  ),
-                  if (canDrive || canManage)
-                    _NavTile(
-                      icon: Icons.directions_bus_outlined,
-                      label: 'Vehicles',
-                      onTap: () => context.push('/vehicles'),
-                    ),
-                  const Divider(height: 16),
-                  _NavTile(
-                    icon: Icons.settings_outlined,
-                    label: 'Settings',
-                    onTap: () => context.push('/settings'),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -109,13 +82,13 @@ class DesktopNavRail extends ConsumerWidget {
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends ConsumerWidget {
   const _ProfileHeader({required this.viewer});
 
   final Viewer viewer;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final m = viewer.member;
     if (m == null) return const SizedBox.shrink();
@@ -123,7 +96,7 @@ class _ProfileHeader extends StatelessWidget {
     return InkWell(
       onTap: () => context.push('/settings/team/${m.id}'),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+        padding: const EdgeInsets.fromLTRB(16, 14, 4, 12),
         child: Row(
           children: [
             // PersonAvatar handles photo + initials fallback in one
@@ -155,6 +128,18 @@ class _ProfileHeader extends StatelessWidget {
                 ],
               ),
             ),
+            // Sign-out parity with the mobile drawer. The rail is
+            // persistent (no overlay to pop) so this just signs out.
+            IconButton(
+              tooltip: 'Sign out',
+              icon: Icon(
+                Icons.logout,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              onPressed: () async {
+                await ref.read(authActionsProvider).signOut();
+              },
+            ),
           ],
         ),
       ),
@@ -162,24 +147,35 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _NavTile extends StatelessWidget {
+class _NavTile extends ConsumerWidget {
   const _NavTile({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.countProvider,
+    super.key,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
+  /// Source of the open-item count badge. The tile watches it itself
+  /// so only this row rebuilds when the count changes (not the whole
+  /// persistent rail), and the parent's watch set stays static. Null →
+  /// no badge; a zero count also hides the badge — same convention as
+  /// the mobile drawer.
+  final Provider<int>? countProvider;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = countProvider == null ? 0 : ref.watch(countProvider!);
     return ListTile(
       leading: Icon(icon),
       title: Text(label),
       dense: true,
       onTap: onTap,
+      trailing: count == 0 ? null : NavCountBadge(count: count),
     );
   }
 }

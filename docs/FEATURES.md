@@ -44,9 +44,14 @@ code; mismatches show up as drift warnings):
 
 ## Top-level orientation
 
-The drawer's main destinations are **Today**, **Schedule**, **Captures**,
-**Tasks**, **Settings**. Everything else is reachable via the omnibox
-(`/search`) or via slash commands. Settings is the library / admin
+The drawer (mobile) and desktop nav rail both render from the single
+canonical list in `lib/shared/widgets/nav_destinations.dart`
+(`buildNavDestinations(viewer)`). Top-level destinations in canonical
+order: **Today**, **Schedule**, **Observations** (gated `canObserve`),
+**Captures**, **Tasks**, **Brain Breaks**, **Missions**, **Brainstorm
+Board**, **Insights**, **Surveys**, **Vehicles** (gated `canDrive ||
+canManageSpace`), **Settings**. Everything narrower is reachable via the
+omnibox (`/search`) or slash commands. Settings is the library / admin
 surface — preferences + roster + fleet, not primary workflows.
 
 ---
@@ -175,7 +180,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Routes: `/observations`, `/observations/new`, `/observations/:id/edit`, `/groups/:id/observations`
 - Omnibox: yes — "Observations" (gated by `can_observe`), "Observations · {Group.name}" (per cohort), "New {entry label}" (action), "Quick observation · {Name}" (per subject)
 - Slash: `/log {kid}` (aliases `/observe`, `/obs`)
-- Drawer: no
+- Drawer: yes — "Observations" (canonical nav, gated `canObserve`; position between Schedule and Captures)
 - Settings: no
 **Capabilities**: `can_observe`
 **Data**: [entries](SCHEMA.md#entries), [attachments](SCHEMA.md#attachments)
@@ -185,7 +190,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Observation form* — `lib/features/entries/observation_form_screen.dart`. Create / edit a single entry; photo attach, voice dictation via Deepgram mic (suffix-icon on the body TextField; owns its own `DeepgramVoiceController` instance — does NOT consume the shared `deepgramVoiceProvider` singleton, to avoid the dual-listener race against AppShell's composer mic).
 **Depends on**: Subjects, Groups, Attachments, Photos, Voice (Deepgram dictation on the body field).
 **Consumed by**: Exports (Progress Report compiles entries), Captures (promotion destination), Insights (pattern detection), Family (Lauren read), Today (recent activity card).
-**Last verified**: 2026-05-22
+**Last verified**: 2026-06-01
 
 ---
 
@@ -284,7 +289,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Routes: `/insights`
 - Omnibox: yes — "Insights"
 - Slash: `/insights`
-- Drawer: no (omnibox-only entry)
+- Drawer: yes — "Insights" (canonical nav, position between Surveys and Vehicles)
 - Settings: no
 **Capabilities**: None — open to all signed-in staff. Some insights are member-scoped (only the affected staff sees them); some are space-wide.
 **Data**: derived — reads [attendance_records](SCHEMA.md#attendance_records), [member_certifications](SCHEMA.md#member_certifications), [vehicle_logs](SCHEMA.md#vehicle_logs), [entries](SCHEMA.md#entries), [captures](SCHEMA.md#captures), [survey_responses](SCHEMA.md#survey_responses). Snooze state in [dismissed_insights](SCHEMA.md#dismissed_insights).
@@ -292,7 +297,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Insights screen* — `lib/features/insights/insights_screen.dart`. Card list; tap to drill into the underlying data; swipe to dismiss (per-member snooze).
 **Depends on**: Attendance, Certifications, Vehicles, Entries, Captures, Surveys.
 **Consumed by**: Today (top-N insight chip).
-**Last verified**: 2026-05-21
+**Last verified**: 2026-06-01
 
 ---
 
@@ -350,7 +355,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Routes: `/live/this-or-that` (LiveSessionScreen), `/live/charades` (CharadesLiveScreen), `/board` (BoardScreen)
 - Omnibox: yes — "Brainstorm Board" (`page.board`, keywords: board, brainstorm, meeting, agenda, ideas, anonymous) → `/board`. No direct catalog entries for `/live/this-or-that` or `/live/charades` — those are reached via the Quick Picks screen action and via slash commands respectively.
 - Slash: `/live` (aliases: `present`, `projector`, `remote`, `session`) → `/live/this-or-that`; `/charades` (aliases: `act`, `acting`, `mime`, `guess`) → `/live/charades`; `/board` (aliases: `brainstorm`, `meeting`, `agenda`, `ideas`) → `/board`
-- Drawer: no — mode of a brain break or meeting tool, not a top-level destination
+- Drawer: yes — "Brainstorm Board" for `/board` (canonical nav, position between Missions and Insights). `/live/this-or-that` and `/live/charades` have no drawer entry — those remain reached via the Brain Breaks deck and slash commands.
 - Settings: no
 **Capabilities**: None — open to all signed-in staff.
 **Data**: None persisted. Uses Supabase Realtime broadcast + presence — a documented ephemeral-coordination exception (same class as auth and Storage). This-or-That + Charades use channel `dw-session-<CODE>`; Board uses `dw-board-<CODE>`. No Drift tables, no PowerSync sync, no migration.
@@ -367,7 +372,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Brain Breaks deck card* — `lib/features/activity_runtime/brain_breaks_screen.dart`. "Charades" card → `/live/charades`.
 **Depends on**: ActivityRuntime (`content_bank.dart` — seeds This-or-That pairs and the 24 Charades prompts via `ContentKind.charades`).
 **Consumed by**: Nothing — LiveSession is a leaf.
-**Last verified**: 2026-06-01
+**Last verified**: 2026-06-01 (nav refactor)
 
 ---
 
@@ -561,8 +566,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - Routes: `/settings/missions`
 - Omnibox: yes — "Missions" (id `page.missions`), keywords: missions, jobs, helpers, chores, responsibilities, equipment manager, snack helper → `/settings/missions`
 - Slash: none
-- Drawer: no — library surface (same convention as Locations, Activities, Supplies)
-- Settings: no — omnibox is the canonical discovery entry; Settings screen is preferences-only per the library convention
+- Drawer: yes — "Missions" (canonical nav, position between Brain Breaks and Brainstorm Board)
+- Settings: no
 **Capabilities**: View: all signed-in staff. Create / edit / delete: `canManageSpace` (director / lead). Slice 2 will add kid-side claim with no cap gate.
 **Data**: [missions](SCHEMA.md#missions)
 **Surfaces**:
@@ -571,7 +576,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Mission templates* — `lib/features/missions/mission_templates.dart`. `MissionTemplate` + `missionTemplates` (11 starter jobs: Equipment Manager, Snack Helper, Cleanup Crew, Supply Keeper, Line Leader, Greeter, Library Keeper, Lights & Doors, Recycle Captain, Plant & Pet Caretaker, Peace Buddy); `MissionEvidenceKind` enum (photo/count/note/check); actions JSON codec (encode/decodeMissionActions).
 **Depends on**: Nothing — leaf catalog feature in slice 1.
 **Consumed by**: Nothing in slice 1. Slice 2 will add mission_assignments + Entries/Attachments as the evidence destination.
-**Last verified**: 2026-06-01
+**Last verified**: 2026-06-01 (nav refactor)
 
 ---
 
@@ -629,7 +634,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Routes: `/surveys`, `/surveys/:templateId`, `/surveys/:templateId/take`, `/surveys/:templateId/table`
 - Omnibox: yes — "Surveys"
 - Slash: none
-- Drawer: no
+- Drawer: yes — "Surveys" (canonical nav, position between Insights and Vehicles)
 - Settings: no — surveys are top-level
 **Capabilities**: None for taking. Authoring templates is gated by `can_manage_space`.
 **Data**: [survey_responses](SCHEMA.md#survey_responses), [survey_picker_options](SCHEMA.md#survey_picker_options). Templates live in code today (no `survey_templates` table yet).
@@ -640,7 +645,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Survey table* — `lib/features/surveys/survey_table_screen.dart`. One row per response, anonymized (recorded-at timestamp + identity columns + answer slots). Status filter (all / completed / drafts). CSV export.
 **Depends on**: Kid mode, Voice (Deepgram Aura 2 TTS).
 **Consumed by**: Insights (low-signal survey detection).
-**Last verified**: 2026-05-26
+**Last verified**: 2026-06-01
 
 ---
 
@@ -738,7 +743,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Routes: `/vehicles`, `/vehicles/new`, `/vehicles/scan`, `/vehicles/:id`, `/vehicles/:id/edit`, `/vehicles/:id/checkout`, `/vehicles/:id/checkin` (old `/settings/vehicles*` paths redirect here — preserved for printed QR codes from before Wave 95)
 - Omnibox: yes — "Vehicles", "{Vehicle.name}" (per vehicle), "Check out · {Vehicle.name}" (action, gated by `can_drive`), "Check in · {Vehicle.name}" (action, gated by `can_drive`), "Add a vehicle" (action, gated by `can_manage_space`)
 - Slash: `/checkout {vehicle}` (alias `/co`), `/checkin {vehicle}` (aliases `/ci`, `/return`) — gated by `can_drive || can_manage_space`
-- Drawer: no
+- Drawer: yes — "Vehicles" (canonical nav, gated `canDrive || canManageSpace`; position between Surveys and Settings)
 - Settings: yes — "Vehicles" row under {Space name} group
 **Capabilities**: Read: all members. Create / edit: `can_manage_space`. Checkout / checkin: `can_drive` (which itself requires an active Driver cert).
 **Data**: [vehicles](SCHEMA.md#vehicles), [vehicle_logs](SCHEMA.md#vehicle_logs), [member_certifications](SCHEMA.md#member_certifications) (Driver cert gates `can_drive`)
@@ -750,7 +755,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Vehicle inspection* — `lib/features/vehicles/vehicle_inspection_screen.dart`. Pre-trip + post-trip checklist (same screen, different mode). QR PDFs now encode the custom-scheme deep link (`differentworld://v/<id>/<kind>`) — staff always have the app, so the scheme opens the app directly with no browser hop (Wave 171). Invite QRs intentionally keep the HTTPS path for the no-app-installed case.
 **Depends on**: Members, Certifications.
 **Consumed by**: Schedule (trip assignment), Insights (stale-vehicle signal).
-**Last verified**: 2026-05-29
+**Last verified**: 2026-06-01
 
 ---
 
@@ -783,6 +788,13 @@ in. Run `Agent persona-audit` to refresh.
 ---
 
 ## Drift / discovery warnings (auto-populated by feature-mapper)
+
+_Run 2026-06-01 (nav refactor)_ — no unresolved discovery drift after this run. Updates applied:
+- Drawer field updated for 6 features now in `buildNavDestinations`: **Entries** (Observations), **Insights**, **Missions**, **LiveSession** (Board `/board`), **Surveys**, **Vehicles**. Missions and Board are the genuinely new additions; the others were already in the rail but not in the old hardcoded drawer.
+- "Top-level orientation" blurb rewritten to reflect the full canonical list.
+- Settings drop-in note for Missions removed (was `no — omnibox canonical discovery`; now `no` with drawer as the primary surface).
+- SCHEMA.md: no changes — this refactor touched no synced tables and no migrations.
+- Cross-link reconcile: none — only Drawer fields changed, no (feature → table) or (table → feature) links were affected.
 
 _Run 2026-06-01 (Charades + Board)_ — no unresolved discovery drift. Updates applied this run:
 - **LiveSession** — entry rewritten. Routes extended to include `/live/charades` (CharadesLiveScreen) and `/board` (BoardScreen). Omnibox updated: `page.board` entry confirmed in `omnibox_catalog.dart` (`label: 'Brainstorm Board'`, keywords: board, brainstorm, meeting, agenda, ideas, anonymous, `onSelect` pushes `/board`). Slash commands updated: `/charades` (aliases: act, acting, mime, guess) and `/board` (aliases: brainstorm, meeting, agenda, ideas) both confirmed in `slash_commands.dart`. No drawer entry, no Settings ListTile — correct for both surfaces. Brain Breaks deck card "Charades" → `/live/charades` confirmed in `brain_breaks_screen.dart`. No Board card in the Brain Breaks deck — Board is reached via omnibox `page.board` and `/board` slash (correct; it is not an activity card). `live_session.dart` generalized-seam note added: `LiveReducer` typedef, `SessionRole.secret`, game-agnostic `Map<String,dynamic>` state. `charades.dart` and `board_session.dart` new surfaces added. `content_bank.dart` `ContentKind.charades` + 24 prompts confirmed. All claimed surfaces verified.
@@ -927,7 +939,7 @@ All other discovery claims verified against `router.dart`,
 
 ---
 
-_Last full registry verification: 2026-06-01 (Charades + Board)._
+_Last full registry verification: 2026-06-01 (nav refactor — canonical nav list)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._

@@ -233,11 +233,17 @@ When a new screen lands at a new top-level route, update:
    "Schedule · {Group.name}" variants where the feature has a
    per-cohort shape; include broad keywords (`'field trip', 'pool',
    'barn'`) so users discover via what they actually call the thing.
-3. **MainDrawer** (`lib/shared/widgets/main_drawer.dart`): if it's a
-   top-level destination (Today, Schedule, Captures, Tasks…), it
-   belongs in the drawer's main list. If it's a "library" surface
-   (Activities, Locations) it belongs under Settings, not the
-   drawer.
+3. **Nav destinations** (`lib/shared/widgets/nav_destinations.dart`):
+   if it's a top-level destination (Today, Schedule, Captures, Tasks…),
+   add ONE `NavDestination` to `buildNavDestinations`. Both the mobile
+   `MainDrawer` AND the `DesktopNavRail` render from this single list —
+   editing one surface directly is the anti-pattern that let the two
+   drift (the drawer was missing Observations / Insights / Surveys /
+   Vehicles for ages). Capability gates go in `onlyFor:`; a trailing
+   badge count goes in `countProvider:`; a section break goes in
+   `dividerBefore:` (drawer renders it as whitespace, rail as a
+   `Divider`). If it's a "library" surface (Activities, Locations) it
+   belongs under Settings, not the nav list.
 4. **Settings entries** (`lib/features/settings/settings_screen.dart`):
    any settings-section route gets a `ListTile` row in the right
    `_SettingsGroup`. Group new rows with adjacent ones — don't add a
