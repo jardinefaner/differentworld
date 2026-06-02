@@ -34,6 +34,7 @@ import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
@@ -879,6 +880,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/picker',
             builder: (_, _) => const PickerScreen(live: true),
+          ),
+          GoRoute(
+            path: '/present/now-next',
+            builder: (_, _) => const NowNextScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/now-next',
+            builder: (_, _) => const NowNextScreen(live: true),
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.
