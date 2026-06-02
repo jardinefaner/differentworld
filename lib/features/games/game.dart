@@ -1,0 +1,151 @@
+import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:flutter/material.dart';
+
+/// The unified game framework (docs/GAMES.md "The Game contract", VISION
+/// #17). Every host-run game is one tiny contract — a state + a pure
+/// reducer over the shared [GameIntent] vocabulary — and the framework
+/// turns that into a thing that is controllable (tap + keyboard + a phone
+/// remote), live (the reducer IS a LiveReducer), and familiar (one
+/// scaffold), while each game keeps its own stage + vibe.
+///
+/// Primary model: **host-present, room-responds, teacher-tallies** — one
+/// teacher device drives a projector; the room answers out loud / moves /
+/// raises hands; the teacher taps the count. No per-kid devices required.
+/// [GameIntent.submit] is the every-phone counterpart for when devices ARE
+/// in the room (the Board, a word cloud), but [GameIntent.tally] is the
+/// afterschool default.
+
+/// The shared intent vocabulary — a CLOSED set. Every control surface
+/// (tap, keyboard, the teacher's remote, a contributor phone) emits only
+/// these, so a teacher learns the controls once and a new game inherits
+/// them for free. Adding one is a framework decision, not a per-game one.
+enum GameIntent {
+  /// Advance — next slide / question / word / round.
+  next,
+
+  /// Step back. A no-op for games that don't rewind (Rhyme Time, As-If).
+  back,
+
+  /// Show / toggle the hidden beat — the answer, or a discussion prompt.
+  reveal,
+
+  /// A discrete host choice — `args: {'choice': int|String}`. The only
+  /// intent that carries a selection (a vote side, a bracket pick).
+  pick,
+
+  /// Count one more of the room's responses — `args: {'by': int}` (default
+  /// 1), optional `{'bucket': String}`. The heart of the host-present,
+  /// teacher-tallies model.
+  tally,
+
+  /// Record durable evidence — `args: {'text': String, ...}`. Pure here
+  /// (mutates state only); the durable write is a runner side-effect.
+  capture,
+
+  /// A contributor submission from a participant device (a Board sticky, a
+  /// word-cloud word, a dropped pin) — `args` carries the contribution.
+  /// The every-phone counterpart to [tally]; most afterschool games use
+  /// [tally] (no kid devices), [submit] is there when devices are present.
+  submit,
+
+  /// Play again / new round.
+  reset,
+}
+
+/// A pure transform over the wire-state. Identical in shape to the
+/// existing `LiveReducer`, so a game's [GameDefinition.reduce] tear-off
+/// drives both the single-device runner and a live session with no
+/// adapter. Operates on `Map<String, dynamic>` (the wire-state) so it
+/// survives the Realtime wire and stays JSON-trivial.
+typedef GameReducer =
+    Map<String, dynamic> Function(
+      Map<String, dynamic> state,
+      GameIntent intent,
+      Map<String, dynamic> args,
+    );
+
+/// Where a [GameIntent.capture] / [GameIntent.submit] writes its durable
+/// evidence (docs/GAMES.md). The intent stays pure; the runner performs
+/// the write as a side effect, presenter-only in a live session.
+enum CaptureTarget { crowdGrow, entry, both }
+
+/// Declares that a game's `capture` produces durable evidence.
+class CaptureSpec {
+  const CaptureSpec({required this.target, required this.contentKind});
+
+  /// crowd-grow into `content_items`, a growth-book `entries` row, or both.
+  final CaptureTarget target;
+
+  /// The bank kind to crowd-grow into (e.g. `ContentKind.rhymeWord`).
+  final String contentKind;
+}
+
+/// Per-game character (docs/GAMES.md decision: a distinct vibe + hero
+/// shape per game). The [GameDefinition.buildStage] owns the hero shape +
+/// the per-game wrap beat; this carries the chrome tint the shared
+/// scaffold reads (progress accent, control-bar wash, status pill).
+class GameVibe {
+  const GameVibe({required this.accent, this.surface = const Color(0xFF000000)});
+
+  /// The game's signature color — its identity at a glance. Keep these
+  /// distinct across the deck (docs/GAMES.md flags the green / amber
+  /// collisions to resolve as games migrate).
+  final Color accent;
+
+  /// The stage background. Most games are a near-black field; This-or-That
+  /// uses a per-slide palette inside its stage instead.
+  final Color surface;
+}
+
+/// Everything that makes one game. Pure data + pure functions — the
+/// widgets own no game state. `S` is the game's typed state view; the
+/// wire-state is always `Map<String, dynamic>` so the reducer can also
+/// run over Supabase Realtime.
+abstract class GameDefinition<S> {
+  const GameDefinition();
+
+  /// Stable id — matches the route + the `ContentKind` where 1:1.
+  String get id;
+
+  /// Per-game character (color/surface). The stage carries the rest.
+  GameVibe get vibe;
+
+  /// Build the initial wire-state. THE ONE place a game reads content, so
+  /// the reducer stays pure + content-free. Stash content-derived
+  /// constants (e.g. the item count under `'n'`) into the state here so
+  /// the reducer needs no closure over content (and the presenter is the
+  /// single source of truth for them on the live path).
+  Map<String, dynamic> initialState(ContentSource content);
+
+  /// Typed lens over the wire-state — the role `LiveState.fromMap` plays.
+  S decode(Map<String, dynamic> state);
+
+  /// THE reducer — pure `(state, intent, args) -> state`. One function for
+  /// both the local and live paths. Never touches content, Drift, or the
+  /// network (those are runner concerns).
+  Map<String, dynamic> reduce(
+    Map<String, dynamic> state,
+    GameIntent intent,
+    Map<String, dynamic> args,
+  );
+
+  /// Which intents are live for the given state — drives which control
+  /// affordances the scaffold shows + which keys bind (Back off at the
+  /// start, Reveal off when done, …).
+  Set<GameIntent> activeIntents(S state);
+
+  /// The STAGE — a first-class, full-bleed, pluggable slot. Renders the
+  /// state big for the room: text-on-black, a two-tone split, a big
+  /// letter, a grid, a word cloud, (later) a map. Owns its hero shape +
+  /// its own per-game wrap / done beat (docs/GAMES.md decision).
+  Widget buildStage(BuildContext context, S state);
+
+  /// Optional override for the middle of the control bar. Default (null) =
+  /// the scaffold's standard affordances from [activeIntents]. Tally games
+  /// supply a big "+1"; Charades supplies "Got it / Skip".
+  Widget? buildControlBody(BuildContext context, S state) => null;
+
+  /// If non-null, `capture` / `submit` produce durable evidence and the
+  /// runner routes the write here (crowd-grow + a growth-book entry).
+  CaptureSpec? get capture => null;
+}
