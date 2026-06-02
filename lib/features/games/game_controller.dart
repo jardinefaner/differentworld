@@ -84,12 +84,13 @@ class LiveGameController implements GameController {
     required String code,
     required GameDefinition<dynamic> def,
     required ContentSource content,
+    Map<String, dynamic>? seed,
   }) {
     final session = LiveSession.open(
       client: client,
       role: role,
       code: code,
-      initialState: def.initialState(content),
+      initialState: seed ?? def.initialState(content),
       reduce: _adapt(def),
     );
     return LiveGameController._(session);

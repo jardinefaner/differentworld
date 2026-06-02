@@ -14,9 +14,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// The live counterpart (a `LiveGameController` over `LiveSession` for the
 /// `/live/...` routes) is Wave 0c — it slots into the same scaffold.
 class GameRunner<S> extends ConsumerStatefulWidget {
-  const GameRunner({required this.def, super.key});
+  const GameRunner({required this.def, this.seed, super.key});
 
   final GameDefinition<S> def;
+
+  /// Optional pre-built initial wire-state. Data-driven presentables (a
+  /// picker over the roster, a Now & Next board over the schedule) read Drift
+  /// via a provider in a wrapper and pass the seed here instead of going
+  /// through `def.initialState` (which only sees the content bank).
+  final Map<String, dynamic>? seed;
 
   @override
   ConsumerState<GameRunner<S>> createState() => _GameRunnerState<S>();
@@ -31,7 +37,8 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
     // Our OWN bank instance → this session's seen-tracking is independent.
     final snapshot = ref.read(bankedContentProvider).value ?? curatedSeeds;
     _controller = LocalGameController(
-      initial: widget.def.initialState(LocalContentBank(snapshot)),
+      initial:
+          widget.seed ?? widget.def.initialState(LocalContentBank(snapshot)),
       reduce: widget.def.reduce,
     );
   }

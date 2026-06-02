@@ -21,9 +21,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// The lobby / join-code / presence chrome is the only live-specific part;
 /// the stage and the control vocabulary come entirely from the game.
 class LiveGameScreen<S> extends ConsumerStatefulWidget {
-  const LiveGameScreen({required this.def, super.key});
+  const LiveGameScreen({required this.def, this.seed, super.key});
 
   final GameDefinition<S> def;
+
+  /// Optional pre-built initial wire-state for data-driven presentables —
+  /// the presenter seeds from Drift (roster/schedule); the controller gets it
+  /// via the broadcast (self-describing state).
+  final Map<String, dynamic>? seed;
 
   @override
   ConsumerState<LiveGameScreen<S>> createState() => _LiveGameScreenState<S>();
@@ -59,6 +64,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       code: code,
       def: _def,
       content: LocalContentBank(snapshot),
+      seed: widget.seed,
     );
     _subs
       ..add(c.states.listen((v) {
