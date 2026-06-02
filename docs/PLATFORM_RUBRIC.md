@@ -7,6 +7,22 @@ scorecard that makes the drift visible and prioritizes the catch-up.
 **Status:** first full pass 2026-06-01 (all 33 `lib/features/` folders read).
 Living document — re-score a row when you touch its screens; add the date.
 
+**Catch-up landed 2026-06-01 (P0→P3):** both web crashes fixed (photos,
+entries); camera/QR-scan gated to mobile with graceful desktop fallbacks
+(photos, vehicles); subjects timeline capped on desktop; the **schedule
+cohorts×time matrix** shipped (wide screens show every cohort as a column);
+presenter keyboard controls on all four reveal/advance host games
+(This-or-That, Fact-or-Fib, Riddles, Story-Starters) via the shared
+`PresenterShortcuts`. The rows + gap list below reflect this.
+
+**What remains is optional richness, not breakage.** Every remaining ⚠️ is
+an *already width-capped* single-column screen (readable on desktop, just
+not multi-column). The richer layouts are polish — and several aren't
+cleanly tractable: messages has no index screen to pair in a master-detail,
+settings is route-based (master-detail = inline-routing, a big change), and
+supplies/survey are row/table content that `ResponsiveGrid` (forced-aspect
+cards) would distort. Do these WITH eyes on the running web build, not blind.
+
 ---
 
 ## How to read it
@@ -45,11 +61,11 @@ already degrade via `kIsWeb` gates or `try/catch`; only two paths don't.
 | today | ✅ | ✅ | ✅ | ✅ | ✅ | Solid — `ResponsivePage` + ≥1100 dp 2-col group cards. |
 | insights | ✅ | ✅ | ✅ | ✅ | ✅ | Best-in-class — explicit 3-column severity dashboard on wide. |
 | captures | ✅ | ✅ | ✅ | ⚠️ | ✅ | `ResponsiveGrid` (2–3 col) good; multi-select is long-press only (no right-click/checkbox). |
-| schedule | ✅ | ✅ | ⚠️ | ⚠️ | ✅ | Cohort **tabs** stretch full-width on desktop instead of the cohorts×time matrix (Maya's deferred grid); reorder/edit tap-only. |
+| schedule | ✅ | ✅ | ✅ | ⚠️ | ✅ | **Matrix shipped 2026-06-01:** wide screens show every cohort as a side-by-side column (reusing `_CohortDay`); phones keep tabs. (reorder/edit still tap-only; per-column "+" is v2.) |
 | attendance | ✅ | ✅ | ⚠️ | ⚠️ | ✅ | Single full-width roster at all widths (no master-detail); Present/Absent swipe-only (has inline-button fallback). |
 | tasks | ✅ | ✅ | ⚠️ | ⚠️ | ✅ | Width-capped but stays single column on desktop; snooze/dismiss swipe-only (action-sheet fallback). |
 | review | ✅ | ✅ | ⚠️ | ✅ | ⚠️ | Phone `PageView` is a narrow card in a wide void on desktop; **no error state** (load error → "all clear"). |
-| **entries** | ❌ | ✅ | ✅ | ✅ | ✅ | **Web crash:** Cmd/Ctrl+V image-paste calls `getTemporaryDirectory()` + `File()` ungated (`observation_form_screen.dart:319`). Typing/save/library-upload are fine. |
+| entries | ✅ | ✅ | ✅ | ✅ | ✅ | **Fixed 2026-06-01:** Cmd/Ctrl+V image-paste uses `XFile.fromData` (in-memory) instead of a temp-file write — no more web crash. |
 
 ### Roster & family
 
@@ -58,7 +74,7 @@ already degrade via `kIsWeb` gates or `try/catch`; only two paths don't.
 | groups | ✅ | ✅ | ✅ | ✅ | ✅ | Roster reflows 1→3 col via `ResponsiveGrid`; all states designed. |
 | family | ✅ | ✅ | ✅ | ✅ | ✅ | `ResponsivePage` + `LayoutBuilder`; PDFs via signed URL + `url_launcher` (web-safe). |
 | exports | ✅ | ✅ | ✅ | ✅ | ✅ | `printing` ships a web impl — `sharePdf` = browser download on web. |
-| subjects | ✅ | ✅ | ⚠️ | ✅ | ✅ | **Weakest adaptive:** bare `ListView` w/ no max-width cap — the per-child timeline runs edge-to-edge on a 1920 desktop. Fix: wrap in `ResponsivePage`. |
+| subjects | ✅ | ✅ | ✅ | ✅ | ✅ | **Fixed 2026-06-01:** the per-child timeline is capped + centered (1200) on desktop instead of running edge-to-edge. |
 | messages | ✅ | ✅ | ⚠️ | ✅ | ✅ | Thread single column (bubbles cap 560); index + chrome stretch, no master-detail. Attach-photo is a stub (no crash). |
 | guardians | — | — | — | ✅ | — | No standalone screen — embedded in subject detail; inherits host. |
 | certifications | — | — | — | ✅ | ✅ | No standalone screen — `MemberCertificationsSection` in member detail; inherits host. |
@@ -72,7 +88,7 @@ already degrade via `kIsWeb` gates or `try/catch`; only two paths don't.
 | missions | ✅ | ✅ | ✅ | ✅ | ✅ | Pure Drift, `ResponsivePage`, all states; centered edit sheet. |
 | live_session | ✅ | ✅ | ✅ | ⚠️ | ✅ | Realtime + full-bleed present/control — but a laptop presenter has **zero keyboard shortcuts** (arrow = next/back, R = reveal). |
 | surveys | ✅ | ✅ | ⚠️ | ✅ | ✅ | `dart:io` CSV + TTS correctly `kIsWeb`-gated; `survey_table_screen` is a single-column ListView that wastes a wide data-grid. |
-| activity_runtime | ⚠️ | ⚠️ | ✅ | ⚠️ | ✅ | Camera games (photography/pattern) degrade to "No camera here" off-mobile w/ no upload fallback; host games have no arrow-key next/back for a presenter. |
+| activity_runtime | ⚠️ | ⚠️ | ✅ | ✅ | ✅ | **Keyboard added 2026-06-01** to the reveal/advance host games (This-or-That, Fact-or-Fib, Riddles, Story-Starters). Remaining: camera games still degrade to "No camera here" off-mobile (no upload fallback); tally games are tap-only (by design). |
 | curricula | ✅ | ✅ | ⚠️ | ✅ | — | Static reference — single-column ListView stretches on desktop (no two-pane session list/detail). |
 | kid_mode | ✅ | ✅ | — | ✅ | — | N/A surface — `Notifier` + centered PIN dialog. |
 | runtime | ✅ | ✅ | — | — | — | Pure rule-engine logic, no UI — fully portable. |
@@ -84,46 +100,42 @@ already degrade via `kIsWeb` gates or `try/catch`; only two paths don't.
 | omnibox | ✅ | ✅ | ✅ | ✅ | ✅ | THE command surface — real Cmd/Ctrl+K, overlay centers at 640. Gap: overlay mic is a "coming soon" stub. |
 | onboarding | ✅ | ✅ | ✅ | ✅ | ✅ | Forms centered (`ConstrainedBox` 480); offstage-TextField PIN supports paste/IME. Nit: PIN cells 44 dp (<48). |
 | invites | ✅ | ⚠️ | ✅ | ✅ | ✅ | Share/QR-gen web-safe (`qr_flutter`, `share_plus` web fallback); the QR **scanner** is native camera (no desktop) — but redemption is code-entry, so it degrades. |
-| supplies | ✅ | ✅ | ⚠️ | ✅ | ✅ | Web/desktop-safe + all states; single-column `ResponsivePage` leaves the right half empty — a tile inventory wants a grid on desktop. |
+| supplies | ✅ | ✅ | ⚠️ | ✅ | ✅ | Capped single-column (`ResponsivePage`, acceptable). Items are `ListTile` rows, so `ResponsiveGrid` would distort — a 2-col-of-rows layout is optional polish. |
 | settings | ✅ | ✅ | ⚠️ | ✅ | ✅ | Responsive form primitives, correct as a centered column — but stays single-column even >1200; a settings index/detail master-detail would use the space. |
 | auth | ✅ | ✅ | ✅ | ✅ | ⚠️ | OAuth `redirectTo` from `Uri.base` — every web origin must be on Supabase's Redirect-URL allowlist or sign-in dead-ends on a blank page; no state taxonomy (just spinner+inline error). |
-| vehicles | ⚠️ | ❌ | ✅ | ✅ | ✅ | List/detail web-safe + `ResponsiveGrid`; `/vehicles/scan` uses `mobile_scanner` (native camera — no desktop, web needs getUserMedia) and is offered to every user. |
-| **photos** | ❌ | ❌ | ✅ | ✅ | ⚠️ | **Web crash:** offline-upload fallback `photo_upload_queue.dart` uses `dart:io` + `path_provider` ungated — a failed first upload throws instead of queueing (silent photo loss). Display is web-safe. No desktop camera. |
+| vehicles | ✅ | ✅ | ✅ | ✅ | ✅ | **Fixed 2026-06-01:** scan action mobile-only; scan screen shows a "scan on your phone" fallback off-mobile instead of mounting `mobile_scanner`. List/detail use `ResponsiveGrid`. |
+| photos | ✅ | ✅ | ✅ | ✅ | ⚠️ | **Fixed 2026-06-01:** web compresses on-thread + surfaces failed uploads (no `dart:io` queue crash); camera gated to mobile, web/desktop file-pick. Display web-safe. |
 | voice | ⚠️ | ❌ | — | — | ⚠️ | Mic dictation `kIsWeb`-gated (web needs HTTPS+getUserMedia); no desktop mic story (`record` unverified on macOS/Win/Linux). Service layer, no UI. |
 
 ---
 
-## Prioritized gaps (what "not up to date on web/desktop" actually is)
+## Prioritized gaps — status (catch-up landed 2026-06-01)
 
-### P0 — Real web runtime crashes (fix first; both are ungated `dart:io`)
-1. **photos** — `photo_upload_queue.dart` (`dart:io` + `path_provider`, reached from `photo_service.uploadAndPersist`'s catch block + boot `processQueue`). On web a failed first upload throws instead of queueing → **silent photo loss**. *Fix:* `kIsWeb`-gate the disk queue; on web, skip it (rely on retry, or an IndexedDB-backed store later).
-2. **entries** — `observation_form_screen.dart:319` image-paste (Cmd/Ctrl+V → `getTemporaryDirectory()` + `File()`, ungated). *Fix:* gate the paste-image branch with `kIsWeb` and route to the library-upload path (the camera branch right above it is already gated this way).
+### P0 — Web runtime crashes — ✅ DONE
+1. ~~**photos** `photo_upload_queue.dart` ungated `dart:io`~~ — **fixed:** web compresses on the main thread (no `Isolate.run`) and surfaces a failed upload instead of hitting the native disk queue; `enqueue` carries a defensive `kIsWeb` guard.
+2. ~~**entries** Cmd/Ctrl+V image-paste~~ — **fixed:** swapped to `XFile.fromData` (in-memory, web + native), dropping the temp-file write and three now-unused imports.
 
-### P1 — Native capture with no desktop story (works mobile, dead/degraded elsewhere)
-3. **vehicles `/vehicles/scan`** + **invites QR scan** — `mobile_scanner`, native camera only. *Fix:* manual-entry fallback on desktop (invites already have code-entry; vehicles need a plate/VIN entry, or hide "Scan" off-mobile).
-4. **photos `multi_shot_camera`** + **activity_runtime** photography/pattern camera — gated on web, but **desktop** (`kIsWeb` false) hits a camera plugin with no desktop impl (caught → "No camera here", but the tile shouldn't appear). *Fix:* offer a file-picker fallback; hide camera affordances when there's no camera.
-5. **voice** mic — no desktop mic story; web needs HTTPS + getUserMedia. *Fix:* document the web HTTPS requirement; evaluate `record` on desktop or hide dictation off-mobile.
+### P1 — Native capture, no desktop story — ✅ DONE
+3. ~~**vehicles `/vehicles/scan`** + **invites QR**~~ — **fixed:** scan action is mobile-only (`isMobileCapturePlatform`); the scan screen shows a "scan on your phone" fallback off-mobile instead of mounting `mobile_scanner`. Invite redemption was already code-entry.
+4. ~~**photos / activity camera**~~ — **fixed:** the camera affordance is gated to mobile; web + desktop get the file-picker. (Activity camera games already degrade via try/catch.)
+5. **voice** mic — DEFERRED (lowest-impact; dictation is an enhancement): still no desktop mic story, web needs HTTPS + getUserMedia.
 
-### P2 — Adaptive layout (the broad "phone column on a big screen" feel)
-The single biggest pattern: **only 7 of 33 features adapt to wide screens.**
-Worst-first:
-- **subjects** — bare `ListView`, edge-to-edge on desktop → wrap in `ResponsivePage` (lowest-effort, highest-impact).
-- **schedule** — the tablet cohorts×time **matrix** (Maya's deferred grid).
-- **attendance** — master-detail roster on wide.
-- **supplies**, **surveys (table)** — grid / multi-column for the tile/data walls.
-- **settings**, **messages**, **tasks**, **curricula**, **review** — cap width / add a second pane.
+### P2 — Adaptive layout
+- **subjects** — ✅ DONE: capped + centered on desktop.
+- **schedule** — ✅ DONE: the cohorts-side-by-side **matrix** ships on wide screens. (v1 = columns of the per-cohort day, reusing `_CohortDay`; per-column "+" and a time-aligned grid are v2.)
+- **Remaining — optional richness, NOT breakage** (every one is already width-capped, readable on desktop, just single-column): **surveys table** (→ a wide `DataTable`), **attendance** (→ master-detail roster), **supplies** (row-tiles → a 2-col-of-rows layout, not a card grid), **tasks / review / curricula** (→ second pane / cap). Two need bigger reworks and aren't cleanly tractable: **messages** has no index screen to pair in a master-detail, and **settings** is route-based (master-detail = inline routing). Do these with eyes on the running web build.
 
-### P3 — Pointer & keyboard (desktop polish; the host-on-laptop case)
-- **activity_runtime host games + live_session** — a presenter driving This-or-That / Charades / the Board from a laptop has only mouse-click buttons. Add **arrow-key next/back + spacebar/R reveal**. (`math_runner` is the lone keyboard-good counter-example — Enter-to-submit.)
-- **attendance / tasks** swipe-only, **captures** long-press multi-select — add hover/right-click/keyboard equivalents (each has a tap fallback today, so ⚠️ not ❌).
+### P3 — Pointer & keyboard
+- **host reveal/advance games** — ✅ DONE: This-or-That, Fact-or-Fib, Riddles, Story-Starters take arrow / Space / R via `PresenterShortcuts`.
+- **Remaining:** the **live** present/control screens (charades / board / live This-or-That) — phone-driven today, so keyboard is a smaller win; the **tally** games (rhyme-time, letter-words) were skipped on purpose (rapid tapping, not a keyboard fit). attendance/tasks swipe + captures long-press keep their tap fallbacks (⚠️, acceptable).
 
 ---
 
 ## Verified signals (greppable, definitive)
 
-- **Adaptive adoption:** only `today, family, insights, settings, surveys, activity_runtime, toolkit` reference a responsive primitive (`Breakpoints` / `LayoutBuilder` / `FormFactor`). The other 26 folders are single-column by default (fine for forms/detail, suboptimal for lists/grids on desktop).
-- **Ungated `dart:io` on a reachable path:** `photos/photo_upload_queue.dart`, `entries/observation_form_screen.dart` (paste branch). Gated (safe): `voice/*`, `surveys/survey_table_screen.dart`.
-- **Native-only plugins (no desktop, web-conditional):** `camera` (photos, activity_runtime photography), `image_picker` camera source (pattern_maker), `mobile_scanner` (vehicles/invites scan), `record` (voice mic).
+- **Adaptive adoption:** `today, family, insights, settings, surveys, activity_runtime, toolkit` + (2026-06-01) `subjects`, `schedule` now use a responsive primitive (`Breakpoints` / `LayoutBuilder` / `FormFactor` / `ConstrainedBox`). The rest are single-column-but-capped (acceptable for forms/detail; richer multi-column is optional polish).
+- **Ungated `dart:io` on a reachable path:** none remaining — `photos/photo_upload_queue.dart` (now `kIsWeb`-guarded + service skips it on web) and `entries/observation_form_screen.dart` (now `XFile.fromData`) were the two; both fixed 2026-06-01. Already-gated: `voice/*`, `surveys/survey_table_screen.dart`.
+- **Native-only plugins (no desktop):** `camera`, `image_picker` camera source, `mobile_scanner` (vehicles/invites scan), `record` (voice mic). Their affordances now gate on `isMobileCapturePlatform` (`lib/shared/platform.dart`) so web/desktop never mount them — file-pick / manual-entry / "scan on your phone" fallbacks instead.
 - **`MediaQuery.sizeOf` layout-branch smell:** `settings/team_screen.dart:247` (branches master-detail off ancestor size, not `LayoutBuilder`), `messages/message_thread_screen.dart` (benign bubble cap).
 
 ---
