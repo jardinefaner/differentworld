@@ -289,6 +289,44 @@ Opt-in and coordinated (who has which job today), never a chore chart.
 - **Status:** seed → designing ([MISSIONS.md](MISSIONS.md))
 - **Lives in:** [MISSIONS.md](MISSIONS.md)
 
+### 17. Every game speaks the same language
+
+> "all games should be controllable... they all should have the same
+> familiar ui and i like the different vibe... how can they all be live...
+> how else can they be enhanced... for rhyming, the teacher types what
+> students guess, and count it... how can all these speak the same language"
+
+One interaction language under every game — a teacher learns the controls
+once and they work everywhere — while each game keeps its own **vibe** (its
+color, motion, character). The language is already half-built; the dream is
+to finish it so the seams *are* the framework:
+
+- **One content seam** — every game draws from the bank (`ContentSource`,
+  #7): the same next / take / remaining everywhere.
+- **One control seam** — every game is the same tiny contract: a *state* +
+  a reducer `(state, intent) → state` over a shared vocabulary
+  (**next · back · reveal · pick · tally · capture**). That one seam makes
+  a game controllable three ways at once — tap, **keyboard**
+  (`PresenterShortcuts`), and a **phone remote** — because all three just
+  send the same intents.
+- **One live seam** — because a game *is* a reducer, it plugs straight into
+  `LiveSession` (#14): the controller phone sends intents, the presenter
+  applies the same reducer. **Every game becomes live for free**, no
+  per-game realtime code.
+- **One familiar scaffold, many vibes** — a shared `GameScaffold` (the
+  glass chrome, the control bar/panel, progress, the reveal beat) so they
+  read as one system; per-game theming keeps each one's character.
+- **Richer by capture** — a game can *record*, not just advance: in Rhyme
+  Time the teacher types each rhyme a student calls out → it counts AND
+  banks the good ones (crowd-grow, #7), and can feed the growth book (#1).
+  The same `capture` intent fits every game.
+
+- **Status:** seed → designing (the seams — `ContentSource`,
+  `PresenterShortcuts`, `LiveSession` — already exist; the unifying `Game`
+  contract + `GameScaffold` is the next design)
+- **Lives in:** lib/features/activity_runtime/, lib/features/live_session/,
+  [LIVE_SESSIONS.md](LIVE_SESSIONS.md), [CONTENT_BANK.md](CONTENT_BANK.md)
+
 ---
 
 ## New dreams land here
