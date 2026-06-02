@@ -6,6 +6,7 @@ import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -63,6 +64,17 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
   Widget build(BuildContext context) {
     final insightsAsync = ref.watch(insightsProvider);
     final liveInsights = insightsAsync.value ?? const <Insight>[];
+    // Four-states standard: a load error must not masquerade as the
+    // "all clear" empty state (it would, since liveInsights is empty on
+    // error). Surface it with a retry before we seed the page order.
+    if (insightsAsync.hasError && !_seeded) {
+      return EdgeScaffold(
+        body: ErrorState(
+          title: 'Could not load your review',
+          onRetry: () => ref.invalidate(insightsProvider),
+        ),
+      );
+    }
     _seed(liveInsights);
 
     // Build the page list from the frozen initial order — every entry
