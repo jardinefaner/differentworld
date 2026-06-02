@@ -41,6 +41,7 @@ import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
+import 'package:differentworld/features/live_session/charades_live_screen.dart';
 import 'package:differentworld/features/live_session/live_session_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
@@ -839,6 +840,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/this-or-that',
             builder: (_, _) => const LiveSessionScreen(),
+          ),
+          // Charades — the showcase: room sees the category, the actor's
+          // phone shows the secret word, the teacher's phone marks Got it.
+          GoRoute(
+            path: '/live/charades',
+            builder: (_, _) => const CharadesLiveScreen(),
           ),
           // Do a mission (docs/MISSIONS.md slice 2) — the Mission rides in
           // `extra`; a bare deep-link bounces to the catalog.

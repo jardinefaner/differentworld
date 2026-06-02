@@ -59,10 +59,13 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
       client: ref.read(supabaseProvider),
       role: role,
       code: code,
-      total: _total,
+      initialState: const LiveState().toMap(),
+      reduce: LiveState.reducer(_total),
     );
     _subs
-      ..add(s.states.listen((v) => setState(() => _live = v)))
+      ..add(
+        s.states.listen((v) => setState(() => _live = LiveState.fromMap(v))),
+      )
       ..add(s.peers.listen((v) => setState(() => _peers = v)))
       ..add(s.status.listen((v) => setState(() => _status = v)));
     setState(() {

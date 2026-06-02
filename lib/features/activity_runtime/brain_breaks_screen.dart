@@ -116,6 +116,13 @@ class BrainBreaksScreen extends StatelessWidget {
       color: Color(0xFFEC407A),
       route: '/activity/rhyme-time',
     ),
+    _BreakCard(
+      title: 'Charades',
+      tagline: 'Act it out — phone + screen',
+      icon: Icons.theater_comedy_outlined,
+      color: Color(0xFFAB47BC),
+      route: '/live/charades',
+    ),
   ];
 
   void _surprise(BuildContext context) {

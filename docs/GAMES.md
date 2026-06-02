@@ -75,10 +75,11 @@ for free.**
 ## Perform & imagine
 - **✓ Act It Out** — say the line "as if…".
   *Big:* the line + the emotion. *Phone:* Next · shuffle.
-- **+ Charades** — act it out, no words.
-  *Big (room):* the category + a guess timer. *Secret (actor's phone):* the
-  word to act. *Phone (teacher):* mark guessed · Next. **The clearest
-  two-device unlock — the secret word can't be on the screen everyone sees.**
+- **✓ Charades** — act it out, no words.
+  *Big (room):* the category + the score. *Secret (actor's phone):* the
+  word to act. *Phone (teacher):* Got it / Skip. **The clearest two-device
+  unlock — the secret word can't be on the screen everyone sees.** Built on
+  the generic `LiveSession` seam (3 roles: present / secret / control).
 - **✓ Role Cards** — be an animal / person / job for the day.
   *Big:* the chosen card. *Phone:* browse · pick · "Today I am…".
 

@@ -50,6 +50,10 @@ abstract class ContentKind {
 
   /// A word for the room to rhyme with — payload `{word}`.
   static const rhymeWord = 'rhyme_word';
+
+  /// A charades prompt to act out — payload `{word, category}`. The actor's
+  /// phone shows the word; the room sees only the category.
+  static const charades = 'charades';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -89,6 +93,7 @@ class LocalContentBank implements ContentSource {
     ..._storyStarterSeed,
     ..._storyTwistSeed,
     ..._rhymeWordSeed,
+    ..._charadesSeed,
   ]);
 
   final Map<String, List<ContentItem>> _byKind = {};
@@ -402,4 +407,39 @@ final List<ContentItem> _rhymeWordSeed = <ContentItem>[
   _rhymeOf('cake'),
   _rhymeOf('fun'),
   _rhymeOf('top'),
+];
+
+ContentItem _charadesOf(String word, String category) => ContentItem(
+  kind: ContentKind.charades,
+  fingerprint: word.toLowerCase(),
+  payload: {'word': word, 'category': category},
+);
+
+// Act-it-out prompts (ages 4–12). Order is stable so every device in a live
+// session maps the same index to the same word (no shuffle — sync needs it).
+final List<ContentItem> _charadesSeed = <ContentItem>[
+  _charadesOf('A penguin', 'Animal'),
+  _charadesOf('A monkey', 'Animal'),
+  _charadesOf('A snake', 'Animal'),
+  _charadesOf('A T-rex', 'Animal'),
+  _charadesOf('An elephant', 'Animal'),
+  _charadesOf('A kangaroo', 'Animal'),
+  _charadesOf('Brushing your teeth', 'Action'),
+  _charadesOf('Tying your shoes', 'Action'),
+  _charadesOf('Eating spaghetti', 'Action'),
+  _charadesOf('Flying a kite', 'Action'),
+  _charadesOf('Sneezing', 'Action'),
+  _charadesOf('Climbing a ladder', 'Action'),
+  _charadesOf('A superhero', 'Character'),
+  _charadesOf('A robot', 'Character'),
+  _charadesOf('A wizard', 'Character'),
+  _charadesOf('A pirate', 'Character'),
+  _charadesOf('A sleepy baby', 'Character'),
+  _charadesOf('A ballerina', 'Character'),
+  _charadesOf('Shooting a basketball', 'Sport'),
+  _charadesOf('Surfing a wave', 'Sport'),
+  _charadesOf('A chef cooking', 'Job'),
+  _charadesOf('A firefighter', 'Job'),
+  _charadesOf('A farmer', 'Job'),
+  _charadesOf('Conducting an orchestra', 'Job'),
 ];

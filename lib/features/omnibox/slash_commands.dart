@@ -326,6 +326,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     aliases: const ['present', 'projector', 'remote', 'session'],
     exec: (ctx, _, _) => unawaited(ctx.push('/live/this-or-that')),
   ),
+  SlashCommand(
+    name: 'charades',
+    label: '/charades',
+    hint: "Charades — actor's phone has the word, the room watches the screen",
+    icon: Icons.theater_comedy_outlined,
+    aliases: const ['act', 'acting', 'mime', 'guess'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/live/charades')),
+  ),
   const SlashCommand(
     name: 'checkout',
     label: '/checkout {vehicle}',
