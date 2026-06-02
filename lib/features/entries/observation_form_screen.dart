@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:desktop_drop/desktop_drop.dart';
@@ -25,8 +24,6 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:uuid/uuid.dart';
 
@@ -314,15 +311,17 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       }, onError: (_) => completer.complete(null));
       final bytes = await completer.future;
       if (bytes == null || bytes.isEmpty) continue;
-      // Write to a temp file so we can hand it to _handleDroppedFiles
-      // as an XFile (the same path the DropTarget uses).
-      final tempDir = await getTemporaryDirectory();
+      // Hand the bytes to the same path the DropTarget uses. XFile.fromData
+      // holds them in memory (no temp file) so this works on web too — the
+      // old getTemporaryDirectory()/File() write crashed on web (no
+      // filesystem). _handleDroppedFiles filters on name + mimeType, not
+      // path, so the in-memory XFile passes its image check.
       final name = 'paste_${DateTime.now().millisecondsSinceEpoch}'
           '.${fmt == Formats.png ? 'png' : 'jpg'}';
-      final path = p.join(tempDir.path, name);
-      final f = File(path);
-      await f.writeAsBytes(bytes, flush: true);
-      await _handleDroppedFiles([XFile(path)]);
+      final mime = fmt == Formats.png ? 'image/png' : 'image/jpeg';
+      await _handleDroppedFiles([
+        XFile.fromData(bytes, name: name, mimeType: mime),
+      ]);
       return;
     }
     // No image on the clipboard — fall through so the default text

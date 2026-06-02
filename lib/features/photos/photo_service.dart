@@ -61,7 +61,12 @@ class PhotoService {
     }
 
     final bytes = await picked.readAsBytes();
-    final compressed = await Isolate.run(() => _compressSync(bytes));
+    // Isolate.run isn't available on web (single-threaded); compress on
+    // the main thread there. The image is already ≤1024px from the picker,
+    // so it's a brief, spinner-covered step — not a hot path.
+    final compressed = kIsWeb
+        ? _compressSync(bytes)
+        : await Isolate.run(() => _compressSync(bytes));
     final path = '$spaceId/${entity.name}/$entityId/${_uuid.v4()}.jpg';
 
     // Online-first attempt. If Storage upload fails (network out,
@@ -86,6 +91,12 @@ class PhotoService {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'photos'),
       );
+      if (kIsWeb) {
+        // No on-device offline queue on web (no filesystem). Surface the
+        // failure so the user can retry, rather than crashing on the
+        // native disk queue or silently losing the bytes.
+        rethrow;
+      }
       storedValue = await _ref.read(photoUploadQueueProvider).enqueue(
             bucket: _bucket,
             bucketPath: path,
@@ -143,7 +154,12 @@ class PhotoService {
       throw StateError('No Space — sign in and join a program first.');
     }
     final bytes = await picked.readAsBytes();
-    final compressed = await Isolate.run(() => _compressSync(bytes));
+    // Isolate.run isn't available on web (single-threaded); compress on
+    // the main thread there. The image is already ≤1024px from the picker,
+    // so it's a brief, spinner-covered step — not a hot path.
+    final compressed = kIsWeb
+        ? _compressSync(bytes)
+        : await Isolate.run(() => _compressSync(bytes));
     final path = '$spaceId/$entityKind/$entityId/${_uuid.v4()}.jpg';
     try {
       await _supabase.storage.from(_bucket).uploadBinary(
@@ -163,6 +179,12 @@ class PhotoService {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'photos'),
       );
+      if (kIsWeb) {
+        // No on-device offline queue on web (no filesystem). Surface the
+        // failure so the caller can retry rather than crashing on the
+        // native disk queue.
+        rethrow;
+      }
       // Caller (e.g. AttachmentActions.add) writes this token into
       // the row's url. The queue worker rewrites it to the real
       // path when the upload eventually lands. Caller passes

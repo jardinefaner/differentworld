@@ -153,6 +153,16 @@ class PhotoUploadQueue {
     required String entityId,
     required Uint8List bytes,
   }) async {
+    // Native-only: the queue persists bytes to the app-docs directory,
+    // which path_provider / dart:io don't provide on web. Callers
+    // (PhotoService) gate with kIsWeb and surface the failure instead;
+    // this guard turns a confusing path_provider crash into a clear error
+    // if a future caller forgets.
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'Offline photo upload queue is native-only (no filesystem on web).',
+      );
+    }
     final id = bucketPath.split('/').last.replaceAll('.jpg', '');
     final dir = await _pendingDir();
     final file = File(p.join(dir.path, '$id.jpg'));
