@@ -82,19 +82,15 @@ class LocalContentBank implements ContentSource {
     }
   }
 
-  /// Seed the bank with the curated content shipped in the app.
-  factory LocalContentBank.seeded() => LocalContentBank([
-    ..._thisOrThatSeed,
-    ..._categorySeed,
-    ..._lineSeed,
-    ..._asIfSeed,
-    ..._riddleSeed,
-    ..._factOrFibSeed,
-    ..._storyStarterSeed,
-    ..._storyTwistSeed,
-    ..._rhymeWordSeed,
-    ..._charadesSeed,
-  ]);
+  /// Seed the bank with the curated content shipped in the app — the
+  /// always-available offline floor.
+  factory LocalContentBank.seeded() => LocalContentBank(curatedSeeds);
+
+  /// The curated floor PLUS [extra] banked items (AI / crowd rows pulled
+  /// from `content_items`). De-dupe at load collapses any overlap between
+  /// a curated seed and a banked row that share a (kind, fingerprint).
+  factory LocalContentBank.seededWith(Iterable<ContentItem> extra) =>
+      LocalContentBank([...curatedSeeds, ...extra]);
 
   final Map<String, List<ContentItem>> _byKind = {};
   final Set<String> _seenFingerprints = <String>{};
@@ -129,6 +125,23 @@ class LocalContentBank implements ContentSource {
   /// Forget what's been served this session (e.g. play again).
   void reset() => _served.clear();
 }
+
+/// The curated content shipped in the app (docs/CONTENT_BANK.md §1, tier 2)
+/// — kid-safe by construction, free, offline, global. The DB bank
+/// (`content_items`) layers AI + crowd items on top of this floor via
+/// [LocalContentBank.seededWith].
+final List<ContentItem> curatedSeeds = <ContentItem>[
+  ..._thisOrThatSeed,
+  ..._categorySeed,
+  ..._lineSeed,
+  ..._asIfSeed,
+  ..._riddleSeed,
+  ..._factOrFibSeed,
+  ..._storyStarterSeed,
+  ..._storyTwistSeed,
+  ..._rhymeWordSeed,
+  ..._charadesSeed,
+];
 
 // ── Curated seeds ──────────────────────────────────────────────────────
 // Kid-safe by construction (the curated tier, docs/CONTENT_BANK.md §1).

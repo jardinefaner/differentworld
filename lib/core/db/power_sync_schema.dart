@@ -482,4 +482,17 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  // ---- Content bank (docs/CONTENT_BANK.md) --------------------------------
+  // See supabase/migrations/20260601000005_content_items.sql. `space_id`
+  // is nullable on the server (NULL = global AI/curated); the local schema
+  // mirrors that. `payload` is the activity's JSON shape, raw string here.
+  Table('content_items', [
+    Column.text('space_id'),
+    Column.text('kind'),
+    Column.text('payload'),
+    Column.text('fingerprint'),
+    Column.text('source'),
+    Column.text('created_by'),
+    Column.text('created_at'),
+  ]),
 ]);

@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// `/activity/this-or-that` — a TEACHER-hosted brain break (game-show-host
@@ -19,18 +21,29 @@ import 'package:go_router/go_router.dart';
 /// phone shows the control with a preview. The LIVE two-device link (phone
 /// controls a separate projector via a realtime session) is the next
 /// layer — this proves the separation of concerns first.
-class ThisOrThatScreen extends StatefulWidget {
+class ThisOrThatScreen extends ConsumerStatefulWidget {
   const ThisOrThatScreen({super.key});
 
   @override
-  State<ThisOrThatScreen> createState() => _ThisOrThatScreenState();
+  ConsumerState<ThisOrThatScreen> createState() => _ThisOrThatScreenState();
 }
 
-class _ThisOrThatScreenState extends State<ThisOrThatScreen> {
+class _ThisOrThatScreenState extends ConsumerState<ThisOrThatScreen> {
   static const _wideBreakpoint = 720.0;
 
-  final LocalContentBank _bank = LocalContentBank.seeded();
-  late final List<ContentItem> _pairs = _bank.take(ContentKind.thisOrThat, 8);
+  late final LocalContentBank _bank;
+  late final List<ContentItem> _pairs;
+
+  @override
+  void initState() {
+    super.initState();
+    // Draw from the banked snapshot (curated ∪ synced AI/crowd), falling
+    // back to curated-only until the DB tier has synced. Build our OWN
+    // bank so this session's seen-tracking is independent of any other.
+    final snapshot = ref.read(bankedContentProvider).value ?? curatedSeeds;
+    _bank = LocalContentBank(snapshot);
+    _pairs = _bank.take(ContentKind.thisOrThat, 8);
+  }
 
   int _index = 0;
   bool _revealed = false; // the "why?" discussion prompt is showing

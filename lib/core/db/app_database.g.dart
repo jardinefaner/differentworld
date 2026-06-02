@@ -23749,6 +23749,521 @@ class WeeklyTemplateBlocksCompanion
   }
 }
 
+class $ContentItemsTable extends ContentItems
+    with TableInfo<$ContentItemsTable, ContentItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ContentItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fingerprintMeta = const VerificationMeta(
+    'fingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> fingerprint = GeneratedColumn<String>(
+    'fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    kind,
+    payload,
+    fingerprint,
+    source,
+    createdBy,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'content_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ContentItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('fingerprint')) {
+      context.handle(
+        _fingerprintMeta,
+        fingerprint.isAcceptableOrUnknown(
+          data['fingerprint']!,
+          _fingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_fingerprintMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ContentItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ContentItemRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      ),
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      fingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fingerprint'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ContentItemsTable createAlias(String alias) {
+    return $ContentItemsTable(attachedDatabase, alias);
+  }
+}
+
+class ContentItemRow extends DataClass implements Insertable<ContentItemRow> {
+  final String id;
+  final String? spaceId;
+  final String kind;
+  final String payload;
+  final String fingerprint;
+  final String source;
+  final String? createdBy;
+  final String createdAt;
+  const ContentItemRow({
+    required this.id,
+    this.spaceId,
+    required this.kind,
+    required this.payload,
+    required this.fingerprint,
+    required this.source,
+    this.createdBy,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || spaceId != null) {
+      map['space_id'] = Variable<String>(spaceId);
+    }
+    map['kind'] = Variable<String>(kind);
+    map['payload'] = Variable<String>(payload);
+    map['fingerprint'] = Variable<String>(fingerprint);
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    return map;
+  }
+
+  ContentItemsCompanion toCompanion(bool nullToAbsent) {
+    return ContentItemsCompanion(
+      id: Value(id),
+      spaceId: spaceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(spaceId),
+      kind: Value(kind),
+      payload: Value(payload),
+      fingerprint: Value(fingerprint),
+      source: Value(source),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ContentItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ContentItemRow(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String?>(json['spaceId']),
+      kind: serializer.fromJson<String>(json['kind']),
+      payload: serializer.fromJson<String>(json['payload']),
+      fingerprint: serializer.fromJson<String>(json['fingerprint']),
+      source: serializer.fromJson<String>(json['source']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String?>(spaceId),
+      'kind': serializer.toJson<String>(kind),
+      'payload': serializer.toJson<String>(payload),
+      'fingerprint': serializer.toJson<String>(fingerprint),
+      'source': serializer.toJson<String>(source),
+      'createdBy': serializer.toJson<String?>(createdBy),
+      'createdAt': serializer.toJson<String>(createdAt),
+    };
+  }
+
+  ContentItemRow copyWith({
+    String? id,
+    Value<String?> spaceId = const Value.absent(),
+    String? kind,
+    String? payload,
+    String? fingerprint,
+    String? source,
+    Value<String?> createdBy = const Value.absent(),
+    String? createdAt,
+  }) => ContentItemRow(
+    id: id ?? this.id,
+    spaceId: spaceId.present ? spaceId.value : this.spaceId,
+    kind: kind ?? this.kind,
+    payload: payload ?? this.payload,
+    fingerprint: fingerprint ?? this.fingerprint,
+    source: source ?? this.source,
+    createdBy: createdBy.present ? createdBy.value : this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ContentItemRow copyWithCompanion(ContentItemsCompanion data) {
+    return ContentItemRow(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      fingerprint: data.fingerprint.present
+          ? data.fingerprint.value
+          : this.fingerprint,
+      source: data.source.present ? data.source.value : this.source,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ContentItemRow(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('kind: $kind, ')
+          ..write('payload: $payload, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('source: $source, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    kind,
+    payload,
+    fingerprint,
+    source,
+    createdBy,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ContentItemRow &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.kind == this.kind &&
+          other.payload == this.payload &&
+          other.fingerprint == this.fingerprint &&
+          other.source == this.source &&
+          other.createdBy == this.createdBy &&
+          other.createdAt == this.createdAt);
+}
+
+class ContentItemsCompanion extends UpdateCompanion<ContentItemRow> {
+  final Value<String> id;
+  final Value<String?> spaceId;
+  final Value<String> kind;
+  final Value<String> payload;
+  final Value<String> fingerprint;
+  final Value<String> source;
+  final Value<String?> createdBy;
+  final Value<String> createdAt;
+  final Value<int> rowid;
+  const ContentItemsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.fingerprint = const Value.absent(),
+    this.source = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ContentItemsCompanion.insert({
+    required String id,
+    this.spaceId = const Value.absent(),
+    required String kind,
+    required String payload,
+    required String fingerprint,
+    required String source,
+    this.createdBy = const Value.absent(),
+    required String createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       kind = Value(kind),
+       payload = Value(payload),
+       fingerprint = Value(fingerprint),
+       source = Value(source),
+       createdAt = Value(createdAt);
+  static Insertable<ContentItemRow> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? kind,
+    Expression<String>? payload,
+    Expression<String>? fingerprint,
+    Expression<String>? source,
+    Expression<String>? createdBy,
+    Expression<String>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (kind != null) 'kind': kind,
+      if (payload != null) 'payload': payload,
+      if (fingerprint != null) 'fingerprint': fingerprint,
+      if (source != null) 'source': source,
+      if (createdBy != null) 'created_by': createdBy,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ContentItemsCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? spaceId,
+    Value<String>? kind,
+    Value<String>? payload,
+    Value<String>? fingerprint,
+    Value<String>? source,
+    Value<String?>? createdBy,
+    Value<String>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ContentItemsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      kind: kind ?? this.kind,
+      payload: payload ?? this.payload,
+      fingerprint: fingerprint ?? this.fingerprint,
+      source: source ?? this.source,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (fingerprint.present) {
+      map['fingerprint'] = Variable<String>(fingerprint.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ContentItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('kind: $kind, ')
+          ..write('payload: $payload, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('source: $source, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -23804,6 +24319,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $WeeklyTemplateBlocksTable weeklyTemplateBlocks =
       $WeeklyTemplateBlocksTable(this);
+  late final $ContentItemsTable contentItems = $ContentItemsTable(this);
   late final AttachmentsDao attachmentsDao = AttachmentsDao(
     this as AppDatabase,
   );
@@ -23827,6 +24343,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final MembersDao membersDao = MembersDao(this as AppDatabase);
   late final MessagesDao messagesDao = MessagesDao(this as AppDatabase);
   late final MissionsDao missionsDao = MissionsDao(this as AppDatabase);
+  late final ContentBankDao contentBankDao = ContentBankDao(
+    this as AppDatabase,
+  );
   late final SpacesDao spacesDao = SpacesDao(this as AppDatabase);
   late final SubjectsDao subjectsDao = SubjectsDao(this as AppDatabase);
   late final SuppliesDao suppliesDao = SuppliesDao(this as AppDatabase);
@@ -23883,6 +24402,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     events,
     weeklyTemplates,
     weeklyTemplateBlocks,
+    contentItems,
   ];
 }
 
@@ -35186,6 +35706,265 @@ typedef $$WeeklyTemplateBlocksTableProcessedTableManager =
       WeeklyTemplateBlock,
       PrefetchHooks Function()
     >;
+typedef $$ContentItemsTableCreateCompanionBuilder =
+    ContentItemsCompanion Function({
+      required String id,
+      Value<String?> spaceId,
+      required String kind,
+      required String payload,
+      required String fingerprint,
+      required String source,
+      Value<String?> createdBy,
+      required String createdAt,
+      Value<int> rowid,
+    });
+typedef $$ContentItemsTableUpdateCompanionBuilder =
+    ContentItemsCompanion Function({
+      Value<String> id,
+      Value<String?> spaceId,
+      Value<String> kind,
+      Value<String> payload,
+      Value<String> fingerprint,
+      Value<String> source,
+      Value<String?> createdBy,
+      Value<String> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ContentItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $ContentItemsTable> {
+  $$ContentItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ContentItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ContentItemsTable> {
+  $$ContentItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ContentItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ContentItemsTable> {
+  $$ContentItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ContentItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ContentItemsTable,
+          ContentItemRow,
+          $$ContentItemsTableFilterComposer,
+          $$ContentItemsTableOrderingComposer,
+          $$ContentItemsTableAnnotationComposer,
+          $$ContentItemsTableCreateCompanionBuilder,
+          $$ContentItemsTableUpdateCompanionBuilder,
+          (
+            ContentItemRow,
+            BaseReferences<_$AppDatabase, $ContentItemsTable, ContentItemRow>,
+          ),
+          ContentItemRow,
+          PrefetchHooks Function()
+        > {
+  $$ContentItemsTableTableManager(_$AppDatabase db, $ContentItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ContentItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ContentItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ContentItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> spaceId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<String> fingerprint = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String?> createdBy = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ContentItemsCompanion(
+                id: id,
+                spaceId: spaceId,
+                kind: kind,
+                payload: payload,
+                fingerprint: fingerprint,
+                source: source,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> spaceId = const Value.absent(),
+                required String kind,
+                required String payload,
+                required String fingerprint,
+                required String source,
+                Value<String?> createdBy = const Value.absent(),
+                required String createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ContentItemsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                kind: kind,
+                payload: payload,
+                fingerprint: fingerprint,
+                source: source,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ContentItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ContentItemsTable,
+      ContentItemRow,
+      $$ContentItemsTableFilterComposer,
+      $$ContentItemsTableOrderingComposer,
+      $$ContentItemsTableAnnotationComposer,
+      $$ContentItemsTableCreateCompanionBuilder,
+      $$ContentItemsTableUpdateCompanionBuilder,
+      (
+        ContentItemRow,
+        BaseReferences<_$AppDatabase, $ContentItemsTable, ContentItemRow>,
+      ),
+      ContentItemRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -35260,4 +36039,6 @@ class $AppDatabaseManager {
       $$WeeklyTemplatesTableTableManager(_db, _db.weeklyTemplates);
   $$WeeklyTemplateBlocksTableTableManager get weeklyTemplateBlocks =>
       $$WeeklyTemplateBlocksTableTableManager(_db, _db.weeklyTemplateBlocks);
+  $$ContentItemsTableTableManager get contentItems =>
+      $$ContentItemsTableTableManager(_db, _db.contentItems);
 }

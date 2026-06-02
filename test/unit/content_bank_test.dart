@@ -70,4 +70,46 @@ void main() {
       expect(pair.payload['b'], isA<String>());
     });
   });
+
+  // The curated ∪ DB merge that the DB-backed bank relies on
+  // (docs/CONTENT_BANK.md): banked AI/crowd rows layer on top of the
+  // curated floor, de-duped against it. `bankedContentProvider` builds
+  // exactly this list from `content_items`.
+  group('LocalContentBank.seededWith (curated ∪ banked)', () {
+    test('seededWith([]) equals the curated floor', () {
+      expect(
+        LocalContentBank.seededWith(const []).remaining(ContentKind.thisOrThat),
+        LocalContentBank.seeded().remaining(ContentKind.thisOrThat),
+      );
+    });
+
+    test('a novel banked item adds to the curated floor', () {
+      final curatedTotal = LocalContentBank.seeded().remaining(
+        ContentKind.thisOrThat,
+      );
+      final bank = LocalContentBank.seededWith([
+        ContentItem(
+          kind: ContentKind.thisOrThat,
+          fingerprint: 'robots|aliens',
+          payload: {'a': 'Robots', 'b': 'Aliens'},
+        ),
+      ]);
+      expect(bank.remaining(ContentKind.thisOrThat), curatedTotal + 1);
+    });
+
+    test('a banked dup of a curated seed is dropped (curated wins)', () {
+      final curatedTotal = LocalContentBank.seeded().remaining(
+        ContentKind.thisOrThat,
+      );
+      final bank = LocalContentBank.seededWith([
+        // Same (kind, fingerprint) as the curated 'Pizza' | 'Tacos' seed.
+        ContentItem(
+          kind: ContentKind.thisOrThat,
+          fingerprint: 'pizza|tacos',
+          payload: {'a': 'Pizza', 'b': 'Tacos'},
+        ),
+      ]);
+      expect(bank.remaining(ContentKind.thisOrThat), curatedTotal);
+    });
+  });
 }

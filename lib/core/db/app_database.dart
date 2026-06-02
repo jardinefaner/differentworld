@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/dao/attachments_dao.dart';
 import 'package:differentworld/core/db/dao/attendance_dao.dart';
 import 'package:differentworld/core/db/dao/captures_dao.dart';
 import 'package:differentworld/core/db/dao/certifications_dao.dart';
+import 'package:differentworld/core/db/dao/content_bank_dao.dart';
 import 'package:differentworld/core/db/dao/dismissed_insights_dao.dart';
 import 'package:differentworld/core/db/dao/entries_dao.dart';
 import 'package:differentworld/core/db/dao/events_dao.dart';
@@ -583,6 +584,28 @@ class Missions extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// The content bank (docs/CONTENT_BANK.md). One banked activity item —
+/// generated once, synced, reused, so AI is never called on the hot path
+/// of a play. `spaceId` is nullable: NULL = global (AI / shared-curated,
+/// written server-side), set = this program's own (crowd-grown).
+/// `payload` is the activity's JSON shape, stored raw. The Drift row is
+/// named `ContentItemRow` (via @DataClassName) so it doesn't collide with
+/// the domain `ContentItem` in content_bank.dart.
+@DataClassName('ContentItemRow')
+class ContentItems extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text().nullable()();
+  TextColumn get kind => text()();
+  TextColumn get payload => text()();
+  TextColumn get fingerprint => text()();
+  TextColumn get source => text()();
+  TextColumn get createdBy => text().nullable()();
+  TextColumn get createdAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// The program's real-world inventory (docs/SUPPLIES.md). A catalog
 /// referenced by id from the things that consume it. `quantity` /
 /// `lowStockThreshold` are doubles; `photoUrl` is a Storage path.
@@ -841,6 +864,8 @@ class Events extends Table {
     Events,
     // Wave 154: weekly template authoring.
     WeeklyTemplates, WeeklyTemplateBlocks,
+    // Content bank — generate-once-reuse activity content.
+    ContentItems,
   ],
   daos: [
     AttachmentsDao,
@@ -858,6 +883,7 @@ class Events extends Table {
     MembersDao,
     MessagesDao,
     MissionsDao,
+    ContentBankDao,
     SpacesDao,
     SubjectsDao,
     SuppliesDao,
