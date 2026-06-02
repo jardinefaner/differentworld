@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/vehicles/inspection_checklist.dart';
 import 'package:differentworld/features/vehicles/vehicle_qr_pdf.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
@@ -72,6 +76,13 @@ class VehicleDetailScreen extends ConsumerWidget {
             onPressed: () => printVehicleCheckoutQr(
               vehicle: vehicleAsync.value!,
             ),
+          ),
+        if (canEdit && vehicleAsync.value != null)
+          SecondaryActionButton(
+            tooltip: 'Photo checklist',
+            icon: Icons.add_a_photo_outlined,
+            onPressed: () =>
+                context.push('/vehicles/$vehicleId/photo-checklist'),
           ),
         if (canEdit && vehicleAsync.value != null)
           SecondaryActionButton(
@@ -317,30 +328,102 @@ class _LogRow extends ConsumerWidget {
         : DateFormat.MMMd().add_jm().format(dt.toLocal());
     final isCheckout = log.kind == VehicleLogKind.checkout;
     final worst = InspectionResults.fromJson(log.items).worst;
+    final photos = ref
+            .watch(attachmentsForEntityProvider((kind: 'vehicle_log', id: log.id)))
+            .value ??
+        const <Attachment>[];
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      leading: Icon(
-        isCheckout ? Icons.key_outlined : Icons.assignment_turned_in_outlined,
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
-      title: Text(
-        '${isCheckout ? 'Checked out' : 'Checked in'} · $driverName',
-      ),
-      subtitle: Text(
-        [
-          when,
-          if (log.odometer != null) '${log.odometer} mi',
-          if (log.fuelLevel != null && log.fuelLevel!.isNotEmpty)
-            'Fuel ${log.fuelLevel}',
-        ].join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: worst != null && worst != InspectionStatus.ok
-          ? _IssueChip(status: worst)
-          : null,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          leading: Icon(
+            isCheckout
+                ? Icons.key_outlined
+                : Icons.assignment_turned_in_outlined,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          title: Text(
+            '${isCheckout ? 'Checked out' : 'Checked in'} · $driverName',
+          ),
+          subtitle: Text(
+            [
+              when,
+              if (log.odometer != null) '${log.odometer} mi',
+              if (log.fuelLevel != null && log.fuelLevel!.isNotEmpty)
+                'Fuel ${log.fuelLevel}',
+            ].join(' · '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: worst != null && worst != InspectionStatus.ok
+              ? _IssueChip(status: worst)
+              : null,
+        ),
+        if (photos.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+            child: SizedBox(
+              height: 60,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: photos.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 6),
+                itemBuilder: (_, i) {
+                  final a = photos[i];
+                  return GestureDetector(
+                    onTap: () => _viewPhoto(context, a),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: PersonPhotoNetwork(urlOrPath: a.url),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+      ],
     );
+  }
+
+  void _viewPhoto(BuildContext context, Attachment a) {
+    unawaited(showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if ((a.caption ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  a.caption!,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 420),
+              child: PersonPhotoNetwork(urlOrPath: a.url, fit: BoxFit.contain),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ));
   }
 }

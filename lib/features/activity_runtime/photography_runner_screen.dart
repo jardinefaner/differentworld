@@ -178,6 +178,11 @@ class _PhotographyRunnerScreenState
   void _disposeCamera() {
     final c = _controller;
     _controller = null;
+    // Reset the in-flight guard: backgrounding DURING init (permission dialog
+    // up, _controller still null) would otherwise leave this true and make
+    // the resume-time _initCamera early-return forever (camera stuck). The
+    // init's own `if (!mounted)` guards dispose a late-finishing controller.
+    _initInFlight = false;
     unawaited(c?.dispose());
   }
 
