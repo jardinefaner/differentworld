@@ -319,11 +319,19 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/breaks')),
   ),
   SlashCommand(
+    name: 'present',
+    label: '/present',
+    hint: 'Present to the room — Now & Next, Poll, Spotlight, Signals',
+    icon: Icons.co_present_outlined,
+    aliases: const ['cast', 'room', 'screen', 'projector', 'remote'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/present')),
+  ),
+  SlashCommand(
     name: 'live',
     label: '/live',
     hint: 'This or That — Live: present on a big screen, control from a phone',
     icon: Icons.cast,
-    aliases: const ['present', 'projector', 'remote', 'session'],
+    aliases: const ['session'],
     exec: (ctx, _, _) => unawaited(ctx.push('/live/this-or-that')),
   ),
   SlashCommand(

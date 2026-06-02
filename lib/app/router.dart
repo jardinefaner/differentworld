@@ -39,6 +39,7 @@ import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
@@ -855,8 +856,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/live/fact-or-fib',
             builder: (_, _) => const LiveGameScreen(def: FactOrFibGame()),
           ),
-          // Non-game presentables (docs/VISION.md #18 — the classroom remote):
-          // same engine, /present = single-device, /live = two-device.
+          // The classroom remote (docs/VISION.md #18). /present = the hub;
+          // /present/<id> = single-device, /live/<id> = two-device.
+          GoRoute(
+            path: '/present',
+            builder: (_, _) => const PresentHubScreen(),
+          ),
           GoRoute(
             path: '/present/poll',
             builder: (_, _) => const GameRunner(def: PollGame()),

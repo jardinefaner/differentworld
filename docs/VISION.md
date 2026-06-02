@@ -402,6 +402,15 @@ once it has a home.
   all of them but the timer (which needs a clock primitive); the move is to
   reframe it as a "Present / Room screen" capability and give existing
   content a Present mode (→ dream #18).
+- **2026-06-02 (tangent, remember)** — **Vehicle check-in/out → guided photo
+  capture.** Beyond the safety checklist, check-in/out should REQUIRE photos
+  via a *guided* flow: the camera stays open and walks the staffer through
+  exactly what to shoot, shot by shot (e.g. front, odometer/mileage, seats /
+  every-child-out sweep, fuel, any damage), each with a named prompt, before
+  the checklist can complete. Pairs with the planned shared
+  `face_aligned_camera.dart` / on-device camera widget + the Storage photo
+  path (photo_url on the row, bytes in the bucket). Not built yet — captured
+  so it's not lost. (→ vehicles feature; relates to the camera infra.)
 
 ---
 

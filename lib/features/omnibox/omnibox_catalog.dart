@@ -215,6 +215,95 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ],
       onSelect: (ctx, _) => ctx.push('/board'),
     ),
+    // The classroom remote (docs/VISION.md #18) — present a surface on the
+    // big screen, drive it from the phone. Staff-only (guardians can't drive
+    // the room). Broad keywords surface each by what teachers call the thing.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.present',
+        label: 'Present to the room',
+        category: OmniboxCategory.page,
+        icon: Icons.co_present_outlined,
+        keywords: const [
+          'present',
+          'cast',
+          'big screen',
+          'projector',
+          'room',
+          'remote',
+          'classroom remote',
+          'tv',
+        ],
+        onSelect: (ctx, _) => ctx.push('/present'),
+      ),
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'present.now-next',
+        label: 'Now & Next board',
+        category: OmniboxCategory.page,
+        icon: Icons.calendar_view_day_outlined,
+        keywords: const [
+          'now and next',
+          'now next',
+          'schedule board',
+          "what's next",
+          'agenda board',
+          'present schedule',
+        ],
+        onSelect: (ctx, _) => ctx.push('/present/now-next'),
+      ),
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'present.poll',
+        label: 'Quick Poll',
+        category: OmniboxCategory.page,
+        icon: Icons.how_to_vote_outlined,
+        keywords: const [
+          'poll',
+          'vote',
+          'decide',
+          'choose',
+          'survey the room',
+        ],
+        onSelect: (ctx, _) => ctx.push('/present/poll'),
+      ),
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'present.spotlight',
+        label: 'Spotlight — random picker',
+        category: OmniboxCategory.page,
+        icon: Icons.star_outline,
+        keywords: const [
+          'spotlight',
+          'random',
+          'picker',
+          'pick a name',
+          'fair turns',
+          'whose turn',
+          'spin',
+        ],
+        onSelect: (ctx, _) => ctx.push('/present/picker'),
+      ),
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'present.signals',
+        label: 'Signals — room cues',
+        category: OmniboxCategory.page,
+        icon: Icons.campaign_outlined,
+        keywords: const [
+          'signals',
+          'cue',
+          'attention',
+          'eyes up',
+          'clean up',
+          'quiet',
+          'line up',
+          'breathe',
+          'freeze',
+          'transition',
+        ],
+        onSelect: (ctx, _) => ctx.push('/present/cues'),
+      ),
     // Toolkit landing page — broad keywords surface the catalog
     // itself when the user wants to browse rather than jump to a
     // specific tool. Gated by viewer kind: guardians can't reach
