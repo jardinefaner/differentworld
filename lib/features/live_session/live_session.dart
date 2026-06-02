@@ -10,8 +10,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// Game-AGNOSTIC: the session carries an opaque `Map<String,dynamic>` state
 /// and a [LiveReducer]. Each game defines its own state shape + rules
-/// (This-or-That via [LiveState]; Charades via charades.dart). Build the seam
-/// once → the whole deck goes present/control.
+/// (This-or-That via this_or_that_game.dart's GameDefinition; Charades via
+/// charades.dart). Build the seam once → the whole deck goes present/control.
 ///
 /// Protocol on channel `dw-session-<CODE>`:
 ///   - controller → broadcast `intent` `{intent, args}`
@@ -104,13 +104,13 @@ class LiveSession {
           },
         )
         .onPresenceSync((_) {
-          _peers.add(_channel.presenceState().length);
+          _addPeers(_channel.presenceState().length);
           // A device just (re)joined — presenter re-publishes so it syncs.
           if (role == SessionRole.present) unawaited(_broadcastState());
         })
         .subscribe((status, error) {
           if (status == RealtimeSubscribeStatus.subscribed) {
-            _status.add(LiveStatus.live);
+            _addStatus(LiveStatus.live);
             unawaited(_channel.track({'role': role.name}));
             if (role == SessionRole.present) {
               unawaited(_broadcastState());
@@ -120,14 +120,24 @@ class LiveSession {
             }
           } else if (status == RealtimeSubscribeStatus.channelError ||
               status == RealtimeSubscribeStatus.timedOut) {
-            _status.add(LiveStatus.error);
+            _addStatus(LiveStatus.error);
           }
         });
-    _status.add(LiveStatus.connecting);
+    _addStatus(LiveStatus.connecting);
   }
 
+  // Realtime callbacks can fire after dispose() closes the sinks (unsubscribe
+  // is async + unawaited), so every add guards isClosed — not just _states.
   void _emit() {
     if (!_states.isClosed) _states.add(_state);
+  }
+
+  void _addPeers(int n) {
+    if (!_peers.isClosed) _peers.add(n);
+  }
+
+  void _addStatus(LiveStatus s) {
+    if (!_status.isClosed) _status.add(s);
   }
 
   Future<void> _send(String event, Map<String, dynamic> payload) async {
@@ -162,57 +172,5 @@ class LiveSession {
     await _states.close();
     await _peers.close();
     await _status.close();
-  }
-}
-
-/// This-or-That's state shape over the generic session (slide / revealed /
-/// done). A typed view of the session's `Map`.
-class LiveState {
-  const LiveState({this.index = 0, this.revealed = false, this.done = false});
-
-  factory LiveState.fromMap(Map<String, dynamic> m) => LiveState(
-    index: (m['i'] as num?)?.toInt() ?? 0,
-    revealed: m['r'] == true,
-    done: m['d'] == true,
-  );
-
-  final int index;
-  final bool revealed;
-  final bool done;
-
-  LiveState copyWith({int? index, bool? revealed, bool? done}) => LiveState(
-    index: index ?? this.index,
-    revealed: revealed ?? this.revealed,
-    done: done ?? this.done,
-  );
-
-  Map<String, dynamic> toMap() => {'i': index, 'r': revealed, 'd': done};
-
-  /// The seam's [LiveReducer] for This-or-That, curried with the slide
-  /// [total] — wraps [reduce] over the session's `Map`.
-  static LiveReducer reducer(int total) =>
-      (state, intent, args) =>
-          reduce(LiveState.fromMap(state), intent, total).toMap();
-
-  /// Pure reducer — mirrors the single-device control logic exactly. (A
-  /// transform, not a constructor; it takes a state in.)
-  // ignore: prefer_constructors_over_static_methods
-  static LiveState reduce(LiveState s, String intent, int total) {
-    switch (intent) {
-      case 'next':
-        if (s.done) return s;
-        if (s.index >= total - 1) return s.copyWith(done: true);
-        return s.copyWith(index: s.index + 1, revealed: false);
-      case 'back':
-        if (s.done) return s.copyWith(done: false);
-        if (s.index == 0) return s;
-        return s.copyWith(index: s.index - 1, revealed: false);
-      case 'reveal':
-        return s.copyWith(revealed: !s.revealed);
-      case 'restart':
-        return const LiveState();
-      default:
-        return s; // 'hello' / unknown — no-op (just triggers a rebroadcast)
-    }
   }
 }

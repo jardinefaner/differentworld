@@ -105,6 +105,11 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
 
     // ── Activities ──────────────────────────────────────────────────
     const NavDestination(
+      icon: Icons.co_present_outlined,
+      label: 'Present',
+      route: '/present',
+    ),
+    const NavDestination(
       icon: Icons.bubble_chart_outlined,
       label: 'Brain Breaks',
       route: '/breaks',

@@ -9,17 +9,14 @@ import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
-import 'package:differentworld/features/activity_runtime/fact_or_fib_screen.dart';
 import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/rhyme_time_screen.dart';
-import 'package:differentworld/features/activity_runtime/riddles_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
-import 'package:differentworld/features/activity_runtime/this_or_that_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
@@ -34,6 +31,15 @@ import 'package:differentworld/features/exports/send_export_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
+import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/cues_game.dart';
+import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/nownext_screen.dart';
+import 'package:differentworld/features/games/games/picker_screen.dart';
+import 'package:differentworld/features/games/games/poll_game.dart';
+import 'package:differentworld/features/games/games/riddles_game.dart';
+import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
@@ -43,7 +49,7 @@ import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/charades_live_screen.dart';
-import 'package:differentworld/features/live_session/live_session_screen.dart';
+import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
@@ -840,7 +846,53 @@ final routerProvider = Provider<GoRouter>((ref) {
           // present on a big screen, control from a phone over Realtime.
           GoRoute(
             path: '/live/this-or-that',
-            builder: (_, _) => const LiveSessionScreen(),
+            builder: (_, _) => const LiveGameScreen(def: ThisOrThatGame()),
+          ),
+          GoRoute(
+            path: '/live/riddles',
+            builder: (_, _) => const LiveGameScreen(def: RiddlesGame()),
+          ),
+          GoRoute(
+            path: '/live/fact-or-fib',
+            builder: (_, _) => const LiveGameScreen(def: FactOrFibGame()),
+          ),
+          // The classroom remote (docs/VISION.md #18). /present = the hub;
+          // /present/<id> = single-device, /live/<id> = two-device.
+          GoRoute(
+            path: '/present',
+            builder: (_, _) => const PresentHubScreen(),
+          ),
+          GoRoute(
+            path: '/present/poll',
+            builder: (_, _) => const GameRunner(def: PollGame()),
+          ),
+          GoRoute(
+            path: '/live/poll',
+            builder: (_, _) => const LiveGameScreen(def: PollGame()),
+          ),
+          GoRoute(
+            path: '/present/cues',
+            builder: (_, _) => const GameRunner(def: CuesGame()),
+          ),
+          GoRoute(
+            path: '/live/cues',
+            builder: (_, _) => const LiveGameScreen(def: CuesGame()),
+          ),
+          GoRoute(
+            path: '/present/picker',
+            builder: (_, _) => const PickerScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/picker',
+            builder: (_, _) => const PickerScreen(live: true),
+          ),
+          GoRoute(
+            path: '/present/now-next',
+            builder: (_, _) => const NowNextScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/now-next',
+            builder: (_, _) => const NowNextScreen(live: true),
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.
@@ -893,7 +945,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // content bank (docs/ACTIVITY_RUNTIME.md + CONTENT_BANK.md).
           GoRoute(
             path: '/activity/this-or-that',
-            builder: (_, _) => const ThisOrThatScreen(),
+            builder: (_, _) => const GameRunner(def: ThisOrThatGame()),
           ),
           // "Starts with" word game — content from the content bank.
           GoRoute(
@@ -915,7 +967,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Riddles — host-run, answer-first; the room guesses, you Reveal.
           GoRoute(
             path: '/activity/riddles',
-            builder: (_, _) => const RiddlesScreen(),
+            builder: (_, _) => const GameRunner(def: RiddlesGame()),
           ),
           // Mindful Minute — a calm breathing break (the regulation gap).
           GoRoute(
@@ -925,7 +977,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Fact or Fib — host-run; the room votes true/false, you Reveal.
           GoRoute(
             path: '/activity/fact-or-fib',
-            builder: (_, _) => const FactOrFibScreen(),
+            builder: (_, _) => const GameRunner(def: FactOrFibGame()),
           ),
           // Story Starters — host-run; the room builds a story aloud.
           GoRoute(

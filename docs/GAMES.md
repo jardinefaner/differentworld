@@ -159,6 +159,24 @@ Lives in `lib/features/games/`.
   kind `game_capture` (the growth-book artifact, VISION #1). Presenter-only
   in a live session (one write, not per-controller).
 
+### Cost (measured 2026-06-02)
+Live runs over Supabase **Realtime**, billed on **message count + concurrent
+peak connections** (NOT bytes): Free = 2M msgs/mo + 200 peak; Pro = 5M + 500;
+overage $2.50/M msgs, ~$10/1,000 connections. Measured This-or-That footprint:
+- **~234 bytes per broadcast** (the pairs ride in the state — 6.3× the bare
+  `{i,r,d}`, but egress is free-tier-trivial and Supabase doesn't bill bytes,
+  so pairs-in-state is **cost-neutral** and we keep it for correctness).
+- **~2 messages per remote tap** (controller send + presenter rebroadcast),
+  +1 rebroadcast per presence join; **2 connections** per two-device session.
+- One program at heavy use (≈150 sessions/mo) ≈ **4.5K messages, ≤20 peak,
+  ~1 MB egress → $0** (0.2% of the free tier). The free ceiling isn't reached
+  until **hundreds of simultaneously-active programs**, and the binding
+  constraint there is **concurrent connections, not messages**.
+- **Watch item for new games:** `initialState` stashes content in the
+  wire-state and it **rebroadcasts on every intent** — keep it small (lists,
+  not long bodies). Connections are held for the whole session, so prompt
+  dispose on leave matters (the 0c double-dispose fix covers it).
+
 ### Decisions (user, 2026-06-01)
 - **Wrap beat → per-game vibe.** Each game's "game over" matches its
   character; the vibe carries it (not one shared recap).
@@ -171,9 +189,35 @@ Lives in `lib/features/games/`.
   teacher-paced"). A text field is the opt-in last resort.
 
 ### Migration (one shippable PR each; commit between waves)
-0. Extract the framework; port **This-or-That** (already reducer-shaped) so
-   both `/activity` + `/live` run the new runner. Golden-locked.
+0a. **DONE (`feat/game-framework` 3dd15da).** The framework spine:
+   `game.dart` (`GameIntent` incl. `tally`/`submit`, `GameReducer`,
+   `GameDefinition<S>` with the first-class `buildStage` slot, `GameVibe`,
+   `CaptureSpec`) + `game_controller.dart` (`GameController` +
+   `LocalGameController`) + a unit test. Analyze clean, 3/3 pass.
+0b. **DONE (`feat/game-framework` 78f0f1b).** `GameScaffold` (control
+   bar/panel from `activeIntents` + a per-game reveal label + progress +
+   `PresenterShortcuts` wiring + responsive present/control split + cast
+   action) + `GameRunner` (single-device) + `ThisOrThatGame`. `/activity/
+   this-or-that` now builds `GameRunner(def: ThisOrThatGame())`; the bespoke
+   `this_or_that_screen.dart` is deleted. Reducer = the old logic over
+   `GameIntent`; the resolved pairs ride IN the wire-state (self-describing,
+   sets up the live path). 8/8 widget + core tests, preflight 0/0/3.
+0c. **DONE (`feat/game-framework` 8d54aab).** `LiveGameController` (wraps
+   `LiveSession`; maps `GameIntent.name` ↔ String; present→`applyLocal` /
+   control→`sendIntent`; idempotent dispose) + `/live/this-or-that` rewritten
+   to drive `ThisOrThatGame` over it. The duplicate `LiveState` reducer +
+   `_Presentation`/`_Half`/`_OrBadge` are DELETED — `/activity` + `/live`
+   now share one source of truth. The `LiveState.reduce` test moved to
+   `this_or_that_game_test.dart`. Preflight 0 blockers / 3 warnings (double-
+   dispose, missing `_peers`/`_status` isClosed guards, setState-without-
+   mounted) — ALL fixed. 108/108 unit, analyze clean. ⚠ The **live two-device
+   flow is unverified from here** — verify on the Pixel + a desktop window
+   (present on desktop, scan/join code on the Pixel, drive slides) before
+   merging to main. Behavior is preserved (same reducer + stage), so the risk
+   is wiring, not logic.
 1. Reveal/slideshow games — Riddles, Fact-or-Fib, Math, Story, Discussions.
+   **These reuse `GameScaffold` for free — each is a `GameDefinition` (state
+   + reducer + stage) + a route swap; no new chrome.**
 2. Tally games — Rhyme Time, Beat the Letter (**Rhyme Time lands `capture`**).
 3. Charades (the live/secret role).
 4. As-If (validates the contract bends to a non-slideshow shape).

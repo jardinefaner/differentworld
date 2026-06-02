@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/live_session/charades.dart';
-import 'package:differentworld/features/live_session/live_session.dart';
-import 'package:differentworld/features/live_session/live_session_screen.dart'
+import 'package:differentworld/features/live_session/live_game_screen.dart'
     show generateSessionCode;
+import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
