@@ -152,6 +152,7 @@ const appSchema = Schema([
     Column.text('items'),
     Column.text('notes'),
     Column.text('body_damage_notes'),
+    Column.text('roster'),
     Column.text('created_at'),
   ]),
   Table('member_certifications', [

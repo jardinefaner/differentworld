@@ -6884,6 +6884,15 @@ class $VehicleLogsTable extends VehicleLogs
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _rosterMeta = const VerificationMeta('roster');
+  @override
+  late final GeneratedColumn<String> roster = GeneratedColumn<String>(
+    'roster',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -6907,6 +6916,7 @@ class $VehicleLogsTable extends VehicleLogs
     items,
     notes,
     bodyDamageNotes,
+    roster,
     createdAt,
   ];
   @override
@@ -6996,6 +7006,12 @@ class $VehicleLogsTable extends VehicleLogs
         ),
       );
     }
+    if (data.containsKey('roster')) {
+      context.handle(
+        _rosterMeta,
+        roster.isAcceptableOrUnknown(data['roster']!, _rosterMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -7053,6 +7069,10 @@ class $VehicleLogsTable extends VehicleLogs
         DriftSqlType.string,
         data['${effectivePrefix}body_damage_notes'],
       ),
+      roster: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}roster'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -7077,6 +7097,12 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
   final String items;
   final String? notes;
   final String? bodyDamageNotes;
+
+  /// JSON array of boarded subject ids — the trip headcount (board at
+  /// check-out, tap each off at check-in). Nullable + always set explicitly
+  /// by the client (a server `default` is a no-op over PowerSync); read as
+  /// null → empty list.
+  final String? roster;
   final String createdAt;
   const VehicleLog({
     required this.id,
@@ -7089,6 +7115,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
     required this.items,
     this.notes,
     this.bodyDamageNotes,
+    this.roster,
     required this.createdAt,
   });
   @override
@@ -7111,6 +7138,9 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
     }
     if (!nullToAbsent || bodyDamageNotes != null) {
       map['body_damage_notes'] = Variable<String>(bodyDamageNotes);
+    }
+    if (!nullToAbsent || roster != null) {
+      map['roster'] = Variable<String>(roster);
     }
     map['created_at'] = Variable<String>(createdAt);
     return map;
@@ -7136,6 +7166,9 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
       bodyDamageNotes: bodyDamageNotes == null && nullToAbsent
           ? const Value.absent()
           : Value(bodyDamageNotes),
+      roster: roster == null && nullToAbsent
+          ? const Value.absent()
+          : Value(roster),
       createdAt: Value(createdAt),
     );
   }
@@ -7156,6 +7189,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
       items: serializer.fromJson<String>(json['items']),
       notes: serializer.fromJson<String?>(json['notes']),
       bodyDamageNotes: serializer.fromJson<String?>(json['bodyDamageNotes']),
+      roster: serializer.fromJson<String?>(json['roster']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
     );
   }
@@ -7173,6 +7207,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
       'items': serializer.toJson<String>(items),
       'notes': serializer.toJson<String?>(notes),
       'bodyDamageNotes': serializer.toJson<String?>(bodyDamageNotes),
+      'roster': serializer.toJson<String?>(roster),
       'createdAt': serializer.toJson<String>(createdAt),
     };
   }
@@ -7188,6 +7223,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
     String? items,
     Value<String?> notes = const Value.absent(),
     Value<String?> bodyDamageNotes = const Value.absent(),
+    Value<String?> roster = const Value.absent(),
     String? createdAt,
   }) => VehicleLog(
     id: id ?? this.id,
@@ -7202,6 +7238,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
     bodyDamageNotes: bodyDamageNotes.present
         ? bodyDamageNotes.value
         : this.bodyDamageNotes,
+    roster: roster.present ? roster.value : this.roster,
     createdAt: createdAt ?? this.createdAt,
   );
   VehicleLog copyWithCompanion(VehicleLogsCompanion data) {
@@ -7220,6 +7257,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
       bodyDamageNotes: data.bodyDamageNotes.present
           ? data.bodyDamageNotes.value
           : this.bodyDamageNotes,
+      roster: data.roster.present ? data.roster.value : this.roster,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -7237,6 +7275,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
           ..write('items: $items, ')
           ..write('notes: $notes, ')
           ..write('bodyDamageNotes: $bodyDamageNotes, ')
+          ..write('roster: $roster, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -7254,6 +7293,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
     items,
     notes,
     bodyDamageNotes,
+    roster,
     createdAt,
   );
   @override
@@ -7270,6 +7310,7 @@ class VehicleLog extends DataClass implements Insertable<VehicleLog> {
           other.items == this.items &&
           other.notes == this.notes &&
           other.bodyDamageNotes == this.bodyDamageNotes &&
+          other.roster == this.roster &&
           other.createdAt == this.createdAt);
 }
 
@@ -7284,6 +7325,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
   final Value<String> items;
   final Value<String?> notes;
   final Value<String?> bodyDamageNotes;
+  final Value<String?> roster;
   final Value<String> createdAt;
   final Value<int> rowid;
   const VehicleLogsCompanion({
@@ -7297,6 +7339,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
     this.items = const Value.absent(),
     this.notes = const Value.absent(),
     this.bodyDamageNotes = const Value.absent(),
+    this.roster = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -7311,6 +7354,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
     required String items,
     this.notes = const Value.absent(),
     this.bodyDamageNotes = const Value.absent(),
+    this.roster = const Value.absent(),
     required String createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -7331,6 +7375,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
     Expression<String>? items,
     Expression<String>? notes,
     Expression<String>? bodyDamageNotes,
+    Expression<String>? roster,
     Expression<String>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -7345,6 +7390,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
       if (items != null) 'items': items,
       if (notes != null) 'notes': notes,
       if (bodyDamageNotes != null) 'body_damage_notes': bodyDamageNotes,
+      if (roster != null) 'roster': roster,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -7361,6 +7407,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
     Value<String>? items,
     Value<String?>? notes,
     Value<String?>? bodyDamageNotes,
+    Value<String?>? roster,
     Value<String>? createdAt,
     Value<int>? rowid,
   }) {
@@ -7375,6 +7422,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
       items: items ?? this.items,
       notes: notes ?? this.notes,
       bodyDamageNotes: bodyDamageNotes ?? this.bodyDamageNotes,
+      roster: roster ?? this.roster,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -7413,6 +7461,9 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
     if (bodyDamageNotes.present) {
       map['body_damage_notes'] = Variable<String>(bodyDamageNotes.value);
     }
+    if (roster.present) {
+      map['roster'] = Variable<String>(roster.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -7435,6 +7486,7 @@ class VehicleLogsCompanion extends UpdateCompanion<VehicleLog> {
           ..write('items: $items, ')
           ..write('notes: $notes, ')
           ..write('bodyDamageNotes: $bodyDamageNotes, ')
+          ..write('roster: $roster, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -27687,6 +27739,7 @@ typedef $$VehicleLogsTableCreateCompanionBuilder =
       required String items,
       Value<String?> notes,
       Value<String?> bodyDamageNotes,
+      Value<String?> roster,
       required String createdAt,
       Value<int> rowid,
     });
@@ -27702,6 +27755,7 @@ typedef $$VehicleLogsTableUpdateCompanionBuilder =
       Value<String> items,
       Value<String?> notes,
       Value<String?> bodyDamageNotes,
+      Value<String?> roster,
       Value<String> createdAt,
       Value<int> rowid,
     });
@@ -27762,6 +27816,11 @@ class $$VehicleLogsTableFilterComposer
 
   ColumnFilters<String> get bodyDamageNotes => $composableBuilder(
     column: $table.bodyDamageNotes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get roster => $composableBuilder(
+    column: $table.roster,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -27830,6 +27889,11 @@ class $$VehicleLogsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get roster => $composableBuilder(
+    column: $table.roster,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -27879,6 +27943,9 @@ class $$VehicleLogsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get roster =>
+      $composableBuilder(column: $table.roster, builder: (column) => column);
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
@@ -27924,6 +27991,7 @@ class $$VehicleLogsTableTableManager
                 Value<String> items = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String?> bodyDamageNotes = const Value.absent(),
+                Value<String?> roster = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VehicleLogsCompanion(
@@ -27937,6 +28005,7 @@ class $$VehicleLogsTableTableManager
                 items: items,
                 notes: notes,
                 bodyDamageNotes: bodyDamageNotes,
+                roster: roster,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -27952,6 +28021,7 @@ class $$VehicleLogsTableTableManager
                 required String items,
                 Value<String?> notes = const Value.absent(),
                 Value<String?> bodyDamageNotes = const Value.absent(),
+                Value<String?> roster = const Value.absent(),
                 required String createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => VehicleLogsCompanion.insert(
@@ -27965,6 +28035,7 @@ class $$VehicleLogsTableTableManager
                 items: items,
                 notes: notes,
                 bodyDamageNotes: bodyDamageNotes,
+                roster: roster,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
