@@ -121,11 +121,20 @@ class EntryActions {
   /// 'entry'), in the order they appear in [photoUrls]. Per
   /// UX_DECISIONS §8 the entry row no longer carries photo URLs
   /// directly; attachments are first-class.
+  ///
+  /// [photoIds] (aligned by index with [photoUrls]) lets the caller pin each
+  /// attachment's id. REQUIRED for offline correctness when a url is a
+  /// `pending:` token: the bytes were uploaded via
+  /// `uploadOnly(entityKind:'attachment', entityId:<this id>)`, and the queue
+  /// patches the deferred upload via `updateUrl(<this id>)` — so the
+  /// attachment row MUST carry that same id or the photo is silently lost.
+  /// When empty (text-only callers / no offline photos) ids are random.
   Future<String> createObservation({
     required String subjectId,
     required String groupId,
     required String text,
     List<String> photoUrls = const [],
+    List<String> photoIds = const [],
     String? scheduleBlockId,
     String? id,
   }) async {
@@ -139,13 +148,13 @@ class EntryActions {
     );
     if (photoUrls.isNotEmpty) {
       final attachments = _ref.read(attachmentActionsProvider);
-      var sort = 0;
-      for (final url in photoUrls) {
+      for (var i = 0; i < photoUrls.length; i++) {
         await attachments.add(
+          id: i < photoIds.length ? photoIds[i] : null,
           entityKind: 'entry',
           entityId: entryId,
-          url: url,
-          sortOrder: sort++,
+          url: photoUrls[i],
+          sortOrder: i,
         );
       }
     }
