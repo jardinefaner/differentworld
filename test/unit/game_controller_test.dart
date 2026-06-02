@@ -84,5 +84,23 @@ void main() {
       ].forEach(c.send);
       expect(c.state, {'i': 5, 'count': 2});
     });
+
+    // Regression: the GameController contract says dispose is idempotent, and
+    // send-after-dispose must not throw (no add to a closed sink). This pins
+    // the contract LiveGameController also honors via its _disposed guard —
+    // the class of bug Wave 0c's preflight caught on the live path.
+    test('dispose is idempotent; send after dispose is a safe no-op', () {
+      final c = LocalGameController(
+        initial: {'i': 0, 'count': 0},
+        reduce: _counterReduce,
+      );
+      c.dispose();
+      expect(c.dispose, returnsNormally, reason: 'double dispose is safe');
+      expect(
+        () => c.send(GameIntent.tally),
+        returnsNormally,
+        reason: 'no add to a closed sink',
+      );
+    });
   });
 }

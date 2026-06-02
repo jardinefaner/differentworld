@@ -1402,6 +1402,47 @@ Adding more reviewers later (e.g. a SQL-policy critic, a
 performance-budget critic) — define them in the same dir, then
 wire them into the Council orchestrator's parallel-spawn step.
 
+### Closing the loop — every confirmed bug hardens the pipeline
+
+A reviewer, guard, or on-device session that finds a bug has done
+HALF the job. The other half: make sure that *class* of bug can't
+recur silently. **Every confirmed bug gets a durable home so the next
+session inherits the lesson** — pick the narrowest one that fits:
+
+1. **A guard checklist item** (`~/.claude/agents/flutter-*-guard.md`,
+   `interaction-guard.md`, …) — when the bug is a PATTERN a guard
+   should pattern-match (a lifecycle / async / state / platform
+   footgun). **This is the default**: it makes the pipeline catch the
+   bug automatically on every future run, for every file. Add a
+   `- [ ]` line to the right guard's checklist.
+2. **A "Known gotcha"** (this file) — when the bug is PROJECT-SPECIFIC
+   and non-obvious (a PowerSync / Drift / RLS / go_router / ES256 trap
+   unique to this stack), not a generic pattern a guard could phrase.
+3. **A regression test** — when the bug is concrete behavior a test
+   can pin (a reducer case, a widget-state transition). The tightest
+   net; add it AND consider 1 or 2 for the broader class.
+
+Most bugs want #1. The bar: after you fix a bug, ask *"what would have
+caught this before I wrote it?"* — then add exactly that. A guard's
+checklist is cheap to extend and compounds; a bug fixed without
+hardening the pipeline is a bug we'll write again.
+
+**Worked precedent (Wave 0c, the live-game port).** Preflight found
+three lifecycle/async bugs: (1) the live controller was disposed from
+two paths (`_leave` AND `State.dispose`) with no idempotency guard;
+(2) two of three Realtime stream sinks (`_peers`/`_status`) were
+`.add()`-ed from late callbacks after `close()` with no `isClosed`
+guard — the genuine add-after-close throw, because only `_states` was
+guarded; (3) `setState` inside a `.listen` callback with no `mounted`
+guard. Notable: the two reviewers disagreed on whether
+`StreamController.close()` itself throws on a double-call — it does
+NOT (it's idempotent), so verifying the Dart contract mattered before
+writing the rule. The real throw was #2. All three were fixed AND
+folded back as `- [ ]` items in `flutter-async-guard.md` +
+`flutter-lifecycle-guard.md` — so the guards now flag the *class*, not
+just that instance. That's the loop (and the fact-check is part of
+it — don't codify a rule a reviewer asserted without confirming it).
+
 ## "Done" means
 
 For substantive changes:
