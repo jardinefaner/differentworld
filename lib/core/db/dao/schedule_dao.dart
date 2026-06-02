@@ -108,6 +108,10 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
         leadMemberId: Value(leadMemberId),
         locationOverrideId: Value(locationOverrideId),
         kind: kind,
+        // Set 'planned' explicitly: PowerSync owns the local schema, so
+        // Drift's withDefault is a no-op and omitting status lands a NULL
+        // that crashes the row-mapper on read.
+        status: const Value('planned'),
         notes: Value(notes),
         curriculumSessionSlug: Value(curriculumSessionSlug),
         recurrenceId: Value(recurrenceId),
@@ -160,6 +164,8 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
             leadMemberId: Value(leadMemberId),
             locationOverrideId: Value(locationOverrideId),
             kind: kind,
+            // Explicit 'planned' — withDefault is a no-op over PowerSync.
+            status: const Value('planned'),
             notes: Value(notes),
             curriculumSessionSlug: Value(curriculumSessionSlug),
             recurrenceId: Value(recurrenceId),

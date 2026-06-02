@@ -48,7 +48,9 @@ final liveBlockForGroupProvider =
   final now = DateTime.now();
 
   final live = blocks.where((b) {
-    if (b.status != BlockStatus.planned) return false;
+    // status is nullable (older rows predate the column / it's set lazily);
+    // a NULL status means a normal planned block, so coalesce.
+    if ((b.status ?? BlockStatus.planned) != BlockStatus.planned) return false;
     if (b.kind == BlockKind.breakBlock || b.kind == BlockKind.closed) {
       return false;
     }

@@ -18316,10 +18316,9 @@ class $ScheduleBlocksTable extends ScheduleBlocks
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
     'status',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultValue: const Constant('planned'),
   );
   static const VerificationMeta _statusReasonMeta = const VerificationMeta(
     'statusReason',
@@ -18621,7 +18620,7 @@ class $ScheduleBlocksTable extends ScheduleBlocks
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
-      )!,
+      ),
       statusReason: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status_reason'],
@@ -18670,7 +18669,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
   final String? locationOverrideId;
   final String kind;
   final String? notes;
-  final String status;
+  final String? status;
   final String? statusReason;
 
   /// Wave 165: optional link back to a curriculum session shipped in
@@ -18701,7 +18700,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     this.locationOverrideId,
     required this.kind,
     this.notes,
-    required this.status,
+    this.status,
     this.statusReason,
     this.curriculumSessionSlug,
     this.recurrenceId,
@@ -18738,7 +18737,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
-    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || status != null) {
+      map['status'] = Variable<String>(status);
+    }
     if (!nullToAbsent || statusReason != null) {
       map['status_reason'] = Variable<String>(statusReason);
     }
@@ -18780,7 +18781,9 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
-      status: Value(status),
+      status: status == null && nullToAbsent
+          ? const Value.absent()
+          : Value(status),
       statusReason: statusReason == null && nullToAbsent
           ? const Value.absent()
           : Value(statusReason),
@@ -18818,7 +18821,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       ),
       kind: serializer.fromJson<String>(json['kind']),
       notes: serializer.fromJson<String?>(json['notes']),
-      status: serializer.fromJson<String>(json['status']),
+      status: serializer.fromJson<String?>(json['status']),
       statusReason: serializer.fromJson<String?>(json['statusReason']),
       curriculumSessionSlug: serializer.fromJson<String?>(
         json['curriculumSessionSlug'],
@@ -18847,7 +18850,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
       'locationOverrideId': serializer.toJson<String?>(locationOverrideId),
       'kind': serializer.toJson<String>(kind),
       'notes': serializer.toJson<String?>(notes),
-      'status': serializer.toJson<String>(status),
+      'status': serializer.toJson<String?>(status),
       'statusReason': serializer.toJson<String?>(statusReason),
       'curriculumSessionSlug': serializer.toJson<String?>(
         curriculumSessionSlug,
@@ -18872,7 +18875,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
     Value<String?> locationOverrideId = const Value.absent(),
     String? kind,
     Value<String?> notes = const Value.absent(),
-    String? status,
+    Value<String?> status = const Value.absent(),
     Value<String?> statusReason = const Value.absent(),
     Value<String?> curriculumSessionSlug = const Value.absent(),
     Value<String?> recurrenceId = const Value.absent(),
@@ -18896,7 +18899,7 @@ class ScheduleBlock extends DataClass implements Insertable<ScheduleBlock> {
         : this.locationOverrideId,
     kind: kind ?? this.kind,
     notes: notes.present ? notes.value : this.notes,
-    status: status ?? this.status,
+    status: status.present ? status.value : this.status,
     statusReason: statusReason.present ? statusReason.value : this.statusReason,
     curriculumSessionSlug: curriculumSessionSlug.present
         ? curriculumSessionSlug.value
@@ -19030,7 +19033,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
   final Value<String?> locationOverrideId;
   final Value<String> kind;
   final Value<String?> notes;
-  final Value<String> status;
+  final Value<String?> status;
   final Value<String?> statusReason;
   final Value<String?> curriculumSessionSlug;
   final Value<String?> recurrenceId;
@@ -19152,7 +19155,7 @@ class ScheduleBlocksCompanion extends UpdateCompanion<ScheduleBlock> {
     Value<String?>? locationOverrideId,
     Value<String>? kind,
     Value<String?>? notes,
-    Value<String>? status,
+    Value<String?>? status,
     Value<String?>? statusReason,
     Value<String?>? curriculumSessionSlug,
     Value<String?>? recurrenceId,
@@ -33077,7 +33080,7 @@ typedef $$ScheduleBlocksTableCreateCompanionBuilder =
       Value<String?> locationOverrideId,
       required String kind,
       Value<String?> notes,
-      Value<String> status,
+      Value<String?> status,
       Value<String?> statusReason,
       Value<String?> curriculumSessionSlug,
       Value<String?> recurrenceId,
@@ -33100,7 +33103,7 @@ typedef $$ScheduleBlocksTableUpdateCompanionBuilder =
       Value<String?> locationOverrideId,
       Value<String> kind,
       Value<String?> notes,
-      Value<String> status,
+      Value<String?> status,
       Value<String?> statusReason,
       Value<String?> curriculumSessionSlug,
       Value<String?> recurrenceId,
@@ -33446,7 +33449,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String?> locationOverrideId = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
-                Value<String> status = const Value.absent(),
+                Value<String?> status = const Value.absent(),
                 Value<String?> statusReason = const Value.absent(),
                 Value<String?> curriculumSessionSlug = const Value.absent(),
                 Value<String?> recurrenceId = const Value.absent(),
@@ -33490,7 +33493,7 @@ class $$ScheduleBlocksTableTableManager
                 Value<String?> locationOverrideId = const Value.absent(),
                 required String kind,
                 Value<String?> notes = const Value.absent(),
-                Value<String> status = const Value.absent(),
+                Value<String?> status = const Value.absent(),
                 Value<String?> statusReason = const Value.absent(),
                 Value<String?> curriculumSessionSlug = const Value.absent(),
                 Value<String?> recurrenceId = const Value.absent(),

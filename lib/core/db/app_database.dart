@@ -682,10 +682,18 @@ class ScheduleBlocks extends Table {
   TextColumn get locationOverrideId => text().nullable()();
   TextColumn get kind => text()(); // on_site / field_trip / break / closed
   TextColumn get notes => text().nullable()();
-  // Wave 155: status of this block — 'planned' (default) / 'skipped'
-  // / 'cancelled'. The today view dims skipped/cancelled blocks; the
-  // family lens shows the reason inline.
-  TextColumn get status => text().withDefault(const Constant('planned'))();
+  // Wave 155: status of this block — 'planned' / 'skipped' / 'cancelled'.
+  // The today view dims skipped/cancelled blocks; the family lens shows
+  // the reason inline.
+  //
+  // NULLABLE on purpose: PowerSync owns the local SQLite schema, so a
+  // Drift `.withDefault('planned')` is a no-op there — the column is
+  // created without a default, and any insert that omits `status` (Drift
+  // lets you, *because* of the default) lands a NULL, which then crashes
+  // the row-mapper on read ("Couldn't load this cohort's schedule" on
+  // every add). Treating it as nullable makes reads NULL-safe; inserts
+  // set 'planned' explicitly, and readers coalesce NULL → planned.
+  TextColumn get status => text().nullable()();
   TextColumn get statusReason => text().nullable()();
 
   /// Wave 165: optional link back to a curriculum session shipped in

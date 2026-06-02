@@ -143,6 +143,8 @@ class WeeklyTemplateDao extends DatabaseAccessor<AppDatabase>
               leadMemberId: Value(slot.leadMemberId),
               locationOverrideId: Value(slot.locationOverrideId),
               kind: 'on_site',
+              // Explicit 'planned' — withDefault is a no-op over PowerSync.
+              status: const Value('planned'),
               notes: Value(slot.notes),
               createdAt: now,
               updatedAt: now,
