@@ -171,8 +171,24 @@ Lives in `lib/features/games/`.
   teacher-paced"). A text field is the opt-in last resort.
 
 ### Migration (one shippable PR each; commit between waves)
-0. Extract the framework; port **This-or-That** (already reducer-shaped) so
-   both `/activity` + `/live` run the new runner. Golden-locked.
+0a. **DONE (`feat/game-framework` 3dd15da).** The framework spine:
+   `game.dart` (`GameIntent` incl. `tally`/`submit`, `GameReducer`,
+   `GameDefinition<S>` with the first-class `buildStage` slot, `GameVibe`,
+   `CaptureSpec`) + `game_controller.dart` (`GameController` +
+   `LocalGameController`) + a unit test. Analyze clean, 3/3 pass.
+0b. **Next.** `GameScaffold` (control bar from `activeIntents` + progress +
+   keyboard hint + `PresenterShortcuts` wiring + live header) +
+   `LiveGameController` (wraps `LiveSession` — note: `LiveSession.sendIntent`
+   speaks **String** intents + has its own `LiveState.reducer(total)`, so
+   the controller maps `GameIntent.name` ↔ String) + `GameRunner` + port
+   **This-or-That**. ⚠ This-or-That is NOT greenfield — it's a working,
+   **golden-locked** feature on **two routes** (`/activity/this-or-that`
+   builds `ThisOrThatScreen`; `/live/this-or-that` is the live variant) with
+   two widget tests (`this_or_that_screen_test`, `brain_breaks_screen_test`)
+   to keep green. So 0b REPLACES a working showcase — do it with the widget
+   tests + golden as the safety net, and verify the **live two-device flow
+   on the Pixel + a desktop window** before merging. Best as its own focused
+   PR, not a tail-of-session cram.
 1. Reveal/slideshow games — Riddles, Fact-or-Fib, Math, Story, Discussions.
 2. Tally games — Rhyme Time, Beat the Letter (**Rhyme Time lands `capture`**).
 3. Charades (the live/secret role).
