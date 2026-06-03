@@ -165,31 +165,72 @@ void main() {
     });
   });
 
-  group('renderPosterTiles / renderPosterPdf (assembly guides)', () {
+  group('posterViewRect (fill reposition)', () {
+    test('zoom 1 + centered focus equals the centered cover crop', () {
+      final cover = posterCoverCrop(2000, 1000, letterAspect);
+      final view = posterViewRect(2000, 1000, letterAspect, 1, 0.5, 0.5);
+      expect(view.$1, closeTo(cover.$1, 1e-6));
+      expect(view.$2, closeTo(cover.$2, 1e-6));
+      expect(view.$3, closeTo(cover.$3, 1e-6));
+      expect(view.$4, closeTo(cover.$4, 1e-6));
+    });
+
+    test('panning a wide image slides the crop across the slack', () {
+      final left = posterViewRect(2000, 1000, letterAspect, 1, 0, 0.5);
+      final right = posterViewRect(2000, 1000, letterAspect, 1, 1, 0.5);
+      expect(left.$1, closeTo(0, 1e-6)); // focus 0 → hugs the left edge
+      expect(right.$1, closeTo(2000 - right.$3, 1e-6)); // focus 1 → right edge
+      expect(left.$3, closeTo(right.$3, 1e-9)); // same width, just moved
+    });
+
+    test('zoom shrinks the view (tighter crop)', () {
+      final z1 = posterViewRect(2000, 1000, letterAspect, 1, 0.5, 0.5);
+      final z2 = posterViewRect(2000, 1000, letterAspect, 2, 0.5, 0.5);
+      expect(z2.$3, closeTo(z1.$3 / 2, 1e-6));
+      expect(z2.$4, closeTo(z1.$4 / 2, 1e-6));
+    });
+
+    test('the view stays within the image at any focus / zoom', () {
+      for (final f in const [0.0, 0.5, 1.0]) {
+        for (final z in const [1.0, 2.0, 4.0]) {
+          final (l, t, w, h) = posterViewRect(1500, 1200, letterAspect, z, f, f);
+          expect(l, greaterThanOrEqualTo(-1e-6));
+          expect(t, greaterThanOrEqualTo(-1e-6));
+          expect(l + w, lessThanOrEqualTo(1500 + 1e-6));
+          expect(t + h, lessThanOrEqualTo(1200 + 1e-6));
+        }
+      }
+    });
+  });
+
+  // These exercise the real decode/crop/encode (+ PDF assembly), but via the
+  // synchronous test seam — spawning Isolate.run() under the full-suite runner
+  // is flaky. The thin isolate wrapper itself is verified on-device.
+  group('tile render + assembly guides', () {
     Uint8List solidPng(int w, int h) {
       final image = img.Image(width: w, height: h);
       img.fill(image, color: img.ColorRgb8(120, 180, 240));
       return Uint8List.fromList(img.encodePng(image));
     }
 
-    test('produces one tile per page (row-major)', () async {
+    test('produces one tile per page (row-major)', () {
       final bytes = solidPng(600, 800);
       final layout = computePosterLayout(
         const PosterOptions(fitShape: false),
         600 / 800,
       );
-      final tiles = await renderPosterTiles(bytes, layout, PosterFit.fill);
+      final tiles = renderPosterTilesForTest(bytes, layout, PosterFit.fill);
       expect(tiles.length, layout.pageCount); // 2×2 → 4
     });
 
-    test('guides shrink each tile to leave a trim margin', () async {
+    test('guides shrink each tile to leave a trim margin', () {
       final bytes = solidPng(600, 800);
       final layout = computePosterLayout(
         const PosterOptions(fitShape: false),
         600 / 800,
       );
-      final plain = await renderPosterTiles(bytes, layout, PosterFit.fill);
-      final guided = await renderPosterTiles(
+      final plain = renderPosterTilesForTest(bytes, layout, PosterFit.fill);
+      final guided = renderPosterTilesForTest(
         bytes,
         layout,
         PosterFit.fill,
@@ -201,16 +242,21 @@ void main() {
       expect(g0.height, lessThan(p0.height));
     });
 
-    test('a guided render still produces a valid, non-empty PDF', () async {
+    test('a guided PDF is valid and non-empty', () async {
       final bytes = solidPng(400, 400);
       final layout = computePosterLayout(
         const PosterOptions(fitShape: false),
         1,
       );
-      final pdf = await renderPosterPdf(
+      final tiles = renderPosterTilesForTest(
         bytes,
         layout,
         PosterFit.fill,
+        guides: true,
+      );
+      final pdf = await buildPosterPdf(
+        tiles: tiles,
+        layout: layout,
         guides: true,
       );
       expect(pdf, isNotEmpty);

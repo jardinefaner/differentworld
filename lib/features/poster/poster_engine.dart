@@ -178,6 +178,30 @@ int posterPageCount(int n) => n * n;
   return (0, (imgH - h) / 2, imgW, h);
 }
 
+/// For [PosterFit.fill] with repositioning: the source rect to show, given a
+/// [zoom] (≥1, crops tighter) and a focal point [focusX]/[focusY] ∈ [0,1].
+/// At zoom 1 + focus (0.5, 0.5) this equals [posterCoverCrop] (centered
+/// cover). Panning slides the crop across the cover slack; zooming shrinks it
+/// around the focal point. The result is always within the image — no clamp
+/// needed — and exactly matches the preview's `Transform.scale` + cover-
+/// alignment so what you drag is what prints.
+(double, double, double, double) posterViewRect(
+  double imgW,
+  double imgH,
+  double canvasAspect,
+  double zoom,
+  double focusX,
+  double focusY,
+) {
+  final (_, _, cw, ch) = posterCoverCrop(imgW, imgH, canvasAspect);
+  final z = zoom < 1 ? 1.0 : zoom;
+  final fx = focusX.clamp(0.0, 1.0);
+  final fy = focusY.clamp(0.0, 1.0);
+  final vw = cw / z;
+  final vh = ch / z;
+  return (fx * (imgW - vw), fy * (imgH - vh), vw, vh);
+}
+
 /// For [PosterFit.whole] (contain): where the whole image lands, centered,
 /// on a canvas of [canvasW]×[canvasH]. The rest of the canvas is white.
 /// Returns `(left, top, width, height)` in canvas pixels.
@@ -223,45 +247,78 @@ const double kGuideMarginIn = 0.35;
   );
 }
 
-/// Decode [bytes], rotate by [quarterTurns] × 90° (lossless), and tile per
-/// [layout] + [fit], returning the page images (JPEG bytes, row-major:
-/// index `row * cols + col`). Runs the CPU-heavy decode/rotate/resize/crop
-/// in an isolate (falls back to the main thread on web, which has no
-/// isolates).
+/// Rotate [bytes] 90° clockwise (lossless decode → re-encode), off the UI
+/// thread. The poster tool bakes rotation into the working image so pan /
+/// zoom + the engine all operate in one "as-displayed" coordinate space.
+Future<Uint8List> rotateImageQuarterTurn(Uint8List bytes) {
+  if (kIsWeb) return Future.value(_rotateSync(bytes));
+  return Isolate.run(() => _rotateSync(bytes));
+}
+
+Uint8List _rotateSync(Uint8List bytes) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) return bytes;
+  final rotated = img.copyRotate(decoded, angle: 90);
+  return Uint8List.fromList(img.encodeJpg(rotated, quality: 95));
+}
+
+/// Decode [bytes] and tile per [layout] + [fit], returning the page images
+/// (JPEG bytes, row-major: index `row * cols + col`). In [PosterFit.fill],
+/// [zoom] / [focusX] / [focusY] reposition the crop (see [posterViewRect]).
+/// Runs the CPU-heavy decode/resize/crop in an isolate (falls back to the
+/// main thread on web, which has no isolates).
 ///
 /// Throws [FormatException] if the bytes can't be decoded as an image.
 Future<List<Uint8List>> renderPosterTiles(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit, {
-  int quarterTurns = 0,
   bool guides = false,
+  double zoom = 1,
+  double focusX = 0.5,
+  double focusY = 0.5,
 }) {
   if (kIsWeb) {
     return Future.value(
-      _renderPosterTilesSync(bytes, layout, fit, quarterTurns, guides),
+      _renderPosterTilesSync(bytes, layout, fit, guides, zoom, focusX, focusY),
     );
   }
   return Isolate.run(
-    () => _renderPosterTilesSync(bytes, layout, fit, quarterTurns, guides),
+    () =>
+        _renderPosterTilesSync(bytes, layout, fit, guides, zoom, focusX, focusY),
   );
 }
+
+/// Synchronous tile render — the same work [renderPosterTiles] does, minus
+/// the isolate hop. Exposed for tests so they stay deterministic (spawning
+/// isolates under the full-suite runner is flaky); production goes through
+/// [renderPosterTiles].
+@visibleForTesting
+List<Uint8List> renderPosterTilesForTest(
+  Uint8List bytes,
+  PosterLayout layout,
+  PosterFit fit, {
+  bool guides = false,
+  double zoom = 1,
+  double focusX = 0.5,
+  double focusY = 0.5,
+}) =>
+    _renderPosterTilesSync(bytes, layout, fit, guides, zoom, focusX, focusY);
 
 /// Top-level (isolate-safe — no closure over instance state).
 List<Uint8List> _renderPosterTilesSync(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit,
-  int quarterTurns,
   bool guides,
+  double zoom,
+  double focusX,
+  double focusY,
 ) {
-  final decoded = img.decodeImage(bytes);
-  if (decoded == null) {
+  final src = img.decodeImage(bytes);
+  if (src == null) {
     throw const FormatException('Could not decode the chosen image.');
   }
-  final turns = quarterTurns % 4;
-  final src =
-      turns == 0 ? decoded : img.copyRotate(decoded, angle: 90.0 * turns);
   final px = _pagePixels(layout);
   // With guides on, the image only fills the trimmable area inside each
   // page's margin — so the tiles are smaller and the white border is added
@@ -277,13 +334,17 @@ List<Uint8List> _renderPosterTilesSync(
 
   switch (fit) {
     case PosterFit.fill:
-      // Cover: crop the source to the canvas aspect, then slice each page
+      // Cover, with optional reposition: crop the source to the chosen view
+      // (zoom + focal point) at the canvas aspect, then slice each page
       // directly out of the (un-resized) source and resize only that tile.
       // Peak memory = source + one page (never the whole canvas at once).
-      final (cl, ct, cw, ch) = posterCoverCrop(
+      final (cl, ct, cw, ch) = posterViewRect(
         src.width.toDouble(),
         src.height.toDouble(),
         canvasAspect,
+        zoom,
+        focusX,
+        focusY,
       );
       for (var row = 0; row < rows; row++) {
         for (var col = 0; col < cols; col++) {
@@ -533,7 +594,7 @@ pw.Page _mapPage(
   );
 }
 
-/// One-shot: render [bytes] per [layout] + [fit] (+ optional rotation) and
+/// One-shot: render [bytes] per [layout] + [fit] (+ optional reposition) and
 /// assemble the PDF.
 Future<Uint8List> renderPosterPdf(
   Uint8List bytes,
@@ -541,15 +602,19 @@ Future<Uint8List> renderPosterPdf(
   PosterFit fit, {
   bool labels = true,
   String title = 'Poster',
-  int quarterTurns = 0,
   bool guides = false,
+  double zoom = 1,
+  double focusX = 0.5,
+  double focusY = 0.5,
 }) async {
   final tiles = await renderPosterTiles(
     bytes,
     layout,
     fit,
-    quarterTurns: quarterTurns,
     guides: guides,
+    zoom: zoom,
+    focusX: focusX,
+    focusY: focusY,
   );
   return buildPosterPdf(
     tiles: tiles,

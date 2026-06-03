@@ -31,8 +31,14 @@ class PosterScreen extends ConsumerStatefulWidget {
 
 class _PosterScreenState extends ConsumerState<PosterScreen> {
   Uint8List? _bytes;
-  double _imageAspect = 1; // width / height of the picked image, pre-rotation
-  int _quarterTurns = 0; // user rotation (per image; not persisted)
+  // Aspect of the WORKING image (rotation is baked into the bytes, so this is
+  // always "as displayed").
+  double _imageAspect = 1;
+  // Fill-mode reposition (per image; not persisted). 0.5/0.5 = centered,
+  // zoom 1 = the full cover crop.
+  double _zoom = 1;
+  double _focusX = 0.5;
+  double _focusY = 0.5;
   PosterOptions _opts = const PosterOptions();
   bool _working = false;
   String? _error;
@@ -46,15 +52,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     }));
   }
 
-  /// The image's aspect with the current rotation applied (an odd number of
-  /// quarter-turns swaps width and height).
-  double get _effectiveAspect {
-    if (_imageAspect <= 0) return 1;
-    return _quarterTurns.isOdd ? 1 / _imageAspect : _imageAspect;
-  }
-
   /// The concrete page grid for the current image + options.
-  PosterLayout get _layout => computePosterLayout(_opts, _effectiveAspect);
+  PosterLayout get _layout => computePosterLayout(_opts, _imageAspect);
+
+  bool get _repositioned => _zoom != 1 || _focusX != 0.5 || _focusY != 0.5;
 
   /// Mutate options + persist so they come back next session.
   void _update(PosterOptions next) {
@@ -62,7 +63,36 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     unawaited(PosterPrefs.save(next));
   }
 
-  void _rotate() => setState(() => _quarterTurns = (_quarterTurns + 1) % 4);
+  void _resetCrop() => setState(() {
+        _zoom = 1;
+        _focusX = 0.5;
+        _focusY = 0.5;
+      });
+
+  /// Rotate the working image 90° — baked into the bytes (off-thread) so pan /
+  /// zoom + the engine all share one "as-displayed" coordinate space.
+  Future<void> _rotate() async {
+    final bytes = _bytes;
+    if (bytes == null || _working) return;
+    setState(() => _working = true);
+    try {
+      final rotated = await rotateImageQuarterTurn(bytes);
+      final aspect = await _decodeAspect(rotated);
+      if (!mounted) return;
+      setState(() {
+        _bytes = rotated;
+        _imageAspect = aspect;
+        _zoom = 1;
+        _focusX = 0.5;
+        _focusY = 0.5;
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() => _error = 'Could not rotate the image.');
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
 
   /// Read just the image's pixel dimensions (header decode — no full
   /// rasterize) so the grid can fit the image's shape.
@@ -100,7 +130,9 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       setState(() {
         _bytes = bytes;
         _imageAspect = aspect;
-        _quarterTurns = 0; // fresh image — clear any prior rotation
+        _zoom = 1; // fresh image — clear any prior reposition
+        _focusX = 0.5;
+        _focusY = 0.5;
         _error = null;
       });
     } on Object {
@@ -154,8 +186,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         _opts.fit,
         labels: _opts.labels,
         title: 'Poster $tag',
-        quarterTurns: _quarterTurns,
         guides: _opts.guides,
+        zoom: _zoom,
+        focusX: _focusX,
+        focusY: _focusY,
       );
       if (!mounted) return;
       if (share) {
@@ -260,11 +294,39 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               layout: layout,
               fit: _opts.fit,
               labels: _opts.labels,
-              quarterTurns: _quarterTurns,
+              zoom: _zoom,
+              focusX: _focusX,
+              focusY: _focusY,
+              onReposition: (z, fx, fy) => setState(() {
+                _zoom = z;
+                _focusX = fx;
+                _focusY = fy;
+              }),
             ),
           ),
         ),
       ),
+      if (_opts.fit == PosterFit.fill) ...[
+        const SizedBox(height: 6),
+        Center(
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 2,
+            children: [
+              Text('Drag to reposition · pinch to zoom', style: caption),
+              if (_repositioned)
+                TextButton(
+                  onPressed: _resetCrop,
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                  child: const Text('Reset'),
+                ),
+            ],
+          ),
+        ),
+      ],
       const SizedBox(height: 8),
       Center(
         child: Text(
@@ -466,29 +528,49 @@ class _Chooser extends StatelessWidget {
 
 /// WYSIWYG preview: the image framed exactly as it'll print, with the page
 /// cut-lines (and corner labels, if on) overlaid so you see what lands where.
-class _PosterPreview extends StatelessWidget {
+/// In Fill mode it's interactive — drag to pan the crop, pinch to zoom — and
+/// the framing (`Transform.scale` + cover alignment) mirrors the engine's
+/// [posterViewRect] one-to-one, so what you set is what prints.
+class _PosterPreview extends StatefulWidget {
   const _PosterPreview({
     required this.bytes,
     required this.layout,
     required this.fit,
     required this.labels,
-    required this.quarterTurns,
+    required this.zoom,
+    required this.focusX,
+    required this.focusY,
+    required this.onReposition,
   });
 
   final Uint8List bytes;
   final PosterLayout layout;
   final PosterFit fit;
   final bool labels;
-  final int quarterTurns;
+  final double zoom;
+  final double focusX;
+  final double focusY;
+  final void Function(double zoom, double focusX, double focusY) onReposition;
+
+  @override
+  State<_PosterPreview> createState() => _PosterPreviewState();
+}
+
+class _PosterPreviewState extends State<_PosterPreview> {
+  double _startZoom = 1;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isFill = fit == PosterFit.fill;
-    return Semantics(
-      label: 'Poster preview — ${layout.cols} by ${layout.rows} pages, '
-          '${isFill ? 'edge to edge' : 'whole image'}. The lines show where '
-          'the pages divide.',
+    final isFill = widget.fit == PosterFit.fill;
+    // Focal point as a cover alignment (-1..1). At zoom 1 this pans the crop
+    // across the cover slack; scaling around the same point zooms in.
+    final align = Alignment(widget.focusX * 2 - 1, widget.focusY * 2 - 1);
+
+    final framed = Semantics(
+      label: 'Poster preview — ${widget.layout.cols} by ${widget.layout.rows} '
+          'pages, ${isFill ? 'edge to edge' : 'whole image'}. The lines show '
+          'where the pages divide.',
       image: true,
       child: RepaintBoundary(
         child: ClipRRect(
@@ -500,21 +582,28 @@ class _PosterPreview extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // The image is rotated in widget space exactly the way the
-                // engine rotates the source bytes, so the preview is WYSIWYG.
-                RotatedBox(
-                  quarterTurns: quarterTurns,
-                  child: Image.memory(
-                    bytes,
-                    fit: isFill ? BoxFit.cover : BoxFit.contain,
+                if (isFill)
+                  Transform.scale(
+                    scale: widget.zoom,
+                    alignment: align,
+                    child: Image.memory(
+                      widget.bytes,
+                      fit: BoxFit.cover,
+                      alignment: align,
+                      gaplessPlayback: true,
+                    ),
+                  )
+                else
+                  Image.memory(
+                    widget.bytes,
+                    fit: BoxFit.contain,
                     gaplessPlayback: true,
                   ),
-                ),
                 CustomPaint(
                   painter: _GridPainter(
-                    cols: layout.cols,
-                    rows: layout.rows,
-                    labels: labels,
+                    cols: widget.layout.cols,
+                    rows: widget.layout.rows,
+                    labels: widget.labels,
                   ),
                 ),
               ],
@@ -522,6 +611,28 @@ class _PosterPreview extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (!isFill) return framed;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxW = constraints.maxWidth;
+        final boxH = constraints.maxHeight;
+        return GestureDetector(
+          onScaleStart: (_) => _startZoom = widget.zoom,
+          onScaleUpdate: (details) {
+            final z = (_startZoom * details.scale).clamp(1.0, 5.0);
+            // Drag right reveals the left of the image → focus moves left.
+            final fx =
+                (widget.focusX - details.focalPointDelta.dx / boxW).clamp(0.0, 1.0);
+            final fy =
+                (widget.focusY - details.focalPointDelta.dy / boxH).clamp(0.0, 1.0);
+            widget.onReposition(z, fx, fy);
+          },
+          child: framed,
+        );
+      },
     );
   }
 }
