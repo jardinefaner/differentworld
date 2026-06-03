@@ -414,62 +414,85 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         style: caption,
       ),
       const SizedBox(height: 16),
-      _label(context, 'Paper'),
-      const SizedBox(height: 6),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: SegmentedButton<PosterPaper>(
-          segments: const [
-            ButtonSegment(value: PosterPaper.letter, label: Text('Letter')),
-            ButtonSegment(value: PosterPaper.a4, label: Text('A4')),
-          ],
-          selected: {_opts.paper},
-          onSelectionChanged: (s) => _update(_opts.copyWith(paper: s.first)),
-        ),
-      ),
-      const SizedBox(height: 16),
-      _label(context, 'Print quality'),
-      const SizedBox(height: 6),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: SegmentedButton<PosterQuality>(
-          segments: const [
-            ButtonSegment(
-              value: PosterQuality.standard,
-              label: Text('Standard'),
+      Card(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          // PageStorageKey keeps the expanded/collapsed state across the many
+          // rebuilds this screen does (every control change, every drag frame).
+          key: const PageStorageKey('poster-print-options'),
+          title: const Text('Print options'),
+          subtitle: Text(_printOptionsSummary(), style: caption),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          expandedCrossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _label(context, 'Paper'),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<PosterPaper>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: PosterPaper.letter,
+                    label: Text('Letter'),
+                  ),
+                  ButtonSegment(value: PosterPaper.a4, label: Text('A4')),
+                ],
+                selected: {_opts.paper},
+                onSelectionChanged: (s) =>
+                    _update(_opts.copyWith(paper: s.first)),
+              ),
             ),
-            ButtonSegment(value: PosterQuality.high, label: Text('High')),
-            ButtonSegment(
-              value: PosterQuality.lossless,
-              label: Text('Lossless'),
+            const SizedBox(height: 16),
+            _label(context, 'Print quality'),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<PosterQuality>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: PosterQuality.standard,
+                    label: Text('Standard'),
+                  ),
+                  ButtonSegment(value: PosterQuality.high, label: Text('High')),
+                  ButtonSegment(
+                    value: PosterQuality.lossless,
+                    label: Text('Lossless'),
+                  ),
+                ],
+                selected: {_opts.quality},
+                onSelectionChanged: (s) =>
+                    _update(_opts.copyWith(quality: s.first)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(_qualityHint(_opts.quality), style: caption),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Corner labels'),
+              subtitle: const Text(
+                'Print a small row/column tag in each page corner so you know '
+                'how to line them up',
+              ),
+              value: _opts.labels,
+              onChanged: (v) => _update(_opts.copyWith(labels: v)),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Assembly guides'),
+              subtitle: const Text(
+                'Add a trim border with a dashed cut line + crop marks so '
+                'seams line up, plus a map page showing where each page goes',
+              ),
+              value: _opts.guides,
+              onChanged: (v) => _update(_opts.copyWith(guides: v)),
             ),
           ],
-          selected: {_opts.quality},
-          onSelectionChanged: (s) => _update(_opts.copyWith(quality: s.first)),
         ),
-      ),
-      const SizedBox(height: 4),
-      Text(_qualityHint(_opts.quality), style: caption),
-      const SizedBox(height: 8),
-      SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        title: const Text('Corner labels'),
-        subtitle: const Text(
-          'Print a small row/column tag in each page corner so you know how '
-          'to line them up',
-        ),
-        value: _opts.labels,
-        onChanged: (v) => _update(_opts.copyWith(labels: v)),
-      ),
-      SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        title: const Text('Assembly guides'),
-        subtitle: const Text(
-          'Add a trim border with a dashed cut line + crop marks so seams '
-          'line up, plus a map page showing where each page goes',
-        ),
-        value: _opts.guides,
-        onChanged: (v) => _update(_opts.copyWith(guides: v)),
       ),
       const SizedBox(height: 4),
       Row(
@@ -498,6 +521,23 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         PosterQuality.lossless =>
           'Crispest for drawings, line art & text — but the largest files.',
       };
+
+  String _qualityLabel(PosterQuality q) => switch (q) {
+        PosterQuality.standard => 'Standard',
+        PosterQuality.high => 'High',
+        PosterQuality.lossless => 'Lossless',
+      };
+
+  /// Live one-line summary of the collapsed "Print options" group.
+  String _printOptionsSummary() {
+    final parts = <String>[
+      if (_opts.paper == PosterPaper.a4) 'A4' else 'Letter',
+      _qualityLabel(_opts.quality),
+      if (_opts.labels) 'labels',
+      if (_opts.guides) 'guides',
+    ];
+    return parts.join(' · ');
+  }
 
   String _paperName(PosterPaper p) => p == PosterPaper.a4 ? 'A4' : 'letter';
 
