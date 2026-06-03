@@ -164,6 +164,25 @@ abstract class GameDefinition<S> {
     void Function(GameIntent intent, [Map<String, dynamic> args]) send,
   ) => null;
 
+  /// Whether this game has a secret/actor role (drives the "Join as actor"
+  /// lobby option + the controller-sees-the-secret behavior). Override to
+  /// true alongside [buildSecretStage]. Default false = a normal two-role
+  /// (present + control) game.
+  bool get hasSecretRole => false;
+
+  /// Optional stage for the SECRET (actor) role — a phone that mirrors the
+  /// state but shows what the ROOM must not (e.g. Charades' secret word). When
+  /// non-null, the live screen offers a "Join as actor" role that renders this,
+  /// and the CONTROLLER (the teacher) sees this instead of [buildStage] (so
+  /// they can mark the room's guess). The presenter/room always shows
+  /// [buildStage]. Default null = no secret role (the normal two-role game).
+  ///
+  /// Secrecy is by RENDERING, not by the wire: the presenter builds the state
+  /// (it already holds the content) and broadcasts it; the room device simply
+  /// doesn't draw the secret field. So stash the secret content in
+  /// [initialState] like any other content.
+  Widget? buildSecretStage(BuildContext context, S state) => null;
+
   /// The label for the [GameIntent.reveal] button in the default control
   /// bar. Most games "Reveal"; This-or-That "Discuss" (it reveals a
   /// discussion prompt, not an answer).

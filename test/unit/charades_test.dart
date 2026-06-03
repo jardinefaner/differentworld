@@ -1,88 +1,109 @@
-// Charades on the generic LiveSession seam (docs/GAMES.md). Pure reducer +
-// the seam wrapping + the content shape. Two-device transport isn't unit-
-// tested (needs a live server), but the rules + wire format are.
+// Charades on the unified game framework (docs/GAMES.md). The pure reducer
+// over GameIntent, the content shape, and the secret-role surface. Two-device
+// transport isn't unit-tested (needs a live server), but the rules + wire
+// format are.
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
-import 'package:differentworld/features/live_session/charades.dart';
+import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  const total = 5;
+  const game = CharadesGame();
 
-  group('CharadesState.reduce', () {
-    test('got counts it and advances', () {
-      final r = CharadesState.reduce(const CharadesState(index: 1, found: 2), 'got', total);
-      expect(r.found, 3);
-      expect(r.index, 2);
-      expect(r.done, isFalse);
+  // A small explicit 5-prompt state so the rules read clearly.
+  Map<String, dynamic> stateAt({int i = 0, int f = 0, bool d = false, int n = 5}) {
+    return {
+      'i': i,
+      'f': f,
+      'd': d,
+      'n': n,
+      'items': [for (var k = 0; k < n; k++) ['word$k', 'cat$k']],
+    };
+  }
+
+  Map<String, dynamic> apply(Map<String, dynamic> s, GameIntent intent) =>
+      game.reduce(s, intent, const {});
+
+  group('CharadesGame.reduce', () {
+    test('Got it (tally) counts it and advances', () {
+      final r = apply(stateAt(i: 1, f: 2), GameIntent.tally);
+      expect(r['f'], 3);
+      expect(r['i'], 2);
+      expect(r['d'], isFalse);
     });
 
-    test('got on the last prompt counts it and ends', () {
-      final r = CharadesState.reduce(
-        const CharadesState(index: total - 1, found: 4),
-        'got',
-        total,
-      );
-      expect(r.found, 5);
-      expect(r.done, isTrue);
+    test('Got it on the last prompt counts it and ends', () {
+      final r = apply(stateAt(i: 4, f: 4), GameIntent.tally);
+      expect(r['f'], 5);
+      expect(r['d'], isTrue);
     });
 
-    test('skip advances without counting', () {
-      final r = CharadesState.reduce(const CharadesState(index: 1, found: 2), 'skip', total);
-      expect(r.found, 2);
-      expect(r.index, 2);
+    test('Skip (next) advances without counting', () {
+      final r = apply(stateAt(i: 1, f: 2), GameIntent.next);
+      expect(r['f'], 2);
+      expect(r['i'], 2);
     });
 
-    test('skip on the last prompt ends without counting', () {
-      final r = CharadesState.reduce(
-        const CharadesState(index: total - 1, found: 2),
-        'skip',
-        total,
-      );
-      expect(r.done, isTrue);
-      expect(r.found, 2);
+    test('Skip on the last prompt ends without counting', () {
+      final r = apply(stateAt(i: 4, f: 2), GameIntent.next);
+      expect(r['d'], isTrue);
+      expect(r['f'], 2);
     });
 
-    test('got/skip are no-ops once done', () {
-      const s = CharadesState(index: total - 1, found: 5, done: true);
-      expect(CharadesState.reduce(s, 'got', total).found, 5);
-      expect(CharadesState.reduce(s, 'skip', total).index, total - 1);
+    test('Got it / Skip are no-ops once done', () {
+      final done = stateAt(i: 4, f: 5, d: true);
+      expect(apply(done, GameIntent.tally)['f'], 5);
+      expect(apply(done, GameIntent.next)['i'], 4);
     });
 
-    test('restart resets; hello is a no-op', () {
-      const s = CharadesState(index: 3, found: 3, done: true);
-      final r = CharadesState.reduce(s, 'restart', total);
-      expect(r.index, 0);
-      expect(r.found, 0);
-      expect(r.done, isFalse);
-      expect(CharadesState.reduce(s, 'hello', total).found, 3);
+    test('Reset clears progress but keeps the prompts', () {
+      final r = apply(stateAt(i: 3, f: 3, d: true), GameIntent.reset);
+      expect(r['i'], 0);
+      expect(r['f'], 0);
+      expect(r['d'], isFalse);
+      expect((r['items'] as List).length, 5); // content survives a reset
     });
   });
 
-  group('seam wiring', () {
-    test('reducer(total) operates on the session map', () {
-      final next = CharadesState.reducer(total)(
-        const CharadesState().toMap(),
-        'got',
-        const {},
-      );
-      final s = CharadesState.fromMap(next);
-      expect(s.found, 1);
-      expect(s.index, 1);
+  group('content + decode', () {
+    test('initialState pulls words + categories from the bank', () {
+      final s = game.initialState(LocalContentBank.seeded());
+      final n = s['n'] as int;
+      final items = s['items'] as List;
+      expect(n, greaterThan(0));
+      expect(items.length, n);
+      for (final it in items) {
+        final pair = it as List;
+        expect((pair[0] as String).trim(), isNotEmpty); // word
+        expect((pair[1] as String).trim(), isNotEmpty); // category
+      }
     });
 
-    test('round-trips through toMap/fromMap', () {
-      const s = CharadesState(index: 4, found: 3);
-      final r = CharadesState.fromMap(s.toMap());
-      expect(r.index, 4);
-      expect(r.found, 3);
-      expect(r.done, isFalse);
+    test('decode exposes the current word + category; secret role on', () {
+      final s = game.decode(stateAt(i: 1));
+      expect(s.word, 'word1');
+      expect(s.category, 'cat1');
+      expect(s.total, 5);
+      expect(game.hasSecretRole, isTrue);
+    });
+  });
+
+  group('activeIntents', () {
+    test('in play: Got it + Skip; done: Play again', () {
+      expect(
+        game.activeIntents(game.decode(stateAt())),
+        {GameIntent.tally, GameIntent.next},
+      );
+      expect(
+        game.activeIntents(game.decode(stateAt(d: true))),
+        {GameIntent.reset},
+      );
     });
   });
 
   test('charades seed: every prompt has a word + a category', () {
-    final bank = LocalContentBank.seeded();
-    final prompts = bank.take(ContentKind.charades, 100);
+    final prompts = LocalContentBank.seeded().take(ContentKind.charades, 100);
     expect(prompts.length, greaterThanOrEqualTo(16));
     for (final p in prompts) {
       expect((p.payload['word']! as String).trim(), isNotEmpty);

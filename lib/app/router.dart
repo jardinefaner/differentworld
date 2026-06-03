@@ -32,6 +32,7 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
@@ -48,7 +49,6 @@ import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
-import 'package:differentworld/features/live_session/charades_live_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
@@ -915,7 +915,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // phone shows the secret word, the teacher's phone marks Got it.
           GoRoute(
             path: '/live/charades',
-            builder: (_, _) => const CharadesLiveScreen(),
+            builder: (_, _) => const LiveGameScreen(def: CharadesGame()),
           ),
           // Anonymous brainstorm / agenda board (docs/VISION.md #5): phones
           // post ideas to a projected wall, no names, over Realtime.
