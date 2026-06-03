@@ -33,7 +33,15 @@ void main() {
   testWidgets('unauthenticated boot lands on the login screen',
       (tester) async {
     await tester.pumpWidget(const ProviderScope(child: DifferentWorldApp()));
-    await tester.pumpAndSettle(const Duration(seconds: 1));
+    // Bounded pump, NOT pumpAndSettle: the full app shell carries a
+    // perpetual ticker (the sync-status indicator / IME cursor) that never
+    // goes idle, so pumpAndSettle would hang until its 10-minute timeout.
+    // The signed-out redirect to /login is synchronous (sessionProvider
+    // reads currentSession == null), so one frame plus a clock advance past
+    // the route transition is enough to land on — and fully build — the
+    // login screen.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
     expect(find.text('Different World'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
   });
