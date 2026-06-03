@@ -140,17 +140,45 @@ Mark inapplicable items **n/a**; don't force them.
 - **D4 — Forms:** inline validation (`onChanged`/`onFieldSubmitted`), draft
   persistence for > 3 fields, submit disabled during submission with an
   inline spinner (never a full-screen overlay). `DismissGuard` when dirty. *Warn.*
+- **D5 — A form / heavy-edit screen has an explicit commit + a visible
+  outcome.** A screen the user EDITS (a form, a multi-field sheet, a
+  configurable editor) needs a clear **Save / Done** affordance — a filled
+  action pill or a prominent button — never a silent save-on-leave that leaves
+  the user wondering *"did it save?"*. On success, brief **confirmation** (a
+  snackbar/toast, or pop back to the now-updated list). On failure, an
+  **inline, recoverable error with retry** — never a hung spinner or a
+  silently-swallowed save. Verify: the screen has a Save/Done action; the
+  submit path shows a success signal AND surfaces failure with retry. *Blocker
+  for any screen that mutates durable data behind a save.*
 
 ## E. Accessibility & i18n
 
 - **E1 — Touch targets ≥ 48×48 dp**, even on desktop. *Blocker.*
-- **E2 — Interactive elements have `Semantics(label:)` or `Tooltip`.** Icon
-  buttons especially. *Warn.*
+- **E2 — Interactive elements are labeled for assistive tech.** A control
+  with visible text is covered; an **icon-only** control (an `IconButton`, a
+  bare-icon tap target — nav chevrons, close, an icon action) MUST carry a
+  `tooltip:` or `Semantics(label:)`. *Blocker for icon-only controls; warn
+  otherwise.*
 - **E3 — Text scales to 200% without truncation.** No fixed-height
   containers wrapping text; respects `textScaler`. *Warn.*
 - **E4 — User-facing strings are localizable** (no hardcoded copy bound for
   translation). i18n infra is deferred app-wide, so this is **note-level**
   until `gen-l10n` lands — but flag new hardcoded strings.
+- **E5 — Text contrast ≥ 4.5:1, MEASURED — including over glass.** Body/label
+  text must hit WCAG AA against its ACTUAL background. Two traps: (1)
+  low-alpha text (`withValues(alpha: < ~0.7)` / `withOpacity`) for
+  secondary/disabled states that drops below 4.5:1 on a light surface — render
+  a disabled state with a real disabled style, not opacity; (2) text over a
+  translucent `GlassPanel` whose backdrop can be anything — glass carrying
+  text needs a scrim (or a high-enough surface alpha) so the text passes
+  against the worst-case backdrop. Check the OUTDOOR/high-contrast theme too
+  (the audience reads in sunlight). *Blocker.*
+- **E6 — Never encode meaning by color alone; a palette gets a legend.** A
+  status/category shown by color must ALSO carry an icon, label, or position
+  (colorblind + glare). When a screen uses a color PALETTE to mean things
+  (schedule block kinds, status tiers), it shows an on-screen **legend** or
+  labels each item. *Warn — blocker if color is the only signal of a
+  safety-relevant state.*
 
 ## F. Offline-first & privacy
 
