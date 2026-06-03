@@ -9,12 +9,10 @@ import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
-import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
-import 'package:differentworld/features/activity_runtime/rhyme_time_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
@@ -35,9 +33,11 @@ import 'package:differentworld/features/games/game_runner.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
+import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
@@ -967,7 +967,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // "Starts with" word game — content from the content bank.
           GoRoute(
             path: '/activity/starts-with',
-            builder: (_, _) => const LetterWordsScreen(),
+            builder: (_, _) => const GameRunner(def: LetterWordsGame()),
+          ),
+          GoRoute(
+            path: '/live/starts-with',
+            builder: (_, _) => const LiveGameScreen(def: LetterWordsGame()),
           ),
           // "As If" acting game — perform a line in an emotion/character.
           GoRoute(
@@ -1004,7 +1008,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Rhyme Time — host-run; the room shouts rhymes, you tally.
           GoRoute(
             path: '/activity/rhyme-time',
-            builder: (_, _) => const RhymeTimeScreen(),
+            builder: (_, _) => const GameRunner(def: RhymeTimeGame()),
+          ),
+          GoRoute(
+            path: '/live/rhyme-time',
+            builder: (_, _) => const LiveGameScreen(def: RhymeTimeGame()),
           ),
           // Make a Pattern — draw/build a tile in real life, snap it, watch
           // it repeat (kaleidoscope mirroring → symmetry from any tile).
