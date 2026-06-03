@@ -22,6 +22,19 @@ enum PosterPaper {
   a4,
 }
 
+/// How each printed page is turned — overrides the auto-pick.
+enum PosterOrientation {
+  /// Let the grid search choose per the image's shape (the default — a wide
+  /// image lands on landscape pages, a tall one on portrait).
+  auto,
+
+  /// Force every page portrait (tall), whatever the image's shape.
+  portrait,
+
+  /// Force every page landscape (wide), whatever the image's shape.
+  landscape,
+}
+
 /// Print quality — trades file size + render time for sharpness.
 enum PosterQuality {
   /// JPEG, modest resolution cap. Fast, small files. The default.
@@ -43,6 +56,7 @@ class PosterOptions {
   const PosterOptions({
     this.size = 2,
     this.fitShape = true,
+    this.orientation = PosterOrientation.auto,
     this.fit = PosterFit.fill,
     this.paper = PosterPaper.letter,
     this.quality = PosterQuality.standard,
@@ -61,6 +75,11 @@ class PosterOptions {
   /// false, the poster is a plain square [size]×[size] of portrait
   /// pages.
   final bool fitShape;
+
+  /// Page turn. [PosterOrientation.auto] keeps the shape-fitting behavior;
+  /// portrait / landscape force every page that way (the grid search is then
+  /// constrained to the forced orientation when [fitShape] is on).
+  final PosterOrientation orientation;
 
   /// Cover vs contain.
   final PosterFit fit;
@@ -84,6 +103,7 @@ class PosterOptions {
   PosterOptions copyWith({
     int? size,
     bool? fitShape,
+    PosterOrientation? orientation,
     PosterFit? fit,
     PosterPaper? paper,
     PosterQuality? quality,
@@ -93,6 +113,7 @@ class PosterOptions {
       PosterOptions(
         size: size ?? this.size,
         fitShape: fitShape ?? this.fitShape,
+        orientation: orientation ?? this.orientation,
         fit: fit ?? this.fit,
         paper: paper ?? this.paper,
         quality: quality ?? this.quality,

@@ -16,6 +16,7 @@ void main() {
     final o = await PosterPrefs.load();
     expect(o.size, 2);
     expect(o.fitShape, isTrue);
+    expect(o.orientation, PosterOrientation.auto);
     expect(o.fit, PosterFit.fill);
     expect(o.paper, PosterPaper.letter);
     expect(o.labels, isTrue);
@@ -25,6 +26,7 @@ void main() {
     const saved = PosterOptions(
       size: 4,
       fitShape: false,
+      orientation: PosterOrientation.landscape,
       fit: PosterFit.whole,
       paper: PosterPaper.a4,
       quality: PosterQuality.lossless,
@@ -35,6 +37,7 @@ void main() {
     final loaded = await PosterPrefs.load();
     expect(loaded.size, 4);
     expect(loaded.fitShape, isFalse);
+    expect(loaded.orientation, PosterOrientation.landscape);
     expect(loaded.fit, PosterFit.whole);
     expect(loaded.paper, PosterPaper.a4);
     expect(loaded.quality, PosterQuality.lossless);

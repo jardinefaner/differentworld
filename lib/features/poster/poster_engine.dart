@@ -78,11 +78,22 @@ class PosterLayout {
 /// fewer pages, then the orientation matching the image.
 PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
   final size = opts.size;
+
+  // Which page orientations the grid search may use. Auto weighs both and
+  // lets the image's shape decide; a forced orientation pins it.
+  final orientations = switch (opts.orientation) {
+    PosterOrientation.auto => const [false, true],
+    PosterOrientation.portrait => const [false],
+    PosterOrientation.landscape => const [true],
+  };
+
   if (!opts.fitShape) {
+    // Plain square grid. Honor a forced landscape; auto + portrait keep the
+    // historical portrait default.
     return PosterLayout(
       cols: size,
       rows: size,
-      landscape: false,
+      landscape: opts.orientation == PosterOrientation.landscape,
       paper: opts.paper,
     );
   }
@@ -93,7 +104,7 @@ PosterLayout computePosterLayout(PosterOptions opts, double imageAspect) {
 
   double mismatch(double a, double b) => a > b ? a / b : b / a;
 
-  for (final landscape in [false, true]) {
+  for (final landscape in orientations) {
     for (var minor = 1; minor <= size; minor++) {
       // The longer page-count is always `size`; pair it both ways so the
       // poster can be wide (cols=size) or tall (rows=size).
@@ -304,17 +315,187 @@ Future<List<Uint8List>> renderPosterTiles(
   double focusX = 0.5,
   double focusY = 0.5,
   PosterQuality quality = PosterQuality.standard,
+  void Function(int done, int total)? onProgress,
 }) {
+  final total = layout.pageCount;
   if (kIsWeb) {
-    return Future.value(
-      _renderPosterTilesSync(
+    // No isolates on web — render on the main thread. We still drive the
+    // progress callback so the caller's UI completes (it just can't animate
+    // mid-decode, since the main thread is busy).
+    onProgress?.call(0, total);
+    final tiles = _renderPosterTilesSync(
+      bytes,
+      layout,
+      fit,
+      guides,
+      zoom,
+      focusX,
+      focusY,
+      quality,
+      onTile: onProgress == null ? null : (done) => onProgress(done, total),
+    );
+    return Future.value(tiles);
+  }
+  if (onProgress == null) {
+    // Fast path: a one-shot worker, no progress channel.
+    return Isolate.run(
+      () => _renderPosterTilesSync(
           bytes, layout, fit, guides, zoom, focusX, focusY, quality),
     );
   }
-  return Isolate.run(
-    () => _renderPosterTilesSync(
-        bytes, layout, fit, guides, zoom, focusX, focusY, quality),
+  // Progress path: a worker that streams the running page count back.
+  return _renderTilesWithProgress(
+    bytes,
+    layout,
+    fit,
+    guides,
+    zoom,
+    focusX,
+    focusY,
+    quality,
+    onProgress,
   );
+}
+
+// --- Progress-reporting render worker --------------------------------------
+//
+// `Isolate.run` is one-shot (no callback channel), so to report determinate
+// per-page progress we spawn a worker that streams the running tile count over
+// a port, then the finished tiles (or a failure). Every terminal path closes
+// the port; an unexpected worker exit (e.g. OOM) is caught via `onExit` so the
+// returned future can never hang.
+
+class _PosterRenderRequest {
+  const _PosterRenderRequest({
+    required this.sendPort,
+    required this.bytes,
+    required this.layout,
+    required this.fit,
+    required this.guides,
+    required this.zoom,
+    required this.focusX,
+    required this.focusY,
+    required this.quality,
+  });
+  final SendPort sendPort;
+  final Uint8List bytes;
+  final PosterLayout layout;
+  final PosterFit fit;
+  final bool guides;
+  final double zoom;
+  final double focusX;
+  final double focusY;
+  final PosterQuality quality;
+}
+
+class _PosterRenderError {
+  const _PosterRenderError(this.message);
+  final String message;
+}
+
+/// The finished tiles, in a dedicated wrapper so the listener classifies the
+/// terminal message by TYPE (never `is List`, which a stray list could spoof
+/// and whose reified generic can be erased across the isolate boundary).
+class _PosterRenderResult {
+  const _PosterRenderResult(this.tiles);
+  final List<Uint8List> tiles;
+}
+
+/// Worker entry — top-level so it's isolate-safe (no capture of instance
+/// state). Streams `int` progress ticks, then a [_PosterRenderResult], or a
+/// [_PosterRenderError] if the render throws.
+void _renderWorker(_PosterRenderRequest req) {
+  final port = req.sendPort;
+  try {
+    final tiles = _renderPosterTilesSync(
+      req.bytes,
+      req.layout,
+      req.fit,
+      req.guides,
+      req.zoom,
+      req.focusX,
+      req.focusY,
+      req.quality,
+      onTile: port.send,
+    );
+    port.send(_PosterRenderResult(tiles));
+  } on Object catch (e) {
+    port.send(_PosterRenderError(e.toString()));
+  }
+}
+
+Future<List<Uint8List>> _renderTilesWithProgress(
+  Uint8List bytes,
+  PosterLayout layout,
+  PosterFit fit,
+  bool guides,
+  double zoom,
+  double focusX,
+  double focusY,
+  PosterQuality quality,
+  void Function(int done, int total) onProgress,
+) async {
+  final total = layout.pageCount;
+  onProgress(0, total);
+  final receive = ReceivePort();
+  final completer = Completer<List<Uint8List>>();
+  late final StreamSubscription<dynamic> sub;
+
+  sub = receive.listen((message) {
+    // Once settled, ignore everything — a late progress tick, or the `onExit`
+    // null that always trails the success message. This makes receive.close()
+    // run exactly once (on the first terminal message) and tolerates any
+    // message arriving after we've resolved.
+    if (completer.isCompleted) return;
+    if (message is int) {
+      // A progress tick (running page count) — not terminal; keep listening.
+      onProgress(message, total);
+      return;
+    }
+    if (message is _PosterRenderResult) {
+      // Reconstruct a strongly-typed list defensively — the reified generic
+      // can be erased crossing the isolate boundary.
+      completer.complete(message.tiles.cast<Uint8List>().toList(growable: false));
+    } else if (message is _PosterRenderError) {
+      completer.completeError(Exception(message.message));
+    } else {
+      // `onExit` fired (null) — or any unexpected message. If we reach here
+      // unresolved, the worker died without a result; surface it rather than
+      // hang the future forever.
+      completer.completeError(
+        Exception('The poster render stopped unexpectedly.'),
+      );
+    }
+    receive.close();
+  });
+
+  try {
+    await Isolate.spawn(
+      _renderWorker,
+      _PosterRenderRequest(
+        sendPort: receive.sendPort,
+        bytes: bytes,
+        layout: layout,
+        fit: fit,
+        guides: guides,
+        zoom: zoom,
+        focusX: focusX,
+        focusY: focusY,
+        quality: quality,
+      ),
+      onExit: receive.sendPort,
+      debugName: 'poster-render',
+    );
+  } on Object catch (e, st) {
+    if (!completer.isCompleted) completer.completeError(e, st);
+    receive.close();
+  }
+
+  try {
+    return await completer.future;
+  } finally {
+    await sub.cancel();
+  }
 }
 
 /// Synchronous tile render — the same work [renderPosterTiles] does, minus
@@ -335,7 +516,9 @@ List<Uint8List> renderPosterTilesForTest(
     _renderPosterTilesSync(
         bytes, layout, fit, guides, zoom, focusX, focusY, quality);
 
-/// Top-level (isolate-safe — no closure over instance state).
+/// Top-level (isolate-safe — no closure over instance state). [onTile] (when
+/// given) is called with the running tile count after each page is encoded,
+/// so a caller can report determinate progress.
 List<Uint8List> _renderPosterTilesSync(
   Uint8List bytes,
   PosterLayout layout,
@@ -344,8 +527,9 @@ List<Uint8List> _renderPosterTilesSync(
   double zoom,
   double focusX,
   double focusY,
-  PosterQuality quality,
-) {
+  PosterQuality quality, {
+  void Function(int done)? onTile,
+}) {
   final src = img.decodeImage(bytes);
   if (src == null) {
     throw const FormatException('Could not decode the chosen image.');
@@ -400,6 +584,7 @@ List<Uint8List> _renderPosterTilesSync(
             interpolation: img.Interpolation.average,
           );
           tiles.add(_encodeTile(tile, quality));
+          onTile?.call(tiles.length);
         }
       }
 
@@ -433,6 +618,7 @@ List<Uint8List> _renderPosterTilesSync(
             height: pageH,
           );
           tiles.add(_encodeTile(tile, quality));
+          onTile?.call(tiles.length);
         }
       }
   }
@@ -638,6 +824,7 @@ Future<Uint8List> renderPosterPdf(
   double focusX = 0.5,
   double focusY = 0.5,
   PosterQuality quality = PosterQuality.standard,
+  void Function(int done, int total)? onProgress,
 }) async {
   final tiles = await renderPosterTiles(
     bytes,
@@ -648,6 +835,7 @@ Future<Uint8List> renderPosterPdf(
     focusX: focusX,
     focusY: focusY,
     quality: quality,
+    onProgress: onProgress,
   );
   return buildPosterPdf(
     tiles: tiles,

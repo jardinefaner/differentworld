@@ -111,6 +111,44 @@ void main() {
       );
       expect(l.paper, PosterPaper.a4);
     });
+
+    test('orientation defaults to auto', () {
+      expect(const PosterOptions().orientation, PosterOrientation.auto);
+    });
+
+    test('forced portrait keeps every page portrait, even for a wide image',
+        () {
+      final l = computePosterLayout(
+        const PosterOptions(size: 3, orientation: PosterOrientation.portrait),
+        2.5, // very wide image that auto would tile on landscape pages
+      );
+      expect(l.landscape, isFalse);
+      expect(math.max(l.cols, l.rows), 3); // grid still honors size
+    });
+
+    test('forced landscape keeps every page landscape, even for a tall image',
+        () {
+      final l = computePosterLayout(
+        const PosterOptions(size: 3, orientation: PosterOrientation.landscape),
+        0.4, // very tall image
+      );
+      expect(l.landscape, isTrue);
+      expect(math.max(l.cols, l.rows), 3);
+    });
+
+    test('forced orientation applies to the plain square grid too', () {
+      final l = computePosterLayout(
+        const PosterOptions(
+          size: 3,
+          fitShape: false,
+          orientation: PosterOrientation.landscape,
+        ),
+        1,
+      );
+      expect(l.cols, 3);
+      expect(l.rows, 3);
+      expect(l.landscape, isTrue);
+    });
   });
 
   group('posterCoverCrop (fill)', () {

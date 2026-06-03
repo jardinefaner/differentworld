@@ -42,6 +42,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   PosterOptions _opts = const PosterOptions();
   bool _working = false;
   bool _lastShare = false; // whether the last output attempt was Share vs Print
+  // Determinate render progress (pages encoded / total) while _working. 0/0
+  // before the first tile lands — the banner shows an indeterminate bar then.
+  int _progressDone = 0;
+  int _progressTotal = 0;
   String? _error;
 
   @override
@@ -179,12 +183,14 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   Future<void> _output({required bool share}) async {
     final bytes = _bytes;
     if (bytes == null || _working) return;
+    final layout = _layout;
     setState(() {
       _working = true;
       _lastShare = share;
       _error = null;
+      _progressDone = 0;
+      _progressTotal = layout.pageCount;
     });
-    final layout = _layout;
     final tag = '${layout.cols}×${layout.rows}';
     try {
       final pdf = await renderPosterPdf(
@@ -198,6 +204,13 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         focusX: _focusX,
         focusY: _focusY,
         quality: _opts.quality,
+        onProgress: (done, total) {
+          if (!mounted) return;
+          setState(() {
+            _progressDone = done;
+            _progressTotal = total;
+          });
+        },
       );
       if (!mounted) return;
       if (share) {
@@ -265,7 +278,11 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                       'together',
                 ),
                 if (_working)
-                  const _WorkingBanner(key: ValueKey('poster-working')),
+                  _WorkingBanner(
+                    key: const ValueKey('poster-working'),
+                    done: _progressDone,
+                    total: _progressTotal,
+                  ),
                 if (_error != null)
                   _ErrorBanner(
                     key: const ValueKey('poster-error'),
@@ -378,11 +395,53 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         contentPadding: EdgeInsets.zero,
         title: const Text('Fit to image shape'),
         subtitle: const Text(
-          'Auto-pick the grid + page orientation so a wide or tall image '
-          'isn’t cropped hard or printed with big margins',
+          'Auto-pick the grid so a wide or tall image isn’t cropped hard or '
+          'printed with big margins',
         ),
         value: _opts.fitShape,
         onChanged: (v) => _update(_opts.copyWith(fitShape: v)),
+      ),
+      const SizedBox(height: 12),
+      _label(context, 'Page orientation'),
+      const SizedBox(height: 6),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: SegmentedButton<PosterOrientation>(
+          showSelectedIcon: false,
+          segments: const [
+            // Labels ellipsize so the 3 segments degrade gracefully at large
+            // text scales; the icon still distinguishes each option (E3).
+            ButtonSegment(
+              value: PosterOrientation.auto,
+              label: Text('Auto', overflow: TextOverflow.ellipsis),
+              icon: Icon(Icons.auto_awesome_outlined),
+            ),
+            ButtonSegment(
+              value: PosterOrientation.portrait,
+              label: Text('Portrait', overflow: TextOverflow.ellipsis),
+              icon: Icon(Icons.crop_portrait),
+            ),
+            ButtonSegment(
+              value: PosterOrientation.landscape,
+              label: Text('Landscape', overflow: TextOverflow.ellipsis),
+              icon: Icon(Icons.crop_landscape),
+            ),
+          ],
+          selected: {_opts.orientation},
+          onSelectionChanged: (s) =>
+              _update(_opts.copyWith(orientation: s.first)),
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        switch (_opts.orientation) {
+          PosterOrientation.auto =>
+            'Picks the page turn that best fits the image.',
+          PosterOrientation.portrait => 'Forces every page portrait (tall).',
+          PosterOrientation.landscape =>
+            'Forces every page landscape (wide).',
+        },
+        style: caption,
       ),
       const SizedBox(height: 8),
       _label(context, 'Fit'),
@@ -795,23 +854,57 @@ class _GridPainter extends CustomPainter {
       old.cols != cols || old.rows != rows || old.labels != labels;
 }
 
+/// Determinate render progress. While the worker streams page counts the bar
+/// fills "page N of M"; before the first tile (or on web, where the count
+/// can't stream) it shows an indeterminate bar so it never looks stuck at 0.
 class _WorkingBanner extends StatelessWidget {
-  const _WorkingBanner({super.key});
+  const _WorkingBanner({required this.done, required this.total, super.key});
+
+  final int done;
+  final int total;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasCount = total > 0 && done > 0;
+    final value = hasCount ? (done / total).clamp(0.0, 1.0) : null;
+    final String label;
+    if (total > 0 && done >= total) {
+      label = 'Finishing your poster…';
+    } else if (hasCount) {
+      label = 'Rendering page $done of $total…';
+    } else {
+      label = 'Preparing your poster…';
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
+          Row(
+            children: [
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(label, style: theme.textTheme.bodyMedium),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Text('Building your poster…', style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: value,
+              minHeight: 6,
+              // Voice the same "page N of M" text so the progress is reachable
+              // from the bar itself, not only the sibling Text (E2).
+              semanticsLabel: label,
+            ),
+          ),
         ],
       ),
     );

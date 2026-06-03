@@ -26,6 +26,11 @@ class PosterPrefs {
       return PosterOptions(
         size: (map['size'] as num?)?.toInt().clamp(2, 5) ?? 2,
         fitShape: map['fitShape'] as bool? ?? true,
+        orientation: _enumByName(
+          PosterOrientation.values,
+          map['orientation'],
+          PosterOrientation.auto,
+        ),
         fit: _enumByName(PosterFit.values, map['fit'], PosterFit.fill),
         paper: _enumByName(PosterPaper.values, map['paper'], PosterPaper.letter),
         quality: _enumByName(
@@ -50,6 +55,7 @@ class PosterPrefs {
         jsonEncode({
           'size': o.size,
           'fitShape': o.fitShape,
+          'orientation': o.orientation.name,
           'fit': o.fit.name,
           'paper': o.paper.name,
           'quality': o.quality.name,
