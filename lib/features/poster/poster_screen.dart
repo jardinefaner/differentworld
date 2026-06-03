@@ -41,6 +41,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   double _focusY = 0.5;
   PosterOptions _opts = const PosterOptions();
   bool _working = false;
+  bool _lastShare = false; // whether the last output attempt was Share vs Print
   String? _error;
 
   @override
@@ -111,6 +112,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   }
 
   Future<void> _pick(ImageSource source) async {
+    // Don't start a pick while a rotate / render is in flight — its later
+    // setState could otherwise clobber the freshly-picked bytes. (The Replace
+    // entry points are already gated on `_working`; this is belt-and-braces.)
+    if (_working) return;
     try {
       // Cap the longest edge at 4096 px. That's still far more detail than
       // the poster needs (the assembled canvas tops out at 3600 px, so a
@@ -175,6 +180,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     if (bytes == null || _working) return;
     setState(() {
       _working = true;
+      _lastShare = share;
       _error = null;
     });
     final layout = _layout;
@@ -256,19 +262,26 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                   subtitle: 'Blow up an image across printed pages you tape '
                       'together',
                 ),
-                if (_working) const _WorkingBanner(),
+                if (_working)
+                  const _WorkingBanner(key: ValueKey('poster-working')),
                 if (_error != null)
                   _ErrorBanner(
+                    key: const ValueKey('poster-error'),
                     message: _error!,
-                    // Only offer retry when there's an image to retry with.
+                    // Retry the SAME action that failed (Print vs Share), and
+                    // only when there's an image to retry with.
                     onRetry: (_bytes != null && !_working)
-                        ? () => _output(share: false)
+                        ? () => _output(share: _lastShare)
                         : null,
                   ),
                 if (!hasImage)
-                  _Chooser(onPick: _pick)
+                  _Chooser(key: const ValueKey('poster-chooser'), onPick: _pick)
                 else
-                  ..._editor(context),
+                  Column(
+                    key: const ValueKey('poster-editor'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: _editor(context),
+                  ),
               ],
             ),
           ),
@@ -444,7 +457,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
           const Spacer(),
           TextButton.icon(
             onPressed: _working ? null : _showSourceSheet,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.swap_horiz),
             label: const Text('Replace'),
           ),
         ],
@@ -477,7 +490,7 @@ String _inches(double v) =>
 
 /// The empty state: pick a source to start.
 class _Chooser extends StatelessWidget {
-  const _Chooser({required this.onPick});
+  const _Chooser({required this.onPick, super.key});
 
   final Future<void> Function(ImageSource) onPick;
 
@@ -501,7 +514,7 @@ class _Chooser extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Pick an image and we’ll split it across several letter pages. '
+            'Pick an image and we’ll split it across several printed pages. '
             'Print them and tape them into one big poster.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -624,10 +637,14 @@ class _PosterPreviewState extends State<_PosterPreview> {
           onScaleUpdate: (details) {
             final z = (_startZoom * details.scale).clamp(1.0, 5.0);
             // Drag right reveals the left of the image → focus moves left.
-            final fx =
-                (widget.focusX - details.focalPointDelta.dx / boxW).clamp(0.0, 1.0);
-            final fy =
-                (widget.focusY - details.focalPointDelta.dy / boxH).clamp(0.0, 1.0);
+            // Divide by zoom so a given finger move pans the same on-screen
+            // distance at every zoom (the visible crop shrinks as you zoom in).
+            final fx = (widget.focusX -
+                    details.focalPointDelta.dx / boxW / widget.zoom)
+                .clamp(0.0, 1.0);
+            final fy = (widget.focusY -
+                    details.focalPointDelta.dy / boxH / widget.zoom)
+                .clamp(0.0, 1.0);
             widget.onReposition(z, fx, fy);
           },
           child: framed,
@@ -701,7 +718,7 @@ class _GridPainter extends CustomPainter {
 }
 
 class _WorkingBanner extends StatelessWidget {
-  const _WorkingBanner();
+  const _WorkingBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -724,7 +741,7 @@ class _WorkingBanner extends StatelessWidget {
 }
 
 class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message, this.onRetry});
+  const _ErrorBanner({required this.message, this.onRetry, super.key});
 
   final String message;
   final VoidCallback? onRetry;

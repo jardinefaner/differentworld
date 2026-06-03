@@ -257,7 +257,11 @@ Future<Uint8List> rotateImageQuarterTurn(Uint8List bytes) {
 
 Uint8List _rotateSync(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
-  if (decoded == null) return bytes;
+  if (decoded == null) {
+    // Throw rather than silently return the input unchanged, so the caller
+    // can surface "Could not rotate" instead of a no-op tap.
+    throw const FormatException('Could not decode the image to rotate.');
+  }
   final rotated = img.copyRotate(decoded, angle: 90);
   return Uint8List.fromList(img.encodeJpg(rotated, quality: 95));
 }
