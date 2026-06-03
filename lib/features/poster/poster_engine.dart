@@ -215,21 +215,25 @@ const int _maxCanvasLongPx = 3600;
   );
 }
 
-/// Decode [bytes] and tile per [layout] + [fit], returning the page images
-/// (JPEG bytes, row-major: index `row * cols + col`). Runs the CPU-heavy
-/// decode/resize/crop in an isolate (falls back to the main thread on web,
-/// which has no isolates).
+/// Decode [bytes], rotate by [quarterTurns] × 90° (lossless), and tile per
+/// [layout] + [fit], returning the page images (JPEG bytes, row-major:
+/// index `row * cols + col`). Runs the CPU-heavy decode/rotate/resize/crop
+/// in an isolate (falls back to the main thread on web, which has no
+/// isolates).
 ///
 /// Throws [FormatException] if the bytes can't be decoded as an image.
 Future<List<Uint8List>> renderPosterTiles(
   Uint8List bytes,
   PosterLayout layout,
-  PosterFit fit,
-) {
+  PosterFit fit, {
+  int quarterTurns = 0,
+}) {
   if (kIsWeb) {
-    return Future.value(_renderPosterTilesSync(bytes, layout, fit));
+    return Future.value(_renderPosterTilesSync(bytes, layout, fit, quarterTurns));
   }
-  return Isolate.run(() => _renderPosterTilesSync(bytes, layout, fit));
+  return Isolate.run(
+    () => _renderPosterTilesSync(bytes, layout, fit, quarterTurns),
+  );
 }
 
 /// Top-level (isolate-safe — no closure over instance state).
@@ -237,11 +241,15 @@ List<Uint8List> _renderPosterTilesSync(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit,
+  int quarterTurns,
 ) {
-  final src = img.decodeImage(bytes);
-  if (src == null) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
     throw const FormatException('Could not decode the chosen image.');
   }
+  final turns = quarterTurns % 4;
+  final src =
+      turns == 0 ? decoded : img.copyRotate(decoded, angle: 90.0 * turns);
   final px = _pagePixels(layout);
   final pageW = px.pageW;
   final pageH = px.pageH;
@@ -392,15 +400,18 @@ Future<Uint8List> buildPosterPdf({
   return doc.save();
 }
 
-/// One-shot: render [bytes] per [layout] + [fit] and assemble the PDF.
+/// One-shot: render [bytes] per [layout] + [fit] (+ optional rotation) and
+/// assemble the PDF.
 Future<Uint8List> renderPosterPdf(
   Uint8List bytes,
   PosterLayout layout,
   PosterFit fit, {
   bool labels = true,
   String title = 'Poster',
+  int quarterTurns = 0,
 }) async {
-  final tiles = await renderPosterTiles(bytes, layout, fit);
+  final tiles =
+      await renderPosterTiles(bytes, layout, fit, quarterTurns: quarterTurns);
   return buildPosterPdf(
     tiles: tiles,
     layout: layout,

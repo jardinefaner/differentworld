@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:differentworld/features/poster/poster_engine.dart';
 import 'package:differentworld/features/poster/poster_models.dart';
+import 'package:differentworld/features/poster/poster_prefs.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -30,13 +31,38 @@ class PosterScreen extends ConsumerStatefulWidget {
 
 class _PosterScreenState extends ConsumerState<PosterScreen> {
   Uint8List? _bytes;
-  double _imageAspect = 1; // width / height of the picked image
+  double _imageAspect = 1; // width / height of the picked image, pre-rotation
+  int _quarterTurns = 0; // user rotation (per image; not persisted)
   PosterOptions _opts = const PosterOptions();
   bool _working = false;
   String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    // Restore the teacher's last size / fit / paper / labels choices.
+    unawaited(PosterPrefs.load().then((saved) {
+      if (mounted) setState(() => _opts = saved);
+    }));
+  }
+
+  /// The image's aspect with the current rotation applied (an odd number of
+  /// quarter-turns swaps width and height).
+  double get _effectiveAspect {
+    if (_imageAspect <= 0) return 1;
+    return _quarterTurns.isOdd ? 1 / _imageAspect : _imageAspect;
+  }
+
   /// The concrete page grid for the current image + options.
-  PosterLayout get _layout => computePosterLayout(_opts, _imageAspect);
+  PosterLayout get _layout => computePosterLayout(_opts, _effectiveAspect);
+
+  /// Mutate options + persist so they come back next session.
+  void _update(PosterOptions next) {
+    setState(() => _opts = next);
+    unawaited(PosterPrefs.save(next));
+  }
+
+  void _rotate() => setState(() => _quarterTurns = (_quarterTurns + 1) % 4);
 
   /// Read just the image's pixel dimensions (header decode — no full
   /// rasterize) so the grid can fit the image's shape.
@@ -74,6 +100,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       setState(() {
         _bytes = bytes;
         _imageAspect = aspect;
+        _quarterTurns = 0; // fresh image — clear any prior rotation
         _error = null;
       });
     } on Object {
@@ -127,6 +154,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         _opts.fit,
         labels: _opts.labels,
         title: 'Poster $tag',
+        quarterTurns: _quarterTurns,
       );
       if (!mounted) return;
       if (share) {
@@ -231,6 +259,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               layout: layout,
               fit: _opts.fit,
               labels: _opts.labels,
+              quarterTurns: _quarterTurns,
             ),
           ),
         ),
@@ -260,8 +289,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             ButtonSegment(value: 5, label: Text('5')),
           ],
           selected: {_opts.size},
-          onSelectionChanged: (s) =>
-              setState(() => _opts = _opts.copyWith(size: s.first)),
+          onSelectionChanged: (s) => _update(_opts.copyWith(size: s.first)),
         ),
       ),
       const SizedBox(height: 4),
@@ -275,7 +303,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
           'isn’t cropped hard or printed with big margins',
         ),
         value: _opts.fitShape,
-        onChanged: (v) => setState(() => _opts = _opts.copyWith(fitShape: v)),
+        onChanged: (v) => _update(_opts.copyWith(fitShape: v)),
       ),
       const SizedBox(height: 8),
       _label(context, 'Fit'),
@@ -296,8 +324,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             ),
           ],
           selected: {_opts.fit},
-          onSelectionChanged: (s) =>
-              setState(() => _opts = _opts.copyWith(fit: s.first)),
+          onSelectionChanged: (s) => _update(_opts.copyWith(fit: s.first)),
         ),
       ),
       const SizedBox(height: 4),
@@ -318,8 +345,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
             ButtonSegment(value: PosterPaper.a4, label: Text('A4')),
           ],
           selected: {_opts.paper},
-          onSelectionChanged: (s) =>
-              setState(() => _opts = _opts.copyWith(paper: s.first)),
+          onSelectionChanged: (s) => _update(_opts.copyWith(paper: s.first)),
         ),
       ),
       const SizedBox(height: 8),
@@ -331,16 +357,23 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
           'to line them up',
         ),
         value: _opts.labels,
-        onChanged: (v) => setState(() => _opts = _opts.copyWith(labels: v)),
+        onChanged: (v) => _update(_opts.copyWith(labels: v)),
       ),
       const SizedBox(height: 4),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          onPressed: _working ? null : _showSourceSheet,
-          icon: const Icon(Icons.refresh),
-          label: const Text('Replace image'),
-        ),
+      Row(
+        children: [
+          TextButton.icon(
+            onPressed: _working ? null : _rotate,
+            icon: const Icon(Icons.rotate_90_degrees_cw_outlined),
+            label: const Text('Rotate'),
+          ),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: _working ? null : _showSourceSheet,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Replace'),
+          ),
+        ],
       ),
     ];
   }
@@ -427,12 +460,14 @@ class _PosterPreview extends StatelessWidget {
     required this.layout,
     required this.fit,
     required this.labels,
+    required this.quarterTurns,
   });
 
   final Uint8List bytes;
   final PosterLayout layout;
   final PosterFit fit;
   final bool labels;
+  final int quarterTurns;
 
   @override
   Widget build(BuildContext context) {
@@ -453,10 +488,15 @@ class _PosterPreview extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.memory(
-                  bytes,
-                  fit: isFill ? BoxFit.cover : BoxFit.contain,
-                  gaplessPlayback: true,
+                // The image is rotated in widget space exactly the way the
+                // engine rotates the source bytes, so the preview is WYSIWYG.
+                RotatedBox(
+                  quarterTurns: quarterTurns,
+                  child: Image.memory(
+                    bytes,
+                    fit: isFill ? BoxFit.cover : BoxFit.contain,
+                    gaplessPlayback: true,
+                  ),
                 ),
                 CustomPaint(
                   painter: _GridPainter(
