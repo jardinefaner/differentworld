@@ -77,7 +77,11 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
         '/settings/team/invite/${invite.id}',
         extra: invite,
       );
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // on Object, not on Exception: the repo can throw a StateError
+      // ("No Space"), and the me!.id unwrap a TypeError — both Error
+      // subtypes that would escape `on Exception` and red-screen
+      // instead of surfacing the inline retry.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'invites'),
       );

@@ -133,7 +133,10 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
       }
       if (!mounted) return;
       context.pop();
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // on Object, not on Exception: the repo can throw a StateError
+      // ("No Space") — an Error subtype — which would otherwise escape
+      // and red-screen instead of surfacing the inline retry.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'vehicles'),
       );
@@ -165,7 +168,9 @@ class _VehicleEditScreenState extends ConsumerState<VehicleEditScreen> {
       context.pop();
       if (!mounted) return;
       if (context.canPop()) context.pop();
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // on Object, not on Exception — see _save: a repo StateError must
+      // surface as the inline retry, not a red screen.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'vehicles'),
       );

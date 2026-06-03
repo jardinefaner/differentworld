@@ -69,3 +69,6 @@ supabase/.temp/
 web/sqlite3.wasm
 web/powersync_db.worker.js
 
+
+# Golden-test failure dumps (framework writes failed comparisons here)
+test/golden/failures/

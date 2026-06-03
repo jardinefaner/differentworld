@@ -547,7 +547,10 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       }
       if (!mounted) return;
       if (context.canPop()) context.pop();
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // on Object, not on Exception: the repo can throw a StateError
+      // ("No Space") — an Error subtype — which would otherwise escape
+      // the catch and red-screen instead of surfacing the inline retry.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'entries'),
       );
@@ -582,7 +585,9 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       await ref.read(entryActionsProvider).delete(existing.id);
       if (!mounted) return;
       if (context.canPop()) context.pop();
-    } on Exception catch (e, st) {
+    } on Object catch (e, st) {
+      // on Object, not on Exception — see _save: a repo StateError must
+      // surface as the inline retry, not a red screen.
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'entries'),
       );
