@@ -5,7 +5,6 @@ import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Mission, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
@@ -14,7 +13,6 @@ import 'package:differentworld/features/activity_runtime/math_runner_screen.dart
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
-import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
@@ -30,6 +28,7 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/as_if_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
@@ -39,6 +38,7 @@ import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
+import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
@@ -976,7 +976,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // "As If" acting game — perform a line in an emotion/character.
           GoRoute(
             path: '/activity/as-if',
-            builder: (_, _) => const AsIfScreen(),
+            builder: (_, _) => const GameRunner(def: AsIfGame()),
+          ),
+          GoRoute(
+            path: '/live/as-if',
+            builder: (_, _) => const LiveGameScreen(def: AsIfGame()),
           ),
           // Role Cards — animal & nature roles as SMART daily practices
           // (docs/ROLES_SMART_PRACTICE.md). Browse the catalog; each card is
@@ -1003,7 +1007,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Story Starters — host-run; the room builds a story aloud.
           GoRoute(
             path: '/activity/story',
-            builder: (_, _) => const StoryStartersScreen(),
+            builder: (_, _) => const GameRunner(def: StoryStartersGame()),
+          ),
+          GoRoute(
+            path: '/live/story',
+            builder: (_, _) => const LiveGameScreen(def: StoryStartersGame()),
           ),
           // Rhyme Time — host-run; the room shouts rhymes, you tally.
           GoRoute(
