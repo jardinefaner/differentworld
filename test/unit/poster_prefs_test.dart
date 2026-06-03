@@ -27,6 +27,7 @@ void main() {
       fitShape: false,
       fit: PosterFit.whole,
       paper: PosterPaper.a4,
+      quality: PosterQuality.lossless,
       labels: false,
       guides: true,
     );
@@ -36,6 +37,7 @@ void main() {
     expect(loaded.fitShape, isFalse);
     expect(loaded.fit, PosterFit.whole);
     expect(loaded.paper, PosterPaper.a4);
+    expect(loaded.quality, PosterQuality.lossless);
     expect(loaded.labels, isFalse);
     expect(loaded.guides, isTrue);
   });

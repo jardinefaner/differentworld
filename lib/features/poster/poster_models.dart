@@ -22,6 +22,20 @@ enum PosterPaper {
   a4,
 }
 
+/// Print quality — trades file size + render time for sharpness.
+enum PosterQuality {
+  /// JPEG, modest resolution cap. Fast, small files. The default.
+  standard,
+
+  /// JPEG at higher quality + a higher resolution cap — sharper on big
+  /// grids (where Standard goes soft). Bigger, slower.
+  high,
+
+  /// Lossless PNG tiles — no JPEG artifacts, razor-crisp edges. Best for
+  /// drawings, line art, logos, and text. Largest files / slowest.
+  lossless,
+}
+
 /// One poster job's configuration. The concrete page grid (columns ×
 /// rows + page orientation) is *derived* from this plus the image's
 /// aspect ratio — see `computePosterLayout` in poster_engine.dart.
@@ -31,6 +45,7 @@ class PosterOptions {
     this.fitShape = true,
     this.fit = PosterFit.fill,
     this.paper = PosterPaper.letter,
+    this.quality = PosterQuality.standard,
     this.labels = true,
     this.guides = false,
   });
@@ -53,6 +68,9 @@ class PosterOptions {
   /// Letter vs A4.
   final PosterPaper paper;
 
+  /// Standard / High / Lossless.
+  final PosterQuality quality;
+
   /// Print a faint "R1·C2" registration label in each page's corner so
   /// the assembly order is obvious when you lay the pages out.
   final bool labels;
@@ -68,6 +86,7 @@ class PosterOptions {
     bool? fitShape,
     PosterFit? fit,
     PosterPaper? paper,
+    PosterQuality? quality,
     bool? labels,
     bool? guides,
   }) =>
@@ -76,6 +95,7 @@ class PosterOptions {
         fitShape: fitShape ?? this.fitShape,
         fit: fit ?? this.fit,
         paper: paper ?? this.paper,
+        quality: quality ?? this.quality,
         labels: labels ?? this.labels,
         guides: guides ?? this.guides,
       );

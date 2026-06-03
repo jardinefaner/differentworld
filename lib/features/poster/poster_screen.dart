@@ -117,15 +117,16 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     // entry points are already gated on `_working`; this is belt-and-braces.)
     if (_working) return;
     try {
-      // Cap the longest edge at 4096 px. That's still far more detail than
-      // the poster needs (the assembled canvas tops out at 3600 px, so a
-      // bigger source is never fully used) and it bounds memory + render
-      // time — critical on web, which has no isolate and renders on the
-      // main thread. The picker downsamples natively at decode time.
+      // Cap the longest edge at 6000 px — enough to feed High / Lossless
+      // quality (their canvas tops out at 6000 px), while still bounding
+      // memory + render time. The preview decodes downsized (see
+      // `cacheWidth`), so a bigger source doesn't cost preview memory; the
+      // full decode only happens per-tile in the render isolate. The picker
+      // downsamples natively at decode time.
       final picked = await ImagePicker().pickImage(
         source: source,
-        maxWidth: 4096,
-        maxHeight: 4096,
+        maxWidth: 6000,
+        maxHeight: 6000,
         requestFullMetadata: false,
       );
       if (picked == null) return;
@@ -196,6 +197,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         zoom: _zoom,
         focusX: _focusX,
         focusY: _focusY,
+        quality: _opts.quality,
       );
       if (!mounted) return;
       if (share) {
@@ -425,6 +427,29 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
           onSelectionChanged: (s) => _update(_opts.copyWith(paper: s.first)),
         ),
       ),
+      const SizedBox(height: 16),
+      _label(context, 'Print quality'),
+      const SizedBox(height: 6),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: SegmentedButton<PosterQuality>(
+          segments: const [
+            ButtonSegment(
+              value: PosterQuality.standard,
+              label: Text('Standard'),
+            ),
+            ButtonSegment(value: PosterQuality.high, label: Text('High')),
+            ButtonSegment(
+              value: PosterQuality.lossless,
+              label: Text('Lossless'),
+            ),
+          ],
+          selected: {_opts.quality},
+          onSelectionChanged: (s) => _update(_opts.copyWith(quality: s.first)),
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(_qualityHint(_opts.quality), style: caption),
       const SizedBox(height: 8),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
@@ -464,6 +489,15 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       ),
     ];
   }
+
+  String _qualityHint(PosterQuality q) => switch (q) {
+        PosterQuality.standard =>
+          'Smaller files, quick — good for most photos.',
+        PosterQuality.high =>
+          'Sharper on big grids. Larger files, slower to build.',
+        PosterQuality.lossless =>
+          'Crispest for drawings, line art & text — but the largest files.',
+      };
 
   String _paperName(PosterPaper p) => p == PosterPaper.a4 ? 'A4' : 'letter';
 
@@ -604,6 +638,9 @@ class _PosterPreviewState extends State<_PosterPreview> {
                       fit: BoxFit.cover,
                       alignment: align,
                       gaplessPlayback: true,
+                      // Decode at preview size, not full source res — keeps
+                      // the preview cheap even for a 6000 px source.
+                      cacheWidth: 1280,
                     ),
                   )
                 else
@@ -611,6 +648,7 @@ class _PosterPreviewState extends State<_PosterPreview> {
                     widget.bytes,
                     fit: BoxFit.contain,
                     gaplessPlayback: true,
+                    cacheWidth: 1280,
                   ),
                 CustomPaint(
                   painter: _GridPainter(

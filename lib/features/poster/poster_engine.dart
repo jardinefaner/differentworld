@@ -221,11 +221,19 @@ int posterPageCount(int n) => n * n;
 // Render — heavy image work, run in an isolate (off the UI thread).
 // ---------------------------------------------------------------------------
 
-/// Target print density. The assembled poster's long edge is capped at
+/// Target print density. The assembled poster's long edge is capped per
 /// [_maxCanvasLongPx] so a big grid degrades DPI gracefully instead of
 /// allocating a huge bitmap.
 const int _targetDpi = 150;
-const int _maxCanvasLongPx = 3600;
+
+/// Max assembled long-edge px, by quality + fit. Fill is rendered tile-by-
+/// tile (peak memory = source + one page), so it scales safely to a high
+/// cap. Whole builds ONE full canvas before slicing, so it's held lower to
+/// bound peak memory (a 6000-long canvas would be ~80 MB).
+int _maxCanvasLongPx(PosterQuality quality, PosterFit fit) {
+  if (quality == PosterQuality.standard) return 3600;
+  return fit == PosterFit.whole ? 4200 : 6000;
+}
 
 /// The white border (inches) reserved on each page when assembly guides are
 /// on — room for the dashed cut line + crop marks, and a safe trim margin
@@ -233,13 +241,27 @@ const int _maxCanvasLongPx = 3600;
 /// dashed line, the pages butt together seamlessly.
 const double kGuideMarginIn = 0.35;
 
+/// Encode one rendered tile per [quality] — lossless PNG, or JPEG at a
+/// quality that tracks the level.
+Uint8List _encodeTile(img.Image tile, PosterQuality quality) {
+  if (quality == PosterQuality.lossless) {
+    return Uint8List.fromList(img.encodePng(tile));
+  }
+  return Uint8List.fromList(
+    img.encodeJpg(tile, quality: quality == PosterQuality.high ? 95 : 85),
+  );
+}
+
 /// Per-page pixel dimensions for [layout] + the chosen print density, after
-/// the long-edge cap.
-({int pageW, int pageH, double dpi}) _pagePixels(PosterLayout layout) {
+/// the long-edge cap [maxLongPx].
+({int pageW, int pageH, double dpi}) _pagePixels(
+  PosterLayout layout,
+  int maxLongPx,
+) {
   final longIn = math.max(layout.assembledWidthIn, layout.assembledHeightIn);
   final desiredLongPx = longIn * _targetDpi;
   final dpi =
-      desiredLongPx > _maxCanvasLongPx ? _maxCanvasLongPx / longIn : _targetDpi.toDouble();
+      desiredLongPx > maxLongPx ? maxLongPx / longIn : _targetDpi.toDouble();
   return (
     pageW: (layout.pageWidthIn * dpi).round(),
     pageH: (layout.pageHeightIn * dpi).round(),
@@ -281,15 +303,17 @@ Future<List<Uint8List>> renderPosterTiles(
   double zoom = 1,
   double focusX = 0.5,
   double focusY = 0.5,
+  PosterQuality quality = PosterQuality.standard,
 }) {
   if (kIsWeb) {
     return Future.value(
-      _renderPosterTilesSync(bytes, layout, fit, guides, zoom, focusX, focusY),
+      _renderPosterTilesSync(
+          bytes, layout, fit, guides, zoom, focusX, focusY, quality),
     );
   }
   return Isolate.run(
-    () =>
-        _renderPosterTilesSync(bytes, layout, fit, guides, zoom, focusX, focusY),
+    () => _renderPosterTilesSync(
+        bytes, layout, fit, guides, zoom, focusX, focusY, quality),
   );
 }
 
@@ -306,8 +330,10 @@ List<Uint8List> renderPosterTilesForTest(
   double zoom = 1,
   double focusX = 0.5,
   double focusY = 0.5,
+  PosterQuality quality = PosterQuality.standard,
 }) =>
-    _renderPosterTilesSync(bytes, layout, fit, guides, zoom, focusX, focusY);
+    _renderPosterTilesSync(
+        bytes, layout, fit, guides, zoom, focusX, focusY, quality);
 
 /// Top-level (isolate-safe — no closure over instance state).
 List<Uint8List> _renderPosterTilesSync(
@@ -318,12 +344,13 @@ List<Uint8List> _renderPosterTilesSync(
   double zoom,
   double focusX,
   double focusY,
+  PosterQuality quality,
 ) {
   final src = img.decodeImage(bytes);
   if (src == null) {
     throw const FormatException('Could not decode the chosen image.');
   }
-  final px = _pagePixels(layout);
+  final px = _pagePixels(layout, _maxCanvasLongPx(quality, fit));
   // With guides on, the image only fills the trimmable area inside each
   // page's margin — so the tiles are smaller and the white border is added
   // in the PDF. The continuous image still spans the IMAGE areas, so after
@@ -372,7 +399,7 @@ List<Uint8List> _renderPosterTilesSync(
             height: pageH,
             interpolation: img.Interpolation.average,
           );
-          tiles.add(Uint8List.fromList(img.encodeJpg(tile, quality: 85)));
+          tiles.add(_encodeTile(tile, quality));
         }
       }
 
@@ -405,7 +432,7 @@ List<Uint8List> _renderPosterTilesSync(
             width: pageW,
             height: pageH,
           );
-          tiles.add(Uint8List.fromList(img.encodeJpg(tile, quality: 85)));
+          tiles.add(_encodeTile(tile, quality));
         }
       }
   }
@@ -610,6 +637,7 @@ Future<Uint8List> renderPosterPdf(
   double zoom = 1,
   double focusX = 0.5,
   double focusY = 0.5,
+  PosterQuality quality = PosterQuality.standard,
 }) async {
   final tiles = await renderPosterTiles(
     bytes,
@@ -619,6 +647,7 @@ Future<Uint8List> renderPosterPdf(
     zoom: zoom,
     focusX: focusX,
     focusY: focusY,
+    quality: quality,
   );
   return buildPosterPdf(
     tiles: tiles,

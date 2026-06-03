@@ -28,6 +28,11 @@ class PosterPrefs {
         fitShape: map['fitShape'] as bool? ?? true,
         fit: _enumByName(PosterFit.values, map['fit'], PosterFit.fill),
         paper: _enumByName(PosterPaper.values, map['paper'], PosterPaper.letter),
+        quality: _enumByName(
+          PosterQuality.values,
+          map['quality'],
+          PosterQuality.standard,
+        ),
         labels: map['labels'] as bool? ?? true,
         guides: map['guides'] as bool? ?? false,
       );
@@ -47,6 +52,7 @@ class PosterPrefs {
           'fitShape': o.fitShape,
           'fit': o.fit.name,
           'paper': o.paper.name,
+          'quality': o.quality.name,
           'labels': o.labels,
           'guides': o.guides,
         }),

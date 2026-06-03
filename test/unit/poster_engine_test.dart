@@ -263,4 +263,46 @@ void main() {
       expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
     });
   });
+
+  group('print quality', () {
+    Uint8List solid(int w, int h) {
+      final image = img.Image(width: w, height: h);
+      img.fill(image, color: img.ColorRgb8(80, 160, 200));
+      return Uint8List.fromList(img.encodePng(image));
+    }
+
+    test('High renders larger tiles than Standard on a big grid', () {
+      // A 3×3 (33" long) exceeds Standard's 3600px cap (→ ~109 DPI) but not
+      // High's 6000px cap (→ 150 DPI), so High's tiles are larger.
+      final bytes = solid(2000, 2000);
+      final layout = computePosterLayout(const PosterOptions(size: 3), 1);
+      final std = renderPosterTilesForTest(bytes, layout, PosterFit.fill);
+      final hi = renderPosterTilesForTest(
+        bytes,
+        layout,
+        PosterFit.fill,
+        quality: PosterQuality.high,
+      );
+      final s0 = img.decodeImage(std.first)!;
+      final h0 = img.decodeImage(hi.first)!;
+      expect(h0.width, greaterThan(s0.width));
+      expect(h0.height, greaterThan(s0.height));
+    });
+
+    test('Lossless emits PNG tiles; the others emit JPEG', () {
+      final bytes = solid(800, 800);
+      final layout = computePosterLayout(const PosterOptions(fitShape: false), 1);
+      final jpg = renderPosterTilesForTest(bytes, layout, PosterFit.fill).first;
+      final png = renderPosterTilesForTest(
+        bytes,
+        layout,
+        PosterFit.fill,
+        quality: PosterQuality.lossless,
+      ).first;
+      expect(jpg[0], 0xFF); // JPEG SOI
+      expect(jpg[1], 0xD8);
+      expect(png[0], 0x89); // PNG signature
+      expect(png[1], 0x50);
+    });
+  });
 }
