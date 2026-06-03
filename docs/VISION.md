@@ -428,6 +428,53 @@ once it has a home.
   return alert, odometer carry-forward + validation (trip miles), Unsafe →
   block + notify the director, maintenance/registration-expiry reminders at
   check-out, optional two-person co-sign on the empty-cabin. (→ vehicles.)
+- **2026-06-03** — **The app as a collection of distilled THINKING TOOLS —
+  one source of truth, many contributors.**
+  > "i want this to be a collection of tools, like 'Systems Thinking'... for
+  > communication, for teaching, for whatever you do... youtube/social media
+  > are too noisy, how can we distill all information to one source of truth...
+  > but many contributors"
+
+  The deeper *why* under everything: the app is a **library of thinking
+  tools** — mental models / frameworks / methods (Systems Thinking, First
+  Principles, Socratic questioning, Think-Pair-Share, the 5 Whys, Inversion…)
+  for thinking, communicating, teaching, doing — distilled, **runnable**, and
+  **refined by many**. The **anti-YouTube**: where social media is noise
+  optimized for engagement + recency (N rival videos, none authoritative,
+  decaying into a feed), this is **signal distilled to ONE canonical, usable
+  form per tool**, which the next contributor *sharpens* rather than competes
+  with.
+
+  The reframe: the games/activities are ALREADY this genre, for kids
+  (This-or-That = articulate a preference + the reasoning; Story = collaborative
+  creativity; Discussions = Socratic; As-If = perspective-taking). The dream
+  makes "a library of thinking tools" the ORGANIZING idea, opens it to
+  contributors, and reaches past the classroom ("whatever you do").
+
+  The substrate already exists — a deepening, not a pivot:
+  - **A contract per tool** (like `GameDefinition`) — structure forces clarity
+    + comparability; the format IS the de-noiser (what it's for / when to reach
+    for it / how to run it / one worked example), not a 12-minute ramble.
+  - **Distillation TIERS, not a feed** (the content-bank model): a curated
+    floor + crowd contributions promoted as they prove out + de-dupe by
+    fingerprint → ONE canonical entry per tool, refined by many
+    (Wikipedia-for-runnable-tools, not rival videos).
+  - **Runnable, not just readable** — the present/control engine (#18): you RUN
+    Think-Pair-Share with the room; you don't watch a video about it. The tool
+    IS the experience.
+  - **Combinatorial generation** (the content engine): a few distilled
+    primitives → endless fresh, never-noisy instances.
+
+  - **Status:** vision / undesigned — likely a NORTH-STAR-level reframe.
+  - **Open questions before coding:** who contributes (program staff / a wider
+    professional community / the public)? what IS a "tool" — a runnable
+    activity (the games), a reference card (the Toolkit "sentences you can
+    say"), or both? is the audience still early-childhood, or does "whatever
+    you do" genuinely broaden it? "one source of truth" curated by whom — an
+    editorial layer, algorithmic promotion, or community consensus? how does a
+    contributed tool earn promotion from crowd → curated?
+  - **Threads:** #2 (this is you + your tools), #7 (content libraries), #17/#18
+    (the game contract + present/control engine), the content freshness engine.
 
 ---
 
