@@ -343,4 +343,38 @@ void main() {
       expect(png[1], 0x50);
     });
   });
+
+  group('renderPosterImagePng (single-image export)', () {
+    Uint8List solidPng(int w, int h) {
+      final image = img.Image(width: w, height: h);
+      img.fill(image, color: img.ColorRgb8(200, 120, 60));
+      return Uint8List.fromList(img.encodePng(image));
+    }
+
+    test('emits one valid PNG sized to the assembled canvas', () {
+      final bytes = solidPng(800, 800);
+      final layout = computePosterLayout(const PosterOptions(fitShape: false), 1);
+      final out = renderPosterImagePngForTest(bytes, layout, PosterFit.fill);
+      expect(out, isNotEmpty);
+      expect(out[0], 0x89); // PNG signature
+      expect(out[1], 0x50);
+      // One continuous image spanning the whole grid (cols·pageW × rows·pageH),
+      // not a single page.
+      final decoded = img.decodeImage(out)!;
+      final tiles = renderPosterTilesForTest(bytes, layout, PosterFit.fill);
+      final tile0 = img.decodeImage(tiles.first)!;
+      expect(decoded.width, tile0.width * layout.cols);
+      expect(decoded.height, tile0.height * layout.rows);
+    });
+
+    test('whole-fit also produces a valid PNG', () {
+      final bytes = solidPng(1200, 600);
+      final layout = computePosterLayout(const PosterOptions(size: 3), 2);
+      final out =
+          renderPosterImagePngForTest(bytes, layout, PosterFit.whole);
+      expect(out, isNotEmpty);
+      expect(out[0], 0x89);
+      expect(out[1], 0x50);
+    });
+  });
 }

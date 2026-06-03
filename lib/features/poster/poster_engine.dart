@@ -845,3 +845,110 @@ Future<Uint8List> renderPosterPdf(
     title: title,
   );
 }
+
+// ---------------------------------------------------------------------------
+// Single-image (PNG) export — the whole assembled poster as ONE continuous
+// image rather than paged tiles. For saving the image to a computer / sending
+// to a print shop, or printing on one large sheet. Same framing as the tiled
+// output; no guide margins (those are a per-page tape aid).
+// ---------------------------------------------------------------------------
+
+/// Render the whole assembled poster as a single PNG. Runs off the UI thread
+/// (isolate on mobile/desktop, main thread on web). Throws [FormatException]
+/// if the bytes can't be decoded.
+Future<Uint8List> renderPosterImagePng(
+  Uint8List bytes,
+  PosterLayout layout,
+  PosterFit fit, {
+  double zoom = 1,
+  double focusX = 0.5,
+  double focusY = 0.5,
+  PosterQuality quality = PosterQuality.standard,
+}) {
+  if (kIsWeb) {
+    return Future.value(
+      _renderPosterImageSync(bytes, layout, fit, zoom, focusX, focusY, quality),
+    );
+  }
+  return Isolate.run(
+    () => _renderPosterImageSync(
+        bytes, layout, fit, zoom, focusX, focusY, quality),
+  );
+}
+
+/// Synchronous single-image render — exposed for deterministic tests (see
+/// [renderPosterTilesForTest] for why production avoids isolates under test).
+@visibleForTesting
+Uint8List renderPosterImagePngForTest(
+  Uint8List bytes,
+  PosterLayout layout,
+  PosterFit fit, {
+  double zoom = 1,
+  double focusX = 0.5,
+  double focusY = 0.5,
+  PosterQuality quality = PosterQuality.standard,
+}) =>
+    _renderPosterImageSync(bytes, layout, fit, zoom, focusX, focusY, quality);
+
+/// Top-level (isolate-safe). Builds the assembled canvas (cols·pageW ×
+/// rows·pageH) at the print-density cap, places the source per [fit], and
+/// encodes ONE PNG.
+Uint8List _renderPosterImageSync(
+  Uint8List bytes,
+  PosterLayout layout,
+  PosterFit fit,
+  double zoom,
+  double focusX,
+  double focusY,
+  PosterQuality quality,
+) {
+  final src = img.decodeImage(bytes);
+  if (src == null) {
+    throw const FormatException('Could not decode the chosen image.');
+  }
+  final px = _pagePixels(layout, _maxCanvasLongPx(quality, fit));
+  final canvasW = math.max(1, px.pageW * layout.cols);
+  final canvasH = math.max(1, px.pageH * layout.rows);
+
+  final img.Image out;
+  switch (fit) {
+    case PosterFit.fill:
+      final (cl, ct, cw, ch) = posterViewRect(
+        src.width.toDouble(),
+        src.height.toDouble(),
+        canvasW / canvasH,
+        zoom,
+        focusX,
+        focusY,
+      );
+      final x = cl.round().clamp(0, src.width - 1);
+      final y = ct.round().clamp(0, src.height - 1);
+      final w = math.min(cw.round(), src.width - x).clamp(1, src.width);
+      final h = math.min(ch.round(), src.height - y).clamp(1, src.height);
+      final crop = img.copyCrop(src, x: x, y: y, width: w, height: h);
+      out = img.copyResize(
+        crop,
+        width: canvasW,
+        height: canvasH,
+        interpolation: img.Interpolation.average,
+      );
+    case PosterFit.whole:
+      final canvas = img.Image(width: canvasW, height: canvasH);
+      img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
+      final (pl, pt, pw0, ph0) = posterContainPlacement(
+        src.width.toDouble(),
+        src.height.toDouble(),
+        canvasW.toDouble(),
+        canvasH.toDouble(),
+      );
+      final scaled = img.copyResize(
+        src,
+        width: pw0.round().clamp(1, canvasW),
+        height: ph0.round().clamp(1, canvasH),
+        interpolation: img.Interpolation.average,
+      );
+      img.compositeImage(canvas, scaled, dstX: pl.round(), dstY: pt.round());
+      out = canvas;
+  }
+  return Uint8List.fromList(img.encodePng(out));
+}

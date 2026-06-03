@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:differentworld/features/poster/poster_engine.dart';
@@ -8,20 +9,33 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
-import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+
+/// How the finished poster leaves the app.
+enum _PosterDelivery {
+  /// Save the multi-page PDF (share sheet → Files / Drive / email → computer).
+  savePdf,
+
+  /// Save the whole poster as one PNG image (same share path).
+  savePng,
+
+  /// Hand the PDF straight to the OS print dialog on this device.
+  printPdf,
+}
 
 /// `/poster` — the Poster tool. Pick one image, choose a size, and it slices
 /// the image across several pages you print and tape together into one big
 /// image (a kid's drawing blown up, a welcome banner, a giant map). The grid
 /// auto-fits the image's shape (a wide banner tiles wide, a tall portrait
 /// tiles tall) so the least gets cropped / wasted. The heavy slicing runs in
-/// an isolate; the output is a multi-page PDF handed to the OS print / share
-/// sheet.
+/// an isolate; the output is a multi-page PDF (or a single PNG) you save to a
+/// computer to print, or send straight to the OS print dialog.
 class PosterScreen extends ConsumerStatefulWidget {
   const PosterScreen({super.key});
 
@@ -41,7 +55,8 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
   double _focusY = 0.5;
   PosterOptions _opts = const PosterOptions();
   bool _working = false;
-  bool _lastShare = false; // whether the last output attempt was Share vs Print
+  // Which output the last attempt used, so the error banner can retry it.
+  _PosterDelivery _lastDelivery = _PosterDelivery.savePdf;
   // Determinate render progress (pages encoded / total) while _working. 0/0
   // before the first tile lands — the banner shows an indeterminate bar then.
   int _progressDone = 0;
@@ -180,59 +195,69 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     );
   }
 
-  Future<void> _output({required bool share}) async {
+  /// Render + deliver the poster. PDF (paged, to tape) or PNG (one image),
+  /// saved via the share sheet (→ Files / Drive / email, i.e. onto a
+  /// computer) or sent straight to the OS print dialog.
+  Future<void> _export(_PosterDelivery delivery) async {
     final bytes = _bytes;
     if (bytes == null || _working) return;
     final layout = _layout;
+    final isPng = delivery == _PosterDelivery.savePng;
     setState(() {
       _working = true;
-      _lastShare = share;
+      _lastDelivery = delivery;
       _error = null;
       _progressDone = 0;
-      _progressTotal = layout.pageCount;
+      // PNG is a single render (no per-page count) → indeterminate banner.
+      _progressTotal = isPng ? 0 : layout.pageCount;
     });
     final tag = '${layout.cols}×${layout.rows}';
+    final stem = 'poster-${layout.cols}x${layout.rows}';
     try {
-      final pdf = await renderPosterPdf(
-        bytes,
-        layout,
-        _opts.fit,
-        labels: _opts.labels,
-        title: 'Poster $tag',
-        guides: _opts.guides,
-        zoom: _zoom,
-        focusX: _focusX,
-        focusY: _focusY,
-        quality: _opts.quality,
-        onProgress: (done, total) {
+      switch (delivery) {
+        case _PosterDelivery.savePdf:
+        case _PosterDelivery.printPdf:
+          final pdf = await renderPosterPdf(
+            bytes,
+            layout,
+            _opts.fit,
+            labels: _opts.labels,
+            title: 'Poster $tag',
+            guides: _opts.guides,
+            zoom: _zoom,
+            focusX: _focusX,
+            focusY: _focusY,
+            quality: _opts.quality,
+            onProgress: (done, total) {
+              if (!mounted) return;
+              setState(() {
+                _progressDone = done;
+                _progressTotal = total;
+              });
+            },
+          );
           if (!mounted) return;
-          setState(() {
-            _progressDone = done;
-            _progressTotal = total;
-          });
-        },
-      );
-      if (!mounted) return;
-      if (share) {
-        await Printing.sharePdf(
-          bytes: pdf,
-          filename: 'poster-${layout.cols}x${layout.rows}.pdf',
-        );
-      } else {
-        await Printing.layoutPdf(
-          onLayout: (_) => pdf,
-          name: 'Poster $tag',
-        );
+          if (delivery == _PosterDelivery.printPdf) {
+            await Printing.layoutPdf(onLayout: (_) => pdf, name: 'Poster $tag');
+          } else {
+            await Printing.sharePdf(bytes: pdf, filename: '$stem.pdf');
+          }
+        case _PosterDelivery.savePng:
+          final png = await renderPosterImagePng(
+            bytes,
+            layout,
+            _opts.fit,
+            zoom: _zoom,
+            focusX: _focusX,
+            focusY: _focusY,
+            quality: _opts.quality,
+          );
+          if (!mounted) return;
+          await _shareBytes(png, '$stem.png', 'image/png');
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            share
-                ? 'Poster shared — ${layout.pageCount} pages.'
-                : 'Sent to print — ${layout.pageCount} pages. Tape them together!',
-          ),
-        ),
+        SnackBar(content: Text(_outcomeMessage(delivery, layout.pageCount))),
       );
     } on Object catch (e, st) {
       FlutterError.reportError(
@@ -248,21 +273,108 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     }
   }
 
+  /// Save arbitrary bytes via the share sheet (mirrors the survey export):
+  /// in-memory on web, a temp file elsewhere. The share sheet is the path
+  /// onto a computer — "Save to Files", Drive, AirDrop, or email-to-self.
+  Future<void> _shareBytes(Uint8List bytes, String filename, String mime) async {
+    if (kIsWeb) {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile.fromData(bytes, name: filename, mimeType: mime)],
+          fileNameOverrides: [filename],
+        ),
+      );
+      return;
+    }
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/$filename');
+    await file.writeAsBytes(bytes);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
+  }
+
+  String _outcomeMessage(_PosterDelivery delivery, int pages) =>
+      switch (delivery) {
+        _PosterDelivery.printPdf =>
+          'Sent to print — $pages pages. Print at 100%, then tape them!',
+        _PosterDelivery.savePdf =>
+          'PDF saved ($pages pages). Open it on a computer and print at 100%.',
+        _PosterDelivery.savePng =>
+          'Image saved. Open it on a computer and print at 100% / actual size.',
+      };
+
+  Future<void> _showExportSheet() {
+    final layout = _layout;
+    return showGlassSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                child: Text(
+                  'Save your poster',
+                  style: theme.textTheme.titleLarge,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                child: _HowToPrint(
+                  pageCount: layout.pageCount,
+                  guides: _opts.guides,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf_outlined),
+                title: const Text('Save as PDF'),
+                subtitle: Text(
+                  '${layout.pageCount} pages to print and tape together',
+                ),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  unawaited(_export(_PosterDelivery.savePdf));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.image_outlined),
+                title: const Text('Save as PNG'),
+                subtitle: const Text(
+                  'One big image file — for a print shop or any app',
+                ),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  unawaited(_export(_PosterDelivery.savePng));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.print_outlined),
+                title: const Text('Print from this device'),
+                subtitle: const Text('Opens your phone’s print dialog'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  unawaited(_export(_PosterDelivery.printPdf));
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasImage = _bytes != null;
     return EdgeScaffold(
       actions: [
-        if (hasImage)
-          SecondaryActionButton(
-            tooltip: 'Share PDF',
-            icon: Icons.ios_share,
-            onPressed: _working ? null : () => _output(share: true),
-          ),
         PrimaryActionButton(
-          tooltip: 'Print',
-          icon: Icons.print_outlined,
-          onPressed: (hasImage && !_working) ? () => _output(share: false) : null,
+          tooltip: 'Save or print',
+          icon: Icons.save_alt,
+          onPressed: (hasImage && !_working) ? _showExportSheet : null,
         ),
       ],
       body: SafeArea(
@@ -287,10 +399,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
                   _ErrorBanner(
                     key: const ValueKey('poster-error'),
                     message: _error!,
-                    // Retry the SAME action that failed (Print vs Share), and
-                    // only when there's an image to retry with.
+                    // Retry the SAME action that failed, and only when there's
+                    // an image to retry with.
                     onRetry: (_bytes != null && !_working)
-                        ? () => _output(share: _lastShare)
+                        ? () => _export(_lastDelivery)
                         : null,
                   ),
                 if (!hasImage)
@@ -905,6 +1017,80 @@ class _WorkingBanner extends StatelessWidget {
               semanticsLabel: label,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "exactly what to do" card shown in the export sheet. Step 3 (print at
+/// 100% / actual size) is the one that actually keeps the tiles lined up — a
+/// printer "fit to page" silently rescales every page and breaks the seams.
+class _HowToPrint extends StatelessWidget {
+  const _HowToPrint({required this.pageCount, required this.guides});
+
+  final int pageCount;
+  final bool guides;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Wrapped strings live in locals (not inline list elements) to avoid the
+    // adjacent-strings-in-list footgun.
+    const printStep = 'Print at 100% / “Actual size” — turn OFF “Fit to page” '
+        '/ “Scale to fit”. This is what keeps the pieces lined up.';
+    final tapeStep = guides
+        ? 'Trim each page on the dashed line, line them up (R1-C1 at the '
+            'top-left), and tape.'
+        : 'Lay the $pageCount pages out in order and tape them together.';
+    final steps = <String>[
+      'Save it to your phone (Files or Drive), or email it to yourself.',
+      'Open the file on your computer.',
+      printStep,
+      tapeStep,
+    ];
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'How to print it',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (var i = 0; i < steps.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${i + 1}.  ',
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  Expanded(
+                    child: Text(steps[i], style: theme.textTheme.bodyMedium),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
