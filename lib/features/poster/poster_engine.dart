@@ -203,8 +203,15 @@ int posterPageCount(int n) => n * n;
 const int _targetDpi = 150;
 const int _maxCanvasLongPx = 3600;
 
-/// Per-page pixel dimensions for [layout], after the long-edge cap.
-({int pageW, int pageH}) _pagePixels(PosterLayout layout) {
+/// The white border (inches) reserved on each page when assembly guides are
+/// on — room for the dashed cut line + crop marks, and a safe trim margin
+/// (most printers can't print the outer ~0.25"). After trimming on the
+/// dashed line, the pages butt together seamlessly.
+const double kGuideMarginIn = 0.35;
+
+/// Per-page pixel dimensions for [layout] + the chosen print density, after
+/// the long-edge cap.
+({int pageW, int pageH, double dpi}) _pagePixels(PosterLayout layout) {
   final longIn = math.max(layout.assembledWidthIn, layout.assembledHeightIn);
   final desiredLongPx = longIn * _targetDpi;
   final dpi =
@@ -212,6 +219,7 @@ const int _maxCanvasLongPx = 3600;
   return (
     pageW: (layout.pageWidthIn * dpi).round(),
     pageH: (layout.pageHeightIn * dpi).round(),
+    dpi: dpi,
   );
 }
 
@@ -227,12 +235,15 @@ Future<List<Uint8List>> renderPosterTiles(
   PosterLayout layout,
   PosterFit fit, {
   int quarterTurns = 0,
+  bool guides = false,
 }) {
   if (kIsWeb) {
-    return Future.value(_renderPosterTilesSync(bytes, layout, fit, quarterTurns));
+    return Future.value(
+      _renderPosterTilesSync(bytes, layout, fit, quarterTurns, guides),
+    );
   }
   return Isolate.run(
-    () => _renderPosterTilesSync(bytes, layout, fit, quarterTurns),
+    () => _renderPosterTilesSync(bytes, layout, fit, quarterTurns, guides),
   );
 }
 
@@ -242,6 +253,7 @@ List<Uint8List> _renderPosterTilesSync(
   PosterLayout layout,
   PosterFit fit,
   int quarterTurns,
+  bool guides,
 ) {
   final decoded = img.decodeImage(bytes);
   if (decoded == null) {
@@ -251,8 +263,13 @@ List<Uint8List> _renderPosterTilesSync(
   final src =
       turns == 0 ? decoded : img.copyRotate(decoded, angle: 90.0 * turns);
   final px = _pagePixels(layout);
-  final pageW = px.pageW;
-  final pageH = px.pageH;
+  // With guides on, the image only fills the trimmable area inside each
+  // page's margin — so the tiles are smaller and the white border is added
+  // in the PDF. The continuous image still spans the IMAGE areas, so after
+  // trimming the margins the pages butt together seamlessly.
+  final marginPx = guides ? (kGuideMarginIn * px.dpi).round() : 0;
+  final pageW = math.max(1, px.pageW - 2 * marginPx);
+  final pageH = math.max(1, px.pageH - 2 * marginPx);
   final cols = layout.cols;
   final rows = layout.rows;
   final canvasAspect = (cols * pageW) / (rows * pageH);
@@ -335,26 +352,32 @@ List<Uint8List> _renderPosterTilesSync(
 // ---------------------------------------------------------------------------
 
 /// Build the multi-page PDF from rendered [tiles] (row-major, length
-/// `layout.pageCount`). Each tile fills one full-bleed page so adjacent
-/// pages abut when assembled. When [labels] is on, a faint "R1·C2" chip is
+/// `layout.pageCount`). Without [guides], each tile fills one full-bleed page
+/// so adjacent pages abut. With [guides], each tile is inset by a white trim
+/// margin carrying a dashed cut line + corner crop marks, and an "Assembly
+/// map" page is appended. When [labels] is on, a faint "R1·C2" chip is
 /// printed in each page's corner.
 Future<Uint8List> buildPosterPdf({
   required List<Uint8List> tiles,
   required PosterLayout layout,
   bool labels = true,
+  bool guides = false,
   String title = 'Poster',
 }) async {
   final doc = pw.Document(title: title, creator: 'Different World');
-  // Built-in standard PDF font — NOT PdfGoogleFonts (which downloads the
+  // Built-in standard PDF fonts — NOT PdfGoogleFonts (which downloads the
   // TTF from Google's CDN at print time and would break offline-first).
-  final font = labels ? pw.Font.helvetica() : null;
+  final font = pw.Font.helvetica();
+  final fontBold = pw.Font.helveticaBold();
 
   var format = layout.paper == PosterPaper.a4
       ? PdfPageFormat.a4
       : PdfPageFormat.letter;
   if (layout.landscape) format = format.landscape;
 
+  final marginPt = guides ? kGuideMarginIn * PdfPageFormat.inch : 0.0;
   final cols = layout.cols;
+
   for (var i = 0; i < tiles.length; i++) {
     final row = i ~/ cols;
     final col = i % cols;
@@ -367,29 +390,25 @@ Future<Uint8List> buildPosterPdf({
           return pw.Stack(
             fit: pw.StackFit.expand,
             children: [
-              pw.Image(image, fit: pw.BoxFit.fill),
-              if (labels && font != null)
+              pw.Positioned(
+                left: marginPt,
+                top: marginPt,
+                right: marginPt,
+                bottom: marginPt,
+                child: pw.Image(image, fit: pw.BoxFit.fill),
+              ),
+              if (guides)
+                pw.CustomPaint(
+                  size: PdfPoint(format.width, format.height),
+                  painter: (canvas, size) =>
+                      _drawTrimGuides(canvas, size, marginPt),
+                ),
+              if (labels)
                 pw.Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
-                    decoration: pw.BoxDecoration(
-                      color: const PdfColor(1, 1, 1, 0.72),
-                      borderRadius: pw.BorderRadius.circular(4),
-                    ),
-                    child: pw.Text(
-                      'R${row + 1}·C${col + 1}',
-                      style: pw.TextStyle(
-                        font: font,
-                        fontSize: 9,
-                        color: PdfColors.grey800,
-                      ),
-                    ),
-                  ),
+                  bottom: marginPt + 6,
+                  right: marginPt + 6,
+                  // ASCII only — built-in Helvetica can't render "·"/"×".
+                  child: _labelChip(font, 'R${row + 1}-C${col + 1}'),
                 ),
             ],
           );
@@ -397,7 +416,121 @@ Future<Uint8List> buildPosterPdf({
       ),
     );
   }
+
+  if (guides) {
+    doc.addPage(_mapPage(format, layout, font, fontBold));
+  }
   return doc.save();
+}
+
+/// Draw the dashed cut line (at the image-area boundary, [m] points in from
+/// every edge) + solid corner crop marks reaching out into the trim margin.
+/// The guides are symmetric, so the raw-PDF bottom-left origin doesn't change
+/// how they look.
+void _drawTrimGuides(PdfGraphics canvas, PdfPoint size, double m) {
+  final w = size.x;
+  final h = size.y;
+  canvas
+    ..setStrokeColor(PdfColors.grey500)
+    ..setLineWidth(0.5)
+    ..setLineDashPattern([3, 3])
+    ..drawRect(m, m, w - 2 * m, h - 2 * m)
+    ..strokePath()
+    ..setLineDashPattern() // back to solid
+    ..setStrokeColor(PdfColors.grey700)
+    ..setLineWidth(0.7);
+  const tick = 10.0;
+  for (final x in [m, w - m]) {
+    for (final y in [m, h - m]) {
+      final hx = x == m ? x - tick : x + tick;
+      final vy = y == m ? y - tick : y + tick;
+      canvas
+        ..moveTo(x, y)
+        ..lineTo(hx, y)
+        ..strokePath()
+        ..moveTo(x, y)
+        ..lineTo(x, vy)
+        ..strokePath();
+    }
+  }
+}
+
+pw.Widget _labelChip(pw.Font font, String text) => pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: pw.BoxDecoration(
+        color: const PdfColor(1, 1, 1, 0.72),
+        borderRadius: pw.BorderRadius.circular(4),
+      ),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(font: font, fontSize: 9, color: PdfColors.grey800),
+      ),
+    );
+
+/// A final index page: a labeled cols×rows grid so you can see, at a glance,
+/// which numbered page goes where.
+pw.Page _mapPage(
+  PdfPageFormat format,
+  PosterLayout layout,
+  pw.Font font,
+  pw.Font fontBold,
+) {
+  final cols = layout.cols;
+  final rows = layout.rows;
+  return pw.Page(
+    pageFormat: format,
+    margin: const pw.EdgeInsets.all(36),
+    build: (context) => pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Assembly map',
+          style: pw.TextStyle(font: fontBold, fontSize: 24),
+        ),
+        pw.SizedBox(height: 6),
+        pw.Text(
+          '$cols x $rows, ${layout.pageCount} pages. Trim each page on the '
+          'dashed line, line them up with R1-C1 at the top-left, and tape.',
+          style: pw.TextStyle(
+            font: font,
+            fontSize: 12,
+            color: PdfColors.grey700,
+          ),
+        ),
+        pw.SizedBox(height: 18),
+        pw.Expanded(
+          child: pw.Column(
+            children: [
+              for (var r = 0; r < rows; r++)
+                pw.Expanded(
+                  child: pw.Row(
+                    children: [
+                      for (var c = 0; c < cols; c++)
+                        pw.Expanded(
+                          child: pw.Container(
+                            margin: const pw.EdgeInsets.all(3),
+                            decoration: pw.BoxDecoration(
+                              border: pw.Border.all(
+                                color: PdfColors.grey600,
+                                width: 0.7,
+                              ),
+                            ),
+                            alignment: pw.Alignment.center,
+                            child: pw.Text(
+                              'R${r + 1}-C${c + 1}',
+                              style: pw.TextStyle(font: font, fontSize: 12),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 /// One-shot: render [bytes] per [layout] + [fit] (+ optional rotation) and
@@ -409,13 +542,20 @@ Future<Uint8List> renderPosterPdf(
   bool labels = true,
   String title = 'Poster',
   int quarterTurns = 0,
+  bool guides = false,
 }) async {
-  final tiles =
-      await renderPosterTiles(bytes, layout, fit, quarterTurns: quarterTurns);
+  final tiles = await renderPosterTiles(
+    bytes,
+    layout,
+    fit,
+    quarterTurns: quarterTurns,
+    guides: guides,
+  );
   return buildPosterPdf(
     tiles: tiles,
     layout: layout,
     labels: labels,
+    guides: guides,
     title: title,
   );
 }

@@ -155,6 +155,7 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         labels: _opts.labels,
         title: 'Poster $tag',
         quarterTurns: _quarterTurns,
+        guides: _opts.guides,
       );
       if (!mounted) return;
       if (share) {
@@ -271,7 +272,8 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
           '${layout.landscape ? 'landscape' : 'portrait'} · ${layout.pageCount} '
           '${_paperName(layout.paper)} page${layout.pageCount == 1 ? '' : 's'} · '
           'about ${_assembledSize(layout)} assembled\n'
-          'Print all ${layout.pageCount}, line them up, and tape them together.',
+          'Print all ${layout.pageCount}, line them up, and tape them together.'
+          '${_opts.guides ? '\nIncludes trim guides + an assembly map page.' : ''}',
           textAlign: TextAlign.center,
           style: caption,
         ),
@@ -358,6 +360,16 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         ),
         value: _opts.labels,
         onChanged: (v) => _update(_opts.copyWith(labels: v)),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Assembly guides'),
+        subtitle: const Text(
+          'Add a trim border with a dashed cut line + crop marks so seams '
+          'line up, plus a map page showing where each page goes',
+        ),
+        value: _opts.guides,
+        onChanged: (v) => _update(_opts.copyWith(guides: v)),
       ),
       const SizedBox(height: 4),
       Row(

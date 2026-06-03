@@ -29,6 +29,7 @@ class PosterPrefs {
         fit: _enumByName(PosterFit.values, map['fit'], PosterFit.fill),
         paper: _enumByName(PosterPaper.values, map['paper'], PosterPaper.letter),
         labels: map['labels'] as bool? ?? true,
+        guides: map['guides'] as bool? ?? false,
       );
     } on Object {
       return const PosterOptions();
@@ -47,6 +48,7 @@ class PosterPrefs {
           'fit': o.fit.name,
           'paper': o.paper.name,
           'labels': o.labels,
+          'guides': o.guides,
         }),
       );
     } on Object {

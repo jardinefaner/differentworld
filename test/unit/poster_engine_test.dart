@@ -3,10 +3,12 @@
 // the isolate renderer and the on-screen preview — so they're pinned here.
 
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:differentworld/features/poster/poster_engine.dart';
 import 'package:differentworld/features/poster/poster_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 
 void main() {
   const letterAspect = kLetterWidthIn / kLetterHeightIn; // 8.5 / 11
@@ -160,6 +162,59 @@ void main() {
     test('the placed image preserves the source aspect (never distorts)', () {
       final (_, _, w, h) = posterContainPlacement(1600, 900, 850, 1100);
       expect(w / h, closeTo(1600 / 900, 1e-9));
+    });
+  });
+
+  group('renderPosterTiles / renderPosterPdf (assembly guides)', () {
+    Uint8List solidPng(int w, int h) {
+      final image = img.Image(width: w, height: h);
+      img.fill(image, color: img.ColorRgb8(120, 180, 240));
+      return Uint8List.fromList(img.encodePng(image));
+    }
+
+    test('produces one tile per page (row-major)', () async {
+      final bytes = solidPng(600, 800);
+      final layout = computePosterLayout(
+        const PosterOptions(fitShape: false),
+        600 / 800,
+      );
+      final tiles = await renderPosterTiles(bytes, layout, PosterFit.fill);
+      expect(tiles.length, layout.pageCount); // 2×2 → 4
+    });
+
+    test('guides shrink each tile to leave a trim margin', () async {
+      final bytes = solidPng(600, 800);
+      final layout = computePosterLayout(
+        const PosterOptions(fitShape: false),
+        600 / 800,
+      );
+      final plain = await renderPosterTiles(bytes, layout, PosterFit.fill);
+      final guided = await renderPosterTiles(
+        bytes,
+        layout,
+        PosterFit.fill,
+        guides: true,
+      );
+      final p0 = img.decodeImage(plain.first)!;
+      final g0 = img.decodeImage(guided.first)!;
+      expect(g0.width, lessThan(p0.width));
+      expect(g0.height, lessThan(p0.height));
+    });
+
+    test('a guided render still produces a valid, non-empty PDF', () async {
+      final bytes = solidPng(400, 400);
+      final layout = computePosterLayout(
+        const PosterOptions(fitShape: false),
+        1,
+      );
+      final pdf = await renderPosterPdf(
+        bytes,
+        layout,
+        PosterFit.fill,
+        guides: true,
+      );
+      expect(pdf, isNotEmpty);
+      expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
     });
   });
 }

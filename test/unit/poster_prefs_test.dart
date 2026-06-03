@@ -28,6 +28,7 @@ void main() {
       fit: PosterFit.whole,
       paper: PosterPaper.a4,
       labels: false,
+      guides: true,
     );
     await PosterPrefs.save(saved);
     final loaded = await PosterPrefs.load();
@@ -36,6 +37,7 @@ void main() {
     expect(loaded.fit, PosterFit.whole);
     expect(loaded.paper, PosterPaper.a4);
     expect(loaded.labels, isFalse);
+    expect(loaded.guides, isTrue);
   });
 
   test('a corrupt blob falls back to defaults', () async {

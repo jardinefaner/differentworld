@@ -32,6 +32,7 @@ class PosterOptions {
     this.fit = PosterFit.fill,
     this.paper = PosterPaper.letter,
     this.labels = true,
+    this.guides = false,
   });
 
   /// How big — the number of pages along the poster's *longest* edge
@@ -56,12 +57,19 @@ class PosterOptions {
   /// the assembly order is obvious when you lay the pages out.
   final bool labels;
 
+  /// Add a white trim border with a dashed cut line + corner crop marks on
+  /// every page, plus an "Assembly map" index page — so the seams line up
+  /// cleanly when you trim and tape. Off by default (the simple full-bleed
+  /// path).
+  final bool guides;
+
   PosterOptions copyWith({
     int? size,
     bool? fitShape,
     PosterFit? fit,
     PosterPaper? paper,
     bool? labels,
+    bool? guides,
   }) =>
       PosterOptions(
         size: size ?? this.size,
@@ -69,5 +77,6 @@ class PosterOptions {
         fit: fit ?? this.fit,
         paper: paper ?? this.paper,
         labels: labels ?? this.labels,
+        guides: guides ?? this.guides,
       );
 }
