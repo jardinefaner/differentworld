@@ -87,17 +87,27 @@ override tools, then a promotion path from per-space → canonical.
   shells?
 
 ## Current status / next
-- **Design done; Phase 1 not yet started.** Branch `feat/thinking-tools`.
-- **First concrete step** (fresh-context-friendly, ~1 commit): the
-  `ThinkingTool` view-model + the two adapters (`ToolkitTool → ThinkingTool`
-  reference; `GameDefinition → ThinkingTool` runnable) + a unit test proving
-  both sources map to one shape. Pure Dart, no UI — de-risks the unification.
-- **Then:** the `/tools` library screen (reuse `FeatureCard` + the toolkit
-  screen's search) + a detail with "Run with the room" → existing live route.
-- **Then:** wire the four discovery surfaces + claim them in `docs/FEATURES.md`.
-- **Spelunking note for whoever builds it:** the games registry isn't a single
-  central list — games are enumerated in `present_hub_screen.dart` (the present
-  hub). Start there to get the iterable set of `GameDefinition`s; the reference
-  set is the const `toolkitCatalog` in `toolkit/toolkit_catalog.dart`.
-  `GameDefinition` has `id / title / vibe / liveRoute` but NO reference text yet
-  — derive a blurb from title+vibe for v1, or add an optional `purpose` getter.
+Branch `feat/thinking-tools`. Phase 1 underway.
+
+- **DONE — the unified model.** `lib/features/tools/thinking_tool.dart`: the
+  `ThinkingTool` view-model + `ThinkingTool.fromToolkit` (reference adapter) +
+  a curated `runnableThinkingTools` const list + `buildToolLibrary()` that
+  merges both sources into one shelf. `test/unit/thinking_tool_test.dart`
+  (6 tests) proves both kinds map to one shape. analyze clean.
+- **NEXT — the `/tools` screen.** A searchable shelf over `buildToolLibrary()`
+  (reuse `FeatureCard` + the toolkit screen's search), with a detail that shows
+  the reference face (when / why / script) and a "Run with the room" button
+  (→ `tool.route`) for runnable tools.
+- **THEN — discovery wiring:** the four surfaces (router `/tools`, omnibox, nav,
+  settings) + claim them in `docs/FEATURES.md`. Decide the fate of the
+  standalone Toolkit + Brain Breaks entry points (fold in vs keep).
+
+### Notes for the build
+- **Runnable source of truth (Phase-2 debt):** `runnableThinkingTools` is a
+  small hand-curated list whose routes mirror the Brain Breaks deck
+  (`activity_runtime/brain_breaks_screen.dart`, the `_BreakCard` const list —
+  route-based, NOT `GameDefinition`s, and it mixes in pure brain-breaks like
+  Breathe / Photo). Phase 2 should reconcile these into one source.
+- **`GameDefinition`** (`games/game.dart`) has only `id / title / vibe(colors)
+  / liveRoute` — no reference text — so we adapt from routes/curation, not from
+  the contract. Add a `purpose` getter there if/when games need richer cards.
