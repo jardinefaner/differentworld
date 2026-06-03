@@ -1,9 +1,7 @@
-import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/data_seeded_game.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
-import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
-import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -26,9 +24,9 @@ String _title(String? title, String kind) {
 }
 
 /// Seeds Now & Next from today's schedule (Drift, not the content bank), then
-/// hands off to the runner / live screen (docs/VISION.md #18). Starts on the
-/// block that's happening now (or the next upcoming). The resolved blocks
-/// ride in the wire-state, so a joined controller shows the same board.
+/// hands off via [DataSeededGame] (docs/VISION.md #18). Starts on the block
+/// happening now (or the next upcoming). The resolved blocks ride in the
+/// wire-state, so a joined controller shows the same board.
 class NowNextScreen extends ConsumerWidget {
   const NowNextScreen({required this.live, super.key});
 
@@ -36,9 +34,11 @@ class NowNextScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final day = ref.watch(scheduleDayProvider(todayKey()));
-    return day.when(
-      data: (blocks) {
+    return DataSeededGame(
+      def: const NowNextGame(),
+      live: live,
+      data: ref.watch(scheduleDayProvider(todayKey())),
+      seed: (blocks) {
         final sorted = [...blocks]
           ..sort((a, b) => a.startAt.compareTo(b.startAt));
         final now = DateTime.now();
@@ -49,23 +49,14 @@ class NowNextScreen extends ConsumerWidget {
           // First block that hasn't ended = now-or-next; else fall to the last.
           if (end != null && now.isBefore(end)) break;
         }
-        final seed = <String, dynamic>{
+        return {
           'blocks': [
             for (final b in sorted)
               [_title(b.title, b.kind), _fmtTime(b.startAt), b.kind],
           ],
           'i': current,
         };
-        return live
-            ? LiveGameScreen(def: const NowNextGame(), seed: seed)
-            : GameRunner(def: const NowNextGame(), seed: seed);
       },
-      loading: () => const EdgeScaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, _) => live
-          ? const LiveGameScreen(def: NowNextGame())
-          : const GameRunner(def: NowNextGame()),
     );
   }
 }
