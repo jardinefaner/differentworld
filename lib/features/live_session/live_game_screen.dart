@@ -93,7 +93,9 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     }
     _subs.clear();
     _controller?.dispose();
-    _controller = null; // null BEFORE the mounted check so dispose() no-ops
+    // Null it here; the disjoint dispose() path's `_controller?.dispose()` is
+    // then a safe no-op (and the stream guards check `mounted`).
+    _controller = null;
     if (!mounted) return;
     setState(() {
       _mode = _Mode.lobby;
@@ -433,7 +435,10 @@ class _JoinCard extends StatefulWidget {
 class _JoinCardState extends State<_JoinCard> {
   String? _code() {
     final code = widget.controller.text.trim().toUpperCase();
-    return code.length >= 3 ? code : null;
+    // Codes are exactly 4 chars (generateSessionCode); requiring 4 stops a
+    // short entry joining a channel with no presenter and hanging on
+    // "Connecting…".
+    return code.length >= 4 ? code : null;
   }
 
   void _submit() {
