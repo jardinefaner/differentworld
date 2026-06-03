@@ -82,6 +82,7 @@ import 'package:differentworld/features/tasks/tasks_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_tool_screen.dart';
+import 'package:differentworld/features/tools/tools_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
 import 'package:differentworld/features/vehicles/vehicle_detail_screen.dart';
 import 'package:differentworld/features/vehicles/vehicle_edit_screen.dart';
@@ -852,6 +853,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/breaks',
             builder: (_, _) => const BrainBreaksScreen(),
+          ),
+          // The Thinking Tools library (docs/THINKING_TOOLS.md) — one shelf
+          // over the runnable activities + the editorial reference cards.
+          GoRoute(
+            path: '/tools',
+            builder: (_, _) =>
+                const RouteTitle(title: 'Tools', child: ToolsScreen()),
           ),
           // Live present/control for This-or-That (docs/LIVE_SESSIONS.md):
           // present on a big screen, control from a phone over Realtime.

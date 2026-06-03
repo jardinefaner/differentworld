@@ -87,20 +87,25 @@ override tools, then a promotion path from per-space → canonical.
   shells?
 
 ## Current status / next
-Branch `feat/thinking-tools`. Phase 1 underway.
+Branch `feat/thinking-tools`. **Phase 1 is essentially done.**
 
 - **DONE — the unified model.** `lib/features/tools/thinking_tool.dart`: the
   `ThinkingTool` view-model + `ThinkingTool.fromToolkit` (reference adapter) +
-  a curated `runnableThinkingTools` const list + `buildToolLibrary()` that
-  merges both sources into one shelf. `test/unit/thinking_tool_test.dart`
-  (6 tests) proves both kinds map to one shape. analyze clean.
-- **NEXT — the `/tools` screen.** A searchable shelf over `buildToolLibrary()`
-  (reuse `FeatureCard` + the toolkit screen's search), with a detail that shows
-  the reference face (when / why / script) and a "Run with the room" button
-  (→ `tool.route`) for runnable tools.
-- **THEN — discovery wiring:** the four surfaces (router `/tools`, omnibox, nav,
-  settings) + claim them in `docs/FEATURES.md`. Decide the fate of the
-  standalone Toolkit + Brain Breaks entry points (fold in vs keep).
+  a curated `runnableThinkingTools` const list + `buildToolLibrary()`.
+  `test/unit/thinking_tool_test.dart` (6 tests). A constructor assert enforces
+  runnable ⇒ has a route.
+- **DONE — the `/tools` screen.** `lib/features/tools/tools_screen.dart`: a
+  searchable shelf of `FeatureCard` tiles over `buildToolLibrary()`; runnable
+  tiles launch `tool.route`, reference tiles open a glass reading sheet
+  (when / why / script). Width-capped for desktop; Screen Rubric passed (D2
+  blocker + A4/A5/E2 warns fixed).
+- **DONE — discovery wiring (4 surfaces) + FEATURES.md.** Router `/tools`,
+  omnibox `page.tools`, `/tools` slash, nav "Tools" (Activities group), and a
+  claimed `## Tools (Thinking Tools)` entry in `docs/FEATURES.md`.
+- **NEXT — Phase 1 wrap + on-device pass.** Decide the fate of the standalone
+  Toolkit (Settings) + Brain Breaks (nav) entry points — keep for now (the new
+  shelf coexists), fold in later. Tap-through on the Pixel once it's back.
+- **THEN — Phase 2 (broaden content).** See the Phase 2 section above.
 
 ### Notes for the build
 - **Runnable source of truth (Phase-2 debt):** `runnableThinkingTools` is a

@@ -741,6 +741,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Tools (Thinking Tools)
+**Path**: `lib/features/tools/`
+**Purpose**: One searchable shelf that unifies the two halves of the "thinking tools" vision (docs/THINKING_TOOLS.md) — the runnable activities (run with the room) and the editorial reference cards — so a staffer browses, then either launches a tool or reads the move. Phase 1 is a view-model adapter over both existing sources; Phases 2–3 broaden the content past the classroom and open it to contributors.
+**Personas served**: All staff. Especially Coach Sam + Brianna (grab a discussion / warm-up to run), Jordan (read the reference move in the moment).
+**Discovery surfaces**:
+- Routes: `/tools`
+- Omnibox: yes — "Tools" (keywords cover tools, thinking tools, thinking, toolkit, activities, run with the room, discussion, frameworks, mental models)
+- Slash: `/tools` (aliases: `toolkit`, `thinking`, `frameworks`, `activities`)
+- Drawer: yes — "Tools" (Activities group, position before Present)
+- Settings: no
+**Capabilities**: None — open to every signed-in staff member (staff-facing; gated `viewer is! GuardianViewer` in the omnibox). Read-only.
+**Data**: None — pure content (a Dart adapter over the toolkit const catalog + a curated runnable list).
+**Surfaces**:
+- *ThinkingTool model* — `lib/features/tools/thinking_tool.dart`. The unified view-model + `ThinkingTool.fromToolkit` (reference adapter), `runnableThinkingTools` (curated runnable list), `buildToolLibrary()` (merged shelf, runnable-first).
+- *Tools screen* — `lib/features/tools/tools_screen.dart`. Searchable list of `FeatureCard` tiles; runnable tiles launch `tool.route`, reference tiles open a glass reading sheet (when / why / script).
+**Depends on**: Toolkit (reads `toolkitCatalog`); the activity routes (`/activity/*`, `/live/*`) it launches into.
+**Consumed by**: Nothing yet.
+**Last verified**: 2026-06-03
+
+---
+
 ## Today
 **Path**: `lib/features/today/`
 **Purpose**: The daily launchpad. Root destination. Context-driven cards: morning (attendance, leading-today, captures); afternoon (pickup, end-of-day capture); director pulse (oversight signals).

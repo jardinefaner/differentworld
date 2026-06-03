@@ -105,6 +105,11 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
 
     // ── Activities ──────────────────────────────────────────────────
     const NavDestination(
+      icon: Icons.psychology_outlined,
+      label: 'Tools',
+      route: '/tools',
+    ),
+    const NavDestination(
       icon: Icons.co_present_outlined,
       label: 'Present',
       route: '/present',

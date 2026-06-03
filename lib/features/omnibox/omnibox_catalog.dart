@@ -215,6 +215,27 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ],
       onSelect: (ctx, _) => ctx.push('/board'),
     ),
+    // The Thinking Tools library (docs/THINKING_TOOLS.md) — one shelf over the
+    // runnable activities + the editorial reference cards.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.tools',
+        label: 'Tools',
+        category: OmniboxCategory.page,
+        icon: Icons.psychology_outlined,
+        keywords: const [
+          'tools',
+          'thinking tools',
+          'thinking',
+          'toolkit',
+          'activities',
+          'run with the room',
+          'discussion',
+          'frameworks',
+          'mental models',
+        ],
+        onSelect: (ctx, _) => ctx.push('/tools'),
+      ),
     // The classroom remote (docs/VISION.md #18) — present a surface on the
     // big screen, drive it from the phone. Staff-only (guardians can't drive
     // the room). Broad keywords surface each by what teachers call the thing.

@@ -21,7 +21,11 @@ class ThinkingTool {
     this.why,
     this.script,
     this.tags = const <String>[],
-  });
+  }) : assert(
+          kind != ToolKind.runnable || route != null,
+          'A runnable tool must carry a launch route — otherwise the "Run" '
+          'affordance would advertise an action it cannot deliver.',
+        );
 
   /// Adapt one editorial Toolkit tool into the unified shape (reference-only —
   /// no route, carries the when/why/script reference face).

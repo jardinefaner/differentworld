@@ -327,6 +327,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/present')),
   ),
   SlashCommand(
+    name: 'tools',
+    label: '/tools',
+    hint: 'Thinking Tools — run one with the room, or read the move',
+    icon: Icons.psychology_outlined,
+    aliases: const ['toolkit', 'thinking', 'frameworks', 'activities'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/tools')),
+  ),
+  SlashCommand(
     name: 'live',
     label: '/live',
     hint: 'This or That — Live: present on a big screen, control from a phone',
