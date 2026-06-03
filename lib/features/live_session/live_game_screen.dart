@@ -6,6 +6,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/features/games/game_fullscreen.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -201,6 +202,14 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
             peers: _peers,
             status: _status,
             onEnd: _leave,
+            onFullscreen: () => unawaited(
+              GameFullscreenScreen.open(
+                context,
+                def: _def,
+                controller: c,
+                joinCode: c.code,
+              ),
+            ),
           )
         else
           _ControllerHeader(status: _status, onLeave: _leave),
@@ -537,12 +546,14 @@ class _PresenterHeader extends StatelessWidget {
     required this.peers,
     required this.status,
     required this.onEnd,
+    required this.onFullscreen,
   });
 
   final String code;
   final int peers;
   final LiveStatus status;
   final VoidCallback onEnd;
+  final VoidCallback onFullscreen;
 
   @override
   Widget build(BuildContext context) {
@@ -574,7 +585,12 @@ class _PresenterHeader extends StatelessWidget {
           const Icon(Icons.people_alt_outlined, color: Colors.white54, size: 18),
           const SizedBox(width: 4),
           Text('$peers', style: const TextStyle(color: Colors.white70)),
-          const SizedBox(width: 10),
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: 'Fullscreen',
+            onPressed: onFullscreen,
+            icon: const Icon(Icons.fullscreen, color: Colors.white54),
+          ),
           IconButton(
             tooltip: 'End session',
             onPressed: onEnd,
