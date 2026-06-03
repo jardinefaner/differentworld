@@ -474,6 +474,29 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Poster
+**Path**: `lib/features/poster/`
+**Purpose**: Tile one image across several Letter/A4 pages — print all of them and tape them into one big poster (a kid's drawing blown up, a welcome banner, a giant map). The grid auto-fits the image's shape; you can reposition the crop, rotate, and add trim/assembly guides.
+**Personas served**: All staff (a maker / room-decoration utility). Not guardians — staff-only; the router allow-list bounces guardians off `/poster`.
+**Discovery surfaces**:
+- Routes: `/poster`
+- Omnibox: yes — "Poster — print big" (keywords: poster, print big, blow up, enlarge, banner, big print, large print, tile, engineer print, wall art, welcome sign, sign). Gated `viewer is! GuardianViewer`.
+- Slash: none
+- Drawer: no
+- Settings: yes — "Poster" row in the Resources `_SettingsGroup`.
+**Capabilities**: None — open to all signed-in staff. No child data touched.
+**Data**: None — fully local. The picked image bytes never persist to the cloud (no DB row, no Storage upload); the PDF is generated on-device and handed to the OS print / share sheet. The chosen size/fit/paper/labels/guides options persist locally in SharedPreferences (`PosterPrefs`).
+**Surfaces**:
+- *PosterScreen* — `lib/features/poster/poster_screen.dart`. Pick image (gallery/camera, capped 6000 px; preview decodes downsized via `cacheWidth`); live WYSIWYG preview with cut-lines; Size (2–5) + "Fit to image shape" + Fit (edge-to-edge / whole image) + Paper (Letter/A4) + Print quality (Standard/High/Lossless) + Corner labels + Assembly guides controls; Rotate (bakes 90° into the bytes) + Reset crop; in Fill mode the preview is interactive (drag to pan, pinch to zoom); Print + Share; working/error banners.
+- *Poster engine* — `lib/features/poster/poster_engine.dart`. Pure geometry (`computePosterLayout` picks cols×rows + page orientation to match the image aspect; `posterCoverCrop`/`posterViewRect` = fill crop with zoom + focal point; `posterContainPlacement` = whole-image fit) + `rotateImageQuarterTurn` + `renderPosterTiles` (heavy decode/crop/resize in an isolate; web falls back to the main thread; per-quality DPI cap + JPEG-or-PNG tile encoding) + `buildPosterPdf` (Letter/A4, portrait/landscape, optional trim border + dashed cut line + crop marks + an "Assembly map" page; built-in Helvetica — no network). `renderPosterTilesForTest` is the `@visibleForTesting` sync seam.
+- *Poster options* — `lib/features/poster/poster_models.dart`. `PosterFit {fill, whole}`, `PosterPaper {letter, a4}`, `PosterQuality {standard, high, lossless}`, `PosterOptions {size, fitShape, fit, paper, quality, labels, guides}`.
+- *Poster prefs* — `lib/features/poster/poster_prefs.dart`. Load/save the durable options (defensive: corrupt/missing/out-of-range → defaults).
+**Depends on**: `image` (decode/rotate/crop/resize), `pdf` + `printing` (PDF + OS print/share), `image_picker`, `shared_preferences`, EdgeScaffold + shared chrome primitives.
+**Consumed by**: none.
+**Last verified**: 2026-06-02
+
+---
+
 ## Pickup
 **Path**: `lib/features/pickup/`
 **Purpose**: Authorized-pickup records — who's allowed to take a child home.

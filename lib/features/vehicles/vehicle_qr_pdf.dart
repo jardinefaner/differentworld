@@ -56,8 +56,14 @@ Future<Uint8List> buildVehicleCheckoutQrPdf({
     kind: kind,
   );
 
-  final font = await PdfGoogleFonts.interMedium();
-  final fontBold = await PdfGoogleFonts.interBold();
+  // Built-in standard PDF fonts — NOT PdfGoogleFonts, which downloads the
+  // TTF from Google's CDN at generation time and breaks offline-first (a
+  // director printing a QR sticker on a captive-portal / no-signal device
+  // gets a hung/failed PDF). Helvetica is embedded in every PDF reader:
+  // zero network, zero asset. See the "PdfGoogleFonts.*() downloads at
+  // print time" gotcha in CLAUDE.md.
+  final font = pw.Font.helvetica();
+  final fontBold = pw.Font.helveticaBold();
   final plate = vehicle.licensePlate;
 
   doc.addPage(

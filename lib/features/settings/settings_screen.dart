@@ -200,6 +200,16 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/settings/curricula/photo'),
               ),
+              const _SettingsDivider(),
+              ListTile(
+                leading: const Icon(Icons.grid_view_rounded),
+                title: const Text('Poster'),
+                subtitle: const Text(
+                  'Blow up an image across printed pages to tape together',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/poster'),
+              ),
             ],
           ),
 
