@@ -5,18 +5,13 @@ import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Mission, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/activity_runtime/as_if_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
-import 'package:differentworld/features/activity_runtime/letter_words_screen.dart';
-import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
-import 'package:differentworld/features/activity_runtime/rhyme_time_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
-import 'package:differentworld/features/activity_runtime/story_starters_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
@@ -32,12 +27,18 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_runner.dart';
+import 'package:differentworld/features/games/games/as_if_game.dart';
+import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/letter_words_game.dart';
+import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
+import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
+import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
@@ -48,7 +49,6 @@ import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
-import 'package:differentworld/features/live_session/charades_live_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
@@ -915,7 +915,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // phone shows the secret word, the teacher's phone marks Got it.
           GoRoute(
             path: '/live/charades',
-            builder: (_, _) => const CharadesLiveScreen(),
+            builder: (_, _) => const LiveGameScreen(def: CharadesGame()),
           ),
           // Anonymous brainstorm / agenda board (docs/VISION.md #5): phones
           // post ideas to a projected wall, no names, over Realtime.
@@ -946,7 +946,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Math GAME — one question at a time, mixed mechanics.
           GoRoute(
             path: '/activity/math-game',
-            builder: (_, _) => const MathGameScreen(),
+            builder: (_, _) => const GameRunner(def: MathQuizGame()),
+          ),
+          GoRoute(
+            path: '/live/math-game',
+            builder: (_, _) => const LiveGameScreen(def: MathQuizGame()),
           ),
           // The Photography activity — opens straight to a full-screen
           // camera, kid-mode locked (docs/ACTIVITY_RUNTIME.md). `?prompt=`
@@ -967,12 +971,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           // "Starts with" word game — content from the content bank.
           GoRoute(
             path: '/activity/starts-with',
-            builder: (_, _) => const LetterWordsScreen(),
+            builder: (_, _) => const GameRunner(def: LetterWordsGame()),
+          ),
+          GoRoute(
+            path: '/live/starts-with',
+            builder: (_, _) => const LiveGameScreen(def: LetterWordsGame()),
           ),
           // "As If" acting game — perform a line in an emotion/character.
           GoRoute(
             path: '/activity/as-if',
-            builder: (_, _) => const AsIfScreen(),
+            builder: (_, _) => const GameRunner(def: AsIfGame()),
+          ),
+          GoRoute(
+            path: '/live/as-if',
+            builder: (_, _) => const LiveGameScreen(def: AsIfGame()),
           ),
           // Role Cards — animal & nature roles as SMART daily practices
           // (docs/ROLES_SMART_PRACTICE.md). Browse the catalog; each card is
@@ -999,12 +1011,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Story Starters — host-run; the room builds a story aloud.
           GoRoute(
             path: '/activity/story',
-            builder: (_, _) => const StoryStartersScreen(),
+            builder: (_, _) => const GameRunner(def: StoryStartersGame()),
+          ),
+          GoRoute(
+            path: '/live/story',
+            builder: (_, _) => const LiveGameScreen(def: StoryStartersGame()),
           ),
           // Rhyme Time — host-run; the room shouts rhymes, you tally.
           GoRoute(
             path: '/activity/rhyme-time',
-            builder: (_, _) => const RhymeTimeScreen(),
+            builder: (_, _) => const GameRunner(def: RhymeTimeGame()),
+          ),
+          GoRoute(
+            path: '/live/rhyme-time',
+            builder: (_, _) => const LiveGameScreen(def: RhymeTimeGame()),
           ),
           // Make a Pattern — draw/build a tile in real life, snap it, watch
           // it repeat (kaleidoscope mirroring → symmetry from any tile).

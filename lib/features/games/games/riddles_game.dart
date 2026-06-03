@@ -50,9 +50,7 @@ class RiddlesGame extends GameDefinition<RiddleState> {
 
   @override
   Map<String, dynamic> initialState(ContentSource content) {
-    final picked = (content.take(ContentKind.riddle, 1000)..shuffle())
-        .take(10)
-        .toList();
+    final picked = content.take(ContentKind.riddle, 10);
     final items = [
       for (final c in picked)
         [c.payload['prompt']! as String, c.payload['answer']! as String],

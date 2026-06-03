@@ -4,8 +4,10 @@ import 'dart:math';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/features/games/game_fullscreen.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +36,7 @@ class LiveGameScreen<S> extends ConsumerStatefulWidget {
   ConsumerState<LiveGameScreen<S>> createState() => _LiveGameScreenState<S>();
 }
 
-enum _Mode { lobby, present, control }
+enum _Mode { lobby, present, secret, control }
 
 /// 4 chars, no ambiguous glyphs (0/O/1/I/L) — easy to read off a screen.
 String generateSessionCode() {
@@ -63,7 +65,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       role: role,
       code: code,
       def: _def,
-      content: LocalContentBank(snapshot),
+      content: ContentEngine(snapshot),
       seed: widget.seed,
     );
     _subs
@@ -79,7 +81,11 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     setState(() {
       _controller = c;
       _wire = c.state;
-      _mode = role == SessionRole.present ? _Mode.present : _Mode.control;
+      _mode = switch (role) {
+        SessionRole.present => _Mode.present,
+        SessionRole.secret => _Mode.secret,
+        SessionRole.control => _Mode.control,
+      };
     });
   }
 
@@ -89,7 +95,9 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     }
     _subs.clear();
     _controller?.dispose();
-    _controller = null; // null BEFORE the mounted check so dispose() no-ops
+    // Null it here; the disjoint dispose() path's `_controller?.dispose()` is
+    // then a safe no-op (and the stream guards check `mounted`).
+    _controller = null;
     if (!mounted) return;
     setState(() {
       _mode = _Mode.lobby;
@@ -118,6 +126,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
           child: switch (_mode) {
             _Mode.lobby => _lobby(context),
             _Mode.present => _stageView(context, isPresenter: true),
+            _Mode.secret => _secretView(context),
             _Mode.control => _stageView(context, isPresenter: false),
           },
         ),
@@ -161,6 +170,9 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
               _JoinCard(
                 controller: _codeCtrl,
                 onJoin: (code) => _open(SessionRole.control, code),
+                onActor: _def.hasSecretRole
+                    ? (code) => _open(SessionRole.secret, code)
+                    : null,
               ),
             ],
           ),
@@ -176,6 +188,13 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     // A game with custom controls (poll, timer) owns the bar; otherwise the
     // standard intents bar. Same override the single-device scaffold honors.
     final custom = _def.buildControls(context, state, c.send);
+    // The room (presenter) always shows the public stage; the controller of a
+    // secret-role game (the teacher) sees the secret stage instead, so they
+    // can mark the room's guess.
+    final stage = isPresenter
+        ? _def.buildStage(context, state)
+        : (_def.buildSecretStage(context, state) ??
+            _def.buildStage(context, state));
     return Column(
       children: [
         if (isPresenter)
@@ -184,14 +203,37 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
             peers: _peers,
             status: _status,
             onEnd: _leave,
+            onFullscreen: () => unawaited(
+              GameFullscreenScreen.open(
+                context,
+                def: _def,
+                controller: c,
+                joinCode: c.code,
+              ),
+            ),
           )
         else
           _ControllerHeader(status: _status, onLeave: _leave),
-        Expanded(child: _def.buildStage(context, state)),
+        Expanded(child: stage),
         if (custom != null)
           _CustomLiveBar(child: custom)
         else
           _LiveControls<S>(def: _def, wire: _wire, onIntent: c.send),
+      ],
+    );
+  }
+
+  // ── Secret (actor) view — the secret stage only; the actor just watches
+  // (e.g. Charades' word) and never drives. ────────────────────────────────
+  Widget _secretView(BuildContext context) {
+    final state = _def.decode(_wire);
+    return Column(
+      children: [
+        _ControllerHeader(status: _status, onLeave: _leave),
+        Expanded(
+          child: _def.buildSecretStage(context, state) ??
+              _def.buildStage(context, state),
+        ),
       ],
     );
   }
@@ -383,23 +425,40 @@ class _LobbyCard extends StatelessWidget {
 }
 
 class _JoinCard extends StatefulWidget {
-  const _JoinCard({required this.controller, required this.onJoin});
+  const _JoinCard({
+    required this.controller,
+    required this.onJoin,
+    this.onActor,
+  });
 
   final TextEditingController controller;
   final ValueChanged<String> onJoin;
+
+  /// When non-null, the game has a secret/actor role — the card offers a
+  /// second "I'm acting" button (joins as [SessionRole.secret]).
+  final ValueChanged<String>? onActor;
 
   @override
   State<_JoinCard> createState() => _JoinCardState();
 }
 
 class _JoinCardState extends State<_JoinCard> {
-  void _submit() {
+  String? _code() {
     final code = widget.controller.text.trim().toUpperCase();
-    if (code.length >= 3) widget.onJoin(code);
+    // Codes are exactly 4 chars (generateSessionCode); requiring 4 stops a
+    // short entry joining a channel with no presenter and hanging on
+    // "Connecting…".
+    return code.length >= 4 ? code : null;
+  }
+
+  void _submit() {
+    final code = _code();
+    if (code != null) widget.onJoin(code);
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasActor = widget.onActor != null;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -415,7 +474,7 @@ class _JoinCardState extends State<_JoinCard> {
               SizedBox(width: 16),
               Expanded(
                 child: Text(
-                  'Control a session',
+                  'Join a session',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -426,38 +485,56 @@ class _JoinCardState extends State<_JoinCard> {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: widget.controller,
-                  textCapitalization: TextCapitalization.characters,
-                  textInputAction: TextInputAction.go,
-                  onSubmitted: (_) => _submit(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    letterSpacing: 6,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: 'CODE',
-                    hintStyle: TextStyle(
-                      color: Colors.white24,
-                      letterSpacing: 6,
-                    ),
-                    border: OutlineInputBorder(),
+          TextField(
+            controller: widget.controller,
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.go,
+            onSubmitted: (_) => _submit(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              letterSpacing: 6,
+              fontWeight: FontWeight.w800,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'CODE',
+              hintStyle: TextStyle(color: Colors.white24, letterSpacing: 6),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (hasActor)
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      final code = _code();
+                      if (code != null) widget.onActor!(code);
+                    },
+                    icon: const Icon(Icons.theater_comedy),
+                    label: const Text("I'm acting"),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              FilledButton(
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _submit,
+                    icon: const Icon(Icons.sports_esports),
+                    label: const Text('Control'),
+                  ),
+                ),
+              ],
+            )
+          else
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
                 onPressed: _submit,
                 style: FilledButton.styleFrom(minimumSize: const Size(88, 56)),
                 child: const Text('Join'),
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -470,12 +547,14 @@ class _PresenterHeader extends StatelessWidget {
     required this.peers,
     required this.status,
     required this.onEnd,
+    required this.onFullscreen,
   });
 
   final String code;
   final int peers;
   final LiveStatus status;
   final VoidCallback onEnd;
+  final VoidCallback onFullscreen;
 
   @override
   Widget build(BuildContext context) {
@@ -507,7 +586,12 @@ class _PresenterHeader extends StatelessWidget {
           const Icon(Icons.people_alt_outlined, color: Colors.white54, size: 18),
           const SizedBox(width: 4),
           Text('$peers', style: const TextStyle(color: Colors.white70)),
-          const SizedBox(width: 10),
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: 'Fullscreen',
+            onPressed: onFullscreen,
+            icon: const Icon(Icons.fullscreen, color: Colors.white54),
+          ),
           IconButton(
             tooltip: 'End session',
             onPressed: onEnd,

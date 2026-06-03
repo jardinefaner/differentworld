@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
@@ -38,7 +39,7 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
     final snapshot = ref.read(bankedContentProvider).value ?? curatedSeeds;
     _controller = LocalGameController(
       initial:
-          widget.seed ?? widget.def.initialState(LocalContentBank(snapshot)),
+          widget.seed ?? widget.def.initialState(ContentEngine(snapshot)),
       reduce: widget.def.reduce,
     );
   }

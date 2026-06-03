@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/features/games/game_fullscreen.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,17 @@ class GameScaffold<S> extends StatelessWidget {
   Widget build(BuildContext context) {
     return EdgeScaffold(
       actions: [
+        SecondaryActionButton(
+          tooltip: 'Fullscreen',
+          icon: Icons.fullscreen,
+          onPressed: () => unawaited(
+            GameFullscreenScreen.open(
+              context,
+              def: def,
+              controller: controller,
+            ),
+          ),
+        ),
         if (def.liveRoute case final route?)
           SecondaryActionButton(
             tooltip: 'Present on a big screen',

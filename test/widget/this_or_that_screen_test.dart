@@ -16,12 +16,13 @@ void main() {
     child: MaterialApp(home: GameRunner(def: ThisOrThatGame())),
   );
 
+  // Content is dynamic now (the ContentEngine generates + shuffles for
+  // freshness), so these lock the framework BEHAVIOR — count, controls,
+  // advancing, reveal — not specific seed words.
   testWidgets('presents the first pair with host controls', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
-    expect(find.text('Pizza'), findsOneWidget);
-    expect(find.text('Tacos'), findsOneWidget);
     expect(find.text('1 / 8'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Discuss'), findsOneWidget);
@@ -35,8 +36,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('2 / 8'), findsOneWidget);
-    expect(find.text('Summer'), findsOneWidget);
-    expect(find.text('Winter'), findsOneWidget);
   });
 
   testWidgets('Discuss reveals the prompt for the room', (tester) async {
