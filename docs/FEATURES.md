@@ -88,8 +88,9 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Content bank* — `lib/features/activity_runtime/content_bank.dart`. `ContentItem`, `ContentKind`, `ContentSource`, `LocalContentBank` — the source-agnostic interface all DB-backed activities depend on. `curatedSeeds` is the offline floor. `LocalContentBank.seededWith(extra)` merges banked DB rows on top.
 - *Content bank providers* — `lib/features/activity_runtime/content_bank_providers.dart`. `bankedContentProvider` (StreamProvider, keepAlive) — watches `content_items` via `ContentBankDao` and yields `curatedSeeds ++ banked` rows; falls back to `curatedSeeds` on DB error.
 **Depends on**: Kid mode (Photography only), Photos (pattern_maker uses image_picker; bytes are not stored in any synced table).
-**Consumed by**: LiveSession (`live_session_screen.dart` imports `content_bank.dart` to seed the This-or-That pairs and Charades prompts via the curated floor).
-**Last verified**: 2026-06-01
+**Consumed by**: LiveSession + games framework (`content_bank.dart` seeds every `GameDefinition`'s `initialState`).
+**Migration note (2026-06-03)**: five host-present activities were PORTED to `GameDefinition`s under `lib/features/games/games/` and now share the unified game UI + go present/live — Rhyme Time (`rhyme_time_game`), Letter Words / "starts-with" (`letter_words_game`), As-If (`as_if_game`), Story Starters (`story_starters_game`), Math Game (`math_quiz_game`). Their bespoke `*_screen.dart` files were deleted; `/activity/<x>` now renders `GameRunner(def:)` + a new `/live/<x>`. Left bespoke (correctly not host-present games): `breathe_screen` (animation), `pattern_maker_screen` + `photography_runner_screen` (camera), `math_runner_screen` (typed input), `role_cards_screen` (catalog), `discussions_screen` (setup picker doesn't fit the host loop). `feature-mapper` should reconcile the surfaces list.
+**Last verified**: 2026-06-03
 
 ---
 
@@ -358,7 +359,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: Phone-as-remote / screen-as-presentation mode for host-run brain-break games (This-or-That, Charades) and the anonymous Brainstorm Board — one device presents on a projector while others control or post over Supabase Realtime.
 **Personas served**: All staff (any teacher running a game on a big screen with their phone as the remote; any meeting facilitator posting anonymously).
 **Discovery surfaces**:
-- Routes: `/live/this-or-that` (LiveSessionScreen), `/live/charades` (CharadesLiveScreen), `/board` (BoardScreen)
+- Routes: `/live/<game>` for every framework game (`this-or-that`, `charades`, `poll`, `cues`, `rhyme-time`, `starts-with`, `as-if`, `story`, `math-game`, `picker`, `now-next`) → `LiveGameScreen(def:)`; `/board` (BoardScreen). NOTE: this entry predates the games unification — `feature-mapper` should reconcile the surfaces below.
 - Omnibox: yes — "Brainstorm Board" (`page.board`, keywords: board, brainstorm, meeting, agenda, ideas, anonymous) → `/board`. No direct catalog entries for `/live/this-or-that` or `/live/charades` — those are reached via the Quick Picks screen action and via slash commands respectively.
 - Slash: `/live` (aliases: `present`, `projector`, `remote`, `session`) → `/live/this-or-that`; `/charades` (aliases: `act`, `acting`, `mime`, `guess`) → `/live/charades`; `/board` (aliases: `brainstorm`, `meeting`, `agenda`, `ideas`) → `/board`
 - Drawer: yes — "Brainstorm Board" for `/board` (canonical nav, position between Missions and Insights). `/live/this-or-that` and `/live/charades` have no drawer entry — those remain reached via the Brain Breaks deck and slash commands.
@@ -369,16 +370,15 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Live session lobby* — `lib/features/live_session/live_session_screen.dart`. Lobby view: "Present here" card (generates a 4-char session code) + "Control a session" join-by-code card. Hosts This-or-That.
 - *Presenter view* — same file, `_presentView`. Big-screen layout: join-code header + presence count + status pill + the full This-or-That split-screen slides + local control bar (Back / Discuss / Next / Again). Presenter is authoritative: applies `LiveState.reduce()`, then rebroadcasts canonical state to all controllers.
 - *Controller view* — same file, `_controlView`. Phone-remote layout: status pill, current slide mirror (option labels + "Discussing why?" indicator), oversized Next button, Back + Reveal/Hide row. Sends intents to the presenter; mirrors state it receives.
-- *LiveSession / LiveState / SessionRole / LiveReducer / LiveStatus* — `lib/features/live_session/live_session.dart`. Game-agnostic protocol layer: wraps a Supabase Realtime channel; each game injects its own `LiveReducer` + uses `SessionRole.secret` for the actor role. `LiveState` is now a typed view for This-or-That; Charades injects `CharadesState.reducer` instead. The seam is game-agnostic by design.
-- *Charades game state + reducer* — `lib/features/live_session/charades.dart`. `CharadesState` (word, category, score, phase) + pure reducer. 24 prompts from `ContentKind.charades` in `content_bank.dart`.
-- *Charades live screen* — `lib/features/live_session/charades_live_screen.dart`. Three roles: **present** (room sees category + score on the big screen); **secret** (actor's phone shows the secret word); **control** (teacher's phone marks Got it / Skip). Routes to `/live/charades`.
+- *LiveSession / SessionRole / LiveReducer / LiveStatus* — `lib/features/live_session/live_session.dart`. Game-agnostic protocol layer: wraps a Supabase Realtime channel; supports `SessionRole.{present, control, secret}`. Each game injects its reducer via `LiveGameController`.
+- *Generic live screen* — `lib/features/live_session/live_game_screen.dart`. **THE one live UI for every `GameDefinition`** (This-or-That, Charades, Poll, Cues, Rhyme Time, Letter Words, As-If, Story, Math Game, Spotlight, Now & Next): lobby (Present / Join, + "I'm acting" when `def.hasSecretRole`), presenter view (`buildStage`), secret view (`buildSecretStage` — the actor), controller view (sees `buildSecretStage ?? buildStage` + `buildControls`/the intent bar). Charades is no longer a bespoke screen — it's `games/games/charades_game.dart` (a `GameDefinition` with `hasSecretRole`/`buildSecretStage`); `charades_live_screen.dart` + `charades.dart` were DELETED. `DataSeededGame` (`games/data_seeded_game.dart`) wraps the live-vs-runner branch for Drift-seeded games (Spotlight, Now & Next).
 - *Board session* — `lib/features/live_session/board_session.dart`. `BoardSession` over Realtime channel `dw-board-<CODE>`; broadcasts `idea` events with no sender identity (anonymous by design); append-only wall; presence for participant count.
 - *Board screen* — `lib/features/live_session/board_screen.dart`. Lobby → presenter wall (all ideas tiled, projected) or contributor post-field (phone keyboard, tap to send). Routes to `/board`. Realizes VISION.md dream #5 (anonymous collective voice in a meeting).
 - *Entry action on Quick Picks* — `lib/features/activity_runtime/this_or_that_screen.dart`. `SecondaryActionButton` (cast icon, tooltip "Present on a big screen") → `context.push('/live/this-or-that')`. Primary discovery path for the This-or-That live session.
 - *Brain Breaks deck card* — `lib/features/activity_runtime/brain_breaks_screen.dart`. "Charades" card → `/live/charades`.
 **Depends on**: ActivityRuntime (`content_bank.dart` — seeds This-or-That pairs and the 24 Charades prompts via `ContentKind.charades`).
 **Consumed by**: Nothing — LiveSession is a leaf.
-**Last verified**: 2026-06-01 (nav refactor)
+**Last verified**: 2026-06-03 (games unification — charades + 5 activities ported to GameDefinitions; secret role generalized)
 
 ---
 
