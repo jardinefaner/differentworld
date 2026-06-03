@@ -206,6 +206,31 @@ const _storyHooks = [
   ' And there was no going back.',
 ];
 
+// A mid-sentence twist clause (reads after "and"). The 5th slot — it takes the
+// story space past a MILLION distinct openers (12×18×24×10×20 = 1,036,800).
+const _storyTwists = [
+  'a voice said their name',
+  'everything changed',
+  'it started to glow',
+  'no one else could see it',
+  'the room went quiet',
+  'the lights flickered',
+  'their shadow waved back',
+  'time seemed to stop',
+  'a tiny sound followed',
+  'it was warm to the touch',
+  'nothing was ever the same',
+  'a breeze came from nowhere',
+  'the clock began ticking backward',
+  'something moved in the corner',
+  'the whole class gasped',
+  'a star fell outside the window',
+  'the colors got brighter',
+  'everyone leaned in closer',
+  'the floor felt strangely soft',
+  'a door appeared where none had been',
+];
+
 const _torThemes = [
   // Superpowers
   [
@@ -285,8 +310,14 @@ const _torThemes = [
 final Map<String, ContentGenerator> contentGenerators = {
   ContentKind.storyStarter: TemplateGenerator(
     kind: ContentKind.storyStarter,
-    slots: const [_storyTimes, _storySubjects, _storyEvents, _storyHooks],
-    format: (p) => '${p[0]} ${p[1]} ${p[2]}.${p[3]}',
+    slots: const [
+      _storyTimes,
+      _storySubjects,
+      _storyEvents,
+      _storyHooks,
+      _storyTwists,
+    ],
+    format: (p) => '${p[0]} ${p[1]} ${p[2]}, and ${p[4]}.${p[3]}',
   ),
   ContentKind.thisOrThat: PairGenerator(
     kind: ContentKind.thisOrThat,

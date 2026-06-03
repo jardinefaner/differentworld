@@ -13,8 +13,8 @@ void main() {
     test('the registry covers story + this-or-that with a big space', () {
       expect(contentGenerators.containsKey(ContentKind.storyStarter), isTrue);
       expect(contentGenerators.containsKey(ContentKind.thisOrThat), isTrue);
-      // 12 × 18 × 24 × 10 openers.
-      expect(contentSpaceFor(ContentKind.storyStarter), greaterThan(50000));
+      // 12 × 18 × 24 × 10 × 20 = 1,036,800 distinct openers.
+      expect(contentSpaceFor(ContentKind.storyStarter), greaterThan(1000000));
       // Σ C(theme,2) over the themed pools.
       expect(contentSpaceFor(ContentKind.thisOrThat), greaterThan(100));
       expect(contentSpaceFor(ContentKind.riddle), isNull); // authored, no gen
