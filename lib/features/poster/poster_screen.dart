@@ -561,16 +561,17 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       Align(
         alignment: Alignment.centerLeft,
         child: SegmentedButton<PosterFit>(
+          // Whole image leads — it's the default and keeps everything.
           segments: const [
-            ButtonSegment(
-              value: PosterFit.fill,
-              label: Text('Edge to edge'),
-              icon: Icon(Icons.crop_free),
-            ),
             ButtonSegment(
               value: PosterFit.whole,
               label: Text('Whole image'),
               icon: Icon(Icons.fit_screen_outlined),
+            ),
+            ButtonSegment(
+              value: PosterFit.fill,
+              label: Text('Edge to edge'),
+              icon: Icon(Icons.crop_free),
             ),
           ],
           selected: {_opts.fit},
@@ -578,12 +579,31 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         ),
       ),
       const SizedBox(height: 4),
-      Text(
-        _opts.fit == PosterFit.fill
-            ? 'Fills every page — crops the edges that don’t fit.'
-            : 'Shows the whole image — thin white margins where it doesn’t fit.',
-        style: caption,
-      ),
+      if (_opts.fit == PosterFit.fill)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 16,
+              color: theme.colorScheme.error,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Crops anything outside the grid — parts of the image won’t '
+                'print. Use “Whole image” to keep all of it.',
+                style: caption?.copyWith(color: theme.colorScheme.error),
+              ),
+            ),
+          ],
+        )
+      else
+        Text(
+          'Keeps the whole image — nothing cut off. Thin white borders where '
+          'the shape doesn’t match the pages.',
+          style: caption,
+        ),
       const SizedBox(height: 16),
       Card(
         margin: const EdgeInsets.symmetric(vertical: 4),

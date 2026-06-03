@@ -4,12 +4,14 @@ library;
 
 /// How the source image is mapped onto the assembled poster grid.
 enum PosterFit {
-  /// Fill every page edge-to-edge, cropping the overflow. No white
-  /// margins — the assembled poster is solid image. The default.
+  /// Fill every page edge-to-edge, cropping the overflow. No white margins —
+  /// the assembled poster is solid image, but anything outside the page grid
+  /// is cut off. Opt-in (use when you specifically want a borderless photo).
   fill,
 
-  /// Fit the *whole* image; add thin white margins on the axis whose
-  /// aspect doesn't match the grid. Nothing is cropped.
+  /// Fit the *whole* image; add thin white margins on the axis whose aspect
+  /// doesn't match the grid. **Nothing is cropped — the default**, so a
+  /// drawing / map / banner prints complete out of the box.
   whole,
 }
 
@@ -57,7 +59,9 @@ class PosterOptions {
     this.size = 2,
     this.fitShape = true,
     this.orientation = PosterOrientation.auto,
-    this.fit = PosterFit.fill,
+    // Default to keeping the WHOLE image — cropping (fill) is destructive and
+    // surprised a user into a wasted print. Opt into fill explicitly.
+    this.fit = PosterFit.whole,
     this.paper = PosterPaper.letter,
     this.quality = PosterQuality.standard,
     this.labels = true,

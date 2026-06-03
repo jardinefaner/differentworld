@@ -31,7 +31,7 @@ class PosterPrefs {
           map['orientation'],
           PosterOrientation.auto,
         ),
-        fit: _enumByName(PosterFit.values, map['fit'], PosterFit.fill),
+        fit: _enumByName(PosterFit.values, map['fit'], PosterFit.whole),
         paper: _enumByName(PosterPaper.values, map['paper'], PosterPaper.letter),
         quality: _enumByName(
           PosterQuality.values,

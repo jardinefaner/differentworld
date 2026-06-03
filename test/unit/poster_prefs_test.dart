@@ -17,7 +17,7 @@ void main() {
     expect(o.size, 2);
     expect(o.fitShape, isTrue);
     expect(o.orientation, PosterOrientation.auto);
-    expect(o.fit, PosterFit.fill);
+    expect(o.fit, PosterFit.whole); // whole = nothing cropped (the default)
     expect(o.paper, PosterPaper.letter);
     expect(o.labels, isTrue);
   });
@@ -27,7 +27,7 @@ void main() {
       size: 4,
       fitShape: false,
       orientation: PosterOrientation.landscape,
-      fit: PosterFit.whole,
+      fit: PosterFit.fill, // non-default, so the round-trip proves persistence
       paper: PosterPaper.a4,
       quality: PosterQuality.lossless,
       labels: false,
@@ -38,7 +38,7 @@ void main() {
     expect(loaded.size, 4);
     expect(loaded.fitShape, isFalse);
     expect(loaded.orientation, PosterOrientation.landscape);
-    expect(loaded.fit, PosterFit.whole);
+    expect(loaded.fit, PosterFit.fill);
     expect(loaded.paper, PosterPaper.a4);
     expect(loaded.quality, PosterQuality.lossless);
     expect(loaded.labels, isFalse);
@@ -49,7 +49,7 @@ void main() {
     SharedPreferences.setMockInitialValues({'poster.options.v1': 'not json'});
     final o = await PosterPrefs.load();
     expect(o.size, 2);
-    expect(o.fit, PosterFit.fill);
+    expect(o.fit, PosterFit.whole);
   });
 
   test('an out-of-range size is clamped', () async {
@@ -63,7 +63,7 @@ void main() {
       'poster.options.v1': '{"fit": "bogus", "paper": "tabloid"}',
     });
     final o = await PosterPrefs.load();
-    expect(o.fit, PosterFit.fill);
+    expect(o.fit, PosterFit.whole); // unknown value falls back to the default
     expect(o.paper, PosterPaper.letter);
   });
 }
