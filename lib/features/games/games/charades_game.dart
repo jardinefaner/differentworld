@@ -60,12 +60,10 @@ class CharadesGame extends GameDefinition<CharadesState> {
 
   @override
   Map<String, dynamic> initialState(ContentSource content) {
-    // Shuffle is safe now: the items ride in the broadcast wire-state, so every
-    // device maps index → the same word (the bespoke screen couldn't shuffle
-    // because each device loaded content independently).
-    final picked = (content.take(ContentKind.charades, 1000)..shuffle())
-        .take(16)
-        .toList();
+    // The engine returns up to 16 fresh, shuffled prompts (skipping ones
+    // recently served); the items ride in the broadcast wire-state, so every
+    // device maps index → the same word.
+    final picked = content.take(ContentKind.charades, 16);
     final items = [
       for (final c in picked)
         [c.payload['word']! as String, c.payload['category']! as String],

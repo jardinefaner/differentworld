@@ -61,13 +61,14 @@ class StoryStartersGame extends GameDefinition<StoryState> {
 
   @override
   Map<String, dynamic> initialState(ContentSource content) {
+    // 8 fresh openers from the generator (≈51k combinations; the engine skips
+    // recently-served ones), then all twists to cycle through.
     final starters = [
-      for (final c in (content.take(ContentKind.storyStarter, 1000)..shuffle())
-          .take(8))
+      for (final c in content.take(ContentKind.storyStarter, 8))
         c.payload['text']! as String,
     ];
     final twists = [
-      for (final c in (content.take(ContentKind.storyTwist, 1000)..shuffle()))
+      for (final c in content.take(ContentKind.storyTwist, 1000))
         c.payload['text']! as String,
     ];
     return {

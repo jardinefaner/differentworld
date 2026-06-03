@@ -54,9 +54,7 @@ class FactOrFibGame extends GameDefinition<FactState> {
 
   @override
   Map<String, dynamic> initialState(ContentSource content) {
-    final picked = (content.take(ContentKind.factOrFib, 1000)..shuffle())
-        .take(10)
-        .toList();
+    final picked = content.take(ContentKind.factOrFib, 10);
     final items = [
       for (final c in picked)
         [

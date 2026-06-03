@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
@@ -64,7 +65,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       role: role,
       code: code,
       def: _def,
-      content: LocalContentBank(snapshot),
+      content: ContentEngine(snapshot),
       seed: widget.seed,
     );
     _subs
