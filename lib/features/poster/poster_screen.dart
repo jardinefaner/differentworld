@@ -676,8 +676,9 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Assembly guides'),
               subtitle: const Text(
-                'Add a trim border with a dashed cut line + crop marks so '
-                'seams line up, plus a map page showing where each page goes',
+                'No white seams: prints a trim border + cut lines so you trim '
+                'each page on the line and tape with no gaps (the fix for a '
+                'printer that can’t print to the edge). Adds a map page.',
               ),
               value: _opts.guides,
               onChanged: (v) => _update(_opts.copyWith(guides: v)),
@@ -1111,6 +1112,32 @@ class _HowToPrint extends StatelessWidget {
                 ],
               ),
             ),
+          // Seam guidance — only when guides are off (the at-risk case; with
+          // guides on, step 4 already covers the trim).
+          if (!guides) ...[
+            const SizedBox(height: 2),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.content_cut,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'White borders at the seams? Most printers can’t print to '
+                    'the edge. Turn on “Assembly guides” and trim on the lines '
+                    '— or print Borderless — for a seamless join.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
