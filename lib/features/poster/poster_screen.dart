@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:differentworld/features/poster/poster_engine.dart';
 import 'package:differentworld/features/poster/poster_models.dart';
@@ -13,11 +14,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:printing/printing.dart';
 
-/// `/poster` — the Poster tool. Pick one image, choose a 2×2 / 3×3 / 4×4
-/// grid, and it slices the image across 4 / 9 / 16 US-Letter pages you
-/// print and tape together into one big image (a kid's drawing blown up, a
-/// welcome banner, a giant map). The heavy slicing runs in an isolate; the
-/// output is a multi-page PDF handed to the OS print / share sheet.
+/// `/poster` — the Poster tool. Pick one image, choose a size, and it slices
+/// the image across several pages you print and tape together into one big
+/// image (a kid's drawing blown up, a welcome banner, a giant map). The grid
+/// auto-fits the image's shape (a wide banner tiles wide, a tall portrait
+/// tiles tall) so the least gets cropped / wasted. The heavy slicing runs in
+/// an isolate; the output is a multi-page PDF handed to the OS print / share
+/// sheet.
 class PosterScreen extends ConsumerStatefulWidget {
   const PosterScreen({super.key});
 
@@ -27,9 +30,29 @@ class PosterScreen extends ConsumerStatefulWidget {
 
 class _PosterScreenState extends ConsumerState<PosterScreen> {
   Uint8List? _bytes;
+  double _imageAspect = 1; // width / height of the picked image
   PosterOptions _opts = const PosterOptions();
   bool _working = false;
   String? _error;
+
+  /// The concrete page grid for the current image + options.
+  PosterLayout get _layout => computePosterLayout(_opts, _imageAspect);
+
+  /// Read just the image's pixel dimensions (header decode — no full
+  /// rasterize) so the grid can fit the image's shape.
+  Future<double> _decodeAspect(Uint8List bytes) async {
+    try {
+      final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+      final descriptor = await ui.ImageDescriptor.encoded(buffer);
+      final w = descriptor.width;
+      final h = descriptor.height;
+      descriptor.dispose();
+      buffer.dispose();
+      return h <= 0 ? 1.0 : w / h;
+    } on Object {
+      return 1; // fall back to square framing if the header won't decode
+    }
+  }
 
   Future<void> _pick(ImageSource source) async {
     try {
@@ -46,9 +69,11 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       );
       if (picked == null) return;
       final bytes = await picked.readAsBytes();
+      final aspect = await _decodeAspect(bytes);
       if (!mounted) return;
       setState(() {
         _bytes = bytes;
+        _imageAspect = aspect;
         _error = null;
       });
     } on Object {
@@ -93,22 +118,26 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
       _working = true;
       _error = null;
     });
+    final layout = _layout;
+    final tag = '${layout.cols}×${layout.rows}';
     try {
       final pdf = await renderPosterPdf(
         bytes,
-        _opts,
-        title: 'Poster ${_opts.grid}×${_opts.grid}',
+        layout,
+        _opts.fit,
+        labels: _opts.labels,
+        title: 'Poster $tag',
       );
       if (!mounted) return;
       if (share) {
         await Printing.sharePdf(
           bytes: pdf,
-          filename: 'poster-${_opts.grid}x${_opts.grid}.pdf',
+          filename: 'poster-${layout.cols}x${layout.rows}.pdf',
         );
       } else {
         await Printing.layoutPdf(
           onLayout: (_) => pdf,
-          name: 'Poster ${_opts.grid}×${_opts.grid}',
+          name: 'Poster $tag',
         );
       }
       if (!mounted) return;
@@ -116,8 +145,8 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         SnackBar(
           content: Text(
             share
-                ? 'Poster shared — ${_opts.pageCount} pages.'
-                : 'Sent to print — ${_opts.pageCount} pages. Tape them together!',
+                ? 'Poster shared — ${layout.pageCount} pages.'
+                : 'Sent to print — ${layout.pageCount} pages. Tape them together!',
           ),
         ),
       );
@@ -187,45 +216,68 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
 
   List<Widget> _editor(BuildContext context) {
     final theme = Theme.of(context);
+    final layout = _layout;
+    final caption = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
     return [
       Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 340),
+          constraints: const BoxConstraints(maxWidth: 340, maxHeight: 460),
           child: AspectRatio(
-            aspectRatio: kLetterWidthIn / kLetterHeightIn,
-            child: _PosterPreview(bytes: _bytes!, opts: _opts),
+            aspectRatio: layout.canvasAspect,
+            child: _PosterPreview(
+              bytes: _bytes!,
+              layout: layout,
+              fit: _opts.fit,
+              labels: _opts.labels,
+            ),
           ),
         ),
       ),
       const SizedBox(height: 8),
       Center(
         child: Text(
-          'Prints ${_opts.pageCount} letter pages · about '
-          '${_inches(_opts.grid * 8.5)}″ × ${_inches(_opts.grid * 11)}″ assembled\n'
-          'Print all ${_opts.pageCount}, line them up, and tape them together.',
+          'Prints as ${layout.cols}×${layout.rows} '
+          '${layout.landscape ? 'landscape' : 'portrait'} · ${layout.pageCount} '
+          '${_paperName(layout.paper)} page${layout.pageCount == 1 ? '' : 's'} · '
+          'about ${_assembledSize(layout)} assembled\n'
+          'Print all ${layout.pageCount}, line them up, and tape them together.',
           textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          style: caption,
         ),
       ),
       const SizedBox(height: 20),
-      _label(context, 'Grid'),
+      _label(context, 'Size'),
       const SizedBox(height: 6),
       Align(
         alignment: Alignment.centerLeft,
         child: SegmentedButton<int>(
           segments: const [
-            ButtonSegment(value: 2, label: Text('2×2')),
-            ButtonSegment(value: 3, label: Text('3×3')),
-            ButtonSegment(value: 4, label: Text('4×4')),
+            ButtonSegment(value: 2, label: Text('2')),
+            ButtonSegment(value: 3, label: Text('3')),
+            ButtonSegment(value: 4, label: Text('4')),
+            ButtonSegment(value: 5, label: Text('5')),
           ],
-          selected: {_opts.grid},
+          selected: {_opts.size},
           onSelectionChanged: (s) =>
-              setState(() => _opts = _opts.copyWith(grid: s.first)),
+              setState(() => _opts = _opts.copyWith(size: s.first)),
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 4),
+      Text('Pages along the poster’s longest edge.', style: caption),
+      const SizedBox(height: 4),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Fit to image shape'),
+        subtitle: const Text(
+          'Auto-pick the grid + page orientation so a wide or tall image '
+          'isn’t cropped hard or printed with big margins',
+        ),
+        value: _opts.fitShape,
+        onChanged: (v) => setState(() => _opts = _opts.copyWith(fitShape: v)),
+      ),
+      const SizedBox(height: 8),
       _label(context, 'Fit'),
       const SizedBox(height: 6),
       Align(
@@ -253,11 +305,24 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         _opts.fit == PosterFit.fill
             ? 'Fills every page — crops the edges that don’t fit.'
             : 'Shows the whole image — thin white margins where it doesn’t fit.',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+        style: caption,
+      ),
+      const SizedBox(height: 16),
+      _label(context, 'Paper'),
+      const SizedBox(height: 6),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: SegmentedButton<PosterPaper>(
+          segments: const [
+            ButtonSegment(value: PosterPaper.letter, label: Text('Letter')),
+            ButtonSegment(value: PosterPaper.a4, label: Text('A4')),
+          ],
+          selected: {_opts.paper},
+          onSelectionChanged: (s) =>
+              setState(() => _opts = _opts.copyWith(paper: s.first)),
         ),
       ),
-      const SizedBox(height: 4),
+      const SizedBox(height: 8),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
         title: const Text('Corner labels'),
@@ -278,6 +343,17 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         ),
       ),
     ];
+  }
+
+  String _paperName(PosterPaper p) => p == PosterPaper.a4 ? 'A4' : 'letter';
+
+  String _assembledSize(PosterLayout l) {
+    if (l.paper == PosterPaper.a4) {
+      final w = (l.assembledWidthIn * 2.54).round();
+      final h = (l.assembledHeightIn * 2.54).round();
+      return '$w × $h cm';
+    }
+    return '${_inches(l.assembledWidthIn)}″ × ${_inches(l.assembledHeightIn)}″';
   }
 
   Widget _label(BuildContext context, String text) => Text(
@@ -346,25 +422,32 @@ class _Chooser extends StatelessWidget {
 /// WYSIWYG preview: the image framed exactly as it'll print, with the page
 /// cut-lines (and corner labels, if on) overlaid so you see what lands where.
 class _PosterPreview extends StatelessWidget {
-  const _PosterPreview({required this.bytes, required this.opts});
+  const _PosterPreview({
+    required this.bytes,
+    required this.layout,
+    required this.fit,
+    required this.labels,
+  });
 
   final Uint8List bytes;
-  final PosterOptions opts;
+  final PosterLayout layout;
+  final PosterFit fit;
+  final bool labels;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fill = opts.fit == PosterFit.fill;
+    final isFill = fit == PosterFit.fill;
     return Semantics(
-      label: 'Poster preview — ${opts.grid} by ${opts.grid} pages, '
-          '${fill ? 'edge to edge' : 'whole image'}. The lines show where the '
-          'pages divide.',
+      label: 'Poster preview — ${layout.cols} by ${layout.rows} pages, '
+          '${isFill ? 'edge to edge' : 'whole image'}. The lines show where '
+          'the pages divide.',
       image: true,
       child: RepaintBoundary(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: ColoredBox(
-            color: fill
+            color: isFill
                 ? theme.colorScheme.surfaceContainerHighest
                 : Colors.white,
             child: Stack(
@@ -372,11 +455,15 @@ class _PosterPreview extends StatelessWidget {
               children: [
                 Image.memory(
                   bytes,
-                  fit: fill ? BoxFit.cover : BoxFit.contain,
+                  fit: isFill ? BoxFit.cover : BoxFit.contain,
                   gaplessPlayback: true,
                 ),
                 CustomPaint(
-                  painter: _GridPainter(opts.grid, labels: opts.labels),
+                  painter: _GridPainter(
+                    cols: layout.cols,
+                    rows: layout.rows,
+                    labels: labels,
+                  ),
                 ),
               ],
             ),
@@ -388,15 +475,16 @@ class _PosterPreview extends StatelessWidget {
 }
 
 class _GridPainter extends CustomPainter {
-  _GridPainter(this.n, {required this.labels});
+  _GridPainter({required this.cols, required this.rows, required this.labels});
 
-  final int n;
+  final int cols;
+  final int rows;
   final bool labels;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cellW = size.width / n;
-    final cellH = size.height / n;
+    final cellW = size.width / cols;
+    final cellH = size.height / rows;
     final under = Paint()
       ..color = Colors.black26
       ..strokeWidth = 3;
@@ -404,19 +492,22 @@ class _GridPainter extends CustomPainter {
       ..color = Colors.white
       ..strokeWidth = 1.5;
 
-    for (var i = 1; i < n; i++) {
-      final x = cellW * i;
-      final y = cellH * i;
+    for (var c = 1; c < cols; c++) {
+      final x = cellW * c;
       canvas
         ..drawLine(Offset(x, 0), Offset(x, size.height), under)
-        ..drawLine(Offset(x, 0), Offset(x, size.height), line)
+        ..drawLine(Offset(x, 0), Offset(x, size.height), line);
+    }
+    for (var r = 1; r < rows; r++) {
+      final y = cellH * r;
+      canvas
         ..drawLine(Offset(0, y), Offset(size.width, y), under)
         ..drawLine(Offset(0, y), Offset(size.width, y), line);
     }
 
     if (labels) {
-      for (var r = 0; r < n; r++) {
-        for (var c = 0; c < n; c++) {
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
           final tp = TextPainter(
             text: TextSpan(
               text: 'R${r + 1}·C${c + 1}',
@@ -442,7 +533,8 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GridPainter old) => old.n != n || old.labels != labels;
+  bool shouldRepaint(_GridPainter old) =>
+      old.cols != cols || old.rows != rows || old.labels != labels;
 }
 
 class _WorkingBanner extends StatelessWidget {

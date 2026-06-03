@@ -1,5 +1,5 @@
 /// Poster print options — how a single image is tiled across multiple
-/// US-Letter pages so it can be printed and taped into one big image.
+/// pages so it can be printed and taped into one big image.
 library;
 
 /// How the source image is mapped onto the assembled poster grid.
@@ -13,32 +13,61 @@ enum PosterFit {
   whole,
 }
 
-/// One poster job's configuration.
+/// Paper stock the poster tiles onto.
+enum PosterPaper {
+  /// US Letter — 8.5 × 11 in.
+  letter,
+
+  /// ISO A4 — 210 × 297 mm (8.27 × 11.69 in).
+  a4,
+}
+
+/// One poster job's configuration. The concrete page grid (columns ×
+/// rows + page orientation) is *derived* from this plus the image's
+/// aspect ratio — see `computePosterLayout` in poster_engine.dart.
 class PosterOptions {
   const PosterOptions({
-    this.grid = 2,
+    this.size = 2,
+    this.fitShape = true,
     this.fit = PosterFit.fill,
+    this.paper = PosterPaper.letter,
     this.labels = true,
   });
 
-  /// N — the poster prints to an N×N grid of letter pages.
-  /// 2 → 4 pages, 3 → 9, 4 → 16.
-  final int grid;
+  /// How big — the number of pages along the poster's *longest* edge
+  /// (2 → up to 2 pages, 3 → up to 3, …). The minor edge is chosen to
+  /// match the image when [fitShape] is on.
+  final int size;
+
+  /// When true, the grid (columns × rows) and page orientation are
+  /// auto-chosen to match the image's shape — so a wide banner or a
+  /// tall portrait tiles with the least cropping / wasted paper. When
+  /// false, the poster is a plain square [size]×[size] of portrait
+  /// pages.
+  final bool fitShape;
 
   /// Cover vs contain.
   final PosterFit fit;
+
+  /// Letter vs A4.
+  final PosterPaper paper;
 
   /// Print a faint "R1·C2" registration label in each page's corner so
   /// the assembly order is obvious when you lay the pages out.
   final bool labels;
 
-  /// Total printed pages: grid².
-  int get pageCount => grid * grid;
-
-  PosterOptions copyWith({int? grid, PosterFit? fit, bool? labels}) =>
+  PosterOptions copyWith({
+    int? size,
+    bool? fitShape,
+    PosterFit? fit,
+    PosterPaper? paper,
+    bool? labels,
+  }) =>
       PosterOptions(
-        grid: grid ?? this.grid,
+        size: size ?? this.size,
+        fitShape: fitShape ?? this.fitShape,
         fit: fit ?? this.fit,
+        paper: paper ?? this.paper,
         labels: labels ?? this.labels,
       );
 }
