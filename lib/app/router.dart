@@ -8,7 +8,6 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
-import 'package:differentworld/features/activity_runtime/math_game_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
@@ -33,6 +32,7 @@ import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
+import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
@@ -946,7 +946,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Math GAME — one question at a time, mixed mechanics.
           GoRoute(
             path: '/activity/math-game',
-            builder: (_, _) => const MathGameScreen(),
+            builder: (_, _) => const GameRunner(def: MathQuizGame()),
+          ),
+          GoRoute(
+            path: '/live/math-game',
+            builder: (_, _) => const LiveGameScreen(def: MathQuizGame()),
           ),
           // The Photography activity — opens straight to a full-screen
           // camera, kid-mode locked (docs/ACTIVITY_RUNTIME.md). `?prompt=`
