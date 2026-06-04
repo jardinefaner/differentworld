@@ -437,6 +437,22 @@ of the SQL.
 
 ---
 
+## survey_picker_options
+**Purpose**: Per-space overrides for the survey "About you" identity chips — which labels appear for each dimension (age_band / grade / school) when kids self-identify before taking a survey.
+**Key columns**:
+- `id` (uuid PK)
+- `space_id` (uuid NOT NULL → spaces.id, on delete cascade)
+- `dimension` (text — `age_band` / `grade` / `school`)
+- `label` (text — the chip label the kid sees)
+- `sort_order` (int)
+- UNIQUE(space_id, dimension, label)
+**RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); GRANT-level + space-scoped sync rule are the real gate.
+**Sync rule**: `by_space` stream; `SELECT * FROM survey_picker_options WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`.
+**Consumers**: [Surveys](FEATURES.md#surveys).
+**Last verified**: 2026-06-03
+
+---
+
 ## survey_responses
 **Purpose**: Questionnaire answers — JSONB `answers` keyed by `question_key`. Templates live in code (no `survey_templates` table yet).
 **Key columns**:
@@ -575,7 +591,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-01 (Live Sessions — no new table; ephemeral Realtime coordination)._
+_Last full registry verification: 2026-06-03 (Tools + LiveSession lobby + Poster orientation — no new tables; all additions are ephemeral Realtime or pure-Dart)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
