@@ -28,10 +28,10 @@ import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:differentworld/core/db/dao/weekly_template_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
-import 'package:uuid/uuid.dart';
 // Both drift and powersync export a `Column` class — only import what we
 // actually need from powersync to avoid the ambiguity.
 import 'package:powersync/powersync.dart' show PowerSyncDatabase;
+import 'package:uuid/uuid.dart';
 
 part 'app_database.g.dart';
 

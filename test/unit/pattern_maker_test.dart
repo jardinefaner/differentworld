@@ -7,12 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('PatternConfig', () {
     test('tileCount is the square of tilesPerRow', () {
-      expect(const PatternConfig(tilesPerRow: 4).tileCount, 16);
+      // Non-default values so the square is actually exercised (default is 4).
+      expect(const PatternConfig(tilesPerRow: 3).tileCount, 9);
       expect(const PatternConfig(tilesPerRow: 2).tileCount, 4);
     });
 
     test('kaleidoscope mirrors odd columns/rows; off mirrors nothing', () {
-      const k = PatternConfig(kaleidoscope: true);
+      const k = PatternConfig(); // kaleidoscope defaults on
       expect(k.flipX(0), isFalse);
       expect(k.flipX(1), isTrue);
       expect(k.flipY(2), isFalse);

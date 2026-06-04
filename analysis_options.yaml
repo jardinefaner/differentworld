@@ -6,6 +6,9 @@ analyzer:
     - "**/*.freezed.dart"
     - "**/*.drift.dart"
     - "lib/generated_plugin_registrant.dart"
+    # Build output — generated Dart from native plugins (irondash,
+    # super_native_extensions) is not our source; don't lint it.
+    - "build/**"
   errors:
     invalid_annotation_target: ignore
 

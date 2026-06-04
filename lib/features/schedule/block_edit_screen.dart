@@ -619,7 +619,7 @@ class _SkipRestoreRow extends ConsumerWidget {
                 id: block.id,
                 status: BlockStatus.planned,
               );
-          if (context.mounted) Navigator.of(context).maybePop();
+          if (context.mounted) await Navigator.of(context).maybePop();
           return;
         }
         // Optional reason prompt — kid-mode friendly default.
@@ -640,7 +640,7 @@ class _SkipRestoreRow extends ConsumerWidget {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(null),
+                  onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
                 FilledButton(
@@ -657,7 +657,7 @@ class _SkipRestoreRow extends ConsumerWidget {
               status: BlockStatus.skipped,
               reason: reason.isEmpty ? null : reason,
             );
-        if (context.mounted) Navigator.of(context).maybePop();
+        if (context.mounted) await Navigator.of(context).maybePop();
       },
       icon: Icon(
         isSkipped ? Icons.replay : Icons.event_busy_outlined,
