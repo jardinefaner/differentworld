@@ -167,6 +167,17 @@ class LiveSession {
     unawaited(_broadcastState());
   }
 
+  /// Presenter → replace the canonical state with a freshly-seeded one
+  /// ("play again with NEW content"). The reducer is pure (no content access),
+  /// so a fresh round comes from re-running the game's `initialState`, not the
+  /// reducer. Emits + rebroadcasts so every controller syncs the new round.
+  void reseed(Map<String, dynamic> fresh) {
+    if (role != SessionRole.present) return;
+    _state = fresh;
+    _emit();
+    unawaited(_broadcastState());
+  }
+
   Future<void> dispose() async {
     await _channel.unsubscribe();
     await _states.close();

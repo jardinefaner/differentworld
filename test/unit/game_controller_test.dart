@@ -62,6 +62,39 @@ void main() {
       await sub.cancel();
     });
 
+    test('reset reseeds with FRESH content when a reseed is wired', () {
+      // Each reseed yields a new round (a different payload), standing in for
+      // the content engine's never-repeat memory — "play again" = new
+      // questions, not a replay.
+      var round = 0;
+      final c = LocalGameController(
+        initial: {'i': 2, 'count': 5, 'q': 'round-0'},
+        reduce: _counterReduce,
+        reseed: () => {'i': 0, 'count': 0, 'q': 'round-${++round}'},
+      );
+      addTearDown(c.dispose);
+
+      c.send(GameIntent.reset);
+      expect(c.state['q'], 'round-1', reason: 'reset pulled fresh content');
+      expect(c.state['i'], 0);
+
+      c.send(GameIntent.reset);
+      expect(c.state['q'], 'round-2', reason: 'each replay is a new round');
+    });
+
+    test('without a reseed, reset replays the same content via the reducer',
+        () {
+      final c = LocalGameController(
+        initial: {'i': 3, 'count': 7, 'q': 'fixed'},
+        reduce: _counterReduce,
+      );
+      addTearDown(c.dispose);
+
+      c.send(GameIntent.reset);
+      expect(c.state['q'], 'fixed', reason: 'same content kept (seed games)');
+      expect(c.state['i'], 0, reason: 'the reducer still zeroes indices');
+    });
+
     test('the reducer is pure — it never mutates the input state', () {
       final initial = {'i': 0, 'count': 0};
       final next = _counterReduce(initial, GameIntent.next, const {});
@@ -93,8 +126,7 @@ void main() {
       final c = LocalGameController(
         initial: {'i': 0, 'count': 0},
         reduce: _counterReduce,
-      );
-      c.dispose();
+      )..dispose();
       expect(c.dispose, returnsNormally, reason: 'double dispose is safe');
       expect(
         () => c.send(GameIntent.tally),

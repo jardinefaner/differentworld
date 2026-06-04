@@ -35,10 +35,18 @@ class LocalGameController implements GameController {
   LocalGameController({
     required Map<String, dynamic> initial,
     required GameReducer reduce,
+    Map<String, dynamic> Function()? reseed,
   }) : _state = initial,
-       _reduce = reduce;
+       _reduce = reduce,
+       _reseed = reseed;
 
   final GameReducer _reduce;
+
+  /// Produces a freshly-seeded state for "play again". When wired, `reset`
+  /// pulls NEW content (new questions) instead of replaying the same set; the
+  /// reducer can't, since it has no content access. Null → reset reduces
+  /// normally (e.g. seed-driven games replay their seed).
+  final Map<String, dynamic> Function()? _reseed;
   Map<String, dynamic> _state;
   final StreamController<Map<String, dynamic>> _states =
       StreamController<Map<String, dynamic>>.broadcast();
@@ -51,7 +59,9 @@ class LocalGameController implements GameController {
 
   @override
   void send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
-    _state = _reduce(_state, intent, args);
+    _state = intent == GameIntent.reset && _reseed != null
+        ? _reseed()
+        : _reduce(_state, intent, args);
     if (!_states.isClosed) _states.add(_state);
   }
 
@@ -72,7 +82,7 @@ class LocalGameController implements GameController {
 /// session chrome needs — [peers], [status], [code] — which the generic
 /// `GameScaffold` ignores (they render in the live header, not the bar).
 class LiveGameController implements GameController {
-  LiveGameController._(this._session);
+  LiveGameController._(this._session, this._reseed);
 
   /// Open a session for [role] and drive [def] over it. The presenter seeds
   /// the authoritative state from `def.initialState(content)` (self-
@@ -93,10 +103,19 @@ class LiveGameController implements GameController {
       initialState: seed ?? def.initialState(content),
       reduce: _adapt(def),
     );
-    return LiveGameController._(session);
+    // Content-bank games (no seed) get fresh content on "play again"; seed-
+    // driven presentables (a roster picker) replay their seed via the reducer.
+    return LiveGameController._(
+      session,
+      seed != null ? null : () => def.initialState(content),
+    );
   }
 
   final LiveSession _session;
+
+  /// Fresh-round producer for `reset` — see [LocalGameController]. Null for
+  /// seed-driven games.
+  final Map<String, dynamic> Function()? _reseed;
   bool _disposed = false;
 
   SessionRole get role => _session.role;
@@ -116,7 +135,13 @@ class LiveGameController implements GameController {
     // controller forwards the intent to the presenter. LiveSession itself
     // no-ops the wrong-role call, so this is just the intent.name bridge.
     if (_session.role == SessionRole.present) {
-      _session.applyLocal(intent.name, args);
+      // "Play again" reseeds the room with NEW content; everything else
+      // reduces. The fresh state broadcasts so every controller syncs it.
+      if (intent == GameIntent.reset && _reseed != null) {
+        _session.reseed(_reseed());
+      } else {
+        _session.applyLocal(intent.name, args);
+      }
     } else {
       _session.sendIntent(intent.name, args);
     }

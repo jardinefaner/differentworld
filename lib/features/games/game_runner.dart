@@ -36,11 +36,15 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
   void initState() {
     super.initState();
     // Our OWN bank instance → this session's seen-tracking is independent.
+    // Keep the engine so "play again" pulls FRESH content from its never-
+    // repeat memory (a new round, not the same questions).
     final snapshot = ref.read(bankedContentProvider).value ?? curatedSeeds;
+    final engine = ContentEngine(snapshot);
     _controller = LocalGameController(
-      initial:
-          widget.seed ?? widget.def.initialState(ContentEngine(snapshot)),
+      initial: widget.seed ?? widget.def.initialState(engine),
       reduce: widget.def.reduce,
+      reseed:
+          widget.seed != null ? null : () => widget.def.initialState(engine),
     );
   }
 
