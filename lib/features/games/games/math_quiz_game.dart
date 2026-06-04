@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/math_game.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:flutter/material.dart';
 
 /// The Math Game on the unified framework: one question at a time, big; the
@@ -75,8 +76,65 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
   String? get liveRoute => '/live/math-game';
 
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
-    final qs = generateMathRound(Random());
+  List<GameSetting> get settings => const [
+        IntSetting(
+          id: 'min',
+          label: 'Smallest number',
+          min: 0,
+          max: 20,
+          initial: 1,
+        ),
+        IntSetting(
+          id: 'max',
+          label: 'Biggest number',
+          min: 5,
+          max: 100,
+          initial: 12,
+        ),
+        MultiSetting(
+          id: 'ops',
+          label: 'Operations',
+          options: [
+            (value: 'add', label: '+'),
+            (value: 'subtract', label: '−'),
+            (value: 'multiply', label: '×'),
+            (value: 'divide', label: '÷'),
+          ],
+          initial: {'add'},
+        ),
+        IntSetting(
+          id: 'count',
+          label: 'How many questions',
+          min: 4,
+          max: 20,
+          initial: 8,
+        ),
+      ];
+
+  @override
+  Map<String, dynamic> initialState(ContentSource content) =>
+      initialStateFor(content, defaultSettingValues(settings));
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) {
+    final minN = values.intSetting('min', 1);
+    final maxN = values.intSetting('max', 12);
+    final count = values.intSetting('count', 8);
+    final opIds = values.multiSetting('ops', const {'add'});
+    final ops = {
+      for (final o in MathOp.values)
+        if (opIds.contains(o.name)) o,
+    };
+    final qs = generateMathRound(
+      Random(),
+      count: count,
+      min: minN,
+      max: maxN,
+      operations: ops.isEmpty ? const {MathOp.add} : ops,
+    );
     return {
       'i': 0,
       'r': false,

@@ -4,6 +4,8 @@ import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_scaffold.dart';
+import 'package:differentworld/features/games/game_settings.dart';
+import 'package:differentworld/features/games/game_settings_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -31,6 +33,11 @@ class GameRunner<S> extends ConsumerStatefulWidget {
 
 class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
   late final LocalGameController _controller;
+  late final ContentEngine _engine;
+  // Teacher-chosen settings (the Settings contract). Defaults until tuned;
+  // the reseed closure reads this field, so "play again" + applied changes
+  // both honor the current values.
+  late Map<String, Object?> _values;
 
   @override
   void initState() {
@@ -39,13 +46,28 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
     // Keep the engine so "play again" pulls FRESH content from its never-
     // repeat memory (a new round, not the same questions).
     final snapshot = ref.read(bankedContentProvider).value ?? curatedSeeds;
-    final engine = ContentEngine(snapshot);
+    _engine = ContentEngine(snapshot);
+    _values = defaultSettingValues(widget.def.settings);
     _controller = LocalGameController(
-      initial: widget.seed ?? widget.def.initialState(engine),
+      initial: widget.seed ?? widget.def.initialStateFor(_engine, _values),
       reduce: widget.def.reduce,
-      reseed:
-          widget.seed != null ? null : () => widget.def.initialState(engine),
+      reseed: widget.seed != null
+          ? null
+          : () => widget.def.initialStateFor(_engine, _values),
     );
+  }
+
+  /// Open the settings sheet; applying starts a fresh round with the new
+  /// values (the reseed closure reads [_values]).
+  Future<void> _openSettings() async {
+    final result = await showGameSettings(
+      context,
+      settings: widget.def.settings,
+      initial: _values,
+    );
+    if (result == null || !mounted) return;
+    setState(() => _values = result);
+    _controller.send(GameIntent.reset);
   }
 
   @override
@@ -55,6 +77,9 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      GameScaffold<S>(def: widget.def, controller: _controller);
+  Widget build(BuildContext context) => GameScaffold<S>(
+        def: widget.def,
+        controller: _controller,
+        onSettings: widget.def.settings.isEmpty ? null : _openSettings,
+      );
 }

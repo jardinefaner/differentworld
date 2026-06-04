@@ -65,4 +65,21 @@ void main() {
     // Round-trips back into typed questions.
     expect(game.decode(s).questions.length, qs.length);
   });
+
+  group('settings (the Settings contract)', () {
+    test('declares the min / max / ops / count knobs', () {
+      final ids = game.settings.map((s) => s.id).toSet();
+      expect(ids, containsAll(<String>['min', 'max', 'ops', 'count']));
+    });
+
+    test('initialStateFor honors the chosen count', () {
+      final s = game.initialStateFor(LocalContentBank.seeded(), {'count': 5});
+      expect(s['n'], 5);
+      expect((s['qs'] as List).length, 5);
+    });
+
+    test('initialState falls back to the declared defaults (count 8)', () {
+      expect(game.initialState(LocalContentBank.seeded())['n'], 8);
+    });
+  });
 }

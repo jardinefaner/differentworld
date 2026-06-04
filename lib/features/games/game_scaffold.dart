@@ -22,6 +22,7 @@ class GameScaffold<S> extends StatelessWidget {
   const GameScaffold({
     required this.def,
     required this.controller,
+    this.onSettings,
     super.key,
   });
 
@@ -30,12 +31,21 @@ class GameScaffold<S> extends StatelessWidget {
   final GameDefinition<S> def;
   final GameController controller;
 
+  /// Opens the game's settings sheet — null when the game has no settings.
+  final VoidCallback? onSettings;
+
   void _send(GameIntent intent) => controller.send(intent);
 
   @override
   Widget build(BuildContext context) {
     return EdgeScaffold(
       actions: [
+        if (onSettings case final open?)
+          SecondaryActionButton(
+            tooltip: 'Game settings',
+            icon: Icons.tune,
+            onPressed: open,
+          ),
         SecondaryActionButton(
           tooltip: 'Fullscreen',
           icon: Icons.fullscreen,

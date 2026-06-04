@@ -1,4 +1,5 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:flutter/material.dart';
 
 /// The unified game framework (docs/GAMES.md "The Game contract", VISION
@@ -127,6 +128,21 @@ abstract class GameDefinition<S> {
   /// convention inherits the standard progress + Back/Reveal/Next/Again
   /// bar for free; one that doesn't overrides [buildControls].
   Map<String, dynamic> initialState(ContentSource content);
+
+  /// Tunable params shown in a pre-game settings sheet (docs/FEATURE_CHECKLISTS
+  /// — the Settings contract). Empty = no settings (the default). A game with
+  /// knobs (number range, topics, count) returns them here and overrides
+  /// [initialStateFor] to honor the chosen values.
+  List<GameSetting> get settings => const [];
+
+  /// Build the initial state honoring teacher-chosen [values] (keyed by
+  /// `GameSetting.id`). Defaults to the no-settings path; games with [settings]
+  /// override this to thread the values into their content. "Play again"
+  /// re-runs this with the same chosen values, so a tuned round stays tuned.
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) => initialState(content);
 
   /// Typed lens over the wire-state — what a `fromMap` factory does.
   S decode(Map<String, dynamic> state);

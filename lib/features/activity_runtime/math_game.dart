@@ -47,25 +47,69 @@ class MathQuestion {
   }
 }
 
-/// A round of [count] questions, cycling the mechanics so the sequence is
-/// varied (choose → type → sequence → true/false → …). Deterministic for a
-/// seeded [rng]; the screen passes a fresh Random, tests a fixed one.
-List<MathQuestion> generateMathRound(Random rng, {int count = 8}) {
-  const order = [
+/// Operations a round can draw from. Subtraction never goes negative;
+/// division is always clean (whole-number answers) — kid-appropriate.
+enum MathOp { add, subtract, multiply, divide }
+
+/// A round of [count] questions over operands in [min]..[max], drawing from
+/// [operations] (defaults to addition). Mechanics cycle (choose → sequence →
+/// true/false). Deterministic for a seeded [rng]; the screen passes a fresh
+/// Random, tests a fixed one.
+List<MathQuestion> generateMathRound(
+  Random rng, {
+  int count = 8,
+  int min = 1,
+  int max = 12,
+  Set<MathOp> operations = const {MathOp.add},
+}) {
+  final lo = min < 0 ? 0 : min;
+  final hi = max <= lo ? lo + 1 : max;
+  final ops = (operations.isEmpty ? const {MathOp.add} : operations).toList();
+  const mechanics = [
     MathMechanic.choose,
     MathMechanic.sequence,
     MathMechanic.trueFalse,
   ];
-  return [for (var i = 0; i < count; i++) _gen(order[i % order.length], rng)];
+  return [
+    for (var i = 0; i < count; i++)
+      _gen(mechanics[i % mechanics.length], rng, lo, hi, ops[i % ops.length]),
+  ];
 }
 
-MathQuestion _gen(MathMechanic m, Random rng) => switch (m) {
-  MathMechanic.choose => _choose(rng),
-  MathMechanic.sequence => _sequence(rng),
-  MathMechanic.trueFalse => _trueFalse(rng),
-};
+MathQuestion _gen(MathMechanic m, Random rng, int lo, int hi, MathOp op) =>
+    switch (m) {
+      MathMechanic.choose => _choose(rng, lo, hi, op),
+      MathMechanic.sequence => _sequence(rng, lo, hi),
+      MathMechanic.trueFalse => _trueFalse(rng, lo, hi, op),
+    };
 
 int _r(Random rng, int min, int max) => min + rng.nextInt(max - min + 1);
+
+/// A problem for [op] over operands in [lo]..[hi] → (prompt, answer).
+/// Subtraction orders the operands so the result is ≥ 0; division builds from
+/// the answer so it divides cleanly.
+(String, int) _problem(Random rng, int lo, int hi, MathOp op) {
+  switch (op) {
+    case MathOp.add:
+      final a = _r(rng, lo, hi);
+      final b = _r(rng, lo, hi);
+      return ('$a + $b', a + b);
+    case MathOp.subtract:
+      final x = _r(rng, lo, hi);
+      final y = _r(rng, lo, hi);
+      final a = x >= y ? x : y;
+      final b = x >= y ? y : x;
+      return ('$a − $b', a - b);
+    case MathOp.multiply:
+      final a = _r(rng, lo, hi);
+      final b = _r(rng, lo, hi);
+      return ('$a × $b', a * b);
+    case MathOp.divide:
+      final b = _r(rng, lo < 1 ? 1 : lo, hi); // divisor ≥ 1
+      final ans = _r(rng, lo, hi);
+      return ('${ans * b} ÷ $b', ans);
+  }
+}
 
 /// [answer] + 3 distinct non-negative distractors, shuffled.
 List<int> _withDistractors(Random rng, int answer) {
@@ -84,21 +128,19 @@ List<int> _withDistractors(Random rng, int answer) {
   return set.toList()..shuffle(rng);
 }
 
-MathQuestion _choose(Random rng) {
-  final a = _r(rng, 1, 12);
-  final b = _r(rng, 1, 12);
-  final ans = a + b;
+MathQuestion _choose(Random rng, int lo, int hi, MathOp op) {
+  final (prompt, ans) = _problem(rng, lo, hi, op);
   return MathQuestion(
     mechanic: MathMechanic.choose,
-    prompt: '$a + $b',
+    prompt: prompt,
     answer: ans,
     choices: _withDistractors(rng, ans),
   );
 }
 
-MathQuestion _sequence(Random rng) {
-  final start = _r(rng, 1, 6);
-  final step = _r(rng, 1, 5);
+MathQuestion _sequence(Random rng, int lo, int hi) {
+  final start = _r(rng, lo, hi);
+  final step = _r(rng, 1, ((hi - lo) ~/ 2).clamp(1, 5));
   final terms = [for (var k = 0; k < 4; k++) start + step * k];
   final ans = start + step * 4;
   return MathQuestion(
@@ -109,16 +151,14 @@ MathQuestion _sequence(Random rng) {
   );
 }
 
-MathQuestion _trueFalse(Random rng) {
-  final a = _r(rng, 1, 12);
-  final b = _r(rng, 1, 12);
-  final real = a + b;
+MathQuestion _trueFalse(Random rng, int lo, int hi, MathOp op) {
+  final (base, real) = _problem(rng, lo, hi, op);
   final showReal = rng.nextBool();
   final off = [-2, -1, 1, 2][rng.nextInt(4)];
   final shown = showReal ? real : real + off;
   return MathQuestion(
     mechanic: MathMechanic.trueFalse,
-    prompt: '$a + $b = $shown',
+    prompt: '$base = $shown',
     statementTrue: shown == real,
   );
 }
