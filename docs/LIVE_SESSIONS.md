@@ -137,6 +137,51 @@ PowerSync for the noun that survives (the saved decision).**
    screen (a text field that fires `idea` messages) + presenter wall +
    optional "save these" → synced `idea` entries.
 
+## One place to join — program-wide (2026-06-03)
+
+**The friction:** today joining is *per game*. `LiveGameScreen<S>(def:)` is
+generic, but `def` is fixed by the `/live/<game>` route — so a joiner must
+navigate to the *matching* game's lobby before entering the code. The channel
+(`session:<code>`) is already game-agnostic; only the rendering is route-
+locked. A joiner shouldn't have to know it's Charades.
+
+**The model (Kahoot/Jackbox, scoped to the program):** one "Join" surface;
+the *session* tells the app which game to render. Two slices, on the existing
+Realtime-ephemeral rails — no new durable table.
+
+**Keystone (DONE):** `lib/features/games/game_registry.dart` — `gameById(id)`
+resolves a game id → its `GameDefinition`. The session advertises an id; the
+joiner resolves it here and renders the right `LiveGameScreen` without knowing
+the game in advance.
+
+### Slice A — generic join (the core)
+- **Presenter advertises its game.** When a presenter opens a session it also
+  joins a program lobby presence channel `program:<spaceId>:live` and tracks
+  `{code, game: def.id, presenter}`. (Adding `game` to the per-session
+  presence too enables a code-entry "peek" path for manual codes.)
+- **`LiveGameScreen` auto-join.** An optional `autoJoin: (code, role)` so the
+  screen skips its lobby and opens straight into control for a given code +
+  resolved def. The joiner builds
+  `LiveGameScreen(def: gameById(game)!, autoJoin: (code, control))`.
+- **Graceful unknown:** `gameById` → null → "That session needs a newer app."
+
+### Slice B — auto-discover + the Today banner (the chosen entry)
+- **Lobby provider.** Watches `program:<spaceId>:live` presence → the active
+  sessions `{code, game, presenter}` in the program (usually exactly one).
+  Ephemeral; `.autoDispose`.
+- **Today banner.** When the lobby is non-empty, Today shows a tap-to-join
+  banner ("A session is live — tap to join"). One tap → resolve via `gameById`
+  → `LiveGameScreen(autoJoin: control)`. Multiple → a tiny picker. This is the
+  only entry the user asked for — joining surfaces itself; no menu-hunting.
+- The join **QR/code becomes game-agnostic** too — one join QR, not one per
+  game; the game comes from the lobby/session, not the link.
+
+### Verification
+Slices A + B are Realtime + two-party — they need **two devices** (or two
+signed-in web tabs) to validate the present→advertise→discover→join handshake.
+Build behind the async-guard (the live-session stream-lifecycle rules), then
+exercise on-device. Don't ship the banner without the two-party check.
+
 ## Open questions (decide before slice 2)
 
 - **Who presents?** Any signed-in staff device can host; the phone that
