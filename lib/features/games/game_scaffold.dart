@@ -106,6 +106,9 @@ class GameScaffold<S> extends StatelessWidget {
                               active: active,
                               revealLabel: revealLabel,
                               onIntent: _send,
+                              onDone: () {
+                                if (context.canPop()) context.pop();
+                              },
                             ),
                           ],
                         )
@@ -120,6 +123,9 @@ class GameScaffold<S> extends StatelessWidget {
                                   active: active,
                                   revealLabel: revealLabel,
                                   onIntent: _send,
+                                  onDone: () {
+                                    if (context.canPop()) context.pop();
+                                  },
                                 ),
                               ),
                             ],
@@ -150,6 +156,7 @@ class _GameControlBar extends StatelessWidget {
     required this.active,
     required this.revealLabel,
     required this.onIntent,
+    required this.onDone,
   });
 
   final Map<String, dynamic> wire;
@@ -157,6 +164,9 @@ class _GameControlBar extends StatelessWidget {
   final Set<GameIntent> active;
   final String revealLabel;
   final void Function(GameIntent) onIntent;
+
+  /// Exit the game (pop back to the deck) — shown on the end-of-round state.
+  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -173,27 +183,36 @@ class _GameControlBar extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                done ? 'Done' : '${index + 1} / $total',
+                done ? 'Round complete!' : '${index + 1} / $total',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
-              IconButton.filledTonal(
-                onPressed: active.contains(GameIntent.back)
-                    ? () => onIntent(GameIntent.back)
-                    : null,
-                icon: const Icon(Icons.arrow_back),
-                tooltip: 'Back',
-              ),
-              const SizedBox(width: 8),
-              if (done)
+              if (!done) ...[
+                IconButton.filledTonal(
+                  onPressed: active.contains(GameIntent.back)
+                      ? () => onIntent(GameIntent.back)
+                      : null,
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: 'Back',
+                ),
+                const SizedBox(width: 8),
+              ],
+              if (done) ...[
+                OutlinedButton.icon(
+                  onPressed: onDone,
+                  icon: const Icon(Icons.check),
+                  label: const Text('Done'),
+                ),
+                const SizedBox(width: 8),
                 FilledButton.icon(
+                  // reset reseeds with fresh content (see LocalGameController).
                   onPressed: () => onIntent(GameIntent.reset),
                   icon: const Icon(Icons.replay),
-                  label: const Text('Again'),
-                )
-              else ...[
+                  label: const Text('Play again'),
+                ),
+              ] else ...[
                 FilledButton.tonalIcon(
                   onPressed: active.contains(GameIntent.reveal)
                       ? () => onIntent(GameIntent.reveal)
@@ -228,6 +247,7 @@ class _GameControlPanel extends StatelessWidget {
     required this.active,
     required this.revealLabel,
     required this.onIntent,
+    required this.onDone,
   });
 
   final Map<String, dynamic> wire;
@@ -235,6 +255,9 @@ class _GameControlPanel extends StatelessWidget {
   final Set<GameIntent> active;
   final String revealLabel;
   final void Function(GameIntent) onIntent;
+
+  /// Exit the game (pop back to the deck) — shown on the end-of-round state.
+  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -247,23 +270,50 @@ class _GameControlPanel extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            done ? 'Done' : 'Slide ${index + 1} of $total',
+            done ? 'Round complete!' : 'Slide ${index + 1} of $total',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const Spacer(),
-          if (done)
+          if (done) ...[
+            Icon(
+              Icons.celebration_outlined,
+              size: 44,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Play again for a fresh round — new questions every time.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 64,
               child: FilledButton.icon(
                 onPressed: () => onIntent(GameIntent.reset),
                 icon: const Icon(Icons.replay),
-                label: const Text('Start over'),
+                label: const Text(
+                  'Play again',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                ),
               ),
-            )
-          else ...[
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: onDone,
+                icon: const Icon(Icons.check),
+                label: const Text('Done'),
+              ),
+            ),
+          ] else ...[
             SizedBox(
               width: double.infinity,
               height: 72,
