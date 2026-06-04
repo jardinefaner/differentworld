@@ -2,14 +2,17 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_fullscreen.dart';
+import 'package:differentworld/features/live_session/live_lobby.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,7 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// The lobby / join-code / presence chrome is the only live-specific part;
 /// the stage and the control vocabulary come entirely from the game.
 class LiveGameScreen<S> extends ConsumerStatefulWidget {
-  const LiveGameScreen({required this.def, this.seed, super.key});
+  const LiveGameScreen({required this.def, this.seed, this.autoJoin, super.key});
 
   final GameDefinition<S> def;
 
@@ -31,6 +34,12 @@ class LiveGameScreen<S> extends ConsumerStatefulWidget {
   /// the presenter seeds from Drift (roster/schedule); the controller gets it
   /// via the broadcast (self-describing state).
   final Map<String, dynamic>? seed;
+
+  /// When set (the program-wide "join" path, docs/LIVE_SESSIONS.md), the
+  /// screen skips its lobby and opens straight into the given role for the
+  /// given code — the game was already resolved (via `gameById`) from the
+  /// session the user tapped to join.
+  final ({String code, SessionRole role})? autoJoin;
 
   @override
   ConsumerState<LiveGameScreen<S>> createState() => _LiveGameScreenState<S>();
@@ -50,12 +59,36 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
 
   _Mode _mode = _Mode.lobby;
   LiveGameController? _controller;
+  // Presenter-only: announces this session to the program lobby so others can
+  // discover + join it (docs/LIVE_SESSIONS.md). Null for controllers.
+  LobbyAnnouncer? _announcer;
+  // True between an autoJoin request and the controller actually opening, so
+  // the screen shows a "Joining…" spinner instead of flashing the lobby.
+  bool _autoJoining = false;
   final _subs = <StreamSubscription<dynamic>>[];
   final _codeCtrl = TextEditingController();
 
   Map<String, dynamic> _wire = const {};
   int _peers = 0;
   LiveStatus _status = LiveStatus.connecting;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoJoin != null) {
+      _autoJoining = true;
+      // After first frame so _open's ref.read(...) calls are safe. Re-read
+      // widget.autoJoin AT callback time (not a captured initState value) and
+      // guard _controller, so a reused State / double post-frame can't open a
+      // stale or second session.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final autoJoin = widget.autoJoin;
+        if (mounted && autoJoin != null && _controller == null) {
+          _open(autoJoin.role, autoJoin.code);
+        }
+      });
+    }
+  }
 
   void _open(SessionRole role, String code) {
     if (_controller != null) return; // re-entrancy: ignore a double-tap
@@ -81,12 +114,28 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     setState(() {
       _controller = c;
       _wire = c.state;
+      _autoJoining = false;
       _mode = switch (role) {
         SessionRole.present => _Mode.present,
         SessionRole.secret => _Mode.secret,
         SessionRole.control => _Mode.control,
       };
     });
+    // The presenter announces to the program lobby so the room can find +
+    // join from Today — without anyone navigating to this game's route first.
+    if (role == SessionRole.present) {
+      final viewer = ref.read(viewerProvider);
+      final spaceId = viewer.spaceId;
+      if (spaceId != null) {
+        _announcer = LobbyAnnouncer.announce(
+          client: ref.read(supabaseProvider),
+          spaceId: spaceId,
+          code: code,
+          game: _def.id,
+          presenter: viewer.displayName,
+        );
+      }
+    }
   }
 
   void _leave() {
@@ -95,15 +144,19 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
     }
     _subs.clear();
     _controller?.dispose();
-    // Null it here; the disjoint dispose() path's `_controller?.dispose()` is
-    // then a safe no-op (and the stream guards check `mounted`).
+    // Null both here; the disjoint dispose() path's `?.dispose()` is then a
+    // safe no-op (LobbyAnnouncer.dispose is idempotent; the stream guards
+    // check mounted/isClosed).
     _controller = null;
+    unawaited(_announcer?.dispose());
+    _announcer = null;
     if (!mounted) return;
     setState(() {
       _mode = _Mode.lobby;
       _wire = const {};
       _peers = 0;
       _status = LiveStatus.connecting;
+      _autoJoining = false;
     });
   }
 
@@ -113,6 +166,7 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       unawaited(sub.cancel());
     }
     _controller?.dispose();
+    unawaited(_announcer?.dispose());
     _codeCtrl.dispose();
     super.dispose();
   }
@@ -123,12 +177,14 @@ class _LiveGameScreenState<S> extends ConsumerState<LiveGameScreen<S>> {
       body: ColoredBox(
         color: const Color(0xFF11121A),
         child: SafeArea(
-          child: switch (_mode) {
-            _Mode.lobby => _lobby(context),
-            _Mode.present => _stageView(context, isPresenter: true),
-            _Mode.secret => _secretView(context),
-            _Mode.control => _stageView(context, isPresenter: false),
-          },
+          child: (_autoJoining && _controller == null)
+              ? const _Connecting()
+              : switch (_mode) {
+                  _Mode.lobby => _lobby(context),
+                  _Mode.present => _stageView(context, isPresenter: true),
+                  _Mode.secret => _secretView(context),
+                  _Mode.control => _stageView(context, isPresenter: false),
+                },
         ),
       ),
     );
@@ -626,6 +682,49 @@ class _StatusPill extends StatelessWidget {
         const SizedBox(width: 6),
         Text(label, style: TextStyle(color: color, fontSize: 12)),
       ],
+    );
+  }
+}
+
+/// Shown for a `/join` link whose game this build can't resolve (a session
+/// running a newer game) or a malformed link — instead of a blank screen.
+class JoinUnavailableScreen extends StatelessWidget {
+  const JoinUnavailableScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const EdgeScaffold(
+      body: SafeArea(
+        child: EmptyState(
+          icon: Icons.link_off,
+          title: "Can't join this session",
+          message: 'The link looks off, or this session is running a newer '
+              'version of the app. Ask the presenter for the join code.',
+        ),
+      ),
+    );
+  }
+}
+
+/// The brief "Joining…" state shown while an auto-join (from the Today live
+/// banner / a join link) connects, so the lobby never flashes.
+class _Connecting extends StatelessWidget {
+  const _Connecting();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: Colors.tealAccent),
+          SizedBox(height: 16),
+          Text(
+            'Joining…',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -154,6 +154,13 @@ resolves a game id → its `GameDefinition`. The session advertises an id; the
 joiner resolves it here and renders the right `LiveGameScreen` without knowing
 the game in advance.
 
+**Status: Slices A + B BUILT 2026-06-03 — pending two-party verification.**
+`live_lobby.dart` (announcer + watcher), `live_lobby_providers.dart`
+(`activeSessionsProvider`), `LiveGameScreen.autoJoin` + presenter announce,
+the `/join` route, and the Today `LiveSessionBanner` are all in. Async-guard
+clean. NOT yet exercised with two connected parties — the present → advertise
+→ discover → join handshake needs two devices / two signed-in web tabs.
+
 ### Slice A — generic join (the core)
 - **Presenter advertises its game.** When a presenter opens a session it also
   joins a program lobby presence channel `program:<spaceId>:live` and tracks

@@ -6,6 +6,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
+import 'package:differentworld/features/live_session/live_session_banner.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
@@ -139,6 +140,8 @@ class TodayBody extends ConsumerWidget {
                   ? Theme.of(context).colorScheme.error
                   : null,
             ),
+            // "A session is live — tap to join" (renders nothing when none).
+            const LiveSessionBanner(),
             // Specialist / substitute identity strip — answers the
             // Coach Sam audit finding ("no UI surface tells Sam what
             // they are"). Renders nothing for director / lead_teacher

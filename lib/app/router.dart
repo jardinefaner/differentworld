@@ -26,6 +26,7 @@ import 'package:differentworld/features/exports/send_export_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
+import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_runner.dart';
 import 'package:differentworld/features/games/games/as_if_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
@@ -50,6 +51,7 @@ import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
+import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
@@ -860,6 +862,31 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/tools',
             builder: (_, _) =>
                 const RouteTitle(title: 'Tools', child: ToolsScreen()),
+          ),
+          // Join ANY live session program-wide (docs/LIVE_SESSIONS.md "One
+          // place to join"): the game is resolved from the link
+          // (/join?code=RJ4K&game=charades) via gameById, so the joiner never
+          // has to pick the game first. The Today live banner pushes here.
+          GoRoute(
+            path: '/join',
+            builder: (_, state) {
+              final code =
+                  (state.uri.queryParameters['code'] ?? '').trim().toUpperCase();
+              final def = gameById(state.uri.queryParameters['game'] ?? '');
+              if (def == null || code.isEmpty) {
+                return const RouteTitle(
+                  title: 'Join',
+                  child: JoinUnavailableScreen(),
+                );
+              }
+              return RouteTitle(
+                title: 'Join',
+                child: LiveGameScreen(
+                  def: def,
+                  autoJoin: (code: code, role: SessionRole.control),
+                ),
+              );
+            },
           ),
           // Live present/control for This-or-That (docs/LIVE_SESSIONS.md):
           // present on a big screen, control from a phone over Realtime.
