@@ -94,6 +94,59 @@ kids themselves (Ava).
 
 ---
 
+## Games — per-game depth (brainstorm 2026-06-04)
+
+Two axes beyond the cross-cutting QoL: **tune it** (controls so a teacher
+shapes the game to the time / group / topic) and **keep it** (artifacts so a
+round produces something savable, printable, or shareable). Today most games
+have hidden knobs and produce nothing durable.
+
+### The two structural unlocks (build these once, every game inherits them)
+
+1. **A game SETTINGS contract.** `GameDefinition` optionally declares tunable
+   params (a tiny schema: numeric ranges, on/off toggles, a topic multi-pick,
+   a count, a difficulty preset). The runner renders them as a quick pre-game
+   sheet and threads the chosen values into `initialState`. Math's min/max and
+   mechanics, This-or-That's topics, Letter Words' letters — all become
+   first-class controls instead of hardcoded constants. (Generalizes the
+   "size the round / difficulty" checklist item.)
+2. **A game ARTIFACT contract.** `GameDefinition` optionally produces a
+   keepable from a finished round — an image, a text, a list. The framework
+   then routes it to: **save to history** (a per-kid / per-class log via
+   `entries` / `content_items`), **print** (straight into the poster/PDF
+   engine we just built), **share to family** (the family lens), or the
+   **growth-story / showcase** (VISION). Pattern → a printable poster is the
+   poster tool earning its keep; a built Story → a take-home page.
+
+### Per-game (tune it · keep it)
+
+| Game | Tune it (controls) | Keep it (artifact) |
+|---|---|---|
+| **Math** | number range (min/max), operations (+ − × ÷), which mechanics (choose / type / sequence / true-false), question count, age preset | a **printable worksheet** of the round (do it on paper); score → history |
+| **This-or-That** | which themes/topics, serious ↔ silly, rounds | "our class prefers…" results card → save / print |
+| **Story Starters** | which slots, genre (adventure / funny / mystery), length | the **built story** → printable page, growth book, story-of-the-day |
+| **Letter Words** | which letters (or one), categories, timer | the class's **word list** → vocab sheet (print), history |
+| **Rhyme Time** | seed words / theme, difficulty | the rhyme list → print / save |
+| **Riddles** | topic, difficulty, count | riddle-of-the-day to take home |
+| **Fact or Fib** | topic, difficulty, count | the true facts learned → save |
+| **As-If / Charades** | prompt category (animals / jobs / feelings), age, count | **photo / video** of the act (capture) → family |
+| **Discussions** | topic + age band, depth | discussion notes → an observation / entry |
+| **Pattern** | symmetry (mirror / rotate / kaleidoscope), repeat, grid size, colors | **the pattern image** → **print BIG (poster)**, history, family, showcase |
+| **Photo Studio** | prompt / theme | the photo → kid timeline, family |
+| **Poll** | the options (teacher-authored), anonymous on/off | result chart → save / print |
+| **Spotlight (Picker)** | the list / roster, fair "no-repeat until all picked" | who-got-picked log |
+| **Cues / Now-Next** | which signals / the schedule source | (utility — no artifact) |
+
+### Why this is small to build
+Both unlocks ride systems that already exist: the **poster/PDF engine**
+(print any visual artifact), **content_items / entries** (history), the
+**family lens** (share), and the **content engine** (the settings just
+parameterize the generators that already exist). The work is two thin
+contracts on `GameDefinition` + one settings sheet + one "save/print this"
+router — not per-game one-offs.
+
+---
+
 ## Checklists still to write (as we touch each feature)
 Poster · Tools · Attendance · Schedule · Observations & Captures · Family lens
 · Vehicles · Surveys · Insights · Exports · Live Sessions · Missions · Toolkit.
