@@ -118,3 +118,16 @@ flutter:
 
   assets:
     - .env
+
+  # Variable display fonts for the Speak feature's editorial karaoke
+  # (lib/features/speak/). Bundled (NOT runtime-fetched via google_fonts)
+  # so the stage works offline. Each is a single variable TTF — set axes
+  # at runtime with `fontVariations` (e.g. FontVariation('wght', 720)).
+  # OFL-licensed; license text sits beside each .ttf.
+  fonts:
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces.ttf
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk.ttf

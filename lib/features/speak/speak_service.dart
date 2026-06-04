@@ -15,11 +15,20 @@ class SpeakService {
   final AudioPlayer _player = AudioPlayer();
   bool _disposed = false;
 
-  /// The audio position — the karaoke view watches this to track the voice.
+  /// The audio position as a stream (~5/sec). Coarse — fine for a progress
+  /// readout, too steppy for word-accurate highlighting; the stage reads
+  /// [currentPosition] per frame instead.
   Stream<Duration> get positionStream => _player.positionStream;
 
   /// Whether audio is currently playing (drives the play/pause affordance).
   Stream<bool> get playingStream => _player.playingStream;
+
+  /// The instantaneous playback position — read every frame by the stage's
+  /// ticker so word/line flips land on the voice, not up to 200ms late.
+  Duration get currentPosition => _player.position;
+
+  /// Whether audio is currently advancing (lets the stage idle its ticker).
+  bool get isPlaying => _player.playing;
 
   /// Synthesize [text] (optionally a specific [voiceId]) into a timed script.
   /// Throws on failure — the screen catches and shows the not-set-up / error

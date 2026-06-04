@@ -74,4 +74,115 @@ void main() {
       expect(currentWordIndex(const [], const Duration(seconds: 1)), -1);
     });
   });
+
+  group('linesFromWords', () {
+    SpokenWord w(String t, int startMs, int endMs) => SpokenWord(
+          text: t,
+          start: Duration(milliseconds: startMs),
+          end: Duration(milliseconds: endMs),
+        );
+
+    test('breaks after sentence-ending punctuation', () {
+      final lines = linesFromWords([
+        w('Hello', 0, 100),
+        w('world.', 100, 200),
+        w('Goodbye', 200, 300),
+        w('now.', 300, 400),
+      ]);
+      expect(lines.map((l) => l.text), ['Hello world.', 'Goodbye now.']);
+      expect(lines[0].start, Duration.zero);
+      expect(lines[0].end, const Duration(milliseconds: 200));
+      expect(lines[1].start, const Duration(milliseconds: 200));
+    });
+
+    test('breaks before a word that would exceed maxChars', () {
+      final lines = linesFromWords(
+        [
+          w('aaaa', 0, 100),
+          w('bbbb', 100, 200),
+          w('cccc', 200, 300),
+          w('dddd', 300, 400),
+        ],
+        maxChars: 12,
+      );
+      expect(lines.map((l) => l.text), ['aaaa bbbb', 'cccc dddd']);
+    });
+
+    test('does NOT orphan a short clause (clause break needs minChars)', () {
+      // "Yes," is under minChars, so it stays with the rest of the sentence.
+      final lines = linesFromWords([
+        w('Yes,', 0, 100),
+        w('we', 100, 200),
+        w('should', 200, 300),
+        w('go.', 300, 400),
+      ]);
+      expect(lines.map((l) => l.text), ['Yes, we should go.']);
+    });
+
+    test('breaks after a clause once the line has heft', () {
+      final lines = linesFromWords(
+        [
+          w('First', 0, 100),
+          w('thing,', 100, 200),
+          w('second', 200, 300),
+          w('thing.', 300, 400),
+        ],
+        minChars: 8,
+      );
+      expect(lines.map((l) => l.text), ['First thing,', 'second thing.']);
+    });
+
+    test('a single over-long word still gets its own line (never dropped)', () {
+      final lines = linesFromWords(
+        [
+          w('Supercalifragilistic', 0, 100),
+          w('ok', 100, 200),
+        ],
+        maxChars: 8,
+      );
+      expect(lines.map((l) => l.text), ['Supercalifragilistic', 'ok']);
+    });
+
+    test('empty input → no lines', () {
+      expect(linesFromWords(const []), isEmpty);
+    });
+  });
+
+  group('lineIndexAt', () {
+    final lines = [
+      const SpokenLine(
+        words: [
+          SpokenWord(
+            text: 'first',
+            start: Duration.zero,
+            end: Duration(milliseconds: 500),
+          ),
+        ],
+      ),
+      const SpokenLine(
+        words: [
+          SpokenWord(
+            text: 'second',
+            start: Duration(milliseconds: 500),
+            end: Duration(seconds: 1),
+          ),
+        ],
+      ),
+    ];
+
+    test('-1 before the first line', () {
+      expect(lineIndexAt(lines, const Duration(milliseconds: -1)), -1);
+    });
+
+    test('tracks the line + persists past its end through the pause', () {
+      expect(lineIndexAt(lines, Duration.zero), 0);
+      expect(lineIndexAt(lines, const Duration(milliseconds: 300)), 0);
+      expect(lineIndexAt(lines, const Duration(milliseconds: 500)), 1);
+      expect(lineIndexAt(lines, const Duration(seconds: 5)), 1);
+    });
+
+    test('empty → -1', () {
+      expect(lineIndexAt(const [], const Duration(seconds: 1)), -1);
+    });
+  });
 }

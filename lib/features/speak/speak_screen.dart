@@ -1,16 +1,18 @@
 import 'dart:async';
 
-import 'package:differentworld/features/speak/karaoke_view.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
+import 'package:differentworld/features/speak/speak_stage.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
+import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 
-/// `/speak` — paste any prompt / quote / block, hear it spoken, and watch it
-/// in big kinetic karaoke (the Speak feature; docs/FEATURE_CHECKLISTS.md).
+/// `/speak` — paste any prompt / quote / block, hear it read aloud, and watch
+/// it take the stage as big, elegant, editorial type: one line at a time, the
+/// spoken word swelling in weight (the Speak feature; docs/FEATURE_CHECKLISTS).
 /// Voice + word-timings come from the `tts-subtitles` Edge Function
 /// (ElevenLabs). An enhancement — needs network + the server key; it degrades
 /// to a clear "set it up" message, never blocks.
@@ -25,6 +27,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
   final TextEditingController _controller = TextEditingController();
   final SpeakService _service = SpeakService();
   SpokenScript? _script;
+  List<SpokenLine> _lines = const <SpokenLine>[];
+  SpeakType _type = SpeakType.serif;
   bool _loading = false;
   String? _error;
 
@@ -63,10 +67,11 @@ class _SpeakScreenState extends State<SpeakScreen> {
     if (!mounted) return;
     setState(() {
       _script = script;
+      _lines = linesFromWords(script.words);
       _loading = false;
     });
     // Fire-and-forget: play() resolves only at end-of-audio and degrades
-    // silently on failure (we've already shown the karaoke view).
+    // silently on failure (we've already shown the stage).
     unawaited(_service.play(script));
   }
 
@@ -75,15 +80,21 @@ class _SpeakScreenState extends State<SpeakScreen> {
     setState(() => _script = null);
   }
 
+  void _toggleType() => setState(() => _type = _type.other);
+
   @override
   Widget build(BuildContext context) {
-    final script = _script;
+    final performing = _script != null;
     return EdgeScaffold(
-      // Perform-mode controls live in the top chrome pill — keeps the karaoke
+      // Perform-mode controls live in the top chrome pill — keeps the stage
       // full-bleed and clear of the floating omnibox bar at the bottom.
-      actions: script == null
-          ? const <Widget>[]
-          : <Widget>[
+      actions: performing
+          ? <Widget>[
+              SecondaryActionButton(
+                tooltip: 'Type: ${_type.label} — tap to switch',
+                icon: Icons.text_fields_rounded,
+                onPressed: _toggleType,
+              ),
               SecondaryActionButton(
                 tooltip: 'New text',
                 icon: Icons.edit_outlined,
@@ -94,13 +105,14 @@ class _SpeakScreenState extends State<SpeakScreen> {
                 icon: Icons.replay,
                 onPressed: () => unawaited(_service.replay()),
               ),
-            ],
+            ]
+          : const <Widget>[],
       // Input view clears the chrome via SafeArea; the perform view is
       // intentionally full-bleed (chrome floats over the dark stage, like the
-      // camera) so the karaoke owns the whole surface.
-      body: script == null
-          ? SafeArea(bottom: false, child: _input(context))
-          : _perform(context, script),
+      // camera) so the type owns the whole surface.
+      body: performing
+          ? _perform(context)
+          : SafeArea(bottom: false, child: _input(context)),
     );
   }
 
@@ -114,8 +126,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
           children: [
             const ContentHeader(
               title: 'Speak',
-              subtitle: 'Paste a prompt, quote, or block — hear it read with '
-                  'big karaoke subtitles',
+              subtitle: 'Paste a prompt, quote, or block — hear it read aloud '
+                  'and set big, one elegant line at a time',
             ),
             TextField(
               controller: _controller,
@@ -131,7 +143,12 @@ class _SpeakScreenState extends State<SpeakScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
+            _TypeSelector(
+              selected: _type,
+              onChanged: (t) => setState(() => _type = t),
+            ),
+            const SizedBox(height: 18),
             if (_error != null) ...[
               _ErrorNote(message: _error!),
               const SizedBox(height: 16),
@@ -158,8 +175,9 @@ class _SpeakScreenState extends State<SpeakScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'A clear, lively voice reads it back and each word lights up as '
-              "it's spoken — great for the room, and for emerging readers.",
+              'A clear voice reads it back while each line takes the stage — the '
+              'spoken word swells. Switch the type any time; pick the one that '
+              'feels right.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -170,17 +188,160 @@ class _SpeakScreenState extends State<SpeakScreen> {
     );
   }
 
-  Widget _perform(BuildContext context, SpokenScript script) {
-    // Full-bleed dark stage; KaraokeView centres the words, so the floating
-    // chrome pills (top) and omnibox bar (bottom) clear the content.
+  Widget _perform(BuildContext context) {
+    // Full-bleed dark stage; SpeakStage centres the line, so the floating
+    // chrome pills (top) and omnibox bar (bottom) clear the type.
     return ColoredBox(
       color: const Color(0xFF0E0F17),
-      child: StreamBuilder<Duration>(
-        stream: _service.positionStream,
-        initialData: Duration.zero,
-        builder: (context, snap) => KaraokeView(
-          words: script.words,
-          position: snap.data ?? Duration.zero,
+      child: _SpeakStageHost(
+        service: _service,
+        lines: _lines,
+        type: _type,
+      ),
+    );
+  }
+}
+
+/// Drives [SpeakStage] from a per-frame ticker that reads the player's exact
+/// position, so word/line flips land on the voice rather than up to 200ms
+/// late (the position STREAM is only ~5/sec). Rebuilds only when the active
+/// line or word actually changes — the implicit weight + line-swap animations
+/// interpolate smoothly between those discrete flips.
+class _SpeakStageHost extends StatefulWidget {
+  const _SpeakStageHost({
+    required this.service,
+    required this.lines,
+    required this.type,
+  });
+
+  final SpeakService service;
+  final List<SpokenLine> lines;
+  final SpeakType type;
+
+  @override
+  State<_SpeakStageHost> createState() => _SpeakStageHostState();
+}
+
+class _SpeakStageHostState extends State<_SpeakStageHost>
+    with SingleTickerProviderStateMixin {
+  late final _ticker = createTicker(_onTick);
+  Duration _position = Duration.zero;
+  int _line = -1;
+  int _word = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_ticker.start());
+  }
+
+  void _onTick(Duration _) {
+    final pos = widget.service.currentPosition;
+    final line = lineIndexAt(widget.lines, pos);
+    final word =
+        line < 0 ? -1 : currentWordIndex(widget.lines[line].words, pos);
+    if (line != _line || word != _word) {
+      setState(() {
+        _position = pos;
+        _line = line;
+        _word = word;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SpeakStage(
+      lines: widget.lines,
+      position: _position,
+      type: widget.type,
+    );
+  }
+}
+
+/// Two pills — each rendered IN its own face, so the choice is a live preview.
+class _TypeSelector extends StatelessWidget {
+  const _TypeSelector({required this.selected, required this.onChanged});
+
+  final SpeakType selected;
+  final ValueChanged<SpeakType> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Text(
+          'Type',
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 14),
+        for (final t in SpeakType.values) ...[
+          _TypePill(
+            type: t,
+            selected: t == selected,
+            onTap: () => onChanged(t),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _TypePill extends StatelessWidget {
+  const _TypePill({
+    required this.type,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final SpeakType type;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${type.label} type',
+      child: Material(
+        color: selected
+            ? scheme.primaryContainer
+            : scheme.surfaceContainerHighest,
+        shape: StadiumBorder(
+          side: selected
+              ? BorderSide(color: scheme.primary, width: 1.5)
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            child: Text(
+              type.label,
+              style: TextStyle(
+                fontFamily: type.family,
+                fontSize: 19,
+                color: selected
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurfaceVariant,
+                fontVariations: type.axesAt(selected ? 620 : 460),
+              ),
+            ),
+          ),
         ),
       ),
     );

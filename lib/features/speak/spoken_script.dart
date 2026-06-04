@@ -101,5 +101,103 @@ int currentWordIndex(List<SpokenWord> words, Duration position) {
   return index;
 }
 
+/// One line of the editorial stage — a short phrase shown on its own, big.
+/// Carries its words (so the active one can be emphasised within the line)
+/// and the time window it occupies.
+@immutable
+class SpokenLine {
+  const SpokenLine({required this.words});
+
+  final List<SpokenWord> words;
+
+  Duration get start => words.first.start;
+  Duration get end => words.last.end;
+  String get text => words.map((w) => w.text).join(' ');
+
+  @override
+  bool operator ==(Object other) =>
+      other is SpokenLine &&
+      other.words.length == words.length &&
+      _listEquals(other.words, words);
+
+  @override
+  int get hashCode => Object.hashAll(words);
+}
+
+bool _listEquals(List<SpokenWord> a, List<SpokenWord> b) {
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
+/// Group words into short, punchy lines for the one-line-at-a-time stage.
+/// The aesthetic goal: each line is a *beat* — a few words you can take in at
+/// a glance, set large. Break rules, in priority order:
+///   1. Always break AFTER sentence-ending punctuation (`.`, `!`, `?`).
+///   2. Break AFTER clause punctuation (`,`, `;`, `:`, `—`) once the line has
+///      some heft (≥ [minChars]) — avoids orphaning "Yes," on its own line.
+///   3. Break BEFORE a word that would push the line past [maxChars].
+/// Never emits an empty line. Pure — unit-tested.
+List<SpokenLine> linesFromWords(
+  List<SpokenWord> words, {
+  int maxChars = 28,
+  int minChars = 12,
+}) {
+  final lines = <SpokenLine>[];
+  var current = <SpokenWord>[];
+  var currentChars = 0;
+
+  void flush() {
+    if (current.isNotEmpty) {
+      lines.add(SpokenLine(words: List.unmodifiable(current)));
+      current = <SpokenWord>[];
+      currentChars = 0;
+    }
+  }
+
+  for (final word in words) {
+    final wordLen = word.text.length;
+    // +1 for the joining space when the line already has a word.
+    final addedLen = current.isEmpty ? wordLen : wordLen + 1;
+
+    // Rule 3: would exceed the budget → start this word on a fresh line
+    // (unless the line is empty, in which case a single long word must stay).
+    if (current.isNotEmpty && currentChars + addedLen > maxChars) {
+      flush();
+    }
+
+    current.add(word);
+    currentChars += current.length == 1 ? wordLen : addedLen;
+
+    final trimmed = word.text.trimRight();
+    final last = trimmed.isEmpty ? '' : trimmed[trimmed.length - 1];
+    final sentenceEnd = last == '.' || last == '!' || last == '?';
+    final clauseEnd =
+        last == ',' || last == ';' || last == ':' || last == '—';
+
+    if (sentenceEnd || (clauseEnd && currentChars >= minChars)) {
+      flush();
+    }
+  }
+  flush();
+  return lines;
+}
+
+/// The line on screen at [position] — the last line whose start has passed, so
+/// a finished line stays up through the trailing pause until the next begins.
+/// Returns -1 before the first line (lead-in silence).
+int lineIndexAt(List<SpokenLine> lines, Duration position) {
+  var index = -1;
+  for (var i = 0; i < lines.length; i++) {
+    if (position >= lines[i].start) {
+      index = i;
+    } else {
+      break;
+    }
+  }
+  return index;
+}
+
 Duration _seconds(double s) =>
     Duration(microseconds: (s * Duration.microsecondsPerSecond).round());
