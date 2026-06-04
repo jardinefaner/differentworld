@@ -87,7 +87,22 @@ override tools, then a promotion path from per-space → canonical.
   shells?
 
 ## Current status / next
-Branch `feat/thinking-tools`. **Phase 1 is essentially done.**
+Branch `feat/thinking-tools`. **Phase 1 done; Phase 2 content shipped.**
+
+- **DONE — Phase 2 content (broaden past the classroom).**
+  `lib/features/tools/thinking_tools_catalog.dart`: `universalThinkingTools`,
+  10 universal mental models / methods as reference cards in the same shape
+  (First Principles, The 5 Whys, Inversion, Second-Order Thinking,
+  Steel-Manning, Think·Pair·Share, Systems Thinking, Map-vs-Territory,
+  Occam's Razor, 10/10/10). `buildToolLibrary()` now merges THREE sources
+  (runnable + universal + Toolkit); tests updated. The library now spans
+  classroom moves + universal thinking tools.
+- **NEXT (Phase 2b) — RUNNABLE thinking tools.** Make ≥2 of the universal
+  tools run with the room (a Think·Pair·Share 3-phase timer, a 5-Whys
+  stepper) as small `GameDefinition`s — the "run it, don't just read it"
+  payoff. And a category filter on `/tools` (runnable / thinking tools /
+  teaching moves) since the flat shelf is now ~46 entries.
+
 
 - **DONE — the unified model.** `lib/features/tools/thinking_tool.dart`: the
   `ThinkingTool` view-model + `ThinkingTool.fromToolkit` (reference adapter) +

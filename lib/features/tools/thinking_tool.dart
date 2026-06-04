@@ -1,4 +1,5 @@
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
+import 'package:differentworld/features/tools/thinking_tools_catalog.dart';
 
 /// Whether a tool is something you READ (a distilled reference card) or RUN
 /// (launched with the room). Some tools will eventually be both; v1 keeps it
@@ -136,6 +137,7 @@ const List<ThinkingTool> runnableThinkingTools = <ThinkingTool>[
 /// with the room" face); the reference set follows.
 List<ThinkingTool> buildToolLibrary() => <ThinkingTool>[
       ...runnableThinkingTools,
+      ...universalThinkingTools,
       for (final category in toolkitCatalog)
         for (final tool in category.tools) ThinkingTool.fromToolkit(tool),
     ];

@@ -1,10 +1,11 @@
-// Phase 1 of the Thinking Tools vision (docs/THINKING_TOOLS.md): the unified
-// ThinkingTool model + adapters prove that the two existing sources — the
-// editorial Toolkit (reference) and the runnable activities — map into ONE
-// shape. Pure data; no UI yet.
+// The Thinking Tools library (docs/THINKING_TOOLS.md). The unified ThinkingTool
+// model + adapters prove the THREE sources — the runnable activities, the
+// universal thinking tools (Phase 2), and the editorial Toolkit (reference) —
+// merge into one shelf. Pure data.
 
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/tools/thinking_tool.dart';
+import 'package:differentworld/features/tools/thinking_tools_catalog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -45,12 +46,39 @@ void main() {
     });
   });
 
+  group('universalThinkingTools', () {
+    test('every entry is a reference card with when/why/script', () {
+      expect(universalThinkingTools, isNotEmpty);
+      for (final t in universalThinkingTools) {
+        expect(t.kind, ToolKind.reference);
+        expect(t.isRunnable, isFalse);
+        expect(t.route, isNull);
+        expect(t.name, isNotEmpty);
+        expect(t.blurb, isNotEmpty);
+        expect(t.whenToUse, isNotNull);
+        expect(t.why, isNotNull);
+        expect(t.script, isNotNull);
+        expect(t.tags, isNotEmpty);
+      }
+    });
+
+    test('ids are unique', () {
+      final ids = universalThinkingTools.map((t) => t.id).toList();
+      expect(ids.toSet().length, ids.length);
+    });
+  });
+
   group('buildToolLibrary', () {
-    test('unifies both sources into one shelf, both kinds present', () {
+    test('unifies all three sources into one shelf, both kinds present', () {
       final lib = buildToolLibrary();
       final refCount =
           toolkitCatalog.fold<int>(0, (n, c) => n + c.tools.length);
-      expect(lib.length, runnableThinkingTools.length + refCount);
+      expect(
+        lib.length,
+        runnableThinkingTools.length +
+            universalThinkingTools.length +
+            refCount,
+      );
       expect(lib.any((t) => t.kind == ToolKind.runnable), isTrue);
       expect(lib.any((t) => t.kind == ToolKind.reference), isTrue);
     });
