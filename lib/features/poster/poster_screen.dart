@@ -37,7 +37,12 @@ enum _PosterDelivery {
 /// an isolate; the output is a multi-page PDF (or a single PNG) you save to a
 /// computer to print, or send straight to the OS print dialog.
 class PosterScreen extends ConsumerStatefulWidget {
-  const PosterScreen({super.key});
+  const PosterScreen({this.seedImage, super.key});
+
+  /// An image to start from instead of the chooser — e.g. a kid's Pattern
+  /// rasterized into a poster (docs/FEATURE_CHECKLISTS.md, the Artifact
+  /// contract). Null = the normal pick-from-gallery / camera flow.
+  final Uint8List? seedImage;
 
   @override
   ConsumerState<PosterScreen> createState() => _PosterScreenState();
@@ -70,6 +75,15 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
     unawaited(PosterPrefs.load().then((saved) {
       if (mounted) setState(() => _opts = saved);
     }));
+    // Seeded from another tool (e.g. a Pattern): skip the chooser, go straight
+    // to the editor with this image + its aspect.
+    final seed = widget.seedImage;
+    if (seed != null) {
+      _bytes = seed;
+      unawaited(_decodeAspect(seed).then((aspect) {
+        if (mounted) setState(() => _imageAspect = aspect);
+      }));
+    }
   }
 
   /// The concrete page grid for the current image + options.

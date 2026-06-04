@@ -944,7 +944,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           // print + tape into a big poster.
           GoRoute(
             path: '/poster',
-            builder: (_, _) => const PosterScreen(),
+            // `extra` may carry a seed image (e.g. a Pattern rasterized into a
+            // poster — the Artifact contract). Null = the normal chooser.
+            builder: (_, state) =>
+                PosterScreen(seedImage: state.extra as Uint8List?),
           ),
           // Charades — the showcase: room sees the category, the actor's
           // phone shows the secret word, the teacher's phone marks Got it.

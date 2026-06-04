@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:differentworld/features/activity_runtime/pattern_maker.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// `/activity/pattern` — Make a Pattern. Draw or build a tile in real life,
@@ -21,6 +24,8 @@ class PatternMakerScreen extends StatefulWidget {
 
 class _PatternMakerScreenState extends State<PatternMakerScreen> {
   final ImagePicker _picker = ImagePicker();
+  // Wraps the rendered pattern so it can be rasterized into a poster.
+  final GlobalKey _patternKey = GlobalKey();
   Uint8List? _tile;
   PatternConfig _config = const PatternConfig();
   int _promptIndex = 0;
@@ -53,6 +58,36 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
 
   void _newPrompt() => setState(() => _promptIndex++);
 
+  /// Rasterize the repeated pattern + open it in the poster tool — print it
+  /// wall-sized, or save it (docs/FEATURE_CHECKLISTS.md, the Artifact
+  /// contract). The whole save/print/export flow lives in the poster tool.
+  Future<void> _makePoster() async {
+    if (_capturing) return;
+    final boundary =
+        _patternKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    if (boundary == null) return;
+    setState(() => _capturing = true);
+    Uint8List? bytes;
+    try {
+      // pixelRatio 3 → a crisp source for the poster engine's tiling.
+      final image = await boundary.toImage(pixelRatio: 3);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      bytes = data?.buffer.asUint8List();
+    } on Object catch (_) {
+      bytes = null;
+    }
+    if (!mounted) return;
+    setState(() => _capturing = false);
+    if (bytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't make a poster from this pattern")),
+      );
+      return;
+    }
+    unawaited(context.push('/poster', extra: bytes));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tile = _tile;
@@ -78,7 +113,12 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
                 borderRadius: BorderRadius.circular(20),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: PatternCanvas(tile: tile, config: _config),
+                  // RepaintBoundary so _makePoster can rasterize the clean
+                  // square pattern (the rounded clip is display-only).
+                  child: RepaintBoundary(
+                    key: _patternKey,
+                    child: PatternCanvas(tile: tile, config: _config),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -87,6 +127,18 @@ class _PatternMakerScreenState extends State<PatternMakerScreen> {
                 capturing: _capturing,
                 onConfig: (c) => setState(() => _config = c),
                 onNewTile: _snap,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: _capturing ? null : _makePoster,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                ),
+                icon: const Icon(Icons.print_outlined),
+                label: const Text(
+                  'Make a poster',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ],
           ],
