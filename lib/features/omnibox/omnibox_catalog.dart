@@ -236,6 +236,30 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/tools'),
       ),
+    // Speak — paste a prompt / quote / block, hear it read aloud with big
+    // kinetic karaoke subtitles (ElevenLabs). Staff-facing creative tool.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.speak',
+        label: 'Speak',
+        category: OmniboxCategory.page,
+        icon: Icons.graphic_eq,
+        keywords: const [
+          'speak',
+          'read aloud',
+          'read it',
+          'karaoke',
+          'subtitles',
+          'captions',
+          'lyrics',
+          'text to speech',
+          'voice',
+          'narrate',
+          'prompt',
+          'quote',
+        ],
+        onSelect: (ctx, _) => ctx.push('/speak'),
+      ),
     // The classroom remote (docs/VISION.md #18) — present a surface on the
     // big screen, drive it from the phone. Staff-only (guardians can't drive
     // the room). Broad keywords surface each by what teachers call the thing.

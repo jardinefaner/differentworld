@@ -72,6 +72,7 @@ import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/roles_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
+import 'package:differentworld/features/speak/speak_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
@@ -862,6 +863,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/tools',
             builder: (_, _) =>
                 const RouteTitle(title: 'Tools', child: ToolsScreen()),
+          ),
+          // Speak — paste a prompt / quote / block, hear it read with big
+          // kinetic karaoke subtitles (ElevenLabs via the tts-subtitles
+          // Edge Function). docs/FEATURE_CHECKLISTS.md.
+          GoRoute(
+            path: '/speak',
+            builder: (_, _) =>
+                const RouteTitle(title: 'Speak', child: SpeakScreen()),
           ),
           // Join ANY live session program-wide (docs/LIVE_SESSIONS.md "One
           // place to join"): the game is resolved from the link

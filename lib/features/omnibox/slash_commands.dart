@@ -335,6 +335,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/tools')),
   ),
   SlashCommand(
+    name: 'speak',
+    label: '/speak',
+    hint: 'Read a prompt aloud with big karaoke subtitles',
+    icon: Icons.graphic_eq,
+    aliases: const ['read', 'karaoke', 'subtitles', 'narrate', 'voice'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/speak')),
+  ),
+  SlashCommand(
     name: 'live',
     label: '/live',
     hint: 'This or That — Live: present on a big screen, control from a phone',

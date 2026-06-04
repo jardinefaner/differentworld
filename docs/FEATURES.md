@@ -742,6 +742,31 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Speak
+**Path**: `lib/features/speak/`
+**Purpose**: Paste any prompt / quote / block and hear it read aloud with big, bold, kinetic "karaoke" subtitles — each word lights up as it's spoken. A read-aloud showpiece for the room and a follow-along aid for emerging readers.
+**Personas served**: All staff. Especially Jordan + Coach Sam (run a prompt with the room), Lauren-side read-aloud for emerging readers. Staff-facing (gated `viewer is! GuardianViewer`).
+**Discovery surfaces**:
+- Routes: `/speak`
+- Omnibox: yes — "Speak" (keywords cover speak, read aloud, read it, karaoke, subtitles, captions, lyrics, text to speech, voice, narrate, prompt, quote)
+- Slash: `/speak` (aliases: `read`, `karaoke`, `subtitles`, `narrate`, `voice`)
+- Drawer: no
+- Settings: no
+- Also on the Tools shelf — registered as a runnable `ThinkingTool` (`id: speak` → `/speak`) in `runnableThinkingTools`.
+**Capabilities**: None — open to every signed-in staff member. Read-only / ephemeral.
+**Data**: None synced. Audio (`.mp3`) + char-level alignment (`.json`) are cached server-side in the public `tts-cache` Storage bucket, keyed by a content hash — no PowerSync tables, nothing persisted on-device. Only the (staff-authored) prompt text is sent; no child PII.
+**Surfaces**:
+- *SpokenScript model* — `lib/features/speak/spoken_script.dart`. Timing model: `SpokenWord` (text + start/end), `SpokenScript` (audio url + words), `wordsFromAlignment` (ElevenLabs char-alignment → words), `currentWordIndex` (which word is spoken at a position). Pure + unit-tested (`test/unit/spoken_script_test.dart`).
+- *KaraokeView* — `lib/features/speak/karaoke_view.dart`. Big kinetic display; the active word scales + glows in the accent colour, spoken words recede, upcoming stay legible (WCAG-AA contrast). Announces the whole script as one label to screen readers (excludes the per-word nodes so it doesn't fight the audio).
+- *SpeakService* — `lib/features/speak/speak_service.dart`. Calls the `tts-subtitles` Edge Function (ElevenLabs `with-timestamps`, key brokered server-side per docs/SECRETS.md), builds a `SpokenScript`, plays via `just_audio`; exposes `positionStream` the view tracks. Idempotent dispose; playback degrades silently.
+- *Speak screen* — `lib/features/speak/speak_screen.dart`. Paste prompt → "Speak it" → full-bleed dark karaoke stage; perform controls (Replay / New text) live in the top chrome pill; loading is an inline "Voicing…" spinner; failure shows a clear "not set up / offline" live-region note (never blocks).
+- *tts-subtitles Edge Function* — `supabase/functions/tts-subtitles/index.ts`. Brokers `ELEVENLABS_API_KEY`; caches audio + alignment by content hash in the `tts-cache` bucket; authenticated-only; CORS-allowed for web. Needs `supabase functions deploy tts-subtitles` + `supabase secrets set ELEVENLABS_API_KEY=…`.
+**Depends on**: Voice (shares the `tts-cache` bucket + the brokered-key Edge Function pattern from `tts-generate`); Tools (registered there as a runnable tool).
+**Consumed by**: Tools (lists Speak as a runnable `ThinkingTool`).
+**Last verified**: 2026-06-03
+
+---
+
 ## Tools (Thinking Tools)
 **Path**: `lib/features/tools/`
 **Purpose**: One searchable shelf that unifies the two halves of the "thinking tools" vision (docs/THINKING_TOOLS.md) — the runnable activities (run with the room) and the editorial reference cards — so a staffer browses, then either launches a tool or reads the move. Phase 1 is a view-model adapter over both existing sources; Phases 2–3 broaden the content past the classroom and open it to contributors.
@@ -757,7 +782,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Surfaces**:
 - *ThinkingTool model* — `lib/features/tools/thinking_tool.dart`. The unified view-model + `ThinkingTool.fromToolkit` (reference adapter), `runnableThinkingTools` (curated runnable list), `buildToolLibrary()` (merged shelf, runnable-first).
 - *Tools screen* — `lib/features/tools/tools_screen.dart`. Searchable list of `FeatureCard` tiles; runnable tiles launch `tool.route`, reference tiles open a glass reading sheet (when / why / script).
-**Depends on**: Toolkit (reads `toolkitCatalog`); the activity routes (`/activity/*`, `/live/*`) it launches into.
+**Depends on**: Toolkit (reads `toolkitCatalog`); the activity routes (`/activity/*`, `/live/*`) and Speak (`/speak`) it launches into.
 **Consumed by**: Nothing yet.
 **Last verified**: 2026-06-03
 

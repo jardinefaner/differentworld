@@ -130,6 +130,21 @@ const List<ThinkingTool> runnableThinkingTools = <ThinkingTool>[
     route: '/activity/riddles',
     tags: <String>['lateral', 'puzzle'],
   ),
+  ThinkingTool(
+    id: 'speak',
+    kind: ToolKind.runnable,
+    name: 'Speak',
+    blurb: 'Read a prompt aloud with big karaoke subtitles',
+    route: '/speak',
+    tags: <String>[
+      'read aloud',
+      'karaoke',
+      'subtitles',
+      'voice',
+      'narrate',
+      'literacy',
+    ],
+  ),
 ];
 
 /// The unified Thinking Tools library: every runnable tool + every editorial
