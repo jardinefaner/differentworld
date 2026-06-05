@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
+import 'package:differentworld/features/speak/speak_voices.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -29,6 +30,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
   SpokenScript? _script;
   List<SpokenLine> _lines = const <SpokenLine>[];
   SpeakType _type = SpeakType.serif;
+  SpeakVoice _voice = speakVoices.first;
   bool _loading = false;
   String? _error;
 
@@ -51,7 +53,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
     });
     final SpokenScript script;
     try {
-      script = await _service.synthesize(text: text);
+      script = await _service.synthesize(text: text, voiceId: _voice.id);
     } on Object catch (e, st) {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'speak'),
@@ -144,6 +146,11 @@ class _SpeakScreenState extends State<SpeakScreen> {
               ),
             ),
             const SizedBox(height: 18),
+            _VoiceSelector(
+              selected: _voice,
+              onChanged: (v) => setState(() => _voice = v),
+            ),
+            const SizedBox(height: 14),
             _TypeSelector(
               selected: _type,
               onChanged: (t) => setState(() => _type = t),
@@ -261,6 +268,47 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
       lines: widget.lines,
       position: _position,
       type: widget.type,
+    );
+  }
+}
+
+/// Pick which voice reads it. A pre-speak choice (a different voice is
+/// different audio, so it re-synthesizes) — the type toggle, by contrast,
+/// stays live during the performance.
+class _VoiceSelector extends StatelessWidget {
+  const _VoiceSelector({required this.selected, required this.onChanged});
+
+  final SpeakVoice selected;
+  final ValueChanged<SpeakVoice> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Text(
+          'Voice',
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final v in speakVoices)
+                ChoiceChip(
+                  label: Text(v.label),
+                  selected: v.id == selected.id,
+                  onSelected: (_) => onChanged(v),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
