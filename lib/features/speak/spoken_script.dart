@@ -258,3 +258,42 @@ bool endsSentence(String word) {
   final last = t[t.length - 1];
   return last == '.' || last == '!' || last == '?';
 }
+
+/// Split the timed [words] into PAGES using the author's own line breaks in the
+/// original [text] — every newline starts a new page (just those words). The
+/// alignment gives words sequentially; we assign them to pages by the word
+/// count of each non-empty input line. Robust to small count mismatches (any
+/// leftover words attach to the last page). No line breaks → one page.
+List<SpokenLine> pagesFromInput(String text, List<SpokenWord> words) {
+  if (words.isEmpty) return const [];
+  final lineCounts = <int>[];
+  for (final raw in text.split('\n')) {
+    final n = raw
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
+    if (n > 0) lineCounts.add(n);
+  }
+  if (lineCounts.length <= 1) {
+    return [SpokenLine(words: List.unmodifiable(words))];
+  }
+  final pages = <SpokenLine>[];
+  var i = 0;
+  for (final count in lineCounts) {
+    if (i >= words.length) break;
+    final end = (i + count).clamp(0, words.length);
+    pages.add(SpokenLine(words: List.unmodifiable(words.sublist(i, end))));
+    i = end;
+  }
+  // Leftover alignment words (ragged vs the input count) → attach to the last.
+  if (i < words.length && pages.isNotEmpty) {
+    final last = pages.removeLast();
+    pages.add(
+      SpokenLine(
+        words: List.unmodifiable([...last.words, ...words.sublist(i)]),
+      ),
+    );
+  }
+  return pages;
+}

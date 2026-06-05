@@ -99,6 +99,7 @@ class SpeakService {
   /// silence with no explanation. `just_audio`'s play() resolves only at
   /// end-of-audio, so we start it separately and don't await the end here.
   Future<bool> play(SpokenScript script) async {
+    if (_disposed) return false;
     _current = script;
     try {
       await _player.stop();
@@ -153,6 +154,7 @@ class SpeakService {
   }
 
   Future<void> stop() async {
+    if (_disposed) return;
     try {
       await _player.stop();
     } on Object catch (_) {

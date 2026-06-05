@@ -8,6 +8,7 @@ import 'package:differentworld/features/speak/justified_view.dart';
 import 'package:differentworld/features/speak/living_background.dart';
 import 'package:differentworld/features/speak/mural_view.dart';
 import 'package:differentworld/features/speak/one_big_word_view.dart';
+import 'package:differentworld/features/speak/packed_view.dart';
 import 'package:differentworld/features/speak/shape_view.dart';
 import 'package:differentworld/features/speak/speak_palette.dart';
 import 'package:differentworld/features/speak/speak_presentation.dart';
@@ -33,6 +34,7 @@ class SpeakPerformer extends StatefulWidget {
     required this.mode,
     required this.lines,
     required this.words,
+    required this.pages,
     required this.type,
     required this.palette,
     super.key,
@@ -42,6 +44,9 @@ class SpeakPerformer extends StatefulWidget {
   final SpeakPresentation mode;
   final List<SpokenLine> lines;
   final List<SpokenWord> words;
+
+  /// Pages split on the author's input line breaks (the Packed mode).
+  final List<SpokenLine> pages;
   final SpeakType type;
   final SpeakPalette palette;
 
@@ -139,6 +144,12 @@ class _SpeakPerformerState extends State<SpeakPerformer>
     return switch (widget.mode) {
       SpeakPresentation.editorial => EditorialView(
         words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.palette.accent,
+      ),
+      SpeakPresentation.packed => PackedView(
+        pages: widget.pages,
         position: _position,
         type: widget.type,
         accent: widget.palette.accent,

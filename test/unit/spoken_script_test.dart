@@ -230,6 +230,52 @@ void main() {
     });
   });
 
+  group('pagesFromInput', () {
+    SpokenWord w(String t) => SpokenWord(
+      text: t,
+      start: Duration.zero,
+      end: const Duration(milliseconds: 100),
+    );
+
+    test('every input line becomes a page (by word count)', () {
+      final pages = pagesFromInput('one two\nthree\nfour five six', [
+        w('one'),
+        w('two'),
+        w('three'),
+        w('four'),
+        w('five'),
+        w('six'),
+      ]);
+      expect(pages.map((p) => p.text), ['one two', 'three', 'four five six']);
+    });
+
+    test('no line breaks → a single page', () {
+      final pages = pagesFromInput('just one line here', [
+        w('just'),
+        w('one'),
+        w('line'),
+        w('here'),
+      ]);
+      expect(pages.length, 1);
+      expect(pages.single.words.length, 4);
+    });
+
+    test('blank lines are ignored', () {
+      final pages = pagesFromInput('a\n\n\nb', [w('a'), w('b')]);
+      expect(pages.map((p) => p.text), ['a', 'b']);
+    });
+
+    test('extra alignment words attach to the last page', () {
+      // Input counts 2 words but alignment has 3 → the 3rd joins page 2.
+      final pages = pagesFromInput('a\nb', [w('a'), w('b'), w('c')]);
+      expect(pages.map((p) => p.text), ['a', 'b c']);
+    });
+
+    test('empty words → no pages', () {
+      expect(pagesFromInput('a\nb', const []), isEmpty);
+    });
+  });
+
   group('SpokenScript JSON', () {
     test('survives a full jsonEncode/decode round-trip (history)', () {
       const script = SpokenScript(

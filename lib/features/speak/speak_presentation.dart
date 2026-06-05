@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 enum SpeakPresentation {
   editorial,
   stage,
+  packed,
   oneBigWord,
   stack,
   collage,
@@ -21,6 +22,7 @@ extension SpeakPresentationX on SpeakPresentation {
   String get label => switch (this) {
     SpeakPresentation.editorial => 'Editorial',
     SpeakPresentation.stage => 'Stage',
+    SpeakPresentation.packed => 'Packed',
     SpeakPresentation.oneBigWord => 'One Big Word',
     SpeakPresentation.stack => 'Stack',
     SpeakPresentation.collage => 'Collage',
@@ -35,6 +37,7 @@ extension SpeakPresentationX on SpeakPresentation {
   IconData get icon => switch (this) {
     SpeakPresentation.editorial => Icons.format_quote_rounded,
     SpeakPresentation.stage => Icons.notes_rounded,
+    SpeakPresentation.packed => Icons.view_agenda_rounded,
     SpeakPresentation.oneBigWord => Icons.title_rounded,
     SpeakPresentation.stack => Icons.layers_rounded,
     SpeakPresentation.collage => Icons.dashboard_rounded,
@@ -52,6 +55,7 @@ extension SpeakPresentationX on SpeakPresentation {
 const List<SpeakPresentation> implementedSpeakModes = <SpeakPresentation>[
   SpeakPresentation.editorial,
   SpeakPresentation.stage,
+  SpeakPresentation.packed,
   SpeakPresentation.oneBigWord,
   SpeakPresentation.stack,
   SpeakPresentation.collage,

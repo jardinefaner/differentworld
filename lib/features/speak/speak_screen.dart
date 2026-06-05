@@ -39,6 +39,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
   SpokenScript? _script;
   List<SpokenLine> _lines = const <SpokenLine>[];
   List<SpokenWord> _words = const <SpokenWord>[];
+  List<SpokenLine> _pages = const <SpokenLine>[]; // split on input line breaks
   List<SpeakHistoryEntry> _recents = const <SpeakHistoryEntry>[];
   SpeakType _type = SpeakType.serif;
   SpeakVoice _voice = speakVoices.first;
@@ -104,6 +105,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
       _script = e.script;
       _words = e.script.words;
       _lines = linesFromWords(e.script.words);
+      _pages = pagesFromInput(e.text, e.script.words);
       _loading = false;
       _error = null;
     });
@@ -162,6 +164,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
       _script = script;
       _words = script.words;
       _lines = linesFromWords(script.words);
+      _pages = pagesFromInput(text, script.words);
       _loading = false;
     });
     unawaited(_playAndReport(script));
@@ -318,7 +321,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
             Text(
               'A clear voice reads it aloud while each line takes the stage — '
               'the spoken word swells. Tap the stage to pause; switch the voice '
-              'or type any time.',
+              'or type any time. (In Packed, each line you type is its own page.)',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -370,6 +373,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
       mode: _mode,
       lines: _lines,
       words: _words,
+      pages: _pages,
       type: _type,
       palette: _voice.palette,
     );
