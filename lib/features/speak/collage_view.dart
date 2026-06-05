@@ -49,7 +49,7 @@ class CollageView extends StatelessWidget {
   }
 }
 
-class _CollageLine extends StatelessWidget {
+class _CollageLine extends StatefulWidget {
   const _CollageLine({
     required this.line,
     required this.activeWord,
@@ -65,22 +65,33 @@ class _CollageLine extends StatelessWidget {
   final SpeakType type;
   final Color accent;
 
+  @override
+  State<_CollageLine> createState() => _CollageLineState();
+}
+
+class _CollageLineState extends State<_CollageLine> {
   static const List<double> _sizes = [30, 40, 52, 36, 46];
 
-  @override
-  Widget build(BuildContext context) {
-    final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
-    // Seeded by the line index → the composition is identical every rebuild
-    // while this line shows (only the active highlight moves).
-    final rnd = math.Random(seed * 7919 + 13);
-    final cells = [
-      for (var i = 0; i < line.words.length; i++)
+  // Computed ONCE — the line is keyed by index in the AnimatedSwitcher, so this
+  // instance's line never changes; only `activeWord` does (re-read in build).
+  late final List<({double size, double angle, bool heavy})> _cells =
+      _compute();
+
+  List<({double size, double angle, bool heavy})> _compute() {
+    final rnd = math.Random(widget.seed * 7919 + 13);
+    return [
+      for (var i = 0; i < widget.line.words.length; i++)
         (
           size: _sizes[rnd.nextInt(_sizes.length)],
           angle: (rnd.nextDouble() - 0.5) * 0.16,
           heavy: rnd.nextBool(),
         ),
     ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
     return Center(
       child: Padding(
         padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomSafe),
@@ -93,16 +104,16 @@ class _CollageLine extends StatelessWidget {
               spacing: 16,
               runSpacing: 2,
               children: [
-                for (var i = 0; i < line.words.length; i++)
+                for (var i = 0; i < widget.line.words.length; i++)
                   Transform.rotate(
-                    angle: cells[i].angle,
+                    angle: _cells[i].angle,
                     child: _CollageWord(
-                      text: line.words[i].text,
-                      size: cells[i].size,
-                      active: i == activeWord,
-                      heavy: cells[i].heavy,
-                      type: type,
-                      accent: accent,
+                      text: widget.line.words[i].text,
+                      size: _cells[i].size,
+                      active: i == widget.activeWord,
+                      heavy: _cells[i].heavy,
+                      type: widget.type,
+                      accent: widget.accent,
                     ),
                   ),
               ],

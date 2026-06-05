@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:differentworld/features/speak/speak_palette.dart';
@@ -11,11 +12,16 @@ class LivingBackground extends StatefulWidget {
   const LivingBackground({
     required this.palette,
     required this.child,
+    this.animate = true,
     super.key,
   });
 
   final SpeakPalette palette;
   final Widget child;
+
+  /// Drift only while it's worth it — paused while the audio is paused / done
+  /// so we don't repaint a gradient every frame for a still stage (battery).
+  final bool animate;
 
   @override
   State<LivingBackground> createState() => _LivingBackgroundState();
@@ -26,7 +32,24 @@ class _LivingBackgroundState extends State<LivingBackground>
   late final AnimationController _drift = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 18),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) unawaited(_drift.repeat(reverse: true));
+  }
+
+  @override
+  void didUpdateWidget(LivingBackground oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.animate == oldWidget.animate) return;
+    if (widget.animate) {
+      unawaited(_drift.repeat(reverse: true));
+    } else {
+      _drift.stop();
+    }
+  }
 
   @override
   void dispose() {

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:differentworld/features/speak/living_background.dart';
 import 'package:differentworld/features/speak/speak_history.dart';
 import 'package:differentworld/features/speak/speak_immersive.dart';
 import 'package:differentworld/features/speak/speak_input_controls.dart';
@@ -361,18 +360,15 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
   }
 
   Widget _perform(BuildContext context) {
-    // Full-bleed living stage in the voice's palette; SpeakStage centres the
-    // line, so the floating chrome (top) + omnibox bar (bottom) clear the type.
-    return LivingBackground(
+    // Full-bleed living stage in the voice's palette — the performer owns the
+    // living background now (it pauses the drift while the audio is idle).
+    return SpeakPerformer(
+      service: _service,
+      mode: _mode,
+      lines: _lines,
+      words: _words,
+      type: _type,
       palette: _voice.palette,
-      child: SpeakPerformer(
-        service: _service,
-        mode: _mode,
-        lines: _lines,
-        words: _words,
-        type: _type,
-        accent: _voice.palette.accent,
-      ),
     );
   }
 }

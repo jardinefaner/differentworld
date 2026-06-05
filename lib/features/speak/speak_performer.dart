@@ -4,9 +4,11 @@ import 'package:differentworld/features/speak/collage_view.dart';
 import 'package:differentworld/features/speak/grid_view.dart';
 import 'package:differentworld/features/speak/index_view.dart';
 import 'package:differentworld/features/speak/justified_view.dart';
+import 'package:differentworld/features/speak/living_background.dart';
 import 'package:differentworld/features/speak/mural_view.dart';
 import 'package:differentworld/features/speak/one_big_word_view.dart';
 import 'package:differentworld/features/speak/shape_view.dart';
+import 'package:differentworld/features/speak/speak_palette.dart';
 import 'package:differentworld/features/speak/speak_presentation.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
@@ -31,7 +33,7 @@ class SpeakPerformer extends StatefulWidget {
     required this.lines,
     required this.words,
     required this.type,
-    required this.accent,
+    required this.palette,
     super.key,
   });
 
@@ -40,7 +42,7 @@ class SpeakPerformer extends StatefulWidget {
   final List<SpokenLine> lines;
   final List<SpokenWord> words;
   final SpeakType type;
-  final Color accent;
+  final SpeakPalette palette;
 
   @override
   State<SpeakPerformer> createState() => _SpeakPerformerState();
@@ -138,61 +140,61 @@ class _SpeakPerformerState extends State<SpeakPerformer>
         words: widget.words,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.stack => StackView(
         lines: widget.lines,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.collage => CollageView(
         lines: widget.lines,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.spotlight => SpotlightView(
         words: widget.words,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.mural => MuralView(
         words: widget.words,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.grid => WordGridView(
         words: widget.words,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.justified => JustifiedView(
         words: widget.words,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.contents => IndexView(
         lines: widget.lines,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.shape => ShapeView(
         words: widget.words,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
       SpeakPresentation.stage => SpeakStage(
         lines: widget.lines,
         position: _position,
         type: widget.type,
-        accent: widget.accent,
+        accent: widget.palette.accent,
       ),
     };
   }
@@ -203,50 +205,54 @@ class _SpeakPerformerState extends State<SpeakPerformer>
     // during the initial load (which would flash "paused" before the voice
     // starts).
     final paused = _started && !_playing && !_done;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _toggle,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // One done-dim for every mode (was inside SpeakStage).
-                AnimatedOpacity(
-                  opacity: _done ? 0.5 : 1,
-                  duration: const Duration(milliseconds: 400),
-                  child: _modeChild(),
-                ),
-                if (paused)
-                  const _StageGlyph(
-                    icon: Icons.play_arrow_rounded,
-                    semantic: 'Paused — tap to resume',
+    return LivingBackground(
+      palette: widget.palette,
+      animate: _playing, // freeze the drift while paused / done (battery)
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _toggle,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // One done-dim for every mode (was inside SpeakStage).
+                  AnimatedOpacity(
+                    opacity: _done ? 0.5 : 1,
+                    duration: const Duration(milliseconds: 400),
+                    child: _modeChild(),
                   ),
-                if (_done)
-                  const _StageGlyph(
-                    icon: Icons.replay_rounded,
-                    semantic: 'Finished — tap to replay',
-                  ),
-              ],
+                  if (paused)
+                    const _StageGlyph(
+                      icon: Icons.play_arrow_rounded,
+                      semantic: 'Paused — tap to resume',
+                    ),
+                  if (_done)
+                    const _StageGlyph(
+                      icon: Icons.replay_rounded,
+                      semantic: 'Finished — tap to replay',
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-        // Transport — play/pause, a drag-to-seek scrubber, time. Sits at the
-        // bottom (the omnibox bar is hidden during the performance).
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _TransportBar(
-            service: widget.service,
-            playing: _playing,
-            done: _done,
-            accent: widget.accent,
-            onPlayPause: _toggle,
+          // Transport — play/pause, a drag-to-seek scrubber, time. Sits at the
+          // bottom (the omnibox bar is hidden during the performance).
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _TransportBar(
+              service: widget.service,
+              playing: _playing,
+              done: _done,
+              accent: widget.palette.accent,
+              onPlayPause: _toggle,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
