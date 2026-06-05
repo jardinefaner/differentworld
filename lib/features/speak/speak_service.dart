@@ -23,12 +23,19 @@ class SpeakService {
   /// Whether audio is currently playing (drives the play/pause affordance).
   Stream<bool> get playingStream => _player.playingStream;
 
+  /// Fires `true` when playback reaches the end — lets the stage stop its
+  /// ticker (no 60fps spin after the voice finishes) and show a "done" state.
+  Stream<bool> get completedStream => _player.processingStateStream
+      .map((s) => s == ProcessingState.completed)
+      .distinct();
+
   /// The instantaneous playback position — read every frame by the stage's
   /// ticker so word/line flips land on the voice, not up to 200ms late.
-  Duration get currentPosition => _player.position;
+  /// Guarded: a stray tick after dispose must not touch the dead player.
+  Duration get currentPosition => _disposed ? Duration.zero : _player.position;
 
   /// Whether audio is currently advancing (lets the stage idle its ticker).
-  bool get isPlaying => _player.playing;
+  bool get isPlaying => !_disposed && _player.playing;
 
   /// Synthesize [text] (optionally a specific [voiceId]) into a timed script.
   /// Throws on failure — the screen catches and shows the not-set-up / error
@@ -87,8 +94,25 @@ class SpeakService {
   }
 
   Future<void> replay() async {
+    if (_disposed) return;
     await _player.seek(Duration.zero);
     await _player.play();
+  }
+
+  /// Pause / resume — the stage's tap-to-pause. Resume continues from the
+  /// current position (unlike [replay], which restarts from the top).
+  Future<void> pause() async {
+    if (_disposed) return;
+    await _player.pause();
+  }
+
+  Future<void> resume() async {
+    if (_disposed) return;
+    try {
+      await _player.play();
+    } on PlayerInterruptedException catch (_) {
+      // Superseded by a newer play() — expected, silent.
+    }
   }
 
   Future<void> stop() async {

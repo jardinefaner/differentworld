@@ -34,6 +34,11 @@ class _SpeakScreenState extends State<SpeakScreen> {
   bool _loading = false;
   String? _error;
 
+  /// Bumped on every speak + every exit. A synthesize() that resolves after
+  /// its generation is stale is discarded — otherwise tapping "New text"
+  /// mid-synthesis would thrust you back into a performance you just left.
+  int _gen = 0;
+
   @override
   void dispose() {
     _controller.dispose();
@@ -44,6 +49,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
   Future<void> _speak() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _loading) return;
+    final gen = ++_gen;
     // Dismiss the keyboard before we (may) swap to the full-bleed perform
     // view — otherwise the IME can linger open behind it on Android.
     FocusScope.of(context).unfocus();
@@ -58,15 +64,17 @@ class _SpeakScreenState extends State<SpeakScreen> {
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'speak'),
       );
-      if (!mounted) return;
+      if (!mounted || gen != _gen) return;
       setState(() {
         _loading = false;
-        _error = "Couldn't voice that. The ElevenLabs voice may not be set up "
-            'yet, or you might be offline.';
+        _error =
+            'Could not voice that — the voice service may be offline or '
+            'not set up yet.';
       });
       return;
     }
-    if (!mounted) return;
+    // Discard a result the user already navigated away from (stale generation).
+    if (!mounted || gen != _gen) return;
     setState(() {
       _script = script;
       _lines = linesFromWords(script.words);
@@ -78,6 +86,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
   }
 
   void _newText() {
+    _gen++; // invalidate any in-flight synthesize so it can't pull us back in
     unawaited(_service.stop());
     setState(() => _script = null);
   }
@@ -128,7 +137,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
           children: [
             const ContentHeader(
               title: 'Speak',
-              subtitle: 'Paste a prompt, quote, or block — hear it read aloud '
+              subtitle:
+                  'Paste a prompt, quote, or block — hear it read aloud '
                   'and set big, one elegant line at a time',
             ),
             TextField(
@@ -145,7 +155,9 @@ class _SpeakScreenState extends State<SpeakScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 10),
+            const _PrivacyNote(),
+            const SizedBox(height: 16),
             _VoiceSelector(
               selected: _voice,
               onChanged: (v) => setState(() => _voice = v),
@@ -182,9 +194,9 @@ class _SpeakScreenState extends State<SpeakScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'A clear voice reads it back while each line takes the stage — the '
-              'spoken word swells. Switch the type any time; pick the one that '
-              'feels right.',
+              'A clear voice reads it aloud while each line takes the stage — '
+              'the spoken word swells. Tap the stage to pause; switch the voice '
+              'or type any time.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -211,9 +223,11 @@ class _SpeakScreenState extends State<SpeakScreen> {
 
 /// Drives [SpeakStage] from a per-frame ticker that reads the player's exact
 /// position, so word/line flips land on the voice rather than up to 200ms
-/// late (the position STREAM is only ~5/sec). Rebuilds only when the active
-/// line or word actually changes — the implicit weight + line-swap animations
-/// interpolate smoothly between those discrete flips.
+/// late (the position STREAM is only ~5/sec). Also owns playback CONTROL: tap
+/// the stage to pause/resume; the ticker idles when not playing (no 60fps
+/// spin after the voice ends); a finished performance shows a tap-to-replay
+/// glyph. Rebuilds only when the active line/word changes — the implicit
+/// animations interpolate smoothly between those discrete flips.
 class _SpeakStageHost extends StatefulWidget {
   const _SpeakStageHost({
     required this.service,
@@ -232,21 +246,54 @@ class _SpeakStageHost extends StatefulWidget {
 class _SpeakStageHostState extends State<_SpeakStageHost>
     with SingleTickerProviderStateMixin {
   late final _ticker = createTicker(_onTick);
+  StreamSubscription<bool>? _playSub;
+  StreamSubscription<bool>? _doneSub;
   Duration _position = Duration.zero;
   int _line = -1;
   int _word = -1;
+  bool _playing = false;
+  bool _started = false;
+  bool _done = false;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_ticker.start());
+    _playSub = widget.service.playingStream.listen(_onPlayingChanged);
+    _doneSub = widget.service.completedStream.listen(_onCompleted);
+  }
+
+  void _onPlayingChanged(bool playing) {
+    if (!mounted) return;
+    setState(() {
+      _playing = playing;
+      if (playing) {
+        _started = true;
+        _done = false;
+      }
+    });
+    // Ticker runs ONLY while the voice advances — no idle 60fps spin.
+    if (playing) {
+      if (!_ticker.isActive) unawaited(_ticker.start());
+    } else if (_ticker.isActive) {
+      _ticker.stop();
+    }
+  }
+
+  void _onCompleted(bool completed) {
+    if (!mounted || !completed) return;
+    if (_ticker.isActive) _ticker.stop();
+    setState(() {
+      _done = true;
+      _playing = false;
+    });
   }
 
   void _onTick(Duration _) {
     final pos = widget.service.currentPosition;
     final line = lineIndexAt(widget.lines, pos);
-    final word =
-        line < 0 ? -1 : currentWordIndex(widget.lines[line].words, pos);
+    final word = line < 0
+        ? -1
+        : currentWordIndex(widget.lines[line].words, pos);
     if (line != _line || word != _word) {
       setState(() {
         _position = pos;
@@ -256,18 +303,73 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
     }
   }
 
+  void _toggle() {
+    if (_done) {
+      unawaited(widget.service.replay());
+    } else if (_playing) {
+      unawaited(widget.service.pause());
+    } else {
+      unawaited(widget.service.resume());
+    }
+  }
+
   @override
   void dispose() {
+    unawaited(_playSub?.cancel());
+    unawaited(_doneSub?.cancel());
     _ticker.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SpeakStage(
-      lines: widget.lines,
-      position: _position,
-      type: widget.type,
+    // Show the pause glyph only once playback has actually begun — never
+    // during the initial load (which would flash "paused" before the voice
+    // starts).
+    final paused = _started && !_playing && !_done;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _toggle,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SpeakStage(
+            lines: widget.lines,
+            position: _position,
+            type: widget.type,
+            done: _done,
+          ),
+          if (paused)
+            const _StageGlyph(
+              icon: Icons.play_arrow_rounded,
+              semantic: 'Paused — tap to resume',
+            ),
+          if (_done)
+            const _StageGlyph(
+              icon: Icons.replay_rounded,
+              semantic: 'Finished — tap to replay',
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A large, low-opacity glyph centred on the stage — the universal
+/// pause/replay affordance, kept quiet so it doesn't fight the type.
+class _StageGlyph extends StatelessWidget {
+  const _StageGlyph({required this.icon, required this.semantic});
+
+  final IconData icon;
+  final String semantic;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Semantics(
+        label: semantic,
+        child: Icon(icon, size: 92, color: Colors.white.withValues(alpha: 0.2)),
+      ),
     );
   }
 }
@@ -284,7 +386,8 @@ class _VoiceSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Voice',
@@ -293,22 +396,94 @@ class _VoiceSelector extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final v in speakVoices)
-                ChoiceChip(
-                  label: Text(v.label),
-                  selected: v.id == selected.id,
-                  onSelected: (_) => onChanged(v),
-                ),
-            ],
-          ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final v in speakVoices)
+              _VoiceTile(
+                voice: v,
+                selected: v.id == selected.id,
+                onTap: () => onChanged(v),
+              ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+class _VoiceTile extends StatelessWidget {
+  const _VoiceTile({
+    required this.voice,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final SpeakVoice voice;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final desc = voice.descriptor;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${voice.label} voice${desc == null ? '' : ', $desc'}',
+      child: Material(
+        color: selected
+            ? scheme.primaryContainer
+            : scheme.surfaceContainerHighest,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: selected
+              ? BorderSide(color: scheme.primary, width: 1.5)
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            // ≥48dp tap target (audit E1: ChoiceChip was ~32dp).
+            constraints: const BoxConstraints(minHeight: 48, minWidth: 68),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    voice.label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSurface,
+                    ),
+                  ),
+                  if (desc != null)
+                    Text(
+                      desc,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            (selected
+                                    ? scheme.onPrimaryContainer
+                                    : scheme.onSurfaceVariant)
+                                .withValues(alpha: 0.85),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -377,7 +552,8 @@ class _TypePill extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            // ≥48dp tap target.
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
             child: Text(
               type.label,
               style: TextStyle(
@@ -392,6 +568,37 @@ class _TypePill extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Discloses that the typed text leaves the device for a voice service —
+/// and nudges staff away from pasting child PII (audit XC-3).
+class _PrivacyNote extends StatelessWidget {
+  const _PrivacyNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.info_outline,
+          size: 16,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Your text is sent to a voice service to create the audio — keep '
+            "children's names and personal details out of it.",
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

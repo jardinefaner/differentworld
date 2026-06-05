@@ -6,13 +6,18 @@ import 'package:flutter/foundation.dart';
 /// prompt; the function validates its shape and caches audio per (voice, text).
 @immutable
 class SpeakVoice {
-  const SpeakVoice({required this.id, required this.label});
+  const SpeakVoice({required this.id, required this.label, this.descriptor});
 
   /// ElevenLabs `voice_id`.
   final String id;
 
   /// What the picker calls it.
   final String label;
+
+  /// A 2–3 word tonal hint shown under the name on the picker tile (e.g.
+  /// "warm & steady"). Null = name only. Helps a teacher choose without
+  /// auditioning each one.
+  final String? descriptor;
 }
 
 /// The voices the picker offers. The first is the default. Provided by the

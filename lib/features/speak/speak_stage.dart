@@ -15,12 +15,17 @@ class SpeakStage extends StatelessWidget {
     required this.lines,
     required this.position,
     required this.type,
+    this.done = false,
     super.key,
   });
 
   final List<SpokenLine> lines;
   final Duration position;
   final SpeakType type;
+
+  /// When playback has finished, the stage dims to signal "done" (the host
+  /// overlays a tap-to-replay nudge).
+  final bool done;
 
   /// Base size before fit-to-width scale-down. Large — short lines stay big;
   /// long lines scale to fit (and wrap to a second line if needed).
@@ -46,34 +51,41 @@ class SpeakStage extends StatelessWidget {
       );
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-        child: AnimatedSwitcher(
-          // Short relative to a line's on-screen life (~1.5–2.5s) so the stage
-          // is mostly STILL — editorial reads as calm, not in constant motion.
-          duration: const Duration(milliseconds: 380),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          // Keep both the outgoing + incoming line centred and stacked.
-          layoutBuilder: (currentChild, previousChildren) => Stack(
-            alignment: Alignment.center,
-            children: [...previousChildren, ?currentChild],
+    // Respect the home-indicator zone at the bottom (the stage is full-bleed,
+    // so nothing else reserves it).
+    final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
+    return AnimatedOpacity(
+      opacity: done ? 0.5 : 1,
+      duration: const Duration(milliseconds: 400),
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(32, 24, 32, 24 + bottomSafe),
+          child: AnimatedSwitcher(
+            // Short relative to a line's on-screen life (~1.5–2.5s) so the stage
+            // is mostly STILL — editorial reads as calm, not in constant motion.
+            duration: const Duration(milliseconds: 380),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            // Keep both the outgoing + incoming line centred and stacked.
+            layoutBuilder: (currentChild, previousChildren) => Stack(
+              alignment: Alignment.center,
+              children: [...previousChildren, ?currentChild],
+            ),
+            transitionBuilder: (child, anim) {
+              // Incoming: rises from below + fades in. Outgoing (anim in reverse)
+              // sinks + fades — a calm vertical dissolve. 0.18 of the line's own
+              // height is enough travel to read as a deliberate gesture at 84sp.
+              final slide = Tween<Offset>(
+                begin: const Offset(0, 0.18),
+                end: Offset.zero,
+              ).animate(anim);
+              return FadeTransition(
+                opacity: anim,
+                child: SlideTransition(position: slide, child: child),
+              );
+            },
+            child: child,
           ),
-          transitionBuilder: (child, anim) {
-            // Incoming: rises from below + fades in. Outgoing (anim in reverse)
-            // sinks + fades — a calm vertical dissolve. 0.18 of the line's own
-            // height is enough travel to read as a deliberate gesture at 84sp.
-            final slide = Tween<Offset>(
-              begin: const Offset(0, 0.18),
-              end: Offset.zero,
-            ).animate(anim);
-            return FadeTransition(
-              opacity: anim,
-              child: SlideTransition(position: slide, child: child),
-            );
-          },
-          child: child,
         ),
       ),
     );
@@ -147,12 +159,14 @@ class _StageWord extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = phase == _WordPhase.active;
     final weight = active ? type.activeWeight : type.restWeight;
-    // Past words recede further than not-yet-spoken ones — the line carries a
-    // gentle past → present → future gradient as the voice moves through it.
+    // Past words recede further than not-yet-spoken ones — a gentle past →
+    // present → future gradient. Floors kept legible (≥0.55 clears WCAG AA on
+    // the near-black stage) so emerging readers can still follow the quiet
+    // words; the active word still clearly dominates at 1.0 + the weight swell.
     final alpha = switch (phase) {
       _WordPhase.active => 1.0,
-      _WordPhase.future => 0.6,
-      _WordPhase.past => 0.32,
+      _WordPhase.future => 0.68,
+      _WordPhase.past => 0.55,
     };
     // ONE implicit animation per word: TextStyle.lerp interpolates BOTH the
     // weight axis (fontVariations) and the colour, so the swell + brightness
