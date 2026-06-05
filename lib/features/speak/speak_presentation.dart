@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// How the words are presented on the stage. One timing model (lines / words /
 /// position), many looks — the user flips between them live, and picks a
 /// default before speaking.
-enum SpeakPresentation { stage, oneBigWord, stack, collage, spotlight }
+enum SpeakPresentation { stage, oneBigWord, stack, collage, spotlight, mural }
 
 extension SpeakPresentationX on SpeakPresentation {
   String get label => switch (this) {
@@ -12,6 +12,7 @@ extension SpeakPresentationX on SpeakPresentation {
     SpeakPresentation.stack => 'Stack',
     SpeakPresentation.collage => 'Collage',
     SpeakPresentation.spotlight => 'Spotlight',
+    SpeakPresentation.mural => 'Mural',
   };
 
   IconData get icon => switch (this) {
@@ -20,6 +21,7 @@ extension SpeakPresentationX on SpeakPresentation {
     SpeakPresentation.stack => Icons.layers_rounded,
     SpeakPresentation.collage => Icons.dashboard_rounded,
     SpeakPresentation.spotlight => Icons.highlight_rounded,
+    SpeakPresentation.mural => Icons.wallpaper_rounded,
   };
 }
 
@@ -30,6 +32,7 @@ const List<SpeakPresentation> implementedSpeakModes = <SpeakPresentation>[
   SpeakPresentation.stack,
   SpeakPresentation.collage,
   SpeakPresentation.spotlight,
+  SpeakPresentation.mural,
 ];
 
 /// The next implemented mode — drives the perform-chrome cycle button.
