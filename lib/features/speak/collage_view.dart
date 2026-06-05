@@ -139,7 +139,8 @@ class _CollageWord extends StatelessWidget {
       curve: Curves.easeOutQuart,
       style: TextStyle(
         fontFamily: type.family,
-        fontSize: size,
+        // Auto-emphasis biases the seeded size — emphasised words run bigger.
+        fontSize: size * (1 + wordEmphasis(text) * 0.2),
         height: 1.04,
         letterSpacing: type.letterSpacing,
         color: Colors.white.withValues(alpha: active ? 1 : 0.6),

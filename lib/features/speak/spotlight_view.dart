@@ -81,7 +81,8 @@ class _SpotWord extends StatelessWidget {
       curve: Curves.easeOutQuart,
       style: TextStyle(
         fontFamily: type.family,
-        fontSize: 36,
+        // Auto-emphasis: ALL-CAPS / long / "!" words read a touch larger.
+        fontSize: 36 * (1 + wordEmphasis(text) * 0.16),
         height: 1.18,
         letterSpacing: type.letterSpacing,
         color: Colors.white.withValues(alpha: alpha),

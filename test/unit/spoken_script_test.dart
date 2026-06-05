@@ -77,10 +77,10 @@ void main() {
 
   group('linesFromWords', () {
     SpokenWord w(String t, int startMs, int endMs) => SpokenWord(
-          text: t,
-          start: Duration(milliseconds: startMs),
-          end: Duration(milliseconds: endMs),
-        );
+      text: t,
+      start: Duration(milliseconds: startMs),
+      end: Duration(milliseconds: endMs),
+    );
 
     test('breaks after sentence-ending punctuation', () {
       final lines = linesFromWords([
@@ -183,6 +183,48 @@ void main() {
 
     test('empty → -1', () {
       expect(lineIndexAt(const [], const Duration(seconds: 1)), -1);
+    });
+  });
+
+  group('wordEmphasis', () {
+    test('ALL-CAPS words score high', () {
+      expect(wordEmphasis('STOP'), greaterThan(wordEmphasis('stop')));
+      expect(wordEmphasis('STOP'), greaterThan(0.5));
+    });
+
+    test('longer words score higher than short ones', () {
+      expect(
+        wordEmphasis('extraordinary'),
+        greaterThan(wordEmphasis('cat')),
+      );
+    });
+
+    test('an exclamation adds emphasis', () {
+      expect(wordEmphasis('go!'), greaterThan(wordEmphasis('go')));
+    });
+
+    test('lone letters / pure digits / empties do not shout', () {
+      expect(wordEmphasis('I'), 0);
+      expect(wordEmphasis('2024'), 0);
+      expect(wordEmphasis('—'), 0);
+    });
+
+    test('score stays within 0..1', () {
+      expect(wordEmphasis('UNBELIEVABLE!'), inInclusiveRange(0, 1));
+    });
+  });
+
+  group('endsSentence', () {
+    test('true for . ! ?', () {
+      expect(endsSentence('end.'), isTrue);
+      expect(endsSentence('wow!'), isTrue);
+      expect(endsSentence('really?'), isTrue);
+    });
+
+    test('false for mid-sentence words / clauses', () {
+      expect(endsSentence('and'), isFalse);
+      expect(endsSentence('then,'), isFalse);
+      expect(endsSentence(''), isFalse);
     });
   });
 }

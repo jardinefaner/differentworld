@@ -5,7 +5,11 @@ import 'package:flutter/foundation.dart';
 /// window the audio's current position falls into.
 @immutable
 class SpokenWord {
-  const SpokenWord({required this.text, required this.start, required this.end});
+  const SpokenWord({
+    required this.text,
+    required this.start,
+    required this.end,
+  });
 
   final String text;
   final Duration start;
@@ -173,8 +177,7 @@ List<SpokenLine> linesFromWords(
     final trimmed = word.text.trimRight();
     final last = trimmed.isEmpty ? '' : trimmed[trimmed.length - 1];
     final sentenceEnd = last == '.' || last == '!' || last == '?';
-    final clauseEnd =
-        last == ',' || last == ';' || last == ':' || last == '—';
+    final clauseEnd = last == ',' || last == ';' || last == ':' || last == '—';
 
     if (sentenceEnd || (clauseEnd && currentChars >= minChars)) {
       flush();
@@ -201,3 +204,32 @@ int lineIndexAt(List<SpokenLine> lines, Duration position) {
 
 Duration _seconds(double s) =>
     Duration(microseconds: (s * Duration.microsecondsPerSecond).round());
+
+/// How much a word should be visually emphasised (0..1), derived from the text
+/// alone — ALL-CAPS, length, and an exclamation read as emphasis. Lets the
+/// modes grow editorial hierarchy (bigger / heavier words) with no markup.
+double wordEmphasis(String word) {
+  final core = word.replaceAll(RegExp('[^A-Za-z0-9]'), '');
+  if (core.isEmpty) return 0;
+  var score = 0.0;
+  // ALL-CAPS (and not a lone letter / pure digits) reads as a shout.
+  if (core.length >= 2 &&
+      core == core.toUpperCase() &&
+      core != core.toLowerCase()) {
+    score += 0.6;
+  }
+  // Longer words carry more weight (capped).
+  score += ((core.length - 4) / 9).clamp(0.0, 0.4);
+  // An exclamation is emphasis.
+  if (word.contains('!')) score += 0.3;
+  return score.clamp(0.0, 1.0);
+}
+
+/// Whether [word] ends a sentence — drives the "hold on the period" rhythm
+/// (the closing word settles a beat more slowly).
+bool endsSentence(String word) {
+  final t = word.trimRight();
+  if (t.isEmpty) return false;
+  final last = t[t.length - 1];
+  return last == '.' || last == '!' || last == '?';
+}

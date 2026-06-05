@@ -162,6 +162,14 @@ class _StageWord extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = phase == _WordPhase.active;
     final weight = active ? type.activeWeight : type.restWeight;
+    // Auto-emphasis: ALL-CAPS / long / "!" words grow a little, so editorial
+    // hierarchy emerges from the text itself (stable per word, no reflow jitter
+    // as the active highlight moves).
+    final emphSize = size * (1 + wordEmphasis(text) * 0.16);
+    // Punctuation rhythm: the word that ends a sentence settles a beat slower.
+    final duration = active && endsSentence(text)
+        ? type.swellDuration * 1.8
+        : type.swellDuration;
     // Past words recede further than not-yet-spoken ones — a gentle past →
     // present → future gradient. Floors kept legible (≥0.55 clears WCAG AA on
     // the near-black stage) so emerging readers can still follow the quiet
@@ -176,11 +184,11 @@ class _StageWord extends StatelessWidget {
     // move together over one front-loaded curve. Monochrome on purpose —
     // weight carries the emphasis, no accent colour. Editorial restraint.
     return AnimatedDefaultTextStyle(
-      duration: type.swellDuration,
+      duration: duration,
       curve: Curves.easeOutQuart,
       style: TextStyle(
         fontFamily: type.family,
-        fontSize: size,
+        fontSize: emphSize,
         height: 1.06,
         letterSpacing: type.letterSpacing,
         color: Colors.white.withValues(alpha: alpha),
