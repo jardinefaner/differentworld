@@ -1,9 +1,13 @@
 import 'dart:async';
 
 import 'package:differentworld/features/speak/collage_view.dart';
+import 'package:differentworld/features/speak/grid_view.dart';
+import 'package:differentworld/features/speak/index_view.dart';
+import 'package:differentworld/features/speak/justified_view.dart';
 import 'package:differentworld/features/speak/living_background.dart';
 import 'package:differentworld/features/speak/mural_view.dart';
 import 'package:differentworld/features/speak/one_big_word_view.dart';
+import 'package:differentworld/features/speak/shape_view.dart';
 import 'package:differentworld/features/speak/speak_presentation.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
@@ -14,6 +18,7 @@ import 'package:differentworld/features/speak/stack_view.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -103,7 +108,27 @@ class _SpeakScreenState extends State<SpeakScreen> {
 
   void _toggleType() => setState(() => _type = _type.other);
 
-  void _cycleMode() => setState(() => _mode = nextSpeakMode(_mode));
+  Future<void> _pickMode() async {
+    final picked = await showGlassSheet<SpeakPresentation>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final m in implementedSpeakModes)
+              ListTile(
+                leading: Icon(m.icon),
+                title: Text(m.label),
+                trailing: m == _mode ? const Icon(Icons.check) : null,
+                selected: m == _mode,
+                onTap: () => Navigator.of(sheetContext).pop(m),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _mode = picked);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,9 +139,9 @@ class _SpeakScreenState extends State<SpeakScreen> {
       actions: performing
           ? <Widget>[
               SecondaryActionButton(
-                tooltip: 'Mode: ${_mode.label} — tap to switch',
+                tooltip: 'Mode: ${_mode.label} — tap to change',
                 icon: _mode.icon,
-                onPressed: _cycleMode,
+                onPressed: () => unawaited(_pickMode()),
               ),
               SecondaryActionButton(
                 tooltip: 'Type: ${_type.label} — tap to switch',
@@ -382,6 +407,30 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
         accent: widget.accent,
       ),
       SpeakPresentation.mural => MuralView(
+        words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      SpeakPresentation.grid => WordGridView(
+        words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      SpeakPresentation.justified => JustifiedView(
+        words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      SpeakPresentation.contents => IndexView(
+        lines: widget.lines,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      SpeakPresentation.shape => ShapeView(
         words: widget.words,
         position: _position,
         type: widget.type,

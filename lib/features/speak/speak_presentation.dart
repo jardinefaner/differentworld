@@ -3,7 +3,18 @@ import 'package:flutter/material.dart';
 /// How the words are presented on the stage. One timing model (lines / words /
 /// position), many looks — the user flips between them live, and picks a
 /// default before speaking.
-enum SpeakPresentation { stage, oneBigWord, stack, collage, spotlight, mural }
+enum SpeakPresentation {
+  stage,
+  oneBigWord,
+  stack,
+  collage,
+  spotlight,
+  mural,
+  grid,
+  justified,
+  contents,
+  shape,
+}
 
 extension SpeakPresentationX on SpeakPresentation {
   String get label => switch (this) {
@@ -13,6 +24,10 @@ extension SpeakPresentationX on SpeakPresentation {
     SpeakPresentation.collage => 'Collage',
     SpeakPresentation.spotlight => 'Spotlight',
     SpeakPresentation.mural => 'Mural',
+    SpeakPresentation.grid => 'Grid',
+    SpeakPresentation.justified => 'Justified',
+    SpeakPresentation.contents => 'Index',
+    SpeakPresentation.shape => 'Shape',
   };
 
   IconData get icon => switch (this) {
@@ -22,6 +37,10 @@ extension SpeakPresentationX on SpeakPresentation {
     SpeakPresentation.collage => Icons.dashboard_rounded,
     SpeakPresentation.spotlight => Icons.highlight_rounded,
     SpeakPresentation.mural => Icons.wallpaper_rounded,
+    SpeakPresentation.grid => Icons.grid_view_rounded,
+    SpeakPresentation.justified => Icons.notes_rounded,
+    SpeakPresentation.contents => Icons.format_list_numbered_rounded,
+    SpeakPresentation.shape => Icons.blur_circular_rounded,
   };
 }
 
@@ -33,6 +52,10 @@ const List<SpeakPresentation> implementedSpeakModes = <SpeakPresentation>[
   SpeakPresentation.collage,
   SpeakPresentation.spotlight,
   SpeakPresentation.mural,
+  SpeakPresentation.grid,
+  SpeakPresentation.justified,
+  SpeakPresentation.contents,
+  SpeakPresentation.shape,
 ];
 
 /// The next implemented mode — drives the perform-chrome cycle button.
