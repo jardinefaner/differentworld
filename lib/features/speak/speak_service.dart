@@ -37,6 +37,16 @@ class SpeakService {
   /// Whether audio is currently advancing (lets the stage idle its ticker).
   bool get isPlaying => !_disposed && _player.playing;
 
+  /// Total length — drives the transport scrubber (null until the clip loads).
+  Stream<Duration?> get durationStream => _player.durationStream;
+  Duration? get duration => _disposed ? null : _player.duration;
+
+  /// Jump to [pos] — the transport scrubber's drag-to-seek.
+  Future<void> seek(Duration pos) async {
+    if (_disposed) return;
+    await _player.seek(pos);
+  }
+
   /// Synthesize [text] (optionally a specific [voiceId]) into a timed script.
   /// Throws on failure — the screen catches and shows the not-set-up / error
   /// state (Speak is an enhancement; nothing else depends on it).

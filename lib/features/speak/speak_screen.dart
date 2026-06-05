@@ -522,29 +522,160 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
     // during the initial load (which would flash "paused" before the voice
     // starts).
     final paused = _started && !_playing && !_done;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: _toggle,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // One done-dim for every mode (was inside SpeakStage).
-          AnimatedOpacity(
-            opacity: _done ? 0.5 : 1,
-            duration: const Duration(milliseconds: 400),
-            child: _modeChild(),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _toggle,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // One done-dim for every mode (was inside SpeakStage).
+                AnimatedOpacity(
+                  opacity: _done ? 0.5 : 1,
+                  duration: const Duration(milliseconds: 400),
+                  child: _modeChild(),
+                ),
+                if (paused)
+                  const _StageGlyph(
+                    icon: Icons.play_arrow_rounded,
+                    semantic: 'Paused — tap to resume',
+                  ),
+              ],
+            ),
           ),
-          if (paused)
-            const _StageGlyph(
-              icon: Icons.play_arrow_rounded,
-              semantic: 'Paused — tap to resume',
-            ),
-          if (_done)
-            const _StageGlyph(
-              icon: Icons.replay_rounded,
-              semantic: 'Finished — tap to replay',
-            ),
-        ],
+        ),
+        // Transport — play/pause, a drag-to-seek scrubber, time. Sits at the
+        // bottom (the omnibox bar is hidden on /speak, so this owns it).
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _TransportBar(
+            service: widget.service,
+            playing: _playing,
+            done: _done,
+            accent: widget.accent,
+            onPlayPause: _toggle,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _fmtTime(Duration d) {
+  final s = d.inSeconds;
+  return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+}
+
+/// The media transport — play/pause/replay, a drag-to-seek scrubber, and
+/// elapsed/total time. Subscribes to the position stream itself (the stage's
+/// ticker is for word-flips; this only needs ~5/sec).
+class _TransportBar extends StatefulWidget {
+  const _TransportBar({
+    required this.service,
+    required this.playing,
+    required this.done,
+    required this.accent,
+    required this.onPlayPause,
+  });
+
+  final SpeakService service;
+  final bool playing;
+  final bool done;
+  final Color accent;
+  final VoidCallback onPlayPause;
+
+  @override
+  State<_TransportBar> createState() => _TransportBarState();
+}
+
+class _TransportBarState extends State<_TransportBar> {
+  // Non-null while dragging the scrubber, so it doesn't snap back to the
+  // streamed position mid-drag.
+  double? _dragMs;
+
+  @override
+  Widget build(BuildContext context) {
+    const labelStyle = TextStyle(color: Colors.white70, fontSize: 12);
+    final icon = widget.done
+        ? Icons.replay_rounded
+        : widget.playing
+        ? Icons.pause_rounded
+        : Icons.play_arrow_rounded;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        child: GlassPanel(
+          shape: GlassPanelShape.bar,
+          child: StreamBuilder<Duration>(
+            stream: widget.service.positionStream,
+            initialData: Duration.zero,
+            builder: (context, snap) {
+              final pos = snap.data ?? Duration.zero;
+              final dur = widget.service.duration ?? Duration.zero;
+              final maxMs = dur.inMilliseconds.toDouble();
+              final posMs = pos.inMilliseconds.toDouble();
+              final value = (_dragMs ?? posMs).clamp(
+                0.0,
+                maxMs <= 0 ? 1 : maxMs,
+              );
+              final shown = _dragMs != null
+                  ? Duration(milliseconds: _dragMs!.round())
+                  : pos;
+              return Row(
+                children: [
+                  IconButton(
+                    onPressed: widget.onPlayPause,
+                    icon: Icon(icon, color: Colors.white),
+                    tooltip: widget.playing ? 'Pause' : 'Play',
+                  ),
+                  SizedBox(
+                    width: 38,
+                    child: Text(_fmtTime(shown), style: labelStyle),
+                  ),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: widget.accent,
+                        thumbColor: widget.accent,
+                        inactiveTrackColor: Colors.white24,
+                        trackHeight: 2.5,
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 14,
+                        ),
+                      ),
+                      child: Slider(
+                        value: value.toDouble(),
+                        max: maxMs <= 0 ? 1 : maxMs,
+                        onChanged: (v) => setState(() => _dragMs = v),
+                        onChangeEnd: (v) {
+                          unawaited(
+                            widget.service.seek(
+                              Duration(milliseconds: v.round()),
+                            ),
+                          );
+                          setState(() => _dragMs = null);
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 38,
+                    child: Text(
+                      _fmtTime(dur),
+                      style: labelStyle,
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }

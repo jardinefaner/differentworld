@@ -481,7 +481,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     // between — they live on /, /messages, /children/*), and is
     // hidden in kid mode same as the drawer.
     final viewportWidth = MediaQuery.sizeOf(context).width;
-    final showDesktopRail = showDrawer &&
+    final showDesktopRail =
+        showDrawer &&
         viewer is! GuardianViewer &&
         viewportWidth >= Breakpoints.tablet;
 
@@ -508,7 +509,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     // Use the full URI path, NOT matchedLocation — inside a ShellRoute
     // builder matchedLocation reflects the SHELL's match (verified on
     // device: it stays at `/breaks` while uri.path is the child route).
-    final isImmersive = routerState.uri.path.startsWith('/activity/');
+    final isImmersive =
+        routerState.uri.path.startsWith('/activity/') ||
+        routerState.uri.path == '/speak';
 
     // When the suggestion overlay is open, the system back gesture
     // (swipe-from-left-edge on Android, swipe-back on iOS) should
@@ -542,91 +545,91 @@ class _AppShellState extends ConsumerState<AppShell> {
     return CallbackShortcuts(
       bindings: shortcuts,
       child: PopScope(
-      canPop: canPop,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        // First: did the back come from the overlay being open? If so,
-        // close it and stop — the user wanted to dismiss the overlay,
-        // not pop the route.
-        if (_searchOverlayOpen) {
-          _closeSearchOverlay();
-          return;
-        }
-        // Otherwise we're at root (canPop=false because of atRoot) and
-        // the user tried to back out of the app entirely. Confirm.
-        if (!mounted) return;
-        final shouldExit = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Close Different World?'),
-            content: const Text(
-              'You can come back anytime — your work is saved.',
+        canPop: canPop,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (didPop) return;
+          // First: did the back come from the overlay being open? If so,
+          // close it and stop — the user wanted to dismiss the overlay,
+          // not pop the route.
+          if (_searchOverlayOpen) {
+            _closeSearchOverlay();
+            return;
+          }
+          // Otherwise we're at root (canPop=false because of atRoot) and
+          // the user tried to back out of the app entirely. Confirm.
+          if (!mounted) return;
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Close Different World?'),
+              content: const Text(
+                'You can come back anytime — your work is saved.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Stay'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Close'),
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Stay'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
-        if (shouldExit ?? false) {
-          // `SystemNavigator.pop()` finishes the activity on Android
-          // (returns to launcher) and is a no-op on iOS (Apple HIG
-          // forbids programmatic exit). That's fine — iOS users
-          // background via the home gesture.
-          await SystemNavigator.pop();
-        }
-      },
-      child: Scaffold(
-      // Wave 121: at desktop the persistent rail replaces the
-      // hamburger drawer. Drawer slot stays wired below desktop so
-      // phone / tablet keep their existing swipe-from-edge gesture
-      // + hamburger pill.
-      drawer: (showDrawer && !showDesktopRail)
-          ? const MainDrawer()
-          : null,
-      // `resizeToAvoidBottomInset: true` is load-bearing — it shrinks
-      // the body so the keyboard occupies its own space below the
-      // body. The omnibox bar lives at the bottom of that body, so
-      // it sits flush above the keyboard with no extra math.
-      resizeToAvoidBottomInset: true,
-      body: showDesktopRail
-          ? Row(
-              children: [
-                const SizedBox(width: 240, child: DesktopNavRail()),
-                Expanded(child: _buildBodyStack(
+          );
+          if (shouldExit ?? false) {
+            // `SystemNavigator.pop()` finishes the activity on Android
+            // (returns to launcher) and is a no-op on iOS (Apple HIG
+            // forbids programmatic exit). That's fine — iOS users
+            // background via the home gesture.
+            await SystemNavigator.pop();
+          }
+        },
+        child: Scaffold(
+          // Wave 121: at desktop the persistent rail replaces the
+          // hamburger drawer. Drawer slot stays wired below desktop so
+          // phone / tablet keep their existing swipe-from-edge gesture
+          // + hamburger pill.
+          drawer: (showDrawer && !showDesktopRail) ? const MainDrawer() : null,
+          // `resizeToAvoidBottomInset: true` is load-bearing — it shrinks
+          // the body so the keyboard occupies its own space below the
+          // body. The omnibox bar lives at the bottom of that body, so
+          // it sits flush above the keyboard with no extra math.
+          resizeToAvoidBottomInset: true,
+          body: showDesktopRail
+              ? Row(
+                  children: [
+                    const SizedBox(width: 240, child: DesktopNavRail()),
+                    Expanded(
+                      child: _buildBodyStack(
+                        inKidMode: inKidMode,
+                        viewer: viewer,
+                        topInset: topInset,
+                        chrome: chrome,
+                        query: query,
+                        mode: mode,
+                        showDrawer: false, // hamburger pill hidden at desktop
+                        atRoot: atRoot,
+                        isImmersive: isImmersive,
+                        context: context,
+                      ),
+                    ),
+                  ],
+                )
+              : _buildBodyStack(
                   inKidMode: inKidMode,
                   viewer: viewer,
                   topInset: topInset,
                   chrome: chrome,
                   query: query,
                   mode: mode,
-                  showDrawer: false, // hamburger pill hidden at desktop
+                  showDrawer: showDrawer,
                   atRoot: atRoot,
                   isImmersive: isImmersive,
                   context: context,
-                )),
-              ],
-            )
-          : _buildBodyStack(
-              inKidMode: inKidMode,
-              viewer: viewer,
-              topInset: topInset,
-              chrome: chrome,
-              query: query,
-              mode: mode,
-              showDrawer: showDrawer,
-              atRoot: atRoot,
-              isImmersive: isImmersive,
-              context: context,
-            ),
-    ),
-    ),
+                ),
+        ),
+      ),
     );
   }
 
@@ -648,176 +651,175 @@ class _AppShellState extends ConsumerState<AppShell> {
     required BuildContext context,
   }) {
     return Stack(
-        // Every child is keyed so Flutter's reconciliation matches
-        // them ACROSS overlay toggles. Without keys, inserting the
-        // overlay child shifts the rest of the children's positions
-        // in the list; Flutter then matches existing Elements to
-        // wrong slots, rebuilds the bar's TextField, and the IME
-        // connection tears down — the user sees the keyboard close.
-        // (This was the actual root cause of "keyboard disappears
-        // on first tap" — not FocusScope rotation, the prior theory.)
-        children: [
-          // Route content. Edge-to-edge: the body fills the viewport
-          // from top to bottom; the floating chrome pills + omnibox
-          // bar overlay it as translucent glass elements. We only
-          // reserve BOTTOM space (so the last scrolled item doesn't
-          // sit forever behind the omnibox); the TOP is intentionally
-          // un-padded so list content scrolls THROUGH the chrome
-          // strip — Wave 52 reverted the prior "padded below the
-          // chrome" layout-law because it produced a solid-coloured
-          // strip at top that read as an opaque appbar even though
-          // the pills themselves were already glass.
-          //
-          // Routes typically start with a ContentHeader; that header
-          // is wide enough that the chrome pills (~48dp each, top
-          // ~64dp area) only overlap a sliver of it, and the glass
-          // blur keeps the underlying text readable.
-          Padding(
-            key: const ValueKey('shell-route-content'),
-            padding: EdgeInsets.only(
-              // No omnibox bar for guardians, in kid mode, or on immersive
-              // activity routes → no bottom reservation; route content can
-              // fill all the way to the gesture inset.
-              bottom: (inKidMode || viewer is GuardianViewer || isImmersive)
-                  ? 0
-                  : ShellMetrics.bottomOmniboxHeight,
-            ),
-            // Wave 127: SelectionArea moved here from
-            // MaterialApp.builder. Now sits inside the routed
-            // Navigator's Overlay scope (provided by Scaffold's
-            // ancestor Navigator), so the SelectableRegion's
-            // upward Overlay lookup succeeds. Every `Text` inside
-            // a route body becomes click-and-drag selectable; the
-            // platform default copy/select-all toolbar shows on
-            // selection. Excludes chrome / omnibox / drawer (they
-            // sit outside this Padding in the Stack), which is
-            // the right call — selecting "Today" out of a chrome
-            // pill isn't what users want.
-            child: SelectionArea(child: widget.child),
+      // Every child is keyed so Flutter's reconciliation matches
+      // them ACROSS overlay toggles. Without keys, inserting the
+      // overlay child shifts the rest of the children's positions
+      // in the list; Flutter then matches existing Elements to
+      // wrong slots, rebuilds the bar's TextField, and the IME
+      // connection tears down — the user sees the keyboard close.
+      // (This was the actual root cause of "keyboard disappears
+      // on first tap" — not FocusScope rotation, the prior theory.)
+      children: [
+        // Route content. Edge-to-edge: the body fills the viewport
+        // from top to bottom; the floating chrome pills + omnibox
+        // bar overlay it as translucent glass elements. We only
+        // reserve BOTTOM space (so the last scrolled item doesn't
+        // sit forever behind the omnibox); the TOP is intentionally
+        // un-padded so list content scrolls THROUGH the chrome
+        // strip — Wave 52 reverted the prior "padded below the
+        // chrome" layout-law because it produced a solid-coloured
+        // strip at top that read as an opaque appbar even though
+        // the pills themselves were already glass.
+        //
+        // Routes typically start with a ContentHeader; that header
+        // is wide enough that the chrome pills (~48dp each, top
+        // ~64dp area) only overlap a sliver of it, and the glass
+        // blur keeps the underlying text readable.
+        Padding(
+          key: const ValueKey('shell-route-content'),
+          padding: EdgeInsets.only(
+            // No omnibox bar for guardians, in kid mode, or on immersive
+            // activity routes → no bottom reservation; route content can
+            // fill all the way to the gesture inset.
+            bottom: (inKidMode || viewer is GuardianViewer || isImmersive)
+                ? 0
+                : ShellMetrics.bottomOmniboxHeight,
           ),
-          // Omnibox suggestion panel — rendered inline as an overlay
-          // when the bar has focus. NOT a pushed route (see Wave 25
-          // notes on _searchOverlayOpen). Sits in the same slot as
-          // the route content, opaque to taps so the page underneath
-          // doesn't receive them. The bar's TextField stays in this
-          // shell's FocusScope across the mount, so the IME stays up.
-          //
-          // `top: topInset + topChromeHeight` clears the floating
-          // chrome pills (which render at `topInset + 8` + ~48dp
-          // pill height ≈ `topInset + topChromeHeight`).
-          if (!inKidMode && _searchOverlayOpen)
-            Positioned(
-              key: const ValueKey('shell-omnibox-overlay'),
-              // Extend edge-to-edge to the screen top + only stop
-              // above the omnibox bar at the bottom. Wave 53 had
-              // this starting at topInset + topChromeHeight which
-              // left the chrome-strip area uncovered — the body's
-              // top edge showed through there, creating a visible
-              // seam that read as "appbar background color." Now
-              // the glass covers everything except where the bar
-              // sits; chrome pills (rendered after this in the
-              // Stack order) float on top of the glass.
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: ShellMetrics.bottomOmniboxHeight,
-              // Scrim behavior: the overlay must absorb every tap
-              // in its bounds. Without this, the BackdropFilter is
-              // pointer-transparent and taps on dead space (between
-              // rows, padding, etc.) fall through to whatever route
-              // sits underneath — clicking "ghost" buttons on Today
-              // through the suggestion glass. Wrapping in a
-              // GestureDetector with opaque hit-test blocks pass-
-              // through; the onTap closes the overlay so tapping
-              // empty space is a dismiss gesture (matching modal-
-              // sheet expectations). Row taps inside the search
-              // screen still win because child gestures beat parent
-              // in Flutter's gesture arena.
-              //
-              // Wave 119: horizontal-drag also closes the overlay.
-              // Swipe-back (either direction — left-to-right matches
-              // iOS gesture, right-to-left matches Android Material)
-              // is a faster dismiss than reaching for the back pill
-              // or the Esc key. Velocity threshold keeps small
-              // accidental drags from triggering. The list rows
-              // themselves don't drag horizontally — child gestures
-              // win in Flutter's arena, so this only fires when the
-              // user actually swipes empty space or background.
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _closeSearchOverlay,
-                onHorizontalDragEnd: (details) {
-                  // Velocity is logical px/s. ~300 px/s is a casual
-                  // swipe; below that is probably a slow scroll
-                  // adjustment that should NOT pop the overlay.
-                  final v = details.primaryVelocity ?? 0;
-                  if (v.abs() > 300) _closeSearchOverlay();
-                },
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: OmniboxSearchScreen(
-                    onClose: _closeSearchOverlay,
-                  ),
+          // Wave 127: SelectionArea moved here from
+          // MaterialApp.builder. Now sits inside the routed
+          // Navigator's Overlay scope (provided by Scaffold's
+          // ancestor Navigator), so the SelectableRegion's
+          // upward Overlay lookup succeeds. Every `Text` inside
+          // a route body becomes click-and-drag selectable; the
+          // platform default copy/select-all toolbar shows on
+          // selection. Excludes chrome / omnibox / drawer (they
+          // sit outside this Padding in the Stack), which is
+          // the right call — selecting "Today" out of a chrome
+          // pill isn't what users want.
+          child: SelectionArea(child: widget.child),
+        ),
+        // Omnibox suggestion panel — rendered inline as an overlay
+        // when the bar has focus. NOT a pushed route (see Wave 25
+        // notes on _searchOverlayOpen). Sits in the same slot as
+        // the route content, opaque to taps so the page underneath
+        // doesn't receive them. The bar's TextField stays in this
+        // shell's FocusScope across the mount, so the IME stays up.
+        //
+        // `top: topInset + topChromeHeight` clears the floating
+        // chrome pills (which render at `topInset + 8` + ~48dp
+        // pill height ≈ `topInset + topChromeHeight`).
+        if (!inKidMode && _searchOverlayOpen)
+          Positioned(
+            key: const ValueKey('shell-omnibox-overlay'),
+            // Extend edge-to-edge to the screen top + only stop
+            // above the omnibox bar at the bottom. Wave 53 had
+            // this starting at topInset + topChromeHeight which
+            // left the chrome-strip area uncovered — the body's
+            // top edge showed through there, creating a visible
+            // seam that read as "appbar background color." Now
+            // the glass covers everything except where the bar
+            // sits; chrome pills (rendered after this in the
+            // Stack order) float on top of the glass.
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: ShellMetrics.bottomOmniboxHeight,
+            // Scrim behavior: the overlay must absorb every tap
+            // in its bounds. Without this, the BackdropFilter is
+            // pointer-transparent and taps on dead space (between
+            // rows, padding, etc.) fall through to whatever route
+            // sits underneath — clicking "ghost" buttons on Today
+            // through the suggestion glass. Wrapping in a
+            // GestureDetector with opaque hit-test blocks pass-
+            // through; the onTap closes the overlay so tapping
+            // empty space is a dismiss gesture (matching modal-
+            // sheet expectations). Row taps inside the search
+            // screen still win because child gestures beat parent
+            // in Flutter's gesture arena.
+            //
+            // Wave 119: horizontal-drag also closes the overlay.
+            // Swipe-back (either direction — left-to-right matches
+            // iOS gesture, right-to-left matches Android Material)
+            // is a faster dismiss than reaching for the back pill
+            // or the Esc key. Velocity threshold keeps small
+            // accidental drags from triggering. The list rows
+            // themselves don't drag horizontally — child gestures
+            // win in Flutter's arena, so this only fires when the
+            // user actually swipes empty space or background.
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _closeSearchOverlay,
+              onHorizontalDragEnd: (details) {
+                // Velocity is logical px/s. ~300 px/s is a casual
+                // swipe; below that is probably a slow scroll
+                // adjustment that should NOT pop the overlay.
+                final v = details.primaryVelocity ?? 0;
+                if (v.abs() > 300) _closeSearchOverlay();
+              },
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: OmniboxSearchScreen(
+                  onClose: _closeSearchOverlay,
                 ),
               ),
             ),
-          // Persistent top chrome (hamburger + back + per-route
-          // actions). Hidden in kid mode. When the suggestion
-          // overlay is open, the chrome pivots to "overlay mode" —
-          // always a back-pill that closes the overlay, no per-
-          // route actions, no topOverlay. Users see a consistent
-          // back affordance whether they got to the suggestion
-          // list from Today, a subject detail, or any other route.
-          if (!inKidMode)
-            ..._buildTopChrome(
-              _searchOverlayOpen
-                  ? const RouteChrome(showBack: true)
-                  : chrome,
-              topInset,
-              showDrawer: showDrawer && !_searchOverlayOpen,
-              overlayBackOverride:
-                  _searchOverlayOpen ? _closeSearchOverlay : null,
+          ),
+        // Persistent top chrome (hamburger + back + per-route
+        // actions). Hidden in kid mode. When the suggestion
+        // overlay is open, the chrome pivots to "overlay mode" —
+        // always a back-pill that closes the overlay, no per-
+        // route actions, no topOverlay. Users see a consistent
+        // back affordance whether they got to the suggestion
+        // list from Today, a subject detail, or any other route.
+        if (!inKidMode)
+          ..._buildTopChrome(
+            _searchOverlayOpen ? const RouteChrome(showBack: true) : chrome,
+            topInset,
+            showDrawer: showDrawer && !_searchOverlayOpen,
+            overlayBackOverride: _searchOverlayOpen
+                ? _closeSearchOverlay
+                : null,
+          ),
+        // Composer at the bottom. Sits flush above the keyboard
+        // when it's up, flush above the home-indicator safe area
+        // otherwise. Hidden in kid mode so the kid surface has no
+        // staff-facing affordance. Also hidden for guardians —
+        // the omnibox catalog is staff-only (settings, captures,
+        // tasks, observations, etc.) and the family lens has its
+        // own navigation pattern via the Family Today header — and on
+        // immersive /activity/* routes, which are full-screen surfaces.
+        // Live-block strip — sits directly above the omnibox bar,
+        // collapses to zero height when nothing is live. Same
+        // guards as the bar: staff only, not kid mode, not immersive.
+        if (!inKidMode && viewer is! GuardianViewer && !isImmersive)
+          Positioned(
+            key: const ValueKey('shell-live-strip'),
+            left: 0,
+            right: 0,
+            bottom: ShellMetrics.bottomOmniboxHeight,
+            child: LiveBlockStrip(
+              liveBlock: ref.watch(liveBlockProvider),
             ),
-          // Composer at the bottom. Sits flush above the keyboard
-          // when it's up, flush above the home-indicator safe area
-          // otherwise. Hidden in kid mode so the kid surface has no
-          // staff-facing affordance. Also hidden for guardians —
-          // the omnibox catalog is staff-only (settings, captures,
-          // tasks, observations, etc.) and the family lens has its
-          // own navigation pattern via the Family Today header — and on
-          // immersive /activity/* routes, which are full-screen surfaces.
-          // Live-block strip — sits directly above the omnibox bar,
-          // collapses to zero height when nothing is live. Same
-          // guards as the bar: staff only, not kid mode, not immersive.
-          if (!inKidMode && viewer is! GuardianViewer && !isImmersive)
-            Positioned(
-              key: const ValueKey('shell-live-strip'),
-              left: 0,
-              right: 0,
-              bottom: ShellMetrics.bottomOmniboxHeight,
-              child: LiveBlockStrip(
-                liveBlock: ref.watch(liveBlockProvider),
-              ),
+          ),
+        if (!inKidMode && viewer is! GuardianViewer && !isImmersive)
+          Positioned(
+            key: const ValueKey('shell-omnibox-bar'),
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: BottomOmniboxBar(
+              controller: _ctrl,
+              focusNode: _focus,
+              mode: mode,
+              voiceActive: _voiceActive,
+              onChanged: _onQueryChanged,
+              onSubmit: _onComposerSubmit,
+              onClear: _clear,
+              onMicTap: _toggleVoice,
+              onCollapse: _collapse,
             ),
-          if (!inKidMode && viewer is! GuardianViewer && !isImmersive)
-            Positioned(
-              key: const ValueKey('shell-omnibox-bar'),
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: BottomOmniboxBar(
-                controller: _ctrl,
-                focusNode: _focus,
-                mode: mode,
-                voiceActive: _voiceActive,
-                onChanged: _onQueryChanged,
-                onSubmit: _onComposerSubmit,
-                onClear: _clear,
-                onMicTap: _toggleVoice,
-                onCollapse: _collapse,
-              ),
-            ),
-        ],
-      );
+          ),
+      ],
+    );
   }
 }
