@@ -1,0 +1,154 @@
+import 'dart:math' as math;
+
+import 'package:differentworld/features/speak/spoken_script.dart';
+import 'package:differentworld/features/speak/type_theme.dart';
+import 'package:flutter/material.dart';
+
+/// Each phrase is a little editorial poster — words at varied sizes, weights,
+/// and slight angles. The composition is STABLE per line (seeded, so it never
+/// jitters); only the spoken word illuminates within it. Tasteful ransom-note.
+class CollageView extends StatelessWidget {
+  const CollageView({
+    required this.lines,
+    required this.position,
+    required this.type,
+    required this.accent,
+    super.key,
+  });
+
+  final List<SpokenLine> lines;
+  final Duration position;
+  final SpeakType type;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final idx = lineIndexAt(lines, position);
+    final child = (idx < 0 || lines.isEmpty)
+        ? const SizedBox.shrink(key: ValueKey('collage-lead-in'))
+        : _CollageLine(
+            key: ValueKey('collage-$idx'),
+            line: lines[idx],
+            activeWord: currentWordIndex(lines[idx].words, position),
+            seed: idx,
+            type: type,
+            accent: accent,
+          );
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 420),
+      switchInCurve: Curves.easeOut,
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.94, end: 1).animate(anim),
+          child: child,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _CollageLine extends StatelessWidget {
+  const _CollageLine({
+    required this.line,
+    required this.activeWord,
+    required this.seed,
+    required this.type,
+    required this.accent,
+    super.key,
+  });
+
+  final SpokenLine line;
+  final int activeWord;
+  final int seed;
+  final SpeakType type;
+  final Color accent;
+
+  static const List<double> _sizes = [30, 40, 52, 36, 46];
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
+    // Seeded by the line index → the composition is identical every rebuild
+    // while this line shows (only the active highlight moves).
+    final rnd = math.Random(seed * 7919 + 13);
+    final cells = [
+      for (var i = 0; i < line.words.length; i++)
+        (
+          size: _sizes[rnd.nextInt(_sizes.length)],
+          angle: (rnd.nextDouble() - 0.5) * 0.16,
+          heavy: rnd.nextBool(),
+        ),
+    ];
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomSafe),
+        child: FittedBox(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 840),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 16,
+              runSpacing: 2,
+              children: [
+                for (var i = 0; i < line.words.length; i++)
+                  Transform.rotate(
+                    angle: cells[i].angle,
+                    child: _CollageWord(
+                      text: line.words[i].text,
+                      size: cells[i].size,
+                      active: i == activeWord,
+                      heavy: cells[i].heavy,
+                      type: type,
+                      accent: accent,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollageWord extends StatelessWidget {
+  const _CollageWord({
+    required this.text,
+    required this.size,
+    required this.active,
+    required this.heavy,
+    required this.type,
+    required this.accent,
+  });
+
+  final String text;
+  final double size;
+  final bool active;
+  final bool heavy;
+  final SpeakType type;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final weight = (active || heavy) ? type.activeWeight : type.restWeight;
+    return AnimatedDefaultTextStyle(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutQuart,
+      style: TextStyle(
+        fontFamily: type.family,
+        fontSize: size,
+        height: 1.04,
+        letterSpacing: type.letterSpacing,
+        color: Colors.white.withValues(alpha: active ? 1 : 0.6),
+        fontVariations: type.axesAt(weight),
+        shadows: active
+            ? [Shadow(color: accent.withValues(alpha: 0.55), blurRadius: 28)]
+            : null,
+      ),
+      child: Text(text),
+    );
+  }
+}

@@ -23,12 +23,13 @@ extension SpeakPresentationX on SpeakPresentation {
   };
 }
 
-/// The modes wired so far — the picker only offers these. Collage + Spotlight
-/// land in the next wave; adding them here is all it takes to surface them.
+/// The modes wired so far — the picker only offers these.
 const List<SpeakPresentation> implementedSpeakModes = <SpeakPresentation>[
   SpeakPresentation.stage,
   SpeakPresentation.oneBigWord,
   SpeakPresentation.stack,
+  SpeakPresentation.collage,
+  SpeakPresentation.spotlight,
 ];
 
 /// The next implemented mode — drives the perform-chrome cycle button.

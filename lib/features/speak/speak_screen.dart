@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/features/speak/collage_view.dart';
 import 'package:differentworld/features/speak/living_background.dart';
 import 'package:differentworld/features/speak/one_big_word_view.dart';
 import 'package:differentworld/features/speak/speak_presentation.dart';
@@ -7,6 +8,7 @@ import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
 import 'package:differentworld/features/speak/speak_voices.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
+import 'package:differentworld/features/speak/spotlight_view.dart';
 import 'package:differentworld/features/speak/stack_view.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -366,7 +368,19 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
         type: widget.type,
         accent: widget.accent,
       ),
-      _ => SpeakStage(
+      SpeakPresentation.collage => CollageView(
+        lines: widget.lines,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      SpeakPresentation.spotlight => SpotlightView(
+        words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      SpeakPresentation.stage => SpeakStage(
         lines: widget.lines,
         position: _position,
         type: widget.type,
