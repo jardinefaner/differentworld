@@ -14,6 +14,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SpeakService {
   final AudioPlayer _player = AudioPlayer();
   bool _disposed = false;
+  // The currently-loaded script — so replay can re-load it (a COMPLETED
+  // just_audio clip won't restart on seek(0)+play()).
+  SpokenScript? _current;
 
   /// The audio position as a stream (~5/sec). Coarse — fine for a progress
   /// readout, too steppy for word-accurate highlighting; the stage reads
@@ -96,6 +99,7 @@ class SpeakService {
   /// silence with no explanation. `just_audio`'s play() resolves only at
   /// end-of-audio, so we start it separately and don't await the end here.
   Future<bool> play(SpokenScript script) async {
+    _current = script;
     try {
       await _player.stop();
       await _player.setUrl(script.audioUrl);
@@ -121,8 +125,15 @@ class SpeakService {
 
   Future<void> replay() async {
     if (_disposed) return;
+    final script = _current;
+    if (script != null) {
+      // Full reload — the only reliable way to restart a COMPLETED clip
+      // (seek(0)+play() no-ops because just_audio still reports playing=true).
+      await play(script);
+      return;
+    }
     await _player.seek(Duration.zero);
-    await _player.play();
+    unawaited(_playLoaded());
   }
 
   /// Pause / resume — the stage's tap-to-pause. Resume continues from the
