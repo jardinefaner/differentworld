@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/speak/collage_view.dart';
+import 'package:differentworld/features/speak/editorial_view.dart';
 import 'package:differentworld/features/speak/grid_view.dart';
 import 'package:differentworld/features/speak/index_view.dart';
 import 'package:differentworld/features/speak/justified_view.dart';
@@ -136,6 +137,12 @@ class _SpeakPerformerState extends State<SpeakPerformer>
   /// Collage + Spotlight fall through to Stage until they're built.
   Widget _modeChild() {
     return switch (widget.mode) {
+      SpeakPresentation.editorial => EditorialView(
+        words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.palette.accent,
+      ),
       SpeakPresentation.oneBigWord => OneBigWordView(
         words: widget.words,
         position: _position,
@@ -362,6 +369,8 @@ class _TransportBarState extends State<_TransportBar> {
                       textAlign: TextAlign.end,
                     ),
                   ),
+                  // Keep the total time off the very edge.
+                  const SizedBox(width: 10),
                 ],
               );
             },

@@ -29,7 +29,7 @@ class StackView extends StatelessWidget {
     // grow upward + scroll off the top — no scroll controller needed.
     return ListView.builder(
       reverse: true,
-      padding: EdgeInsets.fromLTRB(28, 96, 28, 40 + bottomSafe),
+      padding: EdgeInsets.fromLTRB(28, 96, 28, 100 + bottomSafe),
       itemCount: shown,
       itemBuilder: (context, i) {
         final lineIdx = current - i; // i == 0 → current line (bottom)

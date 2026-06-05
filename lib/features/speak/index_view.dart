@@ -26,7 +26,7 @@ class IndexView extends StatelessWidget {
     final viewPad = MediaQuery.viewPaddingOf(context).bottom;
     return Center(
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(28, 96, 28, 40 + viewPad),
+        padding: EdgeInsets.fromLTRB(28, 96, 28, 100 + viewPad),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
           child: Column(

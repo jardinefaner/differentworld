@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 /// position), many looks — the user flips between them live, and picks a
 /// default before speaking.
 enum SpeakPresentation {
+  editorial,
   stage,
   oneBigWord,
   stack,
@@ -18,6 +19,7 @@ enum SpeakPresentation {
 
 extension SpeakPresentationX on SpeakPresentation {
   String get label => switch (this) {
+    SpeakPresentation.editorial => 'Editorial',
     SpeakPresentation.stage => 'Stage',
     SpeakPresentation.oneBigWord => 'One Big Word',
     SpeakPresentation.stack => 'Stack',
@@ -31,6 +33,7 @@ extension SpeakPresentationX on SpeakPresentation {
   };
 
   IconData get icon => switch (this) {
+    SpeakPresentation.editorial => Icons.format_quote_rounded,
     SpeakPresentation.stage => Icons.notes_rounded,
     SpeakPresentation.oneBigWord => Icons.title_rounded,
     SpeakPresentation.stack => Icons.layers_rounded,
@@ -44,8 +47,10 @@ extension SpeakPresentationX on SpeakPresentation {
   };
 }
 
-/// The modes wired so far — the picker only offers these.
+/// The modes wired so far — the picker only offers these. Editorial leads (it's
+/// the calm, designed pull-quote — the most editorial of the set).
 const List<SpeakPresentation> implementedSpeakModes = <SpeakPresentation>[
+  SpeakPresentation.editorial,
   SpeakPresentation.stage,
   SpeakPresentation.oneBigWord,
   SpeakPresentation.stack,

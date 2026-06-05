@@ -42,7 +42,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
   List<SpeakHistoryEntry> _recents = const <SpeakHistoryEntry>[];
   SpeakType _type = SpeakType.serif;
   SpeakVoice _voice = speakVoices.first;
-  SpeakPresentation _mode = SpeakPresentation.stage;
+  SpeakPresentation _mode = SpeakPresentation.editorial;
   bool _loading = false;
   String? _error;
 
@@ -186,18 +186,21 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
     final picked = await showGlassSheet<SpeakPresentation>(
       context: context,
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final m in implementedSpeakModes)
-              ListTile(
-                leading: Icon(m.icon),
-                title: Text(m.label),
-                trailing: m == _mode ? const Icon(Icons.check) : null,
-                selected: m == _mode,
-                onTap: () => Navigator.of(sheetContext).pop(m),
-              ),
-          ],
+        // Scrollable — ten modes overflow a short sheet otherwise.
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final m in implementedSpeakModes)
+                ListTile(
+                  leading: Icon(m.icon),
+                  title: Text(m.label),
+                  trailing: m == _mode ? const Icon(Icons.check) : null,
+                  selected: m == _mode,
+                  onTap: () => Navigator.of(sheetContext).pop(m),
+                ),
+            ],
+          ),
         ),
       ),
     );
