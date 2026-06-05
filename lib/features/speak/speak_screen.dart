@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:differentworld/features/speak/living_background.dart';
+import 'package:differentworld/features/speak/one_big_word_view.dart';
+import 'package:differentworld/features/speak/speak_presentation.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
 import 'package:differentworld/features/speak/speak_voices.dart';
 import 'package:differentworld/features/speak/spoken_script.dart';
+import 'package:differentworld/features/speak/stack_view.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -30,8 +33,10 @@ class _SpeakScreenState extends State<SpeakScreen> {
   final SpeakService _service = SpeakService();
   SpokenScript? _script;
   List<SpokenLine> _lines = const <SpokenLine>[];
+  List<SpokenWord> _words = const <SpokenWord>[];
   SpeakType _type = SpeakType.serif;
   SpeakVoice _voice = speakVoices.first;
+  SpeakPresentation _mode = SpeakPresentation.stage;
   bool _loading = false;
   String? _error;
 
@@ -78,6 +83,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
     if (!mounted || gen != _gen) return;
     setState(() {
       _script = script;
+      _words = script.words;
       _lines = linesFromWords(script.words);
       _loading = false;
     });
@@ -94,6 +100,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
 
   void _toggleType() => setState(() => _type = _type.other);
 
+  void _cycleMode() => setState(() => _mode = nextSpeakMode(_mode));
+
   @override
   Widget build(BuildContext context) {
     final performing = _script != null;
@@ -102,6 +110,11 @@ class _SpeakScreenState extends State<SpeakScreen> {
       // full-bleed and clear of the floating omnibox bar at the bottom.
       actions: performing
           ? <Widget>[
+              SecondaryActionButton(
+                tooltip: 'Mode: ${_mode.label} — tap to switch',
+                icon: _mode.icon,
+                onPressed: _cycleMode,
+              ),
               SecondaryActionButton(
                 tooltip: 'Type: ${_type.label} — tap to switch',
                 icon: Icons.text_fields_rounded,
@@ -168,6 +181,11 @@ class _SpeakScreenState extends State<SpeakScreen> {
               selected: _type,
               onChanged: (t) => setState(() => _type = t),
             ),
+            const SizedBox(height: 14),
+            _ModeSelector(
+              selected: _mode,
+              onChanged: (m) => setState(() => _mode = m),
+            ),
             const SizedBox(height: 18),
             if (_error != null) ...[
               _ErrorNote(message: _error!),
@@ -215,7 +233,9 @@ class _SpeakScreenState extends State<SpeakScreen> {
       palette: _voice.palette,
       child: _SpeakStageHost(
         service: _service,
+        mode: _mode,
         lines: _lines,
+        words: _words,
         type: _type,
         accent: _voice.palette.accent,
       ),
@@ -233,13 +253,17 @@ class _SpeakScreenState extends State<SpeakScreen> {
 class _SpeakStageHost extends StatefulWidget {
   const _SpeakStageHost({
     required this.service,
+    required this.mode,
     required this.lines,
+    required this.words,
     required this.type,
     required this.accent,
   });
 
   final SpeakService service;
+  final SpeakPresentation mode;
   final List<SpokenLine> lines;
+  final List<SpokenWord> words;
   final SpeakType type;
   final Color accent;
 
@@ -325,6 +349,32 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
     super.dispose();
   }
 
+  /// Render the active mode. All modes read the same (lines / words /
+  /// position), so switching is just a different look on the same timeline.
+  /// Collage + Spotlight fall through to Stage until they're built.
+  Widget _modeChild() {
+    return switch (widget.mode) {
+      SpeakPresentation.oneBigWord => OneBigWordView(
+        words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      SpeakPresentation.stack => StackView(
+        lines: widget.lines,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+      _ => SpeakStage(
+        lines: widget.lines,
+        position: _position,
+        type: widget.type,
+        accent: widget.accent,
+      ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     // Show the pause glyph only once playback has actually begun — never
@@ -337,12 +387,11 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          SpeakStage(
-            lines: widget.lines,
-            position: _position,
-            type: widget.type,
-            done: _done,
-            accent: widget.accent,
+          // One done-dim for every mode (was inside SpeakStage).
+          AnimatedOpacity(
+            opacity: _done ? 0.5 : 1,
+            duration: const Duration(milliseconds: 400),
+            child: _modeChild(),
           ),
           if (paused)
             const _StageGlyph(
@@ -583,6 +632,111 @@ class _TypePill extends StatelessWidget {
                     ? scheme.onPrimaryContainer
                     : scheme.onSurfaceVariant,
                 fontVariations: type.axesAt(selected ? 620 : 460),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pick the presentation mode. Changeable live in performance too — every
+/// mode reads the same timeline, so switching is just a different look.
+class _ModeSelector extends StatelessWidget {
+  const _ModeSelector({required this.selected, required this.onChanged});
+
+  final SpeakPresentation selected;
+  final ValueChanged<SpeakPresentation> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Show',
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final m in implementedSpeakModes)
+              _ModeChip(
+                mode: m,
+                selected: m == selected,
+                onTap: () => onChanged(m),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ModeChip extends StatelessWidget {
+  const _ModeChip({
+    required this.mode,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final SpeakPresentation mode;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${mode.label} mode',
+      child: Material(
+        color: selected
+            ? scheme.primaryContainer
+            : scheme.surfaceContainerHighest,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: selected
+              ? BorderSide(color: scheme.primary, width: 1.5)
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    mode.icon,
+                    size: 18,
+                    color: selected
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    mode.label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: selected
+                          ? scheme.onPrimaryContainer
+                          : scheme.onSurface,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

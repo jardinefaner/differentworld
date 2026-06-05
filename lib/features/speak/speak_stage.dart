@@ -15,7 +15,6 @@ class SpeakStage extends StatelessWidget {
     required this.lines,
     required this.position,
     required this.type,
-    this.done = false,
     this.accent = const Color(0xFFAEB6C6),
     super.key,
   });
@@ -23,10 +22,6 @@ class SpeakStage extends StatelessWidget {
   final List<SpokenLine> lines;
   final Duration position;
   final SpeakType type;
-
-  /// When playback has finished, the stage dims to signal "done" (the host
-  /// overlays a tap-to-replay nudge).
-  final bool done;
 
   /// The voice's hue — the active word glows faintly in it (the colour lives
   /// in the ambience, not the ink, so legibility holds).
@@ -60,38 +55,35 @@ class SpeakStage extends StatelessWidget {
     // Respect the home-indicator zone at the bottom (the stage is full-bleed,
     // so nothing else reserves it).
     final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
-    return AnimatedOpacity(
-      opacity: done ? 0.5 : 1,
-      duration: const Duration(milliseconds: 400),
-      child: Center(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(32, 24, 32, 24 + bottomSafe),
-          child: AnimatedSwitcher(
-            // Short relative to a line's on-screen life (~1.5–2.5s) so the stage
-            // is mostly STILL — editorial reads as calm, not in constant motion.
-            duration: const Duration(milliseconds: 380),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            // Keep both the outgoing + incoming line centred and stacked.
-            layoutBuilder: (currentChild, previousChildren) => Stack(
-              alignment: Alignment.center,
-              children: [...previousChildren, ?currentChild],
-            ),
-            transitionBuilder: (child, anim) {
-              // Incoming: rises from below + fades in. Outgoing (anim in reverse)
-              // sinks + fades — a calm vertical dissolve. 0.18 of the line's own
-              // height is enough travel to read as a deliberate gesture at 84sp.
-              final slide = Tween<Offset>(
-                begin: const Offset(0, 0.18),
-                end: Offset.zero,
-              ).animate(anim);
-              return FadeTransition(
-                opacity: anim,
-                child: SlideTransition(position: slide, child: child),
-              );
-            },
-            child: child,
+    // The done-dim now lives in the host (it dims every mode uniformly).
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(32, 24, 32, 24 + bottomSafe),
+        child: AnimatedSwitcher(
+          // Short relative to a line's on-screen life (~1.5–2.5s) so the stage
+          // is mostly STILL — editorial reads as calm, not in constant motion.
+          duration: const Duration(milliseconds: 380),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          // Keep both the outgoing + incoming line centred and stacked.
+          layoutBuilder: (currentChild, previousChildren) => Stack(
+            alignment: Alignment.center,
+            children: [...previousChildren, ?currentChild],
           ),
+          transitionBuilder: (child, anim) {
+            // Incoming: rises from below + fades in. Outgoing (anim in reverse)
+            // sinks + fades — a calm vertical dissolve. 0.18 of the line's own
+            // height is enough travel to read as a deliberate gesture at 84sp.
+            final slide = Tween<Offset>(
+              begin: const Offset(0, 0.18),
+              end: Offset.zero,
+            ).animate(anim);
+            return FadeTransition(
+              opacity: anim,
+              child: SlideTransition(position: slide, child: child),
+            );
+          },
+          child: child,
         ),
       ),
     );
