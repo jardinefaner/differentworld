@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:differentworld/features/poster/poster_models.dart';
 // shared_preferences IS a direct dep in pubspec.yaml; the analyzer can warn
 // spuriously across pub workspace boundaries.
-// ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persists the poster tool's durable options (size / fit-shape / fit /

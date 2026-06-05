@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // shared_preferences is a direct dep in pubspec.yaml; the analyzer
 // sometimes warns spuriously across pub workspace boundaries.
-// ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Kid-mode: when ON, the AppShell hides the omnibox composer and

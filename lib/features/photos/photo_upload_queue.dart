@@ -10,7 +10,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 // shared_preferences IS listed as a direct dep in pubspec.yaml; the
 // analyzer sometimes warns spuriously across pub workspace boundaries.
-// ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

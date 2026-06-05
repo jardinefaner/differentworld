@@ -94,6 +94,8 @@ dependencies:
   # retry. When wifi or cellular returns, we drain the queue.
   connectivity_plus: ^7.0.0
   super_clipboard: ^0.9.1
+  # Runtime use: settings prefs (text scale, outdoor mode) + Speak history.
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -110,7 +112,6 @@ dev_dependencies:
   drift_dev: ^2.33.0
   freezed: ^3.2.5
   json_serializable: ^6.13.2
-  shared_preferences: ^2.5.3
   very_good_analysis: ^10.2.0
 
 flutter:

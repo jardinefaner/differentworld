@@ -2,6 +2,8 @@
 // alignment → words with time windows, and the current-word lookup that
 // drives the highlight. Pure functions — no audio, no network.
 
+import 'dart:convert';
+
 import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -225,6 +227,31 @@ void main() {
       expect(endsSentence('and'), isFalse);
       expect(endsSentence('then,'), isFalse);
       expect(endsSentence(''), isFalse);
+    });
+  });
+
+  group('SpokenScript JSON', () {
+    test('survives a full jsonEncode/decode round-trip (history)', () {
+      const script = SpokenScript(
+        audioUrl: 'https://example.test/voice/abc.mp3',
+        words: [
+          SpokenWord(
+            text: 'Hello',
+            start: Duration.zero,
+            end: Duration(milliseconds: 300),
+          ),
+          SpokenWord(
+            text: 'world.',
+            start: Duration(milliseconds: 300),
+            end: Duration(milliseconds: 800),
+          ),
+        ],
+      );
+      final restored = SpokenScript.fromJson(
+        jsonDecode(jsonEncode(script.toJson())) as Map<String, dynamic>,
+      );
+      expect(restored.audioUrl, script.audioUrl);
+      expect(restored.words, script.words); // SpokenWord has value equality
     });
   });
 }

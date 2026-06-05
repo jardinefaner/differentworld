@@ -8,6 +8,7 @@ import 'package:differentworld/features/speak/living_background.dart';
 import 'package:differentworld/features/speak/mural_view.dart';
 import 'package:differentworld/features/speak/one_big_word_view.dart';
 import 'package:differentworld/features/speak/shape_view.dart';
+import 'package:differentworld/features/speak/speak_history.dart';
 import 'package:differentworld/features/speak/speak_presentation.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
@@ -16,8 +17,10 @@ import 'package:differentworld/features/speak/spoken_script.dart';
 import 'package:differentworld/features/speak/spotlight_view.dart';
 import 'package:differentworld/features/speak/stack_view.dart';
 import 'package:differentworld/features/speak/type_theme.dart';
+import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
@@ -39,9 +42,11 @@ class SpeakScreen extends StatefulWidget {
 class _SpeakScreenState extends State<SpeakScreen> {
   final TextEditingController _controller = TextEditingController();
   final SpeakService _service = SpeakService();
+  final SpeakHistory _history = SpeakHistory();
   SpokenScript? _script;
   List<SpokenLine> _lines = const <SpokenLine>[];
   List<SpokenWord> _words = const <SpokenWord>[];
+  List<SpeakHistoryEntry> _recents = const <SpeakHistoryEntry>[];
   SpeakType _type = SpeakType.serif;
   SpeakVoice _voice = speakVoices.first;
   SpeakPresentation _mode = SpeakPresentation.stage;
@@ -54,10 +59,66 @@ class _SpeakScreenState extends State<SpeakScreen> {
   int _gen = 0;
 
   @override
+  void initState() {
+    super.initState();
+    unawaited(_loadHistory());
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     unawaited(_service.dispose());
     super.dispose();
+  }
+
+  Future<void> _loadHistory() async {
+    final r = await _history.load();
+    if (!mounted) return;
+    setState(() => _recents = r);
+  }
+
+  Future<void> _saveToHistory(
+    String text,
+    String voiceId,
+    SpokenScript script,
+  ) async {
+    final r = await _history.add(
+      SpeakHistoryEntry(
+        text: text,
+        voiceId: voiceId,
+        script: script,
+        createdAtMs: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _recents = r);
+  }
+
+  /// Replay a saved piece — loads the stored script + cached audio. NO
+  /// synthesize, NO Edge Function call, NO ElevenLabs.
+  void _replayFromHistory(SpeakHistoryEntry e) {
+    _gen++; // invalidate any in-flight synthesize
+    FocusScope.of(context).unfocus();
+    final voice = speakVoices.firstWhere(
+      (v) => v.id == e.voiceId,
+      orElse: () => _voice,
+    );
+    setState(() {
+      _voice = voice;
+      _controller.text = e.text;
+      _script = e.script;
+      _words = e.script.words;
+      _lines = linesFromWords(e.script.words);
+      _loading = false;
+      _error = null;
+    });
+    unawaited(_service.play(e.script));
+  }
+
+  Future<void> _clearHistory() async {
+    final r = await _history.clear();
+    if (!mounted) return;
+    setState(() => _recents = r);
   }
 
   Future<void> _speak() async {
@@ -98,6 +159,8 @@ class _SpeakScreenState extends State<SpeakScreen> {
     // Fire-and-forget: play() resolves only at end-of-audio and degrades
     // silently on failure (we've already shown the stage).
     unawaited(_service.play(script));
+    // Save so it can be replayed later with no re-synthesis.
+    unawaited(_saveToHistory(text, _voice.id, script));
   }
 
   void _newText() {
@@ -248,6 +311,14 @@ class _SpeakScreenState extends State<SpeakScreen> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (_recents.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              _RecentList(
+                entries: _recents,
+                onTap: _replayFromHistory,
+                onClear: () => unawaited(_clearHistory()),
+              ),
+            ],
           ],
         ),
       ),
@@ -812,6 +883,83 @@ class _ModeChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Recent pieces — tap any to replay it INSTANTLY (loads the stored script +
+/// cached audio: no re-synthesis, no ElevenLabs). Also the "go back to where I
+/// was": it persists across navigation.
+class _RecentList extends StatelessWidget {
+  const _RecentList({
+    required this.entries,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  final List<SpeakHistoryEntry> entries;
+  final void Function(SpeakHistoryEntry) onTap;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Recent',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const Spacer(),
+            TextButton(onPressed: onClear, child: const Text('Clear')),
+          ],
+        ),
+        const SizedBox(height: 4),
+        for (final e in entries.take(8))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _RecentItem(entry: e, onTap: () => onTap(e)),
+          ),
+      ],
+    );
+  }
+}
+
+class _RecentItem extends StatelessWidget {
+  const _RecentItem({required this.entry, required this.onTap});
+
+  final SpeakHistoryEntry entry;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final voice = speakVoices.firstWhere(
+      (v) => v.id == entry.voiceId,
+      orElse: () => speakVoices.first,
+    );
+    final snippet = entry.text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final when = relativeTimeAgo(
+      DateTime.fromMillisecondsSinceEpoch(entry.createdAtMs),
+    );
+    return FeatureCard(
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: voice.palette.accent.withValues(alpha: 0.18),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.play_arrow_rounded, color: voice.palette.accent),
+      ),
+      title: snippet,
+      subtitle: '${voice.label} · $when',
+      onTap: onTap,
     );
   }
 }

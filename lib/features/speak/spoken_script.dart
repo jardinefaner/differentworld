@@ -11,9 +11,21 @@ class SpokenWord {
     required this.end,
   });
 
+  factory SpokenWord.fromJson(Map<String, dynamic> j) => SpokenWord(
+    text: j['t'] as String,
+    start: Duration(microseconds: j['s'] as int),
+    end: Duration(microseconds: j['e'] as int),
+  );
+
   final String text;
   final Duration start;
   final Duration end;
+
+  Map<String, dynamic> toJson() => {
+    't': text,
+    's': start.inMicroseconds,
+    'e': end.inMicroseconds,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -33,11 +45,24 @@ class SpokenWord {
 class SpokenScript {
   const SpokenScript({required this.audioUrl, required this.words});
 
+  factory SpokenScript.fromJson(Map<String, dynamic> j) => SpokenScript(
+    audioUrl: j['url'] as String,
+    words: [
+      for (final w in j['words'] as List)
+        SpokenWord.fromJson((w as Map).cast<String, dynamic>()),
+    ],
+  );
+
   /// Where the audio lives — a Storage URL (cached) the player loads.
   final String audioUrl;
   final List<SpokenWord> words;
 
   Duration get duration => words.isEmpty ? Duration.zero : words.last.end;
+
+  Map<String, dynamic> toJson() => {
+    'url': audioUrl,
+    'words': words.map((w) => w.toJson()).toList(),
+  };
 }
 
 /// Group ElevenLabs char-level alignment into words. The `with-timestamps`

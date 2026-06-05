@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // shared_preferences IS listed as a direct dep in pubspec.yaml; the
 // analyzer sometimes warns spuriously across pub workspace boundaries.
-// ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Last-N tools the user has opened from the catalog. Turns the

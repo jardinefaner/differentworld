@@ -8,7 +8,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 // shared_preferences IS listed as a direct dep in pubspec.yaml; the
 // analyzer sometimes warns spuriously across pub workspace boundaries.
-// ignore: depend_on_referenced_packages
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
