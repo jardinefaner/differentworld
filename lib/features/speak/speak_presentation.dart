@@ -38,7 +38,7 @@ extension SpeakPresentationX on SpeakPresentation {
     SpeakPresentation.spotlight => Icons.highlight_rounded,
     SpeakPresentation.mural => Icons.wallpaper_rounded,
     SpeakPresentation.grid => Icons.grid_view_rounded,
-    SpeakPresentation.justified => Icons.notes_rounded,
+    SpeakPresentation.justified => Icons.format_align_justify_rounded,
     SpeakPresentation.contents => Icons.format_list_numbered_rounded,
     SpeakPresentation.shape => Icons.blur_circular_rounded,
   };

@@ -91,13 +91,29 @@ class SpeakService {
   /// input/error state by the time this runs, so there's nothing to surface.
   /// `just_audio`'s `play()` future completes only at end-of-audio, so callers
   /// fire this unawaited.
-  Future<void> play(SpokenScript script) async {
+  /// Returns `false` if the audio failed to LOAD (offline / bad URL) so the
+  /// caller can surface it — otherwise the stage would run its highlights over
+  /// silence with no explanation. `just_audio`'s play() resolves only at
+  /// end-of-audio, so we start it separately and don't await the end here.
+  Future<bool> play(SpokenScript script) async {
     try {
       await _player.stop();
       await _player.setUrl(script.audioUrl);
+    } on PlayerInterruptedException catch (_) {
+      return true; // superseded by a newer load — not a failure
+    } on Object catch (e, st) {
+      if (kDebugMode) debugPrint('[speak] load failed: $e\n$st');
+      return false;
+    }
+    unawaited(_playLoaded());
+    return true;
+  }
+
+  Future<void> _playLoaded() async {
+    try {
       await _player.play();
     } on PlayerInterruptedException catch (_) {
-      // A newer play() superseded this one — expected, silent.
+      // Superseded — expected, silent.
     } on Object catch (e, st) {
       if (kDebugMode) debugPrint('[speak] play failed: $e\n$st');
     }

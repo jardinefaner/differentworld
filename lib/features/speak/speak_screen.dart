@@ -9,6 +9,7 @@ import 'package:differentworld/features/speak/mural_view.dart';
 import 'package:differentworld/features/speak/one_big_word_view.dart';
 import 'package:differentworld/features/speak/shape_view.dart';
 import 'package:differentworld/features/speak/speak_history.dart';
+import 'package:differentworld/features/speak/speak_immersive.dart';
 import 'package:differentworld/features/speak/speak_presentation.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
@@ -25,6 +26,7 @@ import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `/speak` — paste any prompt / quote / block, hear it read aloud, and watch
 /// it take the stage as big, elegant, editorial type: one line at a time, the
@@ -32,17 +34,19 @@ import 'package:flutter/material.dart';
 /// Voice + word-timings come from the `tts-subtitles` Edge Function
 /// (ElevenLabs). An enhancement — needs network + the server key; it degrades
 /// to a clear "set it up" message, never blocks.
-class SpeakScreen extends StatefulWidget {
+class SpeakScreen extends ConsumerStatefulWidget {
   const SpeakScreen({super.key});
 
   @override
-  State<SpeakScreen> createState() => _SpeakScreenState();
+  ConsumerState<SpeakScreen> createState() => _SpeakScreenState();
 }
 
-class _SpeakScreenState extends State<SpeakScreen> {
+class _SpeakScreenState extends ConsumerState<SpeakScreen> {
   final TextEditingController _controller = TextEditingController();
   final SpeakService _service = SpeakService();
   final SpeakHistory _history = SpeakHistory();
+  // Cached so dispose() can reset it without touching ref.
+  late final SpeakImmersive _immersive;
   SpokenScript? _script;
   List<SpokenLine> _lines = const <SpokenLine>[];
   List<SpokenWord> _words = const <SpokenWord>[];
@@ -61,11 +65,13 @@ class _SpeakScreenState extends State<SpeakScreen> {
   @override
   void initState() {
     super.initState();
+    _immersive = ref.read(speakImmersiveProvider.notifier);
     unawaited(_loadHistory());
   }
 
   @override
   void dispose() {
+    _immersive.exit(); // never leave the omnibox hidden after we leave
     _controller.dispose();
     unawaited(_service.dispose());
     super.dispose();
@@ -112,13 +118,26 @@ class _SpeakScreenState extends State<SpeakScreen> {
       _loading = false;
       _error = null;
     });
-    unawaited(_service.play(e.script));
+    unawaited(_playAndReport(e.script));
   }
 
   Future<void> _clearHistory() async {
     final r = await _history.clear();
     if (!mounted) return;
     setState(() => _recents = r);
+  }
+
+  /// Start playback and surface a load failure (offline / bad URL) — otherwise
+  /// the stage would run its highlights over silence with no explanation.
+  Future<void> _playAndReport(SpokenScript script) async {
+    final ok = await _service.play(script);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't play the audio — you may be offline."),
+        ),
+      );
+    }
   }
 
   Future<void> _speak() async {
@@ -156,9 +175,7 @@ class _SpeakScreenState extends State<SpeakScreen> {
       _lines = linesFromWords(script.words);
       _loading = false;
     });
-    // Fire-and-forget: play() resolves only at end-of-audio and degrades
-    // silently on failure (we've already shown the stage).
-    unawaited(_service.play(script));
+    unawaited(_playAndReport(script));
     // Save so it can be replayed later with no re-synthesis.
     unawaited(_saveToHistory(text, _voice.id, script));
   }
@@ -166,7 +183,12 @@ class _SpeakScreenState extends State<SpeakScreen> {
   void _newText() {
     _gen++; // invalidate any in-flight synthesize so it can't pull us back in
     unawaited(_service.stop());
-    setState(() => _script = null);
+    setState(() {
+      _script = null;
+      // A stale synth that resolves later returns early without touching this,
+      // so reset it here — otherwise the button stays stuck on "Voicing…".
+      _loading = false;
+    });
   }
 
   void _toggleType() => setState(() => _type = _type.other);
@@ -196,6 +218,20 @@ class _SpeakScreenState extends State<SpeakScreen> {
   @override
   Widget build(BuildContext context) {
     final performing = _script != null;
+    // Only the PERFORMANCE is immersive (omnibox hidden) — not the input
+    // composer. Defer the write past this build phase (AppShell watches it).
+    if (ref.read(speakImmersiveProvider) != performing) {
+      unawaited(
+        Future.microtask(() {
+          if (!mounted) return;
+          if (performing) {
+            _immersive.enter();
+          } else {
+            _immersive.exit();
+          }
+        }),
+      );
+    }
     return EdgeScaffold(
       // Perform-mode controls live in the top chrome pill — keeps the stage
       // full-bleed and clear of the floating omnibox bar at the bottom.
@@ -250,6 +286,15 @@ class _SpeakScreenState extends State<SpeakScreen> {
               controller: _controller,
               minLines: 3,
               maxLines: 8,
+              // Bound the cost (and the ElevenLabs bill) on a giant paste.
+              maxLength: 2000,
+              buildCounter:
+                  (
+                    _, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) => null,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
                 hintText: 'Type or paste anything to read aloud…',
@@ -277,7 +322,16 @@ class _SpeakScreenState extends State<SpeakScreen> {
               selected: _mode,
               onChanged: (m) => setState(() => _mode = m),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
+            Text(
+              'A clear voice reads it aloud while each line takes the stage — '
+              'the spoken word swells. Tap the stage to pause; switch the voice '
+              'or type any time.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
             if (_error != null) ...[
               _ErrorNote(message: _error!),
               const SizedBox(height: 16),
@@ -300,15 +354,6 @@ class _SpeakScreenState extends State<SpeakScreen> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'A clear voice reads it aloud while each line takes the stage — '
-              'the spoken word swells. Tap the stage to pause; switch the voice '
-              'or type any time.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             if (_recents.isNotEmpty) ...[
@@ -381,6 +426,9 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
   bool _playing = false;
   bool _started = false;
   bool _done = false;
+  // Set before the ticker is disposed — a stream event arriving in the
+  // cancel→dispose window must not touch the dead ticker.
+  bool _disposed = false;
 
   @override
   void initState() {
@@ -390,7 +438,7 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
   }
 
   void _onPlayingChanged(bool playing) {
-    if (!mounted) return;
+    if (_disposed || !mounted) return;
     setState(() {
       _playing = playing;
       if (playing) {
@@ -407,7 +455,7 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
   }
 
   void _onCompleted(bool completed) {
-    if (!mounted || !completed) return;
+    if (_disposed || !mounted || !completed) return;
     if (_ticker.isActive) _ticker.stop();
     setState(() {
       _done = true;
@@ -416,6 +464,7 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
   }
 
   void _onTick(Duration _) {
+    if (_disposed) return;
     final pos = widget.service.currentPosition;
     final line = lineIndexAt(widget.lines, pos);
     final word = line < 0
@@ -442,6 +491,7 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
 
   @override
   void dispose() {
+    _disposed = true;
     unawaited(_playSub?.cancel());
     unawaited(_doneSub?.cancel());
     _ticker.dispose();
@@ -542,12 +592,17 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
                     icon: Icons.play_arrow_rounded,
                     semantic: 'Paused — tap to resume',
                   ),
+                if (_done)
+                  const _StageGlyph(
+                    icon: Icons.replay_rounded,
+                    semantic: 'Finished — tap to replay',
+                  ),
               ],
             ),
           ),
         ),
         // Transport — play/pause, a drag-to-seek scrubber, time. Sits at the
-        // bottom (the omnibox bar is hidden on /speak, so this owns it).
+        // bottom (the omnibox bar is hidden during the performance).
         Positioned(
           left: 0,
           right: 0,
@@ -644,9 +699,8 @@ class _TransportBarState extends State<_TransportBar> {
                         thumbColor: widget.accent,
                         inactiveTrackColor: Colors.white24,
                         trackHeight: 2.5,
-                        overlayShape: const RoundSliderOverlayShape(
-                          overlayRadius: 14,
-                        ),
+                        // Default overlay radius (24 → 48dp touch target); the
+                        // old custom 14 made the thumb hard to grab.
                       ),
                       child: Slider(
                         value: value.toDouble(),

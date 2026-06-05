@@ -13,6 +13,7 @@ import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_state.dart';
 import 'package:differentworld/features/omnibox/slash_commands.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
+import 'package:differentworld/features/speak/speak_immersive.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -511,7 +512,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     // device: it stays at `/breaks` while uri.path is the child route).
     final isImmersive =
         routerState.uri.path.startsWith('/activity/') ||
-        routerState.uri.path == '/speak';
+        ref.watch(speakImmersiveProvider);
 
     // When the suggestion overlay is open, the system back gesture
     // (swipe-from-left-edge on Android, swipe-back on iOS) should
