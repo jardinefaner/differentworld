@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/features/speak/living_background.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
 import 'package:differentworld/features/speak/speak_stage.dart';
 import 'package:differentworld/features/speak/speak_voices.dart';
@@ -208,14 +209,15 @@ class _SpeakScreenState extends State<SpeakScreen> {
   }
 
   Widget _perform(BuildContext context) {
-    // Full-bleed dark stage; SpeakStage centres the line, so the floating
-    // chrome pills (top) and omnibox bar (bottom) clear the type.
-    return ColoredBox(
-      color: const Color(0xFF0E0F17),
+    // Full-bleed living stage in the voice's palette; SpeakStage centres the
+    // line, so the floating chrome (top) + omnibox bar (bottom) clear the type.
+    return LivingBackground(
+      palette: _voice.palette,
       child: _SpeakStageHost(
         service: _service,
         lines: _lines,
         type: _type,
+        accent: _voice.palette.accent,
       ),
     );
   }
@@ -233,11 +235,13 @@ class _SpeakStageHost extends StatefulWidget {
     required this.service,
     required this.lines,
     required this.type,
+    required this.accent,
   });
 
   final SpeakService service;
   final List<SpokenLine> lines;
   final SpeakType type;
+  final Color accent;
 
   @override
   State<_SpeakStageHost> createState() => _SpeakStageHostState();
@@ -338,6 +342,7 @@ class _SpeakStageHostState extends State<_SpeakStageHost>
             position: _position,
             type: widget.type,
             done: _done,
+            accent: widget.accent,
           ),
           if (paused)
             const _StageGlyph(
@@ -450,34 +455,49 @@ class _VoiceTile extends StatelessWidget {
             // ≥48dp tap target (audit E1: ChoiceChip was ~32dp).
             constraints: const BoxConstraints(minHeight: 48, minWidth: 68),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    voice.label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: selected
-                          ? scheme.onPrimaryContainer
-                          : scheme.onSurface,
+                  // The voice's colour identity, previewed.
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: voice.palette.accent,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                  if (desc != null)
-                    Text(
-                      desc,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color:
-                            (selected
-                                    ? scheme.onPrimaryContainer
-                                    : scheme.onSurfaceVariant)
-                                .withValues(alpha: 0.85),
+                  const SizedBox(width: 10),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        voice.label,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: selected
+                              ? scheme.onPrimaryContainer
+                              : scheme.onSurface,
+                        ),
                       ),
-                    ),
+                      if (desc != null)
+                        Text(
+                          desc,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                (selected
+                                        ? scheme.onPrimaryContainer
+                                        : scheme.onSurfaceVariant)
+                                    .withValues(alpha: 0.85),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),

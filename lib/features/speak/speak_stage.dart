@@ -16,6 +16,7 @@ class SpeakStage extends StatelessWidget {
     required this.position,
     required this.type,
     this.done = false,
+    this.accent = const Color(0xFFAEB6C6),
     super.key,
   });
 
@@ -26,6 +27,10 @@ class SpeakStage extends StatelessWidget {
   /// When playback has finished, the stage dims to signal "done" (the host
   /// overlays a tap-to-replay nudge).
   final bool done;
+
+  /// The voice's hue — the active word glows faintly in it (the colour lives
+  /// in the ambience, not the ink, so legibility holds).
+  final Color accent;
 
   /// Base size before fit-to-width scale-down. Large — short lines stay big;
   /// long lines scale to fit (and wrap to a second line if needed).
@@ -48,6 +53,7 @@ class SpeakStage extends StatelessWidget {
         activeWord: currentWordIndex(line.words, position),
         type: type,
         baseSize: _baseSize,
+        accent: accent,
       );
     }
 
@@ -102,6 +108,7 @@ class _StageLine extends StatelessWidget {
     required this.activeWord,
     required this.type,
     required this.baseSize,
+    required this.accent,
     super.key,
   });
 
@@ -111,6 +118,7 @@ class _StageLine extends StatelessWidget {
   final int activeWord;
   final SpeakType type;
   final double baseSize;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +142,7 @@ class _StageLine extends StatelessWidget {
                     : (i < activeWord ? _WordPhase.past : _WordPhase.future),
                 type: type,
                 size: baseSize,
+                accent: accent,
               ),
           ],
         ),
@@ -148,12 +157,14 @@ class _StageWord extends StatelessWidget {
     required this.phase,
     required this.type,
     required this.size,
+    required this.accent,
   });
 
   final String text;
   final _WordPhase phase;
   final SpeakType type;
   final double size;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +193,11 @@ class _StageWord extends StatelessWidget {
         letterSpacing: type.letterSpacing,
         color: Colors.white.withValues(alpha: alpha),
         fontVariations: type.axesAt(weight),
+        // The active word glows faintly in the voice's hue — ties the colour
+        // identity to the type without tinting the (legible white) fill.
+        shadows: active
+            ? [Shadow(color: accent.withValues(alpha: 0.5), blurRadius: 26)]
+            : null,
       ),
       child: Text(text),
     );
