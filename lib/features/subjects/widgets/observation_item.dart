@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
+import 'package:differentworld/shared/widgets/hover_tap.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -60,7 +61,7 @@ class _ObservationPhotosStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     if (photos.length == 1) {
-      return GestureDetector(
+      return HoverTap(
         onTap: () => PhotoViewer.open(context, urls: photos),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
@@ -82,7 +83,7 @@ class _ObservationPhotosStrip extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         itemCount: photos.length,
         separatorBuilder: (_, _) => const SizedBox(width: 6),
-        itemBuilder: (_, i) => GestureDetector(
+        itemBuilder: (_, i) => HoverTap(
           onTap: () => PhotoViewer.open(
             context,
             urls: photos,

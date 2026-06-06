@@ -15,6 +15,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
+import 'package:differentworld/shared/widgets/hover_tap.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/material.dart';
@@ -323,7 +324,7 @@ class _ObservationCard extends StatelessWidget {
           if (photoUrl != null && photoUrl.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: GestureDetector(
+              child: HoverTap(
                 onTap: () => PhotoViewer.open(context, urls: [photoUrl]),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),

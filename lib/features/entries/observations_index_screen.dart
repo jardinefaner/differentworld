@@ -15,6 +15,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/hover_tap.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -386,7 +387,7 @@ class _IndexPhotoThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final extras = photos.length - 1;
-    return GestureDetector(
+    return HoverTap(
       onTap: onTap,
       child: SizedBox(
         width: 56,
