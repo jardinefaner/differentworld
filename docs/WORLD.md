@@ -99,19 +99,69 @@ already built get *re-skinned* by. New world = new pack, same engine.
 - [ ] *Open detail:* the exact per-world pack CONTENTS (see §B) — to flesh out
   world by world once the spine is set.
 
-## B. Inside a world (the content pack)
-- [ ] **People** — the role deck themed per world. Fixed cast, or each kid
-  chooses who they are this week?
-- [ ] **Things** — themed objects. The program's REAL supplies (#15) re-skinned,
-  purely imagined, or both?
-- [ ] **Words** — the world's vocabulary; the kid's Action Words drawn from it.
-  How many per world? Do they persist into the self (you collect pirate words
-  AND space words) or reset?
-- [ ] **Dreams (the quest)** — one shared world-dream, a per-crew dream, or each
-  kid their own? Pursued via missions/dailies (#16) with real evidence?
-- [ ] **Culture** — what defines a world's culture (values, a greeting, a
-  ritual, a look)? Does the kid CHOOSE within it (their take) or absorb it
-  (it's the world's)?
+## B. Inside a world (the content pack) — FLESHED (2026-06-06)
+Each dimension maps to a system: **people → roles (#8)**, **things → supplies
+(#15)**, **words → action words (#9)**, **dream → missions (#16)**, **culture →
+the world's vibe/values**. The 8 starter packs:
+
+### High Seas 🏴‍☠️
+- **People:** Captain · Navigator · Lookout · Quartermaster
+- **Things:** compass · treasure map · spyglass · ship's wheel · chest
+- **Words:** ahoy · horizon · treasure · brave · crew · chart
+- **Dream:** find the buried treasure — read the map + the stars, dig it up
+- **Culture:** no one sails alone — crew loyalty, courage, share the bounty
+
+### Deep Space 🚀
+- **People:** Commander · Pilot · Engineer · Science Officer
+- **Things:** rocket · spacesuit · telescope · control panel · rover
+- **Words:** orbit · liftoff · gravity · explore · signal · launch
+- **Dream:** reach the new planet — build the rocket, plot the course, land
+- **Culture:** explorers go together — every job matters, curiosity first
+
+### Under the Sea 🌊
+- **People:** Diver · Marine Biologist · Merperson · Sub Pilot
+- **Things:** submarine · mask · net · shell · the glow of the deep
+- **Words:** dive · current · reef · deep · glow · bubble
+- **Dream:** find the lost city — descend, map the reef, follow the glow
+- **Culture:** wonder + care for the ocean — leave it better than you found it
+
+### Deep Jungle 🌿
+- **People:** Explorer · Ranger · Zoologist · Guide
+- **Things:** binoculars · vine · map · backpack · camera
+- **Words:** trek · canopy · wild · trail · spot · roar
+- **Dream:** find the rare creature — follow the tracks, watch quietly
+- **Culture:** respect the wild — observe, don't disturb; patience
+
+### Lost Kingdom 🏺
+- **People:** Archaeologist · Explorer · Keeper · Ruler
+- **Things:** lantern · scroll · artifact · key · ancient map
+- **Words:** ancient · discover · tomb · secret · relic · uncover
+- **Dream:** uncover the tomb — decode the scroll, find the key, open the door
+- **Culture:** history's mysteries — honor the past, careful discovery
+
+### The Future 🤖
+- **People:** Inventor · Engineer · Coder · Designer
+- **Things:** gadget · circuit · hologram · robot · blueprint
+- **Words:** invent · build · tomorrow · power · design · spark
+- **Dream:** build the machine — sketch it, gather the parts, switch it on
+- **Culture:** make what doesn't exist yet — try, fail, try again
+
+### Castle & Quest 🐉
+- **People:** Knight · Wizard · Royal · Squire
+- **Things:** shield · scroll · map · crown · lantern
+- **Words:** brave · quest · kingdom · honor · noble · oath
+- **Dream:** complete the quest — take the oath, face the trial, return a hero
+- **Culture:** courage + honor — protect the small, keep your word
+
+### Tiny World 🐞
+- **People:** Bug Explorer · Tiny Scientist · Garden Guide
+- **Things:** leaf · dewdrop · petal · blade of grass · tiny map
+- **Words:** tiny · crawl · buzz · giant · climb · drop
+- **Dream:** cross the garden — climb the stem, cross the puddle, reach the bloom
+- **Culture:** big things in small places — courage isn't about size; notice all
+
+- [ ] *Open:* the bench worlds (Arctic / Safari / Dinosaurs / City) get packs
+  when promoted; director-custom worlds fill the same five fields.
 
 ## C. The crew — SETTLED (2026-06-06)
 - [x] **What is a crew** — configurable (ALL, each a capability): default = the
@@ -163,58 +213,64 @@ Same data, two voices (4–6 may also simply hide the heavier fields):
 - [x] Same data underneath; the surface (words + which fields show) switches by
   age band (or a director toggle).
 
-## G. Progression, the arc & no-punishment
-- [ ] What **grows** over the summer (age, skills, words, the avatar, the crew)?
-- [ ] **Milestone moments** — a level-up, a dream achieved, a skill mastered:
-  how do they *feel*?
-- [ ] **No-punishment vow (#4/#11)** — missing a day never takes anything away.
-  Celebrate consistency; never penalise absence.
-- [ ] **The bookend** — first vs final self-drawing; the summer's whole arc as
-  the keepsake (#1).
+## G. Progression, the arc & no-punishment — SETTLED (2026-06-06)
+- [x] **What grows:** age (= dailies), collected words, earned skills/abilities,
+  the avatar (costumes + the final re-draw), crew bonds. The self is *visibly*
+  bigger at summer's end.
+- [x] **Milestones FEEL like a small ceremony, not a popup** — a dream achieved
+  at Departure, an age threshold, a skill mastered: a quiet, room-shareable
+  moment (ties the present/control engine #18), never a coin-pop.
+- [x] **No-punishment vow (#4/#11):** TOTAL, not streaks. Missing a day never
+  removes anything; absence is never penalised; consistency is celebrated.
+- [x] **The bookend:** first vs final self-drawing is the keepsake's spine (#1).
 
-## H. Authorship — who sets what
-- [ ] **Per element**: kid-alone / kid + counselor / director-curated menu /
-  fixed (name = kid; world = director; culture = within the world; skills =
-  earned).
-- [ ] **Director menus** — the world catalog, role deck, supplies, word bank,
-  skill list: program-configurable (capabilities)?
+## H. Authorship — SETTLED (2026-06-06): per-element, configurable
+- [x] **Defaults:** name = **kid**; world + crew = **director** (kid-vote
+  optional); culture = absorbed from the **world** (kid takes their angle);
+  skills = **earned**; words = **collected**; avatar = **kid** (drawn).
+- [x] **Director menus (capabilities):** the world catalog + order, role deck,
+  supplies, word bank, skill list — all program-configurable, every default
+  overridable.
 
-## I. The social / shared dimension
-- [ ] **Private-to-kid vs shared-to-crew vs shared-to-room vs sent-to-family** —
-  per element.
-- [ ] Do kids **see each other's selves / crews** (a shared world, a wall)?
-- [ ] **Collaboration** — shared crew dreams, roles that interact.
+## I. The social / shared dimension — SETTLED (2026-06-06)
+- [x] **Visibility, per element (configurable):** **private-to-kid** by default
+  for the self; **crew-shared** for the crew dream + identity; **room-shared**
+  optional (a wall of characters / the shared world map, via the present engine
+  #18); **family** gets the keepsake/book (#1), not the raw sheet.
+- [x] **Kids see each other** only at the crew/room level a director opts into.
+- [x] **Collaboration:** the crew dream is shared; roles can interact (the
+  world's people need each other).
 
-## J. Privacy & safety (the vow — kids' PII)
-- [ ] What's **stored** (drawings, chosen names, crews).
-- [ ] **No real location** — the "map" is the invented world's geography, never
-  a child's real coordinates.
-- [ ] 💭 **The world framing IMPROVES privacy** — a *chosen name + a drawn self*
-  inside a *fictional world* is far less PII than a photo + legal name. Lean in:
-  a pseudonymous, drawn, fictional self may be the safest identity we can give.
+## J. Privacy & safety — SETTLED (2026-06-06): the vow
+- [x] **No real location, ever** — the only "map" is the *fictional* world's
+  geography; we never store a child's real coordinates.
+- [x] **Pseudonymous, drawn, fictional self = the privacy WIN.** A *chosen name
+  + a drawing* inside a *made-up world* is far less PII than a photo + legal
+  name. The world framing is a privacy *feature*, and we lean all the way in.
+- [x] **Stored:** drawings (Storage, like photos), chosen names, crews, progress
+  — under the same space-scoped RLS + on-device-first rules as everything else.
 
-## K. Onboarding — entering a world
-- [ ] **Day-one ritual** (whole summer) — draw yourself, choose your name.
-- [ ] **Week-one ritual** (each world) — the reveal of the new world, join a
-  crew, take a dream, meet its words/people. How long, how counselor-guided?
+## K. Onboarding — SETTLED (2026-06-06): two rituals
+- [x] **Day-one (whole summer):** *draw yourself* + *choose your name* — short,
+  counselor-guided, the birth of your world-self.
+- [x] **Week-one (each world):** the world is *revealed* → *join a crew* → *take
+  a dream* → *meet its words + people*. A few minutes, counselor-led, then the
+  week is play.
 
 ---
 
-## The spine — SETTLED (2026-06-06)
-The five highest-leverage decisions are made: **A** worlds · **C** crew ·
-**D** dream · **E** persistent self · **F** surfaces. The world has a spine to
-design against.
+## The vision — FULLY SHAPED (2026-06-06)
+Every section A–K is settled (spine + the 8 fleshed world packs + the second
+tier). This doc now describes a complete, coherent kid-facing world to build.
 
-**Still to shape (second tier):**
-- **§B** — the per-world pack CONTENTS (flesh out each of the 8 worlds: its
-  people / things / words / dream / culture).
-- **§G** — progression feel + milestone moments + the no-punishment vow.
-- **§H** — per-element authorship (who sets each piece).
-- **§I** — the social / shared dimension (do kids see each other's worlds).
-- **§J** — privacy specifics (no real location; the pseudonymous-self insight).
-- **§K** — the arrival (day-one) + week-one rituals.
+**Next (the bridge to code):**
+1. **Design doc** — synthesize this into a buildable spec: the **data model**
+   (the `subjects` self + a world / crew / dream / character-sheet layer), the
+   **"me" + world screens** (the two age surfaces), and **how each field maps**
+   to the systems that already exist (roles #8, supplies #15, action-words #9,
+   missions #16). Run **`Agent blast-radius`** on it first — this adds several
+   synced tables, so the 6-place checklist + the kid-mode surfaces are in play.
+2. **First slice** — on its own branch: *"draw yourself → that's your face"* +
+   a bare "me" screen. Smallest real, biggest symbol.
 
-**Then:** promote this into a real **design doc** (the data model + the "me" /
-world screens + how each field maps to roles / supplies / action-words /
-missions), or build the **smallest slice** — the day-one *"draw yourself →
-that's your face in the world."*
+This is a multi-session feature; the docs above are the durable baton.
