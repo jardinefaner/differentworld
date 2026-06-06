@@ -1688,6 +1688,25 @@ do / dictate. Some key invariants:
   ONLY places that still add `topChromeHeight` by hand are the omnibox
   *overlay* (not an EdgeScaffold) and anything rendered outside the
   shell. Don't reintroduce the per-screen inset.
+- **A raw `Scaffold` (NOT `EdgeScaffold`) used for a full-bleed surface
+  INSIDE the shell gets the floating chrome painted OVER its content —
+  this is a recurring trap.** The shell's top pills + bottom omnibox bar
+  live in AppShell's Stack ABOVE the route, and a raw `Scaffold` neither
+  reserves the top band (only `EdgeScaffold` publishes it into
+  `MediaQuery.padding.top`) nor suppresses the bar. So the surface's
+  header hides behind the top pills and its bottom controls hide behind
+  the omnibox bar. Two correct fixes: (a) use `EdgeScaffold` (gets
+  clearance) if you WANT the chrome; or (b) for a true full-bleed
+  presentation/cockpit that wants NO chrome, set an **immersive
+  provider** (`speakImmersiveProvider`, `castImmersiveProvider`, or
+  kid-mode) so AppShell hides the pills + bar entirely. A bare
+  `Scaffold` + `SafeArea` clears only the OS status bar, NOT the app
+  chrome — that's the bug. The cast cockpit shipped this and had to be
+  fixed with `castImmersiveProvider`. For true OS fullscreen on a
+  presentation screen (hide the status/nav bars too), ALSO call
+  `SystemChrome.setEnabledSystemUIMode(immersiveSticky)` on mount +
+  restore `edgeToEdge` on dispose (see `cast_receiver.dart`,
+  `game_fullscreen.dart`).
 - **The bar lives INSIDE the body Stack** at `Positioned(bottom: 0)`,
   not in `Scaffold.bottomNavigationBar`. The bottomNavigationBar slot
   does NOT ride the keyboard inset; the body does. Routes whose forms

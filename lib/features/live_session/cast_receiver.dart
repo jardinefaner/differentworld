@@ -5,6 +5,7 @@ import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The **Receiver** — the big screen as a dumb, clean display
@@ -34,6 +35,11 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
   @override
   void initState() {
     super.initState();
+    // True fullscreen for the room — hide the OS status / nav bars (the app
+    // chrome is already gone via castImmersiveProvider). Restored in dispose.
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+    );
     final session = CastSession.receive(
       client: ref.read(supabaseProvider),
       code: widget.code,
@@ -50,6 +56,8 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
 
   @override
   void dispose() {
+    // Restore the app's default (EdgeScaffold draws under the bars).
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     for (final sub in _subs) {
       unawaited(sub.cancel());
     }

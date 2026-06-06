@@ -1,4 +1,5 @@
 import 'package:differentworld/features/live_session/cast_cockpit.dart';
+import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/live_session/cast_receiver.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart'
     show generateSessionCode;
@@ -22,12 +23,29 @@ enum _Mode { lobby, receive, cast }
 class _CastScreenState extends ConsumerState<CastScreen> {
   _Mode _mode = _Mode.lobby;
   String _code = '';
+  // Cached so dispose() can reset it without touching ref. Driving the
+  // presentation surfaces immersive is what hides AppShell's chrome (the top
+  // pills + the omnibox bar) so they can't paint over the cockpit/stage.
+  late final CastImmersive _immersive;
+
+  @override
+  void initState() {
+    super.initState();
+    _immersive = ref.read(castImmersiveProvider.notifier);
+  }
+
+  @override
+  void dispose() {
+    _immersive.exit();
+    super.dispose();
+  }
 
   void _presentHere() {
     setState(() {
       _code = generateSessionCode();
       _mode = _Mode.receive;
     });
+    _immersive.enter(); // a callback, not build — safe to write the provider
   }
 
   void _control(String code) {
@@ -35,9 +53,13 @@ class _CastScreenState extends ConsumerState<CastScreen> {
       _code = code;
       _mode = _Mode.cast;
     });
+    _immersive.enter();
   }
 
-  void _toLobby() => setState(() => _mode = _Mode.lobby);
+  void _toLobby() {
+    setState(() => _mode = _Mode.lobby);
+    _immersive.exit();
+  }
 
   @override
   Widget build(BuildContext context) {
