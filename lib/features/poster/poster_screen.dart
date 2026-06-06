@@ -457,7 +457,6 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
               bytes: _bytes!,
               layout: layout,
               fit: _opts.fit,
-              labels: _opts.labels,
               zoom: _zoom,
               focusX: _focusX,
               focusY: _focusY,
@@ -825,8 +824,8 @@ class _Chooser extends StatelessWidget {
   }
 }
 
-/// WYSIWYG preview: the image framed exactly as it'll print, with the page
-/// cut-lines (and corner labels, if on) overlaid so you see what lands where.
+/// WYSIWYG preview: the image framed exactly as it'll print, with faint page
+/// cut-lines overlaid so you see where it splits — nothing drawn over the art.
 /// In Fill mode it's interactive — drag to pan the crop, pinch to zoom — and
 /// the framing (`Transform.scale` + cover alignment) mirrors the engine's
 /// [posterViewRect] one-to-one, so what you set is what prints.
@@ -835,7 +834,6 @@ class _PosterPreview extends StatefulWidget {
     required this.bytes,
     required this.layout,
     required this.fit,
-    required this.labels,
     required this.zoom,
     required this.focusX,
     required this.focusY,
@@ -845,7 +843,6 @@ class _PosterPreview extends StatefulWidget {
   final Uint8List bytes;
   final PosterLayout layout;
   final PosterFit fit;
-  final bool labels;
   final double zoom;
   final double focusX;
   final double focusY;
@@ -906,7 +903,6 @@ class _PosterPreviewState extends State<_PosterPreview> {
                   painter: _GridPainter(
                     cols: widget.layout.cols,
                     rows: widget.layout.rows,
-                    labels: widget.labels,
                   ),
                 ),
               ],
@@ -945,22 +941,26 @@ class _PosterPreviewState extends State<_PosterPreview> {
 }
 
 class _GridPainter extends CustomPainter {
-  _GridPainter({required this.cols, required this.rows, required this.labels});
+  _GridPainter({required this.cols, required this.rows});
 
   final int cols;
   final int rows;
-  final bool labels;
 
   @override
   void paint(Canvas canvas, Size size) {
     final cellW = size.width / cols;
     final cellH = size.height / rows;
+    // FAINT hairlines — show WHERE the pages split without hiding the art
+    // beneath. NO labels drawn over the image: the preview stays clean so you
+    // can read your whole picture. (The "R1·C2" registration labels, when on,
+    // print only in the page corners — a white chip per cell here was
+    // covering the content, which is the bug this removes.)
     final under = Paint()
-      ..color = Colors.black26
-      ..strokeWidth = 3;
+      ..color = Colors.black.withValues(alpha: 0.15)
+      ..strokeWidth = 1;
     final line = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 1.5;
+      ..color = Colors.white.withValues(alpha: 0.5)
+      ..strokeWidth = 1;
 
     for (var c = 1; c < cols; c++) {
       final x = cellW * c;
@@ -974,37 +974,10 @@ class _GridPainter extends CustomPainter {
         ..drawLine(Offset(0, y), Offset(size.width, y), under)
         ..drawLine(Offset(0, y), Offset(size.width, y), line);
     }
-
-    if (labels) {
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          final tp = TextPainter(
-            text: TextSpan(
-              text: 'R${r + 1}·C${c + 1}',
-              style: const TextStyle(
-                fontSize: 9,
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            textDirection: TextDirection.ltr,
-          )..layout();
-          final dx = c * cellW + cellW - tp.width - 6;
-          final dy = r * cellH + cellH - tp.height - 6;
-          final chip = RRect.fromRectAndRadius(
-            Rect.fromLTWH(dx - 3, dy - 2, tp.width + 6, tp.height + 4),
-            const Radius.circular(3),
-          );
-          canvas.drawRRect(chip, Paint()..color = Colors.white70);
-          tp.paint(canvas, Offset(dx, dy));
-        }
-      }
-    }
   }
 
   @override
-  bool shouldRepaint(_GridPainter old) =>
-      old.cols != cols || old.rows != rows || old.labels != labels;
+  bool shouldRepaint(_GridPainter old) => old.cols != cols || old.rows != rows;
 }
 
 /// Determinate render progress. While the worker streams page counts the bar
