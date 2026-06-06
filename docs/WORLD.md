@@ -55,19 +55,49 @@ already built get *re-skinned* by. New world = new pack, same engine.
 - [x] **A persistent self travels through a NEW themed world each week**
   (pirates / space / sea / …). The self carries; the world changes.
 - [x] **Each world is a content pack**: people, things, words, dreams, culture.
+- [x] **Starter catalog (8 packed worlds)**: High Seas 🏴‍☠️, Deep Space 🚀, Under
+  the Sea 🌊, Deep Jungle 🌿, Lost Kingdom 🏺, The Future 🤖, Castle & Quest 🐉,
+  Tiny World 🐞. Bench (easy adds): Arctic ❄️, Safari 🦁, Dinosaurs 🦕, The City
+  🏙️. **Rule:** a world ships only if it fills all five (people / things / words
+  / dream / culture).
+- [x] **One world per week**, shaped: **Arrive** (the world is revealed → draw /
+  name your self into it → join a crew → take a dream) → **the week** (dailies
+  chase the dream; collect the world's words / roles / skills) → **Depart**
+  (the dream resolves → a small ceremony → a page lands in the book). ~8–10
+  weeks ≈ a summer.
+- [x] **Authorship = ALL, layered** (every path a capability): **ship** the
+  catalog (the floor, works day one) + director **orders the season arc** +
+  director **builds custom** worlds (the ceiling) + optional **kids vote** the
+  next world.
+- [x] **Continuity = ALL, layered**: the **self always carries** (avatar, age,
+  collected words / skills); PLUS an optional **summer-long through-line** (a
+  season story) AND a loose **motif** (a passport stamped per world + a
+  recurring guide). Composable + director-configurable.
+- [x] **Crew = configurable** (classroom group by default · splittable into
+  small crews · kid-formed) with an identity re-skinned per world.
+- [x] **Dream = nested 3 levels** (world → crew → kid), pursued via dailies /
+  missions (#16) — "age = dailies" IS progress toward it — resolved at Departure
+  (ceremony + a page in the book).
+- [x] **The self accumulates; the world is fresh; collection flows up.** Age /
+  words / skills grow all summer + never reset; the crew identity, dream, and
+  world reset each week; what you earn in a world joins your permanent self. One
+  summer-name; avatar drawn once + optional per-world costumes; re-drawn at the
+  end as the bookend.
+- [x] **Two surfaces by age** with a per-field language map (full "world" voice
+  for 7–12; soft voice for 4–6), same data underneath.
 
-## A. The worlds (the weekly themes)
-- [ ] **Catalog** — which worlds? (pirates, deep space, under the sea, jungle,
-  ancient Egypt, the future, a tiny world, a city…) Director-picked per week,
-  a fixed seasonal arc, or kid-voted?
-- [ ] **Cadence** — exactly a week each? Can one run longer / shorter?
-- [ ] **Arrival + departure** — how do you ENTER a world (a reveal, a ritual,
-  a map that opens)? How does a week END (the dream resolved, a celebration,
-  a chapter added to the book)?
-- [ ] **Authorship** — is a world a fixed pack we ship, a **director-built
-  pack** (capabilities), or partly kid-shaped?
-- [ ] **Continuity** — do the worlds connect (an over-arc / a through-line all
-  summer), or is each a clean reset?
+## A. The worlds (the weekly themes) — SETTLED (2026-06-06)
+- [x] **Catalog** — the starter 8 + bench (above). Each fills all five pack
+  dimensions or it doesn't ship.
+- [x] **Cadence** — one world / week, shaped Arrive → week → Depart (above).
+- [x] **Arrival + departure** — Arrive: reveal + draw/name into it + join a crew
+  + take a dream. Depart: the dream resolves + a ceremony + a book page.
+- [x] **Authorship** — layered: ship + director-orders-arc + director-custom +
+  kid-vote (all capabilities).
+- [x] **Continuity** — layered: self always carries + optional through-line +
+  optional passport/guide motif.
+- [ ] *Open detail:* the exact per-world pack CONTENTS (see §B) — to flesh out
+  world by world once the spine is set.
 
 ## B. Inside a world (the content pack)
 - [ ] **People** — the role deck themed per world. Fixed cast, or each kid
@@ -83,37 +113,55 @@ already built get *re-skinned* by. New world = new pack, same engine.
   ritual, a look)? Does the kid CHOOSE within it (their take) or absorb it
   (it's the world's)?
 
-## C. The crew
-- [ ] **What is a crew** — a fixed small team for the week, the whole cohort,
-  or kid-formed? Does it map to the real classroom **groups**?
-- [ ] **Shared or solo dream** — does the crew chase one dream together, or
-  each member their own within the crew?
-- [ ] **Crew identity** — a name, a flag, a culture of its own? Does it carry
-  across worlds or re-form each week?
+## C. The crew — SETTLED (2026-06-06)
+- [x] **What is a crew** — configurable (ALL, each a capability): default = the
+  classroom **group** (reuse `groups`); director can split a group into small
+  crews (3–5) per world; or kids form their own (cross-group, with the roster /
+  safety caveat).
+- [x] **Identity** — a name + emblem, **re-skinned per world** (Tide Riders →
+  Star Jumpers). Membership can persist or reshuffle (configurable); the bond is
+  the constant, the costume changes.
+- [x] **Shared or solo dream** — both (see §D, the nested 3-level dream).
 
-## D. The dream
-- [ ] **Whose** — the kid's, the crew's, or the world's (a shared quest all
-  pursue)?
-- [ ] **How pursued** — via missions / dailies (#16) with real-life evidence?
-  Is "age = dailies" literally *progress toward the dream*?
-- [ ] **How it resolves** — at week's end: a ceremony, a reveal, a page in the
-  growth book (#1)?
+## D. The dream — SETTLED (2026-06-06)
+- [x] **Whose** — ALL THREE, **nested**: the **world** has a big shared dream
+  (find the treasure / reach the planet); each **crew** has its dream (their
+  slice of it); each **kid** has a **personal** dream within. The kid sees
+  their own; the crew rallies a shared one; the world frames the epic.
+- [x] **How pursued** — via **dailies / missions (#16)** with real-life
+  evidence. **"Age = dailies" is literally progress toward the dream** — every
+  daily you complete moves it forward.
+- [x] **How it resolves** — at **Departure** (week's end): a ceremony + the
+  dream's outcome added as a page in the growth book (#1).
 
-## E. The persistent self (carries across worlds)
-- [ ] **Avatar** — drawn ONCE for the summer, or **re-drawn per world** (you in
-  pirate garb, you in a spacesuit…)? 💭 per-world self-portraits could be the
-  most magical artifact of all.
-- [ ] **Age = dailies** — accrues across ALL worlds (the summer total), never
-  resets.
-- [ ] **Words / skills / abilities** — KEPT across worlds (you accumulate every
-  world's gifts) or reset each week? (Lean: kept — the self grows.)
-- [ ] **Name** — one summer-name, or a new world-name each week?
+## E. The persistent self — SETTLED (2026-06-06)
+- [x] **The rule: the self ACCUMULATES; the world is FRESH; collection flows
+  UP.** What's yours grows all summer; what's the world's resets each week; what
+  you pick up in a world JOINS your permanent self.
+- [x] **Avatar** — drawn ONCE (your face for the summer) + optional **per-world
+  costumes** (you in pirate garb, in a spacesuit) as a magical extra. Bookend:
+  re-draw yourself at the end (age 0 → age N).
+- [x] **Age = dailies** — accrues across ALL worlds; never resets, never drops.
+- [x] **Words / skills / abilities** — KEPT + collected: each world's earned
+  words / skills join your permanent set; you leave the summer with all of them.
+- [x] **Name** — one summer-name (your world-self), constant across worlds.
 
-## F. The two surfaces (the age blend — detail it)
-- [ ] **The line** — strict by cohort band, or a per-child / director toggle?
-- [ ] **The language map** — per field, the 4–6 word vs the 7–12 word
-  ("how many days you've come" vs "age 9"; "what you can do" vs "abilities").
-- [ ] **Fewer fields for little ones**, or same data in soft language?
+## F. The two surfaces — language map — SETTLED shape (2026-06-06)
+Same data, two voices (4–6 may also simply hide the heavier fields):
+
+| field | 7–12 (full world) | 4–6 (soft) |
+|---|---|---|
+| avatar | "your character" | "the you you drew" |
+| name | "your world-name" | "what to call you" |
+| age | "Age 9" | "9 days in your world" |
+| skills | "Skills" + badges | "things you can do" |
+| abilities | "your abilities" | "your power words" |
+| crew | "your crew" | "your team" |
+| dream | "your quest" | "what you're after" |
+| world | "Week 3 · Deep Space" | "this week: SPACE! 🚀" |
+
+- [x] Same data underneath; the surface (words + which fields show) switches by
+  age band (or a director toggle).
 
 ## G. Progression, the arc & no-punishment
 - [ ] What **grows** over the summer (age, skills, words, the avatar, the crew)?
@@ -152,15 +200,21 @@ already built get *re-skinned* by. New world = new pack, same engine.
 
 ---
 
-## Highest-leverage first (suggested order to settle)
-1. **A — the worlds**: catalog + cadence + who authors them. Everything hangs
-   off the weekly-world frame.
-2. **C — the crew = real groups?**: deciding whether a crew IS a classroom
-   group unblocks a lot of plumbing.
-3. **D — the dream = missions?**: tying the quest to missions/dailies (#16)
-   makes "age = progress" concrete.
-4. **E — kept vs reset across worlds** (words/skills/avatar): defines the
-   persistent self.
-5. **F — the 4–6 vs 7–12 language map**: same data, two surfaces.
+## The spine — SETTLED (2026-06-06)
+The five highest-leverage decisions are made: **A** worlds · **C** crew ·
+**D** dream · **E** persistent self · **F** surfaces. The world has a spine to
+design against.
 
-Settle these five and the world has a spine to design against.
+**Still to shape (second tier):**
+- **§B** — the per-world pack CONTENTS (flesh out each of the 8 worlds: its
+  people / things / words / dream / culture).
+- **§G** — progression feel + milestone moments + the no-punishment vow.
+- **§H** — per-element authorship (who sets each piece).
+- **§I** — the social / shared dimension (do kids see each other's worlds).
+- **§J** — privacy specifics (no real location; the pseudonymous-self insight).
+- **§K** — the arrival (day-one) + week-one rituals.
+
+**Then:** promote this into a real **design doc** (the data model + the "me" /
+world screens + how each field maps to roles / supplies / action-words /
+missions), or build the **smallest slice** — the day-one *"draw yourself →
+that's your face in the world."*
