@@ -159,3 +159,7 @@ streams:
       # (space_id IS NULL) arrives via the separate `global_content`
       # stream (declared above), NOT here.
       - SELECT * FROM content_items          WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())
+      # Different World — the persistent in-world self (drawn avatar +
+      # chosen name), 1:1 with a subject. One row per enrolled child;
+      # tiny. See docs/WORLD.md + supabase/migrations/20260606000001.
+      - SELECT * FROM character_sheets       WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())

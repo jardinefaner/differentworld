@@ -95,6 +95,8 @@ import 'package:differentworld/features/vehicles/vehicle_scan_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_list_screen.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart'
     show VehicleLogKind;
+import 'package:differentworld/features/world/character_sheet_screen.dart';
+import 'package:differentworld/features/world/draw_self_screen.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/foundation.dart';
@@ -534,6 +536,25 @@ final routerProvider = Provider<GoRouter>((ref) {
                     child: HealthProfileScreen(subject: subject),
                   );
                 },
+              ),
+              // Different World — the persistent in-world self (docs/WORLD.md).
+              // Both build from the path id alone so a kid-mode bounce-back
+              // (which drops `extra`) rebuilds cleanly.
+              GoRoute(
+                path: 'subjects/:id/me',
+                builder: (_, state) => RouteTitle(
+                  title: 'World self',
+                  child: CharacterSheetScreen(
+                    subjectId: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'subjects/:id/draw',
+                builder: (_, state) => DrawSelfScreen(
+                  subjectId: state.pathParameters['id']!,
+                  displayName: state.extra as String?,
+                ),
               ),
               GoRoute(
                 path: 'activities',

@@ -336,6 +336,20 @@ const appSchema = Schema([
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
+  // ---- Different World ----------------------------------------------------
+  // The persistent in-world self (drawn avatar + chosen name). 1:1 with a
+  // subject. See supabase/migrations/20260606000001_character_sheets.sql.
+  Table('character_sheets', [
+    Column.text('space_id'),
+    Column.text('subject_id'),
+    Column.text('chosen_name'),
+    Column.text('avatar_url'),
+    Column.text('born_on'),
+    Column.text('culture'),
+    Column.text('capabilities'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
   // ---- Camp scheduling ----------------------------------------------------
   // See supabase/migrations/20260519000003_camp_scheduling.sql.
   Table('locations', [

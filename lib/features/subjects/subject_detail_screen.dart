@@ -16,6 +16,7 @@ import 'package:differentworld/features/subjects/widgets/health_profile_card.dar
 import 'package:differentworld/features/subjects/widgets/observation_item.dart';
 import 'package:differentworld/features/subjects/widgets/pickup_list.dart';
 import 'package:differentworld/features/subjects/widgets/today_status_card.dart';
+import 'package:differentworld/features/world/character_sheet_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
@@ -23,6 +24,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -275,6 +277,15 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
           ),
         ),
 
+        // Different World — the persistent in-world self (docs/WORLD.md).
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: _WorldSelfTile(
+            subjectId: subject.id,
+            firstName: subject.firstName,
+          ),
+        ),
+
         // Section index chips: scroll-anchored quick links. Tap to
         // jump to a section. Lightweight; doesn't introduce slivers.
         _SectionChips(
@@ -501,6 +512,38 @@ class _SectionGap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SizedBox(height: 32);
+}
+
+/// Entry point to the child's persistent in-world self (Different World;
+/// docs/WORLD.md). Reactive — shows the drawn avatar once it exists, otherwise
+/// a "draw + name" prompt. Tapping opens the Me screen.
+class _WorldSelfTile extends ConsumerWidget {
+  const _WorldSelfTile({required this.subjectId, required this.firstName});
+
+  final String subjectId;
+  final String firstName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sheet = ref.watch(characterSheetForSubjectProvider(subjectId)).value;
+    final chosen = sheet?.chosenName?.trim();
+    final hasName = chosen != null && chosen.isNotEmpty;
+    final hasDrawing = sheet?.avatarUrl != null;
+    final subtitle = hasDrawing
+        ? (hasName ? chosen : 'Self-portrait saved')
+        : 'Draw + name their summer self';
+    return FeatureCard(
+      leading: PersonAvatar(
+        name: hasName ? chosen : firstName,
+        photoUrl: sheet?.avatarUrl,
+        radius: 22,
+      ),
+      title: 'World self',
+      subtitle: subtitle,
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push('/subjects/$subjectId/me'),
+    );
+  }
 }
 
 /// Horizontal scroller of section anchors at the top of the detail

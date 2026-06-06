@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/dao/attachments_dao.dart';
 import 'package:differentworld/core/db/dao/attendance_dao.dart';
 import 'package:differentworld/core/db/dao/captures_dao.dart';
 import 'package:differentworld/core/db/dao/certifications_dao.dart';
+import 'package:differentworld/core/db/dao/character_sheets_dao.dart';
 import 'package:differentworld/core/db/dao/content_bank_dao.dart';
 import 'package:differentworld/core/db/dao/dismissed_insights_dao.dart';
 import 'package:differentworld/core/db/dao/entries_dao.dart';
@@ -564,6 +565,27 @@ class ActivitySupplies extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// The persistent in-world SELF (Different World; docs/WORLD.md,
+/// docs/WORLD_DESIGN.md). 1:1 with a subject. `avatarUrl` is the child's
+/// self-DRAWING — kept separate from the subject's administrative `photoUrl`
+/// so a crayon portrait never clobbers the pickup-ID photo. Age is derived
+/// from completed dailies (no stored streak — the no-punishment vow).
+class CharacterSheets extends Table {
+  TextColumn get id => text()();
+  TextColumn get spaceId => text()();
+  TextColumn get subjectId => text()();
+  TextColumn get chosenName => text().nullable()();
+  TextColumn get avatarUrl => text().nullable()();
+  TextColumn get bornOn => text().nullable()(); // ISO date
+  TextColumn get culture => text().nullable()();
+  TextColumn get capabilities => text().nullable()(); // raw JSON
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Real jobs a kid (or counselor) actually does, with real evidence
 /// (docs/MISSIONS.md). The grounded counterpart to the imaginative Role
 /// Cards. `actions` is a JSON array string (parse client-side);
@@ -865,6 +887,8 @@ class Events extends Table {
     SurveyResponses, SurveyPickerOptions,
     DismissedInsights, Captures, Tasks, Messages,
     Exports, ExportRecipients,
+    // Different World — the persistent in-world self.
+    CharacterSheets,
     // Supplies inventory.
     Supplies,
     // Missions — real jobs with evidence.
@@ -885,6 +909,7 @@ class Events extends Table {
     AttachmentsDao,
     AttendanceDao,
     CapturesDao,
+    CharacterSheetsDao,
     CertificationsDao,
     DismissedInsightsDao,
     EntriesDao,

@@ -14496,6 +14496,624 @@ class ExportRecipientsCompanion extends UpdateCompanion<ExportRecipient> {
   }
 }
 
+class $CharacterSheetsTable extends CharacterSheets
+    with TableInfo<$CharacterSheetsTable, CharacterSheet> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CharacterSheetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _spaceIdMeta = const VerificationMeta(
+    'spaceId',
+  );
+  @override
+  late final GeneratedColumn<String> spaceId = GeneratedColumn<String>(
+    'space_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _chosenNameMeta = const VerificationMeta(
+    'chosenName',
+  );
+  @override
+  late final GeneratedColumn<String> chosenName = GeneratedColumn<String>(
+    'chosen_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bornOnMeta = const VerificationMeta('bornOn');
+  @override
+  late final GeneratedColumn<String> bornOn = GeneratedColumn<String>(
+    'born_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cultureMeta = const VerificationMeta(
+    'culture',
+  );
+  @override
+  late final GeneratedColumn<String> culture = GeneratedColumn<String>(
+    'culture',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _capabilitiesMeta = const VerificationMeta(
+    'capabilities',
+  );
+  @override
+  late final GeneratedColumn<String> capabilities = GeneratedColumn<String>(
+    'capabilities',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<String> createdAt = GeneratedColumn<String>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<String> updatedAt = GeneratedColumn<String>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    spaceId,
+    subjectId,
+    chosenName,
+    avatarUrl,
+    bornOn,
+    culture,
+    capabilities,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'character_sheets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CharacterSheet> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('space_id')) {
+      context.handle(
+        _spaceIdMeta,
+        spaceId.isAcceptableOrUnknown(data['space_id']!, _spaceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_spaceIdMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_subjectIdMeta);
+    }
+    if (data.containsKey('chosen_name')) {
+      context.handle(
+        _chosenNameMeta,
+        chosenName.isAcceptableOrUnknown(data['chosen_name']!, _chosenNameMeta),
+      );
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
+    }
+    if (data.containsKey('born_on')) {
+      context.handle(
+        _bornOnMeta,
+        bornOn.isAcceptableOrUnknown(data['born_on']!, _bornOnMeta),
+      );
+    }
+    if (data.containsKey('culture')) {
+      context.handle(
+        _cultureMeta,
+        culture.isAcceptableOrUnknown(data['culture']!, _cultureMeta),
+      );
+    }
+    if (data.containsKey('capabilities')) {
+      context.handle(
+        _capabilitiesMeta,
+        capabilities.isAcceptableOrUnknown(
+          data['capabilities']!,
+          _capabilitiesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CharacterSheet map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CharacterSheet(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      spaceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}space_id'],
+      )!,
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      )!,
+      chosenName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}chosen_name'],
+      ),
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
+      bornOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}born_on'],
+      ),
+      culture: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}culture'],
+      ),
+      capabilities: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}capabilities'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CharacterSheetsTable createAlias(String alias) {
+    return $CharacterSheetsTable(attachedDatabase, alias);
+  }
+}
+
+class CharacterSheet extends DataClass implements Insertable<CharacterSheet> {
+  final String id;
+  final String spaceId;
+  final String subjectId;
+  final String? chosenName;
+  final String? avatarUrl;
+  final String? bornOn;
+  final String? culture;
+  final String? capabilities;
+  final String createdAt;
+  final String updatedAt;
+  const CharacterSheet({
+    required this.id,
+    required this.spaceId,
+    required this.subjectId,
+    this.chosenName,
+    this.avatarUrl,
+    this.bornOn,
+    this.culture,
+    this.capabilities,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['space_id'] = Variable<String>(spaceId);
+    map['subject_id'] = Variable<String>(subjectId);
+    if (!nullToAbsent || chosenName != null) {
+      map['chosen_name'] = Variable<String>(chosenName);
+    }
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
+    if (!nullToAbsent || bornOn != null) {
+      map['born_on'] = Variable<String>(bornOn);
+    }
+    if (!nullToAbsent || culture != null) {
+      map['culture'] = Variable<String>(culture);
+    }
+    if (!nullToAbsent || capabilities != null) {
+      map['capabilities'] = Variable<String>(capabilities);
+    }
+    map['created_at'] = Variable<String>(createdAt);
+    map['updated_at'] = Variable<String>(updatedAt);
+    return map;
+  }
+
+  CharacterSheetsCompanion toCompanion(bool nullToAbsent) {
+    return CharacterSheetsCompanion(
+      id: Value(id),
+      spaceId: Value(spaceId),
+      subjectId: Value(subjectId),
+      chosenName: chosenName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(chosenName),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
+      bornOn: bornOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bornOn),
+      culture: culture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(culture),
+      capabilities: capabilities == null && nullToAbsent
+          ? const Value.absent()
+          : Value(capabilities),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CharacterSheet.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CharacterSheet(
+      id: serializer.fromJson<String>(json['id']),
+      spaceId: serializer.fromJson<String>(json['spaceId']),
+      subjectId: serializer.fromJson<String>(json['subjectId']),
+      chosenName: serializer.fromJson<String?>(json['chosenName']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      bornOn: serializer.fromJson<String?>(json['bornOn']),
+      culture: serializer.fromJson<String?>(json['culture']),
+      capabilities: serializer.fromJson<String?>(json['capabilities']),
+      createdAt: serializer.fromJson<String>(json['createdAt']),
+      updatedAt: serializer.fromJson<String>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'spaceId': serializer.toJson<String>(spaceId),
+      'subjectId': serializer.toJson<String>(subjectId),
+      'chosenName': serializer.toJson<String?>(chosenName),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'bornOn': serializer.toJson<String?>(bornOn),
+      'culture': serializer.toJson<String?>(culture),
+      'capabilities': serializer.toJson<String?>(capabilities),
+      'createdAt': serializer.toJson<String>(createdAt),
+      'updatedAt': serializer.toJson<String>(updatedAt),
+    };
+  }
+
+  CharacterSheet copyWith({
+    String? id,
+    String? spaceId,
+    String? subjectId,
+    Value<String?> chosenName = const Value.absent(),
+    Value<String?> avatarUrl = const Value.absent(),
+    Value<String?> bornOn = const Value.absent(),
+    Value<String?> culture = const Value.absent(),
+    Value<String?> capabilities = const Value.absent(),
+    String? createdAt,
+    String? updatedAt,
+  }) => CharacterSheet(
+    id: id ?? this.id,
+    spaceId: spaceId ?? this.spaceId,
+    subjectId: subjectId ?? this.subjectId,
+    chosenName: chosenName.present ? chosenName.value : this.chosenName,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    bornOn: bornOn.present ? bornOn.value : this.bornOn,
+    culture: culture.present ? culture.value : this.culture,
+    capabilities: capabilities.present ? capabilities.value : this.capabilities,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CharacterSheet copyWithCompanion(CharacterSheetsCompanion data) {
+    return CharacterSheet(
+      id: data.id.present ? data.id.value : this.id,
+      spaceId: data.spaceId.present ? data.spaceId.value : this.spaceId,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      chosenName: data.chosenName.present
+          ? data.chosenName.value
+          : this.chosenName,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      bornOn: data.bornOn.present ? data.bornOn.value : this.bornOn,
+      culture: data.culture.present ? data.culture.value : this.culture,
+      capabilities: data.capabilities.present
+          ? data.capabilities.value
+          : this.capabilities,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CharacterSheet(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('chosenName: $chosenName, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('bornOn: $bornOn, ')
+          ..write('culture: $culture, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    spaceId,
+    subjectId,
+    chosenName,
+    avatarUrl,
+    bornOn,
+    culture,
+    capabilities,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CharacterSheet &&
+          other.id == this.id &&
+          other.spaceId == this.spaceId &&
+          other.subjectId == this.subjectId &&
+          other.chosenName == this.chosenName &&
+          other.avatarUrl == this.avatarUrl &&
+          other.bornOn == this.bornOn &&
+          other.culture == this.culture &&
+          other.capabilities == this.capabilities &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CharacterSheetsCompanion extends UpdateCompanion<CharacterSheet> {
+  final Value<String> id;
+  final Value<String> spaceId;
+  final Value<String> subjectId;
+  final Value<String?> chosenName;
+  final Value<String?> avatarUrl;
+  final Value<String?> bornOn;
+  final Value<String?> culture;
+  final Value<String?> capabilities;
+  final Value<String> createdAt;
+  final Value<String> updatedAt;
+  final Value<int> rowid;
+  const CharacterSheetsCompanion({
+    this.id = const Value.absent(),
+    this.spaceId = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.chosenName = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.bornOn = const Value.absent(),
+    this.culture = const Value.absent(),
+    this.capabilities = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CharacterSheetsCompanion.insert({
+    required String id,
+    required String spaceId,
+    required String subjectId,
+    this.chosenName = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.bornOn = const Value.absent(),
+    this.culture = const Value.absent(),
+    this.capabilities = const Value.absent(),
+    required String createdAt,
+    required String updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       spaceId = Value(spaceId),
+       subjectId = Value(subjectId),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<CharacterSheet> custom({
+    Expression<String>? id,
+    Expression<String>? spaceId,
+    Expression<String>? subjectId,
+    Expression<String>? chosenName,
+    Expression<String>? avatarUrl,
+    Expression<String>? bornOn,
+    Expression<String>? culture,
+    Expression<String>? capabilities,
+    Expression<String>? createdAt,
+    Expression<String>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (spaceId != null) 'space_id': spaceId,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (chosenName != null) 'chosen_name': chosenName,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (bornOn != null) 'born_on': bornOn,
+      if (culture != null) 'culture': culture,
+      if (capabilities != null) 'capabilities': capabilities,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CharacterSheetsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? spaceId,
+    Value<String>? subjectId,
+    Value<String?>? chosenName,
+    Value<String?>? avatarUrl,
+    Value<String?>? bornOn,
+    Value<String?>? culture,
+    Value<String?>? capabilities,
+    Value<String>? createdAt,
+    Value<String>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CharacterSheetsCompanion(
+      id: id ?? this.id,
+      spaceId: spaceId ?? this.spaceId,
+      subjectId: subjectId ?? this.subjectId,
+      chosenName: chosenName ?? this.chosenName,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bornOn: bornOn ?? this.bornOn,
+      culture: culture ?? this.culture,
+      capabilities: capabilities ?? this.capabilities,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (spaceId.present) {
+      map['space_id'] = Variable<String>(spaceId.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (chosenName.present) {
+      map['chosen_name'] = Variable<String>(chosenName.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (bornOn.present) {
+      map['born_on'] = Variable<String>(bornOn.value);
+    }
+    if (culture.present) {
+      map['culture'] = Variable<String>(culture.value);
+    }
+    if (capabilities.present) {
+      map['capabilities'] = Variable<String>(capabilities.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<String>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<String>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CharacterSheetsCompanion(')
+          ..write('id: $id, ')
+          ..write('spaceId: $spaceId, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('chosenName: $chosenName, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('bornOn: $bornOn, ')
+          ..write('culture: $culture, ')
+          ..write('capabilities: $capabilities, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SuppliesTable extends Supplies with TableInfo<$SuppliesTable, Supply> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -24354,6 +24972,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ExportRecipientsTable exportRecipients = $ExportRecipientsTable(
     this,
   );
+  late final $CharacterSheetsTable characterSheets = $CharacterSheetsTable(
+    this,
+  );
   late final $SuppliesTable supplies = $SuppliesTable(this);
   late final $MissionsTable missions = $MissionsTable(this);
   late final $ActivitySuppliesTable activitySupplies = $ActivitySuppliesTable(
@@ -24380,6 +25001,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final AttendanceDao attendanceDao = AttendanceDao(this as AppDatabase);
   late final CapturesDao capturesDao = CapturesDao(this as AppDatabase);
+  late final CharacterSheetsDao characterSheetsDao = CharacterSheetsDao(
+    this as AppDatabase,
+  );
   late final CertificationsDao certificationsDao = CertificationsDao(
     this as AppDatabase,
   );
@@ -24444,6 +25068,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     messages,
     exports,
     exportRecipients,
+    characterSheets,
     supplies,
     missions,
     activitySupplies,
@@ -31408,6 +32033,311 @@ typedef $$ExportRecipientsTableProcessedTableManager =
       ExportRecipient,
       PrefetchHooks Function()
     >;
+typedef $$CharacterSheetsTableCreateCompanionBuilder =
+    CharacterSheetsCompanion Function({
+      required String id,
+      required String spaceId,
+      required String subjectId,
+      Value<String?> chosenName,
+      Value<String?> avatarUrl,
+      Value<String?> bornOn,
+      Value<String?> culture,
+      Value<String?> capabilities,
+      required String createdAt,
+      required String updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CharacterSheetsTableUpdateCompanionBuilder =
+    CharacterSheetsCompanion Function({
+      Value<String> id,
+      Value<String> spaceId,
+      Value<String> subjectId,
+      Value<String?> chosenName,
+      Value<String?> avatarUrl,
+      Value<String?> bornOn,
+      Value<String?> culture,
+      Value<String?> capabilities,
+      Value<String> createdAt,
+      Value<String> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CharacterSheetsTableFilterComposer
+    extends Composer<_$AppDatabase, $CharacterSheetsTable> {
+  $$CharacterSheetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get chosenName => $composableBuilder(
+    column: $table.chosenName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bornOn => $composableBuilder(
+    column: $table.bornOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get culture => $composableBuilder(
+    column: $table.culture,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CharacterSheetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CharacterSheetsTable> {
+  $$CharacterSheetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get spaceId => $composableBuilder(
+    column: $table.spaceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get chosenName => $composableBuilder(
+    column: $table.chosenName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bornOn => $composableBuilder(
+    column: $table.bornOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get culture => $composableBuilder(
+    column: $table.culture,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CharacterSheetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CharacterSheetsTable> {
+  $$CharacterSheetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get spaceId =>
+      $composableBuilder(column: $table.spaceId, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get chosenName => $composableBuilder(
+    column: $table.chosenName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get bornOn =>
+      $composableBuilder(column: $table.bornOn, builder: (column) => column);
+
+  GeneratedColumn<String> get culture =>
+      $composableBuilder(column: $table.culture, builder: (column) => column);
+
+  GeneratedColumn<String> get capabilities => $composableBuilder(
+    column: $table.capabilities,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CharacterSheetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CharacterSheetsTable,
+          CharacterSheet,
+          $$CharacterSheetsTableFilterComposer,
+          $$CharacterSheetsTableOrderingComposer,
+          $$CharacterSheetsTableAnnotationComposer,
+          $$CharacterSheetsTableCreateCompanionBuilder,
+          $$CharacterSheetsTableUpdateCompanionBuilder,
+          (
+            CharacterSheet,
+            BaseReferences<
+              _$AppDatabase,
+              $CharacterSheetsTable,
+              CharacterSheet
+            >,
+          ),
+          CharacterSheet,
+          PrefetchHooks Function()
+        > {
+  $$CharacterSheetsTableTableManager(
+    _$AppDatabase db,
+    $CharacterSheetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CharacterSheetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CharacterSheetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CharacterSheetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> spaceId = const Value.absent(),
+                Value<String> subjectId = const Value.absent(),
+                Value<String?> chosenName = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<String?> bornOn = const Value.absent(),
+                Value<String?> culture = const Value.absent(),
+                Value<String?> capabilities = const Value.absent(),
+                Value<String> createdAt = const Value.absent(),
+                Value<String> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CharacterSheetsCompanion(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                chosenName: chosenName,
+                avatarUrl: avatarUrl,
+                bornOn: bornOn,
+                culture: culture,
+                capabilities: capabilities,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String spaceId,
+                required String subjectId,
+                Value<String?> chosenName = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<String?> bornOn = const Value.absent(),
+                Value<String?> culture = const Value.absent(),
+                Value<String?> capabilities = const Value.absent(),
+                required String createdAt,
+                required String updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CharacterSheetsCompanion.insert(
+                id: id,
+                spaceId: spaceId,
+                subjectId: subjectId,
+                chosenName: chosenName,
+                avatarUrl: avatarUrl,
+                bornOn: bornOn,
+                culture: culture,
+                capabilities: capabilities,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CharacterSheetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CharacterSheetsTable,
+      CharacterSheet,
+      $$CharacterSheetsTableFilterComposer,
+      $$CharacterSheetsTableOrderingComposer,
+      $$CharacterSheetsTableAnnotationComposer,
+      $$CharacterSheetsTableCreateCompanionBuilder,
+      $$CharacterSheetsTableUpdateCompanionBuilder,
+      (
+        CharacterSheet,
+        BaseReferences<_$AppDatabase, $CharacterSheetsTable, CharacterSheet>,
+      ),
+      CharacterSheet,
+      PrefetchHooks Function()
+    >;
 typedef $$SuppliesTableCreateCompanionBuilder =
     SuppliesCompanion Function({
       required String id,
@@ -36087,6 +37017,8 @@ class $AppDatabaseManager {
       $$ExportsTableTableManager(_db, _db.exports);
   $$ExportRecipientsTableTableManager get exportRecipients =>
       $$ExportRecipientsTableTableManager(_db, _db.exportRecipients);
+  $$CharacterSheetsTableTableManager get characterSheets =>
+      $$CharacterSheetsTableTableManager(_db, _db.characterSheets);
   $$SuppliesTableTableManager get supplies =>
       $$SuppliesTableTableManager(_db, _db.supplies);
   $$MissionsTableTableManager get missions =>

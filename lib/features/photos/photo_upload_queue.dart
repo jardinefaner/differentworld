@@ -251,6 +251,12 @@ class PhotoUploadQueue {
           await db.membersDao.updateAvatarUrl(e.entityId, e.bucketPath);
         case 'subject':
           await db.subjectsDao.updatePhotoUrl(e.entityId, e.bucketPath);
+        case 'character_sheet':
+          // Different World drawn avatar. entityId == subjectId; the sheet
+          // row was created with the `pending:` token at draw time, so this
+          // patches it to the real path.
+          await db.characterSheetsDao
+              .setAvatarUrlForSubject(e.entityId, e.bucketPath);
         case 'attachment':
           // Attachments use the bucket path as the `url` column.
           await db.attachmentsDao.updateUrl(e.entityId, e.bucketPath);
