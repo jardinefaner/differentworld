@@ -27,8 +27,7 @@ class JoinOrCreateScreen extends ConsumerStatefulWidget {
   const JoinOrCreateScreen({super.key});
 
   @override
-  ConsumerState<JoinOrCreateScreen> createState() =>
-      _JoinOrCreateScreenState();
+  ConsumerState<JoinOrCreateScreen> createState() => _JoinOrCreateScreenState();
 }
 
 enum _Stage {
@@ -97,7 +96,8 @@ class _JoinOrCreateScreenState extends ConsumerState<JoinOrCreateScreen> {
         setState(() {
           _stage = _Stage.enteringCode;
           _codeController.text = pending;
-          _error = "We couldn't find that invite. Double-check the code "
+          _error =
+              "We couldn't find that invite. Double-check the code "
               'with your director.';
         });
         return;
@@ -130,7 +130,8 @@ class _JoinOrCreateScreenState extends ConsumerState<JoinOrCreateScreen> {
       if (!mounted) return;
       setState(() {
         _stage = _Stage.choosing;
-        _error = 'Could not check for your invite. You can still join '
+        _error =
+            'Could not check for your invite. You can still join '
             'with a code or start a new program.';
       });
     }
@@ -156,7 +157,8 @@ class _JoinOrCreateScreenState extends ConsumerState<JoinOrCreateScreen> {
       if (!mounted) return;
       setState(() {
         _stage = _Stage.enteringCode;
-        _error = "We couldn't find that invite. Double-check the code "
+        _error =
+            "We couldn't find that invite. Double-check the code "
             'with your director.';
       });
     } on Exception catch (e, st) {
@@ -189,28 +191,28 @@ class _JoinOrCreateScreenState extends ConsumerState<JoinOrCreateScreen> {
     return switch (_stage) {
       _Stage.autoMatching => const _AutoMatchScaffold(),
       _Stage.choosing => _ChoosingScaffold(
-          onEnterCode: () => setState(() {
-            _stage = _Stage.enteringCode;
-            _error = null;
-          }),
-          warning: _error,
-        ),
+        onEnterCode: () => setState(() {
+          _stage = _Stage.enteringCode;
+          _error = null;
+        }),
+        warning: _error,
+      ),
       _Stage.enteringCode => _CodeEntryScaffold(
-          controller: _codeController,
-          error: _error,
-          submitting: false,
-          onSubmit: _redeemCode,
-          onBack: () => setState(() {
-            _stage = _Stage.choosing;
-            _error = null;
-            _codeController.clear();
-          }),
-        ),
+        controller: _codeController,
+        error: _error,
+        submitting: false,
+        onSubmit: _redeemCode,
+        onBack: () => setState(() {
+          _stage = _Stage.choosing;
+          _error = null;
+          _codeController.clear();
+        }),
+      ),
       _Stage.redeeming => _CodeEntryScaffold(
-          controller: _codeController,
-          submitting: true,
-          onSubmit: _redeemCode,
-        ),
+        controller: _codeController,
+        submitting: true,
+        onSubmit: _redeemCode,
+      ),
     };
   }
 }
@@ -307,65 +309,65 @@ class _ChoosingScaffold extends StatelessWidget {
                   size: 56,
                   color: theme.colorScheme.primary,
                 ),
-                  if (warning != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      warning!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                      textAlign: TextAlign.center,
+                if (warning != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    warning!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
                     ),
-                  ],
-                  const SizedBox(height: 32),
-                  _PrimaryCard(
-                    icon: Icons.key_outlined,
-                    title: 'I have an invite code',
-                    subtitle:
-                        'Your director gave you a 6-character code or a '
-                        'QR to scan.',
-                    onTap: onEnterCode,
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12),
-                  _PrimaryCard(
-                    icon: Icons.add_business_outlined,
-                    title: 'Start a new program',
-                    subtitle:
-                        'About 3 questions, takes a minute. You become its '
-                        'director and can invite your team.',
-                    onTap: () {
-                      unawaited(
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const CreateSpaceScreen(),
-                          ),
+                ],
+                const SizedBox(height: 32),
+                _PrimaryCard(
+                  icon: Icons.key_outlined,
+                  title: 'I have an invite code',
+                  subtitle:
+                      'Your director gave you a 6-character code or a '
+                      'QR to scan.',
+                  onTap: onEnterCode,
+                ),
+                const SizedBox(height: 12),
+                _PrimaryCard(
+                  icon: Icons.add_business_outlined,
+                  title: 'Start a new program',
+                  subtitle:
+                      'About 3 questions, takes a minute. You become its '
+                      'director and can invite your team.',
+                  onTap: () {
+                    unawaited(
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const CreateSpaceScreen(),
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  // Escape hatch: signed in with the wrong Google
-                  // account? Sign out and start over without quitting
-                  // the app.
-                  Consumer(builder: (context, ref, _) {
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                // Escape hatch: signed in with the wrong Google
+                // account? Sign out and start over without quitting
+                // the app.
+                Consumer(
+                  builder: (context, ref, _) {
                     return Center(
                       child: TextButton(
                         onPressed: () async {
-                          await ref
-                              .read(authActionsProvider)
-                              .signOut();
+                          await ref.read(authActionsProvider).signOut();
                         },
                         child: const Text(
                           'Use a different Google account',
                         ),
                       ),
                     );
-                  }),
-                ],
-              ),
+                  },
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 }
@@ -463,45 +465,45 @@ class _CodeEntryScaffold extends StatelessWidget {
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(height: 24),
-                  // 6-cell PIN-style input. Each cell is a Material 3
-                  // outlined box; typing into any one auto-advances to
-                  // the next. The hidden underlying TextField holds
-                  // the canonical value the rest of the screen reads.
-                  _PinInput(
-                    controller: controller,
-                    enabled: !submitting,
-                    onCompleted: onSubmit,
-                  ),
-                  if (error != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      error!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                      textAlign: TextAlign.center,
+                // 6-cell PIN-style input. Each cell is a Material 3
+                // outlined box; typing into any one auto-advances to
+                // the next. The hidden underlying TextField holds
+                // the canonical value the rest of the screen reads.
+                _PinInput(
+                  controller: controller,
+                  enabled: !submitting,
+                  onCompleted: onSubmit,
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    error!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
                     ),
-                  ],
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: submitting ? null : onSubmit,
-                    icon: submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.check),
-                    label: const Text('Join program'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
-              ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: submitting ? null : onSubmit,
+                  icon: submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
+                  label: const Text('Join program'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 }
@@ -624,7 +626,8 @@ class _PinInputState extends State<_PinInput> {
               for (var i = 0; i < 6; i++)
                 _PinCell(
                   char: i < value.length ? value[i] : null,
-                  active: widget.enabled && i == value.length && _focus.hasFocus,
+                  active:
+                      widget.enabled && i == value.length && _focus.hasFocus,
                   scheme: scheme,
                   textStyle: theme.textTheme.headlineMedium,
                 ),
@@ -656,7 +659,7 @@ class _PinCell extends StatelessWidget {
         : (char != null ? scheme.outline : scheme.outlineVariant);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 140),
-      width: 44,
+      width: 48, // ≥48dp touch target (a11y E1)
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),

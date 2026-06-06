@@ -8,6 +8,7 @@ import 'package:differentworld/features/photos/widgets/person_photo_network.dart
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -131,63 +132,69 @@ class _ObservationsFeed extends StatelessWidget {
       byDay[key]!.add(e);
     }
 
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ContentHeader(
-              title: 'Observations',
-              subtitle: _subtitleFor(entries.length, groupFilter, groups),
-              bottomGap: 8,
-            ),
-          ),
-        ),
-        // Classroom chip row — horizontal scroll, single-tap toggle.
-        if (groups.length > 1)
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  _ClassroomChip(
-                    label: 'All',
-                    selected: groupFilter == null,
-                    onTap: () => onFilterChanged(null),
-                  ),
-                  for (final g in groups)
-                    _ClassroomChip(
-                      label: g.name,
-                      selected: groupFilter == g.id,
-                      onTap: () => onFilterChanged(g.id),
-                    ),
-                ],
+    // Cap + center the day-grouped feed on desktop/web (was full-width).
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Breakpoints.splitMaxWidth),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ContentHeader(
+                  title: 'Observations',
+                  subtitle: _subtitleFor(entries.length, groupFilter, groups),
+                  bottomGap: 8,
+                ),
               ),
             ),
-          ),
-        if (entries.isEmpty && allCount > 0)
-          const SliverToBoxAdapter(
-            child: EmptyState(
-              icon: Icons.filter_alt_off_outlined,
-              title: 'No observations match this filter',
-            ),
-          ),
-        for (final key in dayOrder) ...[
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _DayHeader(label: _dayLabel(key)),
-          ),
-          SliverList.builder(
-            itemCount: byDay[key]!.length,
-            itemBuilder: (_, i) => _ObservationListItem(
-              entry: byDay[key]![i],
-            ),
-          ),
-        ],
-        const SliverToBoxAdapter(child: SizedBox(height: 96)),
-      ],
+            // Classroom chip row — horizontal scroll, single-tap toggle.
+            if (groups.length > 1)
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 44,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: [
+                      _ClassroomChip(
+                        label: 'All',
+                        selected: groupFilter == null,
+                        onTap: () => onFilterChanged(null),
+                      ),
+                      for (final g in groups)
+                        _ClassroomChip(
+                          label: g.name,
+                          selected: groupFilter == g.id,
+                          onTap: () => onFilterChanged(g.id),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            if (entries.isEmpty && allCount > 0)
+              const SliverToBoxAdapter(
+                child: EmptyState(
+                  icon: Icons.filter_alt_off_outlined,
+                  title: 'No observations match this filter',
+                ),
+              ),
+            for (final key in dayOrder) ...[
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _DayHeader(label: _dayLabel(key)),
+              ),
+              SliverList.builder(
+                itemCount: byDay[key]!.length,
+                itemBuilder: (_, i) => _ObservationListItem(
+                  entry: byDay[key]![i],
+                ),
+              ),
+            ],
+            const SliverToBoxAdapter(child: SizedBox(height: 96)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -324,9 +331,9 @@ class _ObservationListItem extends ConsumerWidget {
     final groupName = entry.groupId == null
         ? null
         : groupsAsync.value
-            ?.where((g) => g.id == entry.groupId)
-            .map((g) => g.name)
-            .firstOrNull;
+              ?.where((g) => g.id == entry.groupId)
+              .map((g) => g.name)
+              .firstOrNull;
 
     return ListTile(
       leading: PersonAvatar(
@@ -392,8 +399,7 @@ class _IndexPhotoThumb extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
                 child: PersonPhotoNetwork(
                   urlOrPath: photos.first,
-                  errorBuilder: (_) =>
-                      const Icon(Icons.broken_image_outlined),
+                  errorBuilder: (_) => const Icon(Icons.broken_image_outlined),
                 ),
               ),
             ),
