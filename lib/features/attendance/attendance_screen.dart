@@ -8,7 +8,9 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/attendance_row.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -20,6 +22,7 @@ import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Daily attendance for a single Group. Per-Subject status, optimistic
 /// writes, date scrubber, "Mark all present" shortcut.
@@ -92,8 +95,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       groupId: widget.groupId,
       date: _isoDate,
       subjectIds: subjects.map((s) => s.id).toList(),
-      alreadyRecordedSubjectIds:
-          records.map((r) => r.subjectId).toList(),
+      alreadyRecordedSubjectIds: records.map((r) => r.subjectId).toList(),
     );
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -151,75 +153,150 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           ),
         const SyncStatusIndicator(),
       ],
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ContentHeader(
-              title: 'Attendance',
-              subtitle: groupAsync.value?.name,
-              bottomGap: 8,
-            ),
-          ),
-          _DateScrubber(
-            label: _dateLabel(),
-            canGoForward: _canGoForward,
-            onPrev: () => _shiftDay(-1),
-            onNext: () => _shiftDay(1),
-            onTapLabel: _pickDate,
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: subjectsAsync.when(
-                loading: () =>
-                    const LoadingSlot(),
-                error: (e, _) => ErrorState(
-                  title: 'Could not load students',
-                  onRetry: () =>
-                      ref.invalidate(subjectsInGroupProvider(widget.groupId)),
-                ),
-                data: (subjects) {
-                  if (subjects.isEmpty) {
-                    return EmptyState(
-                      icon: Icons.child_care_outlined,
-                      title:
-                          'No ${labels.subjectPlural.toLowerCase()} '
-                          'in this ${labels.group.toLowerCase()}',
-                      message:
-                          'Add ${labels.subjectPlural.toLowerCase()} '
-                          'first, then come back to take '
-                          '${labels.attendanceNoun.toLowerCase()}.',
-                    );
-                  }
-                  return recordsAsync.when(
-                    loading: () =>
-                        const LoadingSlot(),
-                    error: (e, _) => ErrorState(
-                      title: 'Could not load attendance',
-                      onRetry: () => ref.invalidate(
-                        attendanceForDayProvider(
-                          (groupId: widget.groupId, date: _isoDate),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // The roster column, capped + centered so wide-and-short rows don't
+          // stretch into ribbons on desktop/web.
+          final content = Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ContentHeader(
+                      title: 'Attendance',
+                      subtitle: groupAsync.value?.name,
+                      bottomGap: 8,
+                    ),
+                  ),
+                  _DateScrubber(
+                    label: _dateLabel(),
+                    canGoForward: _canGoForward,
+                    onPrev: () => _shiftDay(-1),
+                    onNext: () => _shiftDay(1),
+                    onTapLabel: _pickDate,
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: subjectsAsync.when(
+                      loading: () => const LoadingSlot(),
+                      error: (e, _) => ErrorState(
+                        title: 'Could not load students',
+                        onRetry: () => ref.invalidate(
+                          subjectsInGroupProvider(widget.groupId),
                         ),
                       ),
+                      data: (subjects) {
+                        if (subjects.isEmpty) {
+                          return EmptyState(
+                            icon: Icons.child_care_outlined,
+                            title:
+                                'No ${labels.subjectPlural.toLowerCase()} '
+                                'in this ${labels.group.toLowerCase()}',
+                            message:
+                                'Add ${labels.subjectPlural.toLowerCase()} '
+                                'first, then come back to take '
+                                '${labels.attendanceNoun.toLowerCase()}.',
+                          );
+                        }
+                        return recordsAsync.when(
+                          loading: () => const LoadingSlot(),
+                          error: (e, _) => ErrorState(
+                            title: 'Could not load attendance',
+                            onRetry: () => ref.invalidate(
+                              attendanceForDayProvider(
+                                (groupId: widget.groupId, date: _isoDate),
+                              ),
+                            ),
+                          ),
+                          data: (records) => _AttendanceList(
+                            groupId: widget.groupId,
+                            date: _isoDate,
+                            subjects: subjects,
+                            records: records,
+                          ),
+                        );
+                      },
                     ),
-                    data: (records) => _AttendanceList(
-                      groupId: widget.groupId,
-                      date: _isoDate,
-                      subjects: subjects,
-                      records: records,
-                    ),
-                  );
-                },
+                  ),
+                  _SummaryBar(
+                    subjects: subjectsAsync.value,
+                    records: recordsAsync.value,
+                  ),
+                ],
               ),
             ),
-          _SummaryBar(
-            subjects: subjectsAsync.value,
-            records: recordsAsync.value,
-          ),
-        ],
+          );
+          // Desktop: a group-switcher rail beside the roster so a director can
+          // hop between classrooms without leaving the screen. Phone: just the
+          // capped roster (you arrived here for THIS group). "Mark all present"
+          // stays in the top-right action pill.
+          if (constraints.maxWidth >= Breakpoints.tablet) {
+            return Row(
+              children: [
+                SizedBox(
+                  width: 260,
+                  child: _GroupRail(selectedId: widget.groupId),
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: content),
+              ],
+            );
+          }
+          return content;
+        },
       ),
-      // FAB removed — "Mark all present" lives in the top-right
-      // primary action pill (see actions above).
+    );
+  }
+}
+
+/// Desktop-only left rail: every classroom, the current one highlighted; tap
+/// to switch which group's attendance is showing (replaces the route so the
+/// back stack doesn't pile up). Hidden below [Breakpoints.tablet], where you
+/// reach attendance per-group from the classroom and don't need a switcher.
+class _GroupRail extends ConsumerWidget {
+  const _GroupRail({required this.selectedId});
+
+  final String selectedId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final groups = ref.watch(groupsProvider).value ?? const <Group>[];
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Text(
+            'CLASSROOMS',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        for (final g in groups)
+          ListTile(
+            dense: true,
+            selected: g.id == selectedId,
+            selectedTileColor: theme.colorScheme.primaryContainer.withValues(
+              alpha: 0.5,
+            ),
+            leading: Icon(
+              Icons.meeting_room_outlined,
+              color: g.id == selectedId
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            title: Text(g.name, overflow: TextOverflow.ellipsis),
+            onTap: g.id == selectedId
+                ? null
+                : () => context.replace('/groups/${g.id}/attendance'),
+          ),
+      ],
     );
   }
 }
@@ -335,7 +412,12 @@ class _AttendanceList extends ConsumerWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(0, 4, 0, 96), // bottom clearance for FAB
+      padding: const EdgeInsets.fromLTRB(
+        0,
+        4,
+        0,
+        96,
+      ), // bottom clearance for FAB
       itemCount: subjects.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
@@ -343,12 +425,16 @@ class _AttendanceList extends ConsumerWidget {
         final scheme = Theme.of(context).colorScheme;
         Future<void> apply(AttendanceStatus? next) async {
           if (next == null) {
-            await ref.read(attendanceActionsProvider).clearStatus(
+            await ref
+                .read(attendanceActionsProvider)
+                .clearStatus(
                   subjectId: subject.id,
                   date: date,
                 );
           } else {
-            await ref.read(attendanceActionsProvider).setStatus(
+            await ref
+                .read(attendanceActionsProvider)
+                .setStatus(
                   groupId: groupId,
                   subjectId: subject.id,
                   date: date,
@@ -367,7 +453,9 @@ class _AttendanceList extends ConsumerWidget {
           key: ValueKey('att-${subject.id}-$date'),
           background: Container(
             alignment: Alignment.centerLeft,
-            color: AttendanceStatus.present.color(scheme).withValues(
+            color: AttendanceStatus.present
+                .color(scheme)
+                .withValues(
                   alpha: 0.20,
                 ),
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -390,7 +478,9 @@ class _AttendanceList extends ConsumerWidget {
           ),
           secondaryBackground: Container(
             alignment: Alignment.centerRight,
-            color: AttendanceStatus.absent.color(scheme).withValues(
+            color: AttendanceStatus.absent
+                .color(scheme)
+                .withValues(
                   alpha: 0.20,
                 ),
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -463,27 +553,27 @@ class _SummaryBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              ...AttendanceStatus.values
-                  .where((s) => (counts[s] ?? 0) > 0)
-                  .map((s) {
-                final color = s.color(theme.colorScheme);
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Row(
-                    children: [
-                      Icon(s.icon, size: 14, color: color),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${counts[s]}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.w600,
+              ...AttendanceStatus.values.where((s) => (counts[s] ?? 0) > 0).map(
+                (s) {
+                  final color = s.color(theme.colorScheme);
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Row(
+                      children: [
+                        Icon(s.icon, size: 14, color: color),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${counts[s]}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
+                      ],
+                    ),
+                  );
+                },
+              ),
               const Spacer(),
               if (unmarked > 0)
                 Text(
