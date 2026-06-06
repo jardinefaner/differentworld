@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,8 +37,7 @@ class FamilyMessagesScreen extends ConsumerWidget {
         body: EmptyState(
           icon: Icons.forum_outlined,
           title: 'No global messages view',
-          message:
-              "Staff reach threads from each child's detail screen.",
+          message: "Staff reach threads from each child's detail screen.",
         ),
       );
     }
@@ -63,21 +63,21 @@ class FamilyMessagesScreen extends ConsumerWidget {
                   'account; once they do, message threads will appear here.',
             );
           }
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 32),
+          // ResponsivePage caps + centers the thread list on desktop/web (was
+          // stretching full-width). It provides the side padding, so the items
+          // drop their own horizontal 16 to avoid doubling it.
+          return ResponsivePage(
+            bottomPadding: 32,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: ContentHeader(
-                  title: 'Messages',
-                  subtitle:
-                      'A direct line between you and the team — one '
-                      'thread per child.',
-                ),
+              const ContentHeader(
+                title: 'Messages',
+                subtitle:
+                    'A direct line between you and the team — one '
+                    'thread per child.',
               ),
               for (final child in children)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
                   child: _ChildThreadCard(
                     child: child,
                     guardianId: viewer.guardian.id,
@@ -111,7 +111,8 @@ class _ChildThreadCard extends StatelessWidget {
         .toList();
     final unread = mine
         .where(
-            (m) => m.senderKind == MessageSenderKind.staff && m.readAt == null)
+          (m) => m.senderKind == MessageSenderKind.staff && m.readAt == null,
+        )
         .length;
     final latest = mine.isEmpty ? null : mine.first;
     final fullName = '${child.firstName} ${child.lastName}'.trim();

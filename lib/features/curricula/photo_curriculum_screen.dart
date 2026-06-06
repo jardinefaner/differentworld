@@ -6,6 +6,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,8 +66,11 @@ class _PhotoCurriculumScreenState extends State<PhotoCurriculumScreen> {
   Widget build(BuildContext context) {
     return EdgeScaffold(
       backFallbackRoute: '/settings',
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      // ResponsivePage caps the column at 1200dp + scales the side padding
+      // (16/24/48) so the reference content doesn't stretch edge-to-edge on a
+      // desktop/web window. The list already had the horizontal padding (items
+      // don't), so this is a clean swap.
+      body: ResponsivePage(
         children: [
           const ContentHeader(
             title: 'Through My Eyes',
@@ -135,8 +139,7 @@ class _SessionDots extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   color: i < activeIndex
                       ? photoCurriculum[i].color.withValues(alpha: 0.4)
-                      : theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.4),
+                      : theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
                 ),
               ),
           ],
@@ -166,18 +169,18 @@ class _SessionDot extends StatelessWidget {
     final bg = active
         ? session.color.withValues(alpha: 0.18)
         : done
-            ? session.color.withValues(alpha: 0.08)
-            : theme.colorScheme.surfaceContainerLow;
+        ? session.color.withValues(alpha: 0.08)
+        : theme.colorScheme.surfaceContainerLow;
     final borderColor = active
         ? session.color
         : done
-            ? session.color.withValues(alpha: 0.4)
-            : theme.colorScheme.outlineVariant;
+        ? session.color.withValues(alpha: 0.4)
+        : theme.colorScheme.outlineVariant;
     final fg = active
         ? session.color
         : done
-            ? session.color.withValues(alpha: 0.7)
-            : theme.colorScheme.onSurfaceVariant;
+        ? session.color.withValues(alpha: 0.7)
+        : theme.colorScheme.onSurfaceVariant;
     return Semantics(
       label: 'Session ${session.number}, ${session.title}',
       button: true,
@@ -338,8 +341,9 @@ class _SessionBody extends StatelessWidget {
           trailing: Text(
             session.gameDuration,
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onPrimaryContainer
-                  .withValues(alpha: 0.8),
+              color: theme.colorScheme.onPrimaryContainer.withValues(
+                alpha: 0.8,
+              ),
             ),
           ),
           child: _Paragraph(
@@ -771,8 +775,9 @@ class _VocabBody extends StatelessWidget {
                 Text(
                   'Not one was taught. Every one was played.',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer
-                        .withValues(alpha: 0.85),
+                    color: theme.colorScheme.onPrimaryContainer.withValues(
+                      alpha: 0.85,
+                    ),
                     fontStyle: FontStyle.italic,
                   ),
                 ),

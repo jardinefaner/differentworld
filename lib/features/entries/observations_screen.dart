@@ -7,6 +7,7 @@ import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -52,8 +53,7 @@ class ObservationsScreen extends ConsumerWidget {
           PrimaryActionButton(
             tooltip: 'New observation',
             icon: Icons.add,
-            onPressed: () =>
-                context.push('/observations/new?groupId=$groupId'),
+            onPressed: () => context.push('/observations/new?groupId=$groupId'),
           ),
         const SyncStatusIndicator(),
       ],
@@ -86,24 +86,34 @@ class ObservationsScreen extends ConsumerWidget {
                   : null,
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 96),
-            itemCount: entries.length + 1,
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: 'Observations',
-                    subtitle: group?.name,
-                  ),
-                );
-              }
-              return _ObservationRow(
-                entry: entries[i - 1],
-                groupId: groupId,
-              );
-            },
+          // Cap + center the feed on desktop/web — the rows are ListTiles
+          // (their own 16dp padding), so a width cap is the right fix rather
+          // than ResponsivePage's extra padding.
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: Breakpoints.splitMaxWidth,
+              ),
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 96),
+                itemCount: entries.length + 1,
+                itemBuilder: (_, i) {
+                  if (i == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ContentHeader(
+                        title: 'Observations',
+                        subtitle: group?.name,
+                      ),
+                    );
+                  }
+                  return _ObservationRow(
+                    entry: entries[i - 1],
+                    groupId: groupId,
+                  );
+                },
+              ),
+            ),
           );
         },
       ),
@@ -130,7 +140,9 @@ class _ObservationRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final when = DateTime.tryParse(entry.recordedAt);
-    final whenLabel = when == null ? '' : DateFormat.MMMd().add_jm().format(when);
+    final whenLabel = when == null
+        ? ''
+        : DateFormat.MMMd().add_jm().format(when);
     final subjectId = entry.subjectId;
     final subjectsAsync = ref.watch(subjectsInGroupProvider(groupId));
     Subject? subject;
@@ -214,8 +226,7 @@ class _PhotoThumb extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
                 child: PersonPhotoNetwork(
                   urlOrPath: photos.first,
-                  errorBuilder: (_) =>
-                      const Icon(Icons.broken_image_outlined),
+                  errorBuilder: (_) => const Icon(Icons.broken_image_outlined),
                 ),
               ),
             ),
