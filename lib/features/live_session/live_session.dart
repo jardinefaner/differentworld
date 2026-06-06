@@ -47,8 +47,13 @@ class LiveSession {
     required String code,
     required Map<String, dynamic> initialState,
     required LiveReducer reduce,
+    String? topic,
   }) {
-    final channel = client.channel(topicFor(code));
+    // [topic] lets a caller use a SEPARATE channel namespace for the same
+    // join code — the cast layer passes `dw-cast-<CODE>` so a cast session
+    // can't collide with a `/live` per-game session that happens to share a
+    // code (which would feed the wrong-shaped state to the other's decoder).
+    final channel = client.channel(topic ?? topicFor(code));
     return LiveSession._(
       channel,
       role,

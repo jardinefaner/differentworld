@@ -1,0 +1,421 @@
+import 'dart:async';
+
+import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
+import 'package:differentworld/features/activity_runtime/content_engine.dart';
+import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/live_session/cast_session.dart';
+import 'package:differentworld/features/live_session/live_session.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// The **Cockpit** — the phone as the app remote (docs/LIVE_SESSIONS.md "the
+/// cast model"). The authority: it picks what to present (the launcher),
+/// drives it (the controls), and switches it at will. Everything here stays on
+/// the phone — only the chosen game + its state ride the wire to the Receiver.
+class CastCockpit extends ConsumerStatefulWidget {
+  const CastCockpit({required this.code, required this.onLeave, super.key});
+
+  final String code;
+  final VoidCallback onLeave;
+
+  @override
+  ConsumerState<CastCockpit> createState() => _CastCockpitState();
+}
+
+class _CastCockpitState extends ConsumerState<CastCockpit> {
+  CastSession? _session;
+  final _subs = <StreamSubscription<dynamic>>[];
+  Map<String, dynamic> _meta = CastSession.idleState;
+  LiveStatus _status = LiveStatus.connecting;
+  int _peers = 0;
+  // The launcher is the home; casting hides it, "Switch" brings it back. It's
+  // phone-local — opening it never changes what the screen is showing.
+  bool _showLauncher = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final session = CastSession.cast(
+      client: ref.read(supabaseProvider),
+      code: widget.code,
+    );
+    _subs
+      ..add(session.states.listen((v) {
+        if (mounted) setState(() => _meta = v);
+      }))
+      ..add(session.peers.listen((v) {
+        if (mounted) setState(() => _peers = v);
+      }))
+      ..add(session.status.listen((v) {
+        if (mounted) setState(() => _status = v);
+      }));
+    _session = session;
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _subs) {
+      unawaited(sub.cancel());
+    }
+    unawaited(_session?.dispose());
+    super.dispose();
+  }
+
+  ContentSource _contentNow() =>
+      ContentEngine(ref.read(bankedContentProvider).value ?? curatedSeeds);
+
+  void _castGame(GameDefinition<dynamic> def) {
+    _session?.cast(def, _contentNow());
+    setState(() => _showLauncher = false);
+  }
+
+  void _send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
+    final id = CastSession.gameIdOf(_meta);
+    final def = id == null ? null : gameById(id);
+    // "Play again" re-casts with FRESH content (the pure reducer can't pull
+    // new content); everything else reduces on the authority.
+    if (intent == GameIntent.reset && def != null) {
+      _session?.cast(def, _contentNow());
+    } else {
+      _session?.send(intent, args);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gameId = CastSession.gameIdOf(_meta);
+    final def = gameId == null ? null : gameById(gameId);
+
+    return Column(
+      children: [
+        _CockpitHeader(
+          status: _status,
+          peers: _peers,
+          code: widget.code,
+          casting: def?.title,
+          onLeave: widget.onLeave,
+        ),
+        // The explicit `def == null` here promotes `def` to non-null in the
+        // else branch (no `!` needed).
+        if (def == null || _showLauncher)
+          Expanded(
+            key: const ValueKey('cockpit-launcher'),
+            child: _Launcher(onPick: _castGame),
+          )
+        else ...[
+          Expanded(
+            key: const ValueKey('cockpit-driving'),
+            child: _Driving(def: def, meta: _meta, send: _send),
+          ),
+          _SwitchBar(
+            onSwitch: () => setState(() => _showLauncher = true),
+            onStop: () {
+              _session?.clearStage();
+              setState(() => _showLauncher = true);
+            },
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// The launcher — pick what to cast. The whole game deck, by vibe colour.
+class _Launcher extends StatelessWidget {
+  const _Launcher({required this.onPick});
+
+  final void Function(GameDefinition<dynamic>) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.extent(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      maxCrossAxisExtent: 200,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.1,
+      children: [
+        // Only content-bank games — roster/schedule-seeded ones (Now & Next,
+        // Spotlight) would cast an empty stage (docs/LIVE_SESSIONS.md v1 scope).
+        for (final def in liveGames.where((d) => d.seedsFromContentBank))
+          _LauncherTile(def: def, onTap: () => onPick(def)),
+      ],
+    );
+  }
+}
+
+class _LauncherTile extends StatelessWidget {
+  const _LauncherTile({required this.def, required this.onTap});
+
+  final GameDefinition<dynamic> def;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: def.vibe.accent,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.cast, color: Colors.white, size: 28),
+              const Spacer(),
+              Text(
+                def.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Tap to cast',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Driving a cast game: the stage (what the room sees) + its controls.
+class _Driving extends StatelessWidget {
+  const _Driving({required this.def, required this.meta, required this.send});
+
+  final GameDefinition<dynamic> def;
+  final Map<String, dynamic> meta;
+  final void Function(GameIntent, [Map<String, dynamic>]) send;
+
+  @override
+  Widget build(BuildContext context) {
+    final wire = CastSession.gameStateOf(meta);
+    final state = def.decode(wire);
+    final custom = def.buildControls(context, state, send);
+    return Column(
+      children: [
+        Expanded(
+          child: ColoredBox(
+            color: def.vibe.surface,
+            child: def.buildStage(context, state),
+          ),
+        ),
+        if (custom != null)
+          _Bar(child: custom)
+        else
+          _CastControls(def: def, wire: wire, onIntent: send),
+      ],
+    );
+  }
+}
+
+/// The standard control bar, built from the game's *active* intents — same
+/// vocabulary the single-device + live bars use (Back · Reveal · +1 · Next ·
+/// Again), so it fits any game shape.
+class _CastControls extends StatelessWidget {
+  const _CastControls({
+    required this.def,
+    required this.wire,
+    required this.onIntent,
+  });
+
+  final GameDefinition<dynamic> def;
+  final Map<String, dynamic> wire;
+  final void Function(GameIntent, [Map<String, dynamic>]) onIntent;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = def.activeIntents(def.decode(wire));
+    final index = (wire['i'] as num?)?.toInt() ?? 0;
+    final total = (wire['n'] as num?)?.toInt() ?? 0;
+    final done = wire['d'] == true;
+    final revealed = wire['r'] == true;
+
+    final buttons = <Widget>[
+      if (active.contains(GameIntent.back))
+        IconButton.filledTonal(
+          onPressed: () => onIntent(GameIntent.back),
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back',
+        ),
+      if (active.contains(GameIntent.reveal))
+        FilledButton.tonalIcon(
+          onPressed: () => onIntent(GameIntent.reveal),
+          icon: Icon(revealed ? Icons.visibility_off : Icons.lightbulb_outline),
+          label: Text(def.revealLabel(revealed: revealed)),
+        ),
+      if (active.contains(GameIntent.tally))
+        FilledButton.tonalIcon(
+          onPressed: () => onIntent(GameIntent.tally),
+          icon: const Icon(Icons.add),
+          label: const Text('+1'),
+        ),
+      if (active.contains(GameIntent.next))
+        FilledButton.icon(
+          onPressed: () => onIntent(GameIntent.next),
+          icon: const Icon(Icons.arrow_forward),
+          label: const Text('Next'),
+        ),
+      if (active.contains(GameIntent.reset))
+        FilledButton.icon(
+          onPressed: () => onIntent(GameIntent.reset),
+          icon: const Icon(Icons.replay),
+          label: const Text('Again'),
+        ),
+    ];
+
+    return _Bar(
+      child: Row(
+        children: [
+          if (wire['n'] != null)
+            Text(
+              done ? 'Done' : '${index + 1} / $total',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          const Spacer(),
+          for (final b in buttons) ...[b, const SizedBox(width: 8)],
+        ],
+      ),
+    );
+  }
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.06),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _SwitchBar extends StatelessWidget {
+  const _SwitchBar({required this.onSwitch, required this.onStop});
+
+  final VoidCallback onSwitch;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.04),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onSwitch,
+                  icon: const Icon(Icons.grid_view_rounded),
+                  label: const Text('Cast something else'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              TextButton.icon(
+                onPressed: onStop,
+                icon: const Icon(Icons.stop_circle_outlined),
+                label: const Text('Clear'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CockpitHeader extends StatelessWidget {
+  const _CockpitHeader({
+    required this.status,
+    required this.peers,
+    required this.code,
+    required this.casting,
+    required this.onLeave,
+  });
+
+  final LiveStatus status;
+  final int peers;
+  final String code;
+  final String? casting;
+  final VoidCallback onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      LiveStatus.live => ('Live', Colors.greenAccent),
+      LiveStatus.connecting => ('Connecting…', Colors.amberAccent),
+      LiveStatus.error => ('Offline', Colors.redAccent),
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  casting == null ? 'Pick something to cast' : 'Casting · $casting',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration:
+                          BoxDecoration(color: color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 6),
+                    Text('$label · screen $code',
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 12)),
+                    if (peers > 1) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.tv, color: Colors.white38, size: 14),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          TextButton.icon(
+            onPressed: onLeave,
+            icon: const Icon(Icons.close, color: Colors.white70),
+            // "Leave" not "End" — this returns the phone to the lobby; the
+            // screen stays on (idle) until it's closed there.
+            label: const Text('Leave', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
+    );
+  }
+}

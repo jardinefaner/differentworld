@@ -281,6 +281,26 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/present'),
       ),
+    // The app remote (docs/LIVE_SESSIONS.md "the cast model"): make a screen a
+    // clean display + drive everything from the phone — pick + switch + control.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.cast',
+        label: 'Cast to a screen',
+        category: OmniboxCategory.page,
+        icon: Icons.cast,
+        keywords: const [
+          'cast',
+          'remote',
+          'control',
+          'screen',
+          'projector',
+          'tv',
+          'present from phone',
+          'phone remote',
+        ],
+        onSelect: (ctx, _) => ctx.push('/cast'),
+      ),
     if (viewer is! GuardianViewer)
       OmniboxEntry(
         id: 'present.now-next',

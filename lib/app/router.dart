@@ -50,6 +50,7 @@ import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
+import 'package:differentworld/features/live_session/cast_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
@@ -937,6 +938,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/present',
             builder: (_, _) => const PresentHubScreen(),
+          ),
+          // The app remote / cast model (docs/LIVE_SESSIONS.md "the cast
+          // model"): one device is a clean Receiver; this phone is the Caster
+          // (pick + drive + switch what's on the screen).
+          GoRoute(
+            path: '/cast',
+            builder: (_, _) => const CastScreen(),
           ),
           GoRoute(
             path: '/present/poll',
