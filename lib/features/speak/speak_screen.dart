@@ -185,6 +185,20 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
 
   void _toggleType() => setState(() => _type = _type.next);
 
+  /// Flip to the next / previous presentation IN PLACE — no sheet, no leaving
+  /// the stage. The audio + timeline keep running; only the visual swaps. The
+  /// "no back and forth" path: driven by the chrome button (tap), a horizontal
+  /// swipe on the stage, or (for a specific mode) long-press → the picker.
+  void _cycleMode({bool forward = true}) {
+    final n = implementedSpeakModes.length;
+    if (n == 0) return;
+    final i = implementedSpeakModes.indexOf(_mode);
+    final next = forward
+        ? implementedSpeakModes[(i + 1) % n]
+        : implementedSpeakModes[(i - 1 + n) % n];
+    setState(() => _mode = next);
+  }
+
   Future<void> _pickMode() async {
     final picked = await showGlassSheet<SpeakPresentation>(
       context: context,
@@ -232,10 +246,16 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
       // full-bleed and clear of the floating omnibox bar at the bottom.
       actions: performing
           ? <Widget>[
-              SecondaryActionButton(
-                tooltip: 'Mode: ${_mode.label} — tap to change',
-                icon: _mode.icon,
-                onPressed: () => unawaited(_pickMode()),
+              // Tap = flip to the next presentation in place; long-press =
+              // open the full picker (jump to a specific one). Either way you
+              // never leave the stage.
+              GestureDetector(
+                onLongPress: () => unawaited(_pickMode()),
+                child: SecondaryActionButton(
+                  tooltip: '${_mode.label} — tap to flip, hold to pick',
+                  icon: _mode.icon,
+                  onPressed: _cycleMode,
+                ),
               ),
               SecondaryActionButton(
                 tooltip: 'Type: ${_type.label} — tap to switch',
@@ -376,6 +396,8 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
       pages: _pages,
       type: _type,
       palette: _voice.palette,
+      // Swipe left / right on the stage to flip presentations live.
+      onCycleMode: (forward) => _cycleMode(forward: forward),
     );
   }
 }
