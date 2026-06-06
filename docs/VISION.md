@@ -535,6 +535,29 @@ once it has a home.
     #8 (roles as lenses), #9 (action words = verbs), #16 (missions = dailies
     = age). The CLAUDE.md "Showcase / growth arc" is the OUTPUT; **this is the
     PLAYER** that produces it.
+- **2026-06-06 (cont.)** — **A NEW world every week — themed worlds, a crew, a
+  dream.** The "different world" is plural: the summer is a JOURNEY through
+  worlds, a new themed one each week.
+  > "they're going to different worlds... every week they'll go to different
+  > worlds... they'll be pirates, they'll be in outer space, under the sea...
+  > they'll have their crew... they'll have a dream... in this world there are
+  > people, things, words, dreams, culture"
+
+  Two layers: the **persistent self** (the character sheet) travels through a
+  **new themed world each week** — pirates / outer space / under the sea / ….
+  Each world is a populated place — **people, things, words, dreams, culture** —
+  and inside it the kid has a **crew** (a team) and a **dream** (a quest). The
+  week-shape: arrive → join a crew → take a dream → live the world → carry the
+  growth forward. This makes **"one engine, many worlds" (#13) literal on the
+  KID side**: each world is a **themed content pack** that re-skins what we've
+  built — roles (#8) = its people, supplies (#15) = its things, action words
+  (#9) = its words, missions (#16) = how dreams are chased. New world = new
+  pack, same engine.
+  - **Status:** vision / undesigned — the full shape + a shaping checklist now
+    live in **[WORLD.md](WORLD.md)** (this is the home the 2026-06-06 reframe
+    was waiting for).
+  - **Threads:** the persistent self (above) + #8 / #9 / #13 / #15 / #16. CREW
+    likely maps to classroom **groups**; DREAM likely maps to **missions**.
 
 ---
 
