@@ -41,6 +41,7 @@ class SpeakPerformer extends StatefulWidget {
     required this.pages,
     required this.type,
     required this.palette,
+    this.onCycleMode,
     super.key,
   });
 
@@ -53,6 +54,10 @@ class SpeakPerformer extends StatefulWidget {
   final List<SpokenLine> pages;
   final SpeakType type;
   final SpeakPalette palette;
+
+  /// Flip the presentation live on a horizontal swipe (`true` = next /
+  /// forward, `false` = previous). Null disables stage-swipe flipping.
+  final ValueChanged<bool>? onCycleMode;
 
   @override
   State<SpeakPerformer> createState() => _SpeakPerformerState();
@@ -73,11 +78,33 @@ class _SpeakPerformerState extends State<SpeakPerformer>
   // cancel→dispose window must not touch the dead ticker.
   bool _disposed = false;
 
+  // A brief label of the current presentation, flashed when the mode flips so
+  // the user sees which one they landed on. Kept (not nulled) during fade-out.
+  String _flashLabel = '';
+  bool _flashVisible = false;
+  Timer? _flashTimer;
+
   @override
   void initState() {
     super.initState();
     _playSub = widget.service.playingStream.listen(_onPlayingChanged);
     _doneSub = widget.service.completedStream.listen(_onCompleted);
+  }
+
+  @override
+  void didUpdateWidget(SpeakPerformer old) {
+    super.didUpdateWidget(old);
+    if (old.mode != widget.mode) {
+      // We're already inside a rebuild (parent changed mode); set the label
+      // now so it paints this frame, and arm a timer to fade it back out.
+      _flashLabel = widget.mode.label;
+      _flashVisible = true;
+      _flashTimer?.cancel();
+      _flashTimer = Timer(const Duration(milliseconds: 1100), () {
+        if (_disposed || !mounted) return;
+        setState(() => _flashVisible = false);
+      });
+    }
   }
 
   void _onPlayingChanged(bool playing) {
@@ -135,6 +162,7 @@ class _SpeakPerformerState extends State<SpeakPerformer>
   @override
   void dispose() {
     _disposed = true;
+    _flashTimer?.cancel();
     unawaited(_playSub?.cancel());
     unawaited(_doneSub?.cancel());
     _ticker.dispose();
@@ -260,6 +288,16 @@ class _SpeakPerformerState extends State<SpeakPerformer>
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: _toggle,
+              // Swipe horizontally to flip presentations live (no sheet, no
+              // leaving the stage). Distinct gesture from the tap-to-pause, and
+              // the modes don't scroll horizontally, so there's no conflict.
+              onHorizontalDragEnd: widget.onCycleMode == null
+                  ? null
+                  : (details) {
+                      final v = details.primaryVelocity ?? 0;
+                      if (v == 0) return;
+                      widget.onCycleMode!(v < 0); // left = next, right = prev
+                    },
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -295,6 +333,26 @@ class _SpeakPerformerState extends State<SpeakPerformer>
               done: _done,
               accent: widget.palette.accent,
               onPlayPause: _toggle,
+            ),
+          ),
+          // Mode-flip flash — names the presentation you just landed on, then
+          // fades. Top-center, above the stage; ignores pointers so it never
+          // eats a pause-tap or a seek-drag.
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 64,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _flashVisible ? 1 : 0,
+                  duration: const Duration(milliseconds: 280),
+                  child: _ModeFlash(
+                    label: _flashLabel,
+                    accent: widget.palette.accent,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -434,6 +492,37 @@ class _StageGlyph extends StatelessWidget {
       child: Semantics(
         label: semantic,
         child: Icon(icon, size: 92, color: Colors.white.withValues(alpha: 0.2)),
+      ),
+    );
+  }
+}
+
+/// A small glass pill naming the presentation you just flipped to. Flashed on
+/// every mode change, then faded out by the host.
+class _ModeFlash extends StatelessWidget {
+  const _ModeFlash({required this.label, required this.accent});
+
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    if (label.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.6)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
+        ),
       ),
     );
   }
