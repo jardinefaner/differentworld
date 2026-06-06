@@ -189,6 +189,67 @@ signed-in web tabs) to validate the present→advertise→discover→join handsh
 Build behind the async-guard (the live-session stream-lifecycle rules), then
 exercise on-device. Don't ship the banner without the two-party check.
 
+## The cast model — app remote, clean receiver (2026-06-06)
+
+The per-game remote works, but it's **per game** and the **screen shows the
+controls**. The user wants an **app-level remote**: the big screen is a dumb,
+clean display; the phone is the cockpit; you *pick what to present from the
+phone* and the screen just shows it — switch to a different game and the screen
+swaps — and the screen **never** shows your launcher, menus, or control bar.
+*Separation of concern.*
+
+### Roles, redrawn (no new transport)
+Built entirely on the existing `LiveSession` — **no new `SessionRole`** (the
+blast-radius flags that the `role != present` guard in `_wire` is what stops a
+follower applying the reducer; don't fork it).
+
+- **Receiver = the screen.** Joins as `SessionRole.control` (a pure follower —
+  never sends an intent, never reduces). Generates + shows the join code while
+  idle; once the phone casts, renders **only** `gameById(id).buildStage(...)` —
+  full-bleed, no header, no controls, ever.
+- **Caster = the phone (cockpit).** Joins as `SessionRole.present` — the
+  **authority**. Holds the meta-state, runs the reducer (`applyLocal`),
+  re-seeds on a cast (`reseed`). Shows the launcher (pick a game), the controls
+  (Back/Reveal/Next), and a "switch" back to the launcher. None of this rides
+  the wire — only the chosen game id + its state do.
+
+> Authority is the **phone**, inverting the per-game model (where the screen
+> hosts). Chosen because the cast-switch needs content seeding
+> (`def.initialState(content)`), which only happens off the pure reducer via
+> `reseed` — and the phone has the ContentEngine in hand. Trade-off: if the
+> phone disconnects, the screen freezes on its last frame (acceptable v1 — the
+> phone is the device being held). Robustness upgrade later: move authority to
+> the screen + add an authority-side intent interceptor for the seeded cast.
+
+### The one new idea: a meta-state
+The session's wire-state gains a presentable wrapper: `{'game': <id|null>,
+'state': <game wire>}`. A **meta-reducer** (on the Caster) delegates game
+intents to `gameById(game).reduce(state, …)`; **casting** a game is
+`reseed({'game': id, 'state': def.initialState(content)})` (content-seeded,
+off the reducer); **clearing** is `reseed({'game': null})` → idle. Everything
+else — `decode`, `buildStage`, `activeIntents`, `buildControls` — is reused
+from the game's `GameDefinition` verbatim.
+
+### Deliberately reused / skipped
+- **Reuses:** `LiveSession`, `gameById` + the `liveGames` registry,
+  `generateSessionCode` (imported from live_game_screen — don't move it), every
+  game's `buildStage`/`reduce`/`activeIntents`, `bankedContentProvider`.
+- **Skips lobby-announce.** A cast session does NOT join `dw-live-<spaceId>` /
+  `LobbyAnnouncer`. The Today "a session is live" banner is for *join-my-game*;
+  the cast flow is a personal present/control the user drives directly, so the
+  stale-ad-on-switch bug (blast-radius #1/#3) never arises. The existing `/live`
+  + per-game cast button are untouched.
+- **Same channel auth caveat** as `/live`: `dw-session-<CODE>` is guess-by-code,
+  not space-gated (the open question below) — unchanged by cast.
+
+### v1 scope
+- Launcher = the brain-break games that seed from the content bank
+  (`def.initialState(content)`). Data-seeded presentables (Now & Next, Spotlight
+  — need a Drift roster/schedule seed) and **non-game** content (a photo, a
+  Speak piece, the schedule) are later *presentable kinds* — the meta-state is
+  built to grow into them. Entry: a card on `/present` + the omnibox; route
+  `/cast`.
+
 ## Open questions (decide before slice 2)
 
 - **Who presents?** Any signed-in staff device can host; the phone that

@@ -14,6 +14,15 @@ class PresentHubScreen extends StatelessWidget {
   const PresentHubScreen({super.key});
 
   static const _cards = <_PresentCard>[
+    // The app remote (docs/LIVE_SESSIONS.md "the cast model") — make a screen a
+    // clean display and pick / switch / drive it all from this phone.
+    _PresentCard(
+      title: 'Cast to a screen',
+      tagline: 'Phone is the remote — pick, switch, control',
+      icon: Icons.cast,
+      color: Color(0xFF00897B),
+      route: '/cast',
+    ),
     _PresentCard(
       title: 'Now & Next',
       tagline: "What's on now — and next",
