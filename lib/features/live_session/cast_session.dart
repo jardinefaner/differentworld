@@ -32,6 +32,7 @@ class CastSession {
         client: client,
         role: SessionRole.control,
         code: code,
+        topic: topicFor(code),
         initialState: idleState,
         reduce: _noop,
       ),
@@ -40,6 +41,13 @@ class CastSession {
 
   /// The phone cockpit. The authority: holds the meta-state, runs the
   /// meta-reducer on control taps, re-seeds on a cast.
+  ///
+  /// One authority per code. If two phones open the cockpit on the SAME code
+  /// they both become `present` and broadcast competing state, so the screen
+  /// flickers between them — there's no admission control yet (see
+  /// docs/LIVE_SESSIONS.md "Auth on the channel"). The 4-char code + exact
+  /// match in the lobby make an accidental collision unlikely; a deliberate
+  /// hand-off (one phone takes over) is a later feature.
   factory CastSession.cast({
     required SupabaseClient client,
     required String code,
@@ -49,11 +57,16 @@ class CastSession {
         client: client,
         role: SessionRole.present,
         code: code,
+        topic: topicFor(code),
         initialState: idleState,
         reduce: _metaReduce,
       ),
     );
   }
+
+  /// Cast's OWN channel namespace — kept distinct from `/live`'s
+  /// `dw-session-<CODE>` so the same code can't cross-wire the two flows.
+  static String topicFor(String code) => 'dw-cast-${code.toUpperCase()}';
 
   final LiveSession _session;
 

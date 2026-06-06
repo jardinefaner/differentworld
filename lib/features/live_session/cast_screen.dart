@@ -55,7 +55,11 @@ class _CastScreenState extends ConsumerState<CastScreen> {
           ),
         ),
         // The Receiver owns its own clean Scaffold — no chrome over the stage.
-        _Mode.receive => CastReceiver(key: ValueKey('rx-$_code'), code: _code),
+        _Mode.receive => CastReceiver(
+          key: ValueKey('rx-$_code'),
+          code: _code,
+          onExit: _toLobby,
+        ),
         _Mode.cast => Scaffold(
           backgroundColor: const Color(0xFF0C0D14),
           body: SafeArea(
@@ -90,9 +94,17 @@ class _LobbyState extends State<_Lobby> {
     super.dispose();
   }
 
+  String? _error;
+
   void _join() {
     final code = _codeCtrl.text.trim().toUpperCase();
-    if (code.length >= 4) widget.onJoin(code);
+    // Exact 4 — a short entry would join an empty channel (and a loose match
+    // raises the odds of two phones landing on the same code → two authorities).
+    if (code.length == 4) {
+      widget.onJoin(code);
+    } else {
+      setState(() => _error = 'The code is exactly 4 characters.');
+    }
   }
 
   @override
@@ -123,8 +135,9 @@ class _LobbyState extends State<_Lobby> {
               const SizedBox(height: 28),
               _BigCard(
                 icon: Icons.cast,
-                title: 'Present on this screen',
-                subtitle: 'This device becomes the display + shows a join code.',
+                title: 'Use this device as the screen',
+                subtitle: 'Open this on a TV or laptop — it shows a join code '
+                    'for your phone.',
                 onTap: widget.onPresent,
               ),
               const SizedBox(height: 14),
@@ -163,6 +176,10 @@ class _LobbyState extends State<_Lobby> {
                       controller: _codeCtrl,
                       textCapitalization: TextCapitalization.characters,
                       textInputAction: TextInputAction.go,
+                      maxLength: 4,
+                      onChanged: (_) {
+                        if (_error != null) setState(() => _error = null);
+                      },
                       onSubmitted: (_) => _join(),
                       style: const TextStyle(
                         color: Colors.white,
@@ -170,11 +187,15 @@ class _LobbyState extends State<_Lobby> {
                         letterSpacing: 6,
                         fontWeight: FontWeight.w800,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'CODE',
-                        hintStyle:
-                            TextStyle(color: Colors.white24, letterSpacing: 6),
-                        border: OutlineInputBorder(),
+                        hintStyle: const TextStyle(
+                          color: Colors.white24,
+                          letterSpacing: 6,
+                        ),
+                        border: const OutlineInputBorder(),
+                        counterText: '',
+                        errorText: _error,
                       ),
                     ),
                     const SizedBox(height: 12),

@@ -101,9 +101,15 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
         // The explicit `def == null` here promotes `def` to non-null in the
         // else branch (no `!` needed).
         if (def == null || _showLauncher)
-          Expanded(child: _Launcher(onPick: _castGame))
+          Expanded(
+            key: const ValueKey('cockpit-launcher'),
+            child: _Launcher(onPick: _castGame),
+          )
         else ...[
-          Expanded(child: _Driving(def: def, meta: _meta, send: _send)),
+          Expanded(
+            key: const ValueKey('cockpit-driving'),
+            child: _Driving(def: def, meta: _meta, send: _send),
+          ),
           _SwitchBar(
             onSwitch: () => setState(() => _showLauncher = true),
             onStop: () {
@@ -132,7 +138,9 @@ class _Launcher extends StatelessWidget {
       crossAxisSpacing: 12,
       childAspectRatio: 1.1,
       children: [
-        for (final def in liveGames)
+        // Only content-bank games — roster/schedule-seeded ones (Now & Next,
+        // Spotlight) would cast an empty stage (docs/LIVE_SESSIONS.md v1 scope).
+        for (final def in liveGames.where((d) => d.seedsFromContentBank))
           _LauncherTile(def: def, onTap: () => onPick(def)),
       ],
     );
@@ -402,7 +410,9 @@ class _CockpitHeader extends StatelessWidget {
           TextButton.icon(
             onPressed: onLeave,
             icon: const Icon(Icons.close, color: Colors.white70),
-            label: const Text('End', style: TextStyle(color: Colors.white70)),
+            // "Leave" not "End" — this returns the phone to the lobby; the
+            // screen stays on (idle) until it's closed there.
+            label: const Text('Leave', style: TextStyle(color: Colors.white70)),
           ),
         ],
       ),

@@ -44,6 +44,11 @@ IconData kindIcon(String kind) => switch (kind) {
 class NowNextGame extends GameDefinition<NowNextState> {
   const NowNextGame();
 
+  // Seeds from the day's schedule (Drift), not the content bank — so it's
+  // hidden from the cast launcher until cast can pass it a seed.
+  @override
+  bool get seedsFromContentBank => false;
+
   @override
   String get id => 'now-next';
 

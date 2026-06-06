@@ -34,6 +34,11 @@ class PickerState {
 class PickerGame extends GameDefinition<PickerState> {
   const PickerGame();
 
+  // Seeds from the roster (Drift), not the content bank — so it's hidden from
+  // the cast launcher until cast can pass it a seed.
+  @override
+  bool get seedsFromContentBank => false;
+
   @override
   String get id => 'picker';
 

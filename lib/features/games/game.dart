@@ -208,6 +208,15 @@ abstract class GameDefinition<S> {
   /// — the live present/control variant (docs/LIVE_SESSIONS.md).
   String? get liveRoute => null;
 
+  /// Whether this game builds its whole round from the content bank in
+  /// [initialState] (true) — vs. needing a Drift-derived seed (roster,
+  /// schedule) the content bank can't supply (false). The cast launcher
+  /// (docs/LIVE_SESSIONS.md "the cast model") only offers `true` games, since
+  /// it seeds purely from the content bank; a `false` game would cast an empty
+  /// stage. Default true; data-seeded presentables (Now & Next, Spotlight)
+  /// override to false until the cast flow can pass them a seed.
+  bool get seedsFromContentBank => true;
+
   /// If non-null, `capture` / `submit` produce durable evidence and the
   /// runner routes the write here (crowd-grow + a growth-book entry).
   CaptureSpec? get capture => null;
