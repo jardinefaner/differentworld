@@ -172,6 +172,12 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         _zoom = 1; // fresh image — clear any prior reposition
         _focusX = 0.5;
         _focusY = 0.5;
+        // A fresh image starts on WHOLE — never silently carry a prior "Fill"
+        // (which crops) onto a new image. Fill is destructive + image-specific
+        // (it owns the per-image zoom/focus we just reset), so it's a
+        // deliberate opt-in per image, not a sticky global. This was the
+        // "parts of the image aren't printing" bug: Fill stuck from a past use.
+        _opts = _opts.copyWith(fit: PosterFit.whole);
         _error = null;
       });
     } on Object {
