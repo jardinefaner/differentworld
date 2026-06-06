@@ -591,7 +591,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-03 (Tools + LiveSession lobby + Poster orientation — no new tables; all additions are ephemeral Realtime or pure-Dart)._
+_Last full registry verification: 2026-06-05 (Speak screen-split + 11 modes + history + transport — no new tables; Speak audio is in `tts-cache` Storage; history is SharedPreferences-local; nothing rides PowerSync)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
