@@ -3,6 +3,7 @@ import 'package:differentworld/features/games/games/as_if_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
@@ -25,6 +26,7 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   ThisOrThatGame(),
   CharadesGame(),
   RiddlesGame(),
+  GridRevealGame(),
   FactOrFibGame(),
   AsIfGame(),
   StoryStartersGame(),

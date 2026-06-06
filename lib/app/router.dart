@@ -32,6 +32,7 @@ import 'package:differentworld/features/games/games/as_if_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
+import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
@@ -930,6 +931,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const LiveGameScreen(def: RiddlesGame()),
           ),
           GoRoute(
+            path: '/live/grid-reveal',
+            builder: (_, _) => const LiveGameScreen(def: GridRevealGame()),
+          ),
+          GoRoute(
             path: '/live/fact-or-fib',
             builder: (_, _) => const LiveGameScreen(def: FactOrFibGame()),
           ),
@@ -1073,6 +1078,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/riddles',
             builder: (_, _) => const GameRunner(def: RiddlesGame()),
+          ),
+          GoRoute(
+            path: '/activity/grid-reveal',
+            builder: (_, _) => const GameRunner(def: GridRevealGame()),
           ),
           // Mindful Minute — a calm breathing break (the regulation gap).
           GoRoute(

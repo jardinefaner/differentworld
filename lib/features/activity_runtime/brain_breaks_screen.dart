@@ -89,6 +89,13 @@ class BrainBreaksScreen extends StatelessWidget {
       route: '/activity/riddles',
     ),
     _BreakCard(
+      title: 'Reveal the Picture',
+      tagline: 'Call a square, guess the picture',
+      icon: Icons.grid_on,
+      color: Color(0xFF26C6DA),
+      route: '/activity/grid-reveal',
+    ),
+    _BreakCard(
       title: 'Mindful Minute',
       tagline: 'Breathe together',
       icon: Icons.spa_outlined,
