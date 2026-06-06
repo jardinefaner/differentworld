@@ -10,6 +10,7 @@ import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 /// The **Cockpit** — the phone as the app remote (docs/LIVE_SESSIONS.md "the
 /// cast model"). The authority: it picks what to present (the launcher),
@@ -38,6 +39,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
   @override
   void initState() {
     super.initState();
+    unawaited(WakelockPlus.enable()); // the remote shouldn't sleep mid-session
     final session = CastSession.cast(
       client: ref.read(supabaseProvider),
       code: widget.code,
@@ -57,6 +59,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
 
   @override
   void dispose() {
+    unawaited(WakelockPlus.disable());
     for (final sub in _subs) {
       unawaited(sub.cancel());
     }

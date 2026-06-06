@@ -7,6 +7,7 @@ import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 /// The **Receiver** — the big screen as a dumb, clean display
 /// (docs/LIVE_SESSIONS.md "the cast model"). Joins as a follower, shows the
@@ -18,8 +19,8 @@ class CastReceiver extends ConsumerStatefulWidget {
 
   final String code;
 
-  /// Return to the cast lobby — the Receiver's only exit (the screen has no
-  /// nav chrome). Surfaced as a low-key corner button + the disconnect card.
+  /// Return to the cast lobby — the Receiver's full exit (the screen has no
+  /// nav chrome). Surfaced in the tap-to-reveal controls + the disconnect card.
   final VoidCallback onExit;
 
   @override
@@ -31,15 +32,20 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
   final _subs = <StreamSubscription<dynamic>>[];
   Map<String, dynamic> _meta = CastSession.idleState;
   LiveStatus _status = LiveStatus.connecting;
+  // Fullscreen (OS bars hidden) is the default; a toggle in the revealed
+  // controls drops to a windowed view + re-enters. The app chrome stays gone
+  // either way (castImmersiveProvider) — this is just the OS bars.
+  bool _fullscreen = true;
+  // The controls (code · fullscreen · leave) auto-hide so the stage stays
+  // clean; a tap anywhere on the screen brings them back.
+  bool _controlsVisible = true;
+  Timer? _hideTimer;
 
   @override
   void initState() {
     super.initState();
-    // True fullscreen for the room — hide the OS status / nav bars (the app
-    // chrome is already gone via castImmersiveProvider). Restored in dispose.
-    unawaited(
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-    );
+    unawaited(WakelockPlus.enable()); // a presentation screen must not sleep
+    unawaited(_applyFullscreen());
     final session = CastSession.receive(
       client: ref.read(supabaseProvider),
       code: widget.code,
@@ -52,10 +58,13 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
         if (mounted) setState(() => _status = v);
       }));
     _session = session;
+    _scheduleHide();
   }
 
   @override
   void dispose() {
+    _hideTimer?.cancel();
+    unawaited(WakelockPlus.disable());
     // Restore the app's default (EdgeScaffold draws under the bars).
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     for (final sub in _subs) {
@@ -63,6 +72,28 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
     }
     unawaited(_session?.dispose());
     super.dispose();
+  }
+
+  Future<void> _applyFullscreen() => SystemChrome.setEnabledSystemUIMode(
+        _fullscreen ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+      );
+
+  void _scheduleHide() {
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _controlsVisible = false);
+    });
+  }
+
+  void _revealControls() {
+    if (!_controlsVisible) setState(() => _controlsVisible = true);
+    _scheduleHide();
+  }
+
+  void _toggleFullscreen() {
+    setState(() => _fullscreen = !_fullscreen);
+    unawaited(_applyFullscreen());
+    _revealControls();
   }
 
   @override
@@ -96,26 +127,117 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
       backgroundColor: const Color(0xFF0C0D14),
       body: Stack(
         children: [
-          Positioned.fill(key: const ValueKey('cast-receiver-body'), child: body),
+          // Tap anywhere to bring the controls back (buildStage has no
+          // interactive elements, so this never steals a real tap).
+          Positioned.fill(
+            key: const ValueKey('cast-receiver-body'),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _revealControls,
+              child: body,
+            ),
+          ),
           if (disconnected)
             Positioned.fill(
               key: const ValueKey('cast-receiver-disconnected'),
               child: _DisconnectedCard(onExit: widget.onExit),
             ),
-          // The Receiver's only chrome: a low-key corner exit so an unattended
-          // screen is never a dead-end (the stage stays otherwise clean).
+          // Auto-hiding controls: join code (while casting) · fullscreen
+          // toggle · leave. Hidden during the disconnect card (it has its own).
           Positioned(
             top: 0,
+            left: 0,
             right: 0,
-            child: SafeArea(
-              child: IconButton(
-                tooltip: 'Leave',
-                onPressed: widget.onExit,
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white.withValues(alpha: 0.3),
+            child: _Fade(
+              visible: _controlsVisible && !disconnected,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      if (gameId != null) _CodeChip(code: widget.code),
+                      const Spacer(),
+                      IconButton(
+                        tooltip: _fullscreen ? 'Exit fullscreen' : 'Fullscreen',
+                        onPressed: _toggleFullscreen,
+                        icon: Icon(
+                          _fullscreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Leave',
+                        onPressed: widget.onExit,
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fade + ignore-pointer wrapper for the auto-hiding controls.
+class _Fade extends StatelessWidget {
+  const _Fade({required this.visible, required this.child});
+
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: visible ? 1 : 0,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// The join code, shown in the revealed controls so a late phone can still
+/// join while something's already cast.
+class _CodeChip extends StatelessWidget {
+  const _CodeChip({required this.code});
+
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'CODE  ',
+            style: TextStyle(
+              color: Colors.white54,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+              fontSize: 12,
+            ),
+          ),
+          Text(
+            code,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              letterSpacing: 3,
             ),
           ),
         ],
