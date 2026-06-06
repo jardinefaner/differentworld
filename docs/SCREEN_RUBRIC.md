@@ -56,11 +56,18 @@ Mark inapplicable items **n/a**; don't force them.
   bottom pad to clear the home indicator. Check those two cases — do NOT
   flag a plain scroll view for "padding < 76." *Blocker for a fixed bottom
   control that overlaps; warn otherwise.*
-- **A4 — Uses the full viewport; long text is constrained for reading.**
+- **A4 — Uses the full viewport; long text + LIST BODIES are width-capped.**
   Content fills the width (no accidental narrow column, no large dead
   gutters), but long-form text / forms are wrapped in
-  `ConstrainedBox(maxWidth: ~600)` centered so lines don't stretch on
-  desktop. Verify: no hardcoded small `width:`; forms/prose constrained. *Warn.*
+  `ConstrainedBox(maxWidth: ~600)` centered, AND a scrollable list body
+  goes through `ResponsivePage` / `FormBody` (or, for `ListTile` lists
+  that bring their own 16dp padding, `Center(ConstrainedBox(maxWidth:
+  Breakpoints.splitMaxWidth))`). **A bare `ListView(` / `ListView.builder(`
+  / `CustomScrollView(` / `SingleChildScrollView(` as the `EdgeScaffold`
+  body with no width cap is a defect** — rows stretch edge-to-edge into
+  hostile full-width ribbons on a 1920 window (the 2026-06-06 responsive
+  audit's single most common offender). Verify: grep the body for those
+  constructors and confirm each is capped. *Warn.*
 - **A5 — Responsive across the breakpoint matrix.** Phone / tablet /
   desktop look intentional. Master-detail screens use a `LayoutBuilder` or
   the shared `Breakpoints`; nothing assumes phone width. Verify: no

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/insights/insights_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -211,9 +212,18 @@ class _ReviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cap the review card on desktop/web so it reads as a focused column,
+    // not one full-width card floating in a wide PageView page.
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      child: InsightCard(insight: insight),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: Breakpoints.contentMaxWidth,
+          ),
+          child: InsightCard(insight: insight),
+        ),
+      ),
     );
   }
 }
