@@ -3,13 +3,17 @@ import 'dart:async';
 import 'package:differentworld/features/speak/collage_view.dart';
 import 'package:differentworld/features/speak/editorial_view.dart';
 import 'package:differentworld/features/speak/grid_view.dart';
+import 'package:differentworld/features/speak/headline_view.dart';
 import 'package:differentworld/features/speak/index_view.dart';
 import 'package:differentworld/features/speak/justified_view.dart';
 import 'package:differentworld/features/speak/living_background.dart';
+import 'package:differentworld/features/speak/marker_view.dart';
 import 'package:differentworld/features/speak/mural_view.dart';
 import 'package:differentworld/features/speak/one_big_word_view.dart';
+import 'package:differentworld/features/speak/oversized_view.dart';
 import 'package:differentworld/features/speak/packed_view.dart';
 import 'package:differentworld/features/speak/shape_view.dart';
+import 'package:differentworld/features/speak/slam_view.dart';
 import 'package:differentworld/features/speak/speak_palette.dart';
 import 'package:differentworld/features/speak/speak_presentation.dart';
 import 'package:differentworld/features/speak/speak_service.dart';
@@ -150,6 +154,30 @@ class _SpeakPerformerState extends State<SpeakPerformer>
       ),
       SpeakPresentation.packed => PackedView(
         pages: widget.pages,
+        position: _position,
+        type: widget.type,
+        accent: widget.palette.accent,
+      ),
+      SpeakPresentation.headline => HeadlineView(
+        lines: widget.lines,
+        position: _position,
+        type: widget.type,
+        accent: widget.palette.accent,
+      ),
+      SpeakPresentation.slam => SlamView(
+        words: widget.words,
+        position: _position,
+        type: widget.type,
+        accent: widget.palette.accent,
+      ),
+      SpeakPresentation.marker => MarkerView(
+        lines: widget.lines,
+        position: _position,
+        type: widget.type,
+        accent: widget.palette.accent,
+      ),
+      SpeakPresentation.oversized => OversizedView(
+        lines: widget.lines,
         position: _position,
         type: widget.type,
         accent: widget.palette.accent,

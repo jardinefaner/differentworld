@@ -132,3 +132,8 @@ flutter:
     - family: SpaceGrotesk
       fonts:
         - asset: assets/fonts/SpaceGrotesk.ttf
+    # Anton — a static condensed-black display face (single weight) for the
+    # bold "statement" Speak modes (Headline / Slam / Marker / Oversized).
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton.ttf

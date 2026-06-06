@@ -41,9 +41,9 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
   List<SpokenWord> _words = const <SpokenWord>[];
   List<SpokenLine> _pages = const <SpokenLine>[]; // split on input line breaks
   List<SpeakHistoryEntry> _recents = const <SpeakHistoryEntry>[];
-  SpeakType _type = SpeakType.serif;
+  SpeakType _type = SpeakType.condensed;
   SpeakVoice _voice = speakVoices.first;
-  SpeakPresentation _mode = SpeakPresentation.editorial;
+  SpeakPresentation _mode = SpeakPresentation.headline;
   bool _loading = false;
   String? _error;
 
@@ -183,7 +183,7 @@ class _SpeakScreenState extends ConsumerState<SpeakScreen> {
     });
   }
 
-  void _toggleType() => setState(() => _type = _type.other);
+  void _toggleType() => setState(() => _type = _type.next);
 
   Future<void> _pickMode() async {
     final picked = await showGlassSheet<SpeakPresentation>(

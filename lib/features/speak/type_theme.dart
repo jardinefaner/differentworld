@@ -13,65 +13,80 @@ enum SpeakType {
   /// Space Grotesk — a modern geometric sans (wght axis). Clean, confident,
   /// poster-like.
   grotesque,
+
+  /// Anton — a STATIC condensed-black display face (no variable axes, single
+  /// poster weight). The "bold statement" voice for Headline / Slam / Marker /
+  /// Oversized. Weight-swell doesn't apply (it's always black); emphasis comes
+  /// from size + colour instead.
+  condensed,
 }
 
 extension SpeakTypeX on SpeakType {
   /// The bundled font family (matches pubspec `fonts: family:`).
   String get family => switch (this) {
-        SpeakType.serif => 'Fraunces',
-        SpeakType.grotesque => 'SpaceGrotesk',
-      };
+    SpeakType.serif => 'Fraunces',
+    SpeakType.grotesque => 'SpaceGrotesk',
+    SpeakType.condensed => 'Anton',
+  };
 
   /// Short human label for the toggle.
   String get label => switch (this) {
-        SpeakType.serif => 'Serif',
-        SpeakType.grotesque => 'Sans',
-      };
+    SpeakType.serif => 'Serif',
+    SpeakType.grotesque => 'Sans',
+    SpeakType.condensed => 'Bold',
+  };
+
+  /// Whether the face is variable (weight can swell). Anton is static.
+  bool get isVariable => this != SpeakType.condensed;
 
   /// Weight a quiet (un-spoken) word sits at.
   double get restWeight => switch (this) {
-        SpeakType.serif => 340,
-        SpeakType.grotesque => 360,
-      };
+    SpeakType.serif => 340,
+    SpeakType.grotesque => 360,
+    SpeakType.condensed => 400, // unused — Anton has no weight axis
+  };
 
   /// Weight the spoken word swells to.
   double get activeWeight => switch (this) {
-        SpeakType.serif => 760,
-        SpeakType.grotesque => 680,
-      };
+    SpeakType.serif => 760,
+    SpeakType.grotesque => 680,
+    SpeakType.condensed => 400, // unused
+  };
 
   /// Editorial tracking — display type is set tight; the grotesque tighter.
   double get letterSpacing => switch (this) {
-        SpeakType.serif => -0.5,
-        SpeakType.grotesque => -1.5,
-      };
+    SpeakType.serif => -0.5,
+    SpeakType.grotesque => -1.5,
+    SpeakType.condensed => -0.5,
+  };
 
   /// How fast the spoken word swells. Short on purpose (word windows in normal
   /// speech are ~250ms) and front-loaded (easeOutQuart) so the heaviest moment
-  /// lands ON the word, not after it. Per-voice: the serif luxuriates a beat
-  /// longer; the grotesque snaps — so the two read differently in MOTION, not
-  /// just in glyph.
+  /// lands ON the word, not after it.
   Duration get swellDuration => switch (this) {
-        SpeakType.serif => const Duration(milliseconds: 190),
-        SpeakType.grotesque => const Duration(milliseconds: 140),
-      };
+    SpeakType.serif => const Duration(milliseconds: 190),
+    SpeakType.grotesque => const Duration(milliseconds: 140),
+    SpeakType.condensed => const Duration(milliseconds: 140),
+  };
 
-  /// The other voice — the toggle flips between the two.
-  SpeakType get other => switch (this) {
-        SpeakType.serif => SpeakType.grotesque,
-        SpeakType.grotesque => SpeakType.serif,
-      };
+  /// The next voice — the toggle cycles through all three.
+  SpeakType get next => switch (this) {
+    SpeakType.serif => SpeakType.grotesque,
+    SpeakType.grotesque => SpeakType.condensed,
+    SpeakType.condensed => SpeakType.serif,
+  };
 
   /// All variable-font axes at a given [weight]. Fraunces gets a high optical
-  /// size (it's shown large) and neutral SOFT/WONK; Space Grotesk only carries
-  /// the weight axis.
+  /// size + neutral SOFT/WONK; Space Grotesk carries only weight; Anton is
+  /// static (no axes — returns const []).
   List<FontVariation> axesAt(double weight) => switch (this) {
-        SpeakType.serif => [
-            FontVariation('wght', weight),
-            const FontVariation('opsz', 144),
-            const FontVariation('SOFT', 0),
-            const FontVariation('WONK', 0),
-          ],
-        SpeakType.grotesque => [FontVariation('wght', weight)],
-      };
+    SpeakType.serif => [
+      FontVariation('wght', weight),
+      const FontVariation('opsz', 144),
+      const FontVariation('SOFT', 0),
+      const FontVariation('WONK', 0),
+    ],
+    SpeakType.grotesque => [FontVariation('wght', weight)],
+    SpeakType.condensed => const [],
+  };
 }

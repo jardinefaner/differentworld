@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 /// default before speaking.
 enum SpeakPresentation {
   editorial,
+  headline,
+  slam,
+  marker,
+  oversized,
   stage,
   packed,
   oneBigWord,
@@ -21,6 +25,10 @@ enum SpeakPresentation {
 extension SpeakPresentationX on SpeakPresentation {
   String get label => switch (this) {
     SpeakPresentation.editorial => 'Editorial',
+    SpeakPresentation.headline => 'Headline',
+    SpeakPresentation.slam => 'Slam',
+    SpeakPresentation.marker => 'Marker',
+    SpeakPresentation.oversized => 'Oversized',
     SpeakPresentation.stage => 'Stage',
     SpeakPresentation.packed => 'Packed',
     SpeakPresentation.oneBigWord => 'One Big Word',
@@ -36,6 +44,10 @@ extension SpeakPresentationX on SpeakPresentation {
 
   IconData get icon => switch (this) {
     SpeakPresentation.editorial => Icons.format_quote_rounded,
+    SpeakPresentation.headline => Icons.format_bold_rounded,
+    SpeakPresentation.slam => Icons.bolt_rounded,
+    SpeakPresentation.marker => Icons.border_color_rounded,
+    SpeakPresentation.oversized => Icons.zoom_out_map_rounded,
     SpeakPresentation.stage => Icons.notes_rounded,
     SpeakPresentation.packed => Icons.view_agenda_rounded,
     SpeakPresentation.oneBigWord => Icons.title_rounded,
@@ -54,6 +66,10 @@ extension SpeakPresentationX on SpeakPresentation {
 /// the calm, designed pull-quote — the most editorial of the set).
 const List<SpeakPresentation> implementedSpeakModes = <SpeakPresentation>[
   SpeakPresentation.editorial,
+  SpeakPresentation.headline,
+  SpeakPresentation.slam,
+  SpeakPresentation.marker,
+  SpeakPresentation.oversized,
   SpeakPresentation.stage,
   SpeakPresentation.packed,
   SpeakPresentation.oneBigWord,
