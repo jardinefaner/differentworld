@@ -20,7 +20,6 @@ void main() {
     expect(o.fit, PosterFit.whole); // whole = nothing cropped (the default)
     expect(o.paper, PosterPaper.letter);
     expect(o.labels, isTrue);
-    expect(o.guides, isTrue); // guides on = trim + tape, no printer-margin gaps
   });
 
   test('round-trips a saved configuration', () async {
@@ -32,7 +31,7 @@ void main() {
       paper: PosterPaper.a4,
       quality: PosterQuality.lossless,
       labels: false,
-      guides: false, // non-default now (default is true), so it proves persistence
+      guides: true,
     );
     await PosterPrefs.save(saved);
     final loaded = await PosterPrefs.load();
@@ -43,25 +42,25 @@ void main() {
     expect(loaded.paper, PosterPaper.a4);
     expect(loaded.quality, PosterQuality.lossless);
     expect(loaded.labels, isFalse);
-    expect(loaded.guides, isFalse);
+    expect(loaded.guides, isTrue);
   });
 
   test('a corrupt blob falls back to defaults', () async {
-    SharedPreferences.setMockInitialValues({'poster.options.v2': 'not json'});
+    SharedPreferences.setMockInitialValues({'poster.options.v1': 'not json'});
     final o = await PosterPrefs.load();
     expect(o.size, 2);
     expect(o.fit, PosterFit.whole);
   });
 
   test('an out-of-range size is clamped', () async {
-    SharedPreferences.setMockInitialValues({'poster.options.v2': '{"size": 99}'});
+    SharedPreferences.setMockInitialValues({'poster.options.v1': '{"size": 99}'});
     final o = await PosterPrefs.load();
     expect(o.size, 5);
   });
 
   test('an unknown enum name falls back, not throws', () async {
     SharedPreferences.setMockInitialValues({
-      'poster.options.v2': '{"fit": "bogus", "paper": "tabloid"}',
+      'poster.options.v1': '{"fit": "bogus", "paper": "tabloid"}',
     });
     final o = await PosterPrefs.load();
     expect(o.fit, PosterFit.whole); // unknown value falls back to the default
