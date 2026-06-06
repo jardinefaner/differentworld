@@ -34,23 +34,32 @@ class CharacterSheetsDao extends DatabaseAccessor<AppDatabase>
 
   /// Ensure a sheet exists for the subject, returning it. Idempotent — the
   /// 1:1 invariant means we never create a second row for the same child.
+  ///
+  /// Wrapped in a transaction so the find→insert is atomic: the local
+  /// PowerSync SQLite has no UNIQUE(subject_id) constraint (PowerSync owns the
+  /// schema and only adds the `id` PK), so two concurrent ensures would
+  /// otherwise both see null and both INSERT — a second local row the server's
+  /// UNIQUE rejects forever on upload. Drift serialises transactions on the
+  /// connection, so the second caller sees the first's row.
   Future<CharacterSheet> ensureForSubject({
     required String spaceId,
     required String subjectId,
-  }) async {
-    final existing = await findForSubject(subjectId);
-    if (existing != null) return existing;
-    final now = DateTime.now().toUtc().toIso8601String();
-    final row = CharacterSheetsCompanion.insert(
-      id: _uuid.v4(),
-      spaceId: spaceId,
-      subjectId: subjectId,
-      createdAt: now,
-      updatedAt: now,
-    );
-    await into(characterSheets).insert(row);
-    // Re-read so callers get the persisted row (with any DB-side defaults).
-    return (await findForSubject(subjectId))!;
+  }) {
+    return transaction(() async {
+      final existing = await findForSubject(subjectId);
+      if (existing != null) return existing;
+      final now = DateTime.now().toUtc().toIso8601String();
+      final row = CharacterSheetsCompanion.insert(
+        id: _uuid.v4(),
+        spaceId: spaceId,
+        subjectId: subjectId,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await into(characterSheets).insert(row);
+      // Re-read so callers get the persisted row (with any DB-side defaults).
+      return (await findForSubject(subjectId))!;
+    });
   }
 
   /// Set the drawn avatar (a bucket path or a `pending:<id>` token). Creates

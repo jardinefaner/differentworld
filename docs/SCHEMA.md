@@ -415,8 +415,8 @@ of the SQL.
 - `withdrawn_at` (timestamptz, nullable)
 **RLS gist**: relaxed for staff. Guardian self-reads via direct PostgREST through `subject_guardians` join.
 **Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
-**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos).
-**Last verified**: 2026-05-21
+**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name).
+**Last verified**: 2026-06-06
 
 ---
 
@@ -573,6 +573,25 @@ of the SQL.
 
 ---
 
+## character_sheets
+**Purpose**: The persistent in-world self for each child — drawn avatar + chosen name + born_on date + culture. 1:1 with subjects; the foundation of the Different World feature (docs/WORLD.md).
+**Key columns**:
+- `id` (uuid PK)
+- `space_id` (uuid NOT NULL → spaces.id, on delete cascade)
+- `subject_id` (uuid NOT NULL → subjects.id, on delete cascade; UNIQUE — 1:1 with the child)
+- `chosen_name` (text, nullable — kid-authored world-self name; NULL until the day-one ritual)
+- `avatar_url` (text, nullable — `person-photos` bucket-relative path for the drawn self-portrait; deliberately SEPARATE from `subjects.photo_url` which is the admin ID photo; may briefly hold `pending:<id>` when saved offline)
+- `born_on` (date, nullable — enrollment/"birthday" in the world)
+- `culture` (text, nullable — the kid's description of their world's culture)
+- `capabilities` (jsonb NOT NULL default '{}' — per-sheet flags, future use)
+- `created_at` / `updated_at` (timestamptz)
+**RLS gist**: relaxed (`for all to authenticated using(true) with check(true)`); ES256 `auth.uid()`-null workaround in effect (see CLAUDE.md). Space-scoped sync rule + GRANT are the real gate.
+**Sync rule**: `by_space` stream; `SELECT * FROM character_sheets WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`. PowerSync publication added in migration `20260606000001_character_sheets.sql`. Dashboard deploy + device local-recreate required.
+**Consumers**: [World](FEATURES.md#world) (character_sheet_providers.dart via `characterSheetsDao`).
+**Last verified**: 2026-06-06
+
+---
+
 ## content_items
 **Purpose**: The content bank — activity prompts (this-or-that pairs, riddles, fact-or-fib claims, story starters, rhyme words, act-it-out lines, charades words, etc.) made once and reused, so no AI model is called on the hot path of a play. `space_id IS NULL` rows are global (shared across every program); `space_id` set rows belong to one program's crowd-grown library.
 **Key columns**:
@@ -591,7 +610,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-05 (Speak screen-split + 11 modes + history + transport — no new tables; Speak audio is in `tts-cache` Storage; history is SharedPreferences-local; nothing rides PowerSync)._
+_Last full registry verification: 2026-06-06 (World slice 1 — `character_sheets` table added; `subjects` Consumers updated to include World)._
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._

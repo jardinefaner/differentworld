@@ -88,9 +88,20 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // Idempotent belt-and-suspenders — the exit paths already clear these
+    // before popping (see _leaveKidMode); this covers an OS-forced teardown.
     ref.read(kidModeProvider.notifier).exit();
     ref.read(kidModeLockedRouteProvider.notifier).pin(null);
     super.dispose();
+  }
+
+  /// Clear kid mode + the locked-route pin. MUST run before any pop: the
+  /// router redirect bounces away-navigation back to the pinned route, so
+  /// popping with the pin still set traps the screen (Wave 143 gotcha,
+  /// documented in survey_take_screen.dart). exit()/pin(null) are idempotent.
+  void _leaveKidMode() {
+    ref.read(kidModeProvider.notifier).exit();
+    ref.read(kidModeLockedRouteProvider.notifier).pin(null);
   }
 
   void _startStroke(Offset p) {
@@ -156,11 +167,18 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
         drawing: file,
       );
       if (!mounted) {
+        // OS killed the screen mid-save (near-impossible under the kid-mode
+        // lock). The write already landed; dispose() clears kid mode. Don't
+        // touch ref / navigator on a dead element.
         messenger.showSnackBar(
           const SnackBar(content: Text('Saved your drawing!')),
         );
         return;
       }
+      // Clear the locked-route pin + kid mode BEFORE popping — the router's
+      // redirect bounces away-navigation back to the pinned route, so popping
+      // with the pin still set traps the screen (the Wave 143 gotcha).
+      _leaveKidMode();
       navigator.pop();
       messenger.showSnackBar(
         const SnackBar(content: Text('Saved your drawing!')),
@@ -199,6 +217,12 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     final title = (name != null && name.isNotEmpty)
         ? 'Draw yourself, $name!'
         : 'Draw yourself!';
+    // Intentionally a RAW Scaffold, not EdgeScaffold — this is a full-bleed
+    // kid surface. Kid mode strips AppShell's omnibox + chrome, and this
+    // screen draws its own top bar + tools. Switching to EdgeScaffold would
+    // inject chrome insets that fight the lockdown (and flash the floating
+    // pills during the mount microtask gap). See CLAUDE.md "kid mode" +
+    // docs/SCREEN_RUBRIC.md full-bleed exception.
     return Scaffold(
       backgroundColor: const Color(0xFF2B2A33),
       body: SafeArea(
@@ -207,7 +231,12 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
             _TopBar(
               title: title,
               canEdit: _hasDrawing && !_saving,
-              onCancel: _saving ? null : () => Navigator.of(context).maybePop(),
+              onCancel: _saving
+                  ? null
+                  : () {
+                      _leaveKidMode(); // clear the pin before popping (Wave 143)
+                      unawaited(Navigator.of(context).maybePop());
+                    },
               onUndo: _strokes.isNotEmpty && !_saving ? _undo : null,
               onClear: _hasDrawing && !_saving ? _clear : null,
             ),
@@ -446,21 +475,32 @@ class _Tools extends StatelessWidget {
               itemBuilder: (_, i) {
                 final c = palette[i];
                 final selected = c == color;
+                // The last swatch is paper-coloured — it erases against the
+                // paper. Name it so VoiceOver doesn't read "Color 10".
+                final isErase = i == palette.length - 1;
                 return Semantics(
-                  label: 'Color ${i + 1}',
+                  label: isErase ? 'Erase' : 'Color ${i + 1}',
                   selected: selected,
                   button: true,
+                  // 48 dp hit target (rubric E1); 44 dp visible circle inside.
                   child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: enabled ? () => onColor(c) : null,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: selected ? Colors.white : Colors.white24,
-                          width: selected ? 4 : 1.5,
+                    child: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Center(
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: selected ? Colors.white : Colors.white24,
+                              width: selected ? 4 : 1.5,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -480,10 +520,11 @@ class _Tools extends StatelessWidget {
                   selected: w == width,
                   button: true,
                   child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onTap: enabled ? () => onWidth(w) : null,
                     child: Container(
                       width: 48,
-                      height: 40,
+                      height: 48,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: w == width

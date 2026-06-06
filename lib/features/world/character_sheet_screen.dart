@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -30,7 +31,7 @@ class CharacterSheetScreen extends ConsumerWidget {
     return EdgeScaffold(
       body: SafeArea(
         child: sheetAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const LoadingSlot(variant: LoadingVariant.spinner),
           error: (e, _) => ErrorState(
             title: "Couldn't load the world self",
             detail: '$e',
@@ -88,7 +89,10 @@ class _Body extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            // The chosen name (or a prompt to choose one).
+            // The chosen name (or a prompt to choose one). Intentionally an
+            // inline tap-to-edit affordance (not a FeatureCard row) — it's a
+            // centred headline, not a list item; the InkWell gives it a 48 dp
+            // ripple target.
             Center(
               child: Material(
                 color: Colors.transparent,

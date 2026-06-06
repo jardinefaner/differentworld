@@ -470,8 +470,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - *PersonPhotoNetwork* — used by gallery + viewer sites.
 - *Signed-URL provider* — `lib/features/photos/person_photo_url.dart`. `signedPersonPhotoUrlProvider` is the single mint point; handles legacy full-URL rows via `extractPersonPhotoPath`.
 **Depends on**: Supabase Storage client.
-**Consumed by**: Members, Subjects, Entries (attachment display), Family.
-**Last verified**: 2026-05-21
+**Consumed by**: Members, Subjects, Entries (attachment display), Family, World (DrawSelfScreen → `CharacterSheetActions.setDrawnAvatar` → `PhotoService.uploadOnly`; CharacterSheetScreen → `PersonAvatar` for signed-URL render of the drawn avatar).
+**Last verified**: 2026-06-06
 
 ---
 
@@ -634,6 +634,29 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## World
+**Path**: `lib/features/world/`
+**Purpose**: A child draws their self-portrait, names it, and that drawing becomes their persistent in-world avatar — the day-one ritual that starts the summer-long Different World identity (docs/WORLD.md, docs/WORLD_DESIGN.md).
+**Personas served**: Ava (draws + names her world self); Jordan, Coach Sam (set up the ritual from the subject card as floor staff).
+**Discovery surfaces**:
+- Routes: `/subjects/:id/me` (CharacterSheetScreen — the "Me" screen), `/subjects/:id/draw` (DrawSelfScreen — finger-drawing canvas)
+- Omnibox: no — intentionally absent in slice 1; reached only from the subject's card
+- Slash: none
+- Drawer: no — intentionally absent in slice 1
+- Settings: no — intentionally absent in slice 1
+**Note (slice 1)**: The only discovery surface is a `_WorldSelfTile` FeatureCard on `lib/features/subjects/subject_detail_screen.dart`. No omnibox, drawer, or settings entry exists yet — this is intentional; slice 2 will add direct kid-mode discovery.
+**Capabilities**: None — open to all signed-in staff. `/subjects/:id/draw` auto-enters kid mode so the child can use it without staff navigating away.
+**Data**: [character_sheets](SCHEMA.md#character_sheets). Avatar bytes route through the shared `person-photos` Storage bucket + signed-URL pipeline (same as `subjects.photo_url` and `members.avatar_url`) but are written to `character_sheets.avatar_url`, not `subjects.photo_url`.
+**Surfaces**:
+- *DrawSelfScreen* — `lib/features/world/draw_self_screen.dart`. Full-bleed kid-mode finger-drawing canvas; 10-color palette + 3 brush sizes; undo + clear; "That's me!" saves the rasterised PNG via `CharacterSheetActions.setDrawnAvatar`. Auto-enters kid mode in `initState` (microtask-deferred); exits on `dispose`. Pins the locked route so system-back can't escape to staff screens.
+- *CharacterSheetScreen* — `lib/features/world/character_sheet_screen.dart`. The "Me" screen — shows the drawn avatar (via `PersonAvatar` with signed URL) + the child's chosen name (inline-editable dialog). "Draw myself / Redraw myself" button pushes to `/subjects/:id/draw`. Staff-facing for now; per-age surfaces (soft for 4–6, full for 7–12) come in later slices.
+- *Character sheet providers* — `lib/features/world/character_sheet_providers.dart`. `characterSheetForSubjectProvider` (StreamProvider.autoDispose.family by subjectId → `db.characterSheetsDao.watchForSubject`); `CharacterSheetActions` Notifier with `setDrawnAvatar` (routes through `PhotoService.uploadOnly` with `entityKind: 'character_sheet', entityId: subjectId`) and `setChosenName`.
+**Depends on**: Subjects (subject card is the entry point; `subjectByIdProvider` read on the Me screen), Kid mode (DrawSelfScreen auto-enters), Photos (avatar bytes through `PhotoService.uploadOnly` + signed-URL render via `PersonAvatar`).
+**Consumed by**: Subjects (`subject_detail_screen.dart` imports `character_sheet_providers.dart` and renders `_WorldSelfTile`).
+**Last verified**: 2026-06-06
+
+---
+
 ## Subjects
 **Path**: `lib/features/subjects/`
 **Purpose**: The child / student / patient record. Profile, health intake, photo, drop-off / pickup, guardian links.
@@ -651,8 +674,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Subject edit* — `lib/features/subjects/subject_edit_screen.dart`. Create / update form.
 - *Health profile screen* — `lib/features/subjects/health_profile_screen.dart`. Medical intake (allergies, dietary, IEP, etc.).
 **Depends on**: Groups, Guardians, Photos.
-**Consumed by**: Attendance, Entries, Exports, Family, Messages, Surveys.
-**Last verified**: 2026-05-21
+**Consumed by**: Attendance, Entries, Exports, Family, Messages, Surveys, World (subject_detail_screen imports `character_sheet_providers.dart`; `_WorldSelfTile` is the entry point for the World feature).
+**Last verified**: 2026-06-06
 
 ---
 
@@ -1027,6 +1050,13 @@ All other discovery claims verified against `router.dart`,
 `omnibox_catalog.dart`, `slash_commands.dart`, `main_drawer.dart`, and
 `settings_screen.dart`.
 
+_Run 2026-06-06 (World slice 1 — character_sheets)_ — no discovery drift. Updates applied this run:
+- **World** — new feature entry added. Routes `/subjects/:id/me` + `/subjects/:id/draw` confirmed in `router.dart` (lines 543–558, top-level shell children). No omnibox entry, no drawer item, no settings row, no slash command — all intentionally absent in slice 1; the only discovery surface is `_WorldSelfTile` FeatureCard on `subject_detail_screen.dart`. The claimed absence is verified against `omnibox_catalog.dart`, `slash_commands.dart`, `main_drawer.dart`, and `settings_screen.dart` — none contain world/character_sheet references.
+- **Subjects** — `**Consumed by**` updated to include World.
+- **Photos** — `**Consumed by**` updated to include World.
+- **SCHEMA.md** — `character_sheets` table entry added.
+- Cross-link reconcile: World `**Data**` claims `character_sheets`; `character_sheets` `**Consumers**` lists World. Bidirectional. No other (feature → table) or (table → feature) drift.
+
 _Run 2026-06-05 (Speak — screen split + 11 modes + history + transport)_ — no discovery drift found. Updates applied this run:
 - **Speak** — Presentation modes rewritten: was "Five modes" / "Ten modes" (stale from earlier waves); corrected to 11 modes. **Editorial** added as the new default (first in `implementedSpeakModes`). Stage, Collage, Spotlight, Mural, Grid, Justified, Index, Shape entries preserved. Mode count in the surfaces line now correct.
 - **Speak** — Three new surfaces added from the `speak_screen.dart` refactor (1 223 → 378 lines): *Speak input controls* (`speak_input_controls.dart`), *Speak performer* (`speak_performer.dart` — performance host + ticker + transport bar), *Speak immersive provider* (`speak_immersive.dart`). The old monolithic Speak screen entry retargeted to its post-refactor role (orchestration only).
@@ -1046,7 +1076,7 @@ _Run 2026-06-03 (Tools + LiveSession lobby + Poster orientation)_ — discovery 
 
 ---
 
-_Last full registry verification: 2026-06-05 (Speak — screen split + 11 modes + history + transport)._
+_Last full registry verification: 2026-06-06 (World slice 1 — character_sheets)._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._
