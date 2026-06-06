@@ -475,6 +475,66 @@ once it has a home.
     contributed tool earn promotion from crowd → curated?
   - **Threads:** #2 (this is you + your tools), #7 (content libraries), #17/#18
     (the game contract + present/control engine), the content freshness engine.
+- **2026-06-06** — **The summer IS a Different World — each child builds an
+  in-world self.** The kid-facing counterpart to the thinking-tools reframe:
+  the summer isn't a program a child *attends*, it's a world they *live in*
+  and construct an identity inside, over the whole summer.
+  > "for the whole summer, it is a different world. their pictures are their
+  > first drawing of themselves... they choose their names, their age is how
+  > long they've completed dailies... birthday... they choose their culture,
+  > their words, etc... map their location, get to see their world differently
+  > through roles... they'll have the verbs, their abilities... and their
+  > skills are things that are utility / survivability"
+
+  Each child has a **character sheet** — but every field is *earned or chosen,
+  never just given*:
+  - **Avatar = their first drawing of themselves.** Not a photo — on day one
+    the child draws who they are; that drawing is their face in the world.
+    (→ #1: the drawing is the first page of their book.)
+  - **Name — chosen.** A world-name they pick, not the one on the roster.
+  - **"Age" = dailies completed.** Age isn't years lived; it's how many daily
+    missions you've done. You grow *older in the world* by showing up and doing
+    the work — progression as identity. (→ #16 missions / dailies.)
+  - **Birthday** = the day they entered the world (first daily / first day).
+  - **Culture — chosen.** They pick a culture; it colours their world.
+  - **Words — chosen.** Their Action Words become *theirs* — a personal
+    vocabulary they carry. (→ #9 Action Words of the Day.)
+  - **Location — on a map.** Each child sits somewhere on a world map; the
+    program is a geography, not a roster.
+  - **Roles — how you see the world differently.** Roles aren't jobs you're
+    assigned; they're LENSES — step into one and the world looks different.
+    (→ #8 role decks, #2 identity-as-self-knowledge.)
+  - **Verbs = abilities.** The action words are also what you can DO — your
+    verbs are your powers. (→ #9.)
+  - **Skills = utility / survivability.** Practical real-world competences —
+    not RPG stats, but things that help you *do and endure* (the mission
+    competences, made legible as a skill set).
+
+  The reframe: every kid-facing thread — the growth book (#1), identity cards
+  (#2), brain-break makes (#3), role decks (#8), action words (#9), real
+  missions (#16) — are FACETS OF ONE THING: a child constructing themselves
+  inside a world over a summer. The **character sheet is the spine** that
+  connects them. It's the kid-side answer to "what are we even doing": not
+  entertaining them, not testing them — giving them a world to *become
+  someone* in, and a record of who they became.
+
+  - **Status:** vision / undesigned — a NORTH-STAR-level reframe of the
+    kid-facing experience (counterpart to the 2026-06-03 thinking-tools reframe
+    of the staff-facing side). Theme-worthy; fold up once it has a home.
+  - **Open questions before coding:** what does a child SEE — a "me" screen
+    (the character sheet), a world map, both? how literal is the RPG framing
+    (do we say "abilities / skills / age" to a 6-year-old, or is that
+    staff/parent-facing language over a playful kid surface)? who sets it up —
+    kid alone, kid + counselor, director-curated menus (culture / words /
+    roles from a fixed set vs free)? how does "age = dailies" show — a number,
+    a badge, a growing avatar? does the avatar get RE-drawn over the summer
+    (you draw yourself again at the end — growth made visible)? is the map
+    real geography or an invented world? what's private-to-kid vs
+    shared-to-room vs sent-to-family?
+  - **Threads:** #1 (the book / output), #2 (identity + tools), #3 (makes),
+    #8 (roles as lenses), #9 (action words = verbs), #16 (missions = dailies
+    = age). The CLAUDE.md "Showcase / growth arc" is the OUTPUT; **this is the
+    PLAYER** that produces it.
 
 ---
 
