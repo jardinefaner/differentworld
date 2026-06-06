@@ -12,7 +12,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PosterPrefs {
   const PosterPrefs._();
 
-  static const _key = 'poster.options.v1';
+  // v2: the defaults changed (guides now ON — see PosterOptions.guides). Bump
+  // the key so a stale v1 blob with guides=false is discarded and everyone
+  // picks up the new, gap-free default. (A one-time reset of poster prefs.)
+  static const _key = 'poster.options.v2';
 
   /// Load the saved options, or the defaults if nothing's saved / the blob
   /// is corrupt. Never throws.
@@ -38,7 +41,7 @@ class PosterPrefs {
           PosterQuality.standard,
         ),
         labels: map['labels'] as bool? ?? true,
-        guides: map['guides'] as bool? ?? false,
+        guides: map['guides'] as bool? ?? true,
       );
     } on Object {
       return const PosterOptions();

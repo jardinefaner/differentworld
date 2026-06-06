@@ -65,7 +65,10 @@ class PosterOptions {
     this.paper = PosterPaper.letter,
     this.quality = PosterQuality.standard,
     this.labels = true,
-    this.guides = false,
+    // On by default — see [guides]. The printer's unprintable edge margin
+    // makes full-bleed multi-page posters lose content at every seam; trim
+    // guides are how the pieces actually meet with nothing missing.
+    this.guides = true,
   });
 
   /// How big — the number of pages along the poster's *longest* edge
@@ -100,8 +103,11 @@ class PosterOptions {
 
   /// Add a white trim border with a dashed cut line + corner crop marks on
   /// every page, plus an "Assembly map" index page — so the seams line up
-  /// cleanly when you trim and tape. Off by default (the simple full-bleed
-  /// path).
+  /// cleanly when you trim and tape. **On by default**: home printers can't
+  /// print to the very edge, so full-bleed tiles lose ~¼" at each page edge and
+  /// leave gaps when assembled. Trimming on the cut line + taping is the only
+  /// way the pieces meet with nothing missing. Turn it off only for a
+  /// borderless / professional printer.
   final bool guides;
 
   PosterOptions copyWith({

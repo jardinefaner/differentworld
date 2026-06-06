@@ -314,8 +314,10 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
 
   String _outcomeMessage(_PosterDelivery delivery, int pages) =>
       switch (delivery) {
-        _PosterDelivery.printPdf =>
-          'Sent to print — $pages pages. Print at 100%, then tape them!',
+        _PosterDelivery.printPdf => _opts.guides
+            ? 'Sent to print — $pages pages. Print at 100%, trim each page on '
+                'the dashed line, then tape — no gaps.'
+            : 'Sent to print — $pages pages. Print at 100%, then tape them!',
         _PosterDelivery.savePdf =>
           'PDF saved ($pages pages). Open it on a computer and print at 100%.',
         _PosterDelivery.savePng =>
