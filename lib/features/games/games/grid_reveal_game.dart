@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_settings.dart';
 import 'package:flutter/material.dart';
 
 /// Reveal the Picture (docs/GAMES.md) — a hidden picture behind a lettered ×
@@ -87,15 +88,47 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
   @override
   String? get liveRoute => '/live/grid-reveal';
 
+  // Customizable grid — A–H × 1–8 like a chessboard, or any size in between.
+  // The settings sheet (single-device) collects these; the live/cast default
+  // path uses [initialState] (the default size) until the cockpit grows a
+  // pre-cast config step (a follow-up).
   @override
-  Map<String, dynamic> initialState(ContentSource content) {
-    // The bundled set is a code catalog, not the content bank — pick a random
-    // picture for the round. "Play again" re-runs this (a fresh picture).
+  List<GameSetting> get settings => const [
+        IntSetting(
+          id: 'cols',
+          label: 'Columns (A, B, C…)',
+          min: 2,
+          max: 8,
+          initial: _cols,
+        ),
+        IntSetting(
+          id: 'rows',
+          label: 'Rows (1, 2, 3…)',
+          min: 2,
+          max: 8,
+          initial: _rows,
+        ),
+      ];
+
+  @override
+  Map<String, dynamic> initialState(ContentSource content) =>
+      _build(_cols, _rows);
+
+  @override
+  Map<String, dynamic> initialStateFor(
+    ContentSource content,
+    Map<String, Object?> values,
+  ) =>
+      _build(values.intSetting('cols', _cols), values.intSetting('rows', _rows));
+
+  // The bundled set is a code catalog, not the content bank — pick a random
+  // picture for the round. "Play again" re-runs this (a fresh picture).
+  static Map<String, dynamic> _build(int cols, int rows) {
     final pick = _pictures[Random().nextInt(_pictures.length)];
-    const n = _cols * _rows;
+    final n = cols * rows;
     return <String, dynamic>{
-      'cols': _cols,
-      'rows': _rows,
+      'cols': cols,
+      'rows': rows,
       'pic': pick.$1,
       'lbl': pick.$2,
       'rev': List<bool>.filled(n, false),
