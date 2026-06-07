@@ -321,9 +321,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               // (docs/WORKFLOWS.md gap #3). Reuses entries.kind='incident'.
               GoRoute(
                 path: 'incidents',
-                builder: (_, _) => const RouteTitle(
+                builder: (_, state) => RouteTitle(
                   title: 'Incidents',
-                  child: IncidentsScreen(),
+                  child: IncidentsScreen(
+                    initialFilter: state.uri.queryParameters['filter'],
+                  ),
                 ),
                 routes: [
                   GoRoute(

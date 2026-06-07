@@ -25,14 +25,20 @@ enum _IncidentFilter { all, needsFollowUp }
 /// families still need a call and work the list down. Scoped to what the
 /// viewer can see (their cohorts; directors see all).
 class IncidentsScreen extends ConsumerStatefulWidget {
-  const IncidentsScreen({super.key});
+  const IncidentsScreen({this.initialFilter, super.key});
+
+  /// 'followup' opens the log pre-filtered to incidents whose family
+  /// hasn't been notified — the Director's-Pulse deep link lands here.
+  final String? initialFilter;
 
   @override
   ConsumerState<IncidentsScreen> createState() => _IncidentsScreenState();
 }
 
 class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
-  _IncidentFilter _filter = _IncidentFilter.all;
+  late _IncidentFilter _filter = widget.initialFilter == 'followup'
+      ? _IncidentFilter.needsFollowUp
+      : _IncidentFilter.all;
 
   @override
   Widget build(BuildContext context) {
