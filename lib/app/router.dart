@@ -12,6 +12,7 @@ import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/this_week_screen.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
+import 'package:differentworld/features/action_words/world_present_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
@@ -1012,6 +1013,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'This week’s world',
               child: ThisWeekScreen(),
+            ),
+          ),
+          // Project a world fullscreen to the room (device → projector).
+          // Goes immersive via castImmersiveProvider.
+          GoRoute(
+            path: '/present-world/:id',
+            builder: (_, state) => WorldPresentScreen(
+              worldId: state.pathParameters['id']!,
             ),
           ),
           // Spells — fullscreen timer commands, each a word in another
