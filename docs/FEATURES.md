@@ -62,13 +62,13 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: The world-reveal loop (docs/ACTION_WORDS.md, from the developer brief) — kids pick 3 of 12 action words each morning; the combo reveals an animal/element/archetype **world**; over time a title forms from their most-practiced verbs. The app touches the kid ~5 min/day; the room is the product.
 **Personas served**: Teacher (Conductor) — primary; Kid (Explorer) — optional V1; Parent (Witness) — V1 is the generated text, not an app.
 **Discovery surfaces**:
-- Routes: `/action-words` (the morning pick roster), `/action-words/send` (Send home — end-of-day copy-to-clipboard parent messages), `/action-words/worlds` (Our worlds — the class’s invented-world book), `/action-words/different-worlds` (Different Worlds — gallery of the program’s six themed worlds: Books, Movies, Songs, Dreams, Space, Time; each tappable to a glass sheet with sensory “Become it” beats + five world-building facets), `/action-words/activities` (Activity matcher — filter activities by verb), `/action-words/:subjectId` (the collection — worlds grid + verb bars + emerging title), `/this-week` (This Week hub — the live curriculum hub; shows the current world, “Cast to the room” + “Worksheets” + “Activities” actions; director manages journey start date from here), `/present-world/:id` (WorldPresentScreen — fullscreen immersive world slideshow, “Cast to the room”; reached from the This Week hub + the gallery world sheet; no omnibox entry — it is a per-world contextual action)
+- Routes: `/action-words` (the morning pick roster), `/action-words/send` (Send home — end-of-day copy-to-clipboard parent messages), `/action-words/worlds` (Our worlds — the class’s invented-world book), `/action-words/different-worlds` (Different Worlds — gallery of the program’s six themed worlds: Books, Movies, Songs, Dreams, Space, Time; each tappable to a glass sheet with sensory “Become it” beats + five world-building facets), `/action-words/activities` (Activity matcher — filter activities by verb), `/action-words/:subjectId` (the collection — worlds grid + verb bars + emerging title), `/this-week` (This Week hub — the live curriculum hub; shows the current world, “Cast to the room” + “Worksheets” + “Activities” actions; director manages journey start date from here), `/present-world/:id` (WorldPresentScreen — fullscreen immersive world slideshow, “Cast to the room”; reached from the This Week hub + the gallery world sheet; no omnibox entry — it is a per-world contextual action), `/book/:subjectId` (BookScreen — a child’s 10-week journey grouped by curriculum week; reached via a “Book” IconButton on the kid story screen; no omnibox entry — per-subject contextual)
 - Omnibox: `page.action-words` — "Action Words" (keywords: verbs, words, worlds, pick, reveal, collection, animal; morning contextTag). `page.this-week` — "This week's world" (keywords: this week, this week's world, current world, live world, journey, week, cast, worksheets). `page.different-worlds` — "Different Worlds" (keywords: books, movies, songs, dreams, space, time, different world, room). No omnibox entries for `/send`, `/worlds`, `/activities`, or `/present-world/:id` — reached via chrome action buttons or in-context links.
 - Slash: none
 - Drawer/Rail: yes — "Action Words" nav destination, gated `onlyFor: canObserve`
 - Settings: none (no opt-in cap yet)
 **Capabilities**: Pick / run: `can_observe` (the daily-staff gate).
-**Data**: Reuses [entries](SCHEMA.md#entries) `kind='action_words'` — one row per (subject, date); `details` = `{verb_picks:[3], done:[…], note, word_of_day, world_name?}`. The revealed world is DERIVED from `verb_picks` (deterministic lookup), not stored. NO new table. Reads [spaces](SCHEMA.md#spaces) capabilities via `SpaceCaps.programStartDate` (`program_start_date` key) — the journey start date that drives `currentCurriculumWeekProvider` + `currentWorldProvider`. No new table; the cap is written by `WorldScheduleActions.setStartDate`.
+**Data**: Reuses [entries](SCHEMA.md#entries) `kind='action_words'` — one row per (subject, date); `details` = `{verb_picks:[3], done:[…], note, word_of_day, world_name?}`. The revealed world is DERIVED from `verb_picks` (deterministic lookup), not stored. NO new table. Reads [spaces](SCHEMA.md#spaces) capabilities via `SpaceCaps.programStartDate` (`program_start_date` key) — the journey start date that drives `currentCurriculumWeekProvider` + `currentWorldProvider`. No new table; the cap is written by `WorldScheduleActions.setStartDate`. Writes [activities](SCHEMA.md#activities) — `CurriculumImporter.importActivities` seeds ~75 curriculum activities (verb-tagged via `action_verbs` cap, idempotent via `curriculum_key` cap marker in `activities.capabilities` JSONB).
 **Surfaces**:
 - `verbs.dart` — the 12 permanent verbs (id/emoji/label).
 - `worlds.dart` — `World` + `matchWorld(picks)` (exact / closest ≥2 / fresh), the ~40-world lookup (8 canonical + 7 starter extras; user owns the rest). Also exports `InventedWorld` and `kNamedWorlds`.
@@ -89,8 +89,10 @@ surface — preferences + roster + fleet, not primary workflows.
 - `world_present_screen.dart` — `WorldPresentScreen` at `/present-world/:id`: fullscreen immersive slideshow for the current world (Cast to the room). Enters `SystemUiMode.immersiveSticky`; restores `edgeToEdge` on dispose. No omnibox entry — reached from the This Week hub and from individual world sheets in the gallery.
 - `worksheet_pdf.dart` — `printWorldWorksheets(world)` / `printAllWorksheets(worlds)`. Generates printable PDF worksheets for one or all curriculum worlds; dispatches via the OS print sheet. No route — action from the This Week hub + each gallery world sheet app bar.
 - *Today card* — `_ThisWeekWorldCard` in `lib/features/today/widgets/today_sections.dart`. Embedded on Today; reads `currentWorldProvider`; shows the live world name + "Start the journey" prompt when no start date is set (director-only CTA). Tapping pushes `/this-week`.
-**Status**: This Week hub + world projection (Cast) + worksheets + Today card shipped (waves "week engine" + "worksheets" + "cast", commit range fbfdda3–206b108). Activity matcher verb-tagging library hookup, spell timers still deferred.
-**Depends on**: Entries, Subjects, Viewer, Spaces (program_start_date cap via world_schedule.dart).
+- `book_screen.dart` (`BookScreen`) — `/book/:subjectId`: a child's 10-week journey grouped by curriculum week. Each section shows the week's world header (emoji, name, question), the verbs practiced that week, and `MomentTile` rows for every captured moment. A `_LastPage` summary closes the screen. Reads `entriesForSubjectProvider` + `curriculumWorldsProvider` + `programStartDateProvider`; no new data. Reached via a "Book" `IconButton` on `kid_story_screen.dart`; no omnibox entry.
+- `curriculum_import.dart` (`CurriculumImporter`) — no route; in-place action. Reads `curriculumWorldsProvider`, iterates `w.activities`, inserts into `activitiesDao.create` with `action_verbs` + `curriculum_key` + `curriculum_world` caps. Idempotent (skips rows whose `curriculum_key` is already present). Surfaced as a director-only app-bar action on `activity_match_screen.dart` and as an empty-state CTA on the same screen. `curriculumImporterProvider` is the Riverpod entry point.
+**Status**: This Week hub + world projection (Cast) + worksheets + Today card shipped (waves "week engine" + "worksheets" + "cast", commit range fbfdda3–206b108). Book screen + curriculum importer shipped (waves "the Book" + "import curriculum activities", commits 2021813 + 5d4db52). Activity matcher verb-tagging library hookup, spell timers still deferred.
+**Depends on**: Entries, Subjects, Viewer, Spaces (program_start_date cap via world_schedule.dart), Activities (curriculum importer writes).
 **Consumed by**: Today (`_ThisWeekWorldCard` mounted in today_sections.dart reads `currentWorldProvider`).
 **Last verified**: 2026-06-07
 
@@ -681,6 +683,29 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Spell catalog* — `lib/features/spells/spells.dart`. `Spell`, `SpellWord`, `kSpells` (5 spells × 3 languages), `spellWordForDay(spell, dayKey)` (deterministic day-keyed rotation), `spellTimeLabel(seconds)`.
 **Depends on**: Nothing — pure catalog feature.
 **Consumed by**: Nothing currently. Future: Action Words spell-timer integration (docs/ACTION_WORDS.md — "spell timers" listed as next step).
+**Last verified**: 2026-06-07
+
+---
+
+## Story
+**Path**: `lib/features/story/`
+**Purpose**: TODO — please describe.
+**Personas served**: TODO
+**Discovery surfaces**:
+- Routes: `/story` (RoomStoryScreen — the whole class's moments), `/story/:subjectId` (KidStoryScreen — a child's memory timeline; carries a "Book" IconButton that pushes `/book/:subjectId`)
+- Omnibox: yes — `page.room-story` "Room story" (keywords: story, moments, memory, history); no per-subject omnibox entry
+- Slash: none
+- Drawer: no
+- Settings: no
+**Capabilities**: TODO
+**Data**: TODO
+**Surfaces**:
+- *Room story screen* — `lib/features/story/room_story_screen.dart`. TODO — please describe.
+- *Kid story screen* — `lib/features/story/kid_story_screen.dart`. A child's captured moments as a timeline; "Book" icon pushes `/book/:subjectId`.
+- *Moment model + helpers* — `lib/features/story/moment.dart`. `Moment`, `momentsFrom(entries)`, `curriculumWeekFor(start, dt)`.
+- *Story providers* — `lib/features/story/story_providers.dart`. TODO — please describe.
+**Depends on**: Entries, Subjects, Action Words (Book button + `curriculumWeekFor` from `moment.dart`).
+**Consumed by**: Action Words (`book_screen.dart` imports `moment.dart` + `MomentTile`).
 **Last verified**: 2026-06-07
 
 ---

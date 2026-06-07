@@ -134,6 +134,16 @@ class _LiveWorld extends ConsumerWidget {
               label: const Text('Worksheets'),
             ),
             OutlinedButton.icon(
+              onPressed: () => context.push('/wall'),
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              label: const Text('The Wall'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/time-capsules'),
+              icon: const Icon(Icons.lock_clock_outlined),
+              label: const Text('Time capsules'),
+            ),
+            OutlinedButton.icon(
               onPressed: () => context.push('/action-words/different-worlds'),
               icon: const Icon(Icons.public_outlined),
               label: const Text('Explore all worlds'),
