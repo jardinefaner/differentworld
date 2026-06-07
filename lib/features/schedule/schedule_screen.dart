@@ -184,6 +184,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                   tooltip: 'Weekly template',
                   onPressed: () => context.push('/schedule/template'),
                 ),
+                // The day-template builder — shape the day once, drop it
+                // onto a date.
+                IconButton(
+                  icon: const Icon(Icons.view_timeline_outlined),
+                  tooltip: 'Day templates',
+                  onPressed: () => context.push('/schedule/day-templates'),
+                ),
                 PrimaryActionButton(
                   tooltip: 'New block',
                   icon: Icons.add,

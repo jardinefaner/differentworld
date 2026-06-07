@@ -178,6 +178,51 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     return ids;
   }
 
+  /// Apply a day template to one (group, date): insert a HETEROGENEOUS
+  /// batch of blocks — each with its own title / kind / clock window —
+  /// sharing one `recurrenceId` so a day's generated blocks can be found
+  /// (and cleared) together. The caller (the day-template builder) packs
+  /// the duration-blocks into clock windows on the target date first.
+  /// `activityId` / `leadMemberId` / `locationOverrideId` are intentionally
+  /// absent (NULL) — staff fill those in per block after the template lands.
+  Future<List<String>> createDayBlocks({
+    required String spaceId,
+    required String groupId,
+    required String date,
+    required List<
+            ({String title, String kind, DateTime startAt, DateTime endAt})>
+        blocks,
+  }) async {
+    if (blocks.isEmpty) return const [];
+    final recurrenceId = _uuid.v4();
+    final now = DateTime.now().toUtc().toIso8601String();
+    final ids = <String>[];
+    await transaction(() async {
+      for (final b in blocks) {
+        final id = _uuid.v4();
+        ids.add(id);
+        await into(scheduleBlocks).insert(
+          ScheduleBlocksCompanion.insert(
+            id: id,
+            spaceId: spaceId,
+            groupId: groupId,
+            date: date,
+            startAt: b.startAt.toUtc().toIso8601String(),
+            endAt: b.endAt.toUtc().toIso8601String(),
+            title: Value(b.title),
+            kind: b.kind,
+            // Explicit 'planned' — withDefault is a no-op over PowerSync.
+            status: const Value('planned'),
+            recurrenceId: Value(recurrenceId),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
+    });
+    return ids;
+  }
+
   Future<void> update_({
     required String id,
     String? title,

@@ -1221,6 +1221,38 @@ is the runtime. After deploy, every signed-in guardian device needs a
 local-storage wipe (uninstall on mobile; "Clear site data" on web)
 to recreate the local SQLite with the new tables.
 
+### A list stored in caps JSON needs a serialized read-modify-write
+
+When you store a LIST inside a `capabilities` jsonb cell (the no-migration
+trick: `day_templates`, future world-facet content, etc.) and edit it
+through optimistic actions, every mutator is a **read-modify-write of the
+SAME cell**: load the whole list → mutate → `setStringCap` the whole list
+back. Two mutations racing (classic trigger: a drag-reorder's
+`unawaited(...)` write overlapping a delete tap) both read the same
+pre-write state and the second `_save` silently **clobbers** the first —
+the reordered block snaps back after the delete lands. Single-cell sync
+makes this worse: PowerSync resolves the whole `capabilities` cell, so
+cross-field races exist too.
+
+Fix: chain every mutator through a `Future<void> _pending` queue so they
+apply in order, and make the tail never-rejecting so one failed write
+can't block the rest:
+```dart
+Future<void> _pending = Future<void>.value();
+Future<void> _mutate(String spaceId, Update update) {
+  final op = _pending.then((_) async {
+    final list = await _load(spaceId);          // read
+    await _save(spaceId, update(List.of(list))); // modify + write
+  });
+  _pending = op.catchError((Object _) {});        // keep the queue alive
+  return op;                                      // caller still sees errors
+}
+```
+The actions object must be a stable singleton (a `Provider<XActions>`) so
+`_pending` persists across calls. Reference impl:
+`lib/features/schedule/day_template_providers.dart`. (A real table with
+per-row PKs doesn't have this problem — it's specific to list-in-a-cell.)
+
 ---
 
 ## Mutations: write through Drift, sync through PowerSync

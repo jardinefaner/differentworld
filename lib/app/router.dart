@@ -75,6 +75,8 @@ import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
+import 'package:differentworld/features/schedule/day_template_editor_screen.dart';
+import 'package:differentworld/features/schedule/day_templates_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/schedule/trip_detail_screen.dart';
@@ -567,6 +569,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Weekly template',
                   child: WeeklyTemplateScreen(),
+                ),
+              ),
+              // Day-template builder: duration-blocks, drag to reorder,
+              // apply onto a date → schedule_blocks.
+              GoRoute(
+                path: 'schedule/day-templates',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Day templates',
+                  child: DayTemplatesScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'schedule/day-templates/:id',
+                builder: (_, state) => DayTemplateEditorScreen(
+                  templateId: state.pathParameters['id']!,
                 ),
               ),
               // Wave 159: trip detail (MVP). One screen per
