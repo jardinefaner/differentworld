@@ -25,7 +25,7 @@ class WorldBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gold = _gold(theme);
+    final gold = goldFor(theme);
     final world = match.world;
 
     final String emoji;
@@ -90,7 +90,7 @@ class WorldBadge extends StatelessWidget {
 
   /// Soft gold accent — the brief's signature. Tuned per brightness so it
   /// stays legible on both themes.
-  static Color _gold(ThemeData theme) => theme.brightness == Brightness.dark
+  static Color goldFor(ThemeData theme) => theme.brightness == Brightness.dark
       ? const Color(0xFFE6C079)
       : const Color(0xFF9A7B2E);
 }
