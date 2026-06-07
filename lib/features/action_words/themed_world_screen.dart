@@ -4,6 +4,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/themed_worlds.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -26,9 +27,18 @@ class ThemedWorldScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final worldsAsync = ref.watch(curriculumWorldsProvider);
+    final worlds = worldsAsync.value ?? const <CurriculumWorld>[];
 
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        if (worlds.isNotEmpty)
+          IconButton(
+            tooltip: 'Print all worksheets',
+            icon: const Icon(Icons.print_outlined),
+            onPressed: () => unawaited(printAllWorksheets(worlds)),
+          ),
+        const SyncStatusIndicator(),
+      ],
       body: worldsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
@@ -260,6 +270,12 @@ class _WorldSheet extends StatelessWidget {
                 },
                 icon: const Icon(Icons.local_activity_outlined),
                 label: const Text('Activities for these verbs'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => unawaited(printWorldWorksheets(world)),
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Print worksheets'),
               ),
             ],
           ),
