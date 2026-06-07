@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
@@ -365,6 +366,100 @@ class _ActionWordsCard extends ConsumerWidget {
   }
 }
 
+/// The live curriculum world — "this week, the room is in World of X." Taps
+/// through to the This Week hub (cast / worksheets / activities). Renders a
+/// setup prompt to the director until the journey is started, and nothing
+/// at all for everyone else until then.
+class _ThisWeekWorldCard extends ConsumerWidget {
+  const _ThisWeekWorldCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final world = ref.watch(currentWorldProvider);
+
+    if (world == null) {
+      final isDirector = ref.watch(viewerProvider).isDirector;
+      if (!isDirector) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () {
+              unawaited(HapticFeedback.selectionClick());
+              unawaited(context.push('/this-week'));
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+              child: Row(
+                children: [
+                  const Icon(Icons.rocket_launch_outlined),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Start the 10-week journey',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final accent = world.color;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: accent.withValues(alpha: 0.14),
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push('/this-week'));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Text(world.emoji, style: const TextStyle(fontSize: 34)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Week ${world.week} · ${world.name}',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '“${world.question}”',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class TodayBody extends ConsumerWidget {
   const TodayBody({
     required this.member,
@@ -417,6 +512,10 @@ class TodayBody extends ConsumerWidget {
             ),
             // "A session is live — tap to join" (renders nothing when none).
             const LiveSessionBanner(),
+            // The live curriculum world (renders nothing until the
+            // 10-week journey is started; shows a setup prompt to the
+            // director). The daily anchor: "this week, the room is in X."
+            const _ThisWeekWorldCard(),
             // Specialist / substitute identity strip — answers the
             // Coach Sam audit finding ("no UI surface tells Sam what
             // they are"). Renders nothing for director / lead_teacher

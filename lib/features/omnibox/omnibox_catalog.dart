@@ -153,6 +153,23 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       onSelect: (ctx, _) => ctx.push('/action-words'),
     ),
     OmniboxEntry(
+      id: 'page.this-week',
+      label: 'This week’s world',
+      category: OmniboxCategory.page,
+      icon: Icons.rocket_launch_outlined,
+      keywords: const [
+        'this week',
+        'this week’s world',
+        'current world',
+        'live world',
+        'journey',
+        'week',
+        'cast',
+        'worksheets',
+      ],
+      onSelect: (ctx, _) => ctx.push('/this-week'),
+    ),
+    OmniboxEntry(
       id: 'page.different-worlds',
       label: 'Different Worlds',
       category: OmniboxCategory.page,

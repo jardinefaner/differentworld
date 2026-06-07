@@ -24,6 +24,11 @@ abstract class SpaceCaps {
   /// String cap (JSON); director-authored, read-mostly, no table.
   static const dayTemplates = 'day_templates';
 
+  /// The date Week 1 of the 10-week curriculum journey began (ISO date).
+  /// The live "this week's world" is derived from it. String cap; null =
+  /// the journey hasn't been started (worlds gallery still works).
+  static const programStartDate = 'program_start_date';
+
   /// PIN that unlocks the kid-mode lock. Stored as a string on the
   /// Space's capabilities JSONB so a director can change it from
   /// program settings. Default is `null` — kid-mode unlock falls
