@@ -36,6 +36,12 @@ class EntryKind {
   /// world_name?}. The revealed world is DERIVED from verb_picks via
   /// `matchWorld`, not stored (except a kid-named fresh world).
   static const String actionWords = 'action_words';
+
+  /// A role on the Do board for the day (docs/ACTION_WORDS.md "doing
+  /// clears to zero"). `details` = {role_name, emoji, done}. Created when
+  /// a teacher adds a role-card to today's board; flipped done when the
+  /// room has been that role.
+  static const String role = 'role';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
