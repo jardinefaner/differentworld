@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/activity_match_screen.dart';
+import 'package:differentworld/features/action_words/book_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
@@ -1021,6 +1022,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/present-world/:id',
             builder: (_, state) => WorldPresentScreen(
               worldId: state.pathParameters['id']!,
+            ),
+          ),
+          // A child's Book — their 10-week journey grouped by world.
+          GoRoute(
+            path: '/book/:subjectId',
+            builder: (_, state) => RouteTitle(
+              title: 'Book',
+              child: BookScreen(subjectId: state.pathParameters['subjectId']!),
             ),
           ),
           // Spells — fullscreen timer commands, each a word in another

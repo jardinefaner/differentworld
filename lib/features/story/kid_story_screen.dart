@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// A child's **Story** — every moment the room captured (observations,
 /// the Action Words world, missions, roles, incidents, snacks, naps,
@@ -31,6 +32,11 @@ class KidStoryScreen extends ConsumerWidget {
 
     return EdgeScaffold(
       actions: [
+        IconButton(
+          tooltip: 'Book — the 10-week journey',
+          icon: const Icon(Icons.auto_stories_outlined),
+          onPressed: () => context.push('/book/$subjectId'),
+        ),
         IconButton(
           tooltip: 'Wrap',
           icon: const Icon(Icons.auto_awesome_motion_outlined),

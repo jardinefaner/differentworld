@@ -26,6 +26,16 @@ DateTime startDateForWeek(int week, DateTime now) {
   return today.subtract(Duration(days: (week - 1) * 7));
 }
 
+/// The program's Week-1 start date (null = the journey isn't set up). Drives
+/// the Book's week-by-week grouping of a child's moments.
+final programStartDateProvider = Provider<DateTime?>((ref) {
+  final raw = ref.watch(
+    currentSpaceProvider
+        .select((s) => s.value?.caps.getString(SpaceCaps.programStartDate)),
+  );
+  return raw == null ? null : DateTime.tryParse(raw);
+});
+
 /// The live curriculum week (1–10), derived from the program start date
 /// cap. Null when the journey isn't set up / active.
 final currentCurriculumWeekProvider = Provider<int?>((ref) {
