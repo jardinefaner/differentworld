@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/summer_book.dart';
+import 'package:differentworld/features/action_words/summer_book_pdf.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/week_log.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
@@ -39,7 +43,22 @@ class BookScreen extends ConsumerWidget {
     );
 
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        IconButton(
+          tooltip: 'Make the summer book',
+          icon: const Icon(Icons.menu_book_outlined),
+          onPressed: () {
+            final book = buildSummerBook(
+              firstName: firstName,
+              entries: entriesAsync.value ?? const <Entry>[],
+              start: start,
+              worlds: worlds,
+            );
+            unawaited(printSummerBook(book));
+          },
+        ),
+        const SyncStatusIndicator(),
+      ],
       body: start == null
           ? EmptyState(
               icon: Icons.auto_stories_outlined,
