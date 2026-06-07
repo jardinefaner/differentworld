@@ -54,7 +54,20 @@ class BookScreen extends ConsumerWidget {
               start: start,
               worlds: worlds,
             );
-            unawaited(printSummerBook(book));
+            // The PDF is the family keepsake — it leaves the building. Scrub
+            // any OTHER child's name out of the free-text fields first (the
+            // Red Team / buddy-system privacy fix). The child's own name and
+            // all curriculum content stay; an ally typed as "worked with
+            // Sofia" prints as "worked with a friend".
+            final roster =
+                ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
+            final otherNames = <String>{};
+            for (final s in roster) {
+              if (s.id == subjectId) continue;
+              if (s.firstName.trim().isNotEmpty) otherNames.add(s.firstName);
+              if (s.lastName.trim().isNotEmpty) otherNames.add(s.lastName);
+            }
+            unawaited(printSummerBook(anonymizeSummerBook(book, otherNames)));
           },
         ),
         const SyncStatusIndicator(),

@@ -138,3 +138,51 @@ List<String> _practicedVerbs(List<Entry> entries) {
   }
   return out;
 }
+
+/// Replace any occurrence of another child's name in [text] with "a friend"
+/// (word-boundary, case-insensitive). The export/family path runs this over
+/// every free-text field so a child's keepsake never names another child —
+/// the cross-child-name leak the Red Team flagged on the buddy concept (the
+/// same class the incident form guards against staff→family).
+String scrubOtherNames(String text, Set<String> names) {
+  if (text.isEmpty || names.isEmpty) return text;
+  var out = text;
+  for (final name in names) {
+    final n = name.trim();
+    if (n.length < 2) continue; // a 1-char "name" would over-match
+    final re = RegExp('\\b${RegExp.escape(n)}\\b', caseSensitive: false);
+    out = out.replaceAll(re, 'a friend');
+  }
+  return out;
+}
+
+/// Anonymize a Summer Book for the FAMILY / EXPORT path — the child's own
+/// name + the curriculum content stay; every free-text field (milestone,
+/// ally, moments) is scrubbed of any OTHER child's name. [otherNames] is the
+/// roster's names minus this child. Staff-side rendering passes an empty set
+/// (no scrubbing). Acceptance: an exported book contains no other child's name.
+SummerBook anonymizeSummerBook(SummerBook book, Set<String> otherNames) {
+  if (otherNames.isEmpty) return book;
+  return SummerBook(
+    firstName: book.firstName, // their OWN name stays
+    title: book.title,
+    days: book.days,
+    weeks: [
+      for (final w in book.weeks)
+        SummerBookWeek(
+          week: w.week,
+          worldName: w.worldName,
+          emoji: w.emoji,
+          color: w.color,
+          question: w.question,
+          verbs: w.verbs,
+          milestone: scrubOtherNames(w.milestone, otherNames),
+          spell: w.spell, // a vocab word — never a name
+          ally: scrubOtherNames(w.ally, otherNames),
+          moments: [
+            for (final m in w.moments) scrubOtherNames(m, otherNames),
+          ],
+        ),
+    ],
+  );
+}
