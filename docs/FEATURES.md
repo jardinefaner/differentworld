@@ -296,18 +296,18 @@ surface — preferences + roster + fleet, not primary workflows.
 - Routes: `/incidents` (the log) + `/incidents/new` (the form; optional `?subjectId=` to pre-select a child)
 - Omnibox: `page.incidents` — "Incident log" + `action.log-incident` — "Log an incident" (both gated on `feature_incident_reports` + staff who can log/manage; keywords: incident, injury, accident, report, safety, bump, conflict)
 - Slash: none
-- Drawer: no — reached via omnibox + (future) a subject-detail entry point
+- Drawer: no — reached via omnibox + subject-detail jump chip (`SubjectIncidentsSection` → "Log incident")
 - Settings: yes — "Incident reports" (`CapSwitch`, auto-save) under the "What's tracked" section of `program_settings_screen.dart`; gated `canManageSpace`
 **Capabilities**: Gated on space cap `feature_incident_reports` (default on). Log: `can_observe`. View: `can_observe` OR `can_manage_space` (director). Visibility scoped to the viewer's cohorts (directors see all), same shape as observations.
-**Data**: Reuses [entries](SCHEMA.md#entries) `kind='incident'` — `text`=narrative, `details` JSON = `{incident_type, action_taken?, parent_notified}`. NO new table / migration / sync-rule change.
+**Data**: Reuses [entries](SCHEMA.md#entries) `kind='incident'` — `text`=narrative, `details` JSON = `{incident_type, action_taken?, parent_notified}`. [subjects](SCHEMA.md#subjects) — read by the log screen (`subjectsInSpaceProvider`) to resolve child identity on each card. NO new table / migration / sync-rule change.
 **Surfaces**:
-- `incidents_screen.dart` — the log: every incident the viewer can see, newest first, each row = child + type chip + relative time + narrative + action-taken + family-notified badge.
+- `incidents_screen.dart` — the log: every incident the viewer can see, newest first; stateful All / Needs-follow-up filter (incidents where `parent_notified` is false) with a live count chip; each row = child + type chip + relative time + narrative + action-taken + family-notified badge. All-notified celebratory note when the filter result is empty.
 - `incident_form_screen.dart` — the structured form: child picker, type chips (injury / conflict / behavior / illness / medical / other), narrative, action-taken, family-notified toggle, dirty-state discard guard.
-- `incidents_providers.dart` — `IncidentType` catalog, `Incident.fromEntry` (typed parse over an entry), `incidentsInSpaceProvider` + `incidentsForSubjectProvider`.
+- `incidents_providers.dart` — `IncidentType` catalog, `Incident.fromEntry` (typed parse over an entry), `incidentsInSpaceProvider` + `incidentsForSubjectProvider`; `incidentDetailsJson` builder; `IncidentActions.setParentNotified` (flip the family-notified flag post-log, drives the "Mark notified" button on `IncidentCard`).
 - `widgets/incident_card.dart` — `IncidentCard`, the shared card (log + per-child section; `showSubjectName` toggles the identity header).
 - `widgets/subject_incidents_section.dart` — `SubjectIncidentsSection`, the per-child history + scoped "Log incident" action embedded in Subject detail.
 - Create path: `EntryActions.createIncident` (`lib/features/entries/entries_providers.dart`).
-**Status**: shipped — v1 (log + structured form + family-notified tracking + per-child history on Subject detail). Deferred: incident photos, a PDF/CSV export template (the data is structured for it).
+**Status**: shipped — v1 (log + structured form + family-notified tracking + "Mark notified" amend + Needs-follow-up filter + per-child history on Subject detail). Deferred: incident photos, a PDF/CSV export template (the data is structured for it).
 **Depends on**: Entries, Subjects, Groups, Viewer (capabilities).
 **Consumed by**: Subject detail — per-child incident history (`SubjectIncidentsSection`, gated section + jump chip); (future) Exports — incident report.
 **Last verified**: 2026-06-06
@@ -703,7 +703,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Subject edit* — `lib/features/subjects/subject_edit_screen.dart`. Create / update form.
 - *Health profile screen* — `lib/features/subjects/health_profile_screen.dart`. Medical intake (allergies, dietary, IEP, etc.).
 **Depends on**: Groups, Guardians, Photos.
-**Consumed by**: Attendance, Entries, Exports, Family, Messages, Surveys, World (subject_detail_screen imports `character_sheet_providers.dart`; `_WorldSelfTile` is the entry point for the World feature).
+**Consumed by**: Attendance, Entries, Exports, Family, Messages, Surveys, Incidents (`subject_detail_screen.dart` imports `subject_incidents_section.dart`; `SubjectIncidentsSection` + jump chip render in the gated Incidents section), World (subject_detail_screen imports `character_sheet_providers.dart`; `_WorldSelfTile` is the entry point for the World feature).
 **Last verified**: 2026-06-06
 
 ---
@@ -862,7 +862,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Surfaces**:
 - *Today screen* — `lib/features/today/today_screen.dart`. Card list, refresh on pull.
 - *Live-session banner* — `lib/features/live_session/live_session_banner.dart` (cross-feature, mounted in `today_sections.dart`). Auto-shows at the top of Today when `activeSessionsProvider` has active sessions; hidden when none. One-tap join pushes `/join?code=…&game=…`. Multiple live sessions → picker sheet.
-- *Right-now card* — `_RightNowCard` in `lib/features/today/widgets/today_sections.dart`. Time-aware lead card driven by `dayPhaseProvider` (a `StreamProvider<DayPhase>` re-emitting every minute). Shows contextual CTA + destination for each phase: prep = plan the day, arrival → `/checklist`, program → `/schedule`, pickup → `/pickup`, closed = hidden. Renders only for `viewer.isDailyLogger`. Shipped 2026-06-06.
+- *Right-now card* — `_RightNowCard` in `lib/features/today/widgets/today_sections.dart`. Time-aware lead card driven by `dayPhaseProvider` (a `StreamProvider<DayPhase>` re-emitting every minute). Shows contextual CTA + destination for each phase: prep = plan the day, arrival → `/checklist` (with live "M of N in · K still to check in" from `arrivalProgressProvider`), program → `/schedule`, pickup → `/pickup`, closed = hidden. Renders only for `viewer.isDailyLogger`. `ArrivalProgress` + `arrivalProgressProvider` live in `today_providers.dart`; cross-cohort rollup of `GroupDayState.inBuildingCount`. Shipped 2026-06-06 (arrival progress wave 5).
 - *Embedded cards* — leading-today (from Schedule), morning-checklist (from Attendance), recent-captures (from Captures), open-tasks (from Tasks), insights (from Insights), unread-messages (deferred).
 - *Director pulse card* — `_DirectorPulseCard` inside `today_screen.dart`. Director-only proactive pulse: surfaces today's absent kids (from group day state), cohorts running on substitute coverage (from schedule), and certs expiring within 30 days (from certs-in-space). Renders nothing on "all clear" so it never adds noise. Shipped 2026-05-22 (Wave 36).
 - *Identity strip* — `_IdentityStrip` inside `today_screen.dart`. Renders only for specialists ("You are: Specialist · Coach") and substitutes ("You are: Substitute today"); silent for director / lead_teacher / teacher / guardian / kitchen because their context makes the role obvious. Tap → `/settings/roles`. Specialist without a specialty assigned gets a tertiary-tinted hint matching the team-list pattern. Closes the Coach Sam identity gap surfaced by persona-audit 2026-05-23. Shipped Wave 40.
