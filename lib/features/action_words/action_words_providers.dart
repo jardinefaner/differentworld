@@ -256,6 +256,23 @@ final inventedWorldsProvider = Provider<AsyncValue<List<InventedWorld>>>((ref) {
   });
 });
 
+/// How many children have picked their words today — drives the optional
+/// "Today's words" card on the main Today (renders nothing at 0, so it's
+/// invisible for programs that don't use Action Words).
+final actionWordsPickedTodayProvider = Provider<int>((ref) {
+  final entries = ref.watch(_spaceActionWordsProvider).value ?? const <Entry>[];
+  final today = todayKey();
+  final picked = <String>{};
+  for (final e in entries) {
+    final sid = e.subjectId;
+    if (sid == null) continue;
+    final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+    if (local == null || dateKey(local) != today) continue;
+    if (ActionWordsDay.fromEntry(e).hasPicks) picked.add(sid);
+  }
+  return picked.length;
+});
+
 /// The sorted-verb key for a combo — the lookup key for class worlds.
 String worldComboKey(Set<String> verbs) => (verbs.toList()..sort()).join('+');
 
