@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/mood.dart';
 import 'package:differentworld/features/action_words/reveal_overlay.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
@@ -11,6 +12,7 @@ import 'package:differentworld/features/action_words/widgets/world_badge.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
+import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -346,7 +348,14 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              // Mood Weather, inline — the morning check collapses into the
+              // same gesture as the verb pick (no separate per-kid nav).
+              _PickMoodRow(
+                subjectId: widget.subject.id,
+                groupId: widget.subject.groupId,
+              ),
+              const SizedBox(height: 12),
               VerbGrid(selected: _selected, onToggle: _toggle),
               if (match != null) ...[
                 const SizedBox(height: 20),
@@ -441,6 +450,72 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The inline Mood Weather strip on the verb-pick sheet — five tappable
+/// emoji; today's pick is highlighted. Collapses the morning mood check into
+/// the same per-kid sheet as the verb pick (the operational red-team's
+/// Blocker 1: no more 3-navigation-deep per-child mood flow).
+class _PickMoodRow extends ConsumerWidget {
+  const _PickMoodRow({required this.subjectId, this.groupId});
+
+  final String subjectId;
+  final String? groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final moodEntries = ref
+            .watch(entriesForSubjectProvider(
+              (subjectId: subjectId, kind: EntryKind.mood),
+            ))
+            .value ??
+        const <Entry>[];
+    final todayK = dateKey(DateTime.now());
+    MoodLevel? today;
+    for (final e in moodEntries) {
+      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+      if (local != null && dateKey(local) == todayK) {
+        today = MoodReading.fromEntry(e).level;
+        break;
+      }
+    }
+    return Row(
+      children: [
+        for (final m in MoodLevel.values)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => unawaited(
+                  ref.read(entryActionsProvider).recordMood(
+                        subjectId: subjectId,
+                        value: m.value,
+                        groupId: groupId,
+                      ),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: today == m
+                        ? m.color.withValues(alpha: 0.30)
+                        : theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                    border: today == m
+                        ? Border.all(color: m.color, width: 2)
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(m.emoji, style: const TextStyle(fontSize: 20)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
