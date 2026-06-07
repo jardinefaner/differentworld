@@ -40,6 +40,12 @@ class ActionWordsScreen extends ConsumerWidget {
     return EdgeScaffold(
       actions: [
         IconButton(
+          tooltip: 'Reveal all',
+          icon: const Icon(Icons.auto_awesome_motion),
+          color: WorldBadge.goldFor(Theme.of(context)),
+          onPressed: () => _revealAll(context, ref),
+        ),
+        IconButton(
           tooltip: 'Our worlds',
           icon: const Icon(Icons.menu_book_outlined),
           onPressed: () => context.push('/action-words/worlds'),
@@ -62,7 +68,8 @@ class ActionWordsScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.auto_awesome_outlined,
               title: 'No children yet',
-              message: 'Add children to your program, then pick each one’s '
+              message:
+                  'Add children to your program, then pick each one’s '
                   'three action words for the day.',
             );
           }
@@ -83,6 +90,33 @@ class ActionWordsScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// The end-of-day ceremony: gather every child who has picks today and
+  /// reveal them in one tap-to-advance cycle. Reads each kid's already-watched
+  /// day (the rows keep them warm); a child whose row hasn't resolved yet is
+  /// simply skipped. Empty → a gentle nudge instead of a blank ceremony.
+  void _revealAll(BuildContext context, WidgetRef ref) {
+    final subjects =
+        ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
+    final items = <RevealItem>[];
+    for (final s in subjects) {
+      final day = ref
+          .read(
+            actionWordsForDayProvider((subjectId: s.id, date: todayKey())),
+          )
+          .value;
+      if (day != null && day.hasPicks) items.add((subject: s, day: day));
+    }
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No worlds to reveal yet — pick today’s words first.'),
+        ),
+      );
+      return;
+    }
+    unawaited(RevealOverlay.showAll(context, items: items));
   }
 }
 
@@ -147,14 +181,19 @@ class _KidRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final day = ref
-        .watch(actionWordsForDayProvider(
-          (subjectId: subject.id, date: todayKey()),
-        ))
+        .watch(
+          actionWordsForDayProvider(
+            (subjectId: subject.id, date: todayKey()),
+          ),
+        )
         .value;
     final picks = day?.verbPicks ?? const <String>[];
     final hasPicks = day?.hasPicks ?? false;
     final match = (day?.hasPicks ?? false)
-        ? resolveWorld(day!.verbPicks.toSet(), ref.watch(classWorldBookProvider))
+        ? resolveWorld(
+            day!.verbPicks.toSet(),
+            ref.watch(classWorldBookProvider),
+          )
         : null;
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
 
@@ -294,7 +333,9 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
     setState(() => _saving = true);
     final nav = Navigator.of(context);
     unawaited(HapticFeedback.selectionClick());
-    await ref.read(actionWordsActionsProvider).setPicks(
+    await ref
+        .read(actionWordsActionsProvider)
+        .setPicks(
           subjectId: widget.subject.id,
           groupId: widget.subject.groupId,
           date: todayKey(),
@@ -307,8 +348,8 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fullName =
-        '${widget.subject.firstName} ${widget.subject.lastName}'.trim();
+    final fullName = '${widget.subject.firstName} ${widget.subject.lastName}'
+        .trim();
     final ready = _selected.length == kPicksPerDay;
     final match = ready
         ? resolveWorld(_selected, ref.watch(classWorldBookProvider))
@@ -333,8 +374,9 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.4),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.4,
+                    ),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -467,10 +509,13 @@ class _PickMoodRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final moodEntries = ref
-            .watch(entriesForSubjectProvider(
-              (subjectId: subjectId, kind: EntryKind.mood),
-            ))
+    final moodEntries =
+        ref
+            .watch(
+              entriesForSubjectProvider(
+                (subjectId: subjectId, kind: EntryKind.mood),
+              ),
+            )
             .value ??
         const <Entry>[];
     final todayK = dateKey(DateTime.now());
@@ -491,7 +536,9 @@ class _PickMoodRow extends ConsumerWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: () => unawaited(
-                  ref.read(entryActionsProvider).recordMood(
+                  ref
+                      .read(entryActionsProvider)
+                      .recordMood(
                         subjectId: subjectId,
                         value: m.value,
                         groupId: groupId,
