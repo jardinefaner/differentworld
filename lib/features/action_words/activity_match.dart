@@ -1,5 +1,6 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/action_words/senses.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 
 /// The Action Words verbs tagged on an activity (stored in the activity's
@@ -12,6 +13,24 @@ List<String> activityVerbs(Activity a) {
     for (final e in raw)
       if (verbById(e.toString()) != null) e.toString(),
   ];
+}
+
+/// The senses an activity engages (stored in `capabilities.senses` — the
+/// sensory facet). Unknown values are dropped.
+List<Sense> activitySenses(Activity a) {
+  final raw =
+      Capabilities.fromJson(a.capabilities).get<List<dynamic>>('senses') ??
+          const <dynamic>[];
+  final out = <Sense>[];
+  for (final e in raw) {
+    for (final s in Sense.values) {
+      if (s.name == e.toString()) {
+        out.add(s);
+        break;
+      }
+    }
+  }
+  return out;
 }
 
 /// An activity paired with how many of the kid's picked verbs it shares.

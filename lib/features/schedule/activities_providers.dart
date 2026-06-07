@@ -117,14 +117,44 @@ class ActivityActions {
     await db.activitiesDao.unarchive(id);
   }
 
-  /// Tag an activity with Action Words verbs (stored in the activity's
-  /// capabilities JSON — no migration). Drives the verb→activity matcher.
-  Future<void> setActionVerbs(Activity activity, List<String> verbs) async {
+  /// Tag an activity with Action Words verbs + senses (stored in the
+  /// activity's capabilities JSON — no migration). Drives the verb→activity
+  /// matcher and the sensory facet. One write so the two keys can't clobber
+  /// each other.
+  Future<void> setActivityTags(
+    Activity activity, {
+    required List<String> verbs,
+    required List<String> senses,
+  }) async {
     final db = await _ref.read(appDatabaseProvider.future);
     final caps = Capabilities.fromJson(activity.capabilities)
-        .setting('action_verbs', verbs);
+        .setting('action_verbs', verbs)
+        .setting('senses', senses);
     await db.activitiesDao.update_(
       id: activity.id,
+      capabilitiesJson: caps.toJson(),
+    );
+  }
+
+  /// Create an activity already tagged with verbs + senses — the
+  /// add-custom path from the Action Words activity library.
+  Future<String> createTagged({
+    required String name,
+    required List<String> verbs,
+    required List<String> senses,
+    String? description,
+  }) async {
+    final viewer = _ref.read(viewerProvider);
+    final spaceId = viewer.requireSpaceId(action: 'create an activity');
+    final db = await _ref.read(appDatabaseProvider.future);
+    final caps = Capabilities.fromJson('{}')
+        .setting('action_verbs', verbs)
+        .setting('senses', senses);
+    return db.activitiesDao.create(
+      spaceId: spaceId,
+      name: name,
+      ownerMemberId: viewer.memberId,
+      description: description,
       capabilitiesJson: caps.toJson(),
     );
   }
