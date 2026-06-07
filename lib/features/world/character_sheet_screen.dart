@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/mood.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
@@ -211,6 +212,8 @@ class _Body extends ConsumerWidget {
             const SizedBox(height: 28),
             const Divider(),
             const SizedBox(height: 16),
+            _Weather(subjectId: subjectId),
+            const SizedBox(height: 22),
             _Section(
               label: 'Abilities · the 12 verbs',
               child: _Verbs(practiced: practiced),
@@ -356,6 +359,104 @@ class _Section extends StatelessWidget {
         const SizedBox(height: 10),
         child,
       ],
+    );
+  }
+}
+
+class _Weather extends ConsumerWidget {
+  const _Weather({required this.subjectId});
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final moodEntries = ref
+            .watch(entriesForSubjectProvider(
+              (subjectId: subjectId, kind: EntryKind.mood),
+            ))
+            .value ??
+        const <Entry>[];
+
+    final todayKeyStr = dateKey(DateTime.now());
+    MoodReading? today;
+    for (final e in moodEntries) {
+      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+      if (local != null && dateKey(local) == todayKeyStr) {
+        today = MoodReading.fromEntry(e);
+        break; // newest-first → first match is the latest today
+      }
+    }
+    final log =
+        moodReadings(moodEntries).take(14).toList().reversed.toList();
+
+    return _Section(
+      label: 'Weather · today’s mood',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              for (final m in MoodLevel.values)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => unawaited(
+                        ref.read(entryActionsProvider).recordMood(
+                              subjectId: subjectId,
+                              value: m.value,
+                            ),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: today?.level == m
+                              ? m.color.withValues(alpha: 0.30)
+                              : theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                          border: today?.level == m
+                              ? Border.all(color: m.color, width: 2)
+                              : null,
+                        ),
+                        child: Column(
+                          children: [
+                            Text(m.emoji,
+                                style: const TextStyle(fontSize: 24)),
+                            Text(
+                              '${m.value}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (log.length > 1) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Weather log',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 2,
+              children: [
+                for (final r in log)
+                  Text(r.level.emoji, style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
