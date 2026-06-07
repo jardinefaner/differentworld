@@ -45,6 +45,8 @@ import 'package:differentworld/features/games/games/this_or_that_game.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/incidents/incident_form_screen.dart';
+import 'package:differentworld/features/incidents/incidents_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invite_create_screen.dart';
@@ -312,6 +314,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                         ),
                       );
                     },
+                  ),
+                ],
+              ),
+              // Incident log — structured, exportable incident capture
+              // (docs/WORKFLOWS.md gap #3). Reuses entries.kind='incident'.
+              GoRoute(
+                path: 'incidents',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Incidents',
+                  child: IncidentsScreen(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Log an incident',
+                      child: IncidentFormScreen(
+                        initialSubjectId:
+                            state.uri.queryParameters['subjectId'],
+                      ),
+                    ),
                   ),
                 ],
               ),

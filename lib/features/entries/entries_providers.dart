@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -169,12 +171,44 @@ class EntryActions {
     return entryId;
   }
 
+  /// Create a structured incident (docs/WORKFLOWS.md gap #3). The
+  /// narrative goes in [text]; the structured fields ride in `details`
+  /// JSON ({incident_type, action_taken?, parent_notified}). Reuses the
+  /// `entries` table — `kind='incident'` — so there's no new data layer.
+  /// A separate first-class kind from observations: incidents are a
+  /// compliance record, filtered + exported on their own axis.
+  Future<String> createIncident({
+    required String subjectId,
+    required String text,
+    required String incidentType,
+    String? groupId,
+    String? actionTaken,
+    bool parentNotified = false,
+    String? id,
+  }) async {
+    final details = <String, dynamic>{
+      'incident_type': incidentType,
+      if (actionTaken != null && actionTaken.trim().isNotEmpty)
+        'action_taken': actionTaken.trim(),
+      'parent_notified': parentNotified,
+    };
+    return _create(
+      kind: EntryKind.incident,
+      subjectId: subjectId,
+      groupId: groupId,
+      body: text,
+      detailsJson: jsonEncode(details),
+      id: id,
+    );
+  }
+
   Future<String> _create({
     required String kind,
     String? subjectId,
     String? groupId,
     String? scheduleBlockId,
     String? body,
+    String detailsJson = '{}',
     String? id,
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
@@ -191,6 +225,7 @@ class EntryActions {
       groupId: groupId,
       scheduleBlockId: scheduleBlockId,
       body: body,
+      detailsJson: detailsJson,
     );
     return useId;
   }
