@@ -59,6 +59,7 @@ import 'package:differentworld/features/live_session/cast_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
+import 'package:differentworld/features/missions/mission_board_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
@@ -672,6 +673,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   title: 'Missions',
                   child: MissionsListScreen(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'board',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'Today’s board',
+                      child: MissionBoardScreen(),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'roles',

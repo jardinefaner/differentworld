@@ -51,6 +51,48 @@ sorted key). **TODO: the user owns the remaining ~32 named worlds — append
 them to `kNamedWorlds`.** A few obvious extras are seeded + marked so the
 collection isn't empty; replace freely.
 
+## The two halves — doing *clears*, growth *accumulates*
+
+A load-bearing design principle (the user's, 2026-06-06):
+
+- **Doing is ephemeral — it clears to zero.** The day's tasks are **big
+  image-buttons, not lists**. Each one **hides when done**, so the surface
+  *drains toward "tasks zero"* — a clean, satisfying, finished room. Tasks
+  are **sourced from missions + roles** (the existing systems are the
+  catalog of "jobs the room does"). The win is the *emptying*, not a
+  checklist of strikethroughs.
+- **Growth is permanent — it stays *unhidden*.** Worlds, the collection,
+  the emerging title, the words/spells a class learns, the culture they
+  build — these **accumulate and stay visible**. The collection grid, the
+  "Becoming…" title, the spell vocabulary: growth is the thing you *don't*
+  hide.
+
+So: the **Do board** (missions/roles as big buttons → zero) and the
+**Collection/culture** (worlds/words/title, ever-visible) are the two poles
+of the loop. Build the doing to *disappear*; build the growth to *remain*.
+
+## Spells are words in other languages
+
+The spell commands (FREEZE / CREATE / SHARE / MOVE / WONDER) are not just
+English timer words — each is (or carries) a **word in another language**.
+The fullscreen spell is a tiny culture/language moment: the foreign word +
+its meaning + the timer. Over a term the class learns a vocabulary of
+spells across languages — part of the *growth that stays unhidden*.
+
+## They create their own worlds, words, culture — with continuity
+
+The system is **generative, not just a fixed catalog**. Kids and programs
+**author their own**:
+
+- **worlds** — the *fresh world → you name it* moment (shipped) is the seed;
+  a class can name and keep worlds the lookup never had.
+- **words** — their own spells / vocabulary / verbs-in-their-languages.
+- **culture** — a shared, program-specific language + set of worlds that
+  grows over a term and **carries forward (continuity)** year to year.
+
+The fixed 12 verbs + ~40 worlds are the *starter* substrate; the real
+product is what each room *builds on top* and keeps. Growth unhidden.
+
 ## Data model — maps onto the existing engine
 
 The engine is already domain-agnostic (Space / Member / Group / Subject /
