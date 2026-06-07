@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -38,8 +39,7 @@ class WeekLog {
   final String spell;
   final String ally;
 
-  bool get isEmpty =>
-      milestone.isEmpty && spell.isEmpty && ally.isEmpty;
+  bool get isEmpty => milestone.isEmpty && spell.isEmpty && ally.isEmpty;
 }
 
 /// The log for one (subject's entries, week), or null if none yet.
@@ -94,6 +94,19 @@ class _WeekLogSheetState extends ConsumerState<_WeekLogSheet> {
   final _spell = TextEditingController();
   final _ally = TextEditingController();
   bool _loaded = false;
+  // Baseline = what was loaded (or empty for a new log). Dirty = any field
+  // diverged. `_closing` short-circuits the guard once Save has fired so the
+  // programmatic pop doesn't trip the discard dialog.
+  String _baseMilestone = '';
+  String _baseSpell = '';
+  String _baseAlly = '';
+  bool _closing = false;
+
+  bool _isDirty() =>
+      !_closing &&
+      (_milestone.text != _baseMilestone ||
+          _spell.text != _baseSpell ||
+          _ally.text != _baseAlly);
 
   @override
   void dispose() {
@@ -107,10 +120,13 @@ class _WeekLogSheetState extends ConsumerState<_WeekLogSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // Prefill from the existing log once.
-    final entries = ref
-            .watch(entriesForSubjectProvider(
-              (subjectId: widget.subjectId, kind: EntryKind.weekLog),
-            ))
+    final entries =
+        ref
+            .watch(
+              entriesForSubjectProvider(
+                (subjectId: widget.subjectId, kind: EntryKind.weekLog),
+              ),
+            )
             .value ??
         const <Entry>[];
     if (!_loaded) {
@@ -120,62 +136,72 @@ class _WeekLogSheetState extends ConsumerState<_WeekLogSheet> {
         _spell.text = existing.spell;
         _ally.text = existing.ally;
       }
+      _baseMilestone = _milestone.text;
+      _baseSpell = _spell.text;
+      _baseAlly = _ally.text;
       _loaded = true;
     }
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            16 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                '${widget.firstName} · Week ${widget.week} log',
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 14),
-              _Field(
-                controller: _milestone,
-                label: 'Milestone',
-                hint: 'held still for 2 minutes watching a bug',
-              ),
-              const SizedBox(height: 12),
-              _Field(
-                controller: _spell,
-                label: 'Spell learned',
-                hint: 'CANOPY',
-              ),
-              const SizedBox(height: 12),
-              _Field(
-                controller: _ally,
-                label: 'Ally',
-                hint: 'worked with Sofia on the sound map',
-              ),
-              const SizedBox(height: 18),
-              FilledButton(
-                onPressed: () async {
-                  final nav = Navigator.of(context);
-                  await ref.read(entryActionsProvider).setWeekLog(
-                        subjectId: widget.subjectId,
-                        week: widget.week,
-                        groupId: widget.groupId,
-                        milestone: _milestone.text,
-                        spell: _spell.text,
-                        ally: _ally.text,
-                      );
-                  if (!mounted) return;
-                  nav.pop();
-                },
-                child: const Text('Save'),
-              ),
-            ],
+    return DismissGuard(
+      isDirty: _isDirty,
+      discardMessage: 'You have unsaved notes for this week. Discard them?',
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              16 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '${widget.firstName} · Week ${widget.week} log',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 14),
+                _Field(
+                  controller: _milestone,
+                  label: 'Milestone',
+                  hint: 'held still for 2 minutes watching a bug',
+                ),
+                const SizedBox(height: 12),
+                _Field(
+                  controller: _spell,
+                  label: 'Spell learned',
+                  hint: 'CANOPY',
+                ),
+                const SizedBox(height: 12),
+                _Field(
+                  controller: _ally,
+                  label: 'Ally',
+                  hint: 'worked with Sofia on the sound map',
+                ),
+                const SizedBox(height: 18),
+                FilledButton(
+                  onPressed: () async {
+                    final nav = Navigator.of(context);
+                    await ref
+                        .read(entryActionsProvider)
+                        .setWeekLog(
+                          subjectId: widget.subjectId,
+                          week: widget.week,
+                          groupId: widget.groupId,
+                          milestone: _milestone.text,
+                          spell: _spell.text,
+                          ally: _ally.text,
+                        );
+                    if (!mounted) return;
+                    _closing = true; // saved → let the guard pass on pop
+                    nav.pop();
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
