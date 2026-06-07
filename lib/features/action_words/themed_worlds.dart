@@ -1,103 +1,95 @@
 import 'package:differentworld/features/action_words/senses.dart';
 import 'package:flutter/foundation.dart';
 
-/// A **themed world** — the bigger "different world" a room steps into for
-/// a couple of weeks (the brief's themed rooms). Where the daily 3-verb
-/// world is *everyday*, the themed world is the *weekly* sensory immersion
-/// the daily world nests inside (docs/ACTION_WORDS.md). Programs own +
-/// extend this list; the daily Action Words mechanic is theme-agnostic.
+/// A **themed world** — one of the program's standing "Different Worlds."
+/// The umbrella is *Different World*; each room is a world the kids step
+/// into and help build. NOT a weekly rotation — these map to the 5 rooms
+/// the program already has (docs/WORLD.md). The daily 3-verb Action Words
+/// world (everyday) nests inside the bigger themed world (the room).
 @immutable
 class ThemedWorld {
   const ThemedWorld({
     required this.id,
     required this.emoji,
     required this.name,
-    required this.room,
-    required this.blurb,
+    required this.tagline,
     required this.senses,
   });
 
   final String id;
   final String emoji;
+
+  /// "World of Books".
   final String name;
 
-  /// The physical room this world lives in ("Safari Room").
-  final String room;
-
   /// A one-line invitation into the world.
-  final String blurb;
+  final String tagline;
 
-  /// How the room enters this world through the senses.
+  /// How the room enters this world through the senses ("become it").
   final List<SenseBeat> senses;
 }
 
-/// The starter set (the brief's sequence). The teacher sets which one the
-/// room is in this week; replace / extend freely.
+/// The program's worlds — the "Different World" anthology. A starter set
+/// keyed to the rooms a summer program runs; programs rename / extend.
 const List<ThemedWorld> kThemedWorlds = [
   ThemedWorld(
-    id: 'all_about_me',
-    emoji: '🪞',
-    name: 'All About Me',
-    room: 'Home Room',
-    blurb: 'Who am I? Getting to know each other.',
+    id: 'books',
+    emoji: '📚',
+    name: 'World of Books',
+    tagline: 'Open a book and step inside the story.',
     senses: [
-      SenseBeat(Sense.look, 'Look in the mirror — what do you see?'),
-      SenseBeat(Sense.touch, 'Press a handprint that’s only yours'),
+      SenseBeat(Sense.look, 'Open the book — what do you see inside?'),
+      SenseBeat(Sense.sound, 'Read it out loud — be the storyteller'),
     ],
   ),
   ThemedWorld(
-    id: 'wildlife',
-    emoji: '🦁',
-    name: 'Wildlife',
-    room: 'Safari Room',
-    blurb: 'Animals and the wild places they live.',
+    id: 'movies',
+    emoji: '🎬',
+    name: 'World of Movies',
+    tagline: 'Lights, camera — make the scene and act it out.',
     senses: [
-      SenseBeat(Sense.sound, 'Call like an animal — loud, then soft'),
-      SenseBeat(Sense.move, 'Move the way it moves — stalk, hop, soar'),
+      SenseBeat(Sense.move, 'Action! — act the scene with your whole body'),
+      SenseBeat(Sense.sound, 'Say the line, make the movie sounds'),
     ],
   ),
   ThemedWorld(
-    id: 'travel',
-    emoji: '✈️',
-    name: 'Travel',
-    room: 'Travel Room',
-    blurb: 'Places far away and how we get there.',
+    id: 'songs',
+    emoji: '🎵',
+    name: 'World of Songs',
+    tagline: 'Find the beat, sing it, move to it.',
     senses: [
-      SenseBeat(Sense.look, 'Find a place on the map — point to it'),
-      SenseBeat(Sense.move, 'Fly, drive, or sail your way there'),
+      SenseBeat(Sense.sound, 'Sing it out — hear the beat'),
+      SenseBeat(Sense.move, 'Dance the way the song feels'),
     ],
   ),
   ThemedWorld(
-    id: 'water_world',
-    emoji: '🌊',
-    name: 'Water World',
-    room: 'Underwater Room',
-    blurb: 'Under the sea — what lives down deep.',
+    id: 'dreams',
+    emoji: '🌙',
+    name: 'World of Dreams',
+    tagline: 'Close your eyes — anything can happen here.',
     senses: [
-      SenseBeat(Sense.touch, 'Feel the water, cool and smooth'),
-      SenseBeat(Sense.sound, 'Listen for waves and whale song'),
-    ],
-  ),
-  ThemedWorld(
-    id: 'icons',
-    emoji: '🏙️',
-    name: 'Icons',
-    room: 'Urban Room',
-    blurb: 'The city, its buildings, and its heroes.',
-    senses: [
-      SenseBeat(Sense.look, 'Look up — how tall can a building be?'),
-      SenseBeat(Sense.sound, 'Make the sounds of a busy street'),
+      SenseBeat(Sense.look, 'Eyes closed — picture it in your mind'),
+      SenseBeat(Sense.move, 'Float slow and soft, like a dream'),
     ],
   ),
   ThemedWorld(
     id: 'space',
     emoji: '🚀',
-    name: 'Space',
-    room: 'Space Room',
-    blurb: 'The stars, the planets, and the dark between.',
+    name: 'World of Space',
+    tagline: 'Out past the sky, among the stars.',
     senses: [
       SenseBeat(Sense.look, 'Find the brightest star and reach for it'),
-      SenseBeat(Sense.move, 'Float weightless, slow and quiet'),
+      SenseBeat(Sense.move, 'Float weightless — slow and quiet'),
+    ],
+  ),
+  ThemedWorld(
+    id: 'time',
+    emoji: '⏳',
+    name: 'World of Time',
+    tagline: 'Speed it up, slow it down, freeze the moment.',
+    senses: [
+      SenseBeat(Sense.move, 'Move fast… then slow… then freeze'),
+      SenseBeat(Sense.look, 'Watch the clock — tick, tick, tick'),
     ],
   ),
 ];
@@ -109,3 +101,61 @@ ThemedWorld? themedWorldById(String? id) {
   }
   return null;
 }
+
+/// A facet of a world — one of the things a "different world" is made of.
+/// "If they were to create a different world, what's in this?" — the
+/// people, the culture, the (pretend) map, the tools, the dreams. These
+/// are the DIMENSIONS every world shares; the room fills in the content
+/// for its own world (the buildable canvas is a follow-up slice).
+@immutable
+class WorldFacet {
+  const WorldFacet({
+    required this.id,
+    required this.emoji,
+    required this.name,
+    required this.prompt,
+  });
+
+  final String id;
+  final String emoji;
+  final String name;
+
+  /// The question that invites the room to build this facet.
+  final String prompt;
+}
+
+/// What's in a world. The anatomy the kids + teachers build together.
+const List<WorldFacet> kWorldFacets = [
+  WorldFacet(
+    id: 'people',
+    emoji: '👥',
+    name: 'People',
+    prompt: 'Who lives in this world? Who do you meet here?',
+  ),
+  WorldFacet(
+    id: 'culture',
+    emoji: '🎭',
+    name: 'Culture',
+    prompt: 'How do they do things here — their ways, words, celebrations?',
+  ),
+  WorldFacet(
+    id: 'map',
+    emoji: '🗺️',
+    name: 'Map',
+    // SECURITY: the world map is INVENTED geography only — never a
+    // child's real home / location. Make-believe places, full stop.
+    prompt: 'The places of this world — all make-believe, none real.',
+  ),
+  WorldFacet(
+    id: 'tools',
+    emoji: '🛠️',
+    name: 'Tools',
+    prompt: 'What do you use here? What helps you on the way?',
+  ),
+  WorldFacet(
+    id: 'dreams',
+    emoji: '✨',
+    name: 'Dreams',
+    prompt: 'What does this world hope for? What’s the big dream here?',
+  ),
+];

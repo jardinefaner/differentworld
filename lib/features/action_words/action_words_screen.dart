@@ -67,7 +67,7 @@ class ActionWordsScreen extends ConsumerWidget {
                 title: 'Today’s words',
                 subtitle: DateFormat.yMMMMEEEEd().format(DateTime.now()),
               ),
-              const _ThisWeekBanner(),
+              const _WorldsBanner(),
               for (final s in subjects)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -81,52 +81,43 @@ class ActionWordsScreen extends ConsumerWidget {
   }
 }
 
-/// A tappable banner showing the themed world the room is in this week —
-/// the bigger world the daily picks nest inside. Tapping opens the weekly
-/// world surface; when none is set, it invites the teacher to choose one.
-class _ThisWeekBanner extends ConsumerWidget {
-  const _ThisWeekBanner();
+/// A tappable banner into the program's Different Worlds — the bigger
+/// worlds the rooms step into, that the daily picks nest inside.
+class _WorldsBanner extends StatelessWidget {
+  const _WorldsBanner();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gold = WorldBadge.goldFor(theme);
-    final world = ref.watch(currentThemedWorldProvider);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: world == null
-            ? theme.colorScheme.surfaceContainerHighest
-            : gold.withValues(alpha: 0.10),
+        color: gold.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => context.push('/action-words/this-week'),
+          onTap: () => context.push('/action-words/different-worlds'),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                Text(
-                  world?.emoji ?? '🌍',
-                  style: const TextStyle(fontSize: 28),
-                ),
+                const Text('🌍', style: TextStyle(fontSize: 28)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'This week’s world',
+                        'Different Worlds',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           letterSpacing: 0.6,
                         ),
                       ),
                       Text(
-                        world == null
-                            ? 'Tap to choose one'
-                            : '${world.name} · ${world.room}',
+                        'The worlds your rooms step into',
                         style: theme.textTheme.titleSmall,
                       ),
                     ],
