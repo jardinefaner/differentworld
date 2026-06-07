@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/world_cast_game.dart';
+import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
@@ -75,6 +78,13 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     setState(() => _showLauncher = false);
   }
 
+  /// Cast the live curriculum world — an explicit-seed presentable, not a
+  /// content-bank game, so it goes through castStage (docs/WORLD.md).
+  void _castWorld(CurriculumWorld world) {
+    _session?.castStage(WorldCastGame.gameId, worldCastSeed(world));
+    setState(() => _showLauncher = false);
+  }
+
   void _send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
     final id = CastSession.gameIdOf(_meta);
     final def = id == null ? null : gameById(id);
@@ -106,7 +116,11 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
         if (def == null || _showLauncher)
           Expanded(
             key: const ValueKey('cockpit-launcher'),
-            child: _Launcher(onPick: _castGame),
+            child: _Launcher(
+              onPick: _castGame,
+              presentWorld: ref.watch(currentWorldProvider),
+              onPresentWorld: _castWorld,
+            ),
           )
         else ...[
           Expanded(
@@ -128,9 +142,19 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
 
 /// The launcher — pick what to cast. The whole game deck, by vibe colour.
 class _Launcher extends StatelessWidget {
-  const _Launcher({required this.onPick});
+  const _Launcher({
+    required this.onPick,
+    this.presentWorld,
+    this.onPresentWorld,
+  });
 
   final void Function(GameDefinition<dynamic>) onPick;
+
+  /// The live curriculum world (null if the journey isn't set up). Offered
+  /// as a special "presentable" tile — it's explicit-seeded, not a content-
+  /// bank game, so it can't ride the standard loop below.
+  final CurriculumWorld? presentWorld;
+  final void Function(CurriculumWorld world)? onPresentWorld;
 
   @override
   Widget build(BuildContext context) {
@@ -141,11 +165,60 @@ class _Launcher extends StatelessWidget {
       crossAxisSpacing: 12,
       childAspectRatio: 1.1,
       children: [
+        // This week's world — first, the headline thing to cast.
+        if (presentWorld case final world? when onPresentWorld != null)
+          _WorldTile(world: world, onTap: () => onPresentWorld!(world)),
         // Only content-bank games — roster/schedule-seeded ones (Now & Next,
         // Spotlight) would cast an empty stage (docs/LIVE_SESSIONS.md v1 scope).
         for (final def in liveGames.where((d) => d.seedsFromContentBank))
           _LauncherTile(def: def, onTap: () => onPick(def)),
       ],
+    );
+  }
+}
+
+class _WorldTile extends StatelessWidget {
+  const _WorldTile({required this.world, required this.onTap});
+
+  final CurriculumWorld world;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: world.color,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(world.emoji, style: const TextStyle(fontSize: 28)),
+              const Spacer(),
+              Text(
+                'Week ${world.week}',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              Text(
+                world.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Tap to cast',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

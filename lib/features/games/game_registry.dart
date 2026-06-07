@@ -1,3 +1,4 @@
+import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/games/as_if_game.dart';
 import 'package:differentworld/features/games/games/charades_game.dart';
@@ -37,6 +38,9 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   CuesGame(),
   NowNextGame(),
   PickerGame(),
+  // Cast-only (seedsFromContentBank=false): hidden from the launcher's
+  // content-bank loop, resolved by gameById so the receiver renders it.
+  WorldCastGame(),
 ];
 
 /// Resolve a game by its [GameDefinition.id]. Returns null for an id this

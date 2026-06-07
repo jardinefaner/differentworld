@@ -100,6 +100,14 @@ class CastSession {
     });
   }
 
+  /// Put a stage on the screen from an EXPLICIT, pre-built wire-state —
+  /// for presentables that don't seed from the content bank (the world
+  /// slideshow). The caller builds the self-describing state; the game's
+  /// pure reducer drives it from there, same as any cast game.
+  void castStage(String gameId, Map<String, dynamic> state) {
+    _session.reseed(<String, dynamic>{'game': gameId, 'state': state});
+  }
+
   /// Clear the screen back to the idle "waiting" card.
   void clearStage() => _session.reseed(idleState);
 
