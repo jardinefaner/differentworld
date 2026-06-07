@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/reveal_overlay.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
 import 'package:differentworld/features/action_words/widgets/world_badge.dart';
@@ -103,7 +104,22 @@ class _KidRow extends ConsumerWidget {
                 ),
               ),
         trailing: hasPicks
-            ? _Dots(done: day!.doneCount, total: kPicksPerDay)
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _Dots(done: day!.doneCount, total: kPicksPerDay),
+                  IconButton(
+                    tooltip: 'Reveal ${subject.firstName}’s world',
+                    icon: const Icon(Icons.auto_awesome),
+                    color: WorldBadge.goldFor(theme),
+                    onPressed: () => RevealOverlay.show(
+                      context,
+                      subject: subject,
+                      day: day,
+                    ),
+                  ),
+                ],
+              )
             : const Icon(Icons.chevron_right),
       ),
     );
