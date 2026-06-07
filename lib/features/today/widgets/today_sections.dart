@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
@@ -286,6 +287,84 @@ class _PhaseSpec {
   final Color onAccent;
 }
 
+/// Optional "Today's words" lead-in to Action Words — appears only when
+/// at least one child has picked their words today, so it's invisible for
+/// programs that don't use the feature. docs/ACTION_WORDS.md.
+class _ActionWordsCard extends ConsumerWidget {
+  const _ActionWordsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final n = ref.watch(actionWordsPickedTodayProvider);
+    if (n == 0) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: theme.colorScheme.tertiaryContainer,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push('/action-words'));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.tertiary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    color: theme.colorScheme.onTertiary,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Action Words',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onTertiaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        n == 1
+                            ? '1 child picked today — reveal their world at '
+                                'closing'
+                            : '$n children picked today — reveal their worlds '
+                                'at closing',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onTertiaryContainer
+                              .withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: theme.colorScheme.onTertiaryContainer,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class TodayBody extends ConsumerWidget {
   const TodayBody({
     required this.member,
@@ -364,6 +443,8 @@ class TodayBody extends ConsumerWidget {
             // assignments.
             const LeadingTodayCard(),
             const SizedBox(height: 16),
+            // "Today's words" — only when Action Words is in use today.
+            if (viewer.isDailyLogger) const _ActionWordsCard(),
             // Unread family messages — staff-side proactive surface
             // (Wave 60). Renders only when at least one family has
             // sent a message that nobody on staff has read yet.
