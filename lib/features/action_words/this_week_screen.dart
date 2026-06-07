@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -121,6 +122,11 @@ class _LiveWorld extends ConsumerWidget {
               ),
               icon: const Icon(Icons.local_activity_outlined),
               label: const Text('Activities'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => unawaited(printWorldWorksheets(world)),
+              icon: const Icon(Icons.print_outlined),
+              label: const Text('Worksheets'),
             ),
             OutlinedButton.icon(
               onPressed: () => context.push('/action-words/different-worlds'),
