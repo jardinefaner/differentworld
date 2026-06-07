@@ -33,6 +33,11 @@ class KidStoryScreen extends ConsumerWidget {
     return EdgeScaffold(
       actions: [
         IconButton(
+          tooltip: 'Character sheet',
+          icon: const Icon(Icons.badge_outlined),
+          onPressed: () => context.push('/subjects/$subjectId/me'),
+        ),
+        IconButton(
           tooltip: 'Book — the 10-week journey',
           icon: const Icon(Icons.auto_stories_outlined),
           onPressed: () => context.push('/book/$subjectId'),
