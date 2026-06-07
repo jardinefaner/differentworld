@@ -1,8 +1,15 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/story/moment.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -67,6 +74,24 @@ class _Body extends ConsumerWidget {
     final displayName = hasName ? chosen.trim() : (firstName ?? '?');
     final hasDrawing = sheet?.avatarUrl != null;
 
+    // The rest of the sheet, assembled from data that already exists.
+    final collection =
+        ref.watch(actionWordsCollectionProvider(subjectId)).value;
+    final entries = ref
+            .watch(entriesForSubjectProvider(
+              (subjectId: subjectId, kind: null),
+            ))
+            .value ??
+        const <Entry>[];
+    final week = ref.watch(currentCurriculumWeekProvider);
+    final world = ref.watch(currentWorldProvider);
+    final start = ref.watch(programStartDateProvider);
+    final worlds = ref.watch(curriculumWorldsProvider).value ?? const [];
+    final ageDays = _participationDays(entries);
+    final visitedWeeks = _visitedWeeks(entries, start);
+    final practiced = collection?.verbTotals ?? const <String, int>{};
+    final title = collection?.emergingTitle;
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
@@ -130,7 +155,33 @@ class _Body extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            // TITLE — emerges from verb patterns ("The Owl Who Listens").
+            if (title != null) ...[
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            // AGE · SEASON · MAP.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                _Chip(icon: Icons.cake_outlined, label: 'Day $ageDays'),
+                if (week != null)
+                  _Chip(icon: Icons.calendar_today_outlined, label: 'Week $week'),
+                if (world != null) _Chip(emoji: world.emoji, label: world.name),
+              ],
+            ),
+            const SizedBox(height: 24),
             SizedBox(
               height: 52,
               child: FilledButton.icon(
@@ -157,6 +208,22 @@ class _Body extends ConsumerWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 28),
+            const Divider(),
+            const SizedBox(height: 16),
+            _Section(
+              label: 'Abilities · the 12 verbs',
+              child: _Verbs(practiced: practiced),
+            ),
+            const SizedBox(height: 22),
+            _Section(
+              label: 'Collection · worlds visited',
+              child: _Worlds(worlds: worlds, visited: visitedWeeks),
+            ),
+            const SizedBox(height: 22),
+            _Milestones(entries: entries),
+            const SizedBox(height: 22),
+            _Links(subjectId: subjectId),
           ],
         ),
       ),
@@ -211,5 +278,231 @@ class _Body extends ConsumerWidget {
     } finally {
       controller.dispose();
     }
+  }
+
+  /// AGE = distinct days the child shows up in any captured moment.
+  int _participationDays(List<Entry> entries) {
+    final days = <String>{};
+    for (final e in entries) {
+      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+      if (local != null) days.add(dateKey(local));
+    }
+    return days.length;
+  }
+
+  Set<int> _visitedWeeks(List<Entry> entries, DateTime? start) {
+    final weeks = <int>{};
+    if (start == null) return weeks;
+    for (final e in entries) {
+      final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+      if (local == null) continue;
+      final w = curriculumWeekFor(start, local);
+      if (w != null) weeks.add(w);
+    }
+    return weeks;
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.label, this.icon, this.emoji});
+  final String label;
+  final IconData? icon;
+  final String? emoji;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (emoji != null)
+            Text('$emoji ')
+          else if (icon != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Icon(icon, size: 15),
+            ),
+          Text(label, style: theme.textTheme.labelLarge),
+        ],
+      ),
+    );
+  }
+}
+
+class _Section extends StatelessWidget {
+  const _Section({required this.label, required this.child});
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 10),
+        child,
+      ],
+    );
+  }
+}
+
+class _Verbs extends StatelessWidget {
+  const _Verbs({required this.practiced});
+  final Map<String, int> practiced;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final v in kVerbs)
+          if (practiced[v.id] case final n? when n > 0)
+            Chip(
+              avatar: Text(v.emoji),
+              label: Text('${v.label} ·$n'),
+              visualDensity: VisualDensity.compact,
+            )
+          else
+            // BLIND SPOT — a verb never practiced, an invitation.
+            Opacity(
+              opacity: 0.4,
+              child: Chip(
+                avatar: Text(v.emoji),
+                label: Text(v.label),
+                visualDensity: VisualDensity.compact,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              ),
+            ),
+      ],
+    );
+  }
+}
+
+class _Worlds extends StatelessWidget {
+  const _Worlds({required this.worlds, required this.visited});
+  final List<CurriculumWorld> worlds;
+  final Set<int> visited;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, c) {
+        final cols = c.maxWidth >= 520 ? 5 : 4;
+        return GridView.count(
+          crossAxisCount: cols,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 0.82,
+          children: [
+            for (final w in worlds)
+              Opacity(
+                opacity: visited.contains(w.week) ? 1 : 0.3,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(w.emoji, style: const TextStyle(fontSize: 30)),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Wk ${w.week}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _Milestones extends StatelessWidget {
+  const _Milestones({required this.entries});
+  final List<Entry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final moments = momentsFrom(
+      entries.where((e) => e.kind == EntryKind.observation).toList(),
+    ).take(4).toList();
+    if (moments.isEmpty) return const SizedBox.shrink();
+    return _Section(
+      label: 'Milestones · what the room noticed',
+      child: Column(
+        children: [
+          for (final m in moments)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(m.emoji, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      (m.body?.trim().isNotEmpty ?? false) ? m.body! : m.title,
+                      style: theme.textTheme.bodyMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Links extends StatelessWidget {
+  const _Links({required this.subjectId});
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        OutlinedButton.icon(
+          onPressed: () => unawaited(context.push('/book/$subjectId')),
+          icon: const Icon(Icons.auto_stories_outlined),
+          label: const Text('Home base · the book'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => unawaited(context.push('/action-words/$subjectId')),
+          icon: const Icon(Icons.auto_awesome_outlined),
+          label: const Text('Worlds revealed'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => unawaited(context.push('/wall')),
+          icon: const Icon(Icons.dashboard_customize_outlined),
+          label: const Text('Lore · the wall'),
+        ),
+      ],
+    );
   }
 }

@@ -97,6 +97,13 @@ class SubjectDetailScreen extends ConsumerWidget {
             icon: Icons.auto_stories_outlined,
             onPressed: () => unawaited(context.push('/story/$subjectId')),
           ),
+        // The Character Sheet — who they're becoming over the 10 weeks.
+        if (subjectAsync.value != null)
+          SecondaryActionButton(
+            tooltip: 'Character sheet',
+            icon: Icons.badge_outlined,
+            onPressed: () => unawaited(context.push('/subjects/$subjectId/me')),
+          ),
         // Wave 101: hide-don't-disable. Both Progress report and Edit
         // require a group id to build the route, but the buttons used
         // to render even when `groupId` was empty — and silently no-op
