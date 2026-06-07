@@ -288,6 +288,30 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Incidents
+**Path**: `lib/features/incidents/`
+**Purpose**: Structured, first-class incident logging — a bump, conflict, illness, or medical event captured as a typed, child-scoped, family-notification-tracked compliance record, distinct from a free-text observation (docs/WORKFLOWS.md gap #3).
+**Personas served**: All daily-logging staff (log + read their cohorts), Maya / director (reads all; enables the feature), Jordan (the "noticed X / it happened" capture).
+**Discovery surfaces**:
+- Routes: `/incidents` (the log) + `/incidents/new` (the form; optional `?subjectId=` to pre-select a child)
+- Omnibox: `page.incidents` — "Incident log" + `action.log-incident` — "Log an incident" (both gated on `feature_incident_reports` + staff who can log/manage; keywords: incident, injury, accident, report, safety, bump, conflict)
+- Slash: none
+- Drawer: no — reached via omnibox + (future) a subject-detail entry point
+- Settings: the `feature_incident_reports` toggle lives in `lib/features/settings/program_settings_screen.dart`
+**Capabilities**: Gated on space cap `feature_incident_reports` (default on). Log: `can_observe`. View: `can_observe` OR `can_manage_space` (director). Visibility scoped to the viewer's cohorts (directors see all), same shape as observations.
+**Data**: Reuses [entries](SCHEMA.md#entries) `kind='incident'` — `text`=narrative, `details` JSON = `{incident_type, action_taken?, parent_notified}`. NO new table / migration / sync-rule change.
+**Surfaces**:
+- `incidents_screen.dart` — the log: every incident the viewer can see, newest first, each row = child + type chip + relative time + narrative + action-taken + family-notified badge.
+- `incident_form_screen.dart` — the structured form: child picker, type chips (injury / conflict / behavior / illness / medical / other), narrative, action-taken, family-notified toggle, dirty-state discard guard.
+- `incidents_providers.dart` — `IncidentType` catalog, `Incident.fromEntry` (typed parse over an entry), `incidentsInSpaceProvider` + `incidentsForSubjectProvider`.
+- Create path: `EntryActions.createIncident` (`lib/features/entries/entries_providers.dart`).
+**Status**: shipped — v1 (log + structured form + family-notified tracking). Deferred: incident photos, a per-subject incident history on Subject detail, and a PDF/CSV export template (the data is structured for it).
+**Depends on**: Entries, Subjects, Groups, Viewer (capabilities).
+**Consumed by**: (future) Exports — incident report; Subject detail — per-child safety history.
+**Last verified**: 2026-06-06
+
+---
+
 ## Insights
 **Path**: `lib/features/insights/`
 **Purpose**: System-derived questions from patterns — expiring certs, late streaks, stale vehicles, unwritten observations, low-signal surveys.

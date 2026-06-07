@@ -117,6 +117,43 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['afternoon', 'evening'],
       onSelect: (ctx, _) => ctx.push('/pickup'),
     ),
+    // Incident log — gated on the program feature + a staff who can log
+    // or manage (the screen NoAccess-gates the same way, so we don't
+    // surface a dead destination).
+    if (viewer.featureIncidentReports &&
+        (viewer.canObserve || viewer.canManageSpace)) ...[
+      OmniboxEntry(
+        id: 'page.incidents',
+        label: 'Incident log',
+        category: OmniboxCategory.page,
+        icon: Icons.report_gmailerrorred_outlined,
+        keywords: const [
+          'incident',
+          'injury',
+          'accident',
+          'report',
+          'safety',
+          'bump',
+          'conflict',
+        ],
+        onSelect: (ctx, _) => ctx.push('/incidents'),
+      ),
+      if (viewer.canObserve)
+        OmniboxEntry(
+          id: 'action.log-incident',
+          label: 'Log an incident',
+          category: OmniboxCategory.action,
+          icon: Icons.add_alert_outlined,
+          keywords: const [
+            'new incident',
+            'report incident',
+            'injury',
+            'accident',
+            'log',
+          ],
+          onSelect: (ctx, _) => ctx.push('/incidents/new'),
+        ),
+    ],
     OmniboxEntry(
       id: 'page.captures',
       label: 'Capture inbox',
