@@ -86,6 +86,7 @@ import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/speak/speak_screen.dart';
 import 'package:differentworld/features/spells/spells_screen.dart';
 import 'package:differentworld/features/story/kid_story_screen.dart';
+import 'package:differentworld/features/story/room_story_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
@@ -984,6 +985,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/spells',
             builder: (_, _) =>
                 const RouteTitle(title: 'Spells', child: SpellsScreen()),
+          ),
+          // The room Story — the whole class's moments woven over time.
+          GoRoute(
+            path: '/story',
+            builder: (_, _) =>
+                const RouteTitle(title: 'Room story', child: RoomStoryScreen()),
           ),
           // A child's Story — every captured moment woven into one
           // continuous, date-grouped timeline (the memory layer).

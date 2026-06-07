@@ -150,6 +150,21 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       onSelect: (ctx, _) => ctx.push('/action-words/activities'),
     ),
     OmniboxEntry(
+      id: 'page.room-story',
+      label: 'Room story',
+      category: OmniboxCategory.page,
+      icon: Icons.auto_stories_outlined,
+      keywords: const [
+        'story',
+        'memory',
+        'timeline',
+        'moments',
+        'history',
+        'continuity',
+      ],
+      onSelect: (ctx, _) => ctx.push('/story'),
+    ),
+    OmniboxEntry(
       id: 'page.mission-board',
       label: 'Today’s board',
       category: OmniboxCategory.page,
