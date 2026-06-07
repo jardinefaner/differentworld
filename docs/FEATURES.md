@@ -500,20 +500,23 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Pickup
 **Path**: `lib/features/pickup/`
-**Purpose**: Authorized-pickup records — who's allowed to take a child home.
-**Personas served**: Maya (configures), All staff (verifies at dismissal), Lauren / Devon (their entries).
+**Purpose**: The dismissal board + authorized-pickup records — who's still in the building, who's allowed to take a child home, and one-tap release at pickup time (docs/WORKFLOWS.md gap #2).
+**Personas served**: Maya (configures authorized people), All staff (works the board + verifies at dismissal), Lauren / Devon (their entries).
 **Discovery surfaces**:
-- Routes: none — embedded in Subject detail
-- Omnibox: no
+- Routes: `/pickup` (the cross-program dismissal board)
+- Omnibox: `page.pickup` — "Pickup board" (keywords: pickup, dismissal, release, checkout, go home, sign out)
 - Slash: none
-- Drawer: no
+- Drawer: no — reached via Today's pickup-phase "Right now" card + omnibox (symmetric with Morning checklist)
 - Settings: no
-**Capabilities**: Configure: `can_authorize_pickup` (gated cap). Verify at dismissal: all staff.
-**Data**: Lives in [subjects](SCHEMA.md#subjects).capabilities JSONB (`pickup_people`, `authorized_pickup_guardian_ids`, `pickup_strict`).
-**Surfaces**: Status: not yet wired to UI. Authorized-pickup section embedded in `lib/features/subjects/subject_detail_screen.dart` is the planned home.
-**Status**: stub — data shape lives in `subjects.capabilities` but no dedicated screen yet.
-**Depends on**: Subjects, Guardians.
-**Consumed by**: Future end-of-day dismissal flow.
+**Capabilities**: Configure authorized people: `can_authorize_pickup` (gated cap). Work the board / release: `can_take_attendance` (the daily-action gate). View: any staff.
+**Data**: Authorized people in [subjects](SCHEMA.md#subjects).capabilities JSONB (`pickup_people`) + [guardians](SCHEMA.md#guardians).authorized_for_pickup. "Here" derived from [attendance_records](SCHEMA.md#attendance_records) (present/late today). Releases logged as [entries](SCHEMA.md#entries) `kind='departure'` (`text`=released-to, `details.guardian_id`) — a SEPARATE axis from attendance (releasing never mutates the attendance status). No new table.
+**Surfaces**:
+- `pickup_board_screen.dart` — the board: still-here list (one-tap Release per child → authorized-person sheet) + "Picked up today" section (with Undo). All-clear celebratory state when everyone's gone.
+- `pickup_board_providers.dart` — `pickupBoardProvider` (composes groups × attendance × departures via the pure `computePickupBoard`) + `pickupBoardActionsProvider` (release / undo).
+- `pickup_providers.dart` + `pickup_list.dart` — the authorized-people editor embedded in Subject detail (`pickup_people` caps).
+**Status**: shipped — board v1 (still-here · authorized · one-tap release · undo). Deferred: late-pickup timers (needs a configurable pickup-window end), late-pickup push.
+**Depends on**: Subjects, Guardians, Attendance, Entries, Groups.
+**Consumed by**: Today (pickup-phase "Right now" card → `/pickup`).
 **Last verified**: 2026-05-21
 
 ---

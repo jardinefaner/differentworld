@@ -226,8 +226,8 @@ _PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
     case DayPhase.pickup:
       return _PhaseSpec(
         title: 'Pickup time',
-        line: 'Review the room and check $kids out as families arrive.',
-        route: '/checklist',
+        line: 'Release $kids to authorized pickup as families arrive.',
+        route: '/pickup',
         icon: Icons.directions_walk,
         container: cs.secondaryContainer,
         onContainer: cs.onSecondaryContainer,

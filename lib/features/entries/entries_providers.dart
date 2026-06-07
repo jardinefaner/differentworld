@@ -20,6 +20,14 @@ class EntryKind {
   /// `details` carries {missionId, missionName, builds, stepsDone,
   /// stepsTotal}; feeds the track record + the growth book.
   static const String mission = 'mission';
+
+  /// A pickup / dismissal — the child was released to an authorized
+  /// person (docs/WORKFLOWS.md gap #2, the Pickup board). `body` holds
+  /// who they were released to; `details` may carry {guardian_id}. A
+  /// SEPARATE axis from attendance: releasing never mutates the day's
+  /// attendance status (attendance = "did they come"; departure =
+  /// "have they left").
+  static const String departure = 'departure';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
