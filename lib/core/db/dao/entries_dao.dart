@@ -59,6 +59,19 @@ class EntriesDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Every entry in the space, ANY kind, newest first — the substrate for
+  /// the room Story timeline (it weaves all moment kinds together).
+  Stream<List<Entry>> watchAllInSpace({
+    required String spaceId,
+    int limit = 300,
+  }) {
+    return (select(entries)
+          ..where((e) => e.spaceId.equals(spaceId))
+          ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
+          ..limit(limit))
+        .watch();
+  }
+
   /// Entries tagged to a schedule block, newest first — the reverse of
   /// the live-block tag. Powers the block's "moments" sheet.
   Stream<List<Entry>> watchForBlock({
