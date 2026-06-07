@@ -117,7 +117,7 @@ class _LiveWorld extends ConsumerWidget {
           children: [
             FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: accent),
-              onPressed: () => context.push('/present-world/${world.id}'),
+              onPressed: () => _castOptions(context, world),
               icon: const Icon(Icons.cast),
               label: const Text('Cast to the room'),
             ),
@@ -226,6 +226,45 @@ class _LiveWorld extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Two ways to cast a world: mirror this device's screen (cable / AirPlay,
+/// no code) or send it to a separate paired screen via the join-code flow.
+Future<void> _castOptions(BuildContext context, CurriculumWorld world) {
+  return showGlassSheet<void>(
+    context: context,
+    builder: (sheetCtx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.screen_share_outlined),
+            title: const Text('Mirror to this screen'),
+            subtitle: const Text(
+              'Show it right here — for a projector by cable or AirPlay',
+            ),
+            onTap: () {
+              final router = GoRouter.of(sheetCtx);
+              Navigator.of(sheetCtx).pop();
+              unawaited(router.push('/present-world/${world.id}'));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.cast),
+            title: const Text('Send to a paired screen'),
+            subtitle: const Text(
+              'The screen shows a code; enter it, then drive from here',
+            ),
+            onTap: () {
+              final router = GoRouter.of(sheetCtx);
+              Navigator.of(sheetCtx).pop();
+              unawaited(router.push('/cast'));
+            },
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Label extends StatelessWidget {
