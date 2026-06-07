@@ -11,6 +11,11 @@ deleted, only moved from *seed* → *building* → *shipped*. The plan for
 *how* lives in [ROADMAP.md](ROADMAP.md) and
 [ACTIVITY_ROADMAP.md](ACTIVITY_ROADMAP.md); the *why* lives here.
 
+**The day‑to‑day** — how the afterschool day's real workflows (arrival rush →
+blocks → pickup → closeout) map onto the app's surfaces, and where the gaps
+are — lives in [WORKFLOWS.md](WORKFLOWS.md). The dream is served by meeting the
+day where it actually happens.
+
 ---
 
 ## North star
