@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Mission, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
@@ -189,6 +190,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Pickup',
                   child: PickupBoardScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'action-words',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Action Words',
+                  child: ActionWordsScreen(),
                 ),
               ),
               GoRoute(

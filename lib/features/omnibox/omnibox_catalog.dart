@@ -117,6 +117,24 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['afternoon', 'evening'],
       onSelect: (ctx, _) => ctx.push('/pickup'),
     ),
+    OmniboxEntry(
+      id: 'page.action-words',
+      label: 'Action Words',
+      category: OmniboxCategory.page,
+      icon: Icons.auto_awesome_outlined,
+      keywords: const [
+        'verbs',
+        'words',
+        'worlds',
+        'pick',
+        'action words',
+        'reveal',
+        'collection',
+        'animal',
+      ],
+      contextTags: const ['morning'],
+      onSelect: (ctx, _) => ctx.push('/action-words'),
+    ),
     // Incident log — gated on the program feature + a staff who can log
     // or manage (the screen NoAccess-gates the same way, so we don't
     // surface a dead destination).

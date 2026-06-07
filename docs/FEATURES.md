@@ -56,6 +56,31 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Action Words
+**Path**: `lib/features/action_words/`
+**Purpose**: The world-reveal loop (docs/ACTION_WORDS.md, from the developer brief) — kids pick 3 of 12 action words each morning; the combo reveals an animal/element/archetype **world**; over time a title forms from their most-practiced verbs. The app touches the kid ~5 min/day; the room is the product.
+**Personas served**: Teacher (Conductor) — primary; Kid (Explorer) — optional V1; Parent (Witness) — V1 is the generated text, not an app.
+**Discovery surfaces**:
+- Routes: `/action-words` (the morning pick roster)
+- Omnibox: `page.action-words` — "Action Words" (keywords: verbs, words, worlds, pick, reveal, collection, animal; morning contextTag)
+- Slash: none
+- Drawer/Rail: yes — "Action Words" nav destination, gated `onlyFor: canObserve`
+- Settings: none (no opt-in cap yet)
+**Capabilities**: Pick / run: `can_observe` (the daily-staff gate). No new cap.
+**Data**: Reuses [entries](SCHEMA.md#entries) `kind='action_words'` — one row per (subject, date); `details` = `{verb_picks:[3], done:[…], note, word_of_day, world_name?}`. The revealed world is DERIVED from `verb_picks` (deterministic lookup), not stored. NO new table.
+**Surfaces**:
+- `verbs.dart` — the 12 permanent verbs (id/emoji/label).
+- `worlds.dart` — `World` + `matchWorld(picks)` (exact / closest ≥2 / fresh), the ~40-world lookup (8 canonical + 7 starter extras; user owns the rest).
+- `action_words_providers.dart` — `ActionWordsDay` (typed per-day), `ActionWordsCollection` (lifetime worlds + practiced-verb totals + emerging title), `ActionWordsActions` (setPicks/toggleDone/setNote/setWordOfDay/setWorldName — optimistic, find-or-create per day in a txn).
+- `action_words_screen.dart` — the pick roster + the per-kid pick sheet (12-verb grid → live world preview → save).
+- `widgets/verb_grid.dart` (the selectable 12-grid, max-3), `widgets/world_badge.dart` (the reveal badge — emoji/name/title/verbs, handles the fresh case).
+**Status**: building — wave 1 (engine + data) + wave 2 (verb pick + teacher world preview) shipped. Next (the brief's V1 order): activity matcher, today dashboard, the glowing reveal, spell timers, parent message generator, collection tracking, activity library.
+**Depends on**: Entries, Subjects, Viewer.
+**Consumed by**: (future) Today (word-of-day + kid cards), Exports/Messages (parent message).
+**Last verified**: 2026-06-06
+
+---
+
 ## ActivityRuntime
 **Path**: `lib/features/activity_runtime/`
 **Purpose**: Short, card-shaped brain-break activities that a teacher (or a kid) can launch mid-session to reset the room.

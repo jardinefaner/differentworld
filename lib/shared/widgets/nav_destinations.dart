@@ -91,6 +91,12 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       onlyFor: (v) => v.canObserve,
     ),
     NavDestination(
+      icon: Icons.auto_awesome_outlined,
+      label: 'Action Words',
+      route: '/action-words',
+      onlyFor: (v) => v.canObserve,
+    ),
+    NavDestination(
       icon: Icons.inbox_outlined,
       label: 'Captures',
       route: '/captures',
