@@ -3,6 +3,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/story/moment.dart';
 import 'package:differentworld/features/story/story_providers.dart';
 import 'package:differentworld/features/story/widgets/story_timeline.dart';
+import 'package:differentworld/features/story/widgets/wrap_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -27,7 +28,14 @@ class RoomStoryScreen extends ConsumerWidget {
     };
 
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        IconButton(
+          tooltip: 'Wrap',
+          icon: const Icon(Icons.auto_awesome_motion_outlined),
+          onPressed: () => WrapSheet.show(context, subjectName: 'The room'),
+        ),
+        const SyncStatusIndicator(),
+      ],
       body: momentsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
