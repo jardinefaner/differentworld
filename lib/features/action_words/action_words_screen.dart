@@ -20,6 +20,7 @@ import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 /// The morning pick (the brief's VERBS screen): every kid in the room,
@@ -90,6 +91,8 @@ class _KidRow extends ConsumerWidget {
       margin: EdgeInsets.zero,
       child: ListTile(
         onTap: () => _openPick(context, ref, subject, picks),
+        // Long-press → the child's world collection over time.
+        onLongPress: () => context.push('/action-words/${subject.id}'),
         leading: _Leading(match: match),
         title: Text(fullName),
         subtitle: hasPicks
