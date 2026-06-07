@@ -129,15 +129,15 @@ of the SQL.
 - `id`, `space_id`
 - `group_id` (uuid → groups.id, nullable for cross-cohort entries)
 - `subject_id` (uuid → subjects.id, nullable for cohort-wide entries)
-- `kind` (text — `observation` / `meal` / `nap` / `diaper` / `incident` / etc.)
+- `kind` (text — `observation` / `meal` / `nap` / `diaper` / `incident` / `departure` / etc.)
 - `payload` (jsonb — schema depends on kind)
 - `author_id` (uuid → members.id)
 - `occurred_at` (timestamptz)
 - `schedule_block_id` (uuid, nullable — no FK; see migration `20260531000002_entry_schedule_block.sql`. Intentionally FK-free so entries survive block deletion with their tag intact.)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space` (no publication/sync-rule change needed — entries was already replicated and `SELECT *` covers the new column).
-**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family), [Review](FEATURES.md#review), [Schedule](FEATURES.md#schedule) (live-block capture tagging — see docs/LIVE_BLOCK_CONTEXT.md).
-**Last verified**: 2026-06-01
+**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family), [Review](FEATURES.md#review), [Schedule](FEATURES.md#schedule) (live-block capture tagging — see docs/LIVE_BLOCK_CONTEXT.md), [Incidents](FEATURES.md#incidents) (`kind='incident'`), [Pickup](FEATURES.md#pickup) (`kind='departure'`).
+**Last verified**: 2026-06-06
 
 ---
 
@@ -610,7 +610,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-06 (World slice 1 — `character_sheets` table added; `subjects` Consumers updated to include World)._
+_Last full registry verification: 2026-06-06 (Today wave 1 — `_RightNowCard` + `DayPhase`; Pickup wave 2 — dismissal board; Incidents — new feature. `entries` Consumers updated to include Incidents + Pickup; `departure` kind added to entries key-columns.)_
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
