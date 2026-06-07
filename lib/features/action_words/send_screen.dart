@@ -75,8 +75,16 @@ class _SendCard extends ConsumerWidget {
     if (day == null || !day.hasPicks) return const SizedBox.shrink();
 
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
-    final message = buildParentMessage(childName: subject.firstName, day: day);
-    final emoji = day.world?.world?.emoji ?? '🌟';
+    final match = resolveWorld(
+      day.verbPicks.toSet(),
+      ref.watch(classWorldBookProvider),
+    );
+    final message = buildParentMessage(
+      childName: subject.firstName,
+      day: day,
+      world: match,
+    );
+    final emoji = match.world?.emoji ?? '🌟';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

@@ -88,6 +88,40 @@ void main() {
     });
   });
 
+  group('resolveWorld (class continuity)', () {
+    final book = {
+      worldComboKey({'carry', 'echo', 'solve'}): const InventedWorld(
+        name: 'Phoenix',
+        verbs: {'carry', 'echo', 'solve'},
+        count: 3,
+      ),
+    };
+
+    test('a combo the class named comes back claimed, by name', () {
+      final m = resolveWorld({'carry', 'echo', 'solve'}, book);
+      expect(m.kind, WorldMatchKind.claimed);
+      expect(m.world?.name, 'Phoenix');
+      expect(m.isNamed, isTrue);
+    });
+
+    test('claimed lookup is order-independent', () {
+      final m = resolveWorld({'solve', 'carry', 'echo'}, book);
+      expect(m.kind, WorldMatchKind.claimed);
+      expect(m.world?.name, 'Phoenix');
+    });
+
+    test('a combo not in the book falls through to the catalog', () {
+      final m = resolveWorld({'watch', 'spark', 'shine'}, book);
+      expect(m.kind, WorldMatchKind.exact);
+      expect(m.world?.id, 'eagle');
+    });
+
+    test('an unknown fresh combo stays fresh (ready to claim)', () {
+      final m = resolveWorld({'carry', 'wait', 'play'}, const {});
+      expect(m.kind, WorldMatchKind.fresh);
+    });
+  });
+
   group('ActionWordsDay', () {
     test('parses picks/done/note/word and derives the world', () {
       final day = ActionWordsDay.fromEntry(

@@ -95,7 +95,9 @@ class _KidRow extends ConsumerWidget {
         .value;
     final picks = day?.verbPicks ?? const <String>[];
     final hasPicks = day?.hasPicks ?? false;
-    final match = day?.world;
+    final match = (day?.hasPicks ?? false)
+        ? resolveWorld(day!.verbPicks.toSet(), ref.watch(classWorldBookProvider))
+        : null;
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
 
     return Card(
@@ -250,7 +252,9 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
     final fullName =
         '${widget.subject.firstName} ${widget.subject.lastName}'.trim();
     final ready = _selected.length == kPicksPerDay;
-    final match = ready ? matchWorld(_selected) : null;
+    final match = ready
+        ? resolveWorld(_selected, ref.watch(classWorldBookProvider))
+        : null;
 
     return SafeArea(
       child: SingleChildScrollView(

@@ -256,6 +256,40 @@ final inventedWorldsProvider = Provider<AsyncValue<List<InventedWorld>>>((ref) {
   });
 });
 
+/// The sorted-verb key for a combo — the lookup key for class worlds.
+String worldComboKey(Set<String> verbs) => (verbs.toList()..sort()).join('+');
+
+/// THIS class's invented worlds keyed by their verb combo, so a combo
+/// resolves to the world the program already named for it (continuity).
+final classWorldBookProvider = Provider<Map<String, InventedWorld>>((ref) {
+  final invented =
+      ref.watch(inventedWorldsProvider).value ?? const <InventedWorld>[];
+  return {for (final w in invented) worldComboKey(w.verbs): w};
+});
+
+/// Resolve a combo to a world, consulting THIS class's invented worlds
+/// first (continuity), then the fixed catalog. A combo the class already
+/// named comes back [WorldMatchKind.claimed] (shown by name, not re-
+/// named); an unknown fresh combo still comes back [WorldMatchKind.fresh].
+WorldMatch resolveWorld(Set<String> picks, Map<String, InventedWorld> book) {
+  final claimed = book[worldComboKey(picks)];
+  if (claimed != null) {
+    return WorldMatch(
+      kind: WorldMatchKind.claimed,
+      picks: picks,
+      world: World(
+        id: 'class-${claimed.name.toLowerCase()}',
+        emoji: '🌟',
+        name: claimed.name,
+        title: 'a world your class made',
+        verbs: picks,
+        dinnerQuestion: 'What was it like being ${claimed.name} today?',
+      ),
+    );
+  }
+  return matchWorld(picks);
+}
+
 /// Mutations for a child's Action Words day. Every write is optimistic
 /// (local Drift → PowerSync). One `action_words` entry per (subject,
 /// date); find-or-create runs in a transaction so a double-tap can't
