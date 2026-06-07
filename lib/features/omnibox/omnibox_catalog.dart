@@ -136,6 +136,20 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       onSelect: (ctx, _) => ctx.push('/action-words'),
     ),
     OmniboxEntry(
+      id: 'page.action-activities',
+      label: 'Activity matcher',
+      category: OmniboxCategory.page,
+      icon: Icons.local_activity_outlined,
+      keywords: const [
+        'activities',
+        'activity matcher',
+        'match',
+        'tag verbs',
+        'library',
+      ],
+      onSelect: (ctx, _) => ctx.push('/action-words/activities'),
+    ),
+    OmniboxEntry(
       id: 'page.mission-board',
       label: 'Today’s board',
       category: OmniboxCategory.page,
