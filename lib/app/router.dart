@@ -225,9 +225,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                     ),
                   ),
                   GoRoute(
-                    path: 'this-week',
+                    path: 'different-worlds',
                     builder: (_, _) => const RouteTitle(
-                      title: 'This week’s world',
+                      title: 'Different Worlds',
                       child: ThemedWorldScreen(),
                     ),
                   ),

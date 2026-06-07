@@ -19,10 +19,6 @@ abstract class SpaceCaps {
   static const defaultClassSize = 'default_class_size';
   static const photoDefaultConsent = 'photo_default_consent';
 
-  /// The themed "world of the week" the room is currently in — a
-  /// ThemedWorld id (docs/ACTION_WORDS.md). String cap; null = none set.
-  static const currentWorld = 'current_world';
-
   /// PIN that unlocks the kid-mode lock. Stored as a string on the
   /// Space's capabilities JSONB so a director can change it from
   /// program settings. Default is `null` — kid-mode unlock falls

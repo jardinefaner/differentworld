@@ -394,13 +394,13 @@ of the SQL.
 **Key columns**:
 - `id` (uuid PK)
 - `name` (text)
-- `capabilities` (jsonb — `vertical`, `feature_observations`, `feature_meal_logging`, `pickup_window_start`, `pickup_window_end`, `default_class_size`, `photo_default_consent`, `state_compliance`, `staff_pin`, etc.)
+- `capabilities` (jsonb — `vertical`, `feature_observations`, `feature_meal_logging`, `pickup_window_start`, `pickup_window_end`, `default_class_size`, `photo_default_consent`, `state_compliance`, `staff_pin`, `current_world` (string — id of the current `ThemedWorld`; set by Action Words feature), etc.)
 - `created_at` (timestamptz)
 - `created_by` (uuid → members.id)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space` (a member's own space row). `by_guardian` stream also delivers the guardian's linked space row (`WHERE id IN (SELECT space_id FROM guardians WHERE user_id = auth.user_id())`) so the family lens resolves the space name offline-first.
-**Consumers**: [Settings](FEATURES.md#settings), [Onboarding](FEATURES.md#onboarding), [Auth](FEATURES.md#auth) (viewer resolution), [Family](FEATURES.md#family) (offline-first via `by_guardian`), and every other feature via `viewer.spaceId`.
-**Last verified**: 2026-05-23
+**Consumers**: [Settings](FEATURES.md#settings), [Onboarding](FEATURES.md#onboarding), [Auth](FEATURES.md#auth) (viewer resolution), [Family](FEATURES.md#family) (offline-first via `by_guardian`), [Action Words](FEATURES.md#action-words) (`current_world` cap read via `currentThemedWorldProvider`; written via `spaceCapActionsProvider.setStringCap`), and every other feature via `viewer.spaceId`.
+**Last verified**: 2026-06-07
 
 ---
 
@@ -612,7 +612,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-06 (Today wave 1 — `_RightNowCard` + `DayPhase`; Pickup wave 2 — dismissal board; Incidents — new feature. `entries` Consumers updated to include Incidents + Pickup; `departure` kind added to entries key-columns. 2026-06-06 incremental — Incidents waves 4/5/6/7: `subjects` Consumers updated to include Incidents; `entries` Consumers already correct. 2026-06-06 Wave A/B — Incidents PDF export + family-facing incidents. `entries` key-columns + RLS gist updated to document the stripping RPC; Family consumer note clarified to distinguish observations path from incidents RPC path. FEATURES.md Incidents + Family sections reconciled. 2026-06-06 Action Words waves 1-4: `entries` `kind` column updated to include `action_words`; Action Words added to `entries` Consumers list. FEATURES.md Action Words Routes field updated to include `/action-words/:subjectId`; top-level orientation paragraph updated to list Action Words in the nav destinations order. 2026-06-07 incremental — Spells new feature (no table); Missions Do board (`kind='mission'` entries); Action Words Send + world-book surfaces. `entries` Consumers updated to include Missions. FEATURES.md Spells added; Missions Routes/Omnibox/Data/Surfaces updated; Action Words Routes/Surfaces updated.)_
+_Last full registry verification: 2026-06-06 (Today wave 1 — `_RightNowCard` + `DayPhase`; Pickup wave 2 — dismissal board; Incidents — new feature. `entries` Consumers updated to include Incidents + Pickup; `departure` kind added to entries key-columns. 2026-06-06 incremental — Incidents waves 4/5/6/7: `subjects` Consumers updated to include Incidents; `entries` Consumers already correct. 2026-06-06 Wave A/B — Incidents PDF export + family-facing incidents. `entries` key-columns + RLS gist updated to document the stripping RPC; Family consumer note clarified to distinguish observations path from incidents RPC path. FEATURES.md Incidents + Family sections reconciled. 2026-06-06 Action Words waves 1-4: `entries` `kind` column updated to include `action_words`; Action Words added to `entries` Consumers list. FEATURES.md Action Words Routes field updated to include `/action-words/:subjectId`; top-level orientation paragraph updated to list Action Words in the nav destinations order. 2026-06-07 incremental — Spells new feature (no table); Missions Do board (`kind='mission'` entries); Action Words Send + world-book surfaces. `entries` Consumers updated to include Missions. FEATURES.md Spells added; Missions Routes/Omnibox/Data/Surfaces updated; Action Words Routes/Surfaces updated. 2026-06-07 themed-world wave — `spaces` `capabilities` key-columns updated to enumerate `current_world`; Action Words added to `spaces` Consumers. FEATURES.md Action Words: Routes updated to include `/action-words/this-week` + `/action-words/activities`; Omnibox updated to include `page.this-weeks-world`; Capabilities updated to document `SpaceCaps.currentWorld`; Data updated to note `spaces` touch; Surfaces updated to add `themed_worlds.dart`, `themed_world_screen.dart`, `activity_match_screen.dart`, `_ThisWeekBanner`, `currentThemedWorldProvider`; Status + Depends on updated.)_
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._

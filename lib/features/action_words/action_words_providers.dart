@@ -1,11 +1,8 @@
 import 'dart:convert';
 
-import 'package:differentworld/core/capabilities/capabilities.dart';
-import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/action_words/themed_worlds.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
@@ -423,12 +420,3 @@ class ActionWordsActions {
 
 final actionWordsActionsProvider =
     Provider<ActionWordsActions>(ActionWordsActions.new);
-
-/// The themed "world of the week" the room is currently in — resolved from
-/// the Space's `current_world` string cap. Null until a teacher picks one.
-/// The daily 3-verb world nests inside this bigger weekly world
-/// (docs/ACTION_WORDS.md).
-final currentThemedWorldProvider = Provider<ThemedWorld?>((ref) {
-  final space = ref.watch(currentSpaceProvider).value;
-  return themedWorldById(space?.caps.getString(SpaceCaps.currentWorld));
-});

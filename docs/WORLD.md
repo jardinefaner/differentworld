@@ -4,6 +4,33 @@ Home for the 2026-06-06 reframe in [VISION.md](VISION.md). **Not a design doc
 yet** — the shape of the dream + a checklist of what to SHAPE before we design.
 Mark `[x]` settled, `[ ]` open, `💭` an idea to chew on.
 
+## ⚠️ 2026-06-07 correction — worlds are the ROOMS, not a weekly rotation
+
+The user corrected the "new world each week" model below. The truth:
+
+- **The worlds are the program's standing rooms.** A summer program runs a
+  fixed set of **5 rooms**, and each room IS a world. Kids move *between
+  rooms*; a world is a *place that persists*, not a week that passes. (The
+  "journey through a new world each week" framing below is superseded — keep
+  it for history, but the rooms are the unit.)
+- **The world set (umbrella "Different World"):** **World of Books · Movies ·
+  Songs · Dreams · Space · Time** — "fun things for a 10-week summer
+  program." (Code catalog: `lib/features/action_words/themed_worlds.dart`.)
+- **What's in a world ("if they were to create a different world, what's in
+  this?"):** **People · Culture · Map (pretend locations) · Tools · Dreams.**
+  This refines the People/Things/Words/Dreams/Culture list below — it ADDS a
+  **Map** (invented geography only — never a child's real location) and names
+  **Tools** (≈ things). *Words* stays its own system (Action Words). The room
+  + kids BUILD these facets for their world (the buildable canvas is a
+  follow-up; v1 ships the facet scaffold as prompts — `kWorldFacets`).
+- **Implication for the data model:** the planned `world_schedule` (week →
+  world) is the wrong axis. The right one is **room → world** (a world id on
+  the `group`, since groups = rooms). `crews` (group × world) is closer.
+  Revisit `WORLD_DESIGN.md`'s "the week's world" table before building it.
+
+Everything below is the prior (still-useful) thinking; read it through the
+lens of the correction above.
+
 ## The model: a persistent self, traveling through a new world each week
 
 Two layers:

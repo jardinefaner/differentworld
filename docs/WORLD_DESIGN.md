@@ -70,6 +70,12 @@ world reset.
   everywhere for free.
 
 ### `world_schedule` (NEW, per space) — which world, which week
+> ⚠️ **2026-06-07 — superseded axis.** Per the correction in
+> [WORLD.md](WORLD.md), worlds are the program's **standing rooms**, not a
+> weekly rotation. The right model is **room → world** (a `world_id` on the
+> `group`), not week → world. Don't build `world_schedule` as specced;
+> design the room→world assignment instead. Table kept here for history.
+
 Drives "this week's world." Worlds themselves are a **code catalog** (below),
 so this table just points at one by id per week.
 
