@@ -95,6 +95,183 @@ class _ChecklistCallToAction extends ConsumerWidget {
   }
 }
 
+/// Time-aware lead card: orients the whole Today screen to the day's
+/// current phase and points to the surface that matters *right now* —
+/// arrival → check-in, program → schedule, pickup → the roster. The
+/// phase comes from the wall clock via [dayPhaseProvider]; this card
+/// only *leads the eye* to surfaces that already exist — no new data
+/// layer (docs/WORKFLOWS.md gap #1, wave 1). Hidden after hours.
+class _RightNowCard extends ConsumerWidget {
+  const _RightNowCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final phase =
+        ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
+    // After hours, the lead card adds nothing — the greeting already
+    // reads "Good evening". Don't consume scroll.
+    if (phase == DayPhase.closed) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final labels = ref.watch(verticalLabelsProvider);
+    final kids = labels.subjectPlural.toLowerCase();
+    final spec = _phaseSpec(phase, theme.colorScheme, kids);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: spec.container,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push(spec.route));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: spec.accent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(spec.icon, color: spec.onAccent),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'RIGHT NOW',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: spec.onContainer.withValues(alpha: 0.7),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        spec.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: spec.onContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        spec.line,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: spec.onContainer.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: spec.onContainer),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Presentation for one [DayPhase]: copy, icon, destination, colors.
+/// Colors are drawn from the M3 [ColorScheme] (guaranteed-contrast
+/// container/on-container pairs). Arrival owns `primaryContainer` — the
+/// day's loudest moment — and the standing Morning-checklist card is
+/// suppressed during arrival so the two never stack as twins. Every
+/// other phase uses a calmer tone so it never clashes with that
+/// always-present primary card.
+_PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
+  switch (phase) {
+    case DayPhase.prep:
+      return _PhaseSpec(
+        title: 'Getting ready',
+        line: 'Program opens soon — peek at today’s schedule.',
+        route: '/schedule',
+        icon: Icons.wb_twilight_outlined,
+        container: cs.tertiaryContainer,
+        onContainer: cs.onTertiaryContainer,
+        accent: cs.tertiary,
+        onAccent: cs.onTertiary,
+      );
+    case DayPhase.arrival:
+      return _PhaseSpec(
+        title: 'Arrival time',
+        line: 'Check $kids in as they arrive — see who’s still out.',
+        route: '/checklist?filter=unmarked',
+        icon: Icons.login,
+        container: cs.primaryContainer,
+        onContainer: cs.onPrimaryContainer,
+        accent: cs.primary,
+        onAccent: cs.onPrimary,
+      );
+    case DayPhase.program:
+      return _PhaseSpec(
+        title: 'Program time',
+        line: 'Blocks are running — here’s what’s now and next.',
+        route: '/schedule',
+        icon: Icons.play_circle_outline,
+        container: cs.tertiaryContainer,
+        onContainer: cs.onTertiaryContainer,
+        accent: cs.tertiary,
+        onAccent: cs.onTertiary,
+      );
+    case DayPhase.pickup:
+      return _PhaseSpec(
+        title: 'Pickup time',
+        line: 'Review the room and check $kids out as families arrive.',
+        route: '/checklist',
+        icon: Icons.directions_walk,
+        container: cs.secondaryContainer,
+        onContainer: cs.onSecondaryContainer,
+        accent: cs.secondary,
+        onAccent: cs.onSecondary,
+      );
+    case DayPhase.closed:
+      // Never rendered (the card early-returns on closed) — fall back to
+      // the calm prep spec so the switch stays exhaustive.
+      return _PhaseSpec(
+        title: 'Getting ready',
+        line: 'Program opens soon — peek at today’s schedule.',
+        route: '/schedule',
+        icon: Icons.wb_twilight_outlined,
+        container: cs.tertiaryContainer,
+        onContainer: cs.onTertiaryContainer,
+        accent: cs.tertiary,
+        onAccent: cs.onTertiary,
+      );
+  }
+}
+
+class _PhaseSpec {
+  const _PhaseSpec({
+    required this.title,
+    required this.line,
+    required this.route,
+    required this.icon,
+    required this.container,
+    required this.onContainer,
+    required this.accent,
+    required this.onAccent,
+  });
+
+  final String title;
+  final String line;
+  final String route;
+  final IconData icon;
+  final Color container;
+  final Color onContainer;
+  final Color accent;
+  final Color onAccent;
+}
+
 class TodayBody extends ConsumerWidget {
   const TodayBody({
     required this.member,
@@ -124,6 +301,11 @@ class TodayBody extends ConsumerWidget {
         roomsWithFlags += 1;
       }
     }
+    // The day's current phase drives the time-aware lead card and lets
+    // us suppress the standing checklist card during arrival (the lead
+    // already leads with check-in there).
+    final phase =
+        ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
 
     return ResponsivePage(
       bottomPadding: 24,
@@ -149,10 +331,19 @@ class TodayBody extends ConsumerWidget {
             // role obvious. Tap → Roles page so Sam can see what their
             // role can do.
             const _IdentityStrip(),
+            // Time-aware lead: orients Today to the day's phase
+            // (arrival → check-in, program → schedule, pickup → roster).
+            // Renders nothing after hours. docs/WORKFLOWS.md gap #1.
+            if (viewer.isDailyLogger) const _RightNowCard(),
             // Morning Checklist is only useful to staff who can
             // actually mark daily routines — hide for read-only viewers.
-            if (viewer.isDailyLogger) const _ChecklistCallToAction(),
-            if (viewer.isDailyLogger) const SizedBox(height: 16),
+            // Suppressed during arrival, where the Right-now card already
+            // leads with check-in (so the two don't stack as primary
+            // twins).
+            if (viewer.isDailyLogger && phase != DayPhase.arrival)
+              const _ChecklistCallToAction(),
+            if (viewer.isDailyLogger && phase != DayPhase.arrival)
+              const SizedBox(height: 16),
             // "You're leading N blocks today" — renders nothing if
             // the signed-in member isn't a lead on any block today.
             // Naturally hides for non-staff and members with no
