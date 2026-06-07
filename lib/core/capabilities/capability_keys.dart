@@ -19,6 +19,11 @@ abstract class SpaceCaps {
   static const defaultClassSize = 'default_class_size';
   static const photoDefaultConsent = 'photo_default_consent';
 
+  /// The director's day-template library — a JSON-encoded list of
+  /// duration-block day shapes (see features/schedule/day_template.dart).
+  /// String cap (JSON); director-authored, read-mostly, no table.
+  static const dayTemplates = 'day_templates';
+
   /// PIN that unlocks the kid-mode lock. Stored as a string on the
   /// Space's capabilities JSONB so a director can change it from
   /// program settings. Default is `null` — kid-mode unlock falls

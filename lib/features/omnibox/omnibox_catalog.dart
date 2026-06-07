@@ -91,6 +91,23 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       onSelect: (ctx, _) => ctx.push('/schedule'),
     ),
     OmniboxEntry(
+      id: 'page.day-templates',
+      label: 'Day templates',
+      category: OmniboxCategory.page,
+      icon: Icons.view_timeline_outlined,
+      keywords: const [
+        'day template',
+        'day templates',
+        'shape of the day',
+        'time blocks',
+        'timeline',
+        'rhythm',
+        'routine',
+        'schedule template',
+      ],
+      onSelect: (ctx, _) => ctx.push('/schedule/day-templates'),
+    ),
+    OmniboxEntry(
       id: 'page.checklist',
       label: 'Morning checklist',
       category: OmniboxCategory.page,
