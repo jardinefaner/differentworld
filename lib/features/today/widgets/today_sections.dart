@@ -5,6 +5,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
+import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/live_session/live_session_banner.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
@@ -760,7 +761,21 @@ class _DirectorPulseCard extends ConsumerWidget {
       if (exp.isBefore(cutoff)) expiring++;
     }
 
-    final nothing = absent == 0 && substituteGroups == 0 && expiring == 0;
+    // Incidents still awaiting a family call — the compliance gap a
+    // director most wants caught the next morning (e.g. one logged
+    // yesterday afternoon that nobody marked notified). Gated on the
+    // program feature.
+    final viewer = ref.watch(viewerProvider);
+    final needFollowUp = viewer.featureIncidentReports
+        ? (ref.watch(incidentsInSpaceProvider).value ?? const <Incident>[])
+            .where((i) => !i.parentNotified)
+            .length
+        : 0;
+
+    final nothing = absent == 0 &&
+        substituteGroups == 0 &&
+        expiring == 0 &&
+        needFollowUp == 0;
 
     return SectionCard(
       visible: !nothing,
@@ -804,6 +819,15 @@ class _DirectorPulseCard extends ConsumerWidget {
                     '$expiring ${expiring == 1 ? "cert" : "certs"} '
                     'expiring in the next 30 days',
                 onTap: () => context.push('/settings/team'),
+              ),
+            if (needFollowUp > 0)
+              _PulseRow(
+                icon: Icons.report_gmailerrorred_outlined,
+                tint: scheme.error,
+                label: needFollowUp == 1
+                    ? '1 incident needs a family call'
+                    : '$needFollowUp incidents need a family call',
+                onTap: () => context.push('/incidents?filter=followup'),
               ),
           ],
         ),
