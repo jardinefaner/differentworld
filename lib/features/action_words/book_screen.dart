@@ -3,6 +3,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/week_log.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/story/moment.dart';
@@ -57,9 +58,14 @@ class BookScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              data: (entries) =>
-                  _Book(firstName: firstName, entries: entries,
-                      start: start, worlds: worlds),
+              data: (entries) => _Book(
+                firstName: firstName,
+                entries: entries,
+                start: start,
+                worlds: worlds,
+                subjectId: subjectId,
+                groupId: subject?.groupId,
+              ),
             ),
     );
   }
@@ -71,12 +77,16 @@ class _Book extends StatelessWidget {
     required this.entries,
     required this.start,
     required this.worlds,
+    required this.subjectId,
+    required this.groupId,
   });
 
   final String firstName;
   final List<Entry> entries;
   final DateTime start;
   final List<CurriculumWorld> worlds;
+  final String subjectId;
+  final String? groupId;
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +126,10 @@ class _Book extends StatelessWidget {
             week: week,
             world: _worldFor(week),
             entries: byWeek[week]!,
+            subjectId: subjectId,
+            firstName: firstName,
+            groupId: groupId,
+            log: weekLogFor(entries, week),
           ),
         _LastPage(
           firstName: firstName,
@@ -139,11 +153,19 @@ class _WeekSection extends StatelessWidget {
     required this.week,
     required this.world,
     required this.entries,
+    required this.subjectId,
+    required this.firstName,
+    required this.groupId,
+    required this.log,
   });
 
   final int week;
   final CurriculumWorld? world;
   final List<Entry> entries;
+  final String subjectId;
+  final String firstName;
+  final String? groupId;
+  final WeekLog? log;
 
   @override
   Widget build(BuildContext context) {
@@ -187,9 +209,30 @@ class _WeekSection extends StatelessWidget {
                   ],
                 ),
               ),
+              IconButton(
+                tooltip: 'Log this week',
+                icon: const Icon(Icons.edit_note),
+                onPressed: () => showWeekLogSheet(
+                  context,
+                  subjectId: subjectId,
+                  firstName: firstName,
+                  week: week,
+                  groupId: groupId,
+                ),
+              ),
             ],
           ),
         ),
+        // The teacher's noticed bits this week.
+        if (log != null && !log!.isEmpty) ...[
+          const SizedBox(height: 8),
+          if (log!.milestone.isNotEmpty)
+            _LogRow(icon: '🌟', label: 'Milestone', value: log!.milestone),
+          if (log!.spell.isNotEmpty)
+            _LogRow(icon: '🔤', label: 'Spell', value: log!.spell),
+          if (log!.ally.isNotEmpty)
+            _LogRow(icon: '🤝', label: 'Ally', value: log!.ally),
+        ],
         if (verbs.isNotEmpty) ...[
           const SizedBox(height: 8),
           Wrap(
@@ -224,6 +267,38 @@ class _WeekSection extends StatelessWidget {
       }
     }
     return out;
+  }
+}
+
+class _LogRow extends StatelessWidget {
+  const _LogRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+  final String icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
+        ],
+      ),
+    );
   }
 }
 
