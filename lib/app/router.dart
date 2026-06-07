@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
+import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
@@ -202,6 +203,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   child: ActionWordsScreen(),
                 ),
                 routes: [
+                  // Static path BEFORE the :subjectId param route, so
+                  // /action-words/send doesn't match as a subject id.
+                  GoRoute(
+                    path: 'send',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'Send home',
+                      child: SendScreen(),
+                    ),
+                  ),
                   GoRoute(
                     path: ':subjectId',
                     builder: (_, state) => RouteTitle(

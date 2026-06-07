@@ -33,7 +33,14 @@ class ActionWordsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        IconButton(
+          tooltip: 'Send home',
+          icon: const Icon(Icons.outgoing_mail),
+          onPressed: () => context.push('/action-words/send'),
+        ),
+        const SyncStatusIndicator(),
+      ],
       body: subjectsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
