@@ -41,6 +41,7 @@ class Incident {
     required this.narrative,
     required this.actionTaken,
     required this.parentNotified,
+    required this.familyNote,
   });
 
   factory Incident.fromEntry(Entry entry) {
@@ -51,24 +52,39 @@ class Incident {
     } on FormatException {
       details = <String, dynamic>{};
     }
+    final note = (details['family_note'] as String?)?.trim();
     return Incident(
       entry: entry,
       type: IncidentType.fromId(details['incident_type'] as String?),
       narrative: (entry.body ?? '').trim(),
       actionTaken: (details['action_taken'] as String?)?.trim(),
       parentNotified: details['parent_notified'] == true,
+      familyNote: (note == null || note.isEmpty) ? null : note,
     );
   }
 
   final Entry entry;
   final IncidentType type;
+
+  /// The full internal narrative — STAFF-ONLY. Can name other children
+  /// (a conflict), so it must never reach a family surface.
   final String narrative;
   final String? actionTaken;
   final bool parentNotified;
 
+  /// The family-facing summary staff explicitly wrote — the only free
+  /// text safe to show a guardian. Null when staff didn't write one.
+  final String? familyNote;
+
   String get id => entry.id;
   String? get subjectId => entry.subjectId;
   String get recordedAt => entry.recordedAt;
+
+  /// Whether this incident has been *surfaced* to the family — staff
+  /// either notified them or wrote a family note. The family lens shows
+  /// only surfaced incidents, so a just-logged internal one doesn't pop
+  /// up before staff have processed it.
+  bool get familyVisible => parentNotified || familyNote != null;
 }
 
 /// Every incident in the signed-in user's program, scoped to what the
@@ -129,11 +145,14 @@ String incidentDetailsJson({
   required String incidentType,
   required bool parentNotified,
   String? actionTaken,
+  String? familyNote,
 }) {
   final details = <String, dynamic>{
     'incident_type': incidentType,
     if (actionTaken != null && actionTaken.trim().isNotEmpty)
       'action_taken': actionTaken.trim(),
+    if (familyNote != null && familyNote.trim().isNotEmpty)
+      'family_note': familyNote.trim(),
     'parent_notified': parentNotified,
   };
   return jsonEncode(details);
@@ -158,6 +177,7 @@ class IncidentActions {
       detailsJson: incidentDetailsJson(
         incidentType: incident.type.id,
         actionTaken: incident.actionTaken,
+        familyNote: incident.familyNote,
         parentNotified: notified,
       ),
     );

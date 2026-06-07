@@ -116,4 +116,54 @@ void main() {
       expect(amended.actionTaken, 'Ice applied');
     });
   });
+
+  group('family visibility (the leak-proof policy)', () {
+    Incident incidentWith({
+      required bool notified,
+      String? familyNote,
+      String narrative = 'Internal: pushed by another child.',
+    }) =>
+        Incident.fromEntry(
+          _entry(
+            body: narrative,
+            details: incidentDetailsJson(
+              incidentType: 'conflict',
+              parentNotified: notified,
+              familyNote: familyNote,
+            ),
+          ),
+        );
+
+    test('a surfaced incident (notified OR family note) is family-visible', () {
+      expect(incidentWith(notified: true).familyVisible, isTrue);
+      expect(
+        incidentWith(notified: false, familyNote: 'We spoke with you today.')
+            .familyVisible,
+        isTrue,
+      );
+      expect(
+        incidentWith(notified: true, familyNote: 'Details shared.')
+            .familyVisible,
+        isTrue,
+      );
+    });
+
+    test('an un-surfaced incident stays internal-only', () {
+      expect(incidentWith(notified: false).familyVisible, isFalse);
+      expect(incidentWith(notified: false).familyNote, isNull);
+    });
+
+    test('family note round-trips; narrative stays separate (staff-only)', () {
+      final inc = incidentWith(
+        notified: false,
+        familyNote: '  Amy bumped her knee; she is fine.  ',
+        narrative: 'Tussle with Ben over a toy.',
+      );
+      expect(inc.familyNote, 'Amy bumped her knee; she is fine.');
+      // The internal narrative is preserved separately and is NOT the
+      // family note — the family card only ever reads familyNote.
+      expect(inc.narrative, 'Tussle with Ben over a toy.');
+      expect(inc.familyNote == inc.narrative, isFalse);
+    });
+  });
 }

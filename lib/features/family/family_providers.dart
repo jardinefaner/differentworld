@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -131,6 +132,39 @@ final familyEntriesForSubjectProvider =
         .limit(100);
     return [
       for (final r in rows) _entryFromMap(r),
+    ];
+  },
+);
+
+/// Family-facing incidents for a child — only the ones staff have
+/// **surfaced** (notified the family or wrote a family note). This NEVER
+/// exposes the internal narrative (which can name other children); the
+/// family UI reads type / date / notified / familyNote only. Built on the
+/// PostgREST-backed [familyEntriesForSubjectProvider].
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final familyIncidentsForSubjectProvider =
+    FutureProvider.autoDispose.family<List<Incident>, String>(
+  (ref, subjectId) async {
+    final viewer = ref.watch(viewerProvider);
+    if (viewer is! GuardianViewer) return const <Incident>[];
+    if (!viewer.canSeeSubject(subjectId)) return const <Incident>[];
+    final supabase = Supabase.instance.client;
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return const <Incident>[];
+    // Server-side stripping RPC: the narrative (`text`) + `action_taken`
+    // are nulled out in Postgres so they never reach this device — a
+    // conflict narrative naming another child can't leak over the wire
+    // (Red Team B1). The RPC re-checks the guardian↔child link and the
+    // surfaced-only policy (notified OR family note), so this client gate
+    // is defense-in-depth.
+    final rows = await supabase.rpc<dynamic>(
+      'family_incidents_for_subject',
+      params: {'caller_uid': uid, 'p_subject_id': subjectId},
+    ) as List<dynamic>;
+    return [
+      for (final r in rows)
+        Incident.fromEntry(_entryFromMap(r as Map<String, dynamic>)),
     ];
   },
 );
