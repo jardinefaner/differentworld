@@ -306,8 +306,9 @@ surface — preferences + roster + fleet, not primary workflows.
 - `incidents_providers.dart` — `IncidentType` catalog, `Incident.fromEntry` (typed parse over an entry), `incidentsInSpaceProvider` + `incidentsForSubjectProvider`; `incidentDetailsJson` builder; `IncidentActions.setParentNotified` (flip the family-notified flag post-log, drives the "Mark notified" button on `IncidentCard`).
 - `widgets/incident_card.dart` — `IncidentCard`, the shared card (log + per-child section; `showSubjectName` toggles the identity header).
 - `widgets/subject_incidents_section.dart` — `SubjectIncidentsSection`, the per-child history + scoped "Log incident" action embedded in Subject detail.
+- `templates/incident_report.dart` — `buildIncidentReportPdf`, the compliance PDF (built-in Helvetica, offline-safe); the log's Export (`ios_share`) action shares it via `Printing.sharePdf` (save to Files / print / email), respecting the active filter.
 - Create path: `EntryActions.createIncident` (`lib/features/entries/entries_providers.dart`).
-**Status**: shipped — v1 (log + structured form + family-notified tracking + "Mark notified" amend + Needs-follow-up filter + per-child history on Subject detail). Deferred: incident photos, a PDF/CSV export template (the data is structured for it).
+**Status**: shipped — v1 (log + structured form + family-notified tracking + "Mark notified" amend + Needs-follow-up filter + per-child history on Subject detail + PDF export). Deferred: incident photos; a Unicode font for the PDF (shared with progress reports — Helvetica drops accented glyphs).
 **Depends on**: Entries, Subjects, Groups, Viewer (capabilities).
 **Consumed by**: Subject detail — per-child incident history (`SubjectIncidentsSection`, gated section + jump chip); (future) Exports — incident report.
 **Last verified**: 2026-06-06

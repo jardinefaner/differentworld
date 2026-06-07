@@ -1,10 +1,13 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
+import 'package:differentworld/features/incidents/templates/incident_report.dart';
 import 'package:differentworld/features/incidents/widgets/incident_card.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -15,6 +18,7 @@ import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:printing/printing.dart';
 
 enum _IncidentFilter { all, needsFollowUp }
 
@@ -56,6 +60,11 @@ class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
 
     return EdgeScaffold(
       actions: [
+        IconButton(
+          tooltip: 'Export PDF',
+          icon: const Icon(Icons.ios_share),
+          onPressed: _export,
+        ),
         if (viewer.canObserve)
           PrimaryActionButton(
             tooltip: 'Log an incident',
@@ -125,6 +134,64 @@ class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
         },
       ),
     );
+  }
+
+  /// Build a PDF of the currently-shown incidents (respecting the filter)
+  /// and hand it to the OS share sheet — save to Files, print, or email
+  /// for a licensing audit. Pure local bytes via the `printing` package,
+  /// so it works offline (no Storage round-trip, no font fetch).
+  Future<void> _export() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final all = ref.read(incidentsInSpaceProvider).value ?? const <Incident>[];
+    final filtered = _filter == _IncidentFilter.needsFollowUp
+        ? all.where((i) => !i.parentNotified).toList()
+        : all;
+    if (filtered.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No incidents to export.')),
+      );
+      return;
+    }
+    final subjectsById = <String, Subject>{
+      for (final s
+          in ref.read(subjectsInSpaceProvider).value ?? const <Subject>[])
+        s.id: s,
+    };
+    String nameFor(String? id) {
+      final s = id == null ? null : subjectsById[id];
+      return s == null ? 'A child' : '${s.firstName} ${s.lastName}'.trim();
+    }
+
+    final data = IncidentReportData(
+      entries: [
+        for (final inc in filtered)
+          IncidentReportEntry(
+            incident: inc,
+            childName: nameFor(inc.subjectId),
+          ),
+      ],
+      spaceName: ref.read(currentSpaceProvider).value?.name,
+      title: _filter == _IncidentFilter.needsFollowUp
+          ? 'Incidents needing follow-up'
+          : 'Incident report',
+      generatedAt: DateTime.now(),
+    );
+    try {
+      final doc = await buildIncidentReportPdf(data);
+      final bytes = await doc.save();
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'incidents_${todayKey()}.pdf',
+      );
+    } on Object catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'incidents'),
+      );
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not export. Please try again.')),
+      );
+    }
   }
 }
 
