@@ -9,6 +9,7 @@ import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/activity_match_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
+import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
@@ -221,6 +222,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, _) => const RouteTitle(
                       title: 'Our worlds',
                       child: WorldBookScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'this-week',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'This week’s world',
+                      child: ThemedWorldScreen(),
                     ),
                   ),
                   GoRoute(
