@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +25,12 @@ class GroupDayState {
   int get markedCount => counts.values.fold<int>(0, (a, b) => a + b);
   int get unmarked => totalSubjects - markedCount;
   bool get isComplete => totalSubjects > 0 && unmarked == 0;
+
+  /// Children physically in the building today: present or late (arrived,
+  /// just late). Excludes absent / excused / early-pickup / unmarked.
+  int get inBuildingCount =>
+      (counts[AttendanceStatus.present] ?? 0) +
+      (counts[AttendanceStatus.late] ?? 0);
 
   /// Late or absent count today. Drives the "flag" badge on the
   /// classroom card.
@@ -119,6 +126,43 @@ enum DayPhase {
     return DayPhase.closed; // ≥ 6:30p
   }
 }
+
+/// Cross-cohort arrival snapshot for today: how many children are in the
+/// building (present/late) vs the total roster the viewer can see. Drives
+/// the "12 of 18 in" arrival progress on Today (docs/WORKFLOWS.md, the
+/// arrival-rush opportunity). Derived purely from attendance — accurate
+/// regardless of whether the new pickup board is adopted.
+class ArrivalProgress {
+  const ArrivalProgress({required this.inBuilding, required this.total});
+
+  final int inBuilding;
+  final int total;
+
+  int get stillOut => (total - inBuilding).clamp(0, total);
+  bool get allIn => total > 0 && inBuilding >= total;
+}
+
+/// Folds every visible cohort's [GroupDayState] into one arrival count.
+/// A cohort whose attendance stream hasn't delivered yet is skipped (it
+/// fills in on its next emit), same progressive shape as the pickup board.
+final arrivalProgressProvider = Provider<AsyncValue<ArrivalProgress>>((ref) {
+  final groupsAsync = ref.watch(groupsProvider);
+  final groups = groupsAsync.value;
+  if (groups == null) {
+    return groupsAsync.hasError
+        ? AsyncError(groupsAsync.error!, groupsAsync.stackTrace!)
+        : const AsyncLoading();
+  }
+  var inBuilding = 0;
+  var total = 0;
+  for (final g in groups) {
+    final state = ref.watch(groupDayStateProvider(g)).value;
+    if (state == null) continue;
+    inBuilding += state.inBuildingCount;
+    total += state.totalSubjects;
+  }
+  return AsyncData(ArrivalProgress(inBuilding: inBuilding, total: total));
+});
 
 /// Live day phase — re-emits when the wall clock crosses a phase
 /// boundary so Today can lead with the right "Right now" card without a

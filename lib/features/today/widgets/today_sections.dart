@@ -117,6 +117,19 @@ class _RightNowCard extends ConsumerWidget {
     final kids = labels.subjectPlural.toLowerCase();
     final spec = _phaseSpec(phase, theme.colorScheme, kids);
 
+    // Arrival: replace the static line with live "M of N in" progress when
+    // attendance has loaded a non-empty roster (docs/WORKFLOWS.md).
+    var line = spec.line;
+    if (phase == DayPhase.arrival) {
+      final prog = ref.watch(arrivalProgressProvider).value;
+      if (prog != null && prog.total > 0) {
+        line = prog.allIn
+            ? 'All ${prog.total} checked in — nice work.'
+            : '${prog.inBuilding} of ${prog.total} in · '
+                '${prog.stillOut} still to check in';
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Card(
@@ -163,7 +176,7 @@ class _RightNowCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        spec.line,
+                        line,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: spec.onContainer.withValues(alpha: 0.85),
                         ),

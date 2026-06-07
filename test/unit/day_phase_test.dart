@@ -53,4 +53,30 @@ void main() {
       expect(last, DayPhase.closed);
     });
   });
+
+  group('ArrivalProgress', () {
+    test('mid-arrival reports who is still out', () {
+      const p = ArrivalProgress(inBuilding: 12, total: 18);
+      expect(p.stillOut, 6);
+      expect(p.allIn, isFalse);
+    });
+
+    test('everyone in → allIn, none out', () {
+      const p = ArrivalProgress(inBuilding: 18, total: 18);
+      expect(p.stillOut, 0);
+      expect(p.allIn, isTrue);
+    });
+
+    test('over-count (data race) clamps and never goes negative', () {
+      const p = ArrivalProgress(inBuilding: 20, total: 18);
+      expect(p.stillOut, 0);
+      expect(p.allIn, isTrue);
+    });
+
+    test('empty roster is not "all in"', () {
+      const p = ArrivalProgress(inBuilding: 0, total: 0);
+      expect(p.allIn, isFalse);
+      expect(p.stillOut, 0);
+    });
+  });
 }
