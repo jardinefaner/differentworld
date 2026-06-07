@@ -4,6 +4,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worksheet_pdf.dart';
+import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -166,6 +167,25 @@ class _LiveWorld extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 20),
+        // The world's three rules — every kid hears all three; each kid's
+        // verbs decide which one is theirs.
+        if (rulesForWorld(world.id).isNotEmpty) ...[
+          _Label(text: 'The rules of this world', accent: accent),
+          for (final rule in rulesForWorld(world.id))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('§  ', style: TextStyle(color: accent, height: 1.4)),
+                  Expanded(
+                    child: Text(rule.text, style: theme.textTheme.bodyMedium),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 20),
+        ],
         // Watch -> Do
         if (world.videos.isNotEmpty) ...[
           _Label(text: 'Watch → Do', accent: accent),

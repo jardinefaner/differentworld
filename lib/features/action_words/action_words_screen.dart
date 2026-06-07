@@ -8,6 +8,8 @@ import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
 import 'package:differentworld/features/action_words/widgets/verb_lens_strip.dart';
 import 'package:differentworld/features/action_words/widgets/world_badge.dart';
+import 'package:differentworld/features/action_words/world_rules.dart';
+import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -361,6 +363,41 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
                 ),
                 const SizedBox(height: 8),
                 Center(child: VerbLensStrip(verbIds: _selected.toList())),
+                // YOUR RULE THIS WEEK — of the world's three rules, the one
+                // their verbs claim (docs/WORLD.md).
+                if (ref.watch(currentWorldProvider) case final cw?)
+                  if (ruleForVerbs(cw.id, _selected) case final rule?) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'THEIR RULE THIS WEEK',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSecondaryContainer
+                                  .withValues(alpha: 0.7),
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            rule.text,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSecondaryContainer,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 const SizedBox(height: 8),
                 Center(
                   child: TextButton.icon(
