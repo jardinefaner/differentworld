@@ -16,15 +16,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+enum _IncidentFilter { all, needsFollowUp }
+
 /// The incident log — every logged incident in the program, newest first
 /// (docs/WORKFLOWS.md gap #3). A compliance surface: typed, child-scoped,
-/// family-notification tracked. Scoped to what the viewer can see (their
-/// cohorts; directors see all).
-class IncidentsScreen extends ConsumerWidget {
+/// family-notification tracked. The "Needs follow-up" filter pairs with
+/// the per-card "Mark notified" action — a director can see exactly which
+/// families still need a call and work the list down. Scoped to what the
+/// viewer can see (their cohorts; directors see all).
+class IncidentsScreen extends ConsumerStatefulWidget {
   const IncidentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<IncidentsScreen> createState() => _IncidentsScreenState();
+}
+
+class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
+  _IncidentFilter _filter = _IncidentFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
     if (!viewer.canObserve && !viewer.canManageSpace) {
       return const EdgeScaffold(body: NoAccess());
@@ -71,6 +82,14 @@ class IncidentsScreen extends ConsumerWidget {
                   : null,
             );
           }
+
+          final needsCount =
+              incidents.where((i) => !i.parentNotified).length;
+          final filtered = _filter == _IncidentFilter.needsFollowUp
+              ? incidents.where((i) => !i.parentNotified).toList()
+              : incidents;
+          final allClear = filtered.isEmpty;
+
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
@@ -78,15 +97,17 @@ class IncidentsScreen extends ConsumerWidget {
               ),
               child: ListView.builder(
                 padding: const EdgeInsets.only(bottom: 96),
-                itemCount: incidents.length + 1,
+                itemCount: (allClear ? 1 : filtered.length) + 1,
                 itemBuilder: (_, i) {
                   if (i == 0) {
-                    return const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-                      child: ContentHeader(title: 'Incidents'),
+                    return _Header(
+                      filter: _filter,
+                      needsCount: needsCount,
+                      onFilter: (f) => setState(() => _filter = f),
                     );
                   }
-                  final incident = incidents[i - 1];
+                  if (allClear) return const _AllNotifiedNote();
+                  final incident = filtered[i - 1];
                   return IncidentCard(
                     incident: incident,
                     subject: subjectsById[incident.subjectId],
@@ -96,6 +117,82 @@ class IncidentsScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.filter,
+    required this.needsCount,
+    required this.onFilter,
+  });
+
+  final _IncidentFilter filter;
+  final int needsCount;
+  final ValueChanged<_IncidentFilter> onFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: ContentHeader(title: 'Incidents'),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('All'),
+                selected: filter == _IncidentFilter.all,
+                onSelected: (_) => onFilter(_IncidentFilter.all),
+              ),
+              ChoiceChip(
+                label: Text(
+                  needsCount > 0
+                      ? 'Needs follow-up ($needsCount)'
+                      : 'Needs follow-up',
+                ),
+                selected: filter == _IncidentFilter.needsFollowUp,
+                onSelected: (_) => onFilter(_IncidentFilter.needsFollowUp),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AllNotifiedNote extends StatelessWidget {
+  const _AllNotifiedNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      child: Row(
+        children: [
+          Icon(
+            Icons.mark_email_read_outlined,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'All families have been notified — nothing needs follow-up.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
