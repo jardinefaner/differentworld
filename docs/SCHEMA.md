@@ -130,13 +130,15 @@ of the SQL.
 - `group_id` (uuid → groups.id, nullable for cross-cohort entries)
 - `subject_id` (uuid → subjects.id, nullable for cohort-wide entries)
 - `kind` (text — `observation` / `meal` / `nap` / `diaper` / `incident` / `departure` / etc.)
-- `payload` (jsonb — schema depends on kind)
+- `text` (text — narrative / body; for `incident` rows, staff-only — can name other children)
+- `details` (jsonb — schema depends on kind; for `incident`: `{incident_type, action_taken?, parent_notified, family_note?}`)
+- `photo_url` (text, nullable — bucket-relative path; stripped for guardian reads of incidents)
 - `author_id` (uuid → members.id)
 - `occurred_at` (timestamptz)
 - `schedule_block_id` (uuid, nullable — no FK; see migration `20260531000002_entry_schedule_block.sql`. Intentionally FK-free so entries survive block deletion with their tag intact.)
-**RLS gist**: relaxed.
+**RLS gist**: relaxed (`for select to authenticated using(true)`). Guardian-side reads of `kind='incident'` rows MUST go through the `app.family_incidents_for_subject(caller_uid, p_subject_id)` RPC (migration `20260606000002_family_incidents_rpc.sql`), which strips `text` / `photo_url` / `details.action_taken` server-side before rows leave Postgres and enforces the guardian↔child link + surfaced-only policy. Direct `entries` reads by a guardian device would expose the full narrative over the wire even though RLS is `using(true)`.
 **Sync rule**: `by_space` (no publication/sync-rule change needed — entries was already replicated and `SELECT *` covers the new column).
-**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family), [Review](FEATURES.md#review), [Schedule](FEATURES.md#schedule) (live-block capture tagging — see docs/LIVE_BLOCK_CONTEXT.md), [Incidents](FEATURES.md#incidents) (`kind='incident'`), [Pickup](FEATURES.md#pickup) (`kind='departure'`).
+**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (observations via direct PostgREST `familyEntriesForSubjectProvider`; incidents via server-stripping RPC `familyIncidentsForSubjectProvider`), [Review](FEATURES.md#review), [Schedule](FEATURES.md#schedule) (live-block capture tagging — see docs/LIVE_BLOCK_CONTEXT.md), [Incidents](FEATURES.md#incidents) (`kind='incident'`), [Pickup](FEATURES.md#pickup) (`kind='departure'`).
 **Last verified**: 2026-06-06
 
 ---
@@ -610,7 +612,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-06 (Today wave 1 — `_RightNowCard` + `DayPhase`; Pickup wave 2 — dismissal board; Incidents — new feature. `entries` Consumers updated to include Incidents + Pickup; `departure` kind added to entries key-columns. 2026-06-06 incremental — Incidents waves 4/5/6/7: `subjects` Consumers updated to include Incidents; `entries` Consumers already correct.)_
+_Last full registry verification: 2026-06-06 (Today wave 1 — `_RightNowCard` + `DayPhase`; Pickup wave 2 — dismissal board; Incidents — new feature. `entries` Consumers updated to include Incidents + Pickup; `departure` kind added to entries key-columns. 2026-06-06 incremental — Incidents waves 4/5/6/7: `subjects` Consumers updated to include Incidents; `entries` Consumers already correct. 2026-06-06 Wave A/B — Incidents PDF export + family-facing incidents. `entries` key-columns + RLS gist updated to document the stripping RPC; Family consumer note clarified to distinguish observations path from incidents RPC path. FEATURES.md Incidents + Family sections reconciled.)_
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
