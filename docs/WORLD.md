@@ -14,14 +14,19 @@ truth: **[curriculum/ten_worlds_prototype.jsx](curriculum/ten_worlds_prototype.j
 
 - **One Different World, ten weeks, ten worlds — a journey.** A persistent
   self travels week to week. The arc: **Me → Stories → Nature → Water →
-  Music → Space → Dreams → Time → Feelings → Us.** (Note: NOT the
-  Books/Movies/Songs guess in the current `themed_worlds.dart` — that catalog
-  is now WRONG and must be replaced with these ten.)
-- **Each world has TEN facets** (not the 5 currently in `kWorldFacets`):
-  **People · Culture · Map · Tools · Language · Food · Music · Rules ·
-  Problems · Dreams.** Each facet carries rich AUTHORED teacher-facing
-  content per world (see the prototype) — the current build only has the 5
-  dimension *prompts*. Map stays invented-geography-only.
+  Music → Space → Dreams → Time → Feelings → Us.** ✅ BUILT: the catalog now
+  ships as `assets/curriculum/ten_worlds.json` (loaded via
+  `curriculumWorldsProvider`); the gallery renders it.
+- **Each world has TEN facets:** **People · Culture · Map · Tools · Language
+  · Food · Music · Rules · Problems · Dreams** — each with rich AUTHORED
+  teacher-facing content (from the prototype). ✅ BUILT: content lives in the
+  JSON; `kWorldFacets` carries the 10 dimension labels. Map stays
+  invented-geography-only.
+- **Watch → Talk → Do video layer** (added 2026-06-07,
+  [ten_worlds_videos.md](curriculum/ten_worlds_videos.md)): 2–3 pre-screened
+  videos per world, each the *spark* before an activity. ✅ BUILT into the
+  JSON (`videos: [{title, minutes, after}]`) + screen-time rules
+  (`kScreenTimeRules`). Still TO DO: a "Watch" block kind in the day-template.
 - **Each world also carries:** a week number, a color, a one-line tagline, a
   big **question**, **3 featured verbs** (from the 12 Action Words), and a
   list of **6–8 concrete activities**.

@@ -117,7 +117,7 @@ class _WorldsBanner extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'The worlds your rooms step into',
+                        'The 10-week journey',
                         style: theme.textTheme.titleSmall,
                       ),
                     ],

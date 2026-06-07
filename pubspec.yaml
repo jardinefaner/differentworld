@@ -122,6 +122,9 @@ flutter:
 
   assets:
     - .env
+    # The 10-week "If You Built a World" curriculum (bundled JSON so the
+    # worlds load offline). Source of truth: docs/curriculum/.
+    - assets/curriculum/ten_worlds.json
 
   # Variable display fonts for the Speak feature's editorial karaoke
   # (lib/features/speak/). Bundled (NOT runtime-fetched via google_fonts)
