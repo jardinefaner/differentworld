@@ -295,6 +295,22 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
               if (match != null) ...[
                 const SizedBox(height: 20),
                 WorldBadge(match: match, showVerbs: false, emojiSize: 56),
+                const SizedBox(height: 8),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      unawaited(
+                        context.push(
+                          '/action-words/activities?verbs='
+                          '${_selected.join(',')}',
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.local_activity_outlined, size: 18),
+                    label: const Text('See matching activities'),
+                  ),
+                ),
               ],
               const SizedBox(height: 20),
               Row(

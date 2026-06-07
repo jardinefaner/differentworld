@@ -6,6 +6,7 @@ import 'package:differentworld/core/db/app_database.dart'
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_screen.dart';
+import 'package:differentworld/features/action_words/activity_match_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
@@ -219,6 +220,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                       title: 'Our worlds',
                       child: WorldBookScreen(),
                     ),
+                  ),
+                  GoRoute(
+                    path: 'activities',
+                    builder: (_, state) {
+                      final raw =
+                          state.uri.queryParameters['verbs'] ?? '';
+                      final verbs = raw.isEmpty
+                          ? const <String>[]
+                          : raw.split(',').where((s) => s.isNotEmpty).toList();
+                      return RouteTitle(
+                        title: 'Activities',
+                        child: ActivityMatchScreen(initialVerbs: verbs),
+                      );
+                    },
                   ),
                   GoRoute(
                     path: ':subjectId',

@@ -91,10 +91,14 @@ class ActivitiesDao extends DatabaseAccessor<AppDatabase>
     int? maxCapacity,
     bool? isOutdoor,
     String? indoorAltActivityId,
+    String? capabilitiesJson,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await (update(activities)..where((a) => a.id.equals(id))).write(
       ActivitiesCompanion(
+        capabilities: capabilitiesJson == null
+            ? const Value.absent()
+            : Value(capabilitiesJson),
         name: name == null ? const Value.absent() : Value(name),
         description:
             description == null ? const Value.absent() : Value(description),

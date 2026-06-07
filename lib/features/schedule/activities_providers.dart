@@ -1,3 +1,4 @@
+import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -114,6 +115,18 @@ class ActivityActions {
   Future<void> unarchive(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.activitiesDao.unarchive(id);
+  }
+
+  /// Tag an activity with Action Words verbs (stored in the activity's
+  /// capabilities JSON — no migration). Drives the verb→activity matcher.
+  Future<void> setActionVerbs(Activity activity, List<String> verbs) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final caps = Capabilities.fromJson(activity.capabilities)
+        .setting('action_verbs', verbs);
+    await db.activitiesDao.update_(
+      id: activity.id,
+      capabilitiesJson: caps.toJson(),
+    );
   }
 }
 
