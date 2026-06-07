@@ -46,7 +46,7 @@ void main() {
       ],
       spaceName: 'Sunny Afterschool',
       title: 'Incident report',
-      generatedAt: DateTime(2026, 6, 6, 17, 0),
+      generatedAt: DateTime(2026, 6, 6, 17),
     );
     expect(data.notifiedCount, 1);
 
