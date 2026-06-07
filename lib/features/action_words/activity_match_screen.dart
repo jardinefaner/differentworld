@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/activity_match.dart';
+import 'package:differentworld/features/action_words/curriculum_import.dart';
 import 'package:differentworld/features/action_words/senses.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
@@ -38,8 +40,15 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
   @override
   Widget build(BuildContext context) {
     final activitiesAsync = ref.watch(activitiesProvider);
+    final isDirector = ref.watch(viewerProvider).isDirector;
     return EdgeScaffold(
       actions: [
+        if (isDirector)
+          IconButton(
+            tooltip: 'Import the curriculum’s activities',
+            icon: const Icon(Icons.library_add_outlined),
+            onPressed: _import,
+          ),
         IconButton(
           tooltip: 'New activity',
           icon: const Icon(Icons.add),
@@ -61,12 +70,22 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
           final active =
               activities.where((a) => a.archivedAt == null).toList();
           if (active.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.local_activity_outlined,
               title: 'No activities yet',
-              message: 'Add activities in your Schedule first, then tag each '
-                  'one with the three action words it practices — they’ll '
-                  'show up here when those words are picked.',
+              message: isDirector
+                  ? 'Import the 10-week curriculum’s activities — each one '
+                      'tagged with the verbs it practices — or add your own.'
+                  : 'Add activities in your Schedule first, then tag each '
+                      'one with the three action words it practices — they’ll '
+                      'show up here when those words are picked.',
+              action: isDirector
+                  ? FilledButton.icon(
+                      onPressed: _import,
+                      icon: const Icon(Icons.library_add_outlined),
+                      label: const Text('Import curriculum activities'),
+                    )
+                  : null,
             );
           }
           final matches = _filter.isEmpty
@@ -118,6 +137,22 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
       context: context,
       isScrollControlled: true,
       builder: (_) => _TagSheet(activity: activity),
+    );
+  }
+
+  Future<void> _import() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final n = await ref.read(curriculumImporterProvider).importActivities();
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          n == 0
+              ? 'All curriculum activities are already in your library.'
+              : 'Added $n curriculum ${n == 1 ? "activity" : "activities"} — '
+                  'tagged with their verbs.',
+        ),
+      ),
     );
   }
 }
