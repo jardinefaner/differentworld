@@ -48,8 +48,9 @@ The drawer (mobile) and desktop nav rail both render from the single
 canonical list in `lib/shared/widgets/nav_destinations.dart`
 (`buildNavDestinations(viewer)`). Top-level destinations in canonical
 order: **Today**, **Schedule**, **Observations** (gated `canObserve`),
-**Captures**, **Tasks**, **Tools**, **Present**, **Brain Breaks**,
-**Missions**, **Brainstorm Board**, **Insights**, **Surveys**,
+**Action Words** (gated `canObserve`), **Captures**, **Tasks**,
+**Tools**, **Present**, **Brain Breaks**, **Missions**,
+**Brainstorm Board**, **Insights**, **Surveys**,
 **Vehicles** (gated `canDrive || canManageSpace`), **Settings**. Everything narrower is reachable via the
 omnibox (`/search`) or slash commands. Settings is the library / admin
 surface — preferences + roster + fleet, not primary workflows.
@@ -61,7 +62,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: The world-reveal loop (docs/ACTION_WORDS.md, from the developer brief) — kids pick 3 of 12 action words each morning; the combo reveals an animal/element/archetype **world**; over time a title forms from their most-practiced verbs. The app touches the kid ~5 min/day; the room is the product.
 **Personas served**: Teacher (Conductor) — primary; Kid (Explorer) — optional V1; Parent (Witness) — V1 is the generated text, not an app.
 **Discovery surfaces**:
-- Routes: `/action-words` (the morning pick roster)
+- Routes: `/action-words` (the morning pick roster), `/action-words/:subjectId` (the collection — worlds grid + verb bars + emerging title)
 - Omnibox: `page.action-words` — "Action Words" (keywords: verbs, words, worlds, pick, reveal, collection, animal; morning contextTag)
 - Slash: none
 - Drawer/Rail: yes — "Action Words" nav destination, gated `onlyFor: canObserve`
