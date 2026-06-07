@@ -192,6 +192,70 @@ final actionWordsCollectionProvider =
   },
 );
 
+/// All Action Words entries across the program — the substrate for the
+/// class-wide world book.
+final _spaceActionWordsProvider = StreamProvider<List<Entry>>((ref) async* {
+  final viewer = ref.watch(viewerProvider);
+  final spaceId = viewer.spaceId;
+  if (spaceId == null) {
+    yield const [];
+    return;
+  }
+  final db = await ref.watch(appDatabaseProvider.future);
+  yield* db.entriesDao
+      .watchInSpace(spaceId: spaceId, kind: EntryKind.actionWords);
+});
+
+/// A world the class INVENTED — a fresh combo (no named world) that a kid
+/// named. The growth that stays unhidden (docs/ACTION_WORDS.md).
+class InventedWorld {
+  const InventedWorld({
+    required this.name,
+    required this.verbs,
+    required this.count,
+  });
+
+  final String name;
+  final Set<String> verbs;
+
+  /// How many days this invented world has shown up — the class's own
+  /// continuity.
+  final int count;
+}
+
+/// The class's **world book** — every world the program has invented,
+/// derived from `world_name` on fresh-combo days. Most-named first.
+final inventedWorldsProvider = Provider<AsyncValue<List<InventedWorld>>>((ref) {
+  return ref.watch(_spaceActionWordsProvider).whenData((entries) {
+    // key = lower(name); value = (display name, the combo, count)
+    final byName = <String, (String, Set<String>, int)>{};
+    for (final e in entries) {
+      final day = ActionWordsDay.fromEntry(e);
+      final name = day.worldName;
+      if (name == null || name.isEmpty || !day.hasPicks) continue;
+      // Only genuinely invented worlds (the combo maps to no named world).
+      if (day.world?.kind != WorldMatchKind.fresh) continue;
+      final key = name.toLowerCase();
+      final prev = byName[key];
+      byName[key] = (
+        prev?.$1 ?? name,
+        day.verbPicks.toSet(),
+        (prev?.$3 ?? 0) + 1,
+      );
+    }
+    final list = [
+      for (final v in byName.values)
+        InventedWorld(name: v.$1, verbs: v.$2, count: v.$3),
+    ]..sort((a, b) {
+        final byCount = b.count.compareTo(a.count);
+        return byCount != 0
+            ? byCount
+            : a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+    return list;
+  });
+});
+
 /// Mutations for a child's Action Words day. Every write is optimistic
 /// (local Drift → PowerSync). One `action_words` entry per (subject,
 /// date); find-or-create runs in a transaction so a double-tap can't

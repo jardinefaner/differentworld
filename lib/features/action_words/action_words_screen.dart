@@ -35,6 +35,11 @@ class ActionWordsScreen extends ConsumerWidget {
     return EdgeScaffold(
       actions: [
         IconButton(
+          tooltip: 'Our worlds',
+          icon: const Icon(Icons.menu_book_outlined),
+          onPressed: () => context.push('/action-words/worlds'),
+        ),
+        IconButton(
           tooltip: 'Send home',
           icon: const Icon(Icons.outgoing_mail),
           onPressed: () => context.push('/action-words/send'),

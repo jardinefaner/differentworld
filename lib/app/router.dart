@@ -8,6 +8,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
+import 'package:differentworld/features/action_words/world_book_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
@@ -210,6 +211,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, _) => const RouteTitle(
                       title: 'Send home',
                       child: SendScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'worlds',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'Our worlds',
+                      child: WorldBookScreen(),
                     ),
                   ),
                   GoRoute(
