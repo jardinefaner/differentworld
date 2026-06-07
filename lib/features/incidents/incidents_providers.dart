@@ -121,3 +121,48 @@ final incidentsForSubjectProvider =
         .map(_toIncidents);
   },
 );
+
+/// The canonical incident `details` JSON shape — `{incident_type,
+/// action_taken?, parent_notified}`. Used by the "mark notified" amend;
+/// `EntryActions.createIncident` builds the same shape at log time.
+String incidentDetailsJson({
+  required String incidentType,
+  required bool parentNotified,
+  String? actionTaken,
+}) {
+  final details = <String, dynamic>{
+    'incident_type': incidentType,
+    if (actionTaken != null && actionTaken.trim().isNotEmpty)
+      'action_taken': actionTaken.trim(),
+    'parent_notified': parentNotified,
+  };
+  return jsonEncode(details);
+}
+
+/// Amends logged incidents (currently just the family-notified flag).
+class IncidentActions {
+  IncidentActions(this._ref);
+
+  final Ref _ref;
+
+  /// Flip a logged incident's family-notified flag — for the common
+  /// "log now, call the parent later" flow. Preserves the type +
+  /// action narrative; only the flag changes. Optimistic local write.
+  Future<void> setParentNotified(
+    Incident incident, {
+    required bool notified,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.entriesDao.updateDetails(
+      id: incident.id,
+      detailsJson: incidentDetailsJson(
+        incidentType: incident.type.id,
+        actionTaken: incident.actionTaken,
+        parentNotified: notified,
+      ),
+    );
+  }
+}
+
+final incidentActionsProvider =
+    Provider<IncidentActions>(IncidentActions.new);

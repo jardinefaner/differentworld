@@ -71,4 +71,49 @@ void main() {
       expect(incident.type, IncidentType.other);
     });
   });
+
+  group('incidentDetailsJson ↔ Incident.fromEntry', () {
+    test('encodes a shape that parses back identically', () {
+      final json = incidentDetailsJson(
+        incidentType: 'medical',
+        actionTaken: 'EpiPen administered',
+        parentNotified: true,
+      );
+      final inc = Incident.fromEntry(
+        _entry(body: 'Allergic reaction', details: json),
+      );
+      expect(inc.type, IncidentType.medical);
+      expect(inc.actionTaken, 'EpiPen administered');
+      expect(inc.parentNotified, isTrue);
+    });
+
+    test('mark-notified amend flips only the flag, preserving type+action', () {
+      final logged = Incident.fromEntry(
+        _entry(
+          body: 'Bumped head',
+          details: incidentDetailsJson(
+            incidentType: 'injury',
+            actionTaken: 'Ice applied',
+            parentNotified: false,
+          ),
+        ),
+      );
+      expect(logged.parentNotified, isFalse);
+
+      // The amend rebuilds the details from the parsed incident.
+      final amended = Incident.fromEntry(
+        _entry(
+          body: 'Bumped head',
+          details: incidentDetailsJson(
+            incidentType: logged.type.id,
+            actionTaken: logged.actionTaken,
+            parentNotified: true,
+          ),
+        ),
+      );
+      expect(amended.parentNotified, isTrue);
+      expect(amended.type, IncidentType.injury);
+      expect(amended.actionTaken, 'Ice applied');
+    });
+  });
 }
