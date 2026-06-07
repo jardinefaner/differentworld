@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/activity_match.dart';
+import 'package:differentworld/features/action_words/senses.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
@@ -38,7 +39,18 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
   Widget build(BuildContext context) {
     final activitiesAsync = ref.watch(activitiesProvider);
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        IconButton(
+          tooltip: 'New activity',
+          icon: const Icon(Icons.add),
+          onPressed: () => showGlassSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => const _NewActivitySheet(),
+          ),
+        ),
+        const SyncStatusIndicator(),
+      ],
       body: activitiesAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
@@ -202,10 +214,14 @@ class _ActivityCard extends StatelessWidget {
             else
               Wrap(
                 spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   for (final v in verbsByIds(tags))
                     Text('${v.emoji} ${v.label}',
                         style: theme.textTheme.bodySmall),
+                  for (final s in activitySenses(activity))
+                    Text(s.emoji, style: const TextStyle(fontSize: 14)),
                 ],
               ),
           ],
@@ -226,6 +242,7 @@ class _TagSheet extends ConsumerStatefulWidget {
 
 class _TagSheetState extends ConsumerState<_TagSheet> {
   late final Set<String> _selected = activityVerbs(widget.activity).toSet();
+  late final Set<Sense> _senses = activitySenses(widget.activity).toSet();
   bool _saving = false;
 
   void _toggle(String id) {
@@ -241,9 +258,11 @@ class _TagSheetState extends ConsumerState<_TagSheet> {
     setState(() => _saving = true);
     final nav = Navigator.of(context);
     unawaited(HapticFeedback.selectionClick());
-    await ref
-        .read(activityActionsProvider)
-        .setActionVerbs(widget.activity, _selected.toList());
+    await ref.read(activityActionsProvider).setActivityTags(
+          widget.activity,
+          verbs: _selected.toList(),
+          senses: _senses.map((s) => s.name).toList(),
+        );
     if (!mounted) return;
     nav.pop();
   }
@@ -280,6 +299,26 @@ class _TagSheetState extends ConsumerState<_TagSheet> {
               ),
               const SizedBox(height: 16),
               VerbGrid(selected: _selected, onToggle: _toggle),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Senses', style: theme.textTheme.labelLarge),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final s in Sense.values)
+                    FilterChip(
+                      label: Text('${s.emoji} ${s.label}'),
+                      selected: _senses.contains(s),
+                      onSelected: (_) => setState(() {
+                        if (!_senses.remove(s)) _senses.add(s);
+                      }),
+                    ),
+                ],
+              ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -299,6 +338,181 @@ class _TagSheetState extends ConsumerState<_TagSheet> {
                           )
                         : const Icon(Icons.check),
                     label: const Text('Save tags'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Add a custom activity from the library — name, instruction, the words
+/// it practices, and the senses it engages. Saved tagged so it shows in
+/// the matcher right away.
+class _NewActivitySheet extends ConsumerStatefulWidget {
+  const _NewActivitySheet();
+
+  @override
+  ConsumerState<_NewActivitySheet> createState() => _NewActivitySheetState();
+}
+
+class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
+  final _name = TextEditingController();
+  final _instruction = TextEditingController();
+  final Set<String> _verbs = {};
+  final Set<Sense> _senses = {};
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _instruction.dispose();
+    super.dispose();
+  }
+
+  void _toggleVerb(String id) {
+    setState(() {
+      if (!_verbs.remove(id) && _verbs.length < kPicksPerDay) _verbs.add(id);
+    });
+  }
+
+  Future<void> _save() async {
+    if (_saving) return;
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Give the activity a name.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final nav = Navigator.of(context);
+    unawaited(HapticFeedback.selectionClick());
+    await ref.read(activityActionsProvider).createTagged(
+          name: name,
+          description: _instruction.text.trim().isEmpty
+              ? null
+              : _instruction.text.trim(),
+          verbs: _verbs.toList(),
+          senses: _senses.map((s) => s.name).toList(),
+        );
+    if (!mounted) return;
+    nav.pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            20 + MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text('New activity', style: theme.textTheme.titleLarge),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _name,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  hintText: 'Heavy Helper',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _instruction,
+                minLines: 2,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'One-sentence instruction (optional)',
+                  hintText: 'Carry the heaviest thing you safely can to a '
+                      'friend.',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Words it practices',
+                    style: theme.textTheme.labelLarge),
+              ),
+              const SizedBox(height: 6),
+              VerbGrid(selected: _verbs, onToggle: _toggleVerb),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Senses', style: theme.textTheme.labelLarge),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final s in Sense.values)
+                    FilterChip(
+                      label: Text('${s.emoji} ${s.label}'),
+                      selected: _senses.contains(s),
+                      onSelected: (_) => setState(() {
+                        if (!_senses.remove(s)) _senses.add(s);
+                      }),
+                    ),
+                ],
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.error),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _save,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check),
+                    label: const Text('Create'),
                   ),
                 ],
               ),
