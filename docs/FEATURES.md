@@ -297,7 +297,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Omnibox: `page.incidents` — "Incident log" + `action.log-incident` — "Log an incident" (both gated on `feature_incident_reports` + staff who can log/manage; keywords: incident, injury, accident, report, safety, bump, conflict)
 - Slash: none
 - Drawer: no — reached via omnibox + (future) a subject-detail entry point
-- Settings: the `feature_incident_reports` toggle lives in `lib/features/settings/program_settings_screen.dart`
+- Settings: yes — "Incident reports" (`CapSwitch`, auto-save) under the "What's tracked" section of `program_settings_screen.dart`; gated `canManageSpace`
 **Capabilities**: Gated on space cap `feature_incident_reports` (default on). Log: `can_observe`. View: `can_observe` OR `can_manage_space` (director). Visibility scoped to the viewer's cohorts (directors see all), same shape as observations.
 **Data**: Reuses [entries](SCHEMA.md#entries) `kind='incident'` — `text`=narrative, `details` JSON = `{incident_type, action_taken?, parent_notified}`. NO new table / migration / sync-rule change.
 **Surfaces**:
@@ -540,8 +540,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - `pickup_providers.dart` + `pickup_list.dart` — the authorized-people editor embedded in Subject detail (`pickup_people` caps).
 **Status**: shipped — board v1 (still-here · authorized · one-tap release · undo). Deferred: late-pickup timers (needs a configurable pickup-window end), late-pickup push.
 **Depends on**: Subjects, Guardians, Attendance, Entries, Groups.
-**Consumed by**: Today (pickup-phase "Right now" card → `/pickup`).
-**Last verified**: 2026-05-21
+**Consumed by**: Today (pickup-phase "Right now" card routes to `/pickup` when `dayPhaseProvider` is `DayPhase.pickup`).
+**Last verified**: 2026-06-06
 
 ---
 
@@ -860,12 +860,13 @@ surface — preferences + roster + fleet, not primary workflows.
 **Surfaces**:
 - *Today screen* — `lib/features/today/today_screen.dart`. Card list, refresh on pull.
 - *Live-session banner* — `lib/features/live_session/live_session_banner.dart` (cross-feature, mounted in `today_sections.dart`). Auto-shows at the top of Today when `activeSessionsProvider` has active sessions; hidden when none. One-tap join pushes `/join?code=…&game=…`. Multiple live sessions → picker sheet.
+- *Right-now card* — `_RightNowCard` in `lib/features/today/widgets/today_sections.dart`. Time-aware lead card driven by `dayPhaseProvider` (a `StreamProvider<DayPhase>` re-emitting every minute). Shows contextual CTA + destination for each phase: prep = plan the day, arrival → `/checklist`, program → `/schedule`, pickup → `/pickup`, closed = hidden. Renders only for `viewer.isDailyLogger`. Shipped 2026-06-06.
 - *Embedded cards* — leading-today (from Schedule), morning-checklist (from Attendance), recent-captures (from Captures), open-tasks (from Tasks), insights (from Insights), unread-messages (deferred).
 - *Director pulse card* — `_DirectorPulseCard` inside `today_screen.dart`. Director-only proactive pulse: surfaces today's absent kids (from group day state), cohorts running on substitute coverage (from schedule), and certs expiring within 30 days (from certs-in-space). Renders nothing on "all clear" so it never adds noise. Shipped 2026-05-22 (Wave 36).
 - *Identity strip* — `_IdentityStrip` inside `today_screen.dart`. Renders only for specialists ("You are: Specialist · Coach") and substitutes ("You are: Substitute today"); silent for director / lead_teacher / teacher / guardian / kitchen because their context makes the role obvious. Tap → `/settings/roles`. Specialist without a specialty assigned gets a tertiary-tinted hint matching the team-list pattern. Closes the Coach Sam identity gap surfaced by persona-audit 2026-05-23. Shipped Wave 40.
-**Depends on**: nearly everything, including LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`).
+**Depends on**: nearly everything, including LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`), Pickup (pickup-phase "Right now" card routes to `/pickup`).
 **Consumed by**: Nothing — Today is a leaf.
-**Last verified**: 2026-06-03
+**Last verified**: 2026-06-06
 
 ---
 

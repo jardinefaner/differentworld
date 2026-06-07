@@ -30,20 +30,27 @@ phases below all improve once Today tracks the day's phase.
 
 ## The three highest‑leverage gaps (the build roadmap)
 
-1. **Time‑aware Today** *(cheapest, highest impact — build first)* — a `DayPhase`
-   derived from the clock (afterschool defaults, later program‑configurable) +
-   a leading **"Right now"** card that switches by phase: arrival → check‑in,
-   program → the live block, pickup → pickup. It *reorders/leads* what's
-   already there; no new data layer for v1.
-2. **A real Pickup board** — mirror the arrival rush's importance: a dismissal
-   board (still‑here · authorized · late timers · one‑tap release). Pairs with
-   the deferred late‑pickup push.
-3. **Structured incident logging** — a first‑class, exportable incident capture
-   (kind, who, what, follow‑up) separate from observations — a real afterschool
-   compliance need.
+1. **Time‑aware Today** ✅ *shipped (wave 1)* — a `DayPhase` derived from the
+   clock (afterschool defaults, later program‑configurable) + a leading
+   **"Right now"** card that switches by phase: arrival → check‑in, program →
+   schedule, pickup → the board. Leads the eye to surfaces that already exist;
+   no new data layer. `lib/features/today/` (`dayPhaseProvider`, `_RightNowCard`).
+2. **A real Pickup board** ✅ *shipped (wave 2)* — a dismissal board
+   (still‑here · authorized · one‑tap release · undo) at `/pickup`. A release is
+   `entries.kind='departure'` — a separate axis from attendance, no new table.
+   `lib/features/pickup/pickup_board_*`. *Deferred:* late‑pickup timers + push.
+3. **Structured incident logging** ✅ *shipped (wave 3)* — a first‑class typed
+   incident record (type · narrative · action · family‑notified) at `/incidents`,
+   distinct from observations. `entries.kind='incident'`, no new table.
+   `lib/features/incidents/`. *Deferred:* photos, per‑subject history, PDF/CSV
+   export.
 
 ## Status
 
 - **Map:** this doc.
-- **Build:** wave 1 = time‑aware Today (`DayPhase` + a "Right now" leading card).
-  Waves 2–3 = Pickup board, incident logging.
+- **Build:** all three highest‑leverage gaps **shipped** — wave 1 time‑aware
+  Today, wave 2 Pickup board, wave 3 incident logging. Each reused the synced
+  `entries` table (or pure clock derivation), so none needed a new table /
+  migration / PowerSync‑dashboard deploy. Remaining opportunities in the table
+  above (day‑open brief, face‑aligned check‑in, "run this block", close‑the‑day,
+  substitute handoff) are the next tier.
