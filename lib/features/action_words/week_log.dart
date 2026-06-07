@@ -119,18 +119,17 @@ class _WeekLogSheetState extends ConsumerState<_WeekLogSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Prefill from the existing log once.
-    final entries =
-        ref
-            .watch(
-              entriesForSubjectProvider(
-                (subjectId: widget.subjectId, kind: EntryKind.weekLog),
-              ),
-            )
-            .value ??
-        const <Entry>[];
-    if (!_loaded) {
-      final existing = weekLogFor(entries, widget.week);
+    // Prefill from the existing log once it has actually LOADED. Gate on
+    // hasValue (not the `?? []` fallback) so a cold/loading stream frame
+    // doesn't lock an empty baseline + skip the real log — which would open
+    // an existing week's sheet blank and treat the empty form as clean.
+    final logsAsync = ref.watch(
+      entriesForSubjectProvider(
+        (subjectId: widget.subjectId, kind: EntryKind.weekLog),
+      ),
+    );
+    if (!_loaded && logsAsync.hasValue) {
+      final existing = weekLogFor(logsAsync.requireValue, widget.week);
       if (existing != null) {
         _milestone.text = existing.milestone;
         _spell.text = existing.spell;
