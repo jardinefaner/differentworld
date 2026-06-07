@@ -11,6 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// One child + their day, for the closing reveal cycle.
+typedef RevealItem = ({Subject subject, ActionWordsDay day});
+
 /// The closing reveal — the day's world appears with a glow, e.g.
 /// "Maya was 🐬 Dolphin today." The only loud-ish moment in a calm app.
 ///
@@ -29,6 +32,26 @@ class RevealOverlay {
         barrierColor: Colors.black,
         transitionDuration: const Duration(milliseconds: 400),
         pageBuilder: (_, _, _) => _RevealPage(subject: subject, day: day),
+        transitionsBuilder: (_, anim, _, child) =>
+            FadeTransition(opacity: anim, child: child),
+      ),
+    );
+  }
+
+  /// The end-of-day ceremony: reveal every child in sequence, tap to advance.
+  /// Fresh-world NAMING is deferred here (it blocks the flow) — a brand-new
+  /// world shows by its badge and the cycle keeps moving; naming happens later
+  /// on the per-child reveal or the character sheet. No-op on an empty list.
+  static Future<void> showAll(
+    BuildContext context, {
+    required List<RevealItem> items,
+  }) {
+    if (items.isEmpty) return Future<void>.value();
+    return Navigator.of(context, rootNavigator: true).push<void>(
+      PageRouteBuilder<void>(
+        barrierColor: Colors.black,
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (_, _, _) => _RevealCyclePage(items: items),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
@@ -79,7 +102,9 @@ class _RevealPageState extends ConsumerState<_RevealPage>
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
     setState(() => _named = true);
-    await ref.read(actionWordsActionsProvider).setWorldName(
+    await ref
+        .read(actionWordsActionsProvider)
+        .setWorldName(
           subjectId: widget.subject.id,
           groupId: widget.subject.groupId,
           date: todayKey(),
@@ -216,6 +241,193 @@ class _RevealPageState extends ConsumerState<_RevealPage>
                         fontSize: 12,
                       ),
                     ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The shared reveal visual — "{name} was [glowing badge] today", optionally
+/// the sensory BecomeStrip, and the verb LENS ("their way today"). Used by the
+/// cycle page; the single page keeps its own inline layout (+ naming field).
+class _RevealVisual extends StatelessWidget {
+  const _RevealVisual({
+    required this.firstName,
+    required this.match,
+    required this.freshName,
+    required this.verbPicks,
+    required this.glow,
+    required this.gold,
+    required this.showBecome,
+    super.key,
+  });
+
+  final String firstName;
+  final WorldMatch? match;
+  final String? freshName;
+  final List<String> verbPicks;
+  final Animation<double> glow;
+  final Color gold;
+  final bool showBecome;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$firstName was',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: gold, fontSize: 18, letterSpacing: 1),
+        ),
+        const SizedBox(height: 16),
+        if (match != null)
+          _GlowingBadge(
+            glow: glow,
+            gold: gold,
+            child: WorldBadge(
+              match: match!,
+              freshName: freshName,
+              emojiSize: 104,
+            ),
+          ),
+        const SizedBox(height: 8),
+        Text('today', style: TextStyle(color: gold.withValues(alpha: 0.8))),
+        if (match != null && showBecome) ...[
+          const SizedBox(height: 24),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: BecomeStrip(match: match!, accent: gold),
+          ),
+        ],
+        if (verbPicks.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(
+            '$firstName’s way today',
+            style: TextStyle(
+              color: gold.withValues(alpha: 0.8),
+              fontSize: 13,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: VerbLensStrip(verbIds: verbPicks, accent: gold),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// The closing CEREMONY — reveal each child in turn, tap to advance. One glow
+/// controller for the whole run; the index walks the list; the last tap pops.
+/// Naming is deferred (no fresh-world field) so the flow never stalls.
+class _RevealCyclePage extends ConsumerStatefulWidget {
+  const _RevealCyclePage({required this.items});
+
+  final List<RevealItem> items;
+
+  @override
+  ConsumerState<_RevealCyclePage> createState() => _RevealCyclePageState();
+}
+
+class _RevealCyclePageState extends ConsumerState<_RevealCyclePage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glow;
+  int _i = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _glow = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    unawaited(_glow.repeat(reverse: true));
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glow.dispose();
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    super.dispose();
+  }
+
+  void _advance() {
+    if (_i + 1 >= widget.items.length) {
+      unawaited(Navigator.of(context).maybePop());
+    } else {
+      setState(() => _i++);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final book = ref.watch(classWorldBookProvider);
+    final item = widget.items[_i];
+    final day = item.day;
+    final match = day.hasPicks
+        ? resolveWorld(day.verbPicks.toSet(), book)
+        : null;
+    final isFresh = match != null && match.kind == WorldMatchKind.fresh;
+    const gold = Color(0xFFE6C079);
+    final n = widget.items.length;
+    final isLast = _i + 1 >= n;
+
+    return Theme(
+      data: ThemeData.dark(useMaterial3: true),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          onTap: _advance,
+          behavior: HitTestBehavior.opaque,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${_i + 1} / $n',
+                      style: TextStyle(
+                        color: gold.withValues(alpha: 0.7),
+                        fontSize: 13,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  // Keyed by index so the glow/badge cross-fade reads as a new
+                  // child each advance, not a mutation of the last one.
+                  _RevealVisual(
+                    key: ValueKey('reveal-${item.subject.id}'),
+                    firstName: item.subject.firstName,
+                    match: match,
+                    // Naming deferred — show whatever auto-name exists, if any.
+                    freshName: day.worldName,
+                    verbPicks: day.verbPicks,
+                    glow: _glow,
+                    gold: gold,
+                    showBecome: !isFresh,
+                  ),
+                  const Spacer(),
+                  Text(
+                    isLast ? 'tap to finish' : 'tap for the next',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),

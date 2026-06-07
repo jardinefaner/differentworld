@@ -9,6 +9,7 @@ import 'package:differentworld/features/action_words/summer_book_pdf.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/week_log.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/story/moment.dart';
 import 'package:differentworld/features/story/widgets/moment_tile.dart';
@@ -53,6 +54,11 @@ class BookScreen extends ConsumerWidget {
               entries: entriesAsync.value ?? const <Entry>[],
               start: start,
               worlds: worlds,
+              // Cross-ref attendance so a gap week reads as "away" (absent) or
+              // "a quiet week" (present, unlogged) — never a silent hole.
+              attendance:
+                  ref.read(attendanceForSubjectProvider(subjectId)).value ??
+                  const <AttendanceRecord>[],
             );
             // The PDF is the family keepsake — it leaves the building. Scrub
             // any OTHER child's name out of the free-text fields first (the
@@ -76,7 +82,8 @@ class BookScreen extends ConsumerWidget {
           ? EmptyState(
               icon: Icons.auto_stories_outlined,
               title: '$firstName’s book starts soon',
-              message: 'Once the 10-week journey is set up, $firstName’s book '
+              message:
+                  'Once the 10-week journey is set up, $firstName’s book '
                   'fills in week by week — the worlds they visit and the '
                   'moments along the way.',
             )
@@ -136,7 +143,8 @@ class _Book extends StatelessWidget {
       return EmptyState(
         icon: Icons.auto_stories_outlined,
         title: '$firstName’s book is blank — for now',
-        message: 'As the room captures moments — picks, photos, observations '
+        message:
+            'As the room captures moments — picks, photos, observations '
             '— they’ll land here, sorted into the week’s world.',
       );
     }
@@ -227,8 +235,9 @@ class _WeekSection extends StatelessWidget {
                   children: [
                     Text(
                       'Week $week${world == null ? '' : ' · ${world!.name}'}',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     if (world != null)
                       Text(
@@ -324,8 +333,9 @@ class _LogRow extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             '$label: ',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
         ],
@@ -363,8 +373,9 @@ class _LastPage extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'So far in $firstName’s book',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
