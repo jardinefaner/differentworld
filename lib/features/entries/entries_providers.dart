@@ -54,6 +54,12 @@ class EntryKind {
   /// `details` = {sealed_until: ISO date, world_id?}. Hidden until the
   /// seal date passes.
   static const String timeCapsule = 'time_capsule';
+
+  /// A Mood Weather check (docs/WORLD.md — "fingers up, 1 is a black hole,
+  /// 5 is a supernova"). Per subject, often several a day. `details` =
+  /// {value: 1-5, part?: morning|midday|afternoon}. Feeds the character
+  /// sheet's WEATHER + WEATHER LOG.
+  static const String mood = 'mood';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -288,6 +294,20 @@ class EntryActions {
         groupId: groupId,
         body: text.trim(),
         detailsJson: jsonEncode({'world_id': worldId, 'note_type': noteType}),
+      );
+
+  /// Record a Mood Weather check for a child (1–5).
+  Future<String> recordMood({
+    required String subjectId,
+    required int value,
+    String? part,
+    String? groupId,
+  }) =>
+      _create(
+        kind: EntryKind.mood,
+        subjectId: subjectId,
+        groupId: groupId,
+        detailsJson: jsonEncode({'value': value.clamp(1, 5), 'part': ?part}),
       );
 
   /// Bury a time capsule — sealed (hidden) until [sealedUntil].
