@@ -183,13 +183,18 @@ class EntryActions {
     required String incidentType,
     String? groupId,
     String? actionTaken,
+    String? familyNote,
     bool parentNotified = false,
     String? id,
   }) async {
+    // Shape kept in sync with `incidentDetailsJson` in incidents_providers
+    // (a leaf encoder there can't be imported here — that'd cycle).
     final details = <String, dynamic>{
       'incident_type': incidentType,
       if (actionTaken != null && actionTaken.trim().isNotEmpty)
         'action_taken': actionTaken.trim(),
+      if (familyNote != null && familyNote.trim().isNotEmpty)
+        'family_note': familyNote.trim(),
       'parent_notified': parentNotified,
     };
     return _create(

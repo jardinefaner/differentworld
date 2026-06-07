@@ -28,6 +28,7 @@ class IncidentFormScreen extends ConsumerStatefulWidget {
 class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
   late final TextEditingController _narrative;
   late final TextEditingController _action;
+  late final TextEditingController _familyNote;
   String? _subjectId;
   IncidentType _type = IncidentType.injury;
   bool _parentNotified = false;
@@ -39,6 +40,7 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
     super.initState();
     _narrative = TextEditingController();
     _action = TextEditingController();
+    _familyNote = TextEditingController();
     _subjectId = widget.initialSubjectId;
   }
 
@@ -46,12 +48,14 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
   void dispose() {
     _narrative.dispose();
     _action.dispose();
+    _familyNote.dispose();
     super.dispose();
   }
 
   bool _isDirty() =>
       _narrative.text.trim().isNotEmpty ||
       _action.text.trim().isNotEmpty ||
+      _familyNote.text.trim().isNotEmpty ||
       _subjectId != null ||
       _parentNotified;
 
@@ -107,6 +111,7 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
             text: narrative,
             incidentType: _type.id,
             actionTaken: _action.text.trim(),
+            familyNote: _familyNote.text.trim(),
             parentNotified: _parentNotified,
           );
       if (!mounted) return;
@@ -236,6 +241,25 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
               decoration: const InputDecoration(
                 labelText: 'Action taken (optional)',
                 hintText: 'Ice applied, redirected, parent called…',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Family-facing note — the ONLY free text a guardian sees
+            // (the narrative above stays staff-only, since it can name
+            // other children). Leave blank to keep this incident internal.
+            TextField(
+              controller: _familyNote,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Note for the family (optional)',
+                hintText: 'What the family will see — about their child only.',
+                helperText: 'Only this note + the type reach the family lens.',
+                helperMaxLines: 2,
+                prefixIcon: Icon(Icons.family_restroom_outlined),
                 border: OutlineInputBorder(),
               ),
             ),

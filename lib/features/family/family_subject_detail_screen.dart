@@ -4,6 +4,8 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/entries/entries_providers.dart' show EntryKind;
 import 'package:differentworld/features/family/family_providers.dart';
+import 'package:differentworld/features/incidents/incidents_providers.dart' show Incident;
+import 'package:differentworld/features/incidents/widgets/family_incident_card.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
@@ -124,6 +126,9 @@ class _FamilyDetailBody extends ConsumerWidget {
             // -- Messages (next-most-important) --------------------------
             _SectionLabel(label: 'Messages', theme: theme),
             _MessagesCard(subjectId: subject.id),
+
+            // -- Incidents (surfaced safety record; hides when none) -----
+            _FamilyIncidents(subjectId: subject.id),
 
             // -- Recent observations (history) ---------------------------
             const SizedBox(height: 16),
@@ -302,12 +307,68 @@ class _RecentObservations extends ConsumerWidget {
   }
 }
 
+/// Family-facing incidents this child's staff have surfaced (notified or
+/// noted). Renders nothing at all when there are none, so the section
+/// only appears when there's something to show. Leak-proof: each card is
+/// a [FamilyIncidentCard], which never reads the internal narrative.
+class _FamilyIncidents extends ConsumerWidget {
+  const _FamilyIncidents({required this.subjectId});
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    // W2: honor the program kill-switch — if the director turned incident
+    // reports off, the family section disappears too.
+    if (!ref.watch(viewerProvider).featureIncidentReports) {
+      return const SizedBox.shrink();
+    }
+    final async = ref.watch(familyIncidentsForSubjectProvider(subjectId));
+    // W4: a fetch failure must not look identical to "no incidents" — a
+    // guardian could miss real safety info. Surface a quiet note instead
+    // of silently hiding.
+    if (async.hasError) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          _SectionLabel(label: 'Incidents', theme: theme),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(
+              'Could not load incident history. Pull to refresh.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    final incidents = async.value ?? const <Incident>[];
+    if (incidents.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        _SectionLabel(label: 'Incidents', theme: theme),
+        for (final i in incidents) FamilyIncidentCard(incident: i),
+      ],
+    );
+  }
+}
+
 class _ObservationCard extends StatelessWidget {
   const _ObservationCard({required this.entry});
   final Entry entry;
 
   @override
   Widget build(BuildContext context) {
+    // Defense-in-depth (Red Team B2): this card renders `entry.body`
+    // raw, which is family-safe ONLY for observations. If a non-
+    // observation kind (e.g. an incident, whose narrative can name other
+    // children) ever reaches here, render nothing rather than leak it.
+    if (entry.kind != EntryKind.observation) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final body = entry.body;
     final photoUrl = entry.photoUrl;
