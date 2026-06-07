@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/features/action_words/conductor.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/world_cast_game.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
@@ -85,6 +86,20 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     setState(() => _showLauncher = false);
   }
 
+  /// Conduct any text — paste lyrics / a sentence, cast it, then tap a word
+  /// to spotlight it on the screen (the Conductor).
+  Future<void> _castConductor() async {
+    final text = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF14151D),
+      builder: (_) => const _ConductSheet(),
+    );
+    if (text == null || text.trim().isEmpty) return;
+    _session?.castStage(ConductorGame.gameId, conductorSeed(text));
+    if (mounted) setState(() => _showLauncher = false);
+  }
+
   void _send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
     final id = CastSession.gameIdOf(_meta);
     final def = id == null ? null : gameById(id);
@@ -120,6 +135,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
               onPick: _castGame,
               presentWorld: ref.watch(currentWorldProvider),
               onPresentWorld: _castWorld,
+              onConduct: _castConductor,
             ),
           )
         else ...[
@@ -146,6 +162,7 @@ class _Launcher extends StatelessWidget {
     required this.onPick,
     this.presentWorld,
     this.onPresentWorld,
+    this.onConduct,
   });
 
   final void Function(GameDefinition<dynamic>) onPick;
@@ -155,6 +172,9 @@ class _Launcher extends StatelessWidget {
   /// bank game, so it can't ride the standard loop below.
   final CurriculumWorld? presentWorld;
   final void Function(CurriculumWorld world)? onPresentWorld;
+
+  /// Open the Conduct text-entry (cast any text, then tap words to spotlight).
+  final VoidCallback? onConduct;
 
   @override
   Widget build(BuildContext context) {
@@ -168,11 +188,144 @@ class _Launcher extends StatelessWidget {
         // This week's world — first, the headline thing to cast.
         if (presentWorld case final world? when onPresentWorld != null)
           _WorldTile(world: world, onTap: () => onPresentWorld!(world)),
+        // The Conductor — cast any text and tap words to spotlight them.
+        if (onConduct != null)
+          _SimpleTile(
+            icon: Icons.ads_click,
+            title: 'Conduct',
+            subtitle: 'Cast text, tap a word',
+            color: const Color(0xFF2A6B7A),
+            onTap: onConduct!,
+          ),
         // Only content-bank games — roster/schedule-seeded ones (Now & Next,
         // Spotlight) would cast an empty stage (docs/LIVE_SESSIONS.md v1 scope).
         for (final def in liveGames.where((d) => d.seedsFromContentBank))
           _LauncherTile(def: def, onTap: () => onPick(def)),
       ],
+    );
+  }
+}
+
+/// A non-game launcher tile (the Conductor, future presentables).
+class _SimpleTile extends StatelessWidget {
+  const _SimpleTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: Colors.white, size: 28),
+              const Spacer(),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Paste / type the text to conduct.
+class _ConductSheet extends StatefulWidget {
+  const _ConductSheet();
+
+  @override
+  State<_ConductSheet> createState() => _ConductSheetState();
+}
+
+class _ConductSheetState extends State<_ConductSheet> {
+  final _text = TextEditingController();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Conduct',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Paste lyrics or type a sentence — one line per line. Tap a word '
+              'on the screen to spotlight it.',
+              style: TextStyle(color: Colors.white60, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _text,
+              autofocus: true,
+              minLines: 3,
+              maxLines: 8,
+              style: const TextStyle(color: Colors.white),
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Twinkle twinkle little star…',
+                hintStyle: TextStyle(color: Colors.white30),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pop(_text.text),
+              icon: const Icon(Icons.cast),
+              label: const Text('Cast it'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
