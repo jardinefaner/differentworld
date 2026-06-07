@@ -122,6 +122,23 @@ class EntriesDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Replace an entry's structured `details` JSON. Amends an entry after
+  /// the fact without touching its narrative — e.g. flipping an
+  /// incident's `parent_notified` once the family's actually been called
+  /// (the "log now, notify later" flow).
+  Future<void> updateDetails({
+    required String id,
+    required String detailsJson,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(entries)..where((e) => e.id.equals(id))).write(
+      EntriesCompanion(
+        details: Value(detailsJson),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   /// Replace an entry's attached photos. Pass `photoUrl: null` and the
   /// serialized `detailsJson` that has no `photos` key to clear them.
   /// Both fields are always written (Value(...)), not Value.absent(),

@@ -1,17 +1,23 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// One incident rendered as a card — type, narrative, action taken, and a
-/// family-notified badge. Shared by the incident log (`/incidents`) and
-/// the per-child incident section on Subject detail.
+/// family-notified badge (with a "Mark notified" amend for the log-now-
+/// notify-later flow). Shared by the incident log (`/incidents`) and the
+/// per-child incident section on Subject detail.
 ///
 /// [showSubjectName] leads with the child's avatar + name (the log, where
 /// identity matters). When false (a per-child section, where the child is
 /// already obvious), it leads with the type + time instead.
-class IncidentCard extends StatelessWidget {
+class IncidentCard extends ConsumerWidget {
   const IncidentCard({
     required this.incident,
     this.subject,
@@ -24,8 +30,9 @@ class IncidentCard extends StatelessWidget {
   final bool showSubjectName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final canAmend = ref.watch(viewerProvider).canObserve;
     final when = DateTime.tryParse(incident.recordedAt)?.toLocal();
     final whenLabel = when == null ? '' : relativeTimeAgo(when);
 
@@ -85,7 +92,31 @@ class IncidentCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 10),
-            _NotifyBadge(notified: incident.parentNotified),
+            Row(
+              children: [
+                _NotifyBadge(notified: incident.parentNotified),
+                const Spacer(),
+                if (!incident.parentNotified && canAmend)
+                  TextButton.icon(
+                    onPressed: () {
+                      // Optimistic local write — fire-and-forget so there's
+                      // no await gap before the confirmation.
+                      final messenger = ScaffoldMessenger.of(context);
+                      unawaited(HapticFeedback.selectionClick());
+                      unawaited(
+                        ref
+                            .read(incidentActionsProvider)
+                            .setParentNotified(incident, notified: true),
+                      );
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Marked family notified')),
+                      );
+                    },
+                    icon: const Icon(Icons.mark_email_read_outlined, size: 16),
+                    label: const Text('Mark notified'),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
