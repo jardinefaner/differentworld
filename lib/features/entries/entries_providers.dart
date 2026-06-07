@@ -60,6 +60,12 @@ class EntryKind {
   /// {value: 1-5, part?: morning|midday|afternoon}. Feeds the character
   /// sheet's WEATHER + WEATHER LOG.
   static const String mood = 'mood';
+
+  /// The teacher's end-of-week LOG for a child (docs/WORLD.md). One row per
+  /// (subject, week). `details` = {week: int, milestone?, spell?, ally?}.
+  /// The structured history the Book + character sheet read from (verbs /
+  /// world / inventory are DERIVED; these three are the human-noticed bits).
+  static const String weekLog = 'week_log';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -309,6 +315,54 @@ class EntryActions {
         groupId: groupId,
         detailsJson: jsonEncode({'value': value.clamp(1, 5), 'part': ?part}),
       );
+
+  /// Upsert the end-of-week LOG for (subject, week) — merges the provided
+  /// fields onto any existing row, so saving just the milestone keeps the
+  /// spell + ally. One row per (subject, week).
+  Future<void> setWeekLog({
+    required String subjectId,
+    required int week,
+    String? groupId,
+    String? milestone,
+    String? spell,
+    String? ally,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final rows = await db.entriesDao
+        .watchForSubject(subjectId: subjectId, kind: EntryKind.weekLog)
+        .first;
+    Entry? existing;
+    var details = <String, dynamic>{'week': week};
+    for (final e in rows) {
+      Map<String, dynamic> d;
+      try {
+        final decoded = jsonDecode(e.details);
+        d = decoded is Map<String, dynamic> ? decoded : const {};
+      } on FormatException {
+        d = const {};
+      }
+      if ((d['week'] as num?)?.toInt() == week) {
+        existing = e;
+        details = Map<String, dynamic>.of(d);
+        break;
+      }
+    }
+    details['week'] = week;
+    if (milestone != null) details['milestone'] = milestone.trim();
+    if (spell != null) details['spell'] = spell.trim();
+    if (ally != null) details['ally'] = ally.trim();
+    if (existing != null) {
+      await db.entriesDao
+          .updateDetails(id: existing.id, detailsJson: jsonEncode(details));
+    } else {
+      await _create(
+        kind: EntryKind.weekLog,
+        subjectId: subjectId,
+        groupId: groupId,
+        detailsJson: jsonEncode(details),
+      );
+    }
+  }
 
   /// Bury a time capsule — sealed (hidden) until [sealedUntil].
   Future<String> createTimeCapsule({
