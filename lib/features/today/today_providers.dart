@@ -81,3 +81,54 @@ String greetingForTime(DateTime now) {
   if (h < 17) return 'Good afternoon';
   return 'Good evening';
 }
+
+/// The afterschool day's coarse phase, derived from the wall clock.
+///
+/// The default windows target an ages 4–12 **afterschool** program (the
+/// primary product context): a quiet open, an arrival rush, program
+/// blocks, a long staggered pickup, a closeout. These are *defaults*;
+/// docs/WORKFLOWS.md gap #1 calls for making them program-configurable
+/// later. v1 leads the Today screen with the right surface; it does NOT
+/// add a data layer.
+enum DayPhase {
+  /// Before the rush — getting ready / planning the day.
+  prep,
+
+  /// Kids checking in as they arrive.
+  arrival,
+
+  /// Program blocks running.
+  program,
+
+  /// Dismissal — staggered pickup.
+  pickup,
+
+  /// After hours — the program day is over.
+  closed;
+
+  /// The coarse phase for [now], using afterschool default windows.
+  ///
+  /// Windows (local time): prep `< 2:30p` · arrival `2:30–3:45p` ·
+  /// program `3:45–4:45p` · pickup `4:45–6:30p` · closed `≥ 6:30p`.
+  static DayPhase fromClock(DateTime now) {
+    final minutes = now.hour * 60 + now.minute;
+    if (minutes < 14 * 60 + 30) return DayPhase.prep; // < 2:30p
+    if (minutes < 15 * 60 + 45) return DayPhase.arrival; // 2:30–3:45p
+    if (minutes < 16 * 60 + 45) return DayPhase.program; // 3:45–4:45p
+    if (minutes < 18 * 60 + 30) return DayPhase.pickup; // 4:45–6:30p
+    return DayPhase.closed; // ≥ 6:30p
+  }
+}
+
+/// Live day phase — re-emits when the wall clock crosses a phase
+/// boundary so Today can lead with the right "Right now" card without a
+/// manual refresh. Emits immediately, then re-checks every minute;
+/// `.distinct()` means the card only rebuilds when the phase actually
+/// changes (not once a minute).
+final dayPhaseProvider = StreamProvider<DayPhase>((ref) async* {
+  yield DayPhase.fromClock(DateTime.now());
+  yield* Stream.periodic(
+    const Duration(minutes: 1),
+    (_) => DayPhase.fromClock(DateTime.now()),
+  ).distinct();
+});
