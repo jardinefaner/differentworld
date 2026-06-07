@@ -75,7 +75,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - `action_words_screen.dart` — the pick roster + the per-kid pick sheet (12-verb grid → live world preview → save).
 - `widgets/verb_grid.dart` (the selectable 12-grid, max-3), `widgets/world_badge.dart` (the reveal badge — emoji/name/title/verbs, handles the fresh case).
 - `reveal_overlay.dart` — the closing reveal: a fullscreen dark "moment" (root-navigator route, breathing gold glow) "Maya was 🐬 Dolphin today", with the fresh-world naming flow. Reachable from each roster row's ✨ button.
-**Status**: building — wave 1 (engine + data) + wave 2 (verb pick + teacher world preview) + wave 3 (the glowing reveal) shipped. Next (the brief's V1 order): activity matcher, today dashboard, spell timers, parent message generator, collection tracking, activity library.
+- `collection_screen.dart` — `/action-words/:subjectId`: the worlds grid (collected = bright + ×count, uncollected = grey silhouette), most-practiced verb bars, and the emerging "Becoming The Owl Who Listens" title. Reached by long-pressing a roster row (+ deep-linkable).
+**Status**: building — the core 4-step loop is shipped: wave 1 (engine + data), wave 2 (verb pick + world preview), wave 3 (glowing reveal), wave 4 (collection). Next (the brief's V1 order): activity matcher + library (needs verb-tagging the existing activities), today dashboard (word-of-day + kid cards), spell timers, parent message generator.
 **Depends on**: Entries, Subjects, Viewer.
 **Consumed by**: (future) Today (word-of-day + kid cards), Exports/Messages (parent message).
 **Last verified**: 2026-06-06
