@@ -170,6 +170,23 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       onSelect: (ctx, _) => ctx.push('/this-week'),
     ),
     OmniboxEntry(
+      id: 'page.thinking',
+      label: 'Big Thinking',
+      category: OmniboxCategory.page,
+      icon: Icons.psychology_outlined,
+      keywords: const [
+        'thinking',
+        'big thinking',
+        'games',
+        'concept',
+        'cause and effect',
+        'empathy',
+        'perspective',
+        'play name bridge question',
+      ],
+      onSelect: (ctx, _) => ctx.push('/thinking'),
+    ),
+    OmniboxEntry(
       id: 'page.wall',
       label: 'The Wall',
       category: OmniboxCategory.page,

@@ -125,6 +125,8 @@ flutter:
     # The 10-week "If You Built a World" curriculum (bundled JSON so the
     # worlds load offline). Source of truth: docs/curriculum/.
     - assets/curriculum/ten_worlds.json
+    # Big Thinking — play → name → bridge → question games.
+    - assets/curriculum/thinking_games.json
 
   # Variable display fonts for the Speak feature's editorial karaoke
   # (lib/features/speak/). Bundled (NOT runtime-fetched via google_fonts)
