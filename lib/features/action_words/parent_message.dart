@@ -1,8 +1,13 @@
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/worlds.dart';
 
 /// Builds the copy-pasteable parent message from a child's day (the
 /// brief's Send screen). Pure + testable — no Riverpod, no context.
+///
+/// [world] is the RESOLVED match (the caller runs `resolveWorld` so the
+/// message honors a world the class invented). Pass `day.world` for the
+/// catalog-only resolution.
 ///
 /// Shape (lines omitted when their data is absent):
 ///   {Name} was 🐬 Dolphin today.
@@ -13,13 +18,14 @@ import 'package:differentworld/features/action_words/verbs.dart';
 String buildParentMessage({
   required String childName,
   required ActionWordsDay day,
+  required WorldMatch? world,
 }) {
   final lines = <String>[];
-  final match = day.world;
-  final world = match?.world;
+  final match = world;
+  final w = match?.world;
 
-  if (world != null) {
-    lines.add('$childName was ${world.emoji} ${world.name} today.');
+  if (w != null) {
+    lines.add('$childName was ${w.emoji} ${w.name} today.');
   } else if (match != null) {
     // A fresh world the class named (or hasn't yet).
     final named = day.worldName;
@@ -43,7 +49,7 @@ String buildParentMessage({
     lines.add('Note: ${day.note}');
   }
 
-  final question = world?.dinnerQuestion ?? _freshDinnerQuestion(verbs);
+  final question = w?.dinnerQuestion ?? _freshDinnerQuestion(verbs);
   if (question != null) {
     lines.add('Ask at dinner: $question');
   }

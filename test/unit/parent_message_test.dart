@@ -22,13 +22,15 @@ ActionWordsDay _day(
 void main() {
   group('buildParentMessage', () {
     test('a full named-world day reads the brief shape', () {
+      final day = _day(
+        ['watch', 'spark', 'shine'], // Eagle
+        word: 'curious',
+        note: 'Great focus today.',
+      );
       final msg = buildParentMessage(
         childName: 'Maya',
-        day: _day(
-          ['watch', 'spark', 'shine'], // Eagle
-          word: 'curious',
-          note: 'Great focus today.',
-        ),
+        day: day,
+        world: day.world,
       );
       expect(msg, contains('Maya was 🦅 Eagle today.'));
       expect(msg, contains('They practiced watch, spark, shine.'));
@@ -38,26 +40,34 @@ void main() {
     });
 
     test('omits word-of-day and note lines when absent', () {
-      final msg =
-          buildParentMessage(childName: 'Ben', day: _day(['watch', 'spark', 'shine']));
+      final day = _day(['watch', 'spark', 'shine']);
+      final msg = buildParentMessage(
+        childName: 'Ben',
+        day: day,
+        world: day.world,
+      );
       expect(msg, isNot(contains('Word of the day')));
       expect(msg, isNot(contains('Note:')));
       expect(msg, contains('Ben was 🦅 Eagle today.'));
     });
 
     test('a fresh unnamed world still gives a dinner question', () {
+      final day = _day(['carry', 'echo', 'solve']);
       final msg = buildParentMessage(
         childName: 'Cal',
-        day: _day(['carry', 'echo', 'solve']),
+        day: day,
+        world: day.world,
       );
       expect(msg, contains('Cal discovered a brand-new world today.'));
       expect(msg, contains('Ask at dinner:'));
     });
 
     test('a fresh NAMED world uses the chosen name', () {
+      final day = _day(['carry', 'echo', 'solve'], worldName: 'Phoenix');
       final msg = buildParentMessage(
         childName: 'Dot',
-        day: _day(['carry', 'echo', 'solve'], worldName: 'Phoenix'),
+        day: day,
+        world: day.world,
       );
       expect(msg, contains('Dot was 🌟 Phoenix today.'));
     });

@@ -171,6 +171,11 @@ enum WorldMatchKind {
   /// Shares fewer than 2 verbs with any named world — a brand-new world
   /// the kid gets to name. [WorldMatch.world] is null.
   fresh,
+
+  /// A world THIS CLASS invented earlier — a once-fresh combo a kid named,
+  /// now part of the program's own lookup (continuity). The reveal shows
+  /// it by name rather than asking to name it again.
+  claimed,
 }
 
 @immutable

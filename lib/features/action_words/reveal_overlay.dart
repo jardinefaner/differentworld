@@ -87,7 +87,13 @@ class _RevealPageState extends ConsumerState<_RevealPage>
 
   @override
   Widget build(BuildContext context) {
-    final match = widget.day.world;
+    // Resolve through the class's own world book first (continuity): a
+    // combo the class already named reveals BY NAME (claimed), not as a
+    // fresh world to name again.
+    final book = ref.watch(classWorldBookProvider);
+    final match = widget.day.hasPicks
+        ? resolveWorld(widget.day.verbPicks.toSet(), book)
+        : null;
     final firstName = widget.subject.firstName;
     const gold = Color(0xFFE6C079);
     final isFresh =
