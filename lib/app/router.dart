@@ -59,6 +59,7 @@ import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
+import 'package:differentworld/features/pickup/pickup_board_screen.dart';
 import 'package:differentworld/features/poster/poster_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
@@ -179,6 +180,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                   child: MorningChecklistScreen(
                     initialFilter: state.uri.queryParameters['filter'],
                   ),
+                ),
+              ),
+              GoRoute(
+                path: 'pickup',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Pickup',
+                  child: PickupBoardScreen(),
                 ),
               ),
               GoRoute(
