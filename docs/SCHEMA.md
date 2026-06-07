@@ -415,8 +415,8 @@ of the SQL.
 - `withdrawn_at` (timestamptz, nullable)
 **RLS gist**: relaxed for staff. Guardian self-reads via direct PostgREST through `subject_guardians` join.
 **Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
-**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name).
-**Last verified**: 2026-06-06
+**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [Incidents](FEATURES.md#incidents) (log screen reads `subjectsInSpaceProvider` to resolve child identity on each card), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name).
+**Last verified**: 2026-06-06 (Incidents added as consumer — log screen reads subjects)
 
 ---
 
@@ -610,7 +610,7 @@ of the SQL.
 
 ---
 
-_Last full registry verification: 2026-06-06 (Today wave 1 — `_RightNowCard` + `DayPhase`; Pickup wave 2 — dismissal board; Incidents — new feature. `entries` Consumers updated to include Incidents + Pickup; `departure` kind added to entries key-columns.)_
+_Last full registry verification: 2026-06-06 (Today wave 1 — `_RightNowCard` + `DayPhase`; Pickup wave 2 — dismissal board; Incidents — new feature. `entries` Consumers updated to include Incidents + Pickup; `departure` kind added to entries key-columns. 2026-06-06 incremental — Incidents waves 4/5/6/7: `subjects` Consumers updated to include Incidents; `entries` Consumers already correct.)_
 _If a synced table is missing, the feature-mapper agent will add a stub
 the next time a migration touches that table. The Consumers list is
 maintained bidirectionally with FEATURES.md — don't edit it by hand._
