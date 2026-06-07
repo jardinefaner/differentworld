@@ -30,6 +30,12 @@ class EntryKind {
   /// attendance status (attendance = "did they come"; departure =
   /// "have they left").
   static const String departure = 'departure';
+
+  /// A day's Action Words (docs/ACTION_WORDS.md). One row per (subject,
+  /// date). `details` = {verb_picks:[3], done:[…], note, word_of_day,
+  /// world_name?}. The revealed world is DERIVED from verb_picks via
+  /// `matchWorld`, not stored (except a kid-named fresh world).
+  static const String actionWords = 'action_words';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
