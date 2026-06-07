@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/widgets/become_strip.dart';
 import 'package:differentworld/features/action_words/widgets/world_badge.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -142,6 +143,15 @@ class _RevealPageState extends ConsumerState<_RevealPage>
                     'today',
                     style: TextStyle(color: gold.withValues(alpha: 0.8)),
                   ),
+                  // How to BECOME it — the sensory embodiment. Shown once
+                  // it's a known/named world (the fresh case is busy naming).
+                  if (match != null && !isFresh) ...[
+                    const SizedBox(height: 24),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      child: BecomeStrip(match: match, accent: gold),
+                    ),
+                  ],
                   if (isFresh) ...[
                     const SizedBox(height: 24),
                     // Let the teacher/kid name the brand-new world.

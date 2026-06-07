@@ -93,6 +93,29 @@ The system is **generative, not just a fixed catalog**. Kids and programs
 The fixed 12 verbs + ~40 worlds are the *starter* substrate; the real
 product is what each room *builds on top* and keeps. Growth unhidden.
 
+## Culture becomes activity — sensory, every day & every week
+
+The loop doesn't stop at *discover + collect*. A world is something you
+**become** — sensory embodiment (the user's direction, 2026-06-07):
+
+- **How a world becomes an activity = the senses.** Each world carries a
+  short multi-sensory "become it" — *move* like it, *sound* like it, *feel*
+  it (`senses.dart`, `kWorldBecome`). The reveal flows discover → become:
+  "Maya was 🐬 Dolphin today → 👋 glide and leap · 👂 click and whistle." A
+  world the class *invented* gets a generic become from its three verbs (act
+  them out). This is how the culture (worlds, words) turns into doing — the
+  sensory way, right for ages 4–7.
+- **Two cadences.** *Everyday*: the daily 3‑verb pick → world → become.
+  *Every week* (really the 2‑week themed rooms — Wildlife, Travel, Water
+  World, Space): the bigger **"different world" you step into**, lived
+  through the senses. The daily world nests inside the weekly world; the
+  themed room is the weekly sensory immersion. (The weekly‑world surface —
+  this week's theme + its sensory activities, fed by the activity matcher's
+  `theme` + sense tags — is the next build.)
+
+So the full arc: **choose → become (sensory) → do → discover → collect →
+the culture grows (worlds/words/senses) → and feeds back into activities.**
+
 ## Data model — maps onto the existing engine
 
 The engine is already domain-agnostic (Space / Member / Group / Subject /
