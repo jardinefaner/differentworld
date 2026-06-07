@@ -8,6 +8,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/groups/room_skin_picker.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -194,6 +195,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   bottomGap: 8,
                 ),
               ),
+              // The room's permanent theme skin (docs/VISION.md).
+              if (group != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: RoomSkinChip(group: group),
+                ),
               // Search pill — useful when rosters cross 10 kids.
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
