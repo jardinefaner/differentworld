@@ -110,3 +110,23 @@ class SpaceCapActions {
 
 final spaceCapActionsProvider =
     Provider<SpaceCapActions>(SpaceCapActions.new);
+
+/// String caps on a Group (a room) — e.g. the room's theme skin
+/// (docs/VISION.md "two layers of skin"). Groups have no findById/
+/// updateCapabilities DAO, so this reads via watchById + writes via update_.
+class GroupCapActions {
+  GroupCapActions(this._ref);
+
+  final Ref _ref;
+
+  Future<void> setStringCap(String groupId, String key, String? value) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final g = await db.groupsDao.watchById(groupId).first;
+    if (g == null) return;
+    final caps = g.caps.setting(key, value);
+    await db.groupsDao.update_(id: groupId, capabilitiesJson: caps.toJson());
+  }
+}
+
+final groupCapActionsProvider =
+    Provider<GroupCapActions>(GroupCapActions.new);

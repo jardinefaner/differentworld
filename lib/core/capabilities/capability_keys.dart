@@ -200,6 +200,10 @@ abstract class GroupCaps {
   static const hasFieldTrips = 'has_field_trips';
   static const curriculumUnitId = 'curriculum_unit_id';
   static const bilingualLanguages = 'bilingual_languages';
+
+  /// The room's permanent theme skin — a RoomSkin id (space / underwater /
+  /// urban / safari / travel…). docs/VISION.md "two layers of skin".
+  static const roomSkin = 'room_skin';
 }
 
 /// Subject-level caps. These are CHILDCARE-FLAVOURED today — the class

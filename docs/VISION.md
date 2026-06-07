@@ -380,6 +380,27 @@ not "games" — and (2) give existing content (the schedule, the photo feed) a
 A dated log so nothing spoken is lost. Promote each into a theme above
 once it has a home.
 
+- **2026-06-07** — **The "why", said plainly.** In the user's words: *"this
+  is going to be where we invest in our kids… the subscription and the
+  scale, proximity, documentation, legacy. Because one day, if AI takes over
+  the world, at least we can still have imagination. This is human-first
+  philosophy in code — a different world. If we could control it: what are
+  our values, our dreams, our wants, and still live in harmony?"* The app is
+  not a logging tool; it's a place to **invest in a child's imagination and
+  prove it happened.** Every feature should answer: does this help a kid
+  become more themselves, and does it leave a record a family can hold? The
+  end deliverable: **the app lays out the SUMMER BOOK for each child — each
+  history, each different world** — so the proof of who they became goes home
+  with them. (Threads: the Book, the Showcase/legacy, the character sheet.)
+- **2026-06-07 (cont.)** — **Two layers of skin.** A child's experience is
+  themed twice: (1) the **ROOM skin** — a physical room's *permanent* theme
+  (Space, Underwater, Urban, Safari, Travel) that decorates the setting for
+  whoever's in that room; and (2) the **WEEKLY skin** — the curriculum world
+  the whole program is in that week (Me → Stories → … → Us). The room sets a
+  standing vibe; the week sets the content. A kid in the Safari Room during
+  Week 3 (World of Nature) lives inside both at once. (Thread: room→skin on
+  `groups`, the week schedule already drives the weekly skin.)
+
 - **2026-06-01** — **Group discussions** by topic + age-appropriateness,
   with a library to back them (→ dream #6). **People role deck** —
   professions/people with their own icons + habits (→ dream #8).
