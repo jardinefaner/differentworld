@@ -81,6 +81,7 @@ import 'package:differentworld/features/settings/roles_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/speak/speak_screen.dart';
+import 'package:differentworld/features/spells/spells_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
@@ -942,6 +943,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/breaks',
             builder: (_, _) => const BrainBreaksScreen(),
+          ),
+          // Spells — fullscreen timer commands, each a word in another
+          // language (docs/ACTION_WORDS.md). The brief's one loud moment.
+          GoRoute(
+            path: '/spells',
+            builder: (_, _) =>
+                const RouteTitle(title: 'Spells', child: SpellsScreen()),
           ),
           // The Thinking Tools library (docs/THINKING_TOOLS.md) — one shelf
           // over the runnable activities + the editorial reference cards.
