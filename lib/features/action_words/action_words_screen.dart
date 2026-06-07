@@ -6,6 +6,7 @@ import 'package:differentworld/features/action_words/action_words_providers.dart
 import 'package:differentworld/features/action_words/reveal_overlay.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
+import 'package:differentworld/features/action_words/widgets/verb_lens_strip.dart';
 import 'package:differentworld/features/action_words/widgets/world_badge.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -348,6 +349,18 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
               if (match != null) ...[
                 const SizedBox(height: 20),
                 WorldBadge(match: match, showVerbs: false, emojiSize: 56),
+                const SizedBox(height: 14),
+                // THE LENS — how this kid will do today's shared activity.
+                Text(
+                  'Their way today',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(child: VerbLensStrip(verbIds: _selected.toList())),
                 const SizedBox(height: 8),
                 Center(
                   child: TextButton.icon(

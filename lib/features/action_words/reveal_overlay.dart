@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/widgets/become_strip.dart';
+import 'package:differentworld/features/action_words/widgets/verb_lens_strip.dart';
 import 'package:differentworld/features/action_words/widgets/world_badge.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -150,6 +151,27 @@ class _RevealPageState extends ConsumerState<_RevealPage>
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 360),
                       child: BecomeStrip(match: match, accent: gold),
+                    ),
+                  ],
+                  // THE LENS — same world, but the kid's three verbs shaped
+                  // HOW they did it. The personalization made visible.
+                  if (!isFresh && widget.day.verbPicks.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Text(
+                      '$firstName’s way today',
+                      style: TextStyle(
+                        color: gold.withValues(alpha: 0.8),
+                        fontSize: 13,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      child: VerbLensStrip(
+                        verbIds: widget.day.verbPicks,
+                        accent: gold,
+                      ),
                     ),
                   ],
                   if (isFresh) ...[
