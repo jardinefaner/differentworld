@@ -882,6 +882,19 @@ descendant's lifecycle when an ancestor is watching it (e.g.
 `kidModeProvider.notifier.enter()` from a kid-surface's initState
 goes through the same microtask defer).
 
+**Guard the deferred enter on `mounted`, and keep paired OS side-effects
+inside the same microtask.** A microtask scheduled from `initState` can
+fire AFTER `dispose` if the screen pops in the same frame (fast back). For
+an immersive screen that does `enter()` on mount and `exit()` on dispose,
+an unguarded deferred `enter()` then runs post-dispose → the provider is
+left `true` (chrome hidden) while dispose already restored the OS UI —
+chrome stuck hidden. Fix: `Future.microtask(() { if (!mounted) return;
+notifier.enter(); SystemChrome.setEnabledSystemUIMode(immersiveSticky); })`
+— the `mounted` check and BOTH side-effects (provider + `SystemChrome`)
+live together so they stay in lockstep. Reference:
+`lib/features/action_words/world_present_screen.dart`. (Caught by the
+lifecycle guard on the world-cast screen, Wave C.)
+
 ### Drift ↔ PowerSync ambiguous `Column` import
 Both packages export a `Column` class. Importing
 `package:powersync/powersync.dart` unqualified inside any file with Drift

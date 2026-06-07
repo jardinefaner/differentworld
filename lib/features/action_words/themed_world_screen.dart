@@ -273,6 +273,16 @@ class _WorldSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
+                onPressed: () {
+                  final router = GoRouter.of(context);
+                  Navigator.of(context).pop();
+                  unawaited(router.push('/present-world/${world.id}'));
+                },
+                icon: const Icon(Icons.cast),
+                label: const Text('Cast to the room'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
                 onPressed: () => unawaited(printWorldWorksheets(world)),
                 icon: const Icon(Icons.print_outlined),
                 label: const Text('Print worksheets'),
