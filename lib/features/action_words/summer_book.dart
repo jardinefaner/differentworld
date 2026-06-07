@@ -10,6 +10,13 @@ import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show Color;
 
+/// Why a week's page looks the way it does. [full] = the child was here and
+/// the week has content. [quiet] = the child was present but nothing was
+/// formally logged (a calm week — NOT neglect). [away] = the child was absent
+/// that week (attendance says so). Distinguishing the last two stops a family
+/// reading a staffing gap as their kid doing nothing.
+enum SummerBookWeekKind { full, quiet, away }
+
 /// One week's page in the Summer Book — the world the room was in, the verbs
 /// the child practiced, the teacher's noticed bits, and the moments captured.
 @immutable
@@ -25,6 +32,7 @@ class SummerBookWeek {
     required this.spell,
     required this.ally,
     required this.moments,
+    this.kind = SummerBookWeekKind.full,
   });
 
   final int week;
@@ -37,6 +45,7 @@ class SummerBookWeek {
   final String spell;
   final String ally;
   final List<String> moments; // observation notes, oldest-first
+  final SummerBookWeekKind kind;
 }
 
 /// A child's whole summer, assembled — the capstone the app lays out and
@@ -61,6 +70,11 @@ class SummerBook {
   final List<SummerBookWeek> weeks;
 
   bool get isEmpty => weeks.isEmpty;
+
+  /// Worlds the child was actually present for — "away" weeks don't count as
+  /// a world visited (they explain a gap; they aren't a participation).
+  int get worldsVisited =>
+      weeks.where((w) => w.kind != SummerBookWeekKind.away).length;
 }
 
 /// Assemble a child's Summer Book from their entries + the program start +
@@ -70,6 +84,7 @@ SummerBook buildSummerBook({
   required List<Entry> entries,
   required DateTime? start,
   required List<CurriculumWorld> worlds,
+  List<AttendanceRecord> attendance = const [],
 }) {
   final collection = ActionWordsCollection.fromEntries(entries);
 
@@ -85,6 +100,22 @@ SummerBook buildSummerBook({
     if (week != null) byWeek.putIfAbsent(week, () => []).add(e);
   }
 
+  // Attendance → which curriculum weeks the child was PRESENT, and whether the
+  // program tracks attendance for them at all. A gap with attendance tracked
+  // and no present record = absent; a gap with no attendance data = unknown
+  // (we render it "quiet", never "away", so we don't imply an absence).
+  final attendedWeeks = <int>{};
+  final tracksAttendance = attendance.isNotEmpty;
+  if (start != null) {
+    for (final a in attendance) {
+      if (!_attendancePresent(a.status)) continue;
+      final local = DateTime.tryParse(a.date)?.toLocal();
+      if (local == null) continue;
+      final week = curriculumWeekFor(start, local);
+      if (week != null) attendedWeeks.add(week);
+    }
+  }
+
   CurriculumWorld? worldFor(int week) {
     for (final w in worlds) {
       if (w.week == week) return w;
@@ -92,31 +123,43 @@ SummerBook buildSummerBook({
     return null;
   }
 
-  final weekPages = <SummerBookWeek>[];
-  for (final week in byWeek.keys.toList()..sort()) {
-    final weekEntries = byWeek[week]!;
+  SummerBookWeek pageFor(int week, SummerBookWeekKind kind) {
     final world = worldFor(week);
-    final log = weekLogFor(entries, week);
-    weekPages.add(
-      SummerBookWeek(
-        week: week,
-        worldName: world?.name ?? 'Week $week',
-        emoji: world?.emoji ?? '🌍',
-        color: world?.color ?? const Color(0xFF6B5B95),
-        question: world?.question ?? '',
-        verbs: _practicedVerbs(weekEntries),
-        milestone: log?.milestone ?? '',
-        spell: log?.spell ?? '',
-        ally: log?.ally ?? '',
-        moments: [
-          for (final m in momentsFrom(
-            weekEntries.where((e) => e.kind == EntryKind.observation).toList(),
-          ).reversed)
-            (m.body?.trim().isNotEmpty ?? false) ? m.body!.trim() : m.title,
-        ],
-      ),
+    final full = kind == SummerBookWeekKind.full;
+    final weekEntries = byWeek[week] ?? const <Entry>[];
+    final log = full ? weekLogFor(entries, week) : null;
+    return SummerBookWeek(
+      week: week,
+      worldName: world?.name ?? 'Week $week',
+      emoji: world?.emoji ?? '🌍',
+      color: world?.color ?? const Color(0xFF6B5B95),
+      question: full ? (world?.question ?? '') : '',
+      verbs: full ? _practicedVerbs(weekEntries) : const [],
+      milestone: log?.milestone ?? '',
+      spell: log?.spell ?? '',
+      ally: log?.ally ?? '',
+      moments: full
+          ? [
+              for (final m in momentsFrom(
+                weekEntries
+                    .where((e) => e.kind == EntryKind.observation)
+                    .toList(),
+              ).reversed)
+                (m.body?.trim().isNotEmpty ?? false) ? m.body!.trim() : m.title,
+            ]
+          : const [],
+      kind: kind,
     );
   }
+
+  final weekPages = <SummerBookWeek>[
+    for (final c in classifySummerWeeks(
+      entryWeeks: byWeek.keys.toSet(),
+      attendedWeeks: attendedWeeks,
+      tracksAttendance: tracksAttendance,
+    ))
+      pageFor(c.week, c.kind),
+  ];
 
   return SummerBook(
     firstName: firstName,
@@ -124,6 +167,44 @@ SummerBook buildSummerBook({
     days: dayKeys.length,
     weeks: weekPages,
   );
+}
+
+/// Attendance statuses that mean the child was physically here that day.
+bool _attendancePresent(String status) =>
+    status == 'present' || status == 'late';
+
+/// Walk a CONTINUOUS range from the child's first signal week to their last so
+/// no week is silently skipped — gaps become honest "quiet" / "away" pages
+/// instead of a hole that reads as neglect. Pure + testable.
+///
+/// - a week with entries -> full
+/// - no entries but present (attendance) -> quiet (here, nothing logged)
+/// - no entries, not present, attendance IS tracked -> away (absent)
+/// - no entries, not present, NO attendance data -> quiet (don't imply away)
+List<({int week, SummerBookWeekKind kind})> classifySummerWeeks({
+  required Set<int> entryWeeks,
+  required Set<int> attendedWeeks,
+  required bool tracksAttendance,
+}) {
+  final signalWeeks = <int>{...entryWeeks, ...attendedWeeks};
+  if (signalWeeks.isEmpty) return const [];
+  final firstW = signalWeeks.reduce((a, b) => a < b ? a : b);
+  final lastW = signalWeeks.reduce((a, b) => a > b ? a : b);
+  final out = <({int week, SummerBookWeekKind kind})>[];
+  for (var week = firstW; week <= lastW; week++) {
+    final SummerBookWeekKind kind;
+    if (entryWeeks.contains(week)) {
+      kind = SummerBookWeekKind.full;
+    } else if (attendedWeeks.contains(week)) {
+      kind = SummerBookWeekKind.quiet;
+    } else if (tracksAttendance) {
+      kind = SummerBookWeekKind.away;
+    } else {
+      kind = SummerBookWeekKind.quiet;
+    }
+    out.add((week: week, kind: kind));
+  }
+  return out;
 }
 
 List<String> _practicedVerbs(List<Entry> entries) {
@@ -182,6 +263,7 @@ SummerBook anonymizeSummerBook(SummerBook book, Set<String> otherNames) {
           moments: [
             for (final m in w.moments) scrubOtherNames(m, otherNames),
           ],
+          kind: w.kind,
         ),
     ],
   );
