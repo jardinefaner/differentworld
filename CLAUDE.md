@@ -1266,6 +1266,38 @@ The actions object must be a stable singleton (a `Provider<XActions>`) so
 `lib/features/schedule/day_template_providers.dart`. (A real table with
 per-row PKs doesn't have this problem — it's specific to list-in-a-cell.)
 
+### Any family-facing / exported artifact built from staff free-text must scrub other-child names
+
+Staff free-text fields routinely NAME another child — an observation
+`body` ("Sofia and Mateo built a fort"), the weekly-log `ally`
+("worked with Sofia"), an incident narrative. That's fine **staff-side**
+(canSeeSubject-gated). But the moment that text crosses into a
+FAMILY-FACING or EXPORTED artifact for Child A — a sent-home PDF, a
+family-lens screen, a future showcase video — another child's name in it
+leaks Child B's identity into Child A's keepsake. This is a recurring
+CLASS, not a one-off: the incident form already strips it server-side
+(`app.family_incidents_for_subject`); the Summer Book PDF now scrubs it
+client-side (`anonymizeSummerBook` + `scrubOtherNames` in
+`summer_book.dart`, wired in the Book screen's export action).
+
+Rule: **before ANY staff free-text renders into a family/export surface,
+run it through a roster-name scrub** — replace any OTHER enrolled child's
+first/last name (from `subjectsInSpaceProvider`, minus the subject the
+artifact is FOR) with a generic token ("a friend"). The subject's own
+name + all curriculum/structured content stay. Reach for
+`scrubOtherNames(text, otherNames)` / `anonymizeSummerBook(...)` as the
+reference shape; don't hand-roll a one-off.
+
+Two deferred surfaces will hit this exact trap when built — the
+family-facing Book (the "swap to the family entries provider" path) and
+the showcase / growth-arc compilation — so they MUST anonymize before
+they ship. The stronger fix (reference collaborators by `subject_id`,
+resolve the display name staff-side only) removes the reliance on
+name-matching, but the export-path scrub is the guarantee that holds
+today. Acceptance bar for any such surface: a unit test that flattens
+the rendered artifact for Child A and asserts no other child's name
+appears (`test/unit/summer_book_privacy_test.dart` is the template).
+
 ---
 
 ## Mutations: write through Drift, sync through PowerSync
