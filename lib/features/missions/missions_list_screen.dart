@@ -34,6 +34,11 @@ class MissionsListScreen extends ConsumerWidget {
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       actions: [
+        IconButton(
+          tooltip: 'Today’s board',
+          icon: const Icon(Icons.dashboard_customize_outlined),
+          onPressed: () => context.push('/missions/board'),
+        ),
         if (canEdit)
           PrimaryActionButton(
             tooltip: 'New mission',

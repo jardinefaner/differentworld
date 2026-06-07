@@ -135,6 +135,22 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['morning'],
       onSelect: (ctx, _) => ctx.push('/action-words'),
     ),
+    OmniboxEntry(
+      id: 'page.mission-board',
+      label: 'Today’s board',
+      category: OmniboxCategory.page,
+      icon: Icons.dashboard_customize_outlined,
+      keywords: const [
+        'board',
+        'do board',
+        'tasks',
+        'tasks zero',
+        'jobs',
+        'missions board',
+        'big buttons',
+      ],
+      onSelect: (ctx, _) => ctx.push('/missions/board'),
+    ),
     // Incident log — gated on the program feature + a staff who can log
     // or manage (the screen NoAccess-gates the same way, so we don't
     // surface a dead destination).
