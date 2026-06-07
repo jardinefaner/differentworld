@@ -4,32 +4,46 @@ Home for the 2026-06-06 reframe in [VISION.md](VISION.md). **Not a design doc
 yet** — the shape of the dream + a checklist of what to SHAPE before we design.
 Mark `[x]` settled, `[ ]` open, `💭` an idea to chew on.
 
-## ⚠️ 2026-06-07 correction — worlds are the ROOMS, not a weekly rotation
+## ✅ 2026-06-07 CANONICAL — the 10-week curriculum ("If You Built a World")
 
-The user corrected the "new world each week" model below. The truth:
+The user delivered the finished curriculum as a working prototype — the
+authoritative source for ALL themed-world content. It **confirms** the
+original "new world each week" model below (the brief intra-day "5 rooms"
+remark was a transitional thought and is superseded by THIS). Source of
+truth: **[curriculum/ten_worlds_prototype.jsx](curriculum/ten_worlds_prototype.jsx)**.
 
-- **The worlds are the program's standing rooms.** A summer program runs a
-  fixed set of **5 rooms**, and each room IS a world. Kids move *between
-  rooms*; a world is a *place that persists*, not a week that passes. (The
-  "journey through a new world each week" framing below is superseded — keep
-  it for history, but the rooms are the unit.)
-- **The world set (umbrella "Different World"):** **World of Books · Movies ·
-  Songs · Dreams · Space · Time** — "fun things for a 10-week summer
-  program." (Code catalog: `lib/features/action_words/themed_worlds.dart`.)
-- **What's in a world ("if they were to create a different world, what's in
-  this?"):** **People · Culture · Map (pretend locations) · Tools · Dreams.**
-  This refines the People/Things/Words/Dreams/Culture list below — it ADDS a
-  **Map** (invented geography only — never a child's real location) and names
-  **Tools** (≈ things). *Words* stays its own system (Action Words). The room
-  + kids BUILD these facets for their world (the buildable canvas is a
-  follow-up; v1 ships the facet scaffold as prompts — `kWorldFacets`).
-- **Implication for the data model:** the planned `world_schedule` (week →
-  world) is the wrong axis. The right one is **room → world** (a world id on
-  the `group`, since groups = rooms). `crews` (group × world) is closer.
-  Revisit `WORLD_DESIGN.md`'s "the week's world" table before building it.
+- **One Different World, ten weeks, ten worlds — a journey.** A persistent
+  self travels week to week. The arc: **Me → Stories → Nature → Water →
+  Music → Space → Dreams → Time → Feelings → Us.** (Note: NOT the
+  Books/Movies/Songs guess in the current `themed_worlds.dart` — that catalog
+  is now WRONG and must be replaced with these ten.)
+- **Each world has TEN facets** (not the 5 currently in `kWorldFacets`):
+  **People · Culture · Map · Tools · Language · Food · Music · Rules ·
+  Problems · Dreams.** Each facet carries rich AUTHORED teacher-facing
+  content per world (see the prototype) — the current build only has the 5
+  dimension *prompts*. Map stays invented-geography-only.
+- **Each world also carries:** a week number, a color, a one-line tagline, a
+  big **question**, **3 featured verbs** (from the 12 Action Words), and a
+  list of **6–8 concrete activities**.
+- **The 12 verbs ARE the tools** (Week 10 says so explicitly): CARRY, LISTEN,
+  PLAY, SPARK, FLOW, BUILD, WATCH, WAIT, SOLVE, HELP, ECHO, SHINE — already
+  built in `verbs.dart`. The week features 3; the daily pick (any 3 of 12) is
+  the existing Action Words mechanic, now scoped per week.
+- **Recurring artifacts the curriculum assumes exist:** the **Book** (each
+  kid's growing world-journal — Week 10 is "the last page"), the **Wall**
+  (shared anonymous sticky-notes for each world's Problems/Dreams), the
+  **Shelf** (collected artifacts), the **avatar** (Week 1 body-map / "draw
+  yourself", Week 10 evolution), **time capsules** (Week 8 → opened Week 10),
+  and the Week-10 **Show** (family gallery). These map onto the deferred
+  character-sheet / showcase / portfolio work — see the gap analysis.
+- **Data-model implication:** the week→world axis IS correct after all (the
+  earlier "room→world" note was based on the transitional remark). A 10-week
+  **world schedule** (which week is live + per-room assignment) is the right
+  model — closer to `WORLD_DESIGN.md`'s `world_schedule` than that doc's
+  current "superseded" banner suggests.
 
-Everything below is the prior (still-useful) thinking; read it through the
-lens of the correction above.
+Everything below is the prior (still-useful) thinking, now CONFIRMED by the
+canonical curriculum above.
 
 ## The model: a persistent self, traveling through a new world each week
 

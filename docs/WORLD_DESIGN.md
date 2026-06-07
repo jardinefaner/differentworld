@@ -70,11 +70,12 @@ world reset.
   everywhere for free.
 
 ### `world_schedule` (NEW, per space) — which world, which week
-> ⚠️ **2026-06-07 — superseded axis.** Per the correction in
-> [WORLD.md](WORLD.md), worlds are the program's **standing rooms**, not a
-> weekly rotation. The right model is **room → world** (a `world_id` on the
-> `group`), not week → world. Don't build `world_schedule` as specced;
-> design the room→world assignment instead. Table kept here for history.
+> ✅ **2026-06-07 — CONFIRMED axis (week → world).** The canonical 10-week
+> curriculum ([WORLD.md](WORLD.md) + `curriculum/ten_worlds_prototype.jsx`)
+> confirms this is a weekly **journey** (Me → Stories → … → Us). This table
+> is the right shape; add an optional per-room override on top if rooms run
+> different weeks. The worlds catalog grows from 6 (current, wrong) to the
+> canonical **10**, each with **10 facets** + featured verbs + activities.
 
 Drives "this week's world." Worlds themselves are a **code catalog** (below),
 so this table just points at one by id per week.
