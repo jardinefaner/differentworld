@@ -1,0 +1,90 @@
+{
+  "title": "Big Thinking",
+  "subtitle": "Play it. Name it. Use it everywhere. Then ask the question with no answer.",
+  "games": [
+    {
+      "id": "dominoes",
+      "emoji": "➡️",
+      "concept": "CAUSE AND EFFECT",
+      "meaning": "One thing makes the next thing happen.",
+      "play": "Set up dominoes. Knock the first one — they all fall. Do it five times. Let every kid build their own chain and knock it down. Pure play, pure joy.",
+      "name": "That's CAUSE AND EFFECT. The first domino CAUSED the second to fall, the second CAUSED the third. One thing made the next thing happen.",
+      "bridge": [
+        "Where else? The domino chain of your morning: the alarm went off (1), you woke up (2), you ate breakfast (3), you got in the car (4), you're here (5). What if domino 1 didn't fall?",
+        "Deeper: what if you're mean to someone? They feel bad (2), so they're mean to someone else (3), who goes home sad (4), whose mom asks what's wrong (5). One domino you pushed fell into a house you've never been to.",
+        "Deepest: what if you're KIND? Same chain, different direction. You smiled at someone (1), they felt good (2), they helped someone (3). The kindness chain goes into houses you'll never visit — and YOU were domino 1."
+      ],
+      "question": "What if domino 1 is kindness?"
+    },
+    {
+      "id": "telephone",
+      "emoji": "📞",
+      "concept": "DRIFT",
+      "meaning": "Things change a little every time they travel.",
+      "play": "Whisper a sentence around the circle. It comes back wrong. Laugh. Do it three times. Pure game.",
+      "name": "The sentence CHANGED — every person heard it a little different and said it a little different. Nobody was wrong. It just changed. That's DRIFT.",
+      "bridge": [
+        "Where else? This is how words change over time. 'Butterfly' sounded different 1000 years ago. Every mouth changed it a tiny bit — the word DRIFTED.",
+        "Deeper: this is how rumors work. Someone says one thing; by the time it reaches you, it's different. Is the last person lying? No — they're just the last mouth. It drifted.",
+        "Deepest: this is how YOUR stories change. You remember something from when you were 3, but you've told it so many times the telling changed the memory. You're playing telephone with your own past."
+      ],
+      "question": "Is the memory true if it drifted?"
+    },
+    {
+      "id": "mirror",
+      "emoji": "🪞",
+      "concept": "EMPATHY",
+      "meaning": "Seeing through someone else so completely your body moves like theirs.",
+      "play": "Face a partner. One moves slowly, the other copies EXACTLY. Switch. Do it for five minutes. Giggles guaranteed.",
+      "name": "To copy someone perfectly you had to WATCH them so closely you almost BECAME them. That's EMPATHY — not feeling sorry, but seeing through their eyes so completely your body moves like theirs.",
+      "bridge": [
+        "Where else? When someone is sad, you don't need to FIX it — you need to MIRROR it. 'I see you're sad.' That's the mirror game with feelings instead of bodies.",
+        "Deeper: when you read a book and feel what the character feels, that's the mirror game. Your heart speeds up when they're scared. Empathy across time and paper.",
+        "Deepest: when you ECHO what someone said in your own way, that's the mirror game with ideas. You held their thought in your body and gave it back shaped like you. That's not copying — that's understanding."
+      ],
+      "question": "Whose eyes did you see through today?"
+    },
+    {
+      "id": "blindfold",
+      "emoji": "🤝",
+      "concept": "TRUST",
+      "meaning": "I can't do this alone, and I believe you won't let me fall.",
+      "play": "Pairs. One wears a blindfold, the other guides them with voice only across the room. Switch. Scary, fun, real.",
+      "name": "You couldn't see — but you could HEAR, and you TRUSTED. Trust means: I can't do this alone, and I believe you won't let me fall. That's INTERDEPENDENCE. I need you, you need me.",
+      "bridge": [
+        "Where else? Every time you ride in a car you're blindfolded — you don't know the road, you trust the driver. Every time you eat food someone else made, you trust they made it safe.",
+        "Deeper: someone built this building. Someone made these shoes. Someone grew this apple. You're trusting people you'll never meet. The whole world is a blindfold walk, and we're all guiding each other.",
+        "Deepest: what if the guide is wrong — not mean, just wrong? They say 'step left' and there's a wall. That's not betrayal, that's being human. Trust doesn't mean perfect. Trust means: I know you're trying."
+      ],
+      "question": "Who are you trusting right now that you can't see?"
+    },
+    {
+      "id": "sorting",
+      "emoji": "🗂️",
+      "concept": "PERSPECTIVE",
+      "meaning": "The objects don't change — your way of seeing them does.",
+      "play": "Dump 30 random objects on a table. 'Sort them into groups. Any groups. You decide.' One sorts by color, one by size, one by 'things I like.' All valid.",
+      "name": "You all sorted the SAME objects into DIFFERENT groups. That's PERSPECTIVE. The objects didn't change — YOUR way of seeing them changed. There's no right way to sort. There's YOUR way.",
+      "bridge": [
+        "Where else? A library sorts books by topic — but you could sort by color, by size, by how they make you feel. The librarian's sort is useful, but it's not the only one.",
+        "Deeper: people sort PEOPLE — by age, skin, language, neighborhood. But people aren't objects; they belong to many groups at once. You are a kid AND an artist AND a sibling AND someone afraid of the dark. Which group? ALL of them.",
+        "Deepest: when someone says 'those people,' they sorted humans into one group and forgot every person is in a hundred. The sorting game taught you: there's always another way to sort. Remember that when someone sorts people."
+      ],
+      "question": "How many groups are YOU in at once?"
+    },
+    {
+      "id": "balance",
+      "emoji": "⚖️",
+      "concept": "BALANCE",
+      "meaning": "Not being still — constantly moving in tiny ways to LOOK still.",
+      "play": "Stand on one foot. How long? Now eyes closed — harder. Now on tiptoe. Now a book on your head. How many things can you balance at once?",
+      "name": "Your body is constantly making tiny adjustments to keep you from falling — automatic, so you don't feel it. That's BALANCE. It's not being still; it's constantly moving in tiny ways to LOOK still.",
+      "bridge": [
+        "Where else? Feelings work the same way. You're not happy or sad — you're constantly adjusting between them. Right now maybe 60% fine, 30% hungry, 10% wondering if it'll rain. It's never just one thing.",
+        "Deeper: friendships need balance too. If one person always talks and the other always listens, it falls over. Balance isn't 50/50 every day — it's 50/50 over TIME.",
+        "Deepest: the whole earth is a balancing act. Trees make oxygen, you breathe it, you breathe out what they breathe in. You're in a balancing game with every tree on the planet — you just can't feel the tiny adjustments."
+      ],
+      "question": "What are you quietly balancing right now?"
+    }
+  ]
+}

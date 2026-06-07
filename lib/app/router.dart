@@ -11,6 +11,7 @@ import 'package:differentworld/features/action_words/book_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
+import 'package:differentworld/features/action_words/thinking_screen.dart';
 import 'package:differentworld/features/action_words/this_week_screen.dart';
 import 'package:differentworld/features/action_words/time_capsule_screen.dart';
 import 'package:differentworld/features/action_words/wall_screen.dart';
@@ -1032,6 +1033,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => RouteTitle(
               title: 'Book',
               child: BookScreen(subjectId: state.pathParameters['subjectId']!),
+            ),
+          ),
+          // Big Thinking — play → name → bridge → question games.
+          GoRoute(
+            path: '/thinking',
+            builder: (_, _) => const RouteTitle(
+              title: 'Big Thinking',
+              child: ThinkingScreen(),
             ),
           ),
           // The room's Wall for this week's world (anonymous notes).

@@ -5,6 +5,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/skills.dart';
+import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
@@ -547,6 +548,63 @@ class _TodaySkillCard extends StatelessWidget {
   }
 }
 
+/// "Today's thinking" — a rotating Big Thinking game (play → name → bridge
+/// → question). Tap → the deck.
+class _TodayThinkingCard extends ConsumerWidget {
+  const _TodayThinkingCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final games = ref.watch(thinkingGamesProvider).value ?? const [];
+    final game = thinkingGameForDay(games, DateTime.now());
+    if (game == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push('/thinking'));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Text(game.emoji, style: const TextStyle(fontSize: 30)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Today’s thinking · ${game.concept}',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        game.play,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class TodayBody extends ConsumerWidget {
   const TodayBody({
     required this.member,
@@ -606,6 +664,8 @@ class TodayBody extends ConsumerWidget {
             // "Today's skill" — one teachable thing a day, with a how
             // (closes the brief's skill-a-day; staff-only).
             if (viewer.isDailyLogger) const _TodaySkillCard(),
+            // "Today's thinking" — a play→name→bridge→question game.
+            if (viewer.isDailyLogger) const _TodayThinkingCard(),
             // Specialist / substitute identity strip — answers the
             // Coach Sam audit finding ("no UI surface tells Sam what
             // they are"). Renders nothing for director / lead_teacher
