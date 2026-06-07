@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/skills.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
@@ -460,6 +461,92 @@ class _ThisWeekWorldCard extends ConsumerWidget {
   }
 }
 
+/// One teachable skill a day, with a 2-minute "how". A suggestion rotates
+/// daily; tap to browse + pick another. Keeps the daily-skill promise from
+/// being hollow without adding a navigation stack.
+class _TodaySkillCard extends StatelessWidget {
+  const _TodaySkillCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final skill = skillForDay(DateTime.now());
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(_browse(context));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Text(skill.emoji, style: const TextStyle(fontSize: 30)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Today’s skill · ${skill.name}',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        skill.how,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _browse(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                  child: Text('Skills to teach',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                for (final s in kSkills)
+                  ListTile(
+                    leading:
+                        Text(s.emoji, style: const TextStyle(fontSize: 26)),
+                    title: Text(s.name),
+                    subtitle: Text(s.how),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class TodayBody extends ConsumerWidget {
   const TodayBody({
     required this.member,
@@ -516,6 +603,9 @@ class TodayBody extends ConsumerWidget {
             // 10-week journey is started; shows a setup prompt to the
             // director). The daily anchor: "this week, the room is in X."
             const _ThisWeekWorldCard(),
+            // "Today's skill" — one teachable thing a day, with a how
+            // (closes the brief's skill-a-day; staff-only).
+            if (viewer.isDailyLogger) const _TodaySkillCard(),
             // Specialist / substitute identity strip — answers the
             // Coach Sam audit finding ("no UI surface tells Sam what
             // they are"). Renders nothing for director / lead_teacher
