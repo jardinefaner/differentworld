@@ -42,6 +42,18 @@ class EntryKind {
   /// a teacher adds a role-card to today's board; flipped done when the
   /// room has been that role.
   static const String role = 'role';
+
+  /// A note on the room's Wall for a world (docs/WORLD.md — every world's
+  /// Problems / Dreams "sticky notes on the wall"). Space-level (no
+  /// subject), anonymous in display. `body` = the note; `details` =
+  /// {world_id, note_type: problem|dream|feeling|free}.
+  static const String wallNote = 'wall_note';
+
+  /// A time capsule (docs/WORLD.md — Week 8 "seal in a box, open Week 10";
+  /// Week 6 "message to the future you"). `body` = what's sealed;
+  /// `details` = {sealed_until: ISO date, world_id?}. Hidden until the
+  /// seal date passes.
+  static const String timeCapsule = 'time_capsule';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -263,6 +275,69 @@ class EntryActions {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.entriesDao.deleteById(id);
   }
+
+  /// Post a note to the room's Wall for a world (space-level, anonymous).
+  Future<String> createWallNote({
+    required String text,
+    required String worldId,
+    required String noteType,
+    String? groupId,
+  }) =>
+      _create(
+        kind: EntryKind.wallNote,
+        groupId: groupId,
+        body: text.trim(),
+        detailsJson: jsonEncode({'world_id': worldId, 'note_type': noteType}),
+      );
+
+  /// Bury a time capsule — sealed (hidden) until [sealedUntil].
+  Future<String> createTimeCapsule({
+    required String text,
+    required DateTime sealedUntil,
+    String? subjectId,
+    String? groupId,
+    String? worldId,
+  }) =>
+      _create(
+        kind: EntryKind.timeCapsule,
+        subjectId: subjectId,
+        groupId: groupId,
+        body: text.trim(),
+        detailsJson: jsonEncode({
+          'sealed_until': '${sealedUntil.year.toString().padLeft(4, '0')}-'
+              '${sealedUntil.month.toString().padLeft(2, '0')}-'
+              '${sealedUntil.day.toString().padLeft(2, '0')}',
+          'world_id': ?worldId,
+        }),
+      );
 }
 
 final entryActionsProvider = Provider<EntryActions>(EntryActions.new);
+
+/// The room's Wall notes (all worlds; the screen filters by world).
+// autoDispose stream providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final wallNotesProvider = StreamProvider.autoDispose<List<Entry>>((ref) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final spaceId = ref.watch(viewerProvider).spaceId;
+  if (spaceId == null) {
+    yield const [];
+    return;
+  }
+  yield* db.entriesDao.watchInSpace(spaceId: spaceId, kind: EntryKind.wallNote);
+});
+
+/// The program's time capsules (sealed + opened).
+// autoDispose stream providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final timeCapsulesProvider =
+    StreamProvider.autoDispose<List<Entry>>((ref) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final spaceId = ref.watch(viewerProvider).spaceId;
+  if (spaceId == null) {
+    yield const [];
+    return;
+  }
+  yield* db.entriesDao
+      .watchInSpace(spaceId: spaceId, kind: EntryKind.timeCapsule);
+});

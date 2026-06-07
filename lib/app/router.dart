@@ -12,6 +12,8 @@ import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/this_week_screen.dart';
+import 'package:differentworld/features/action_words/time_capsule_screen.dart';
+import 'package:differentworld/features/action_words/wall_screen.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
 import 'package:differentworld/features/action_words/world_present_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
@@ -1030,6 +1032,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => RouteTitle(
               title: 'Book',
               child: BookScreen(subjectId: state.pathParameters['subjectId']!),
+            ),
+          ),
+          // The room's Wall for this week's world (anonymous notes).
+          GoRoute(
+            path: '/wall',
+            builder: (_, _) => const RouteTitle(
+              title: 'The Wall',
+              child: WallScreen(),
+            ),
+          ),
+          // Time capsules — sealed until their day.
+          GoRoute(
+            path: '/time-capsules',
+            builder: (_, _) => const RouteTitle(
+              title: 'Time capsules',
+              child: TimeCapsuleScreen(),
             ),
           ),
           // Spells — fullscreen timer commands, each a word in another
