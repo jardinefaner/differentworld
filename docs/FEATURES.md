@@ -304,10 +304,12 @@ surface — preferences + roster + fleet, not primary workflows.
 - `incidents_screen.dart` — the log: every incident the viewer can see, newest first, each row = child + type chip + relative time + narrative + action-taken + family-notified badge.
 - `incident_form_screen.dart` — the structured form: child picker, type chips (injury / conflict / behavior / illness / medical / other), narrative, action-taken, family-notified toggle, dirty-state discard guard.
 - `incidents_providers.dart` — `IncidentType` catalog, `Incident.fromEntry` (typed parse over an entry), `incidentsInSpaceProvider` + `incidentsForSubjectProvider`.
+- `widgets/incident_card.dart` — `IncidentCard`, the shared card (log + per-child section; `showSubjectName` toggles the identity header).
+- `widgets/subject_incidents_section.dart` — `SubjectIncidentsSection`, the per-child history + scoped "Log incident" action embedded in Subject detail.
 - Create path: `EntryActions.createIncident` (`lib/features/entries/entries_providers.dart`).
-**Status**: shipped — v1 (log + structured form + family-notified tracking). Deferred: incident photos, a per-subject incident history on Subject detail, and a PDF/CSV export template (the data is structured for it).
+**Status**: shipped — v1 (log + structured form + family-notified tracking + per-child history on Subject detail). Deferred: incident photos, a PDF/CSV export template (the data is structured for it).
 **Depends on**: Entries, Subjects, Groups, Viewer (capabilities).
-**Consumed by**: (future) Exports — incident report; Subject detail — per-child safety history.
+**Consumed by**: Subject detail — per-child incident history (`SubjectIncidentsSection`, gated section + jump chip); (future) Exports — incident report.
 **Last verified**: 2026-06-06
 
 ---

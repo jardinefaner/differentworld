@@ -8,6 +8,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/exports/widgets/exports_list.dart';
+import 'package:differentworld/features/incidents/widgets/subject_incidents_section.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/alerts_section.dart';
 import 'package:differentworld/features/subjects/widgets/attendance_strip.dart';
@@ -172,6 +173,7 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
   // call Scrollable.ensureVisible(<key>.currentContext) on tap.
   final GlobalKey _alertsKey = GlobalKey();
   final GlobalKey _observationsKey = GlobalKey();
+  final GlobalKey _incidentsKey = GlobalKey();
   final GlobalKey _attendanceKey = GlobalKey();
   final GlobalKey _familyKey = GlobalKey();
   final GlobalKey _pickupKey = GlobalKey();
@@ -213,6 +215,10 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
 
     final entries = entriesAsync.value ?? const <Entry>[];
     final totalObservations = entries.length;
+    // Per-child incident history — gated on the program feature + view
+    // permission (matches the incident log screen's NoAccess gate).
+    final showIncidents = viewer.featureIncidentReports &&
+        (viewer.canObserve || viewer.canManageSpace);
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 96),
@@ -289,12 +295,15 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
         // Section index chips: scroll-anchored quick links. Tap to
         // jump to a section. Lightweight; doesn't introduce slivers.
         _SectionChips(
+          showIncidents: showIncidents,
           onTap: (label) {
             switch (label) {
               case 'Alerts':
                 _scrollTo(_alertsKey);
               case 'Observations':
                 _scrollTo(_observationsKey);
+              case 'Incidents':
+                _scrollTo(_incidentsKey);
               case 'Attendance':
                 _scrollTo(_attendanceKey);
               case 'Family':
@@ -404,6 +413,16 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
             );
           },
         ),
+
+        // Per-child incident history (gated). Sits between Observations
+        // and Attendance — a child's safety record at a glance.
+        if (showIncidents) ...[
+          const _SectionGap(),
+          KeyedSubtree(
+            key: _incidentsKey,
+            child: SubjectIncidentsSection(subjectId: subject.id),
+          ),
+        ],
 
         const _SectionGap(),
         Padding(
@@ -551,14 +570,18 @@ class _WorldSelfTile extends ConsumerWidget {
 /// into a sliver-with-keys); instead the chips serve as a visual TOC
 /// and an affordance reminder of what's below.
 class _SectionChips extends StatelessWidget {
-  const _SectionChips({required this.onTap});
+  const _SectionChips({required this.onTap, this.showIncidents = false});
 
   /// Called with the chip's label when tapped. The parent scrolls its
   /// ListView to the matching section via Scrollable.ensureVisible
   /// against the section header's GlobalKey.
   final ValueChanged<String> onTap;
 
-  static const List<(String, IconData)> _items = [
+  /// Whether the (gated) Incidents section is present — only then do we
+  /// render its chip, so tapping it always lands on a mounted section.
+  final bool showIncidents;
+
+  static const List<(String, IconData)> _baseItems = [
     ('Alerts', Icons.health_and_safety_outlined),
     ('Observations', Icons.menu_book_outlined),
     ('Attendance', Icons.fact_check_outlined),
@@ -571,13 +594,21 @@ class _SectionChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final items = <(String, IconData)>[
+      for (final item in _baseItems) ...[
+        item,
+        // Slot Incidents right after Observations, matching the body order.
+        if (showIncidents && item.$1 == 'Observations')
+          ('Incidents', Icons.report_gmailerrorred_outlined),
+      ],
+    ];
     return SizedBox(
       height: 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          for (final (label, icon) in _items)
+          for (final (label, icon) in items)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               // Wave 103: ActionChip = Chip but tappable. Wires the
