@@ -54,3 +54,18 @@ phases below all improve once Today tracks the day's phase.
   migration / PowerSync‑dashboard deploy. Remaining opportunities in the table
   above (day‑open brief, face‑aligned check‑in, "run this block", close‑the‑day,
   substitute handoff) are the next tier.
+
+### Design note — "day's end" is per‑person, not a program close time
+
+The first cut of close‑the‑day / late‑pickup assumed a single program close
+time (the afterschool `DayPhase` boundary). **That's wrong:** day's end is
+**different for each child and each teacher**, driven by their individual
+**clock‑in / departure** times (and, eventually, each child's *expected* hours
+on file). The raw material now exists — clock‑in = the attendance `present`
+timestamp (`attendance_records.recorded_at`), clock‑out = the pickup
+`departure` entry's `recorded_at` — but "late" / "still here" relative to an
+*expected* departure needs a per‑child schedule we don't store yet (enrollment
+hours / a daily expected‑out time). So **closeout + late‑pickup are deferred**
+until that per‑individual expected‑hours model lands, rather than shipping a
+program‑wide approximation. The Today *arrival progress* (wave 5) and the
+pickup board (wave 2) are the adoption‑independent pieces that don't need it.
