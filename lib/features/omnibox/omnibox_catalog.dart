@@ -149,7 +149,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         'missions board',
         'big buttons',
       ],
-      onSelect: (ctx, _) => ctx.push('/missions/board'),
+      onSelect: (ctx, _) => ctx.push('/settings/missions/board'),
     ),
     OmniboxEntry(
       id: 'page.spells',

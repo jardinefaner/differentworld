@@ -94,7 +94,7 @@ class _MissionBoardScreenState extends ConsumerState<MissionBoardScreen> {
               message: 'Add missions (or the starter set) and they’ll show '
                   'here as today’s board — big buttons you clear to zero.',
               action: FilledButton.icon(
-                onPressed: () => context.push('/missions'),
+                onPressed: () => context.push('/settings/missions'),
                 icon: const Icon(Icons.flag_outlined),
                 label: const Text('Set up missions'),
               ),

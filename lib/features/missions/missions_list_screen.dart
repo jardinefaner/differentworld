@@ -37,7 +37,7 @@ class MissionsListScreen extends ConsumerWidget {
         IconButton(
           tooltip: 'Today’s board',
           icon: const Icon(Icons.dashboard_customize_outlined),
-          onPressed: () => context.push('/missions/board'),
+          onPressed: () => context.push('/settings/missions/board'),
         ),
         if (canEdit)
           PrimaryActionButton(

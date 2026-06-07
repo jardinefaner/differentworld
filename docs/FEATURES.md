@@ -62,8 +62,8 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: The world-reveal loop (docs/ACTION_WORDS.md, from the developer brief) — kids pick 3 of 12 action words each morning; the combo reveals an animal/element/archetype **world**; over time a title forms from their most-practiced verbs. The app touches the kid ~5 min/day; the room is the product.
 **Personas served**: Teacher (Conductor) — primary; Kid (Explorer) — optional V1; Parent (Witness) — V1 is the generated text, not an app.
 **Discovery surfaces**:
-- Routes: `/action-words` (the morning pick roster), `/action-words/:subjectId` (the collection — worlds grid + verb bars + emerging title)
-- Omnibox: `page.action-words` — "Action Words" (keywords: verbs, words, worlds, pick, reveal, collection, animal; morning contextTag)
+- Routes: `/action-words` (the morning pick roster), `/action-words/send` (Send home — end-of-day copy-to-clipboard parent messages), `/action-words/worlds` (Our worlds — the class's invented-world book), `/action-words/:subjectId` (the collection — worlds grid + verb bars + emerging title)
+- Omnibox: `page.action-words` — "Action Words" (keywords: verbs, words, worlds, pick, reveal, collection, animal; morning contextTag). No omnibox entries for `/send` or `/worlds` — reached via the chrome action buttons on the Action Words screen.
 - Slash: none
 - Drawer/Rail: yes — "Action Words" nav destination, gated `onlyFor: canObserve`
 - Settings: none (no opt-in cap yet)
@@ -71,16 +71,19 @@ surface — preferences + roster + fleet, not primary workflows.
 **Data**: Reuses [entries](SCHEMA.md#entries) `kind='action_words'` — one row per (subject, date); `details` = `{verb_picks:[3], done:[…], note, word_of_day, world_name?}`. The revealed world is DERIVED from `verb_picks` (deterministic lookup), not stored. NO new table.
 **Surfaces**:
 - `verbs.dart` — the 12 permanent verbs (id/emoji/label).
-- `worlds.dart` — `World` + `matchWorld(picks)` (exact / closest ≥2 / fresh), the ~40-world lookup (8 canonical + 7 starter extras; user owns the rest).
-- `action_words_providers.dart` — `ActionWordsDay` (typed per-day), `ActionWordsCollection` (lifetime worlds + practiced-verb totals + emerging title), `ActionWordsActions` (setPicks/toggleDone/setNote/setWordOfDay/setWorldName — optimistic, find-or-create per day in a txn).
-- `action_words_screen.dart` — the pick roster + the per-kid pick sheet (12-verb grid → live world preview → save).
+- `worlds.dart` — `World` + `matchWorld(picks)` (exact / closest ≥2 / fresh), the ~40-world lookup (8 canonical + 7 starter extras; user owns the rest). Also exports `InventedWorld` and `kNamedWorlds`.
+- `action_words_providers.dart` — `ActionWordsDay` (typed per-day), `ActionWordsCollection` (lifetime worlds + practiced-verb totals + emerging title), `ActionWordsActions` (setPicks/toggleDone/setNote/setWordOfDay/setWorldName — optimistic, find-or-create per day in a txn). Also exports `inventedWorldsProvider` (derived from the collection: worlds where `world_name` was user-authored, i.e. `InventedWorld` list).
+- `action_words_screen.dart` — the pick roster + the per-kid pick sheet (12-verb grid → live world preview → save). Top chrome carries two icon buttons: "Our worlds" → `/action-words/worlds` and "Send home" → `/action-words/send`.
 - `widgets/verb_grid.dart` (the selectable 12-grid, max-3), `widgets/world_badge.dart` (the reveal badge — emoji/name/title/verbs, handles the fresh case).
 - `reveal_overlay.dart` — the closing reveal: a fullscreen dark "moment" (root-navigator route, breathing gold glow) "Maya was 🐬 Dolphin today", with the fresh-world naming flow. Reachable from each roster row's ✨ button.
 - `collection_screen.dart` — `/action-words/:subjectId`: the worlds grid (collected = bright + ×count, uncollected = grey silhouette), most-practiced verb bars, and the emerging "Becoming The Owl Who Listens" title. Reached by long-pressing a roster row (+ deep-linkable).
-**Status**: building — the core 4-step loop is shipped: wave 1 (engine + data), wave 2 (verb pick + world preview), wave 3 (glowing reveal), wave 4 (collection). Next (the brief's V1 order): activity matcher + library (needs verb-tagging the existing activities), today dashboard (word-of-day + kid cards), spell timers, parent message generator.
+- `parent_message.dart` — `buildParentMessage(childName:, day:)` pure function. Generates the end-of-day text a teacher pastes into their messaging app.
+- `send_screen.dart` — `/action-words/send`: lists every child with picks today; each card shows the auto-generated parent message + a Copy button (writes to clipboard + snackbar). Reached from the "Send home" icon on the Action Words screen.
+- `world_book_screen.dart` — `/action-words/worlds`: the class's invented-world catalog (worlds named by the teacher/kids during a fresh-world reveal); each entry shows the world name + the verb trio that generated it + the day count. Reached from the "Our worlds" icon on the Action Words screen.
+**Status**: building — core 4-step loop shipped (waves 1–4); Send home + world book shipped (wave 5). Next: activity matcher + library (needs verb-tagging), today dashboard (word-of-day + kid cards), spell timers.
 **Depends on**: Entries, Subjects, Viewer.
-**Consumed by**: (future) Today (word-of-day + kid cards), Exports/Messages (parent message).
-**Last verified**: 2026-06-06
+**Consumed by**: (future) Today (word-of-day + kid cards).
+**Last verified**: 2026-06-07
 
 ---
 
@@ -647,25 +650,48 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Spells
+**Path**: `lib/features/spells/`
+**Purpose**: Five fullscreen timer commands — each a word in another language (the word rotates by day so the class meets it in Spanish, then French, then Swahili across the term); a countdown ticks down while a breathing animation plays, then haptic-rings "Time!". The brief's one loud moment — hold up the phone or put it on a projector.
+**Personas served**: All staff (Jordan, Coach Sam, Brianna — any teacher needing a dramatic transition signal).
+**Discovery surfaces**:
+- Routes: `/spells`
+- Omnibox: yes — `page.spells` "Spells" (keywords: spell, timer, freeze, move, countdown, language, transition)
+- Slash: none
+- Drawer: no
+- Settings: no
+**Capabilities**: None — open to all signed-in staff.
+**Data**: None — pure catalog (`kSpells` Dart const). No synced table, no migration.
+**Surfaces**:
+- *Spells screen* — `lib/features/spells/spells_screen.dart`. `/spells`: five tile buttons in a 2–3 col grid (responsive); each tile previews today's foreign word + the timer duration; tap casts the spell.
+- *Spell overlay* — `lib/features/spells/spell_overlay.dart`. Fullscreen dark countdown pushed on the root navigator (bypasses app chrome). Breathing `ScaleTransition` on the emoji; gold foreign word + pronunciation + language + English gloss; live countdown; haptic on expiry; tap anywhere to end early. Enters `SystemUiMode.immersiveSticky`; restores `edgeToEdge` on dispose.
+- *Spell catalog* — `lib/features/spells/spells.dart`. `Spell`, `SpellWord`, `kSpells` (5 spells × 3 languages), `spellWordForDay(spell, dayKey)` (deterministic day-keyed rotation), `spellTimeLabel(seconds)`.
+**Depends on**: Nothing — pure catalog feature.
+**Consumed by**: Nothing currently. Future: Action Words spell-timer integration (docs/ACTION_WORDS.md — "spell timers" listed as next step).
+**Last verified**: 2026-06-07
+
+---
+
 ## Missions
 **Path**: `lib/features/missions/`
 **Purpose**: The program's catalog of real jobs kids do — each with a manual (rules), a practiceable checklist (actions), and an evidence kind — so responsibility is concrete, doable, and verifiable.
 **Personas served**: Maya, Coach Sam, Brianna (directors/leads maintain catalog via `canManageSpace`); Ava and all kids (will claim + do missions in slice 2); All staff (view).
 **Discovery surfaces**:
-- Routes: `/settings/missions`
-- Omnibox: yes — "Missions" (id `page.missions`), keywords: missions, jobs, helpers, chores, responsibilities, equipment manager, snack helper → `/settings/missions`
+- Routes: `/settings/missions`, `/settings/missions/board`
+- Omnibox: yes — "Missions" (id `page.missions`) → `/settings/missions`; "Today's board" (id `page.mission-board`), keywords: board, do board, tasks, tasks zero, jobs, missions board, big buttons → `/settings/missions/board`
 - Slash: none
 - Drawer: yes — "Missions" (canonical nav, position between Brain Breaks and Brainstorm Board)
 - Settings: no
 **Capabilities**: View: all signed-in staff. Create / edit / delete: `canManageSpace` (director / lead). Slice 2 will add kid-side claim with no cap gate.
-**Data**: [missions](SCHEMA.md#missions)
+**Data**: [missions](SCHEMA.md#missions), [entries](SCHEMA.md#entries) (`kind='mission'` — one row per completion; `details.missionId` identifies which mission was done)
 **Surfaces**:
-- *Missions list screen* — `lib/features/missions/missions_list_screen.dart`. EdgeScaffold; four states (loading / empty / error / data); empty state offers "Add the starter set (11)" + "Add your own"; mission tiles; tap → read-only detail sheet (icon, builds, age, rules, numbered steps, evidence kind); edit sheet. Edit actions gated by `viewer.canManageSpace`.
-- *Missions providers* — `lib/features/missions/missions_providers.dart`. `missionsProvider` (StreamProvider → `db.missionsDao.watchInSpace`); `MissionActions` Notifier with create / update_ / delete_ / addStarterSet (one-tap seed from templates).
+- *Missions list screen* — `lib/features/missions/missions_list_screen.dart`. EdgeScaffold; four states (loading / empty / error / data); empty state offers "Add the starter set (11)" + "Add your own"; mission tiles; tap → read-only detail sheet (icon, builds, age, rules, numbered steps, evidence kind); edit sheet. Top chrome carries a board IconButton → `/settings/missions/board`. Edit actions gated by `viewer.canManageSpace`.
+- *Mission board screen* — `lib/features/missions/mission_board_screen.dart`. `/settings/missions/board`: the Do board — active missions as big tap-to-complete buttons (grid, 2–4 cols responsive); tap shrinks the tile away with `AnimatedScale` and writes a `kind='mission'` entry via `MissionActions.complete`; all cleared → "Tasks zero" celebratory state. Drives the "doing clears to zero" UX concept from docs/ACTION_WORDS.md.
+- *Missions providers* — `lib/features/missions/missions_providers.dart`. `missionsProvider` (StreamProvider → `db.missionsDao.watchInSpace`); `missionCompletionsProvider` (StreamProvider → `db.entriesDao.watchInSpace(kind: EntryKind.mission)`); `MissionActions` Notifier with create / update_ / delete_ / addStarterSet / complete.
 - *Mission templates* — `lib/features/missions/mission_templates.dart`. `MissionTemplate` + `missionTemplates` (11 starter jobs: Equipment Manager, Snack Helper, Cleanup Crew, Supply Keeper, Line Leader, Greeter, Library Keeper, Lights & Doors, Recycle Captain, Plant & Pet Caretaker, Peace Buddy); `MissionEvidenceKind` enum (photo/count/note/check); actions JSON codec (encode/decodeMissionActions).
-**Depends on**: Nothing — leaf catalog feature in slice 1.
-**Consumed by**: Nothing in slice 1. Slice 2 will add mission_assignments + Entries/Attachments as the evidence destination.
-**Last verified**: 2026-06-01 (nav refactor)
+**Depends on**: Entries (`kind='mission'` completions read + written via `entriesDao`).
+**Consumed by**: Nothing in slice 1 other than Entries (completion writes). Slice 2 will add mission_assignments.
+**Last verified**: 2026-06-07
 
 ---
 
