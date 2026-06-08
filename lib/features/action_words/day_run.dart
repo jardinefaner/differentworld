@@ -32,12 +32,18 @@ class DayBeat {
     this.sub = '',
     this.lines = const [],
     this.suggestedSeconds = 0,
+    this.emoji = '',
   });
 
   final DayBeatKind kind;
 
   /// Small caption above the headline ("WEEK 4 · WATCH · 3 MIN").
   final String label;
+
+  /// Per-beat hero glyph for `open` beats — overrides the presenter's single
+  /// emoji so a multi-world tour shows EACH world's glyph (the journey cast),
+  /// not one global one. Empty → fall back to the presenter's emoji.
+  final String emoji;
 
   /// The headline — the thing read from across the room.
   final String big;
@@ -190,6 +196,43 @@ List<DayBeat> buildActivityArc(String activity, {int playSeconds = 5 * 60}) {
       label: 'Closing',
       big: 'Who were you in this?',
       sub: 'Reveal each name.',
+    ),
+  ];
+}
+
+/// The whole-summer cast — ONE walkthrough of the journey, world by world (the
+/// user's "one cast that walks the whole experience"). Built from the live
+/// curriculum so it always matches the program: an orientation tour for staff
+/// or families, or a season-opener for the room. Each world is its hero + its
+/// question; the arc is framed by an opening and a closing.
+List<DayBeat> buildJourneyTour(List<CurriculumWorld> worlds) {
+  final sorted = [...worlds]..sort((a, b) => a.week.compareTo(b.week));
+  return [
+    const DayBeat(
+      kind: DayBeatKind.open,
+      label: 'One summer',
+      big: 'Different World',
+      sub: 'Pick three verbs. Live them. Discover who you became.',
+    ),
+    for (final w in sorted) ...[
+      DayBeat(
+        kind: DayBeatKind.open,
+        label: 'Week ${w.week}',
+        big: w.name,
+        sub: w.tagline,
+        emoji: w.emoji,
+      ),
+      DayBeat(
+        kind: DayBeatKind.question,
+        label: 'The question of this world',
+        big: '“${w.question}”',
+      ),
+    ],
+    const DayBeat(
+      kind: DayBeatKind.close,
+      label: 'And then',
+      big: 'Who will you become?',
+      sub: 'The room fills. You go deeper. The game continues.',
     ),
   ];
 }

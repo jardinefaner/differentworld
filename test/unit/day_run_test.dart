@@ -324,4 +324,48 @@ void main() {
       );
     });
   });
+
+  group('buildJourneyTour — one cast that walks the whole summer', () {
+    List<CurriculumWorld> allWorlds() {
+      final raw = File('assets/curriculum/ten_worlds.json').readAsStringSync();
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      return [
+        for (final w in decoded['worlds'] as List)
+          CurriculumWorld.fromJson(w as Map<String, dynamic>),
+      ];
+    }
+
+    test('opens on the program, walks every world (hero + question), closes', () {
+      final worlds = allWorlds();
+      final beats = buildJourneyTour(worlds);
+      expect(beats.first.kind, DayBeatKind.open);
+      expect(beats.first.big, 'Different World');
+      expect(beats.last.kind, DayBeatKind.close);
+      // Each world contributes a hero (open beat carrying ITS emoji) + a
+      // question.
+      expect(
+        beats
+            .where((b) => b.kind == DayBeatKind.open && b.emoji.isNotEmpty)
+            .length,
+        worlds.length,
+      );
+      expect(
+        beats.where((b) => b.kind == DayBeatKind.question).length,
+        worlds.length,
+      );
+    });
+
+    test('worlds appear in week order even if the input is shuffled', () {
+      final beats = buildJourneyTour(allWorlds().reversed.toList());
+      final heroNames = [
+        for (final b in beats)
+          if (b.kind == DayBeatKind.open && b.emoji.isNotEmpty) b.big,
+      ];
+      final byWeek =
+          (allWorlds()..sort((a, b) => a.week.compareTo(b.week)))
+              .map((w) => w.name)
+              .toList();
+      expect(heroNames, byWeek);
+    });
+  });
 }

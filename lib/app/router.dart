@@ -11,6 +11,7 @@ import 'package:differentworld/features/action_words/activity_match_screen.dart'
 import 'package:differentworld/features/action_words/book_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/day_run_screen.dart';
+import 'package:differentworld/features/action_words/journey_tour_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/thinking_screen.dart';
@@ -1052,6 +1053,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 activity: extra is String ? extra : '',
               );
             },
+          ),
+          // One cast that walks the WHOLE summer — the journey, world by world
+          // (docs/VISION.md "one cast that walks the whole experience").
+          GoRoute(
+            path: '/journey',
+            builder: (_, _) => const JourneyTourScreen(),
           ),
           // A child's Book — their 10-week journey grouped by world.
           GoRoute(

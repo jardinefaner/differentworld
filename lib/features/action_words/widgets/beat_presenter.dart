@@ -473,7 +473,10 @@ class _BeatSlide extends StatelessWidget {
     // The world hero.
     if (beat.kind == DayBeatKind.open) {
       return _centered([
-        Text(emoji, style: const TextStyle(fontSize: 130)),
+        Text(
+          beat.emoji.isNotEmpty ? beat.emoji : emoji,
+          style: const TextStyle(fontSize: 130),
+        ),
         const SizedBox(height: 22),
         caption,
         const SizedBox(height: 10),
