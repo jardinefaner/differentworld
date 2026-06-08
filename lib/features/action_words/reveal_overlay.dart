@@ -74,6 +74,7 @@ class _RevealPageState extends ConsumerState<_RevealPage>
   late final AnimationController _glow;
   late final TextEditingController _nameCtrl;
   bool _named = false;
+  bool _naming = false;
 
   @override
   void initState() {
@@ -100,8 +101,14 @@ class _RevealPageState extends ConsumerState<_RevealPage>
 
   Future<void> _nameWorld() async {
     final name = _nameCtrl.text.trim();
-    if (name.isEmpty) return;
-    setState(() => _named = true);
+    // Re-entry guard: a fast double-tap or button+onSubmitted both firing
+    // would send two writes (the upsert is idempotent, but two concurrent
+    // Drift transactions touch the same row). Mirrors _SkillMeasureSheet.
+    if (name.isEmpty || _naming) return;
+    setState(() {
+      _naming = true;
+      _named = true;
+    });
     await ref
         .read(actionWordsActionsProvider)
         .setWorldName(
@@ -110,6 +117,9 @@ class _RevealPageState extends ConsumerState<_RevealPage>
           date: todayKey(),
           name: name,
         );
+    // The page is about to close; guard so a fast back-during-write can't
+    // resume into a disposed state.
+    if (!mounted) return;
   }
 
   @override

@@ -57,8 +57,7 @@ const kMeasurableSkills = <MeasurableSkill>[
     emoji: '✨',
     label: 'Beautiful words',
     unit: 'words',
-    hint:
-        "Fancy words used naturally in one sentence. Eavesdrop — don't quiz.",
+    hint: "Fancy words used naturally in one sentence. Eavesdrop — don't quiz.",
   ),
   MeasurableSkill(
     id: 'details',
@@ -177,6 +176,7 @@ class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
   String _skillId = kMeasurableSkills.first.id;
   final _value = TextEditingController();
   bool _saving = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -187,8 +187,13 @@ class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
   bool get _isDirty => _value.text.trim().isNotEmpty;
 
   Future<void> _save() async {
+    if (_saving) return;
     final parsed = num.tryParse(_value.text.trim());
-    if (parsed == null || _saving) return;
+    if (parsed == null) {
+      // Don't let Save be a silent no-op — say why nothing happened.
+      setState(() => _error = 'Enter a number');
+      return;
+    }
     setState(() => _saving = true);
     final nav = Navigator.of(context);
     await ref
@@ -253,9 +258,13 @@ class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
                   decimal: true,
                 ),
                 autofocus: true,
+                onChanged: (_) {
+                  if (_error != null) setState(() => _error = null);
+                },
                 onSubmitted: (_) => _save(),
                 decoration: InputDecoration(
                   labelText: 'Value',
+                  errorText: _error,
                   suffixText: skill.unit == '/5' ? 'out of 5' : skill.unit,
                   border: const OutlineInputBorder(),
                 ),

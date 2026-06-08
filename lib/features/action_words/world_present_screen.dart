@@ -38,13 +38,15 @@ class _WorldPresentScreenState extends ConsumerState<WorldPresentScreen> {
     // if we're already disposed when the microtask drains, dispose's
     // exit() + edgeToEdge already ran, so we must NOT re-enter. Keep the
     // immersive OS call INSIDE the same microtask so the two stay in lockstep.
-    unawaited(Future.microtask(() {
-      if (!mounted) return;
-      _immersive.enter();
-      unawaited(
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
-      );
-    }));
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        _immersive.enter();
+        unawaited(
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+        );
+      }),
+    );
   }
 
   @override
@@ -57,7 +59,9 @@ class _WorldPresentScreenState extends ConsumerState<WorldPresentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final world = ref.watch(curriculumWorldsProvider).whenOrNull(
+    final world = ref
+        .watch(curriculumWorldsProvider)
+        .whenOrNull(
           data: (worlds) {
             for (final w in worlds) {
               if (w.id == widget.worldId) return w;
@@ -108,13 +112,25 @@ class _WorldPresentScreenState extends ConsumerState<WorldPresentScreen> {
                   child: slides[i],
                 ),
               ),
-              // Tap zones: left third = back, right third = forward.
+              // Tap zones: left third = back, right third = forward. Opaque,
+              // or a childless GestureDetector hit-tests nothing and the tap
+              // falls through to the PageView (tap-to-advance silently dead).
               Positioned.fill(
                 child: Row(
                   children: [
-                    Expanded(child: GestureDetector(onTap: () => _go(-1))),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _go(-1),
+                      ),
+                    ),
                     const Spacer(),
-                    Expanded(child: GestureDetector(onTap: () => _go(1))),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _go(1),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -142,9 +158,7 @@ class _WorldPresentScreenState extends ConsumerState<WorldPresentScreen> {
                         margin: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: i == _index
-                              ? Colors.white
-                              : Colors.white24,
+                          color: i == _index ? Colors.white : Colors.white24,
                         ),
                       ),
                   ],
@@ -161,11 +175,13 @@ class _WorldPresentScreenState extends ConsumerState<WorldPresentScreen> {
     if (!mounted) return;
     final next = (_index + delta).clamp(0, _count - 1);
     if (next == _index) return;
-    unawaited(_page.animateToPage(
-      next,
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOut,
-    ));
+    unawaited(
+      _page.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   List<Widget> _slidesFor(CurriculumWorld w) {
@@ -282,7 +298,11 @@ class _VerbsSlide extends StatelessWidget {
       children: [
         const Text(
           'THIS WEEK’S VERBS',
-          style: TextStyle(color: Colors.white54, fontSize: 20, letterSpacing: 4),
+          style: TextStyle(
+            color: Colors.white54,
+            fontSize: 20,
+            letterSpacing: 4,
+          ),
         ),
         const SizedBox(height: 32),
         for (final id in world.featuredVerbs)
@@ -315,7 +335,11 @@ class _ActivitiesSlide extends StatelessWidget {
       children: [
         const Text(
           'ACTIVITIES',
-          style: TextStyle(color: Colors.white54, fontSize: 20, letterSpacing: 4),
+          style: TextStyle(
+            color: Colors.white54,
+            fontSize: 20,
+            letterSpacing: 4,
+          ),
         ),
         const SizedBox(height: 20),
         for (final a in world.activities.take(8))
