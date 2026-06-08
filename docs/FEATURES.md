@@ -67,7 +67,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Slash: none
 - Drawer/Rail: yes — "Action Words" nav destination, gated `onlyFor: canObserve`
 - Settings: none (no opt-in cap yet)
-**Capabilities**: Pick / run: `can_observe` (the daily-staff gate).
+**Capabilities**: Pick / run: `can_observe` (the daily-staff gate). Present-surface timer tuning: reads `SpaceCaps.timerPresets` (`timer_presets`) via `houseTimerPresetsProvider` and `SpaceCaps.suggestPlayMinutes` (`suggest_play_minutes`) via `houseSuggestPlayMinutesProvider` (both on `spaces.capabilities`); these are program-policy caps written by the director in program settings; no separate member cap gates reading them.
 **Data**: Reuses [entries](SCHEMA.md#entries) `kind='action_words'` — one row per (subject, date); `details` = `{verb_picks:[3], done:[…], note, word_of_day, world_name?}`. The revealed world is DERIVED from `verb_picks` (deterministic lookup), not stored. NO new table. Reads [spaces](SCHEMA.md#spaces) capabilities via `SpaceCaps.programStartDate` (`program_start_date` key) — the journey start date that drives `currentCurriculumWeekProvider` + `currentWorldProvider`. No new table; the cap is written by `WorldScheduleActions.setStartDate`. Writes [activities](SCHEMA.md#activities) — `CurriculumImporter.importActivities` seeds ~75 curriculum activities (verb-tagged via `action_verbs` cap, idempotent via `curriculum_key` cap marker in `activities.capabilities` JSONB).
 **Surfaces**:
 - `verbs.dart` — the 12 permanent verbs (id/emoji/label).
@@ -98,10 +98,10 @@ surface — preferences + roster + fleet, not primary workflows.
 - `widgets/beat_presenter.dart` (`BeatPresenter`) — the single shared immersive present surface. `PageView` of full-screen `DayBeat` slides; enters `SystemUiMode.immersiveSticky` + `castImmersiveProvider` on mount; restores on dispose. Accepts `beats`, `accent`, `emoji`. Backs both `DayRunScreen` and `ActivityArcScreen` — the one correct immersive lifecycle lives here.
 - `day_run_screen.dart` (`DayRunScreen`) — `/play-today`: thin `ConsumerWidget` over `BeatPresenter`; assembles the live world's day-run beats and delegates all presentation. Reached via "Play today" hero button on This Week screen. `page.play-today` omnibox entry → `/play-today`.
 - `activity_arc_screen.dart` (`ActivityArcScreen`) — `/arc`: the teleprompter for teaching. Takes a typed activity name (via go_router `extra` from `/lens`, empty = generic arc), calls `buildActivityArc`, renders through `BeatPresenter` wearing the live world's colour. Reachable via `page.arc` omnibox entry ("Present an activity") and via the "Present this →" `FilledButton` on `/lens` when the text field is non-empty.
-**Status**: This Week hub + world projection (Cast) + worksheets + Today card shipped (waves "week engine" + "worksheets" + "cast", commit range fbfdda3–206b108). Book screen + curriculum importer shipped (waves "the Book" + "import curriculum activities", commits 2021813 + 5d4db52). Play Today (DayRunScreen) + Big Thinking system games + thinking_screen shipped (waves feat/kid-book + feat/curriculum-activity-import, commit 1320864). ActivityArcScreen + BeatPresenter refactor shipped (wave feat/present-arc, commit b4abd80). Activity matcher verb-tagging library hookup, spell timers still deferred.
-**Depends on**: Entries, Subjects, Viewer, Spaces (program_start_date cap via world_schedule.dart), Activities (curriculum importer writes), LiveSession (castImmersiveProvider — DayRunScreen uses cast immersive flag).
-**Consumed by**: Today (`_ThisWeekWorldCard` mounted in today_sections.dart reads `currentWorldProvider`), World (character_sheet_screen.dart reads `systemThinkingGameProvider` + imports `thinking_games.dart` + `widgets/thinking_game_sheet.dart` to surface "the game under this system" on each character-sheet section).
-**Last verified**: 2026-06-07
+**Status**: This Week hub + world projection (Cast) + worksheets + Today card shipped (waves "week engine" + "worksheets" + "cast", commit range fbfdda3–206b108). Book screen + curriculum importer shipped (waves "the Book" + "import curriculum activities", commits 2021813 + 5d4db52). Play Today (DayRunScreen) + Big Thinking system games + thinking_screen shipped (waves feat/kid-book + feat/curriculum-activity-import, commit 1320864). ActivityArcScreen + BeatPresenter refactor shipped (wave feat/present-arc, commit b4abd80). House timer caps (`timer_presets` + `suggest_play_minutes`) shipped (batch D1 commit 2b5937a — `house_timer.dart`, program-settings tiles, injected into `buildDayRun`/`buildActivityArc`). Activity matcher verb-tagging library hookup, spell timers still deferred.
+**Depends on**: Entries, Subjects, Viewer, Spaces (program_start_date cap via world_schedule.dart; timer_presets + suggest_play_minutes caps via house_timer.dart), Activities (curriculum importer writes), LiveSession (castImmersiveProvider — DayRunScreen uses cast immersive flag).
+**Consumed by**: Today (`_ThisWeekWorldCard` mounted in today_sections.dart reads `currentWorldProvider`), World (character_sheet_screen.dart reads `systemThinkingGameProvider` + imports `thinking_games.dart` + `widgets/thinking_game_sheet.dart` to surface "the game under this system" on each character-sheet section), Settings (program_settings_screen.dart reads `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` for the timer tiles; writes via `houseTimerActionsProvider`).
+**Last verified**: 2026-06-08
 
 ---
 
@@ -657,18 +657,18 @@ surface — preferences + roster + fleet, not primary workflows.
 - Drawer: yes — "Settings" (main destinations, position 5)
 - Settings: this IS the settings screen
 **Capabilities**: Read: all members. Program settings: `can_manage_space`. Team write / vehicles write: `can_manage_space`. Roles screen is read-only for everyone (the catalog itself is a code constant).
-**Data**: [spaces](SCHEMA.md#spaces), [members](SCHEMA.md#members), [locations](SCHEMA.md#locations) plus what each sub-screen owns. Roles screen reads no DB — the role catalog is `RoleBundles.rolesFor(vertical)` / `defaultsFor()` in `lib/core/capabilities/`.
+**Data**: [spaces](SCHEMA.md#spaces) (program settings screen reads + writes `capabilities['timer_presets']` via `HouseTimerActions.setPresetMinutes`; `capabilities['suggest_play_minutes']` via `HouseTimerActions.setPlayMinutes`; `capabilities['phase_windows']` via `DayPhaseActions.setWindows`; all other feature flags via `SpaceCapActions.setCap`/`setStringCap`/`setIntCap`), [members](SCHEMA.md#members), [locations](SCHEMA.md#locations) plus what each sub-screen owns. Roles screen reads no DB — the role catalog is `RoleBundles.rolesFor(vertical)` / `defaultsFor()` in `lib/core/capabilities/`.
 **Surfaces**:
 - *Settings screen* — `lib/features/settings/settings_screen.dart`. Grouped list (Account / Space / Preferences / About).
-- *Program settings* — `lib/features/settings/program_settings_screen.dart`. Per-space capability flags + pickup window.
+- *Program settings* — `lib/features/settings/program_settings_screen.dart`. Per-space capability flags + pickup window + "Defaults" section: "Timer presets" `_TimerPresetsTile` (reads `houseTimerPresetsProvider`; taps to a glass sheet that adds/removes whole-minute presets; writes via `HouseTimerActions.setPresetMinutes`) + "Big Thinking play length" `_PlayLengthTile` (inline ± stepper; writes via `HouseTimerActions.setPlayMinutes`) + "Day rhythm" `_PhaseWindowsSection` (four time-pickers for arrival/program/pickup/closed phase boundaries; writes via `DayPhaseActions.setWindows`). All three write `spaces.capabilities` via `SpaceCapActions`.
 - *Team screen* — `lib/features/settings/team_screen.dart`. Members + pending invites.
 - *Member detail* — `lib/features/settings/member_detail_screen.dart`. Per-staff profile + certifications.
 - *Roles & permissions* — `lib/features/settings/roles_screen.dart`. Read-only directory of every role offered in the active vertical + the default capabilities each one ships with. Surfaces cert-gated caps in a separate group so directors don't think "the bundle says false; I'll flip it" without realizing the cert is the actual gate. Shipped 2026-05-22 (Wave 36).
 - *Locations list* — `lib/features/settings/locations_list_screen.dart`. Place catalog for scheduling.
 - *Shared text-size tile / picker* — `lib/features/settings/widgets/text_size_tile.dart`. Public `TextSizeTile` + `showTextSizePicker(context, ref)` helper, reused by Family Today so guardians can reach the override without a Settings screen.
-**Depends on**: Members, Spaces, Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog.
+**Depends on**: Members, Spaces (timer_presets + suggest_play_minutes + phase_windows cap writes; reads via Action Words providers), Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog, Action Words (`houseTimerActionsProvider` + `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` imported from `house_timer.dart`; `DayPhaseActions` + `dayPhaseActionsProvider` imported from `today_providers.dart`).
 **Consumed by**: Most features (config), Helen (text scale — staff AND family-side via shared picker), Jordan (outdoor mode), Family Today (text-size picker).
-**Last verified**: 2026-05-23
+**Last verified**: 2026-06-08
 
 ---
 
@@ -987,7 +987,7 @@ surface — preferences + roster + fleet, not primary workflows.
 - Drawer: yes — "Today" (main destinations, position 1)
 - Settings: no
 **Capabilities**: None — open to all signed-in staff. Cards self-gate by capability (DirectorPulseCard renders only when `viewer.isDirector` AND there's a signal to flag).
-**Data**: Aggregates from Attendance, Schedule, Captures, Tasks, Insights, Messages, Entries, Certifications.
+**Data**: Aggregates from Attendance, Schedule, Captures, Tasks, Insights, Messages, Entries, Certifications. Also reads [spaces](SCHEMA.md#spaces) — `capabilities['phase_windows']` via `dayPhaseWindowsProvider` + `DayPhaseActions.setWindows`; drives `dayPhaseProvider` → the "RIGHT NOW" lead card.
 **Surfaces**:
 - *Today screen* — `lib/features/today/today_screen.dart`. Card list, refresh on pull.
 - *Live-session banner* — `lib/features/live_session/live_session_banner.dart` (cross-feature, mounted in `today_sections.dart`). Auto-shows at the top of Today when `activeSessionsProvider` has active sessions; hidden when none. One-tap join pushes `/join?code=…&game=…`. Multiple live sessions → picker sheet.
@@ -995,9 +995,9 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Embedded cards* — leading-today (from Schedule), morning-checklist (from Attendance), recent-captures (from Captures), open-tasks (from Tasks), insights (from Insights), unread-messages (deferred).
 - *Director pulse card* — `_DirectorPulseCard` inside `today_screen.dart`. Director-only proactive pulse: surfaces today's absent kids (from group day state), cohorts running on substitute coverage (from schedule), and certs expiring within 30 days (from certs-in-space). Renders nothing on "all clear" so it never adds noise. Shipped 2026-05-22 (Wave 36).
 - *Identity strip* — `_IdentityStrip` inside `today_screen.dart`. Renders only for specialists ("You are: Specialist · Coach") and substitutes ("You are: Substitute today"); silent for director / lead_teacher / teacher / guardian / kitchen because their context makes the role obvious. Tap → `/settings/roles`. Specialist without a specialty assigned gets a tertiary-tinted hint matching the team-list pattern. Closes the Coach Sam identity gap surfaced by persona-audit 2026-05-23. Shipped Wave 40.
-**Depends on**: nearly everything, including LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`), Pickup (pickup-phase "Right now" card routes to `/pickup`).
+**Depends on**: nearly everything, including LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`), Pickup (pickup-phase "Right now" card routes to `/pickup`), Spaces (`dayPhaseWindowsProvider` reads `spaces.capabilities['phase_windows']`).
 **Consumed by**: Nothing — Today is a leaf.
-**Last verified**: 2026-06-06
+**Last verified**: 2026-06-08
 
 ---
 
@@ -1250,6 +1250,7 @@ _Run 2026-06-03 (Tools + LiveSession lobby + Poster orientation)_ — discovery 
 ---
 
 _Last full registry verification: 2026-06-06 (World slice 1 — character_sheets)._
+_Incremental reconcile: 2026-06-08 (timer caps + phase windows caps + attendance natural-key index) — Action Words Capabilities + Status + Depends on + Consumed by updated for `timer_presets` / `suggest_play_minutes` caps. Today Data + Depends on updated for `phase_windows` cap. Settings Data + Program settings surface description + Depends on updated for all three caps + new `_TimerPresetsTile` / `_PlayLengthTile` / `_PhaseWindowsSection` tiles. Cross-links reconciled: Today→spaces and Action Words→spaces and Settings→spaces all bidirectional with SCHEMA.md. No new discovery drift._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._

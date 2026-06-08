@@ -36,9 +36,18 @@ sets them once during onboarding and rarely changes them.
 | `pickup_window_end` | time | `'18:00'` | When pickup window closes; "Late pickup" auto-flagged after |
 | `default_class_size` | int | 12 | Used as the default `capacity` for new Groups |
 | `photo_default_consent` | bool | false | Default for `Subject.photo_consent` on new enrollments — start opt-in, change to true if you have blanket consent |
+| `timer_presets` | JSON list | `[1,2,5,10]` | Present-surface timer's "house" preset minutes (Play today / Present an activity). Owner: `house_timer.dart` (`houseTimerPresetsProvider` / `HouseTimerActions.setPresetMinutes`) |
+| `suggest_play_minutes` | int | 5 | Big Thinking play beat's suggested timer length, in minutes. Owner: `house_timer.dart` (`houseSuggestPlayMinutesProvider` / `HouseTimerActions.setPlayMinutes`); injected into `buildDayRun`/`buildActivityArc` via `playSeconds` |
+| `phase_windows` | JSON object | afterschool | Day-phase boundaries `{arrival,program,pickup,closed}` as minutes-from-midnight; retimes the whole Today "RIGHT NOW" lead for camps / full-day programs. Owner: `DayPhaseWindows` + `dayPhaseWindowsProvider` + `DayPhaseActions.setWindows` in `today_providers.dart` |
+
+Note: not every SpaceCaps key is a toggle, so a few string/JSON caps live on
+the blob without a row here (`vertical`, `staff_pin`, `day_templates`,
+`program_start_date`) — see `SpaceCaps` in
+`lib/core/capabilities/capability_keys.dart` for the full list.
 
 **Where the user sees these:** Settings → Program → "What's tracked"
-(a checklist of features) + a "Defaults" section for window times, etc.
+(a checklist of features) + a "Defaults" section (photo consent, the two
+timer caps) + a "Day rhythm" section (the four `phase_windows` time pickers).
 
 ---
 
