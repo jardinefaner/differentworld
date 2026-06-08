@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:differentworld/core/capabilities/capabilities.dart';
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -196,6 +199,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                   value: caps.getBool(SpaceCaps.photoDefaultConsent),
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.photoDefaultConsent, v),
                 ),
+                _TimerPresetsTile(spaceId: spaceId),
                 const SizedBox(height: 32),
               ],
             );
@@ -230,6 +234,155 @@ class _SectionLabel extends StatelessWidget {
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+/// Director editor for the program's **house timer presets** — the quick
+/// durations on the present-surface timer (Play today / Present an activity).
+/// Reads [houseTimerPresetsProvider] (program policy on the Space caps); the
+/// row taps through to a glass sheet that adds/removes presets. Distinct from
+/// each device's remembered customs and the per-beat suggestion.
+class _TimerPresetsTile extends ConsumerWidget {
+  const _TimerPresetsTile({required this.spaceId});
+
+  final String spaceId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final presets = ref.watch(houseTimerPresetsProvider);
+    return ListTile(
+      leading: const Icon(Icons.timer_outlined),
+      title: const Text('Timer presets'),
+      subtitle: Text(
+        '${presets.join(', ')} min · the quick taps on the present timer',
+      ),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => showGlassSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (_) => _TimerPresetsSheet(spaceId: spaceId),
+      ),
+    );
+  }
+}
+
+class _TimerPresetsSheet extends ConsumerStatefulWidget {
+  const _TimerPresetsSheet({required this.spaceId});
+
+  final String spaceId;
+
+  @override
+  ConsumerState<_TimerPresetsSheet> createState() => _TimerPresetsSheetState();
+}
+
+class _TimerPresetsSheetState extends ConsumerState<_TimerPresetsSheet> {
+  late List<int> _working;
+  int _add = 5;
+
+  static const _maxPresets = 6;
+
+  @override
+  void initState() {
+    super.initState();
+    _working = List<int>.of(ref.read(houseTimerPresetsProvider));
+  }
+
+  Future<void> _save(List<int> next) async {
+    final clean = sanitizeTimerPresets(next);
+    final effective = clean.isEmpty ? kDefaultTimerPresetMinutes : clean;
+    setState(() => _working = effective);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    await runReported(
+      library: 'settings',
+      messenger: messenger,
+      onError: "Couldn't save timer presets. Try again.",
+      action: () => ref
+          .read(houseTimerActionsProvider)
+          .setPresetMinutes(widget.spaceId, effective),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final canAdd = _working.length < _maxPresets && !_working.contains(_add);
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Timer presets', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'The quick durations a teacher taps on the present-surface '
+              'timer. They can still dial any length — these are the shortcuts.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final m in _working)
+                  InputChip(
+                    label: Text('$m min'),
+                    onDeleted: _working.length > 1
+                        ? () => unawaited(
+                            _save([for (final x in _working) if (x != m) x]),
+                          )
+                        : null,
+                  ),
+              ],
+            ),
+            const Divider(height: 28),
+            Text('Add a duration', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                IconButton.filledTonal(
+                  tooltip: 'Less',
+                  icon: const Icon(Icons.remove),
+                  onPressed: _add > kMinPresetMinutes
+                      ? () => setState(() => _add--)
+                      : null,
+                ),
+                SizedBox(
+                  width: 72,
+                  child: Text(
+                    '$_add min',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: 'More',
+                  icon: const Icon(Icons.add),
+                  onPressed: _add < kMaxPresetMinutes
+                      ? () => setState(() => _add++)
+                      : null,
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: canAdd
+                      ? () => unawaited(_save([..._working, _add]))
+                      : null,
+                  child: const Text('Add'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => unawaited(_save(kDefaultTimerPresetMinutes)),
+              child: const Text('Reset to default'),
+            ),
+          ],
         ),
       ),
     );

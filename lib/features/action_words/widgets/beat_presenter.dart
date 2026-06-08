@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/action_words/day_run.dart';
+import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/present_timer.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:flutter/material.dart';
@@ -373,11 +374,16 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
         ? beats[_index].suggestedSeconds
         : 0;
     final remembered = ref.read(presentTimerProvider).value ?? const <int>[];
+    // Three concerns, sourced here so the sheet stays presentational: the
+    // per-beat suggestion (curriculum), the house presets (program policy),
+    // and the remembered customs (this device).
+    final housePresets = ref.read(houseTimerPresetsProvider);
     final result = await showModalBottomSheet<({int seconds, bool custom})>(
       context: context,
       backgroundColor: const Color(0xFF1A1A1A),
       builder: (ctx) => _TimerSheet(
         suggestedSeconds: suggested,
+        presetMinutes: housePresets,
         remembered: remembered,
         running: _remaining != null,
       ),
@@ -549,11 +555,16 @@ class _BeatSlide extends StatelessWidget {
 class _TimerSheet extends StatefulWidget {
   const _TimerSheet({
     required this.suggestedSeconds,
+    required this.presetMinutes,
     required this.remembered,
     required this.running,
   });
 
   final int suggestedSeconds;
+
+  /// The program's house presets (minutes) — sourced by the caller from
+  /// [houseTimerPresetsProvider]; the sheet just renders them.
+  final List<int> presetMinutes;
   final List<int> remembered;
   final bool running;
 
@@ -574,9 +585,9 @@ class _TimerSheetState extends State<_TimerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Quick chips: the fixed presets, then any remembered customs that aren't
-    // already a preset (deduped, whole-minute).
-    const presetMins = [1, 2, 5, 10];
+    // Quick chips: the program's house presets, then any remembered customs
+    // that aren't already a preset (deduped, whole-minute).
+    final presetMins = widget.presetMinutes;
     final quickMins = <int>[
       ...presetMins,
       for (final s in widget.remembered)

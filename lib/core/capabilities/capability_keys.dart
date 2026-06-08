@@ -24,6 +24,15 @@ abstract class SpaceCaps {
   /// String cap (JSON); director-authored, read-mostly, no table.
   static const dayTemplates = 'day_templates';
 
+  /// The program's "house" timer presets for the present surface — a
+  /// JSON-encoded list of whole minutes (e.g. [1,2,5,10]) the director
+  /// sets in program settings. String cap (JSON); director-authored,
+  /// read-mostly, no table. Empty/missing → the code default
+  /// (see features/action_words/house_timer.dart). This is *program
+  /// policy*; per-device remembered customs live in SharedPreferences
+  /// (present_timer.dart) and the per-beat suggestion on the beat itself.
+  static const timerPresets = 'timer_presets';
+
   /// The date Week 1 of the 10-week curriculum journey began (ISO date).
   /// The live "this week's world" is derived from it. String cap; null =
   /// the journey hasn't been started (worlds gallery still works).
