@@ -7,6 +7,7 @@ import 'package:differentworld/features/action_words/action_words_providers.dart
 import 'package:differentworld/features/action_words/reveal_overlay.dart';
 import 'package:differentworld/features/action_words/skills.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
+import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
@@ -22,6 +23,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
@@ -724,6 +726,273 @@ class _ThisWeekWorldCard extends ConsumerWidget {
   }
 }
 
+/// "Today's focus" — the DAY-level deepening below the week-level world card.
+/// Where `_ThisWeekWorldCard` says "this week the room is in World X", this
+/// says "today (Day N) we do *this*, and *this* goes on the wall". The single
+/// surface that answers "how do I run today" at the day grain — staff read it
+/// before the room opens. Renders nothing until the journey is active (the
+/// week card above already carries the director's setup prompt, so this never
+/// duplicates it). Staff-only.
+class _TodaysFocusCard extends ConsumerWidget {
+  const _TodaysFocusCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final day = ref.watch(currentProgramDayProvider);
+    final journeyDay = ref.watch(todaysJourneyDayProvider);
+    final block = ref.watch(currentBlockProvider);
+    final wallQuestion = ref.watch(todaysWallQuestionProvider);
+    if (day == null || journeyDay == null || block == null) {
+      return const SizedBox.shrink();
+    }
+
+    final accent = block.color;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: accent.withValues(alpha: 0.10),
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(
+              _showTodaysFocusSheet(context, day, journeyDay, block,
+                  wallQuestion),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(block.emoji, style: const TextStyle(fontSize: 30)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Today · Day $day of 50',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: accent,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            journeyDay.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
+                if (wallQuestion != null) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.format_quote_outlined,
+                          size: 18, color: theme.colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          wallQuestion,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The full "today's focus" read — the day's plan, the wall question, and the
+/// block's environment (room / soundtrack / the one moment that matters), with
+/// a one-tap launch into running the day on the cast surface.
+Future<void> _showTodaysFocusSheet(
+  BuildContext context,
+  int day,
+  JourneyDay journeyDay,
+  WorldBlock block,
+  String? wallQuestion,
+) {
+  return showGlassSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheetCtx) {
+      final theme = Theme.of(sheetCtx);
+      final accent = block.color;
+      return SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(block.emoji, style: const TextStyle(fontSize: 36)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Day $day · ${block.name}',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: accent,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          journeyDay.title,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _FocusLabel(text: 'Today’s focus', accent: accent),
+              const SizedBox(height: 6),
+              Text(journeyDay.focus, style: theme.textTheme.bodyMedium),
+              if (wallQuestion != null) ...[
+                const SizedBox(height: 18),
+                _FocusLabel(text: 'On the wall today', accent: accent),
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    '“$wallQuestion”',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontStyle: FontStyle.italic,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 18),
+              _FocusLabel(text: 'The room', accent: accent),
+              const SizedBox(height: 6),
+              _FocusDetailRow(icon: Icons.chair_outlined, text: block.room),
+              const SizedBox(height: 8),
+              _FocusDetailRow(
+                  icon: Icons.graphic_eq, text: block.soundtrack),
+              const SizedBox(height: 8),
+              _FocusDetailRow(
+                icon: Icons.auto_awesome_outlined,
+                text: block.keyMoment,
+                label: 'If one thing lands',
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    final router = GoRouter.of(sheetCtx);
+                    Navigator.of(sheetCtx).pop();
+                    unawaited(router.push('/play-today'));
+                  },
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text('Run today'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _FocusLabel extends StatelessWidget {
+  const _FocusLabel({required this.text, required this.accent});
+  final String text;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: accent,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.6,
+          ),
+    );
+  }
+}
+
+class _FocusDetailRow extends StatelessWidget {
+  const _FocusDetailRow({required this.icon, required this.text, this.label});
+  final IconData icon;
+  final String text;
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (label != null)
+                Text(
+                  label!,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              Text(
+                text,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// One teachable skill a day, with a 2-minute "how". A suggestion rotates
 /// daily; tap to browse + pick another. Keeps the daily-skill promise from
 /// being hollow without adding a navigation stack.
@@ -977,6 +1246,11 @@ class TodayBody extends ConsumerWidget {
         // 10-week journey is started; shows a setup prompt to the
         // director). The daily anchor: "this week, the room is in X."
         const _ThisWeekWorldCard(),
+        // "Today's focus" — the DAY-level deepening: Day N's title, the
+        // wall question, and (on tap) the full plan + room/soundtrack/key
+        // moment + a one-tap "Run today". Renders nothing until the
+        // journey is active. Staff-only.
+        if (viewer.isDailyLogger) const _TodaysFocusCard(),
         // "Today's skill" — one teachable thing a day, with a how
         // (closes the brief's skill-a-day; staff-only).
         if (viewer.isDailyLogger) const _TodaySkillCard(),
