@@ -1,0 +1,107 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/day_run.dart';
+import 'package:differentworld/features/action_words/thinking_games.dart';
+import 'package:differentworld/features/action_words/world_rules.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// The "day, on rails" assembler: given the live world (+ its rule + this
+/// week's thinking game), buildDayRun returns the ordered run of show the
+/// teacher just advances through — no hunting across screens.
+void main() {
+  CurriculumWorld loadWorld(int week) {
+    final raw = File('assets/curriculum/ten_worlds.json').readAsStringSync();
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final worlds = [
+      for (final w in decoded['worlds'] as List)
+        CurriculumWorld.fromJson(w as Map<String, dynamic>),
+    ];
+    return worlds.firstWhere((w) => w.week == week);
+  }
+
+  ThinkingGame loadThinking(String id) {
+    final raw = File(
+      'assets/curriculum/thinking_games.json',
+    ).readAsStringSync();
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return [
+      for (final g in decoded['games'] as List)
+        ThinkingGame.fromJson(g as Map<String, dynamic>),
+    ].firstWhere((g) => g.id == id);
+  }
+
+  test('the run opens on the world and closes on the reveal handoff', () {
+    final beats = buildDayRun(world: loadWorld(4));
+    expect(beats.first.kind, DayBeatKind.open);
+    expect(beats.last.kind, DayBeatKind.close);
+    expect(beats.first.big, isNotEmpty); // the world name
+  });
+
+  test('a full run threads the Big Thinking move in order', () {
+    final world = loadWorld(4);
+    final beats = buildDayRun(
+      world: world,
+      rules: rulesForWorld(world.id),
+      thinking: loadThinking('adaptation'),
+    );
+    final kinds = beats.map((b) => b.kind).toList();
+
+    // The four thinking beats appear, and in play → name → bridge → ask order.
+    expect(
+      kinds,
+      containsAll(<DayBeatKind>[
+        DayBeatKind.play,
+        DayBeatKind.name,
+        DayBeatKind.bridge,
+        DayBeatKind.ask,
+      ]),
+    );
+    expect(
+      kinds.indexOf(DayBeatKind.play) < kinds.indexOf(DayBeatKind.name),
+      isTrue,
+    );
+    expect(
+      kinds.indexOf(DayBeatKind.name) < kinds.indexOf(DayBeatKind.bridge),
+      isTrue,
+    );
+    expect(
+      kinds.indexOf(DayBeatKind.bridge) < kinds.indexOf(DayBeatKind.ask),
+      isTrue,
+    );
+    // The world frame comes before the thinking move, which comes before do.
+    expect(
+      kinds.indexOf(DayBeatKind.open) < kinds.indexOf(DayBeatKind.play),
+      isTrue,
+    );
+    expect(
+      kinds.indexOf(DayBeatKind.ask) < kinds.indexOf(DayBeatKind.activity),
+      isTrue,
+    );
+  });
+
+  test('with no thinking game, the run skips the thinking beats cleanly', () {
+    final beats = buildDayRun(world: loadWorld(4));
+    final kinds = beats.map((b) => b.kind).toSet();
+    expect(kinds.contains(DayBeatKind.play), isFalse);
+    expect(kinds.contains(DayBeatKind.open), isTrue);
+    expect(kinds.contains(DayBeatKind.verbs), isTrue);
+    expect(kinds.contains(DayBeatKind.close), isTrue);
+  });
+
+  test('every beat carries something to show (no blank slides)', () {
+    final world = loadWorld(7);
+    final beats = buildDayRun(
+      world: world,
+      rules: rulesForWorld(world.id),
+      thinking: loadThinking('imagination'),
+    );
+    for (final b in beats) {
+      final hasContent =
+          b.big.isNotEmpty || b.lines.isNotEmpty || b.sub.isNotEmpty;
+      expect(hasContent, isTrue, reason: '${b.kind} is blank');
+      expect(b.label, isNotEmpty, reason: '${b.kind} has no caption');
+    }
+  });
+}

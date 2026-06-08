@@ -9,6 +9,7 @@ import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/activity_match_screen.dart';
 import 'package:differentworld/features/action_words/book_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
+import 'package:differentworld/features/action_words/day_run_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/thinking_screen.dart';
@@ -242,8 +243,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'activities',
                     builder: (_, state) {
-                      final raw =
-                          state.uri.queryParameters['verbs'] ?? '';
+                      final raw = state.uri.queryParameters['verbs'] ?? '';
                       final verbs = raw.isEmpty
                           ? const <String>[]
                           : raw.split(',').where((s) => s.isNotEmpty).toList();
@@ -1027,6 +1027,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               worldId: state.pathParameters['id']!,
             ),
           ),
+          // "Play today" — the whole day on rails, one immersive run of show
+          // assembled from this week's world (docs/VISION.md "day, on rails").
+          GoRoute(
+            path: '/play-today',
+            builder: (_, _) => const DayRunScreen(),
+          ),
           // A child's Book — their 10-week journey grouped by world.
           GoRoute(
             path: '/book/:subjectId',
@@ -1105,8 +1111,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/join',
             builder: (_, state) {
-              final code =
-                  (state.uri.queryParameters['code'] ?? '').trim().toUpperCase();
+              final code = (state.uri.queryParameters['code'] ?? '')
+                  .trim()
+                  .toUpperCase();
               final def = gameById(state.uri.queryParameters['game'] ?? '');
               if (def == null || code.isEmpty) {
                 return const RouteTitle(

@@ -126,6 +126,11 @@ class _LiveWorld extends ConsumerWidget {
           children: [
             FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: accent),
+              onPressed: () => context.push('/play-today'),
+              icon: const Icon(Icons.play_circle_fill),
+              label: const Text('Play today'),
+            ),
+            OutlinedButton.icon(
               onPressed: () => _castOptions(context, world),
               icon: const Icon(Icons.cast),
               label: const Text('Cast to the room'),
