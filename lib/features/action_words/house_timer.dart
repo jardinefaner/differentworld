@@ -22,9 +22,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 const List<int> kDefaultTimerPresetMinutes = [1, 2, 5, 10];
 
 /// Whole-minute bounds for a preset — a classroom timer below 1 or above 60
-/// minutes isn't a "quick" preset.
+/// minutes isn't a "quick" preset. Also bounds the play-length knob.
 const int kMinPresetMinutes = 1;
 const int kMaxPresetMinutes = 60;
+
+/// The fallback length (minutes) for the Big Thinking play beat's suggested
+/// timer, when a program hasn't tuned its own.
+const int kDefaultPlayMinutes = 5;
 
 /// Sanitize a preset list: keep whole minutes in range, dedupe, sort. Empty
 /// in → empty out (the caller decides whether to fall back to the default).
@@ -71,6 +75,20 @@ final houseTimerPresetsProvider = Provider<List<int>>((ref) {
   return decodeTimerPresets(raw);
 });
 
+/// The program's house length (minutes) for the Big Thinking play beat's
+/// suggested timer. Clamped to the preset bounds; defaults to
+/// [kDefaultPlayMinutes]. Same caps-stream, `.select`-gated shape as the
+/// presets so unrelated cap writes don't rebuild it.
+final houseSuggestPlayMinutesProvider = Provider<int>((ref) {
+  final raw = ref.watch(
+    currentSpaceProvider.select(
+      (s) => s.value?.caps.getInt(SpaceCaps.suggestPlayMinutes),
+    ),
+  );
+  if (raw == null) return kDefaultPlayMinutes;
+  return raw.clamp(kMinPresetMinutes, kMaxPresetMinutes);
+});
+
 /// Director-only write of the house presets — replaces the whole list at once
 /// (the editor holds the full list, so there's no *per-element* read-modify-
 /// write like the day-template library has).
@@ -88,21 +106,37 @@ class HouseTimerActions {
 
   Future<void> _pending = Future<void>.value();
 
-  Future<void> setPresetMinutes(String spaceId, List<int> minutes) {
-    final op = _pending.then(
-      (_) => _ref
-          .read(spaceCapActionsProvider)
-          .setStringCap(
-            spaceId,
-            SpaceCaps.timerPresets,
-            encodeTimerPresets(minutes),
-          ),
-    );
-    // The queue's tail must never reject, or one failed write would block every
-    // later one; the caller still sees this op's own error via the returned op.
+  /// Serialize every house-timer caps write through one queue. `setStringCap`
+  /// and `setIntCap` each read-modify-write the SAME `capabilities` blob, so
+  /// concurrent writes — even across the two knobs (presets + play length) —
+  /// would clobber each other. Chaining makes each read the prior's result.
+  /// The tail never rejects (one failed write can't block the rest); the
+  /// caller still sees its own op's error via the returned future.
+  Future<void> _queue(Future<void> Function() write) {
+    final op = _pending.then((_) => write());
     _pending = op.catchError((Object _) {});
     return op;
   }
+
+  Future<void> setPresetMinutes(String spaceId, List<int> minutes) => _queue(
+    () => _ref
+        .read(spaceCapActionsProvider)
+        .setStringCap(
+          spaceId,
+          SpaceCaps.timerPresets,
+          encodeTimerPresets(minutes),
+        ),
+  );
+
+  Future<void> setPlayMinutes(String spaceId, int minutes) => _queue(
+    () => _ref
+        .read(spaceCapActionsProvider)
+        .setIntCap(
+          spaceId,
+          SpaceCaps.suggestPlayMinutes,
+          minutes.clamp(kMinPresetMinutes, kMaxPresetMinutes),
+        ),
+  );
 }
 
 final houseTimerActionsProvider = Provider<HouseTimerActions>(

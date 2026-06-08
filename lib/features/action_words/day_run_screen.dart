@@ -1,4 +1,5 @@
 import 'package:differentworld/features/action_words/day_run.dart';
+import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/widgets/beat_presenter.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
@@ -57,6 +58,7 @@ class DayRunScreen extends ConsumerWidget {
       world: world,
       rules: rulesForWorld(world.id),
       thinking: weekThinking.isEmpty ? null : weekThinking.first,
+      playSeconds: ref.watch(houseSuggestPlayMinutesProvider) * 60,
     );
 
     // Open where the day actually is — a mid-program tap lands on the doing

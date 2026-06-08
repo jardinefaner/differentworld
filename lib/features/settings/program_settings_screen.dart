@@ -200,6 +200,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                   onChanged: (v) => _setCap(spaceId,SpaceCaps.photoDefaultConsent, v),
                 ),
                 _TimerPresetsTile(spaceId: spaceId),
+                _PlayLengthTile(spaceId: spaceId),
                 const SizedBox(height: 32),
               ],
             );
@@ -264,6 +265,84 @@ class _TimerPresetsTile extends ConsumerWidget {
         context: context,
         showDragHandle: true,
         builder: (_) => _TimerPresetsSheet(spaceId: spaceId),
+      ),
+    );
+  }
+}
+
+/// The program's default length for the Big Thinking play beat's suggested
+/// timer — the *suggestion* layer of the timer (vs. the preset list above and
+/// each device's remembered customs). A compact inline stepper, auto-saved.
+/// Custom row (not ListTile) so the stepper never fights the trailing slot's
+/// width on a narrow phone.
+class _PlayLengthTile extends ConsumerWidget {
+  const _PlayLengthTile({required this.spaceId});
+
+  final String spaceId;
+
+  Future<void> _set(BuildContext context, WidgetRef ref, int minutes) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    return runReported(
+      library: 'settings',
+      messenger: messenger,
+      onError: "Couldn't save the play length. Try again.",
+      action: () =>
+          ref.read(houseTimerActionsProvider).setPlayMinutes(spaceId, minutes),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final mins = ref.watch(houseSuggestPlayMinutesProvider);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          const Icon(Icons.auto_awesome_outlined),
+          const SizedBox(width: 32),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Big Thinking play length',
+                  style: theme.textTheme.bodyLarge,
+                ),
+                Text(
+                  'Suggested timer on the play → name → bridge → question play.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Less',
+            icon: const Icon(Icons.remove_circle_outline),
+            onPressed: mins > kMinPresetMinutes
+                ? () => unawaited(_set(context, ref, mins - 1))
+                : null,
+          ),
+          SizedBox(
+            width: 52,
+            child: Text(
+              '$mins min',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleSmall,
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'More',
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: mins < kMaxPresetMinutes
+                ? () => unawaited(_set(context, ref, mins + 1))
+                : null,
+          ),
+        ],
       ),
     );
   }

@@ -68,6 +68,7 @@ List<DayBeat> buildDayRun({
   required CurriculumWorld world,
   List<WorldRule> rules = const [],
   ThinkingGame? thinking,
+  int playSeconds = 5 * 60,
 }) {
   final verbLines = <String>[
     for (final id in world.featuredVerbs)
@@ -111,7 +112,7 @@ List<DayBeat> buildDayRun({
         kind: DayBeatKind.play,
         label: 'Play it · ${thinking.concept}',
         big: thinking.play,
-        suggestedSeconds: 5 * 60,
+        suggestedSeconds: playSeconds,
       ),
       DayBeat(
         kind: DayBeatKind.name,
@@ -153,15 +154,15 @@ List<DayBeat> buildDayRun({
 /// "with present/cast… like a prompt"). The teacher's own activity, run through
 /// play → name → bridge → question: each beat is a full-screen cue the room
 /// sees and a move the teacher makes. The app prompts; the room is the stage.
-List<DayBeat> buildActivityArc(String activity) {
+List<DayBeat> buildActivityArc(String activity, {int playSeconds = 5 * 60}) {
   final a = activity.trim().isEmpty ? 'Your activity' : activity.trim();
   return [
     DayBeat(
       kind: DayBeatKind.play,
-      label: 'Play it · 5 minutes',
+      label: 'Play it · ${playSeconds ~/ 60} minutes',
       big: a,
       sub: 'Let it be noisy. One instruction, then go.',
-      suggestedSeconds: 5 * 60,
+      suggestedSeconds: playSeconds,
     ),
     const DayBeat(
       kind: DayBeatKind.name,

@@ -33,6 +33,13 @@ abstract class SpaceCaps {
   /// (present_timer.dart) and the per-beat suggestion on the beat itself.
   static const timerPresets = 'timer_presets';
 
+  /// The program's house length (whole minutes) for the Big Thinking play
+  /// beat — the suggested timer the present surface leads with on a play →
+  /// name → bridge → question play. Int cap; director-authored. Missing →
+  /// the code default (5). The Watch beat's suggestion stays intrinsic (the
+  /// video's own length); only the play suggestion is tunable.
+  static const suggestPlayMinutes = 'suggest_play_minutes';
+
   /// The date Week 1 of the 10-week curriculum journey began (ISO date).
   /// The live "this week's world" is derived from it. String cap; null =
   /// the journey hasn't been started (worlds gallery still works).

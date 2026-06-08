@@ -159,11 +159,20 @@ void main() {
       expect(bridge.lines.length, 3);
     });
 
-    test('the play beat suggests a 5-minute timer', () {
+    test('the play beat suggests a 5-minute timer by default', () {
       final play = buildActivityArc(
         'a maze',
       ).firstWhere((b) => b.kind == DayBeatKind.play);
       expect(play.suggestedSeconds, 5 * 60);
+    });
+
+    test('a program play length flows into the play beat + its label', () {
+      final play = buildActivityArc(
+        'a maze',
+        playSeconds: 8 * 60,
+      ).firstWhere((b) => b.kind == DayBeatKind.play);
+      expect(play.suggestedSeconds, 8 * 60);
+      expect(play.label, contains('8 minutes'));
     });
   });
 
@@ -192,6 +201,30 @@ void main() {
         beats.firstWhere((b) => b.kind == DayBeatKind.close).suggestedSeconds,
         0,
       );
+    });
+
+    test('the program play length drives play but not watch', () {
+      final world = loadWorld(4);
+      List<DayBeat> run(int playSeconds) => buildDayRun(
+        world: world,
+        rules: rulesForWorld(world.id),
+        thinking: loadThinking('adaptation'),
+        playSeconds: playSeconds,
+      );
+      int playOf(List<DayBeat> b) =>
+          b.firstWhere((x) => x.kind == DayBeatKind.play).suggestedSeconds;
+      List<int> watchesOf(List<DayBeat> b) => [
+        for (final x in b)
+          if (x.kind == DayBeatKind.watch) x.suggestedSeconds,
+      ];
+
+      final a = run(7 * 60);
+      final c = run(9 * 60);
+      // Play tracks the program length...
+      expect(playOf(a), 7 * 60);
+      expect(playOf(c), 9 * 60);
+      // ...while the Watch beats stay intrinsic (invariant to play length).
+      expect(watchesOf(a), watchesOf(c));
     });
   });
 

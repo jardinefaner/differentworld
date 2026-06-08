@@ -1,4 +1,5 @@
 import 'package:differentworld/features/action_words/day_run.dart';
+import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/widgets/beat_presenter.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,10 @@ class ActivityArcScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final world = ref.watch(currentWorldProvider);
     final accent = world?.color ?? const Color(0xFF7C4DFF);
-    final beats = buildActivityArc(activity);
+    final beats = buildActivityArc(
+      activity,
+      playSeconds: ref.watch(houseSuggestPlayMinutesProvider) * 60,
+    );
     return BeatPresenter(
       beats: beats,
       accent: accent,

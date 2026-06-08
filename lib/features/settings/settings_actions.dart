@@ -106,6 +106,17 @@ class SpaceCapActions {
     final caps = s.caps.setting(key, value);
     await db.spacesDao.updateCapabilities(spaceId, caps.toJson());
   }
+
+  /// Set or clear an integer cap. Stored as a JSON number so `getInt`
+  /// reads it straight back (a string-stored int would not). Pass
+  /// `value: null` to remove the key.
+  Future<void> setIntCap(String spaceId, String key, int? value) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final s = await db.spacesDao.findById(spaceId);
+    if (s == null) return;
+    final caps = s.caps.setting(key, value);
+    await db.spacesDao.updateCapabilities(spaceId, caps.toJson());
+  }
 }
 
 final spaceCapActionsProvider =
