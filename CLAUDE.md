@@ -294,6 +294,12 @@ keep the map fresh, and three agents maintain + query them.
   what the user dreams this app to be, in their own words. Not a feature
   list — the north star the features serve. New dreams land here the
   same turn they're spoken. **Authoritative for intent.**
+- **[docs/PRIMITIVES.md](docs/PRIMITIVES.md)** — the *what it's made of*:
+  the ten atoms every feature decomposes into (Verb, Three, Pick, Reveal,
+  Wall, Book, Circle, Timer, Question, Name), each grounded in its real
+  code construct. **Authoritative for architecture.** When adding a
+  feature, check it's expressible as a combination of these ten; needing
+  an eleventh is a signal, not a default.
 - **[docs/FEATURES.md](docs/FEATURES.md)** — folder-grained list of
   every feature in `lib/features/`. Each entry has a fixed shape:
   purpose, personas served, discovery surfaces (routes / omnibox /
