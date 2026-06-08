@@ -290,6 +290,13 @@ abstract class SubjectCaps {
   static const comfortItems = 'comfort_items';
   static const napRoutine = 'nap_routine';
   static const transitionNotes = 'transition_notes';
+
+  /// The child's chosen **crew** — one identity archetype from a closed
+  /// catalog (Explorer / Builder / Helper / …; see features/world/crews.dart),
+  /// shown on the character sheet. The one *chosen* element of an otherwise
+  /// *earned* identity (the title, verbs, and worlds derive from what the kid
+  /// does). String cap on `subjects.capabilities`; no migration.
+  static const crew = 'crew';
 }
 
 /// Age band values for GroupCaps.ageBand.

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
@@ -13,12 +15,14 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/story/moment.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
+import 'package:differentworld/features/world/crews.dart';
 import 'package:differentworld/features/world/skill_measure.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/scale_bar.dart';
 import 'package:flutter/material.dart';
@@ -179,6 +183,9 @@ class _Body extends ConsumerWidget {
                 ),
               ),
             ],
+            // CREW — the one CHOSEN element of the identity (the title above
+            // is EARNED). A closed catalog; tap to pick.
+            _Crew(subject: subject, subjectId: subjectId),
             const SizedBox(height: 14),
             // AGE · SEASON · MAP.
             Wrap(
@@ -344,6 +351,138 @@ class _Body extends ConsumerWidget {
       if (w != null) weeks.add(w);
     }
     return weeks;
+  }
+}
+
+/// The chosen crew — a tappable chip showing the picked archetype (or a
+/// prompt to pick one). The single CHOSEN element of an otherwise earned
+/// identity. Closed catalog (crews.dart); no rarity, fully reachable.
+class _Crew extends ConsumerWidget {
+  const _Crew({required this.subject, required this.subjectId});
+
+  final Subject? subject;
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final crew = crewById(subject?.caps.getString(SubjectCaps.crew));
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => unawaited(_pick(context, ref)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    crew?.emoji ?? '➕',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    crew == null ? 'Pick a crew' : 'Crew · ${crew.name}',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: crew == null
+                          ? theme.colorScheme.onSurfaceVariant
+                          : null,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.expand_more,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pick(BuildContext context, WidgetRef ref) async {
+    final current = subject?.caps.getString(SubjectCaps.crew);
+    final picked = await showGlassSheet<String>(
+      context: context,
+      builder: (_) => _CrewSheet(currentId: current),
+    );
+    if (picked == null) return; // dismissed
+    await ref
+        .read(subjectCapActionsProvider)
+        .setStringCap(
+          subjectId,
+          SubjectCaps.crew,
+          picked.isEmpty ? null : picked, // '' = clear
+        );
+  }
+}
+
+class _CrewSheet extends StatelessWidget {
+  const _CrewSheet({this.currentId});
+
+  final String? currentId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 2),
+                child: Text('Pick a crew', style: theme.textTheme.titleMedium),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                child: Text(
+                  'The one thing you choose — the rest of your world self is '
+                  'earned.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              for (final c in kCrews)
+                ListTile(
+                  leading: Text(c.emoji, style: const TextStyle(fontSize: 26)),
+                  title: Text(c.name),
+                  subtitle: Text(c.blurb),
+                  trailing: c.id == currentId
+                      ? Icon(
+                          Icons.check_circle,
+                          color: theme.colorScheme.primary,
+                        )
+                      : null,
+                  onTap: () => Navigator.of(context).pop(c.id),
+                ),
+              if (currentId != null)
+                ListTile(
+                  leading: Icon(Icons.clear, color: theme.colorScheme.error),
+                  title: Text(
+                    'No crew',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  onTap: () => Navigator.of(context).pop(''),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -775,8 +914,10 @@ class _SkillRow extends StatelessWidget {
               '${up ? '▲' : '▼'} ${up ? '+' : ''}'
               '${delta % 1 == 0 ? delta.toInt() : delta}',
               style: theme.textTheme.labelSmall?.copyWith(
+                // Theme-aware (not a magic green that clashes on warm
+                // surfaces / dark mode); the ▲/▼ already encodes direction.
                 color: up
-                    ? const Color(0xFF51CF66)
+                    ? theme.colorScheme.primary
                     : theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
               ),
