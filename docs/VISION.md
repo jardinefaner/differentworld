@@ -400,6 +400,22 @@ once it has a home.
   standing vibe; the week sets the content. A kid in the Safari Room during
   Week 3 (World of Nature) lives inside both at once. (Thread: room→skin on
   `groups`, the week schedule already drives the weekly skin.)
+- **2026-06-07 (cont.)** — **The day, on rails — "Play today."** In the
+  user's words: *"we could cast this to present and it's time bound and
+  context bound, room bound, all that, and play these in sequence without
+  the teacher trying to find where everything is."* All the pieces exist
+  (world hero, verbs, the rule, Watch → Do, the Big Thinking game, the
+  activity, the closing reveal) but they live on different screens, so the
+  teacher is a DJ hunting for tracks. The dream: **one "Play today" and the
+  day unfolds as an ordered, full-screen run of show** — assembled from
+  *this room × this week × this moment* — that the teacher just advances,
+  hands free of the menu. The day plays itself; the teacher stays with the
+  kids. **Time-bound** (the run is the day's arc; can start at the beat for
+  "right now"), **context-bound** (the live curriculum world + its thinking
+  game), **room-bound** (this cohort, its skin). Built on the present/cast
+  spine so it casts to the room. (Thread: `buildDayRun` + the `/play-today`
+  immersive runsheet, the cast cockpit. Next: two-device cast of the full
+  run + auto-advance toggle.)
 
 - **2026-06-01** — **Group discussions** by topic + age-appropriateness,
   with a library to back them (→ dream #6). **People role deck** —
