@@ -110,6 +110,7 @@ import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
+import 'package:differentworld/features/toolkit/print_toolkit_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_tool_screen.dart';
 import 'package:differentworld/features/tools/tools_screen.dart';
@@ -1050,6 +1051,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'The staff ladder',
               child: StaffLadderScreen(),
+            ),
+          ),
+          // The printable toolkit — generate the binder pages offline.
+          GoRoute(
+            path: '/print',
+            builder: (_, _) => const RouteTitle(
+              title: 'Printable toolkit',
+              child: PrintToolkitScreen(),
             ),
           ),
           // The staff runbook — the day moment-by-moment for the grown-ups.
