@@ -138,3 +138,46 @@ List<DayBeat> buildDayRun({
     ),
   ];
 }
+
+/// The story arc of ANY single activity, as a castable PROMPT (docs/VISION.md
+/// "with present/cast… like a prompt"). The teacher's own activity, run through
+/// play → name → bridge → question: each beat is a full-screen cue the room
+/// sees and a move the teacher makes. The app prompts; the room is the stage.
+List<DayBeat> buildActivityArc(String activity) {
+  final a = activity.trim().isEmpty ? 'Your activity' : activity.trim();
+  return [
+    DayBeat(
+      kind: DayBeatKind.play,
+      label: 'Play it · 5 minutes',
+      big: a,
+      sub: 'Let it be noisy. One instruction, then go.',
+    ),
+    const DayBeat(
+      kind: DayBeatKind.name,
+      label: 'Name it',
+      big: 'What ONE word does this secretly teach?',
+      sub: 'Say it three times — whisper it, say it, shout it.',
+    ),
+    const DayBeat(
+      kind: DayBeatKind.bridge,
+      label: 'Bridge it · where else?',
+      lines: [
+        'Where else in THIS ROOM does this happen?',
+        'Where else in YOUR LIFE?',
+        'Where else in the WHOLE WORLD?',
+      ],
+    ),
+    const DayBeat(
+      kind: DayBeatKind.ask,
+      label: 'The question',
+      big: 'Now ask the one with no answer.',
+      sub: 'Put it on the Wall. Walk away. Let it hang.',
+    ),
+    const DayBeat(
+      kind: DayBeatKind.close,
+      label: 'Closing',
+      big: 'Who were you in this?',
+      sub: 'Reveal each name.',
+    ),
+  ];
+}

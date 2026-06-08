@@ -104,4 +104,57 @@ void main() {
       expect(b.label, isNotEmpty, reason: '${b.kind} has no caption');
     }
   });
+
+  group('buildActivityArc — the teleprompter for any activity', () {
+    test('runs play → name → bridge → ask → close, in that order', () {
+      final kinds = buildActivityArc(
+        'making paper boats',
+      ).map((b) => b.kind).toList();
+      expect(kinds, <DayBeatKind>[
+        DayBeatKind.play,
+        DayBeatKind.name,
+        DayBeatKind.bridge,
+        DayBeatKind.ask,
+        DayBeatKind.close,
+      ]);
+    });
+
+    test('the typed activity is the play headline', () {
+      final beats = buildActivityArc('building a marble run');
+      final play = beats.firstWhere((b) => b.kind == DayBeatKind.play);
+      expect(play.big, 'building a marble run');
+    });
+
+    test('an empty / whitespace activity falls back to a non-blank prompt', () {
+      for (final input in ['', '   ']) {
+        final play = buildActivityArc(
+          input,
+        ).firstWhere((b) => b.kind == DayBeatKind.play);
+        expect(play.big.trim(), isNotEmpty, reason: 'blank play headline');
+      }
+    });
+
+    test('the activity is trimmed (no leading/trailing whitespace leaks)', () {
+      final play = buildActivityArc(
+        '  snack time  ',
+      ).firstWhere((b) => b.kind == DayBeatKind.play);
+      expect(play.big, 'snack time');
+    });
+
+    test('every beat carries content + a caption (no blank slides)', () {
+      for (final b in buildActivityArc('a nature walk')) {
+        final hasContent =
+            b.big.isNotEmpty || b.lines.isNotEmpty || b.sub.isNotEmpty;
+        expect(hasContent, isTrue, reason: '${b.kind} is blank');
+        expect(b.label, isNotEmpty, reason: '${b.kind} has no caption');
+      }
+    });
+
+    test('the bridge beat zooms out across three scopes', () {
+      final bridge = buildActivityArc(
+        'a drawing',
+      ).firstWhere((b) => b.kind == DayBeatKind.bridge);
+      expect(bridge.lines.length, 3);
+    });
+  });
 }

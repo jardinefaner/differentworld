@@ -7,6 +7,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/lens` — **any activity, the Different World way.** The app isn't a library
 /// you must use; it's a lens you lay over whatever you're already doing. Type
@@ -86,12 +87,37 @@ class _ActivityLensScreenState extends ConsumerState<ActivityLensScreen> {
             ),
           ),
           if (activity.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Center(
-              child: OutlinedButton.icon(
-                onPressed: _keep,
-                icon: const Icon(Icons.bookmark_add_outlined),
-                label: const Text('Keep this activity'),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: WrapAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _keep,
+                    icon: const Icon(Icons.bookmark_add_outlined),
+                    label: const Text('Keep this activity'),
+                  ),
+                  // Run it through the play → name → bridge → question arc,
+                  // full-screen, as a castable prompt the room can see.
+                  FilledButton.icon(
+                    onPressed: () => context.push('/arc', extra: activity),
+                    icon: const Icon(Icons.slideshow_outlined),
+                    label: const Text('Present this →'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Center(
+              child: Text(
+                'Present plays it on rails — do it, name it, bridge it, '
+                'ask it — so you teach the arc without holding it in your head.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],

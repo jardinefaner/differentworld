@@ -6,6 +6,7 @@ import 'package:differentworld/core/db/app_database.dart'
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_screen.dart';
+import 'package:differentworld/features/action_words/activity_arc_screen.dart';
 import 'package:differentworld/features/action_words/activity_match_screen.dart';
 import 'package:differentworld/features/action_words/book_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
@@ -1039,6 +1040,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/play-today',
             builder: (_, _) => const DayRunScreen(),
+          ),
+          // The teleprompter for teaching — ANY activity (typed on /lens, or
+          // generic) presented through its play → name → bridge → question
+          // arc as a castable prompt (docs/VISION.md "like a prompt").
+          GoRoute(
+            path: '/arc',
+            builder: (_, state) {
+              final extra = state.extra;
+              return ActivityArcScreen(
+                activity: extra is String ? extra : '',
+              );
+            },
           ),
           // A child's Book — their 10-week journey grouped by world.
           GoRoute(
