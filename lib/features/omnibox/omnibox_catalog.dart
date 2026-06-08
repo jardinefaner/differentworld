@@ -45,21 +45,17 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final groups = ref.watch(groupsProvider).value ?? const <Group>[];
   final subjects =
       ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
-  final activities =
-      ref.watch(activitiesProvider).value ?? const <Activity>[];
-  final locations =
-      ref.watch(locationsProvider).value ?? const <Location>[];
-  final vehicles =
-      ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
-  final members =
-      ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+  final activities = ref.watch(activitiesProvider).value ?? const <Activity>[];
+  final locations = ref.watch(locationsProvider).value ?? const <Location>[];
+  final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
+  final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
   // Pending invites — only needed for director-side revoke actions.
   // We watch unconditionally because providers can't be conditional;
   // the per-entry guard on canInviteStaff handles the gating.
   final pendingInvites = viewer.spaceId == null
       ? const <Invite>[]
       : (ref.watch(pendingInvitesProvider(viewer.spaceId!)).value ??
-          const <Invite>[]);
+            const <Invite>[]);
 
   // -- Static pages + actions -------------------------------------------
   final entries = <OmniboxEntry>[
@@ -226,6 +222,26 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         'roles',
       ],
       onSelect: (ctx, _) => ctx.push('/verb-jobs'),
+    ),
+    OmniboxEntry(
+      id: 'page.print',
+      label: 'Printable toolkit',
+      category: OmniboxCategory.page,
+      icon: Icons.print_outlined,
+      keywords: const [
+        'print',
+        'printable',
+        'toolkit',
+        'binder',
+        'verb cards',
+        'laminate',
+        'pdf',
+        'spell cards',
+        'reference card',
+        'paper',
+        'offline',
+      ],
+      onSelect: (ctx, _) => ctx.push('/print'),
     ),
     OmniboxEntry(
       id: 'page.runbook',
@@ -776,8 +792,7 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
             categoryById(tool.categoryId).name.toLowerCase(),
             ...tool.when.toLowerCase().split(' ').where((w) => w.length > 3),
           ],
-          onSelect: (ctx, _) =>
-              ctx.push('/settings/toolkit/${tool.slug}'),
+          onSelect: (ctx, _) => ctx.push('/settings/toolkit/${tool.slug}'),
         ),
     OmniboxEntry(
       id: 'page.roles',
@@ -931,8 +946,14 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         category: OmniboxCategory.action,
         icon: Icons.person_add_alt_1_outlined,
         keywords: const [
-          'invite', 'add staff', 'add teacher', 'add counselor',
-          'add specialist', 'add substitute', 'team', 'hire',
+          'invite',
+          'add staff',
+          'add teacher',
+          'add counselor',
+          'add specialist',
+          'add substitute',
+          'team',
+          'hire',
         ],
         onSelect: (ctx, _) => ctx.push('/settings/team/invite/new'),
       ),
@@ -948,11 +969,16 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         category: OmniboxCategory.action,
         icon: Icons.account_circle_outlined,
         keywords: const [
-          'me', 'profile', 'account', 'my account', 'cert',
-          'certification', 'photo', 'avatar',
+          'me',
+          'profile',
+          'account',
+          'my account',
+          'cert',
+          'certification',
+          'photo',
+          'avatar',
         ],
-        onSelect: (ctx, _) =>
-            ctx.push('/settings/team/${viewer.memberId}'),
+        onSelect: (ctx, _) => ctx.push('/settings/team/${viewer.memberId}'),
       ),
     OmniboxEntry(
       id: 'action.signout',
@@ -968,95 +994,108 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
 
   // -- Dynamic: classrooms ---------------------------------------------
   for (final g in groups) {
-    entries.add(OmniboxEntry(
-      id: 'classroom:${g.id}',
-      label: g.name,
-      subtitle: g.ageRange,
-      category: OmniboxCategory.classroom,
-      icon: Icons.meeting_room_outlined,
-      keywords: const ['class', 'room', 'group', 'cohort'],
-      groupId: 'classroom:${g.id}',
-      onSelect: (ctx, _) => ctx.push('/groups/${g.id}'),
-    ));
-    if (viewer.canTakeAttendance) {
-      entries.add(OmniboxEntry(
-        id: 'classroom:${g.id}:attendance',
-        label: 'Take attendance · ${g.name}',
-        category: OmniboxCategory.action,
-        icon: Icons.fact_check_outlined,
-        keywords: const ['attendance', 'mark', 'present'],
+    entries.add(
+      OmniboxEntry(
+        id: 'classroom:${g.id}',
+        label: g.name,
+        subtitle: g.ageRange,
+        category: OmniboxCategory.classroom,
+        icon: Icons.meeting_room_outlined,
+        keywords: const ['class', 'room', 'group', 'cohort'],
         groupId: 'classroom:${g.id}',
-        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/attendance'),
-      ));
+        onSelect: (ctx, _) => ctx.push('/groups/${g.id}'),
+      ),
+    );
+    if (viewer.canTakeAttendance) {
+      entries.add(
+        OmniboxEntry(
+          id: 'classroom:${g.id}:attendance',
+          label: 'Take attendance · ${g.name}',
+          category: OmniboxCategory.action,
+          icon: Icons.fact_check_outlined,
+          keywords: const ['attendance', 'mark', 'present'],
+          groupId: 'classroom:${g.id}',
+          onSelect: (ctx, _) => ctx.push('/groups/${g.id}/attendance'),
+        ),
+      );
     }
     if (viewer.canObserve) {
-      entries.add(OmniboxEntry(
-        id: 'classroom:${g.id}:observations',
-        label: 'Observations · ${g.name}',
-        category: OmniboxCategory.page,
-        icon: Icons.menu_book_outlined,
-        keywords: const ['notes', 'log', 'observation'],
-        groupId: 'classroom:${g.id}',
-        onSelect: (ctx, _) => ctx.push('/groups/${g.id}/observations'),
-      ));
+      entries.add(
+        OmniboxEntry(
+          id: 'classroom:${g.id}:observations',
+          label: 'Observations · ${g.name}',
+          category: OmniboxCategory.page,
+          icon: Icons.menu_book_outlined,
+          keywords: const ['notes', 'log', 'observation'],
+          groupId: 'classroom:${g.id}',
+          onSelect: (ctx, _) => ctx.push('/groups/${g.id}/observations'),
+        ),
+      );
     }
-    entries.add(OmniboxEntry(
-      id: 'classroom:${g.id}:schedule',
-      label: 'Schedule · ${g.name}',
-      category: OmniboxCategory.page,
-      icon: Icons.calendar_month_outlined,
-      keywords: const ['day', 'block', 'rotation'],
-      groupId: 'classroom:${g.id}',
-      onSelect: (ctx, _) => ctx.push('/schedule'),
-    ));
+    entries.add(
+      OmniboxEntry(
+        id: 'classroom:${g.id}:schedule',
+        label: 'Schedule · ${g.name}',
+        category: OmniboxCategory.page,
+        icon: Icons.calendar_month_outlined,
+        keywords: const ['day', 'block', 'rotation'],
+        groupId: 'classroom:${g.id}',
+        onSelect: (ctx, _) => ctx.push('/schedule'),
+      ),
+    );
     // Pat persona — one-tap "X is out today, Y is covering." Opens the
     // substitute-lead sheet directly without first navigating into the
     // schedule editor (the persona-audit recommendation, 2026-05-22).
     // Gated by canManageSchedule because the sheet writes
     // lead_substitute_member_id, same write the editor uses.
     if (viewer.canManageSchedule) {
-      entries.add(OmniboxEntry(
-        id: 'classroom:${g.id}:cover',
-        label: 'Cover today · ${g.name}',
-        category: OmniboxCategory.action,
-        icon: Icons.person_add_alt_1,
-        keywords: const [
-          'cover',
-          'substitute',
-          'sub',
-          'absent',
-          'out today',
-          'lead out',
-          'callout',
-        ],
-        groupId: 'classroom:${g.id}',
-        onSelect: (ctx, _) => unawaited(SubstituteLeadSheet.show(
-          ctx,
-          groupId: g.id,
-          groupName: g.name,
-          date: _todayIsoLocal(),
-        )),
-      ));
+      entries.add(
+        OmniboxEntry(
+          id: 'classroom:${g.id}:cover',
+          label: 'Cover today · ${g.name}',
+          category: OmniboxCategory.action,
+          icon: Icons.person_add_alt_1,
+          keywords: const [
+            'cover',
+            'substitute',
+            'sub',
+            'absent',
+            'out today',
+            'lead out',
+            'callout',
+          ],
+          groupId: 'classroom:${g.id}',
+          onSelect: (ctx, _) => unawaited(
+            SubstituteLeadSheet.show(
+              ctx,
+              groupId: g.id,
+              groupName: g.name,
+              date: _todayIsoLocal(),
+            ),
+          ),
+        ),
+      );
     }
     if (viewer.canManageSpace) {
-      entries.add(OmniboxEntry(
-        id: 'classroom:${g.id}:student.new',
-        label: 'Add a ${labels.subject.toLowerCase()} · ${g.name}',
-        category: OmniboxCategory.action,
-        icon: Icons.person_add_outlined,
-        keywords: const [
-          'new student',
-          'new patient',
-          'new project',
-          'new guest',
-          'enroll',
-          'add kid',
-          'add child',
-        ],
-        groupId: 'classroom:${g.id}',
-        onSelect: (ctx, _) =>
-            ctx.push('/groups/${g.id}/students/new'),
-      ));
+      entries.add(
+        OmniboxEntry(
+          id: 'classroom:${g.id}:student.new',
+          label: 'Add a ${labels.subject.toLowerCase()} · ${g.name}',
+          category: OmniboxCategory.action,
+          icon: Icons.person_add_outlined,
+          keywords: const [
+            'new student',
+            'new patient',
+            'new project',
+            'new guest',
+            'enroll',
+            'add kid',
+            'add child',
+          ],
+          groupId: 'classroom:${g.id}',
+          onSelect: (ctx, _) => ctx.push('/groups/${g.id}/students/new'),
+        ),
+      );
     }
   }
 
@@ -1071,45 +1110,51 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     final gid = s.groupId;
     if (gid == null) continue;
     final fullName = '${s.firstName} ${s.lastName}'.trim();
-    entries.add(OmniboxEntry(
-      id: 'subject:${s.id}',
-      label: fullName,
-      subtitle: 'Open profile',
-      category: OmniboxCategory.person,
-      icon: Icons.child_care_outlined,
-      // Broad search terms so omnibox finds people regardless of
-      // which vertical-noun the user types.
-      keywords: const ['kid', 'child', 'student', 'patient', 'guest'],
-      groupId: 'subject:${s.id}',
-      onSelect: (ctx, _) =>
-          unawaited(ctx.push('/groups/$gid/students/${s.id}')),
-    ));
+    entries.add(
+      OmniboxEntry(
+        id: 'subject:${s.id}',
+        label: fullName,
+        subtitle: 'Open profile',
+        category: OmniboxCategory.person,
+        icon: Icons.child_care_outlined,
+        // Broad search terms so omnibox finds people regardless of
+        // which vertical-noun the user types.
+        keywords: const ['kid', 'child', 'student', 'patient', 'guest'],
+        groupId: 'subject:${s.id}',
+        onSelect: (ctx, _) =>
+            unawaited(ctx.push('/groups/$gid/students/${s.id}')),
+      ),
+    );
     // `gid` is guaranteed non-null here (we `continue`d above).
     if (viewer.canObserve) {
-      entries.add(OmniboxEntry(
-        id: 'subject:${s.id}:progress-report',
-        label: 'Progress report · $fullName',
-        category: OmniboxCategory.action,
-        icon: Icons.description_outlined,
-        keywords: const ['report', 'pdf', 'progress', 'parent'],
-        groupId: 'subject:${s.id}',
-        onSelect: (ctx, _) => ctx.push(
-          '/groups/$gid/students/${s.id}/progress-report',
+      entries.add(
+        OmniboxEntry(
+          id: 'subject:${s.id}:progress-report',
+          label: 'Progress report · $fullName',
+          category: OmniboxCategory.action,
+          icon: Icons.description_outlined,
+          keywords: const ['report', 'pdf', 'progress', 'parent'],
+          groupId: 'subject:${s.id}',
+          onSelect: (ctx, _) => ctx.push(
+            '/groups/$gid/students/${s.id}/progress-report',
+          ),
         ),
-      ));
-      entries.add(OmniboxEntry(
-        id: 'subject:${s.id}:observation.new',
-        label: 'Quick observation · $fullName',
-        category: OmniboxCategory.action,
-        icon: Icons.edit_note_outlined,
-        keywords: const ['note', 'log', 'observe'],
-        groupId: 'subject:${s.id}',
-        onSelect: (ctx, _) {
-          unawaited(
-            ctx.push('/observations/new?groupId=$gid&subjectId=${s.id}'),
-          );
-        },
-      ));
+      );
+      entries.add(
+        OmniboxEntry(
+          id: 'subject:${s.id}:observation.new',
+          label: 'Quick observation · $fullName',
+          category: OmniboxCategory.action,
+          icon: Icons.edit_note_outlined,
+          keywords: const ['note', 'log', 'observe'],
+          groupId: 'subject:${s.id}',
+          onSelect: (ctx, _) {
+            unawaited(
+              ctx.push('/observations/new?groupId=$gid&subjectId=${s.id}'),
+            );
+          },
+        ),
+      );
     }
     // Invite a parent — per-subject action surfaced for directors so
     // they can mint a guardian invite for a specific kid without
@@ -1119,19 +1164,26 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     // canManageSpace because creating a guardians row + minting an
     // invite is a director action.
     if (viewer.canManageSpace) {
-      entries.add(OmniboxEntry(
-        id: 'subject:${s.id}:invite.parent',
-        label: 'Invite a parent · $fullName',
-        category: OmniboxCategory.action,
-        icon: Icons.family_restroom_outlined,
-        keywords: const [
-          'parent', 'family', 'mom', 'dad', 'guardian', 'invite',
-          'invite parent', 'invite family',
-        ],
-        groupId: 'subject:${s.id}',
-        onSelect: (ctx, _) =>
-            ctx.push('/groups/$gid/students/${s.id}/edit'),
-      ));
+      entries.add(
+        OmniboxEntry(
+          id: 'subject:${s.id}:invite.parent',
+          label: 'Invite a parent · $fullName',
+          category: OmniboxCategory.action,
+          icon: Icons.family_restroom_outlined,
+          keywords: const [
+            'parent',
+            'family',
+            'mom',
+            'dad',
+            'guardian',
+            'invite',
+            'invite parent',
+            'invite family',
+          ],
+          groupId: 'subject:${s.id}',
+          onSelect: (ctx, _) => ctx.push('/groups/$gid/students/${s.id}/edit'),
+        ),
+      );
     }
     // Messages — staff path to the per-child thread. Wave 100: the
     // entry used to push subject-detail and let the user find the
@@ -1143,41 +1195,50 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     // surface a snackbar so the user knows why. Gated on canObserve
     // because anyone who logs observations may need to ping family.
     if (viewer.canObserve) {
-      entries.add(OmniboxEntry(
-        id: 'subject:${s.id}:messages',
-        label: 'Messages · $fullName',
-        category: OmniboxCategory.action,
-        icon: Icons.forum_outlined,
-        keywords: const [
-          'message', 'messages', 'chat', 'family', 'parent', 'mom',
-          'dad', 'guardian',
-        ],
-        groupId: 'subject:${s.id}',
-        onSelect: (ctx, ref) async {
-          final guardians =
-              await ref.read(guardiansForSubjectProvider(s.id).future);
-          if (!ctx.mounted) return;
-          if (guardians.length == 1) {
-            unawaited(
-              ctx.push('/messages/${s.id}/${guardians.first.id}'),
+      entries.add(
+        OmniboxEntry(
+          id: 'subject:${s.id}:messages',
+          label: 'Messages · $fullName',
+          category: OmniboxCategory.action,
+          icon: Icons.forum_outlined,
+          keywords: const [
+            'message',
+            'messages',
+            'chat',
+            'family',
+            'parent',
+            'mom',
+            'dad',
+            'guardian',
+          ],
+          groupId: 'subject:${s.id}',
+          onSelect: (ctx, ref) async {
+            final guardians = await ref.read(
+              guardiansForSubjectProvider(s.id).future,
             );
-            return;
-          }
-          // 0 guardians: subject-detail is where the user adds one.
-          // 2+ guardians: subject-detail lists them and the user
-          // picks the thread.
-          unawaited(ctx.push('/groups/$gid/students/${s.id}'));
-          if (guardians.isEmpty) {
-            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'No guardians linked yet — add one to start messaging.',
+            if (!ctx.mounted) return;
+            if (guardians.length == 1) {
+              unawaited(
+                ctx.push('/messages/${s.id}/${guardians.first.id}'),
+              );
+              return;
+            }
+            // 0 guardians: subject-detail is where the user adds one.
+            // 2+ guardians: subject-detail lists them and the user
+            // picks the thread.
+            unawaited(ctx.push('/groups/$gid/students/${s.id}'));
+            if (guardians.isEmpty) {
+              ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'No guardians linked yet — add one to start messaging.',
+                  ),
                 ),
-              ),
-            );
-          }
-        },
-      ));
+              );
+            }
+          },
+        ),
+      );
     }
     // Mark absent today — single-tap chore for the most common
     // attendance write. Today this requires opening the attendance
@@ -1187,52 +1248,61 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
     // Not destructive — director / staff can flip it back from the
     // attendance screen.
     if (viewer.canTakeAttendance) {
-      entries.add(OmniboxEntry(
-        id: 'subject:${s.id}:attendance.absent',
-        label: 'Mark absent today · $fullName',
-        category: OmniboxCategory.action,
-        icon: Icons.event_busy_outlined,
-        keywords: const [
-          'absent', 'absence', 'out', 'callout', 'sick', 'not here',
-          'missing', 'check in',
-        ],
-        groupId: 'subject:${s.id}',
-        onSelect: (ctx, ref) async {
-          try {
-            await ref.read(attendanceActionsProvider).setStatus(
-                  groupId: gid,
-                  subjectId: s.id,
-                  date: _todayIsoLocal(),
-                  status: AttendanceStatus.absent,
-                );
-            if (!ctx.mounted) return;
-            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
-              SnackBar(
-                content: Text('$fullName marked absent.'),
-                action: SnackBarAction(
-                  label: 'Open attendance',
-                  onPressed: () =>
-                      ctx.push('/groups/$gid/attendance'),
+      entries.add(
+        OmniboxEntry(
+          id: 'subject:${s.id}:attendance.absent',
+          label: 'Mark absent today · $fullName',
+          category: OmniboxCategory.action,
+          icon: Icons.event_busy_outlined,
+          keywords: const [
+            'absent',
+            'absence',
+            'out',
+            'callout',
+            'sick',
+            'not here',
+            'missing',
+            'check in',
+          ],
+          groupId: 'subject:${s.id}',
+          onSelect: (ctx, ref) async {
+            try {
+              await ref
+                  .read(attendanceActionsProvider)
+                  .setStatus(
+                    groupId: gid,
+                    subjectId: s.id,
+                    date: _todayIsoLocal(),
+                    status: AttendanceStatus.absent,
+                  );
+              if (!ctx.mounted) return;
+              ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+                SnackBar(
+                  content: Text('$fullName marked absent.'),
+                  action: SnackBarAction(
+                    label: 'Open attendance',
+                    onPressed: () => ctx.push('/groups/$gid/attendance'),
+                  ),
                 ),
-              ),
-            );
-          } on Exception catch (e, st) {
-            FlutterError.reportError(
-              FlutterErrorDetails(
-                exception: e,
-                stack: st,
-                library: 'attendance',
-              ),
-            );
-            if (!ctx.mounted) return;
-            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
-              const SnackBar(
-                content: Text('Could not mark absent. Try again.'),
-              ),
-            );
-          }
-        },
-      ));
+              );
+            } on Exception catch (e, st) {
+              FlutterError.reportError(
+                FlutterErrorDetails(
+                  exception: e,
+                  stack: st,
+                  library: 'attendance',
+                ),
+              );
+              if (!ctx.mounted) return;
+              ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+                const SnackBar(
+                  content: Text('Could not mark absent. Try again.'),
+                ),
+              );
+            }
+          },
+        ),
+      );
     }
   }
 
@@ -1244,110 +1314,126 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   if (viewer.canInviteStaff) {
     for (final inv in pendingInvites) {
       final label = _inviteShortLabel(inv);
-      entries.add(OmniboxEntry(
-        id: 'invite:${inv.id}:revoke',
-        label: 'Revoke pending invite · $label',
-        category: OmniboxCategory.action,
-        icon: Icons.cancel_outlined,
-        keywords: const [
-          'revoke', 'cancel', 'pending', 'invite', 'remove',
-        ],
-        onSelect: (ctx, ref) async {
-          final ok = await confirmDestructive(
-            ctx,
-            title: 'Revoke this invite?',
-            message:
-                'The code stops working immediately. The recipient '
-                "won't be able to join with it.",
-            confirmLabel: 'Revoke',
-          );
-          if (!ok || !ctx.mounted) return;
-          await ref.read(inviteActionsProvider).revoke(inv.id);
-          if (!ctx.mounted) return;
-          ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
-            SnackBar(content: Text('Revoked invite for $label.')),
-          );
-        },
-      ));
+      entries.add(
+        OmniboxEntry(
+          id: 'invite:${inv.id}:revoke',
+          label: 'Revoke pending invite · $label',
+          category: OmniboxCategory.action,
+          icon: Icons.cancel_outlined,
+          keywords: const [
+            'revoke',
+            'cancel',
+            'pending',
+            'invite',
+            'remove',
+          ],
+          onSelect: (ctx, ref) async {
+            final ok = await confirmDestructive(
+              ctx,
+              title: 'Revoke this invite?',
+              message:
+                  'The code stops working immediately. The recipient '
+                  "won't be able to join with it.",
+              confirmLabel: 'Revoke',
+            );
+            if (!ok || !ctx.mounted) return;
+            await ref.read(inviteActionsProvider).revoke(inv.id);
+            if (!ctx.mounted) return;
+            ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+              SnackBar(content: Text('Revoked invite for $label.')),
+            );
+          },
+        ),
+      );
     }
   }
 
   // -- Dynamic: activities ---------------------------------------------
   for (final a in activities) {
-    entries.add(OmniboxEntry(
-      id: 'activity:${a.id}',
-      label: a.name,
-      subtitle: 'Edit activity',
-      category: OmniboxCategory.activity,
-      icon: Icons.local_activity_outlined,
-      keywords: const ['activity'],
-      groupId: 'activity:${a.id}',
-      onSelect: (ctx, _) => ctx.push('/activities/${a.id}'),
-    ));
+    entries.add(
+      OmniboxEntry(
+        id: 'activity:${a.id}',
+        label: a.name,
+        subtitle: 'Edit activity',
+        category: OmniboxCategory.activity,
+        icon: Icons.local_activity_outlined,
+        keywords: const ['activity'],
+        groupId: 'activity:${a.id}',
+        onSelect: (ctx, _) => ctx.push('/activities/${a.id}'),
+      ),
+    );
   }
 
   // -- Dynamic: locations ----------------------------------------------
   for (final l in locations) {
-    entries.add(OmniboxEntry(
-      id: 'location:${l.id}',
-      label: l.name,
-      subtitle: 'Edit location',
-      category: OmniboxCategory.place,
-      icon: Icons.place_outlined,
-      keywords: const ['location', 'place', 'room'],
-      groupId: 'location:${l.id}',
-      onSelect: (ctx, _) => ctx.push('/settings/locations'),
-    ));
+    entries.add(
+      OmniboxEntry(
+        id: 'location:${l.id}',
+        label: l.name,
+        subtitle: 'Edit location',
+        category: OmniboxCategory.place,
+        icon: Icons.place_outlined,
+        keywords: const ['location', 'place', 'room'],
+        groupId: 'location:${l.id}',
+        onSelect: (ctx, _) => ctx.push('/settings/locations'),
+      ),
+    );
   }
 
   // -- Dynamic: vehicles -----------------------------------------------
   for (final v in vehicles) {
-    entries.add(OmniboxEntry(
-      id: 'vehicle:${v.id}',
-      label: v.name,
-      subtitle: v.licensePlate?.toUpperCase(),
-      category: OmniboxCategory.vehicle,
-      icon: Icons.directions_bus_outlined,
-      keywords: const ['vehicle', 'fleet', 'van', 'bus'],
-      groupId: 'vehicle:${v.id}',
-      onSelect: (ctx, _) => ctx.push('/vehicles/${v.id}'),
-    ));
+    entries.add(
+      OmniboxEntry(
+        id: 'vehicle:${v.id}',
+        label: v.name,
+        subtitle: v.licensePlate?.toUpperCase(),
+        category: OmniboxCategory.vehicle,
+        icon: Icons.directions_bus_outlined,
+        keywords: const ['vehicle', 'fleet', 'van', 'bus'],
+        groupId: 'vehicle:${v.id}',
+        onSelect: (ctx, _) => ctx.push('/vehicles/${v.id}'),
+      ),
+    );
     if (viewer.canDrive) {
-      entries.add(OmniboxEntry(
-        id: 'vehicle:${v.id}:checkout',
-        label: 'Check out · ${v.name}',
-        category: OmniboxCategory.action,
-        icon: Icons.key_outlined,
-        keywords: const ['checkout', 'pre-trip', 'pretrip'],
-        groupId: 'vehicle:${v.id}',
-        onSelect: (ctx, _) =>
-            ctx.push('/vehicles/${v.id}/checkout'),
-      ));
-      entries.add(OmniboxEntry(
-        id: 'vehicle:${v.id}:checkin',
-        label: 'Check in · ${v.name}',
-        category: OmniboxCategory.action,
-        icon: Icons.assignment_turned_in_outlined,
-        keywords: const ['checkin', 'post-trip', 'return'],
-        groupId: 'vehicle:${v.id}',
-        onSelect: (ctx, _) =>
-            ctx.push('/vehicles/${v.id}/checkin'),
-      ));
+      entries.add(
+        OmniboxEntry(
+          id: 'vehicle:${v.id}:checkout',
+          label: 'Check out · ${v.name}',
+          category: OmniboxCategory.action,
+          icon: Icons.key_outlined,
+          keywords: const ['checkout', 'pre-trip', 'pretrip'],
+          groupId: 'vehicle:${v.id}',
+          onSelect: (ctx, _) => ctx.push('/vehicles/${v.id}/checkout'),
+        ),
+      );
+      entries.add(
+        OmniboxEntry(
+          id: 'vehicle:${v.id}:checkin',
+          label: 'Check in · ${v.name}',
+          category: OmniboxCategory.action,
+          icon: Icons.assignment_turned_in_outlined,
+          keywords: const ['checkin', 'post-trip', 'return'],
+          groupId: 'vehicle:${v.id}',
+          onSelect: (ctx, _) => ctx.push('/vehicles/${v.id}/checkin'),
+        ),
+      );
     }
   }
 
   // -- Dynamic: members ------------------------------------------------
   for (final m in members) {
-    entries.add(OmniboxEntry(
-      id: 'member:${m.id}',
-      label: m.displayName,
-      subtitle: _roleLabel(m.role),
-      category: OmniboxCategory.person,
-      icon: Icons.person_outline,
-      keywords: const ['teacher', 'staff', 'counselor', 'lead'],
-      groupId: 'member:${m.id}',
-      onSelect: (ctx, _) => ctx.push('/settings/team/${m.id}'),
-    ));
+    entries.add(
+      OmniboxEntry(
+        id: 'member:${m.id}',
+        label: m.displayName,
+        subtitle: _roleLabel(m.role),
+        category: OmniboxCategory.person,
+        icon: Icons.person_outline,
+        keywords: const ['teacher', 'staff', 'counselor', 'lead'],
+        groupId: 'member:${m.id}',
+        onSelect: (ctx, _) => ctx.push('/settings/team/${m.id}'),
+      ),
+    );
   }
 
   return entries;
