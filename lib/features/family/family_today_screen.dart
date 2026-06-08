@@ -308,6 +308,10 @@ class _ChildCard extends ConsumerWidget {
                 const SizedBox(height: 10),
                 NowNextStrip(groupId: child.groupId!, compact: true),
               ],
+              // The 4:30 question: has my child been picked up? Renders only
+              // once they've been released (or left early); silence = still
+              // here, which the attendance status above already conveys.
+              _PickupStatusLine(subjectId: child.id),
             ],
           ),
         ),
@@ -321,6 +325,55 @@ class _ChildCard extends ConsumerWidget {
   static String _statusLabel(AttendanceStatus? s) {
     if (s == null) return 'Check-in pending — usually before 9 AM';
     return s.label;
+  }
+}
+
+/// The family-side pickup confirmation: "Picked up at 4:47 PM" (or "Left early
+/// today"). Renders nothing until the child has actually been released — its
+/// absence is itself the "still here" signal, which the attendance status on
+/// the card already conveys.
+class _PickupStatusLine extends ConsumerWidget {
+  const _PickupStatusLine({required this.subjectId});
+
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(familyPickupStatusProvider(subjectId)).value;
+    if (status == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final (IconData icon, String text, Color tint) = switch (status.state) {
+      FamilyPickupState.releasedAt => (
+        Icons.check_circle_outline,
+        status.at != null ? 'Picked up at ${timeOfDay(status.at!)}' : 'Picked up',
+        scheme.primary,
+      ),
+      FamilyPickupState.leftEarly => (
+        Icons.logout_outlined,
+        'Left early today',
+        scheme.tertiary,
+      ),
+      // here / absent / unknown → no line (the status text covers it).
+      _ => (Icons.circle, '', scheme.onSurfaceVariant),
+    };
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: tint),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: tint,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

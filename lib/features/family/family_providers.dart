@@ -2,7 +2,10 @@ import 'dart:convert';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -135,6 +138,79 @@ final familyEntriesForSubjectProvider =
     ];
   },
 );
+
+/// What a parent most wants to know at pickup time: has my child been picked
+/// up, and when? Derived from today's attendance + today's departure entry.
+enum FamilyPickupState { unknown, here, leftEarly, releasedAt, absent }
+
+typedef FamilyPickupStatus = ({FamilyPickupState state, DateTime? at});
+
+/// Pure mapping of (release time?, attendance status?) → the parent-facing
+/// pickup state. A departure wins (a released child is picked up regardless of
+/// the attendance axis); otherwise the attendance status decides. Pure +
+/// string-typed so it's unit-testable without Drift rows.
+FamilyPickupStatus deriveFamilyPickupState({
+  String? releasedAtIso,
+  String? attendanceStatus,
+}) {
+  if (releasedAtIso != null) {
+    return (
+      state: FamilyPickupState.releasedAt,
+      at: DateTime.tryParse(releasedAtIso)?.toLocal(),
+    );
+  }
+  final status = attendanceStatus == null
+      ? null
+      : AttendanceStatus.fromDb(attendanceStatus);
+  return switch (status) {
+    AttendanceStatus.earlyPickup => (
+      state: FamilyPickupState.leftEarly,
+      at: null,
+    ),
+    AttendanceStatus.present || AttendanceStatus.late => (
+      state: FamilyPickupState.here,
+      at: null,
+    ),
+    AttendanceStatus.absent || AttendanceStatus.excused => (
+      state: FamilyPickupState.absent,
+      at: null,
+    ),
+    _ => (state: FamilyPickupState.unknown, at: null),
+  };
+}
+
+/// Family-side pickup status for one child today (PostgREST-backed — same
+/// not-offline-first trade-off as the other per-subject family reads).
+/// Combines today's attendance with today's latest departure entry.
+// ignore: specify_nonobvious_property_types
+final familyPickupStatusProvider = FutureProvider.autoDispose
+    .family<FamilyPickupStatus, String>((ref, subjectId) async {
+      final today = todayKey();
+      final record = await ref.watch(
+        familyAttendanceForSubjectProvider((
+          subjectId: subjectId,
+          dateIso: today,
+        )).future,
+      );
+      final departures = await ref.watch(
+        familyEntriesForSubjectProvider((
+          subjectId: subjectId,
+          kind: EntryKind.departure,
+        )).future,
+      );
+      String? releasedAtIso;
+      for (final e in departures) {
+        final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+        if (local == null || dateKey(local) != today) continue;
+        if (releasedAtIso == null || e.recordedAt.compareTo(releasedAtIso) > 0) {
+          releasedAtIso = e.recordedAt;
+        }
+      }
+      return deriveFamilyPickupState(
+        releasedAtIso: releasedAtIso,
+        attendanceStatus: record?.status,
+      );
+    });
 
 /// Family-facing incidents for a child — only the ones staff have
 /// **surfaced** (notified the family or wrote a family note). This NEVER
