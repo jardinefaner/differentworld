@@ -11,6 +11,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
+import 'package:differentworld/features/launch/launch_readiness.dart';
 import 'package:differentworld/features/live_session/live_session_banner.dart';
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -106,6 +107,84 @@ class _ChecklistCallToAction extends ConsumerWidget {
 /// phase comes from the wall clock via [dayPhaseProvider]; this card
 /// only *leads the eye* to surfaces that already exist — no new data
 /// layer (docs/WORKFLOWS.md gap #1, wave 1). Hidden after hours.
+/// "Ready to run?" — the pre-9:00 setup check. Director-only, and only while
+/// a gating precondition is still unmet; vanishes the moment the day is ready.
+class _ReadyToRunCard extends ConsumerWidget {
+  const _ReadyToRunCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    if (!viewer.isDirector) return const SizedBox.shrink();
+    final items = ref.watch(launchReadinessProvider);
+    if (allReady(items)) return const SizedBox.shrink();
+    final count = readyCount(items);
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: theme.colorScheme.primaryContainer,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push('/ready'));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.rocket_launch_outlined,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ready to run?',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${count.done} of ${count.total} set for tomorrow — '
+                        'finish setup.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer
+                              .withValues(
+                                alpha: 0.8,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _RightNowCard extends ConsumerWidget {
   const _RightNowCard();
 
@@ -670,6 +749,10 @@ class TodayBody extends ConsumerWidget {
               ? Theme.of(context).colorScheme.error
               : null,
         ),
+        // "Ready to run?" — the pre-9:00 setup check. Renders nothing once the
+        // gating preconditions are met (or for non-directors). The first thing
+        // a brand-new program sees; vanishes the moment it's set up.
+        const _ReadyToRunCard(),
         // "A session is live — tap to join" (renders nothing when none).
         const LiveSessionBanner(),
         // The live curriculum world (renders nothing until the

@@ -67,6 +67,7 @@ import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
+import 'package:differentworld/features/launch/launch_screen.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/cast_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
@@ -1052,6 +1053,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'The staff ladder',
               child: StaffLadderScreen(),
+            ),
+          ),
+          // Ready to run — the pre-9:00 readiness check for tomorrow.
+          GoRoute(
+            path: '/ready',
+            builder: (_, _) => const RouteTitle(
+              title: 'Ready to run',
+              child: LaunchScreen(),
             ),
           ),
           // The activity forge — verb × noun × constraint × time generator.
