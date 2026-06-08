@@ -1,0 +1,70 @@
+{
+  "title": "The day, moment by moment",
+  "subtitle": "What the lead does, what the helper does, and what to do when it breaks.",
+  "moments": [
+    {
+      "time": "9:00",
+      "name": "Door Greeting",
+      "emoji": "🚪",
+      "lead": "Stand at the door. Greet every kid by name. One personal touch-point: 'Hey Marcus, cool shoes.' 'Hi Leah, how's Bear today?' Eye level. Warm. Every kid gets 5 seconds of being the only person in the world.",
+      "helper": "Stand inside the room. As kids enter, guide them to put backpacks away, get their journals, sit in the circle. You're the air-traffic controller — smooth landings, no chaos.",
+      "ifItBreaks": "Kid arrives crying: helper takes the door, lead goes to the kid. Kid arrives late: no big deal, quiet welcome, they join where we are. Parent wants to talk: 'I'd love to chat — can we find five minutes at pickup?' Don't let a parent conversation steal the opening."
+    },
+    {
+      "time": "9:05",
+      "name": "Mood Weather",
+      "emoji": "🌤",
+      "lead": "'Good morning. Mood Weather — 1 is stormy, 5 is sunny. Show me your fingers in 3… 2… 1… hold.' Scan the room. Note the 1s and 2s in your head — don't call them out. Just see them. 'Thank you. I see you.'",
+      "helper": "Participate. Hold up YOUR fingers — kids need to see adults doing it too. Note any kid at 1 or 2 and check on them during the first activity. Don't ask 'what's wrong?' Ask 'can I sit with you?'",
+      "ifItBreaks": "Kid won't participate: that's fine — a kid who won't show is showing you something. Don't push; check in later. Kid shows 1 every day: that's a pattern. Note it, tell the lead, maybe talk to the parent gently. Not an emergency — a signal."
+    },
+    {
+      "time": "9:10",
+      "name": "Verb Pick",
+      "emoji": "📦",
+      "lead": "Verb cards on the table. 'Pick your three for today.' Walk around. Help kids who can't read — say each verb aloud, show the emoji. Don't influence their picks. Never say 'you always pick that one, try something new.' Their pick is their pick.",
+      "helper": "Help with the picking. Hold up cards for younger kids. Record picks in the app or notebook — name + three verbs. With two adults helping, ten kids takes three to five minutes.",
+      "ifItBreaks": "Kid can't decide: 'Close your eyes, point to the table — whatever your finger lands on is your first one.' Takes the pressure off. Kid picks the same three every day: not a problem — that's data. They're telling you who they are. Note the pattern."
+    },
+    {
+      "time": "9:15",
+      "name": "Writing Drill",
+      "emoji": "✏️",
+      "lead": "Today's writing activity from the daily plan. Demo on the board: 'Watch me, then you try.' Walk the room. Check pencil grips. Encourage the specific: 'Look at that A — your hand is getting stronger.'",
+      "helper": "Sit WITH kids, not above them. Pick up a pencil and write alongside them — it shows writing is something everyone does. Guide a hand gently, never grab the pencil. If they're frustrated: 'This is hard AND you're doing it.'",
+      "ifItBreaks": "Kid refuses to write: give them a crayon — less pressure than a pencil. If that fails, they draw. Drawing IS pre-writing. If they won't draw, they watch. Watching IS pre-drawing. Every level of participation counts."
+    },
+    {
+      "time": "10:00",
+      "name": "ABC / Phonics",
+      "emoji": "🔤",
+      "lead": "Today's letters from the daily plan. Show the letter, say the sound, air-trace, paper-trace, find it in the room. Keep it fast — speed-round energy. This block should feel like a game, not a lesson.",
+      "helper": "Run a small group of three or four who need extra help while the lead runs the big group — same activity, slower pace. Or be the letter-hunter: hide letter cards around the room before the block. The treasure hunt is your setup job.",
+      "ifItBreaks": "Kid already knows all the letters: give them WORDS. While others trace A, they write 'apple.' Same block, different level. Then they become a helper — 'can you help Sofia find the letter B?' Advanced kid + struggling kid = both learn."
+    },
+    {
+      "time": "10:45",
+      "name": "Read-Aloud",
+      "emoji": "📖",
+      "lead": "Read the book. Point to every word. Expression, voices, drama. Pause before repeated phrases — let kids fill them in. After: 'What did you notice? What surprised you?' Two responses, then move on. Don't over-discuss.",
+      "helper": "Sit in the circle WITH the kids. React to the story — gasp, laugh, look surprised. Your reactions give permission for theirs. Watch for the disengaged and redirect gently: point to the pictures, whisper 'look at this part.'",
+      "ifItBreaks": "Kids won't sit still: shorten the book — five pages, not fifteen. Or let them draw while you read; listening-while-drawing beats forced stillness for many kids. 'This is boring': 'What book would you rather hear? Let's try yours tomorrow.' Honor it."
+    },
+    {
+      "time": "1:00",
+      "name": "Verb Hour",
+      "emoji": "⭐",
+      "lead": "The main event. Check today's verb picks. Pick the activity that matches the most common verbs. Introduce it with play → name → bridge → question. Run it. Stay loose — if it isn't working, switch. The verb is the anchor, not the activity.",
+      "helper": "Be WITH the kids, not watching from the side. If it's a CARRY activity, you carry. If it's LISTEN, you listen. If it's BUILD, you build. Your participation IS your teaching. During the bridge talk, let the lead run it — your job is to catch the shy kid's eye and nod. That nod says 'you can speak.'",
+      "ifItBreaks": "Too hard: simplify the constraint — 'build a tower' becomes 'stack three blocks.' Too easy: add one — 'build a tower with your eyes closed.' Bombed: cast MOVE, everyone up, shake it off, try something else. 'That wasn't the right game today — let's try THIS.' Kids respect honesty more than pretending it worked."
+    },
+    {
+      "time": "2:45",
+      "name": "Closing",
+      "emoji": "🌙",
+      "lead": "Circle up. Verb guessing game: three or four kids act out a verb, the class guesses verb then world. Then 'what was the best part of today?' — three responses. Then books on the Shelf. Then 'see you tomorrow.' PROTECT THIS TIME. Never skip closing — if you're behind, skip something else.",
+      "helper": "During the guessing game, help the shy: 'You can act it out, or I can and they guess for you.' The shy kid nods, you act out THEIR verb, the class guesses for them — seen without performing. After: help cleanup, pack backpacks, reset the room for tomorrow before you leave.",
+      "ifItBreaks": "No time for closing: do the 60-second version — 'one word for today, go around, one word each.' That's it. The ritual happened — short, but it happened. Never let them leave without a closing. Even a bad closing beats none."
+    }
+  ]
+}

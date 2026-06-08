@@ -95,6 +95,7 @@ import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/speak/speak_screen.dart';
 import 'package:differentworld/features/spells/spells_screen.dart';
+import 'package:differentworld/features/staff/runbook_screen.dart';
 import 'package:differentworld/features/story/kid_story_screen.dart';
 import 'package:differentworld/features/story/room_story_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
@@ -1039,6 +1040,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => RouteTitle(
               title: 'Book',
               child: BookScreen(subjectId: state.pathParameters['subjectId']!),
+            ),
+          ),
+          // The staff runbook — the day moment-by-moment for the grown-ups.
+          GoRoute(
+            path: '/runbook',
+            builder: (_, _) => const RouteTitle(
+              title: 'Runbook',
+              child: RunbookScreen(),
             ),
           ),
           // Big Thinking — play → name → bridge → question games.
