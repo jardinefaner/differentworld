@@ -1,9 +1,16 @@
+import 'dart:convert';
+
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/settings/settings_actions.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Today's date in the local timezone, formatted YYYY-MM-DD.
@@ -113,19 +120,135 @@ enum DayPhase {
   /// After hours — the program day is over.
   closed;
 
-  /// The coarse phase for [now], using afterschool default windows.
-  ///
-  /// Windows (local time): prep `< 2:30p` · arrival `2:30–3:45p` ·
-  /// program `3:45–4:45p` · pickup `4:45–6:30p` · closed `≥ 6:30p`.
-  static DayPhase fromClock(DateTime now) {
-    final minutes = now.hour * 60 + now.minute;
-    if (minutes < 14 * 60 + 30) return DayPhase.prep; // < 2:30p
-    if (minutes < 15 * 60 + 45) return DayPhase.arrival; // 2:30–3:45p
-    if (minutes < 16 * 60 + 45) return DayPhase.program; // 3:45–4:45p
-    if (minutes < 18 * 60 + 30) return DayPhase.pickup; // 4:45–6:30p
-    return DayPhase.closed; // ≥ 6:30p
+  /// The coarse phase for [now] using the afterschool default windows. This is
+  /// the fallback used while the program's configured windows are still
+  /// loading; the live source is [dayPhaseProvider] (which honours the
+  /// program's [DayPhaseWindows]).
+  static DayPhase fromClock(DateTime now) =>
+      DayPhaseWindows.afterschool.phaseAt(now);
+}
+
+/// The clock boundaries that split a program's day into [DayPhase]s — minutes
+/// from midnight for the start of arrival, program, pickup, and closed. The
+/// afterschool defaults assume a 2:30–6:30 window; a camp or full-day program
+/// overrides them (stored on the Space caps), so the whole "RIGHT NOW" lead
+/// system retimes instead of assuming afterschool hours all day.
+@immutable
+class DayPhaseWindows {
+  const DayPhaseWindows({
+    required this.arrivalStart,
+    required this.programStart,
+    required this.pickupStart,
+    required this.closedStart,
+  });
+
+  /// All four are minutes from midnight, strictly ascending.
+  final int arrivalStart;
+  final int programStart;
+  final int pickupStart;
+  final int closedStart;
+
+  /// The historical hardcoded windows: arrival 2:30p · program 3:45p ·
+  /// pickup 4:45p · closed 6:30p.
+  static const afterschool = DayPhaseWindows(
+    arrivalStart: 14 * 60 + 30,
+    programStart: 15 * 60 + 45,
+    pickupStart: 16 * 60 + 45,
+    closedStart: 18 * 60 + 30,
+  );
+
+  DayPhase phaseAt(DateTime now) {
+    final m = now.hour * 60 + now.minute;
+    if (m < arrivalStart) return DayPhase.prep;
+    if (m < programStart) return DayPhase.arrival;
+    if (m < pickupStart) return DayPhase.program;
+    if (m < closedStart) return DayPhase.pickup;
+    return DayPhase.closed;
+  }
+
+  DayPhaseWindows copyWith({
+    int? arrivalStart,
+    int? programStart,
+    int? pickupStart,
+    int? closedStart,
+  }) => DayPhaseWindows(
+    arrivalStart: arrivalStart ?? this.arrivalStart,
+    programStart: programStart ?? this.programStart,
+    pickupStart: pickupStart ?? this.pickupStart,
+    closedStart: closedStart ?? this.closedStart,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'arrival': arrivalStart,
+    'program': programStart,
+    'pickup': pickupStart,
+    'closed': closedStart,
+  };
+}
+
+/// Decode the caps JSON → windows. Anything invalid falls back to the
+/// afterschool defaults, and the four boundaries are forced strictly ascending
+/// (each at least a minute after the previous) so a misconfigured cap can never
+/// produce an unreachable phase.
+DayPhaseWindows decodePhaseWindows(String? raw) {
+  if (raw == null || raw.isEmpty) return DayPhaseWindows.afterschool;
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map) return DayPhaseWindows.afterschool;
+    const def = DayPhaseWindows.afterschool;
+    int pick(String k, int fallback) {
+      final v = decoded[k];
+      return v is num ? v.toInt().clamp(0, 24 * 60 - 1) : fallback;
+    }
+
+    final a = pick('arrival', def.arrivalStart);
+    var p = pick('program', def.programStart);
+    var u = pick('pickup', def.pickupStart);
+    var c = pick('closed', def.closedStart);
+    if (p <= a) p = a + 1;
+    if (u <= p) u = p + 1;
+    if (c <= u) c = u + 1;
+    return DayPhaseWindows(
+      arrivalStart: a,
+      programStart: p,
+      pickupStart: u,
+      closedStart: c,
+    );
+  } on FormatException {
+    return DayPhaseWindows.afterschool;
   }
 }
+
+String encodePhaseWindows(DayPhaseWindows w) => jsonEncode(w.toJson());
+
+/// The program's live day-phase windows, off the Space caps (offline-first,
+/// `.select`-gated). Defaults to afterschool until a director retimes them.
+final dayPhaseWindowsProvider = Provider<DayPhaseWindows>((ref) {
+  final raw = ref.watch(
+    currentSpaceProvider.select(
+      (s) => s.value?.caps.getString(SpaceCaps.phaseWindows),
+    ),
+  );
+  return decodePhaseWindows(raw);
+});
+
+/// Director-only write of the day-phase windows (wholesale replace).
+class DayPhaseActions {
+  DayPhaseActions(this._ref);
+  final Ref _ref;
+
+  Future<void> setWindows(String spaceId, DayPhaseWindows windows) {
+    return _ref
+        .read(spaceCapActionsProvider)
+        .setStringCap(
+          spaceId,
+          SpaceCaps.phaseWindows,
+          encodePhaseWindows(windows),
+        );
+  }
+}
+
+final dayPhaseActionsProvider = Provider<DayPhaseActions>(DayPhaseActions.new);
 
 /// Cross-cohort arrival snapshot for today: how many children are in the
 /// building (present/late) vs the total roster the viewer can see. Drives
@@ -170,7 +293,10 @@ final arrivalProgressProvider = Provider<AsyncValue<ArrivalProgress>>((ref) {
 /// `.distinct()` means the card only rebuilds when the phase actually
 /// changes (not once a minute).
 final dayPhaseProvider = StreamProvider<DayPhase>((ref) async* {
-  var last = DayPhase.fromClock(DateTime.now());
+  // Use the program's configured windows (camps/full-day retime the day);
+  // a window change re-runs this stream.
+  final windows = ref.watch(dayPhaseWindowsProvider);
+  var last = windows.phaseAt(DateTime.now());
   yield last;
   // Re-check each wall-clock minute, aligning the first tick to the next :00
   // so a boundary crossing is caught within ~1s — not up to 59s late, which
@@ -184,7 +310,7 @@ final dayPhaseProvider = StreamProvider<DayPhase>((ref) async* {
     // catches every crossing within ~1s.
     final msToNextMinute = (60 - now.second) * 1000 - now.millisecond;
     await Future<void>.delayed(Duration(milliseconds: msToNextMinute));
-    final next = DayPhase.fromClock(DateTime.now());
+    final next = windows.phaseAt(DateTime.now());
     if (next != last) {
       last = next;
       yield next;

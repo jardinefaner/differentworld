@@ -40,6 +40,14 @@ abstract class SpaceCaps {
   /// video's own length); only the play suggestion is tunable.
   static const suggestPlayMinutes = 'suggest_play_minutes';
 
+  /// The program's day-phase boundaries — a JSON object of minutes-from-
+  /// midnight for {arrival, program, pickup, closed} (see
+  /// features/today/today_providers.dart `DayPhaseWindows`). String cap (JSON);
+  /// director-authored. Missing/invalid → the afterschool defaults. Lets a
+  /// camp or full-day program retime the whole "RIGHT NOW" lead system so it
+  /// stops assuming a 2:30–6:30 afterschool window.
+  static const phaseWindows = 'phase_windows';
+
   /// The date Week 1 of the 10-week curriculum journey began (ISO date).
   /// The live "this week's world" is derived from it. String cap; null =
   /// the journey hasn't been started (worlds gallery still works).

@@ -8,6 +8,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
+import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
@@ -201,6 +202,19 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                 ),
                 _TimerPresetsTile(spaceId: spaceId),
                 _PlayLengthTile(spaceId: spaceId),
+                const _SectionLabel(label: 'Day rhythm'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  child: Text(
+                    'When the day shifts gears. The Today screen leads with '
+                    'the right next move for each window — retime them for a '
+                    'camp or full-day program.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                _PhaseWindowsSection(spaceId: spaceId),
                 const SizedBox(height: 32),
               ],
             );
@@ -344,6 +358,100 @@ class _PlayLengthTile extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The four day-phase boundaries as time-picker rows. Editing one writes the
+/// whole window set (the actions serialize). `DayPhaseWindows` decode forces
+/// the boundaries strictly ascending, so an out-of-order pick self-corrects.
+class _PhaseWindowsSection extends ConsumerWidget {
+  const _PhaseWindowsSection({required this.spaceId});
+
+  final String spaceId;
+
+  Future<void> _save(
+    BuildContext context,
+    WidgetRef ref,
+    DayPhaseWindows windows,
+  ) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    return runReported(
+      library: 'settings',
+      messenger: messenger,
+      onError: "Couldn't save the day rhythm. Try again.",
+      action: () =>
+          ref.read(dayPhaseActionsProvider).setWindows(spaceId, windows),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final w = ref.watch(dayPhaseWindowsProvider);
+    return Column(
+      children: [
+        _PhaseWindowRow(
+          label: 'Arrival starts',
+          minutes: w.arrivalStart,
+          onPick: (m) =>
+              unawaited(_save(context, ref, w.copyWith(arrivalStart: m))),
+        ),
+        _PhaseWindowRow(
+          label: 'Activities start',
+          minutes: w.programStart,
+          onPick: (m) =>
+              unawaited(_save(context, ref, w.copyWith(programStart: m))),
+        ),
+        _PhaseWindowRow(
+          label: 'Pickup starts',
+          minutes: w.pickupStart,
+          onPick: (m) =>
+              unawaited(_save(context, ref, w.copyWith(pickupStart: m))),
+        ),
+        _PhaseWindowRow(
+          label: 'Day ends',
+          minutes: w.closedStart,
+          onPick: (m) =>
+              unawaited(_save(context, ref, w.copyWith(closedStart: m))),
+        ),
+      ],
+    );
+  }
+}
+
+class _PhaseWindowRow extends StatelessWidget {
+  const _PhaseWindowRow({
+    required this.label,
+    required this.minutes,
+    required this.onPick,
+  });
+
+  final String label;
+  final int minutes;
+  final ValueChanged<int> onPick;
+
+  Future<void> _pick(BuildContext context) async {
+    final initial = TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
+    final picked = await showTimePicker(context: context, initialTime: initial);
+    if (picked != null) onPick(picked.hour * 60 + picked.minute);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final t = TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
+    return ListTile(
+      leading: const Icon(Icons.schedule_outlined),
+      title: Text(label),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(t.format(context), style: theme.textTheme.titleSmall),
+          const SizedBox(width: 4),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+      onTap: () => unawaited(_pick(context)),
     );
   }
 }
