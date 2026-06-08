@@ -130,6 +130,9 @@ flutter:
     # The staff runbook — every moment of the day in three lanes
     # (lead / helper / if-it-breaks). The adult twin of "Play today".
     - assets/curriculum/staff_runbook.json
+    # Verb roles — each of the 12 verbs as a kid JOB (+ helper script +
+    # 3-level mission) and a 3-level STAFF skill. One spine, three lives.
+    - assets/curriculum/verb_roles.json
 
   # Variable display fonts for the Speak feature's editorial karaoke
   # (lib/features/speak/). Bundled (NOT runtime-fetched via google_fonts)

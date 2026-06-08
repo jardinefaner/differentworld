@@ -15,6 +15,7 @@ import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/thinking_screen.dart';
 import 'package:differentworld/features/action_words/this_week_screen.dart';
 import 'package:differentworld/features/action_words/time_capsule_screen.dart';
+import 'package:differentworld/features/action_words/verb_jobs_screen.dart';
 import 'package:differentworld/features/action_words/wall_screen.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
 import 'package:differentworld/features/action_words/world_present_screen.dart';
@@ -1048,6 +1049,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'Runbook',
               child: RunbookScreen(),
+            ),
+          ),
+          // Verb spine — each verb as a kid job (+ script), a 3-level
+          // mission, and a 3-level staff skill. One vocabulary, three lives.
+          GoRoute(
+            path: '/verb-jobs',
+            builder: (_, _) => const RouteTitle(
+              title: 'Jobs & missions',
+              child: VerbJobsScreen(),
             ),
           ),
           // Big Thinking — play → name → bridge → question games.
