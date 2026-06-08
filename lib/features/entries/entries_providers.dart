@@ -73,6 +73,11 @@ class EntryKind {
   /// `details` = {skill: id, value: num, week?: int}. The skill isn't taught,
   /// it's NOTICED — the rising number is the proof a brain grew.
   static const String skillMeasure = 'skill_measure';
+
+  /// A kept activity from the forge (verb × noun × constraint × time). Space-
+  /// level, no subject. `body` = the instruction; `details` = {verb, noun,
+  /// constraint, minutes}. The teacher liked a roll and wants to use it.
+  static const String forgedActivity = 'forged_activity';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -341,6 +346,33 @@ class EntryActions {
     }),
   );
 
+  /// Keep a forged activity (verb × noun × constraint × time) at the space
+  /// level so the teacher can come back to a roll they liked.
+  Future<String> keepForgedActivity({
+    required String instruction,
+    required String verbId,
+    required String noun,
+    required String constraint,
+    required int minutes,
+    String? groupId,
+  }) => _create(
+    kind: EntryKind.forgedActivity,
+    groupId: groupId,
+    body: instruction,
+    detailsJson: jsonEncode({
+      'verb': verbId,
+      'noun': noun,
+      'constraint': constraint,
+      'minutes': minutes,
+    }),
+  );
+
+  /// Forget a kept activity.
+  Future<void> removeKeptActivity(String id) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.entriesDao.deleteById(id);
+  }
+
   /// Upsert the end-of-week LOG for (subject, week) — merges the provided
   /// fields onto any existing row, so saving just the milestone keeps the
   /// spell + ally. One row per (subject, week).
@@ -426,6 +458,24 @@ final wallNotesProvider = StreamProvider.autoDispose<List<Entry>>((ref) async* {
     return;
   }
   yield* db.entriesDao.watchInSpace(spaceId: spaceId, kind: EntryKind.wallNote);
+});
+
+/// The activities the teacher kept from the forge (space-level), newest first.
+// autoDispose stream providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final keptActivitiesProvider = StreamProvider.autoDispose<List<Entry>>((
+  ref,
+) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final spaceId = ref.watch(viewerProvider).spaceId;
+  if (spaceId == null) {
+    yield const [];
+    return;
+  }
+  yield* db.entriesDao.watchInSpace(
+    spaceId: spaceId,
+    kind: EntryKind.forgedActivity,
+  );
 });
 
 /// The program's time capsules (sealed + opened).

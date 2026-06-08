@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/activity_forge/activity_forge.dart';
+import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
@@ -34,6 +36,23 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
     setState(() => _seed = (_seed + 1) & 0x7fffffff);
   }
 
+  void _keep(ForgedActivity forged) {
+    unawaited(
+      ref
+          .read(entryActionsProvider)
+          .keepForgedActivity(
+            instruction: forged.instruction,
+            verbId: forged.verb.id,
+            noun: forged.noun,
+            constraint: forged.constraint,
+            minutes: forged.minutes,
+          ),
+    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Kept')));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -45,6 +64,7 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
       verbId: _verbId,
       nouns: useWorld ? worldNouns : null,
     );
+    final kept = ref.watch(keptActivitiesProvider).value ?? const <Entry>[];
     return EdgeScaffold(
       body: ResponsivePage(
         children: [
@@ -94,10 +114,22 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
           _ForgedCard(forged: forged),
           const SizedBox(height: 16),
           Center(
-            child: FilledButton.icon(
-              onPressed: _roll,
-              icon: const Icon(Icons.casino_outlined),
-              label: const Text('Roll again'),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _keep(forged),
+                  icon: const Icon(Icons.bookmark_add_outlined),
+                  label: const Text('Keep this one'),
+                ),
+                FilledButton.icon(
+                  onPressed: _roll,
+                  icon: const Icon(Icons.casino_outlined),
+                  label: const Text('Roll again'),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -111,6 +143,32 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
               ),
             ),
           ),
+          if (kept.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            Text(
+              'KEPT',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 1.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final e in kept)
+              Card(
+                margin: const EdgeInsets.only(bottom: 6),
+                child: ListTile(
+                  title: Text(e.body ?? ''),
+                  trailing: IconButton(
+                    tooltip: 'Forget',
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => unawaited(
+                      ref.read(entryActionsProvider).removeKeptActivity(e.id),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );
