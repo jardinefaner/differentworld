@@ -4,8 +4,10 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/mood.dart';
+import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/week_log.dart';
+import 'package:differentworld/features/action_words/widgets/thinking_game_sheet.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/story/moment.dart';
@@ -226,6 +228,7 @@ class _Body extends ConsumerWidget {
             const SizedBox(height: 22),
             _Section(
               label: 'Abilities · the 12 verbs',
+              systemId: 'abilities',
               child: _Verbs(practiced: practiced),
             ),
             const SizedBox(height: 22),
@@ -243,6 +246,7 @@ class _Body extends ConsumerWidget {
             const SizedBox(height: 22),
             _Section(
               label: 'Collection · worlds visited',
+              systemId: 'collection',
               child: _Worlds(worlds: worlds, visited: visitedWeeks),
             ),
             const SizedBox(height: 22),
@@ -374,9 +378,13 @@ class _Chip extends StatelessWidget {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.label, required this.child});
+  const _Section({required this.label, required this.child, this.systemId});
   final String label;
   final Widget child;
+
+  /// If set, an RPG system id — a "the game under this" link appears under
+  /// the section, opening that system's Big Thinking game.
+  final String? systemId;
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +401,33 @@ class _Section extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         child,
+        if (systemId != null) _SystemGameLink(systemId: systemId!),
       ],
+    );
+  }
+}
+
+/// "✦ The game under this · CONCEPT" — opens the Big Thinking game that sits
+/// beneath an RPG system. Hidden if the deck has no game for that system.
+class _SystemGameLink extends ConsumerWidget {
+  const _SystemGameLink({required this.systemId});
+  final String systemId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final game = ref.watch(systemThinkingGameProvider(systemId));
+    if (game == null) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: () => unawaited(showThinkingGameSheet(context, game)),
+        icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+        label: Text('The game under this · ${game.concept}'),
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.compact,
+          textStyle: Theme.of(context).textTheme.labelMedium,
+        ),
+      ),
     );
   }
 }
@@ -428,6 +462,7 @@ class _Weather extends ConsumerWidget {
 
     return _Section(
       label: 'Weather · today’s mood',
+      systemId: 'weather',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -668,6 +703,7 @@ class _Skills extends StatelessWidget {
     final progress = latestSkillValues(entries);
     return _Section(
       label: 'Skills · stats that grow',
+      systemId: 'skills',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -766,6 +802,7 @@ class _Spells extends StatelessWidget {
     }
     return _Section(
       label: 'Spells · words earned',
+      systemId: 'spells',
       child: spells.isEmpty
           ? Text(
               'No spells learned yet.',
@@ -805,6 +842,7 @@ class _Allies extends StatelessWidget {
     }
     return _Section(
       label: 'Allies · the party',
+      systemId: 'allies',
       child: allies.isEmpty
           ? Text(
               'No allies logged yet.',
@@ -853,6 +891,7 @@ class _Quests extends StatelessWidget {
     final pct = worldCount == 0 ? 0.0 : visited.length / worldCount;
     return _Section(
       label: 'Quests · the long game',
+      systemId: 'quests',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

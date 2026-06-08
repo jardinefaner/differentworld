@@ -526,6 +526,214 @@
         "Deepest: the whole earth is a balancing act. Trees make oxygen, you breathe it, you breathe out what they breathe in. You're in a balancing game with every tree on the planet — you just can't feel the tiny adjustments."
       ],
       "question": "What are you quietly balancing right now?"
+    },
+    {
+      "id": "representation",
+      "system": "avatar",
+      "week": 0,
+      "emoji": "🎨",
+      "concept": "REPRESENTATION",
+      "meaning": "A drawing of you stands FOR you — it isn't you.",
+      "play": "Draw a partner's face without looking at the paper — pencil never leaves the page, eyes on their face the whole time. It'll be hilarious, wrong, and somehow look like them anyway.",
+      "name": "REPRESENTATION. The drawing isn't you — it's a representation, something that STANDS FOR you. A photo isn't you either. Neither is your name. They're all ways of saying 'this is who I am' without being who you are.",
+      "bridge": [
+        "Where else? Your avatar in the journal is a representation that changes every two weeks. You changed it — but did YOU change, or just the drawing? Both.",
+        "Deeper: how you draw yourself reflects how you SEE yourself. Week 1 you drew a stick figure because you didn't know what you looked like; Week 10 you drew wings because you learned you could fly.",
+        "Deepest: the avatar didn't grow wings. YOU did. The drawing just showed it."
+      ],
+      "question": "If your drawing changes but you're the same person, which is the real you — the drawing or the person? What if both are real but different?"
+    },
+    {
+      "id": "declaration",
+      "system": "name",
+      "week": 0,
+      "emoji": "📛",
+      "concept": "DECLARATION",
+      "meaning": "Saying it out loud makes the inside outside — and more real.",
+      "play": "Say your name. Whisper it. Shout it. Sing it. Say it backwards, like a robot, like it's the most important word in the world. Same name every time — completely different each time.",
+      "name": "DECLARATION. Said out loud, a thing becomes more real than when it's only thought. 'My name is Leah' in your head is private; said out loud, other people hold it too. That's declaration — making the inside outside.",
+      "bridge": [
+        "Where else? Every important thing humans do starts with a declaration. 'I love you.' 'I'm sorry.' 'I do' at a wedding. 'We hold these truths to be self-evident.'",
+        "Deeper: the words don't change reality — but saying them out loud changes what's POSSIBLE. Before you said your title, you MIGHT become it; after, you WILL.",
+        "Deepest: the mouth commits what the mind was only considering."
+      ],
+      "question": "Does saying something make it true? If you say 'I am brave' every Monday, does it make you brave — or do you have to BE brave first and then say it?"
+    },
+    {
+      "id": "accumulation",
+      "system": "level",
+      "week": 0,
+      "emoji": "📊",
+      "concept": "ACCUMULATION",
+      "meaning": "Tiny things add up so slowly you only notice when you look back.",
+      "play": "Stand at one end of the room — that's Day 1. Walk to the other end, one step per day, counting out loud. Now turn around and look at where you started. The distance is the summer.",
+      "name": "ACCUMULATION. One step is nothing. Ten is barely anything. But fifty is across the room — tiny things adding up so slowly you don't notice until you turn around. One journal page is nothing; fifty is a book.",
+      "bridge": [
+        "Where else? You grew three inches since last summer — did you feel it? No. It accumulated. Your hair grows every day; you just notice one day that it's longer.",
+        "Deeper: learning is the same. You didn't feel yourself getting smarter today — but compare Day 1 you to Day 50 you and the distance is enormous.",
+        "Deepest: accumulation is invisible while it's happening and undeniable when you look back."
+      ],
+      "question": "If you can't feel yourself growing, how do you know it's happening? What if you're growing right now and won't know until next year?"
+    },
+    {
+      "id": "potential",
+      "system": "abilities",
+      "week": 0,
+      "emoji": "⚡",
+      "concept": "POTENTIAL",
+      "meaning": "You're all twelve verbs, even the nine you didn't pick.",
+      "play": "Stand up — jump. Stand up — spin. Stand up — touch your toes. You can do ALL of those, but only ONE right now. You chose jump; you COULD have spun. The ability existed whether you used it or not.",
+      "name": "POTENTIAL. You have twelve verbs available; you pick three. The other nine are still IN you — you didn't lose them, you just didn't choose them today. You're not just your three picks. You're all twelve, all the time.",
+      "bridge": [
+        "Where else? Right now you can read, draw, run, sing, help, build, listen — a hundred things. You're doing one. The others didn't disappear.",
+        "Deeper: a piano has 88 keys; a song uses maybe 20. The other 68 are there, waiting. You are a piano with 88 keys — today you played 3.",
+        "Deepest: tomorrow you might play 3 different ones. The music changes. The piano doesn't."
+      ],
+      "question": "If you can do twelve things but pick three, what happens to the nine you didn't pick? Do they get lonely, get weaker — or wait?"
+    },
+    {
+      "id": "growth",
+      "system": "skills",
+      "week": 0,
+      "emoji": "📈",
+      "concept": "GROWTH",
+      "meaning": "Growth happens underneath your effort, not because of it.",
+      "play": "Hold still. Time it. Write the number. Try again next Friday and write that number. Compare. It changed — and you didn't DO anything to change it. You practiced once and waited.",
+      "name": "GROWTH. Not effort, not trying hard — GROWTH. The seed doesn't try to grow; it just does. You didn't try to get better at being still; you did it twice and the second time was longer. Effort plants the seed. Growth is what the seed does on its own.",
+      "bridge": [
+        "Where else? Week 1 you couldn't write your name; you practiced; Week 3 you wrote it fast. You didn't feel the moment it clicked — it just happened between the practicing.",
+        "Deeper: reading works that way. Friendship works that way. Courage works that way — you practice being brave in small ways and one day someone says 'you're brave' and you think 'when did that happen?'",
+        "Deepest: it grew while you weren't looking."
+      ],
+      "question": "If growth happens without you noticing, how many things have you already grown at that you don't know about yet?"
+    },
+    {
+      "id": "language-invention",
+      "system": "spells",
+      "week": 0,
+      "emoji": "✨",
+      "concept": "LANGUAGE IS INVENTION",
+      "meaning": "Every word was made up by someone — you can do it too.",
+      "play": "Invent a word in a language nobody speaks. 'FLOMP' — the feeling of cold water on a hot day. Use it three times today. By tomorrow everyone in the room knows what FLOMP means. You invented a word and made it real.",
+      "name": "LANGUAGE IS INVENTION. Every word was made up by someone. 'Butterfly' was invented. 'Enormous' was invented. 'Love' was invented. Someone said a sound and others agreed it meant something. FLOMP is as real as ENORMOUS the moment three people use it — language is agreement, not rules.",
+      "bridge": [
+        "Where else? Shakespeare invented over 1,700 words — 'eyeball,' 'lonely,' 'generous.' They didn't exist until one person said them; now billions use them.",
+        "Deeper: the words on your spell wall — EPHEMERAL, LUMINOUS, CASCADE — someone invented those too, and they traveled through centuries to land in your mouth today.",
+        "Deepest: the word you invent today might travel through centuries to land in the mouth of someone you'll never meet."
+      ],
+      "question": "If you could invent one word the whole world would use forever, what would it mean? What sound would it make?"
+    },
+    {
+      "id": "extension",
+      "system": "tools",
+      "week": 0,
+      "emoji": "🔧",
+      "concept": "EXTENSION",
+      "meaning": "A tool takes something you already have and makes it reach farther.",
+      "play": "Draw a straight line without a ruler. Now draw one with a ruler. Same hand, same pencil, same paper — completely different line. The tool changed the outcome without changing you.",
+      "name": "EXTENSION. A tool is an extension of your body. The magnifying glass extends your eyes; the pencil extends your finger; the camera extends your memory; the flashlight extends the sun. You didn't get new eyes — you got an extension that made the eyes you have reach farther.",
+      "bridge": [
+        "Where else? A telescope is an eye-extension that reaches the moon. A phone is a voice-extension that reaches another country. A book is a brain-extension that reaches across centuries — someone who died 500 years ago is talking to you through it.",
+        "Deeper: the ultimate tool isn't something you hold — it's language. Words extend your thoughts into other people's heads.",
+        "Deepest: right now my words are IN your head. I extended my brain into yours with nothing but sound — the most powerful tool ever invented."
+      ],
+      "question": "If every tool extends something you already have, what tool hasn't been invented yet? What part of you needs an extension that doesn't exist?"
+    },
+    {
+      "id": "evidence",
+      "system": "inventory",
+      "week": 0,
+      "emoji": "🎒",
+      "concept": "EVIDENCE",
+      "meaning": "Your stuff is evidence that you were alive this week.",
+      "play": "Empty your pockets or backpack onto the table. A crumpled receipt, a rock, a wrapper, a string. Junk — or the story of your week? The receipt is Tuesday. The rock is from the walk. The wrapper is the snack you shared with Marcus.",
+      "name": "EVIDENCE. Your inventory isn't stuff — it's evidence that you were alive this week, that you went places, picked up a rock because something about it called to you. The journal is the same: not a book of assignments, a book of evidence. Nobody can argue with evidence — you made it with your hands.",
+      "bridge": [
+        "Where else? Museums are inventory. The Smithsonian is a giant journal of evidence that humans existed and made things. Your journal is your museum; every page is an exhibit.",
+        "Deeper: the pressed leaf from Week 3 is an artifact; the dream drawing from Week 7 is an artifact.",
+        "Deepest: a thousand years from now, if someone found your journal, they'd know — a kid named Leah lived here, drew this, noticed this. She was real. The journal is proof of life."
+      ],
+      "question": "If your journal is evidence that you existed, what's the one page that proves it most? Which page is the MOST you?"
+    },
+    {
+      "id": "complement",
+      "system": "allies",
+      "week": 0,
+      "emoji": "🤝",
+      "concept": "COMPLEMENT",
+      "meaning": "An ally covers the blind spot you can't cover alone.",
+      "play": "Alone, try to clap over your head — easy. Clap behind your back — hard. Now with a partner: YOU clap in front while THEY clap behind you. Together you can clap everywhere. Alone you have blind spots; together you don't.",
+      "name": "COMPLEMENT. Your partner isn't the same as you — that's the point. They're your complement, the piece that fills the gap you can't fill alone. A photographer needs a spotter; a builder needs a helper; a speaker needs a listener. You're looking for someone who covers your blind spot while you cover theirs.",
+      "bridge": [
+        "Where else? Every great thing was made by complements. A song needs a melody AND a rhythm. A story needs a hero AND a problem. A body needs a heart AND lungs.",
+        "Deeper: the ally page in your journal isn't a list of friends — it's a map of your complements, the people who helped you do what you couldn't alone.",
+        "Deepest: and YOU are on their ally page, for the same reason."
+      ],
+      "question": "What can't you do alone that you can do with someone? What would you lose if you ONLY had allies and never worked alone?"
+    },
+    {
+      "id": "intention",
+      "system": "quests",
+      "week": 0,
+      "emoji": "🗺️",
+      "concept": "INTENTION",
+      "meaning": "A quest is a task with a reason — the difference is intention.",
+      "play": "Three tasks: 'Touch the wall. Touch the floor. Touch your head.' GO — done in 4 seconds. Now: 'Touch the wall as SLOWLY as possible. The floor as QUIETLY as possible. Your head like it's made of glass.' Same three tasks, completely different experience.",
+      "name": "INTENTION. The tasks didn't change — the WAY you did them did. That's intention: the difference between doing something and doing it ON PURPOSE. CARRY isn't 'move an object'; CARRY is 'bear someone's weight with care.' Same action, different intention, different person at the end.",
+      "bridge": [
+        "Where else? Brushing your teeth is a task; brushing them because you want a healthy body is a quest. Walking to school is a task; walking while noticing everything you've never noticed is a quest.",
+        "Deeper: the difference between a boring life and an interesting one isn't what you do — it's the intention behind it.",
+        "Deepest: a quest is a task with a reason. The verbs are the reason."
+      ],
+      "question": "If you did the exact same things tomorrow but with different intention, would tomorrow be a different day — or the same day?"
+    },
+    {
+      "id": "curation",
+      "system": "collection",
+      "week": 0,
+      "emoji": "🌟",
+      "concept": "CURATION",
+      "meaning": "The specific things you chose, out of all possible things, are you.",
+      "play": "Close your eyes, point to a spot in the room — that's YOUR spot. Tomorrow point to a different one, and the next day another. After ten days you own ten pieces of this room nobody else chose. Your ten spots are your collection — nobody has the same ten.",
+      "name": "CURATION. You didn't collect everything — you collected THESE. Out of all the possible spots, your finger chose these ten. That pattern, the specific things you chose out of all possible things, is curation. Museums do it. Playlists do it. Your verb picks do it. The selection IS you.",
+      "bridge": [
+        "Where else? Your whole life is a collection of choices — the friends you made, the words you learned, the moments you remember. Out of millions of moments, your brain kept THESE.",
+        "Deeper: why these? Because something about them mattered to you in a way that's completely unique.",
+        "Deepest: your collection of worlds — Ant, Dolphin, Star — isn't random. It's curated by something deep inside you that knows what you need, even when you don't."
+      ],
+      "question": "If someone looked at ONLY your collection — the worlds you visited, the verbs you picked, the words you learned — would they know who you are, without ever meeting you?"
+    },
+    {
+      "id": "shared-memory",
+      "system": "lore",
+      "week": 0,
+      "emoji": "📜",
+      "concept": "SHARED MEMORY",
+      "meaning": "The room knows more than any person in it.",
+      "play": "One kid says a fact: 'I have a dog.' The next adds theirs: 'She has a dog and I like pizza.' The next: 'She has a dog, he likes pizza, and I'm scared of spiders.' By kid 10, one person holds the whole room's story. The chain IS the room's lore.",
+      "name": "SHARED MEMORY. No single person holds all the information — but together the room holds everything. The Wall is the same: one answer to 'what's brave?' is one note, but 50 answers across 50 days is a memory richer than any textbook. The whole is bigger than any part.",
+      "bridge": [
+        "Where else? Every culture works this way. Nobody knows the whole history — but grandma knows the family stories, the librarian knows the books, the neighbor knows the neighborhood. Together they hold the whole picture.",
+        "Deeper: this room is a tiny culture. The Wall is its history book — written by everyone, owned by everyone, read by everyone.",
+        "Deepest: when summer ends and the Wall comes down, the memory doesn't disappear — it lives in you. Every answer you heard is in your head."
+      ],
+      "question": "If the Wall is the room's memory, what happens when it comes down at the end of summer? Does the memory disappear — or does it live somewhere else now?"
+    },
+    {
+      "id": "coexistence",
+      "system": "weather",
+      "week": 0,
+      "emoji": "🌤",
+      "concept": "COEXISTENCE",
+      "meaning": "Sunny and stormy are real in the same room at the same time.",
+      "play": "Everyone stands. 'If you're sunny, jump. Cloudy, sway. Rainy, crouch. Stormy, stomp. Show your weather with your BODY.' The room becomes a living weather map — some jumping, some crouching, all at once.",
+      "name": "COEXISTENCE. Look around — some of you are sunny, some stormy, at the SAME time, in the SAME room. You don't have to feel the same thing to be in the same place. Sunny doesn't cancel stormy. They're next to each other and both are real.",
+      "bridge": [
+        "Where else? Right now, somewhere, someone is getting married — and somewhere else someone is crying, at the same moment. Joy and grief coexist; they always have.",
+        "Deeper: when you're happy and your friend is sad, you don't have to choose one. You can be happy AND hold their sadness.",
+        "Deepest: both are real, both fit in the same room — both fit in the same person."
+      ],
+      "question": "Can you be sunny and stormy at the SAME time — not one after the other? What would that feel like? Does it have a name? If not, invent one."
     }
   ]
 }
