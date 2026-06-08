@@ -198,6 +198,7 @@ class _RightNowCard extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final labels = ref.watch(verticalLabelsProvider);
+    final viewer = ref.watch(viewerProvider);
     final kids = labels.subjectPlural.toLowerCase();
     final spec = _phaseSpec(phase, theme.colorScheme, kids);
 
@@ -226,7 +227,11 @@ class _RightNowCard extends ConsumerWidget {
     final eyebrow = phase == DayPhase.prep ? 'COMING UP' : 'RIGHT NOW';
     if (phase == DayPhase.program) {
       final world = ref.watch(currentWorldProvider);
-      if (world != null) {
+      // A specialist drops in for a specific block — pointing them at the
+      // whole-day run is the wrong surface (their block shows below via the
+      // leading-today card). A substitute IS the room's lead today, so they
+      // still get the run. Lead teachers / directors always do.
+      if (world != null && !viewer.isSpecialist) {
         title = "Run today's program";
         line = 'In ${world.name} this week — full-screen, step by step.';
         route = '/play-today';
@@ -387,6 +392,86 @@ class _PhaseSpec {
   final Color onContainer;
   final Color accent;
   final Color onAccent;
+}
+
+/// Fallback orientation for a drop-in — a specialist or substitute who isn't
+/// assigned to any block today. The leading-today card is blank for them, so
+/// they'd otherwise land on a generic Today with no pointer to the room they're
+/// covering. Sends them to the runbook. Renders nothing once they HAVE blocks
+/// (leading-today takes over) or for non-drop-in roles.
+class _CoveringTodayCard extends ConsumerWidget {
+  const _CoveringTodayCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewer = ref.watch(viewerProvider);
+    if (!viewer.isSpecialist && !viewer.isSubstitute) {
+      return const SizedBox.shrink();
+    }
+    final memberId = viewer.memberId;
+    if (memberId == null) return const SizedBox.shrink();
+    final blocks = ref
+        .watch(
+          scheduleDayForLeadProvider((memberId: memberId, date: todayIso())),
+        )
+        .value;
+    // Until loaded → nothing (no flicker). Assigned → the leading-today card
+    // already shows the blocks, so defer to it.
+    if (blocks == null || blocks.isNotEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final covering = viewer.isSubstitute ? 'covering' : 'here';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        color: scheme.secondaryContainer,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push('/runbook'));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.menu_book_outlined,
+                  color: scheme.onSecondaryContainer,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "You're $covering today",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: scheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'No block assigned to you yet — open the runbook to '
+                        'see how the day runs.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSecondaryContainer.withValues(
+                            alpha: 0.85,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: scheme.onSecondaryContainer),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// One-line announcement shown when the wall clock crosses into a new phase.
@@ -918,6 +1003,10 @@ class TodayBody extends ConsumerWidget {
         // Naturally hides for non-staff and members with no
         // assignments.
         const LeadingTodayCard(),
+        // Fallback orientation for a drop-in (specialist / substitute) with no
+        // assigned block — the leading-today card is blank for them, so point
+        // them at the runbook instead of a generic Today.
+        const _CoveringTodayCard(),
         const SizedBox(height: 16),
         // "Today's words" — only when Action Words is in use today.
         if (viewer.isDailyLogger) const _ActionWordsCard(),
