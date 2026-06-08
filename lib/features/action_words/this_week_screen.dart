@@ -143,6 +143,11 @@ class _LiveWorld extends ConsumerWidget {
               label: const Text('Activities'),
             ),
             OutlinedButton.icon(
+              onPressed: () => context.push('/forge'),
+              icon: const Icon(Icons.casino_outlined),
+              label: const Text('Make one'),
+            ),
+            OutlinedButton.icon(
               onPressed: () => unawaited(printWorldWorksheets(world)),
               icon: const Icon(Icons.print_outlined),
               label: const Text('Worksheets'),
