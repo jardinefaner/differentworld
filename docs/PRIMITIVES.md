@@ -1,11 +1,16 @@
 # The primitives — the atoms the system is built from
 
-> Ten atoms. Infinite molecules. That's the system.
+> Ten atoms named; an eleventh found in the audit. Infinite molecules.
+> That's the system.
+
+*(History: the user named ten. The honest audit flagged THE SCALE as a
+candidate eleventh; we settled it — promoted, and made real in code as
+`Scale` + `ScaleBar`. The list is eleven.)*
 
 The same whether you're 5 or 80, in a classroom or a boardroom, on paper
 or on a screen. Every screen, every PDF page, every activity, every
-ritual, every tool we've built is a **combination of these ten**. Nothing
-in the system requires anything outside this list.
+ritual, every tool we've built is a **combination of these eleven**.
+Nothing in the system requires anything outside this list.
 
 This doc is the **architecture spine** — a companion to
 [VISION.md](VISION.md) (the *why*) and [NAMING.md](NAMING.md) (the
@@ -19,7 +24,7 @@ bug — it's a signal worth a conversation (see *Does it hold?* below).
 
 ---
 
-## The ten atoms
+## The eleven atoms
 
 | # | Atom | What it is | Reach | Lives in code as |
 |---|---|---|---|---|
@@ -30,14 +35,17 @@ bug — it's a signal worth a conversation (see *Does it hold?* below).
 | 5 | **Wall** | unfiltered shared surface | **shared** | `EntryKind.wallNote` + `createWallNote` + `/wall` |
 | 6 | **Book** | personal accumulation over time | individual | `book_screen.dart` + `summer_book.dart` (`/book/:id`) |
 | 7 | **Circle** | everyone faces everyone; ritual | **shared** | the rituals — encoded in the runbook moments + Mood Weather |
-| 8 | **Timer** | a finite container for action; the measure | universal | `Spell.durationSeconds` (casts) + `skill_measure` (time → data) |
+| 8 | **Timer** | a finite container for action | universal | `Spell.durationSeconds` (casts) + `skill_measure` (time → data) |
 | 9 | **Question** | a sentence with no single answer | **shared** | `ThinkingGame.question` + Wall question + `dinnerQuestion` |
 | 10 | **Name** | a word that makes something yours | individual | `emergingTitle` / `setWorldName` / `chosenName` / spells |
+| 11 | **Scale** | a position on a bounded continuum | universal | `Scale` + `ScaleBar` — `lib/shared/widgets/scale_bar.dart` |
 
-Eight individual, three shared (Wall, Circle, Question), three universal
-(Three, Timer — and the way they cut across both). The **Wall** is the
-only primitive where individual atoms become *shared knowledge*; the
-**Book** is its personal mirror.
+Five individual (Verb, Pick, Reveal, Book, Name), three shared (Wall,
+Circle, Question), three universal (Three, Timer, Scale). The **Wall** is
+the only primitive where individual atoms become *shared knowledge*; the
+**Book** is its personal mirror. **Scale** is the gauge the others read
+on — mood **3/5**, stillness **47s**, journey **Week 6/10**, collection
+**4/10**.
 
 ---
 
@@ -99,6 +107,14 @@ only primitive where individual atoms become *shared knowledge*; the
     to the world; after, it's yours. How you take a piece of the infinite and
     make it yours.
 
+11. **Scale** — `Scale` + `ScaleBar` (`lib/shared/widgets/scale_bar.dart`). A
+    position on a bounded continuum, plus its change. The character sheet
+    renders **Collection** (worlds `4/10`) and **Level** (journey `Week 6/10`)
+    as explicit `ScaleBar`s; **Mood** is a *discrete* Scale (1–5, drawn as the
+    five weather emoji); **Skills** is an *unbounded* Scale (no fixed max — the
+    `▲ +13` delta IS the scale's reading). The atom's law: a measure shows
+    position AND change, because growth is the point, not the absolute number.
+
 ---
 
 ## Molecules — every feature decomposed
@@ -115,7 +131,7 @@ The proof is that real features are nothing but combinations:
 - **The activity forge** = Verb (1) · Pick (3, the noun/constraint/time draw) · Timer (8) · Name (10, the composed instruction)
 - **The character sheet** = the *aggregate* — every individual atom, accumulated over 50 days, wearing a face
 
-No feature in the repo needs a construct outside the ten.
+No feature in the repo needs a construct outside the eleven.
 
 ---
 
@@ -127,26 +143,103 @@ should be checked. Two honest notes:
 1. **Circle is barely a code atom.** It's a physical ritual; the app *hosts*
    it (the runbook choreographs it, Mood Weather/Declaration invoke it) but
    doesn't encode it as a structure. That's correct — some primitives are
-   social, not software — but it means "the app is made of these ten" is true
+   social, not software — but it means "the app is made of these atoms" is true
    only if you count one of them as *content the app serves*, not code the app
    runs. Worth saying out loud.
 
-2. **The candidate eleventh atom: THE SCALE.** A position on a bounded
-   continuum — mood **3/5**, stillness **47s**, **Day 23/50** on the journey
-   line, the collection grid's fill. The list folds "the measure" into Timer
-   (#8), but Timer is a container for *action with a duration*; a mood reading
-   or a Day-23 marker isn't an action — it's a gauge. None of the other nine
-   cleanly name "a reading on a dial." It may genuinely be Pick + Reveal +
-   Book in a trench coat (you *pick* 1–5; the delta *reveals* growth; it lands
-   in the *Book*) — but it shows up often enough (Weather, Skills, Level,
-   every progress bar) that whether SCALE is its own atom or a molecule is the
-   one open question. Flagging it, not resolving it.
+2. **The eleventh atom — SCALE — is settled.** It was the candidate the audit
+   raised: a position on a bounded continuum (mood **3/5**, stillness **47s**,
+   journey **Week 6/10**, collection **4/10**). The argument that won:
+   Timer (#8) is a container for *action with a duration*, but a mood reading
+   or a Day-23 marker isn't an action — it's a gauge, and none of the other
+   ten cleanly name "a reading on a dial." It's not Pick+Reveal+Book in a
+   trench coat: those describe *how a value is set / interpreted / stored*, not
+   the value's *being a position on a continuum*. Promoted, and made real:
+   `Scale` + `ScaleBar`. The eleven hold.
 
-Everything else decomposes cleanly. Ten atoms, and the system is the
+Everything decomposes cleanly. Eleven atoms, and the system is the
 chemistry between them.
+
+---
+
+---
+
+## How the primitives shape the UI/UX
+
+The atoms aren't just *what the system is made of* — each one is a **design
+law**. They tell you how a thing must look and behave, regardless of
+screen. This is the layer above the composition primitives
+(`FeatureCard`, `GlassPanel`, `EmptyState` — see CLAUDE.md): those are the
+*widgets*; these are the *rules the widgets must obey*. The
+[SCREEN_RUBRIC](SCREEN_RUBRIC.md) checks a screen is *complete*; this
+checks it's *true to the atoms*.
+
+1. **Verb → one affordance, everywhere.** A verb is always the same
+   tappable object: emoji + word, big, ≥48 dp. The kid's pick, the staff
+   skill, the forge, the print card — identical vocabulary. *Law: never
+   invent a second way to show a verb.* (Honored: `kVerbs` renders the same
+   in every surface.)
+
+2. **Three → never make them hold more than three.** A decision point
+   offers many but takes three; chunk everything into threes. *Law: a choice
+   surface's working set is ~3. Don't ask a body to hold more.*
+
+3. **Pick → the UI must not guide.** No "recommended," no "you always pick
+   CARRY, try a new one," no sort-by-popularity, no nudging default. Free
+   choice means a *neutral* surface. *Law: zero optimization pressure on a
+   pick — agency is the feature, not a thing to A/B.* (Honored: the pick
+   sheet deliberately doesn't editorialize.)
+
+4. **Reveal → withhold, then dramatize.** Never show the outcome before
+   it's earned (the world is hidden until the reveal). The reveal is the ONE
+   loud moment — glow, full-bleed, immersive. *Law: the payoff is a moment,
+   not a label. Defer + dramatize.* (Honored: `RevealOverlay`, the gold glow,
+   the deferred fresh-world naming.)
+
+5. **Wall → additive, unranked, unfiltered.** No likes, no sort-by-best, no
+   favourite, no teacher curation, nothing removed mid-week. Every answer the
+   same size. *Law: shared surfaces never rank or filter — the spread is the
+   lesson.*
+
+6. **Book → accumulate, never delete, show the weight.** The journal only
+   grows; surface its heft (page count, days). It goes home. *Law:
+   personal-history surfaces are append-only and visibly accumulate.* (This
+   is why the Book's "quiet/away" weeks render rather than vanish.)
+
+7. **Circle → immersive ritual, chrome off.** Ritual goes full-bleed and
+   hides the app chrome; everyone faces one thing. *Law: ritual = chrome-off,
+   one focus, no affordances competing for the eye.* (Honored: the immersive
+   present/cast/reveal screens, kid-mode hiding the omnibox.)
+
+8. **Timer → shown as shrinking space, calm.** A countdown you can SEE (the
+   disk that shrinks), not a number that stresses. *Law: time is shown as
+   space running out, not digits ticking up.* (Honored: the spell countdowns.)
+
+9. **Question → open, never graded.** A text field with no validation, no
+   right answer, no error state for "wrong." *Law: question inputs have no
+   correctness UI — invitation, not test.*
+
+10. **Name → editable + owned, inline.** Anything named is tap-to-rename by
+    its owner, in place. *Law: a name is never read-only to the one it
+    belongs to.* (Honored: the character sheet's tap-to-edit chosen name.)
+
+11. **Scale → a gauge with the delta.** A bounded measure shows its position
+    AND its change — the `▲ +13` is the meaningful half, because growth beats
+    the absolute. *Law: never show a measure as a bare number; show where it
+    sits and which way it moved.* (Honored now: `ScaleBar`, the skill delta.)
+
+**Cross-cutting:** the eleven also explain the app's *overall* shape — why
+it's calm (no Pick pressure, no Question grading, no Scale leaderboards),
+why it's offline-first (the Book is paper; the Wall survives the power),
+and why a kid surface and a staff surface feel like one system (same Verb
+affordance, same Three container, same Reveal beat). When a new screen
+feels *off*, it's usually violating an atom's law — a guided pick, a ranked
+wall, a graded question, a bare number where a Scale belongs.
 
 ---
 
 *Living doc. If a new feature needs an atom not on this list, add it here
 with the same grounding (what it is, its reach, the code construct) — or
-prove it's a molecule of the existing ten.*
+prove it's a molecule of the existing eleven. Each atom is also a UI law
+(above): a screen that obeys the eleven feels like the system; one that
+breaks one feels foreign.*
