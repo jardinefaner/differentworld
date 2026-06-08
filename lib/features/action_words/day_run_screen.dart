@@ -138,9 +138,21 @@ class _DayRunScreenState extends ConsumerState<DayRunScreen> {
               Positioned.fill(
                 child: Row(
                   children: [
-                    Expanded(child: GestureDetector(onTap: () => _go(-1))),
+                    Expanded(
+                      child: GestureDetector(
+                        // Opaque, or a childless GestureDetector hit-tests
+                        // nothing and the tap falls through to the PageView.
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _go(-1),
+                      ),
+                    ),
                     const Spacer(),
-                    Expanded(child: GestureDetector(onTap: () => _go(1))),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _go(1),
+                      ),
+                    ),
                   ],
                 ),
               ),
