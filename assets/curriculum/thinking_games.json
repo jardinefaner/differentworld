@@ -33,6 +33,36 @@
       "question": "What's the biggest container? Is there something that holds the universe?"
     },
     {
+      "id": "perception",
+      "week": 1,
+      "emoji": "🔊",
+      "concept": "PERCEPTION",
+      "meaning": "Your brain interprets what comes in — your read isn't the only one.",
+      "play": "Stand in a circle, eyes closed. The teacher claps once. Point to where the sound came from. Open your eyes and check. Do it five times from different spots.",
+      "name": "PERCEPTION. Your ears told your finger where to point — but not everyone pointed the same way. Same sound, different perception. Your brain takes in information and INTERPRETS it. Your interpretation isn't wrong; it's yours. But it's not the only one.",
+      "bridge": [
+        "Where else? Two kids see the same playground argument. One says 'he started it,' the other 'she started it.' Same event, different perception — neither is lying.",
+        "Deeper: they just stood in different spots. When someone sees something differently than you, they're not wrong — they're standing somewhere else.",
+        "Deepest: everyone you'll ever meet is pointing from where they stood. The whole world is people pointing at the same clap from different spots."
+      ],
+      "question": "Is there such a thing as what REALLY happened — or only what each person saw from where they stood?"
+    },
+    {
+      "id": "attention-to-detail",
+      "week": 1,
+      "emoji": "👀",
+      "concept": "ATTENTION TO DETAIL",
+      "meaning": "Looking is automatic; seeing is a choice.",
+      "play": "Pair up. Kid A closes their eyes; Kid B changes ONE thing — unrolls a sleeve, moves a bracelet, untucks a shirt. Kid A opens their eyes and finds the change.",
+      "name": "ATTENTION TO DETAIL. You had to look so carefully at someone that you could spot one tiny change. Most people can't, because they look without SEEING. Looking is automatic. Seeing is a choice.",
+      "bridge": [
+        "Where else? Detectives do this. Doctors do this. Your mom does this — she sees you're sad before you say a word, from the tiny change in your face.",
+        "Deeper: artists do this — they see the shadow you walk past, the color you ignore, the crack you step over.",
+        "Deepest: the whole world is full of details nobody's seeing. They're there right now, waiting to be noticed."
+      ],
+      "question": "What's one thing in this room nobody has ever noticed? Find it, show us — now it's been seen. You made it exist by seeing it."
+    },
+    {
       "id": "connection",
       "week": 2,
       "emoji": "🎒",
@@ -63,6 +93,36 @@
       "question": "What's better — being right, or being surprised?"
     },
     {
+      "id": "causation",
+      "week": 2,
+      "emoji": "⛓️",
+      "concept": "CAUSATION",
+      "meaning": "Every reason has a reason behind it — the chain never ends.",
+      "play": "The teacher starts: 'There was a cat.' Each kid must add a sentence beginning with 'because' — 'because it was raining,' 'because the clouds were angry.' The chain runs backwards into reasons.",
+      "name": "CAUSATION. Every event has a reason behind it — and that reason has a reason, and THAT reason has a reason. The chain never ends. You can always ask 'but why?' one more time. That's not annoying — it's the deepest kind of thinking.",
+      "bridge": [
+        "Where else? 'Why are you here today?' Because your parent brought you. Why? Because they go to work. Why? Because they need money. Why? Because food costs money.",
+        "Deeper: because someone grew it and needs to be paid. Your morning started with a farmer you've never met. The 'because' chain connects you to the whole world.",
+        "Deepest: follow it all the way back and you reach the question humans have asked for 200,000 years — where did the first 'because' come from?"
+      ],
+      "question": "If you follow the 'because' chain all the way back, where does it end? Is there a first 'because'?"
+    },
+    {
+      "id": "possibility",
+      "week": 2,
+      "emoji": "🎲",
+      "concept": "POSSIBILITY",
+      "meaning": "Before it happens, every version exists at once.",
+      "play": "Read a book but skip the ending. Close it. 'What happened at the end?' Everyone writes or draws their ending. Then read the real one and compare.",
+      "name": "POSSIBILITY. Before you read the real ending, every ending was POSSIBLE — yours, your neighbor's, and the author's all existed at the same time. The moment you read the real one, the others disappeared. Were they wrong? No — they were possible. They just didn't happen this time.",
+      "bridge": [
+        "Where else? Every morning you wake up, a hundred possible days exist. You could be kind or mean, try or quit, notice something or miss it.",
+        "Deeper: by bedtime only one day actually happened — but all the others were possible. They almost happened.",
+        "Deepest: tomorrow a hundred new days appear, and you pick one by what you DO."
+      ],
+      "question": "If every day has a hundred possible versions, are you living the best one? How would you know?"
+    },
+    {
       "id": "system",
       "week": 3,
       "emoji": "🐜",
@@ -76,6 +136,36 @@
         "Deepest: you're a part of every system you're in — and the system isn't whole without you."
       ],
       "question": "If you removed yourself from this room, what would be missing? Not your body — what would FEEL different?"
+    },
+    {
+      "id": "relationship",
+      "week": 3,
+      "emoji": "🪨",
+      "concept": "RELATIONSHIP",
+      "meaning": "Connection through attention — what you hold becomes yours.",
+      "play": "Everyone picks up one rock outside — any rock — and brings it in. Put all the rocks on the table. Now find YOUR rock. Most kids can: they held it, they know its weight and shape.",
+      "name": "RELATIONSHIP. The rock didn't change — YOU did. You picked it up and it became yours. That's relationship: connection through attention. Before you held it, it was 'a rock.' After, it's 'MY rock.' The only difference is that you touched it.",
+      "bridge": [
+        "Where else? This is how friendship works. Before you talked to someone, they were 'a kid.' After, they're 'my friend.' The person didn't change — your attention did.",
+        "Deeper: everything you pay attention to becomes yours; everything you ignore stays 'just a rock.'",
+        "Deepest: how many rocks are you walking past every day? How many people?"
+      ],
+      "question": "How many rocks are you walking past every day? What would happen if you picked one up?"
+    },
+    {
+      "id": "architecture",
+      "week": 3,
+      "emoji": "🕷️",
+      "concept": "ARCHITECTURE",
+      "meaning": "Knowledge you were born with — instinct made visible.",
+      "play": "Find a spider web outside. Don't touch it. Watch it for three minutes in silence. Look at the structure; count the connections.",
+      "name": "ARCHITECTURE. Nobody taught the spider to build that — no blueprint, no teacher. It was BORN knowing how to build the most efficient net in nature. The web catches food, holds rain, bounces in wind, and rebuilds overnight. The spider is an architect who never went to school.",
+      "bridge": [
+        "Where else? You're born knowing things too. Nobody taught you to breathe, to swallow, to cry when you need something.",
+        "Deeper: your body is full of knowledge you never learned — it was already there. That's INSTINCT. The spider's web is instinct made visible.",
+        "Deepest: what's YOUR web? What do you know how to do that nobody ever taught you?"
+      ],
+      "question": "If a spider can build a perfect web without being taught, what can YOU do without being taught? What's your web?"
     },
     {
       "id": "adaptation",
@@ -93,6 +183,36 @@
       "question": "Are you the same person everywhere — or a different person in every container?"
     },
     {
+      "id": "irreversible",
+      "week": 4,
+      "emoji": "🧂",
+      "concept": "IRREVERSIBLE",
+      "meaning": "Some things, once done, can't be undone.",
+      "play": "Two cups of water. Add salt to one and stir. Taste both — one's salty, one isn't. Now try to take the salt back out with your hands. You can't.",
+      "name": "IRREVERSIBLE. The salt is IN the water now — you can't separate them with your fingers. It goes one way and doesn't come back. Not everything is like this — you can un-stack blocks, un-draw with an eraser — but some things, once done, are done.",
+      "bridge": [
+        "Where else? Words are like salt in water. Once you say something mean, it's IN the person. You can apologize, say 'I didn't mean it' — but the words already dissolved.",
+        "Deeper: they're inside; you can't reach in and pull them out. That's why WAIT is a verb — wait before speaking.",
+        "Deepest: once the salt hits the water, it's in there. The pause before is the only place you control."
+      ],
+      "question": "If you could un-say one thing, what would it be? You can't un-say it — but you can say something new that matters more. What would that be?"
+    },
+    {
+      "id": "diffusion",
+      "week": 4,
+      "emoji": "🌀",
+      "concept": "DIFFUSION",
+      "meaning": "Spreading without force — nothing is ever truly still.",
+      "play": "Put a drop of food coloring in still water. Don't stir. Watch it spread on its own — slowly, beautifully, without being pushed.",
+      "name": "DIFFUSION. The color spreads because the molecules are always moving, even when the water LOOKS still. Nothing is ever truly still — everything moves at a level you can't see. That's diffusion: spreading without force.",
+      "bridge": [
+        "Where else? Ideas work like this. You say something kind — you don't push it or repeat it, you just drop it into the room. And it spreads.",
+        "Deeper: the kid who heard it tells another at recess, who tells their mom at dinner. Your one drop diffused into places you'll never see.",
+        "Deepest: you don't need to push good ideas — you drop them into still water and wait."
+      ],
+      "question": "What's something you said this week that might still be spreading? You don't know where it went — but it went somewhere."
+    },
+    {
       "id": "rhythm",
       "week": 5,
       "emoji": "👏",
@@ -106,6 +226,36 @@
         "Deepest: the pauses are as important as the stages. Everything with rhythm needs the gap — even you."
       ],
       "question": "What happens if you remove all the pauses — no silence, no summer, no sleep, no rest?"
+    },
+    {
+      "id": "synchronization",
+      "week": 5,
+      "emoji": "🥁",
+      "concept": "SYNCHRONIZATION",
+      "meaning": "Finding each other in the dark by listening, not by a leader.",
+      "play": "Everyone claps together on the count of three. Easy. Now do it with eyes closed — it falls apart. Try again, and again. It takes five or six tries before the clap lands together blind.",
+      "name": "SYNCHRONIZATION. With your eyes open, your eyes did the work. Without them, your EARS had to — you listened for each other's timing and adjusted. That's synchronization: not following a leader, but FINDING each other in the dark.",
+      "bridge": [
+        "Where else? Every band does this. Every team. Every family. You're not all doing the same thing because someone said 'now' — you're constantly listening and adjusting to stay together.",
+        "Deeper: a family eating dinner together is synchronizing. A classroom settling down together is synchronizing.",
+        "Deepest: it doesn't happen by force. It happens by listening."
+      ],
+      "question": "What does this room sound like when we're synchronized? When we're not? Which is better — are you sure?"
+    },
+    {
+      "id": "dissonance",
+      "week": 5,
+      "emoji": "🎹",
+      "concept": "DISSONANCE",
+      "meaning": "The ugly note makes the pretty note matter more.",
+      "play": "Play two notes together — one high, one low. They sound good. Now play two that DON'T go together; everyone cringes. Play the bad-sounding pair three times in a row. By the third, they sound… less bad? Maybe even interesting?",
+      "name": "DISSONANCE. The notes that clash are dissonance — they DISAGREE. But disagreement isn't always bad. Sometimes the clash creates TENSION, and tension creates INTEREST. A song with only pretty notes is boring. The ugly note makes the pretty note matter more.",
+      "bridge": [
+        "Where else? Arguments are dissonance — two people clashing. It sounds bad. But if they stay with it, the clash becomes a conversation.",
+        "Deeper: the disagreement creates something agreement never could. You can't have harmony without knowing what dissonance sounds like.",
+        "Deepest: you need both. The clash isn't the opposite of the music — it's part of it."
+      ],
+      "question": "Is disagreement always bad? What if the people who disagree with you are the ugly note that makes your pretty note matter more?"
     },
     {
       "id": "scale",
@@ -123,6 +273,36 @@
       "question": "Does being small make you unimportant? The earth is a tiny dot — but YOU live on it."
     },
     {
+      "id": "perspective-ball",
+      "week": 6,
+      "emoji": "🔦",
+      "concept": "PERSPECTIVE",
+      "meaning": "It's both day and night at once — it depends where you stand.",
+      "play": "Shine a flashlight at a ball in a dark room. One side is bright, the other dark. Rotate it slowly — the light moves. That's the earth: the bright side is day, the dark side is night. Right now someone on the other side is sleeping while you're awake.",
+      "name": "PERSPECTIVE, deeper. You're on the bright side — you think it's daytime, and it IS, for you. But someone on the dark side KNOWS it's night. They're both right. It's both day AND night at the same time. It depends on where you stand.",
+      "bridge": [
+        "Where else? Every argument you've had is this ball. You're on the bright side saying 'it's day!'; your friend's on the dark side saying 'it's night!' You're both right.",
+        "Deeper: the ball is the truth — you can only see half at a time.",
+        "Deepest: you NEED the person on the other side to see the whole thing."
+      ],
+      "question": "What's something you're SURE about? What would someone on the other side of the ball say? Can both of you be right?"
+    },
+    {
+      "id": "adaptation-dark",
+      "week": 6,
+      "emoji": "🌑",
+      "concept": "ADAPTATION",
+      "meaning": "Not new equipment — getting better at what you already have.",
+      "play": "Turn off all the lights. Total darkness. Wait 30 seconds — 'what can you see?' Nothing. Wait two minutes — 'now?' Shapes, outlines, the room appears. Your eyes adapted.",
+      "name": "ADAPTATION, deeper. Your eyes didn't get new parts — they adjusted the parts they had. The darkness didn't change; YOU did. Given enough time you can see in almost anything. Adaptation isn't getting new equipment — it's getting better at using what you already have.",
+      "bridge": [
+        "Where else? The first day of school is darkness — you can't see anything, you don't know anyone, everything's scary. By Week 3 you can see the whole room. Nothing changed except you.",
+        "Deeper: the first time you try anything — a bike, reading, drawing, being kind — is darkness. You wait. Your eyes adjust.",
+        "Deepest: the room appears. It was always there; you just needed time."
+      ],
+      "question": "What are you still in the dark about? What hasn't your eyes adjusted to yet — what if you waited a little longer?"
+    },
+    {
       "id": "imagination",
       "week": 7,
       "emoji": "🚪",
@@ -136,6 +316,21 @@
         "Deepest: the drawings you just made are blueprints for things that don't exist yet. They could be real someday."
       ],
       "question": "What's behind YOUR door? Could it be real someday — and what would it take to build it?"
+    },
+    {
+      "id": "frame",
+      "week": 7,
+      "emoji": "🦆",
+      "concept": "FRAME",
+      "meaning": "Your brain locks one way of seeing — but it's both at once.",
+      "play": "Look at the duck that's also a rabbit. 'A duck or a rabbit?' Half see each. Now try to see the other one — some can switch, some can't.",
+      "name": "FRAME. Your brain picked one way to see it and locked in. That's a FRAME. Once you see the duck, it's hard to see the rabbit — your brain doesn't like holding two things at once. But the image IS both, at the same time, always.",
+      "bridge": [
+        "Where else? People are duck-rabbits. Your teacher is a teacher AND a person who goes home, watches TV, burns dinner.",
+        "Deeper: your grown-up is your grown-up AND someone who was once a scared kid just like you. Everyone is two things at once — you usually only see one frame.",
+        "Deepest: switch the frame and the person changes without changing."
+      ],
+      "question": "What if everyone you know is a duck-rabbit? What's the version of them you've never seen — and what would change if you looked for it?"
     },
     {
       "id": "attention",
@@ -153,6 +348,21 @@
       "question": "What are you moving too fast to see? What would you notice if you went slower?"
     },
     {
+      "id": "constraint",
+      "week": 8,
+      "emoji": "📐",
+      "concept": "CONSTRAINT",
+      "meaning": "Limits don't shrink creativity — they shape it.",
+      "play": "'You have 10 seconds — draw a house. GO.' Fast, messy, done. Now: 'You have 5 minutes — draw a house.' Same assignment, more time, completely different result. Compare the two.",
+      "name": "CONSTRAINT. The 10-second house isn't worse — it's different. The time limit changed what was possible. Less time doesn't mean less good; it means different decisions. You can't draw a door in 10 seconds so you skip it; in 5 minutes you add curtains. The constraint shaped the art.",
+      "bridge": [
+        "Where else? Your whole life is constraints — limited time, energy, money, attention. Those aren't problems; they're SHAPERS.",
+        "Deeper: a poem with no rules is just a paragraph. A poem with rules — five lines, a rhyme, a rhythm — becomes beautiful BECAUSE of the constraints.",
+        "Deepest: a day with no schedule is chaos; a day with a schedule is a container for freedom."
+      ],
+      "question": "If you had unlimited time for one thing, would it be better — or would you never finish because you had no reason to stop?"
+    },
+    {
       "id": "blend",
       "week": 9,
       "emoji": "🎨",
@@ -168,6 +378,36 @@
       "question": "Is there a feeling that has no name yet — a blend nobody's named? What would you call it?"
     },
     {
+      "id": "fragile",
+      "week": 9,
+      "emoji": "🎈",
+      "concept": "FRAGILE",
+      "meaning": "Strong enough to hold everything, delicate enough to break.",
+      "play": "Fill a balloon with water until it's heavy but not bursting. Hold it in one hand and walk across the room. Don't drop it, don't pop it. Feel how careful you have to be.",
+      "name": "FRAGILE. The balloon is full but delicate — one wrong squeeze and it's gone. Strong enough to hold everything, vulnerable enough to break with one sharp thing. Both at the same time.",
+      "bridge": [
+        "Where else? People are water balloons — full of feelings, memories, fears. They look solid, they walk around like they're fine.",
+        "Deeper: but one sharp word, one push, one careless moment, and something breaks. The kid who's mean to everyone? A full balloon, walking carefully, one sharp thing from breaking.",
+        "Deepest: you can't always see how full someone is — but you can choose not to be the sharp thing."
+      ],
+      "question": "How full is YOUR balloon right now? What would it take to break it — and what would it take to hold it more gently?"
+    },
+    {
+      "id": "contagion",
+      "week": 9,
+      "emoji": "🥱",
+      "concept": "CONTAGION",
+      "meaning": "Feelings spread — you're a station you can't turn off.",
+      "play": "Two kids face each other. Kid A makes a face — angry, sad, scared, surprised. Kid B's job: DON'T mirror it; stay neutral. It's almost impossible — you'll mimic them without choosing to.",
+      "name": "CONTAGION. Feelings spread — like a yawn, like a laugh. You didn't decide to feel what they're feeling; your brain copied it automatically. That's emotional contagion. Feelings aren't private — they leak, they travel, they infect.",
+      "bridge": [
+        "Where else? One kid walks in angry and by lunch three kids are angry. Nobody hit anyone — the feeling just spread.",
+        "Deeper: but it works BOTH ways. One kid walks in joyful and by lunch three kids are lighter. You broadcast feelings all day whether you know it or not.",
+        "Deepest: you're a radio station you can't turn off. The only question is what station you are."
+      ],
+      "question": "If your feeling right now is contagious and will spread to three people by lunch — is that a feeling you want to spread?"
+    },
+    {
       "id": "community",
       "week": 10,
       "emoji": "🕸️",
@@ -181,6 +421,21 @@
         "Deepest: every verb you practiced this summer — CARRY, HELP, LISTEN, SHINE — was a string connecting you to someone else."
       ],
       "question": "When you leave on Friday, the web goes with you — not the string, the feeling. Who will you stay connected to, and how?"
+    },
+    {
+      "id": "collective",
+      "week": 10,
+      "emoji": "🎩",
+      "concept": "COLLECTIVE",
+      "meaning": "People who built something together none could build alone.",
+      "play": "Everyone writes one thing they learned this summer, folds it, puts it in a hat. Pull them out one by one and read each aloud — nobody knows who wrote it — until all are read.",
+      "name": "COLLECTIVE. No single person learned all of this — but together, the room learned everything. Your piece plus my piece plus theirs equals more than any of us alone. That's a collective: not a group standing near each other, but people who've built something together none of them could build alone.",
+      "bridge": [
+        "Where else? This room is a collective. The Wall was built by every hand. The shelf holds every book. The word wall has every kid's vocabulary.",
+        "Deeper: the verb cards were worn soft by every kid's fingers. No one person made this room.",
+        "Deepest: the room made itself — ten weeks of ten people choosing three verbs and showing up. End it as a circle: each kid says their Declaration, and the whole room answers, 'We see you.'"
+      ],
+      "question": "What did this room teach you that no single person in it could have taught you alone?"
     },
     {
       "id": "dominoes",

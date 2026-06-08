@@ -68,10 +68,13 @@ void main() {
 
   test('thinkingGamesForWeek filters to that week; null/0 → empty', () {
     final games = load();
-    expect(thinkingGamesForWeek(games, 4).map((g) => g.id), ['adaptation']);
+    expect(
+      thinkingGamesForWeek(games, 4).map((g) => g.id),
+      containsAll(<String>['adaptation', 'irreversible', 'diffusion']),
+    );
     expect(
       thinkingGamesForWeek(games, 1).map((g) => g.id),
-      containsAll(<String>['unique', 'container']),
+      containsAll(<String>['unique', 'container', 'perception']),
     );
     expect(thinkingGamesForWeek(games, null), isEmpty);
     expect(thinkingGamesForWeek(games, 0), isEmpty);
