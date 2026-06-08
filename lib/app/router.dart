@@ -20,6 +20,7 @@ import 'package:differentworld/features/action_words/wall_screen.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
 import 'package:differentworld/features/action_words/world_present_screen.dart';
 import 'package:differentworld/features/activity_forge/activity_forge_screen.dart';
+import 'package:differentworld/features/activity_forge/activity_lens_screen.dart';
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
@@ -1069,6 +1070,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'Make an activity',
               child: ActivityForgeScreen(),
+            ),
+          ),
+          // Any activity, the Different World way — the lens over your own.
+          GoRoute(
+            path: '/lens',
+            builder: (_, _) => const RouteTitle(
+              title: 'Any activity',
+              child: ActivityLensScreen(),
             ),
           ),
           // The printable toolkit — generate the binder pages offline.

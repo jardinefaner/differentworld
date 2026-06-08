@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/forge` — **make an activity.** The generative formula made tappable:
 /// verb × noun × constraint × time. Lock a verb to what you're teaching, draw
@@ -141,6 +142,13 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton(
+              onPressed: () => context.push('/lens'),
+              child: const Text('…or run your own activity →'),
             ),
           ),
           if (kept.isNotEmpty) ...[

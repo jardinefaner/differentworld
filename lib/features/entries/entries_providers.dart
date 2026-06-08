@@ -346,24 +346,25 @@ class EntryActions {
     }),
   );
 
-  /// Keep a forged activity (verb × noun × constraint × time) at the space
-  /// level so the teacher can come back to a roll they liked.
+  /// Keep an activity at the space level so the teacher can come back to it.
+  /// A forge roll passes the four parts; a free-typed "bring your own"
+  /// activity passes just the [instruction] (the parts are optional).
   Future<String> keepForgedActivity({
     required String instruction,
-    required String verbId,
-    required String noun,
-    required String constraint,
-    required int minutes,
+    String? verbId,
+    String? noun,
+    String? constraint,
+    int? minutes,
     String? groupId,
   }) => _create(
     kind: EntryKind.forgedActivity,
     groupId: groupId,
     body: instruction,
     detailsJson: jsonEncode({
-      'verb': verbId,
-      'noun': noun,
-      'constraint': constraint,
-      'minutes': minutes,
+      'verb': ?verbId,
+      'noun': ?noun,
+      'constraint': ?constraint,
+      'minutes': ?minutes,
     }),
   );
 
