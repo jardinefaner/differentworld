@@ -97,6 +97,33 @@ Future<void> showJourneyDaySheet(
                 text: block.keyMoment,
                 label: 'If one thing lands',
               ),
+              if (block.words.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                _FocusLabel(text: 'The words of this world', accent: accent),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final w in block.words)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          w,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
               if (isToday) ...[
                 const SizedBox(height: 22),
                 SizedBox(
