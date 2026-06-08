@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/activity_match.dart';
 import 'package:differentworld/features/action_words/curriculum_import.dart';
 import 'package:differentworld/features/action_words/senses.dart';
@@ -35,12 +36,22 @@ class ActivityMatchScreen extends ConsumerStatefulWidget {
 }
 
 class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
-  late final Set<String> _filter = widget.initialVerbs.toSet();
+  // null = follow today's most-picked cohort verbs (the auto default, so the
+  // matcher opens already showing what fits the room — THE_DAY.md's 15-second
+  // Verb-Hour touch). A non-null Set = the teacher's explicit filter.
+  Set<String>? _override;
 
   @override
   Widget build(BuildContext context) {
     final activitiesAsync = ref.watch(activitiesProvider);
     final isDirector = ref.watch(viewerProvider).isDirector;
+    // The default lens: explicit initialVerbs if passed, else today's most-
+    // picked cohort verbs (live until the teacher taps a chip).
+    final autoDefault = widget.initialVerbs.isNotEmpty
+        ? widget.initialVerbs.toSet()
+        : ref.watch(todaysTopPickedVerbsProvider).toSet();
+    final filter = _override ?? autoDefault;
+    final following = _override == null && autoDefault.isNotEmpty;
     return EdgeScaffold(
       actions: [
         if (isDirector)
@@ -88,23 +99,36 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
                   : null,
             );
           }
-          final matches = _filter.isEmpty
+          final matches = filter.isEmpty
               ? [for (final a in active) ActivityMatch(activity: a, overlap: 0)]
-              : matchActivities(_filter, active);
+              : matchActivities(filter, active);
 
           return ResponsivePage(
             children: [
-              const ContentHeader(
+              ContentHeader(
                 title: 'Activities',
-                subtitle: 'Tap words to find matches; tag an activity with '
-                    'the words it practices.',
+                subtitle: following
+                    ? "Matching today's most-picked words — tap any to change."
+                    : 'Tap words to find matches; tag an activity with the '
+                          'words it practices.',
               ),
               _VerbFilter(
-                selected: _filter,
+                selected: filter,
                 onToggle: (id) => setState(() {
-                  if (!_filter.remove(id)) _filter.add(id);
+                  final next = {...filter};
+                  if (!next.remove(id)) next.add(id);
+                  _override = next;
                 }),
               ),
+              if (_override != null && widget.initialVerbs.isEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => setState(() => _override = null),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text("Back to today's picks"),
+                  ),
+                ),
               const SizedBox(height: 12),
               if (matches.isEmpty)
                 Padding(

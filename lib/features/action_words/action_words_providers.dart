@@ -290,6 +290,44 @@ final todaysRevealItemsProvider =
       return items;
     });
 
+/// Rank verb ids by how many kids picked them, most-picked first (stable
+/// alphabetical tiebreak), capped. Pure so it's unit-testable without Drift
+/// rows.
+List<String> rankVerbsByPickCount(
+  Iterable<List<String>> picksPerKid, {
+  int cap = 4,
+}) {
+  final counts = <String, int>{};
+  for (final picks in picksPerKid) {
+    for (final v in picks) {
+      counts[v] = (counts[v] ?? 0) + 1;
+    }
+  }
+  final ids = counts.keys.toList()
+    ..sort((a, b) {
+      final byCount = counts[b]!.compareTo(counts[a]!);
+      return byCount != 0 ? byCount : a.compareTo(b);
+    });
+  return ids.take(cap).toList();
+}
+
+/// The verbs the cohort picked MOST today, most-picked first — the default
+/// lens for the activity matcher so it opens already showing what fits the
+/// room's picks (THE_DAY.md's "15-second" Verb-Hour touch). Empty until kids
+/// pick. Derived from the warm space-wide picks stream.
+final todaysTopPickedVerbsProvider = Provider<List<String>>((ref) {
+  final entries = ref.watch(_spaceActionWordsProvider).value ?? const <Entry>[];
+  final today = todayKey();
+  final picks = <List<String>>[];
+  for (final e in entries) {
+    final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+    if (local == null || dateKey(local) != today) continue;
+    final day = ActionWordsDay.fromEntry(e);
+    if (day.hasPicks) picks.add(day.verbPicks);
+  }
+  return rankVerbsByPickCount(picks);
+});
+
 /// The sorted-verb key for a combo — the lookup key for class worlds.
 String worldComboKey(Set<String> verbs) => (verbs.toList()..sort()).join('+');
 
