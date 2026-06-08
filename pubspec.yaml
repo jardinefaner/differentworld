@@ -127,6 +127,9 @@ flutter:
     - assets/curriculum/ten_worlds.json
     # Big Thinking — play → name → bridge → question games.
     - assets/curriculum/thinking_games.json
+    # 30 "spell words" — beautiful words a kid earns by using 3× (the daily
+    # word + the printed gold word-cards).
+    - assets/curriculum/spell_words.json
     # The staff runbook — every moment of the day in three lanes
     # (lead / helper / if-it-breaks). The adult twin of "Play today".
     - assets/curriculum/staff_runbook.json

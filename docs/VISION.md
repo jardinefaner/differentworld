@@ -642,6 +642,24 @@ once it has a home.
   **[THE_DAY.md](THE_DAY.md)**. (Threads: the 11 primitives; the present/cast
   spine; the four app-touch surfaces — mood entry, Action Words picks, the
   `matchActivities` matcher, `buildParentMessage`.)
+- **2026-06-08** — **Everything that brings the system to life — the asset
+  manifest.** The full catalog of what gets MADE: physical cards (verb / world-
+  reveal / spell-word / wall-question / if-i-were / timer), the custom journal
+  (lined-left / blank-right, a mirror sticker on the last page — *"the last page
+  of every book is you"*), the room environment (the Wall Kit, the Journey
+  Line, per-world transformation kits), wearables (verb bracelets, world pins,
+  name tags), audio (a fixed 9:00 chime, per-spell sounds, a reveal sound, the
+  kids' four-note anthem *made by them, not for them*), digital (reveal
+  animations, the parent daily card, the summer report, the collection poster),
+  video (atmospheric world intros, the showcase film), and the **8 print
+  bundles** — the code-actionable core. The operating rule: *"already laid out
+  before printing — teachers don't need to do anything; every printable is
+  pre-formatted to how it gets printed."* And the closer: *"The assets
+  disappear. The teacher appears. The kid is seen. That's the product."* Full
+  manifest + the print-readiness audit (what the `/print` toolkit covers vs. the
+  8 bundles) live in **[ASSETS.md](ASSETS.md)**. (Threads: the print toolkit,
+  the poster engine, the summer book, the daily content banks that are still
+  missing.)
 
 ---
 

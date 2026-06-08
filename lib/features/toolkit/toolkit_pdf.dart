@@ -1,8 +1,11 @@
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/spell_words.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
-import 'package:differentworld/features/spells/spells.dart';
+// `spells.dart` also exports a `SpellWord` (a timer-spell's foreign word) —
+// hide it so the beautiful-word `SpellWord` from `spell_words.dart` wins here.
+import 'package:differentworld/features/spells/spells.dart' hide SpellWord;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -89,6 +92,78 @@ Future<bool> printTimerSpellCards() {
   return Printing.layoutPdf(
     onLayout: (_) => doc.save(),
     name: 'Timer spell cards',
+  );
+}
+
+/// The back of a spell-word card: the word, its meaning, the gesture, and the
+/// "use it 3 times" promise.
+pw.Page _spellWordBack(SpellWord w) => pw.Page(
+  theme: pw.ThemeData.base(),
+  pageFormat: PdfPageFormat.letter,
+  margin: const pw.EdgeInsets.all(48),
+  build: (ctx) => pw.Center(
+    child: pw.Column(
+      mainAxisAlignment: pw.MainAxisAlignment.center,
+      children: [
+        pw.Text(
+          _ascii(w.word),
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(fontSize: 44, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 24),
+        pw.Text(
+          _ascii(w.meaning),
+          textAlign: pw.TextAlign.center,
+          style: const pw.TextStyle(fontSize: 28),
+        ),
+        if (w.gesture.isNotEmpty) ...[
+          pw.SizedBox(height: 30),
+          pw.Text(
+            'GESTURE',
+            style: pw.TextStyle(
+              fontSize: 15,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey600,
+              letterSpacing: 2,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            _ascii(w.gesture),
+            textAlign: pw.TextAlign.center,
+            style: const pw.TextStyle(fontSize: 22, color: PdfColors.grey700),
+          ),
+        ],
+        pw.SizedBox(height: 40),
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(width: 1.5),
+            borderRadius: pw.BorderRadius.circular(10),
+          ),
+          child: pw.Text(
+            _ascii('Use it 3 times today and it is yours.'),
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+        ),
+      ],
+    ),
+  ),
+);
+
+/// 30 spell-word cards — the WORD huge on the front, its meaning + gesture +
+/// "use 3x to earn" on the back. Print double-sided, cut, hand them out as
+/// they're earned (docs/ASSETS.md "each one feels precious").
+Future<bool> printSpellWordCards(List<SpellWord> words) {
+  final doc = pw.Document(creator: 'Different World');
+  for (final w in words) {
+    doc
+      ..addPage(_bigCard(w.word, 'a word to earn'))
+      ..addPage(_spellWordBack(w));
+  }
+  return Printing.layoutPdf(
+    onLayout: (_) => doc.save(),
+    name: 'Spell word cards',
   );
 }
 

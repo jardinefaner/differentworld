@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/spell_words.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
 import 'package:differentworld/features/toolkit/toolkit_pdf.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -49,6 +50,12 @@ class PrintToolkitScreen extends ConsumerWidget {
             title: 'Timer spell cards',
             subtitle: 'FREEZE · MOVE · CREATE · SHARE · WONDER',
             onTap: () => unawaited(printTimerSpellCards()),
+          ),
+          FeatureCard(
+            leading: const Icon(Icons.auto_awesome_outlined),
+            title: 'Spell word cards',
+            subtitle: '30 words to earn — word front, meaning + gesture back',
+            onTap: () => _withSpellWords(context, ref),
           ),
           FeatureCard(
             leading: const Icon(Icons.workspace_premium_outlined),
@@ -119,5 +126,16 @@ class PrintToolkitScreen extends ConsumerWidget {
       return;
     }
     unawaited(gen(worlds));
+  }
+
+  void _withSpellWords(BuildContext context, WidgetRef ref) {
+    final words = ref.read(spellWordsProvider).value ?? const <SpellWord>[];
+    if (words.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Words still loading — try again.')),
+      );
+      return;
+    }
+    unawaited(printSpellWordCards(words));
   }
 }
