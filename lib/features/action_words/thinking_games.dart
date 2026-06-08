@@ -24,6 +24,7 @@ class ThinkingGame {
     required this.bridge,
     required this.question,
     this.week = 0,
+    this.system = '',
   });
 
   factory ThinkingGame.fromJson(Map<String, dynamic> j) => ThinkingGame(
@@ -38,6 +39,7 @@ class ThinkingGame {
     ],
     question: (j['question'] as String?) ?? '',
     week: (j['week'] as num?)?.toInt() ?? 0,
+    system: (j['system'] as String?) ?? '',
   );
 
   final String id;
@@ -46,6 +48,11 @@ class ThinkingGame {
   /// The curriculum week this game belongs to (1–10), tying it to that week's
   /// world — or 0 for an "anytime" game that fits no specific world.
   final int week;
+
+  /// The RPG SYSTEM this game sits underneath (avatar / skills / weather / …),
+  /// or '' for a world / anytime game. The bridge between the character sheet
+  /// and the thinking deck — every system has a game underneath it.
+  final String system;
 
   /// The NAME — the one-word concept ("CAUSE AND EFFECT", "DRIFT"). The spell.
   final String concept;
@@ -109,4 +116,34 @@ final thisWeekThinkingProvider = Provider<List<ThinkingGame>>((ref) {
   final games =
       ref.watch(thinkingGamesProvider).value ?? const <ThinkingGame>[];
   return thinkingGamesForWeek(games, week);
+});
+
+/// The single thinking game underneath an RPG [systemId] (avatar, skills,
+/// weather, …), or null if none. The character-sheet sections link to it.
+ThinkingGame? thinkingGameForSystem(
+  List<ThinkingGame> games,
+  String systemId,
+) {
+  if (systemId.isEmpty) return null;
+  for (final g in games) {
+    if (g.system == systemId) return g;
+  }
+  return null;
+}
+
+/// Every system-tied game (one per RPG system), for the deck's own section.
+List<ThinkingGame> systemThinkingGames(List<ThinkingGame> games) => [
+  for (final g in games)
+    if (g.system.isNotEmpty) g,
+];
+
+/// The game under one RPG system, resolved from the loaded deck.
+// ignore: specify_nonobvious_property_types — family provider, no stable name
+final systemThinkingGameProvider = Provider.family<ThinkingGame?, String>((
+  ref,
+  systemId,
+) {
+  final games =
+      ref.watch(thinkingGamesProvider).value ?? const <ThinkingGame>[];
+  return thinkingGameForSystem(games, systemId);
 });

@@ -30,13 +30,19 @@ class ThinkingScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(thinkingGamesProvider),
         ),
         data: (games) {
-          // Lead with this week's WORLD game(s); the rest of the deck follows.
+          // Lead with this week's WORLD game(s), then the game under each RPG
+          // system, then the rest of the deck.
           final weekGames = ref.watch(thisWeekThinkingProvider);
           final world = ref.watch(currentWorldProvider);
           final weekIds = {for (final g in weekGames) g.id};
-          final rest = [
+          final systemGames = [
             for (final g in games)
-              if (!weekIds.contains(g.id)) g,
+              if (g.system.isNotEmpty && !weekIds.contains(g.id)) g,
+          ];
+          final shownIds = {...weekIds, for (final g in systemGames) g.id};
+          final others = [
+            for (final g in games)
+              if (!shownIds.contains(g.id)) g,
           ];
           return ResponsivePage(
             children: [
@@ -51,9 +57,14 @@ class ThinkingScreen extends ConsumerWidget {
                   world == null ? 'This week' : 'This week · ${world.name}',
                 ),
                 for (final g in weekGames) _GameCard(game: g),
-                const _SectionLabel('The whole deck'),
               ],
-              for (final g in rest) _GameCard(game: g),
+              if (systemGames.isNotEmpty) ...[
+                const _SectionLabel('Under each RPG system'),
+                for (final g in systemGames) _GameCard(game: g),
+              ],
+              if (weekGames.isNotEmpty || systemGames.isNotEmpty)
+                const _SectionLabel('The whole deck'),
+              for (final g in others) _GameCard(game: g),
             ],
           );
         },

@@ -6,8 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   List<ThinkingGame> load() {
-    final raw =
-        File('assets/curriculum/thinking_games.json').readAsStringSync();
+    final raw = File(
+      'assets/curriculum/thinking_games.json',
+    ).readAsStringSync();
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     return [
       for (final g in decoded['games'] as List)
@@ -66,6 +67,36 @@ void main() {
     }
   });
 
+  test('every one of the 13 RPG systems has a game underneath it', () {
+    final games = load();
+    const systems = [
+      'avatar',
+      'name',
+      'level',
+      'abilities',
+      'skills',
+      'spells',
+      'tools',
+      'inventory',
+      'allies',
+      'quests',
+      'collection',
+      'lore',
+      'weather',
+    ];
+    for (final sys in systems) {
+      final game = thinkingGameForSystem(games, sys);
+      expect(game, isNotNull, reason: 'no game under system "$sys"');
+      expect(game!.concept, isNotEmpty);
+      expect(game.bridge.length, 3, reason: '$sys bridge');
+    }
+    // systemThinkingGames returns exactly the system-tied ones.
+    final sysGames = systemThinkingGames(games);
+    expect(sysGames.length, systems.length);
+    expect(thinkingGameForSystem(games, ''), isNull);
+    expect(thinkingGameForSystem(games, 'not-a-system'), isNull);
+  });
+
   test('thinkingGamesForWeek filters to that week; null/0 → empty', () {
     final games = load();
     expect(
@@ -87,7 +118,10 @@ void main() {
     expect(a?.id, b?.id); // same day → same game
     final hit = <String>{};
     for (var d = 0; d < games.length; d++) {
-      final g = thinkingGameForDay(games, DateTime(2026, 7, 2).add(Duration(days: d)));
+      final g = thinkingGameForDay(
+        games,
+        DateTime(2026, 7, 2).add(Duration(days: d)),
+      );
       if (g != null) hit.add(g.id);
     }
     expect(hit.length, games.length);
