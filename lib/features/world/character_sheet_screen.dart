@@ -5,11 +5,13 @@ import 'package:differentworld/features/action_words/action_words_providers.dart
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/mood.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/week_log.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/story/moment.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
+import 'package:differentworld/features/world/skill_measure.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -76,12 +78,16 @@ class _Body extends ConsumerWidget {
     final hasDrawing = sheet?.avatarUrl != null;
 
     // The rest of the sheet, assembled from data that already exists.
-    final collection =
-        ref.watch(actionWordsCollectionProvider(subjectId)).value;
-    final entries = ref
-            .watch(entriesForSubjectProvider(
-              (subjectId: subjectId, kind: null),
-            ))
+    final collection = ref
+        .watch(actionWordsCollectionProvider(subjectId))
+        .value;
+    final entries =
+        ref
+            .watch(
+              entriesForSubjectProvider(
+                (subjectId: subjectId, kind: null),
+              ),
+            )
             .value ??
         const <Entry>[];
     final week = ref.watch(currentCurriculumWeekProvider);
@@ -111,7 +117,8 @@ class _Body extends ConsumerWidget {
                 name: displayName,
                 photoUrl: sheet?.avatarUrl,
                 radius: 76,
-                onTap: () => _goDraw(context, hasName ? chosen.trim() : firstName),
+                onTap: () =>
+                    _goDraw(context, hasName ? chosen.trim() : firstName),
               ),
             ),
             const SizedBox(height: 24),
@@ -178,7 +185,10 @@ class _Body extends ConsumerWidget {
               children: [
                 _Chip(icon: Icons.cake_outlined, label: 'Day $ageDays'),
                 if (week != null)
-                  _Chip(icon: Icons.calendar_today_outlined, label: 'Week $week'),
+                  _Chip(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Week $week',
+                  ),
                 if (world != null) _Chip(emoji: world.emoji, label: world.name),
               ],
             ),
@@ -219,10 +229,33 @@ class _Body extends ConsumerWidget {
               child: _Verbs(practiced: practiced),
             ),
             const SizedBox(height: 22),
+            // Skills — the RPG "stats that grow". The one synthesis piece with
+            // new data: the line going up is the proof a brain grew.
+            _Skills(
+              entries: entries,
+              subjectId: subjectId,
+              firstName: firstName ?? 'this child',
+              groupId: subject?.groupId,
+            ),
+            const SizedBox(height: 22),
+            // Spells — the kid's earned vocabulary, from their weekly logs.
+            _Spells(entries: entries),
+            const SizedBox(height: 22),
             _Section(
               label: 'Collection · worlds visited',
               child: _Worlds(worlds: worlds, visited: visitedWeeks),
             ),
+            const SizedBox(height: 22),
+            // Quests — the long game made visible (project-length progress).
+            _Quests(
+              visited: visitedWeeks,
+              worldCount: worlds.length,
+              days: ageDays,
+            ),
+            const SizedBox(height: 22),
+            // Allies — the party, from the weekly logs (staff-side, full names;
+            // export scrubs other-child names — see summer_book).
+            _Allies(entries: entries),
             const SizedBox(height: 22),
             _Milestones(entries: entries),
             const SizedBox(height: 22),
@@ -274,7 +307,9 @@ class _Body extends ConsumerWidget {
         },
       );
       if (saved == null) return; // cancelled
-      await ref.read(characterSheetActionsProvider).setChosenName(
+      await ref
+          .read(characterSheetActionsProvider)
+          .setChosenName(
             subjectId: subjectId,
             name: saved,
           );
@@ -370,10 +405,13 @@ class _Weather extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final moodEntries = ref
-            .watch(entriesForSubjectProvider(
-              (subjectId: subjectId, kind: EntryKind.mood),
-            ))
+    final moodEntries =
+        ref
+            .watch(
+              entriesForSubjectProvider(
+                (subjectId: subjectId, kind: EntryKind.mood),
+              ),
+            )
             .value ??
         const <Entry>[];
 
@@ -386,8 +424,7 @@ class _Weather extends ConsumerWidget {
         break; // newest-first → first match is the latest today
       }
     }
-    final log =
-        moodReadings(moodEntries).take(14).toList().reversed.toList();
+    final log = moodReadings(moodEntries).take(14).toList().reversed.toList();
 
     return _Section(
       label: 'Weather · today’s mood',
@@ -403,7 +440,9 @@ class _Weather extends ConsumerWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => unawaited(
-                        ref.read(entryActionsProvider).recordMood(
+                        ref
+                            .read(entryActionsProvider)
+                            .recordMood(
                               subjectId: subjectId,
                               value: m.value,
                             ),
@@ -421,8 +460,7 @@ class _Weather extends ConsumerWidget {
                         ),
                         child: Column(
                           children: [
-                            Text(m.emoji,
-                                style: const TextStyle(fontSize: 24)),
+                            Text(m.emoji, style: const TextStyle(fontSize: 24)),
                             Text(
                               '${m.value}',
                               style: theme.textTheme.labelSmall?.copyWith(
@@ -604,6 +642,268 @@ class _Links extends StatelessWidget {
           label: const Text('Lore · the wall'),
         ),
       ],
+    );
+  }
+}
+
+/// SKILLS — measured stats that grow. The latest value + the delta from the
+/// one before it (the line going up). A "log a measurement" affordance feeds
+/// the only new data layer the synthesis needed.
+class _Skills extends StatelessWidget {
+  const _Skills({
+    required this.entries,
+    required this.subjectId,
+    required this.firstName,
+    required this.groupId,
+  });
+
+  final List<Entry> entries;
+  final String subjectId;
+  final String firstName;
+  final String? groupId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final progress = latestSkillValues(entries);
+    return _Section(
+      label: 'Skills · stats that grow',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (progress.isEmpty)
+            Text(
+              "Not measured yet. Skills aren't taught — they're noticed, "
+              'inside the activities that already happen.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            for (final skill in kMeasurableSkills)
+              if (progress[skill.id] case final p?)
+                _SkillRow(skill: skill, progress: p),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: () => unawaited(
+                showSkillMeasureSheet(
+                  context,
+                  subjectId: subjectId,
+                  firstName: firstName,
+                  groupId: groupId,
+                ),
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Log a measurement'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkillRow extends StatelessWidget {
+  const _SkillRow({required this.skill, required this.progress});
+  final MeasurableSkill skill;
+  final SkillProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final prev = progress.previous;
+    final delta = prev == null ? null : progress.latest - prev;
+    final up = delta != null && delta > 0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Text(skill.emoji, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(skill.label, style: theme.textTheme.bodyMedium),
+          ),
+          Text(
+            skill.format(progress.latest),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (delta != null && delta != 0) ...[
+            const SizedBox(width: 8),
+            Text(
+              '${up ? '▲' : '▼'} ${up ? '+' : ''}'
+              '${delta % 1 == 0 ? delta.toInt() : delta}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: up
+                    ? const Color(0xFF51CF66)
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// SPELLS — the kid's earned vocabulary, gathered from their weekly logs.
+class _Spells extends StatelessWidget {
+  const _Spells({required this.entries});
+  final List<Entry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final spells = <String>[];
+    for (final e in entries) {
+      if (e.kind != EntryKind.weekLog) continue;
+      final s = WeekLog.fromEntry(e).spell.trim();
+      if (s.isNotEmpty && !spells.contains(s)) spells.add(s);
+    }
+    return _Section(
+      label: 'Spells · words earned',
+      child: spells.isEmpty
+          ? Text(
+              'No spells learned yet.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          : Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final s in spells)
+                  Chip(
+                    label: Text(s),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
+/// ALLIES — the party, gathered from the weekly logs. Staff-side, full names
+/// (the export path scrubs other-child names; this view is canSeeSubject-gated).
+class _Allies extends StatelessWidget {
+  const _Allies({required this.entries});
+  final List<Entry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final allies = <String>[];
+    for (final e in entries) {
+      if (e.kind != EntryKind.weekLog) continue;
+      final a = WeekLog.fromEntry(e).ally.trim();
+      if (a.isNotEmpty && !allies.contains(a)) allies.add(a);
+    }
+    return _Section(
+      label: 'Allies · the party',
+      child: allies.isEmpty
+          ? Text(
+              'No allies logged yet.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final a in allies)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('🤝  ', style: TextStyle(fontSize: 14)),
+                        Expanded(
+                          child: Text(a, style: theme.textTheme.bodyMedium),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
+/// QUESTS — the long game made visible: the project-length goals (visit every
+/// world, the days accumulating). The daily quest is the verb pick itself.
+class _Quests extends StatelessWidget {
+  const _Quests({
+    required this.visited,
+    required this.worldCount,
+    required this.days,
+  });
+
+  final Set<int> visited;
+  final int worldCount;
+  final int days;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final pct = worldCount == 0 ? 0.0 : visited.length / worldCount;
+    return _Section(
+      label: 'Quests · the long game',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Worlds visited',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+              Text(
+                '${visited.length} / $worldCount',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: pct,
+              minHeight: 6,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text('Days here', style: theme.textTheme.bodyMedium),
+              ),
+              Text(
+                '$days',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Daily quest: pick and do your three verbs.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

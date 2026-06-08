@@ -66,6 +66,13 @@ class EntryKind {
   /// The structured history the Book + character sheet read from (verbs /
   /// world / inventory are DERIVED; these three are the human-noticed bits).
   static const String weekLog = 'week_log';
+
+  /// A measured SKILL data point for a child — the RPG "stats that grow"
+  /// (stillness seconds, story arm-spans, words, details, answer depth).
+  /// One row per measurement; the character sheet shows latest + the delta.
+  /// `details` = {skill: id, value: num, week?: int}. The skill isn't taught,
+  /// it's NOTICED — the rising number is the proof a brain grew.
+  static const String skillMeasure = 'skill_measure';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -294,13 +301,12 @@ class EntryActions {
     required String worldId,
     required String noteType,
     String? groupId,
-  }) =>
-      _create(
-        kind: EntryKind.wallNote,
-        groupId: groupId,
-        body: text.trim(),
-        detailsJson: jsonEncode({'world_id': worldId, 'note_type': noteType}),
-      );
+  }) => _create(
+    kind: EntryKind.wallNote,
+    groupId: groupId,
+    body: text.trim(),
+    detailsJson: jsonEncode({'world_id': worldId, 'note_type': noteType}),
+  );
 
   /// Record a Mood Weather check for a child (1–5).
   Future<String> recordMood({
@@ -308,13 +314,32 @@ class EntryActions {
     required int value,
     String? part,
     String? groupId,
-  }) =>
-      _create(
-        kind: EntryKind.mood,
-        subjectId: subjectId,
-        groupId: groupId,
-        detailsJson: jsonEncode({'value': value.clamp(1, 5), 'part': ?part}),
-      );
+  }) => _create(
+    kind: EntryKind.mood,
+    subjectId: subjectId,
+    groupId: groupId,
+    detailsJson: jsonEncode({'value': value.clamp(1, 5), 'part': ?part}),
+  );
+
+  /// Record a measured SKILL data point for a child (the RPG "stats that
+  /// grow"). One row per measurement — the character sheet reads the latest
+  /// value + the delta from the previous one to show the line going up.
+  Future<String> recordSkillMeasure({
+    required String subjectId,
+    required String skillId,
+    required num value,
+    int? week,
+    String? groupId,
+  }) => _create(
+    kind: EntryKind.skillMeasure,
+    subjectId: subjectId,
+    groupId: groupId,
+    detailsJson: jsonEncode({
+      'skill': skillId,
+      'value': value,
+      'week': ?week,
+    }),
+  );
 
   /// Upsert the end-of-week LOG for (subject, week) — merges the provided
   /// fields onto any existing row, so saving just the milestone keeps the
@@ -352,8 +377,10 @@ class EntryActions {
     if (spell != null) details['spell'] = spell.trim();
     if (ally != null) details['ally'] = ally.trim();
     if (existing != null) {
-      await db.entriesDao
-          .updateDetails(id: existing.id, detailsJson: jsonEncode(details));
+      await db.entriesDao.updateDetails(
+        id: existing.id,
+        detailsJson: jsonEncode(details),
+      );
     } else {
       await _create(
         kind: EntryKind.weekLog,
@@ -371,19 +398,19 @@ class EntryActions {
     String? subjectId,
     String? groupId,
     String? worldId,
-  }) =>
-      _create(
-        kind: EntryKind.timeCapsule,
-        subjectId: subjectId,
-        groupId: groupId,
-        body: text.trim(),
-        detailsJson: jsonEncode({
-          'sealed_until': '${sealedUntil.year.toString().padLeft(4, '0')}-'
-              '${sealedUntil.month.toString().padLeft(2, '0')}-'
-              '${sealedUntil.day.toString().padLeft(2, '0')}',
-          'world_id': ?worldId,
-        }),
-      );
+  }) => _create(
+    kind: EntryKind.timeCapsule,
+    subjectId: subjectId,
+    groupId: groupId,
+    body: text.trim(),
+    detailsJson: jsonEncode({
+      'sealed_until':
+          '${sealedUntil.year.toString().padLeft(4, '0')}-'
+          '${sealedUntil.month.toString().padLeft(2, '0')}-'
+          '${sealedUntil.day.toString().padLeft(2, '0')}',
+      'world_id': ?worldId,
+    }),
+  );
 }
 
 final entryActionsProvider = Provider<EntryActions>(EntryActions.new);
@@ -404,14 +431,17 @@ final wallNotesProvider = StreamProvider.autoDispose<List<Entry>>((ref) async* {
 /// The program's time capsules (sealed + opened).
 // autoDispose stream providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final timeCapsulesProvider =
-    StreamProvider.autoDispose<List<Entry>>((ref) async* {
+final timeCapsulesProvider = StreamProvider.autoDispose<List<Entry>>((
+  ref,
+) async* {
   final db = await ref.watch(appDatabaseProvider.future);
   final spaceId = ref.watch(viewerProvider).spaceId;
   if (spaceId == null) {
     yield const [];
     return;
   }
-  yield* db.entriesDao
-      .watchInSpace(spaceId: spaceId, kind: EntryKind.timeCapsule);
+  yield* db.entriesDao.watchInSpace(
+    spaceId: spaceId,
+    kind: EntryKind.timeCapsule,
+  );
 });
