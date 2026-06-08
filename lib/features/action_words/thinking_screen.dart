@@ -29,16 +29,34 @@ class ThinkingScreen extends ConsumerWidget {
           title: 'Could not load the thinking games',
           onRetry: () => ref.invalidate(thinkingGamesProvider),
         ),
-        data: (games) => ResponsivePage(
-          children: [
-            const ContentHeader(
-              title: 'Big Thinking',
-              subtitle: 'Play it · name it · use it everywhere · then the '
-                  'question with no answer',
-            ),
-            for (final g in games) _GameCard(game: g),
-          ],
-        ),
+        data: (games) {
+          // Lead with this week's WORLD game(s); the rest of the deck follows.
+          final weekGames = ref.watch(thisWeekThinkingProvider);
+          final world = ref.watch(currentWorldProvider);
+          final weekIds = {for (final g in weekGames) g.id};
+          final rest = [
+            for (final g in games)
+              if (!weekIds.contains(g.id)) g,
+          ];
+          return ResponsivePage(
+            children: [
+              const ContentHeader(
+                title: 'Big Thinking',
+                subtitle:
+                    'Play it · name it · use it everywhere · then the '
+                    'question with no answer',
+              ),
+              if (weekGames.isNotEmpty) ...[
+                _SectionLabel(
+                  world == null ? 'This week' : 'This week · ${world.name}',
+                ),
+                for (final g in weekGames) _GameCard(game: g),
+                const _SectionLabel('The whole deck'),
+              ],
+              for (final g in rest) _GameCard(game: g),
+            ],
+          );
+        },
       ),
     );
   }
@@ -58,8 +76,10 @@ class _GameCard extends ConsumerWidget {
         leading: Text(game.emoji, style: const TextStyle(fontSize: 28)),
         title: Text(
           game.concept,
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
         ),
         subtitle: Text(game.meaning),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -74,8 +94,10 @@ class _GameCard extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('↳  ',
-                      style: TextStyle(color: theme.colorScheme.primary)),
+                  Text(
+                    '↳  ',
+                    style: TextStyle(color: theme.colorScheme.primary),
+                  ),
                   Expanded(
                     child: Text(b, style: theme.textTheme.bodyMedium),
                   ),
@@ -97,8 +119,9 @@ class _GameCard extends ConsumerWidget {
                 Text(
                   '4 · THE QUESTION',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onTertiaryContainer
-                        .withValues(alpha: 0.7),
+                    color: theme.colorScheme.onTertiaryContainer.withValues(
+                      alpha: 0.7,
+                    ),
                     letterSpacing: 1,
                   ),
                 ),
@@ -138,7 +161,9 @@ class _GameCard extends ConsumerWidget {
       );
       return;
     }
-    await ref.read(entryActionsProvider).createWallNote(
+    await ref
+        .read(entryActionsProvider)
+        .createWallNote(
           text: game.question,
           worldId: world.id,
           noteType: 'free',
@@ -184,6 +209,28 @@ class _Label extends StatelessWidget {
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.primary,
           letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+}
+
+/// A deck section divider ("THIS WEEK · WORLD OF WATER", "THE WHOLE DECK").
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 10),
+      child: Text(
+        text.toUpperCase(),
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
         ),
       ),
     );

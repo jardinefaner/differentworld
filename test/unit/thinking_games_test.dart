@@ -40,6 +40,43 @@ void main() {
     }
   });
 
+  test('every curriculum week 1-10 has at least one thinking game', () {
+    final games = load();
+    for (var w = 1; w <= 10; w++) {
+      expect(
+        games.where((g) => g.week == w),
+        isNotEmpty,
+        reason: 'week $w has no thinking game',
+      );
+    }
+  });
+
+  test('the six generic games are week 0 (anytime, not world-tied)', () {
+    final games = load();
+    const generic = {
+      'dominoes',
+      'telephone',
+      'mirror',
+      'blindfold',
+      'sorting',
+      'balance',
+    };
+    for (final g in games.where((g) => generic.contains(g.id))) {
+      expect(g.week, 0, reason: '${g.id} should be anytime');
+    }
+  });
+
+  test('thinkingGamesForWeek filters to that week; null/0 → empty', () {
+    final games = load();
+    expect(thinkingGamesForWeek(games, 4).map((g) => g.id), ['adaptation']);
+    expect(
+      thinkingGamesForWeek(games, 1).map((g) => g.id),
+      containsAll(<String>['unique', 'container']),
+    );
+    expect(thinkingGamesForWeek(games, null), isEmpty);
+    expect(thinkingGamesForWeek(games, 0), isEmpty);
+  });
+
   test('thinkingGameForDay rotates deterministically + covers the deck', () {
     final games = load();
     final a = thinkingGameForDay(games, DateTime(2026, 7, 14, 9));
