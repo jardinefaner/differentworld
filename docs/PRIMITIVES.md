@@ -238,8 +238,89 @@ wall, a graded question, a bare number where a Scale belongs.
 
 ---
 
+## The screen/room rule — when to put the screen away
+
+The primitives don't just shape the UI; they tell you **when there should
+be no UI at all.** Some atoms are *degraded by screens*; the app must serve
+the room, not replace it.
+
+| Primitive | Medium | Why |
+|---|---|---|
+| **Pick** | physical | hands grabbing cards IS the commitment; a tap is lighter |
+| **Verb** | physical | the worn card in the basket; the body doing the action |
+| **Circle** | physical | bodies facing bodies; a screen breaks the ring |
+| **Wall** | physical | placing your sticky note is a commitment a text field can't carry |
+| **Book** | physical | the weight in the hands; it goes home |
+| **Name** | physical | a human saying your name out loud — the day's most important moment |
+| **Reveal** | either | flip a card, or animate a glow |
+| **Timer** | either | a held-up disk, or an on-screen countdown |
+| **Three** | either | three fingers, or three dots |
+| **Question** | either | a sticky note, or a text field |
+| **Scale** | either | a finger-count 1–5, or a `ScaleBar` |
+
+**The app's only jobs:** *record* what happened · *suggest* what to do ·
+*generate* messages · *track* over time. **Never replace the physical
+experience.** The app is the memory; the room is the life. The app
+remembers so the teacher can be present; the teacher is present so the kid
+can be alive; the kid alive so the room can fill. The room filling is the
+whole product.
+
+Concrete laws this produces (each is now an audit check — see the audit
+log below):
+- **The kid never sees their own data on a screen.** Mood, skills, the
+  reveal-before-it's-earned, the collection grid — all teacher- or
+  family-facing, never a dashboard a kid stares at. Show a kid their
+  **Book**, not their stats.
+- **The feeling belongs to the kid; the data belongs to the teacher.**
+  Individual mood is never displayed publicly.
+- **During Verb Hour the app is closed.** The room is the interface. If
+  you're looking at the screen during an activity, the activity is wrong.
+- **The first and last thing a kid experiences each day is a human, not a
+  screen.** (Arrival is Name + Circle; the app stays shut.)
+
+### Audit — does the live app obey its own laws? (2026-06-07)
+
+Swept the screens against the eleven atom-laws + the screen/room rule.
+The headline: **the codebase is strongly compliant** — because it was
+built atoms-first, it already obeys the laws that were only named tonight.
+Findings, by severity:
+
+- **CLEAN — Pick.** No nudge / recommend / "you always pick CARRY" / sort-
+  by-popularity anywhere in the pick UI. Agency is uncoerced.
+- **CLEAN — Collection / "never compare kids".** No leaderboard, no
+  cross-kid ranking. (The only kid-vs-kid surface is the Day-1-vs-Day-50
+  *room* photo — collective, not comparative.)
+- **CLEAN — Reveal.** "You were 🐜 Ant today" exists only in the dramatized
+  `RevealOverlay`; no family/kid surface reveals a world flat or early.
+- **CLEAN — Question.** Wall-note input is open text with no validation /
+  error / correctness UI. (The skill-measure's "enter a number" errorText is
+  a *Scale* input, not a Question — correct to validate.)
+- **CLEAN — Mood.** No mood/weather rendered on any family- or kid-facing
+  screen; it lives only in the staff character sheet.
+- **CLEAN — Book.** Append-only; no delete/remove in the book.
+- **LOW (tension, not violation) — Wall removal.** `wall_screen.dart` allows
+  taking a note down, BUT it's deliberate (long-press + a `confirmDestructive`
+  dialog) — a safety valve for inappropriate/PII content, not casual
+  curation. Spirit-compliant. The real guard: never add rank / sort / like
+  / favourite to the Wall — *those* would be true violations.
+- **LOW (defense-in-depth) — the data screen leans on no-nav, not a gate.**
+  `/subjects/:id/me` (the character sheet — verbs, skills, scales) is
+  staff-facing by convention; guardians have no path to it, but it isn't
+  hard-gated. When the kid-facing identity surface is built, gate the
+  *data* view to staff and give kids the **Book** view instead.
+- **LOW (philosophy) — the digital Wall.** `/wall` lets notes be *created*
+  digitally, which the constitution says over-digitizes the physical
+  commitment. Justified (the family lens + remote + the "put it on the Wall"
+  thinking-game tie), but position it as the *archive/window*, not the
+  primary Wall. The physical Wall stays primary.
+
+No HIGH or BLOCKER findings. The system passes its own constitution.
+
+---
+
 *Living doc. If a new feature needs an atom not on this list, add it here
 with the same grounding (what it is, its reach, the code construct) — or
 prove it's a molecule of the existing eleven. Each atom is also a UI law
 (above): a screen that obeys the eleven feels like the system; one that
-breaks one feels foreign.*
+breaks one feels foreign. And some atoms forbid a screen entirely — see the
+screen/room rule.*
