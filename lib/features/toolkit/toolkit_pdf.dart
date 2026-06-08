@@ -1,5 +1,7 @@
+import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/spells/spells.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -194,6 +196,129 @@ Future<bool> printGestureGuide() {
   return Printing.layoutPdf(
     onLayout: (_) => doc.save(),
     name: 'Verb gesture guide',
+  );
+}
+
+List<String> _verbLabels(List<String> ids) => [
+  for (final id in ids)
+    if (verbById(id) case final v?) v.label,
+];
+
+/// One reveal card per world (the closing "you were... AN ANT!" moment). The
+/// world NAME huge + the verbs that map to it. Hold it up, flip, reveal.
+Future<bool> printWorldRevealCards(List<CurriculumWorld> worlds) {
+  final doc = pw.Document(creator: 'Different World');
+  for (final w in worlds) {
+    doc.addPage(
+      pw.Page(
+        theme: pw.ThemeData.base(),
+        pageFormat: PdfPageFormat.letter,
+        margin: const pw.EdgeInsets.all(40),
+        build: (ctx) => pw.Center(
+          child: pw.Column(
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            children: [
+              pw.Text(
+                _ascii('WEEK ${w.week}'),
+                style: const pw.TextStyle(
+                  fontSize: 16,
+                  letterSpacing: 4,
+                  color: PdfColors.grey600,
+                ),
+              ),
+              pw.SizedBox(height: 12),
+              pw.Text(
+                _ascii(w.name.toUpperCase()),
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontSize: 60,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 28),
+              pw.Text(
+                _ascii(_verbLabels(w.featuredVerbs).join('   -   ')),
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(
+                  fontSize: 20,
+                  color: PdfColors.grey700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  return Printing.layoutPdf(
+    onLayout: (_) => doc.save(),
+    name: 'World reveal cards',
+  );
+}
+
+/// One summary poster per world: name, the central question, the verbs, the
+/// rules. Posted on the wall when that world is active.
+Future<bool> printWorldSummaryCards(List<CurriculumWorld> worlds) {
+  final doc = pw.Document(creator: 'Different World');
+  for (final w in worlds) {
+    final rules = rulesForWorld(w.id);
+    doc.addPage(
+      pw.Page(
+        theme: pw.ThemeData.base(),
+        pageFormat: PdfPageFormat.letter,
+        margin: const pw.EdgeInsets.all(48),
+        build: (ctx) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              _ascii('WEEK ${w.week}'),
+              style: const pw.TextStyle(
+                fontSize: 12,
+                letterSpacing: 3,
+                color: PdfColors.grey600,
+              ),
+            ),
+            pw.Text(
+              _ascii(w.name),
+              style: pw.TextStyle(fontSize: 34, fontWeight: pw.FontWeight.bold),
+            ),
+            if (w.question.isNotEmpty) ...[
+              pw.SizedBox(height: 6),
+              pw.Text(
+                _ascii('"${w.question}"'),
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontStyle: pw.FontStyle.italic,
+                  color: PdfColors.grey800,
+                ),
+              ),
+            ],
+            pw.SizedBox(height: 20),
+            _heading('The verbs'),
+            pw.Text(
+              _ascii(_verbLabels(w.featuredVerbs).join('   -   ')),
+              style: const pw.TextStyle(fontSize: 14),
+            ),
+            if (rules.isNotEmpty) ...[
+              pw.SizedBox(height: 18),
+              _heading('The rules of this world'),
+              for (final r in rules)
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 6),
+                  child: pw.Text(
+                    _ascii('-  ${r.text}'),
+                    style: const pw.TextStyle(fontSize: 13),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  return Printing.layoutPdf(
+    onLayout: (_) => doc.save(),
+    name: 'World summary cards',
   );
 }
 
