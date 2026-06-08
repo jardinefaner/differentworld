@@ -5,24 +5,32 @@ import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 /// The one immersive **present surface** for any ordered run of [DayBeat]s —
 /// the day's run of show (`/play-today`) and any single activity's story arc
 /// (`/arc`) both render through this (docs/VISION.md "with present/cast… like a
-/// prompt"). Full-screen, read-from-across-the-room, swipe or tap-zone to
-/// advance; the same surface a device can mirror/cast to a projector.
+/// prompt"). Full-screen, read-from-across-the-room, swipe / tap-zone / on-
+/// screen controls to advance; the same surface a device can mirror/cast to a
+/// projector.
 ///
 /// This is the *single correct lifecycle*: cache the immersive notifier in
 /// `initState` (never touch `ref` in `dispose`), defer the provider write out
 /// of the build phase via a `mounted`-guarded microtask with the OS immersive
-/// call locked inside it, and restore `edgeToEdge` on `dispose`. New present
-/// surfaces compose this widget instead of re-deriving the lifecycle — there
-/// used to be two copies and they drifted.
+/// call locked inside it, restore `edgeToEdge` on `dispose`, and keep the
+/// screen awake the whole time (a cast must not sleep). New present surfaces
+/// compose this widget instead of re-deriving the lifecycle.
+///
+/// Controls (QoL for a teacher running a room): visible prev / next, a jump-
+/// to-beat menu (so the teacher never hunts for where a beat lives), and a
+/// cast countdown **timer** (the Timer primitive — time-bound by construction)
+/// the whole room can see. Haptic tick on every advance.
 class BeatPresenter extends ConsumerStatefulWidget {
   const BeatPresenter({
     required this.beats,
     required this.accent,
     this.emoji = '',
+    this.initialBeat = 0,
     super.key,
   });
 
@@ -35,14 +43,23 @@ class BeatPresenter extends ConsumerStatefulWidget {
   /// Optional hero glyph for `open` beats (the day run's world emoji).
   final String emoji;
 
+  /// Where to start the run. The day run lands on the beat for the current
+  /// phase (a mid-program open opens at the activity, not beat 1); the
+  /// activity arc always starts at 0. Clamped to a valid index.
+  final int initialBeat;
+
   @override
   ConsumerState<BeatPresenter> createState() => _BeatPresenterState();
 }
 
 class _BeatPresenterState extends ConsumerState<BeatPresenter> {
-  final _page = PageController();
+  late final PageController _page;
   late final CastImmersive _immersive;
   int _index = 0;
+
+  // The cast timer (Timer primitive). null = no timer; 0 = finished ("Time!").
+  Timer? _ticker;
+  int? _remaining;
 
   int get _count => widget.beats.length;
 
@@ -51,6 +68,11 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
     super.initState();
     // Cache the notifier (never touch ref in dispose) — the cast pattern.
     _immersive = ref.read(castImmersiveProvider.notifier);
+    final initial = widget.beats.isEmpty
+        ? 0
+        : widget.initialBeat.clamp(0, widget.beats.length - 1);
+    _index = initial;
+    _page = PageController(initialPage: initial);
     // Defer the provider write out of the build phase (the chrome trap), and
     // guard on `mounted` so a fast pop can't strand the chrome hidden. Keep
     // the immersive OS call INSIDE the same microtask so the two stay locked.
@@ -63,12 +85,16 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
         );
       }),
     );
+    // A present/cast surface must not let the screen sleep mid-activity.
+    unawaited(WakelockPlus.enable());
   }
 
   @override
   void dispose() {
+    _ticker?.cancel();
     _immersive.exit();
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    unawaited(WakelockPlus.disable());
     _page.dispose();
     super.dispose();
   }
@@ -98,10 +124,17 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
           child: Stack(
             children: [
               PageView.builder(
+                // Stable keys: the timer pill is a conditional Stack child,
+                // so every sibling needs a key or Flutter matches by position
+                // and poisons Element identity when the pill appears (the
+                // house rule — see CLAUDE.md "Stack children without keys").
+                key: const ValueKey('bp-pageview'),
                 controller: _page,
                 itemCount: beats.length,
                 onPageChanged: (i) {
-                  if (mounted) setState(() => _index = i);
+                  if (!mounted) return;
+                  unawaited(HapticFeedback.selectionClick());
+                  setState(() => _index = i);
                 },
                 itemBuilder: (_, i) => Padding(
                   padding: const EdgeInsets.symmetric(
@@ -115,8 +148,10 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   ),
                 ),
               ),
-              // Tap zones: left third = back, right third = forward.
+              // Tap zones: left third = back, right third = forward. Redundant
+              // with the visible controls below, for quick advance anywhere.
               Positioned.fill(
+                key: const ValueKey('bp-tapzones'),
                 child: Row(
                   children: [
                     Expanded(
@@ -137,7 +172,9 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   ],
                 ),
               ),
+              // Close — top-right.
               Positioned(
+                key: const ValueKey('bp-close'),
                 top: 8,
                 right: 8,
                 child: IconButton(
@@ -145,44 +182,128 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
-              // Progress: "3 / 11" + dots.
+              // The cast timer — top-centre, room-readable, tap to clear.
+              if (_remaining != null)
+                Positioned(
+                  key: const ValueKey('bp-timer'),
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(child: _timerPill()),
+                ),
+              // Control bar — timer · ‹ index/dots › · jump-to-beat.
               Positioned(
-                bottom: 14,
-                left: 0,
-                right: 0,
-                child: Column(
+                key: const ValueKey('bp-controls'),
+                left: 8,
+                right: 8,
+                bottom: 10,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${_index + 1} / ${beats.length}',
-                      style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 12,
-                        letterSpacing: 1,
-                      ),
+                    _ctrl(
+                      Icons.timer_outlined,
+                      'Set a timer',
+                      () => unawaited(_pickTimer()),
                     ),
-                    const SizedBox(height: 6),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        for (var i = 0; i < beats.length; i++)
-                          Container(
-                            width: 7,
-                            height: 7,
-                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: i == _index
-                                  ? Colors.white
-                                  : Colors.white24,
-                            ),
-                          ),
+                        _ctrl(Icons.chevron_left, 'Previous', () => _go(-1)),
+                        const SizedBox(width: 4),
+                        _progress(),
+                        const SizedBox(width: 4),
+                        _ctrl(Icons.chevron_right, 'Next', () => _go(1)),
                       ],
+                    ),
+                    _ctrl(
+                      Icons.list,
+                      'Jump to a beat',
+                      () => unawaited(_pickBeat()),
                     ),
                   ],
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // "3 / 11" + dots.
+  Widget _progress() => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(
+        '${_index + 1} / ${widget.beats.length}',
+        style: const TextStyle(
+          color: Colors.white38,
+          fontSize: 12,
+          letterSpacing: 1,
+          fontFeatures: [FontFeature.tabularFigures()],
+        ),
+      ),
+      const SizedBox(height: 6),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var i = 0; i < widget.beats.length; i++)
+            Container(
+              width: 7,
+              height: 7,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: i == _index ? Colors.white : Colors.white24,
+              ),
+            ),
+        ],
+      ),
+    ],
+  );
+
+  Widget _ctrl(IconData icon, String tip, VoidCallback onTap) => IconButton(
+    tooltip: tip,
+    icon: Icon(icon, color: Colors.white),
+    onPressed: onTap,
+    style: IconButton.styleFrom(
+      backgroundColor: Colors.white.withValues(alpha: 0.12),
+    ),
+  );
+
+  Widget _timerPill() {
+    final done = _remaining == 0;
+    return GestureDetector(
+      onTap: _clearTimer,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          color: (done ? Colors.amber.shade700 : Colors.black).withValues(
+            alpha: 0.6,
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              done ? Icons.notifications_active : Icons.timer_outlined,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              done ? 'Time!' : _mmss(_remaining!),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -199,6 +320,147 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
         curve: Curves.easeOut,
       ),
     );
+  }
+
+  void _jumpTo(int i) {
+    if (!mounted) return;
+    final next = i.clamp(0, _count - 1);
+    if (next == _index) return;
+    unawaited(
+      _page.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      ),
+    );
+  }
+
+  // ── Timer ────────────────────────────────────────────────────────────
+
+  void _startTimer(int minutes) {
+    _ticker?.cancel();
+    setState(() => _remaining = minutes * 60);
+    _ticker = Timer.periodic(const Duration(seconds: 1), _tick);
+  }
+
+  void _tick(Timer t) {
+    if (!mounted) {
+      t.cancel();
+      return;
+    }
+    final r = _remaining;
+    if (r == null || r <= 0) {
+      t.cancel();
+      return;
+    }
+    setState(() => _remaining = r - 1);
+    if (_remaining == 0) {
+      t.cancel();
+      unawaited(HapticFeedback.mediumImpact());
+    }
+  }
+
+  void _clearTimer() {
+    _ticker?.cancel();
+    if (mounted) setState(() => _remaining = null);
+  }
+
+  Future<void> _pickTimer() async {
+    final running = _remaining != null;
+    final minutes = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A1A),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Set a timer',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final m in const [1, 2, 5, 10])
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, m),
+                      child: Text('$m min'),
+                    ),
+                ],
+              ),
+              if (running) ...[
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, 0),
+                  child: const Text('Stop timer'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    if (minutes == null || !mounted) return;
+    if (minutes == 0) {
+      _clearTimer();
+    } else {
+      _startTimer(minutes);
+    }
+  }
+
+  Future<void> _pickBeat() async {
+    final beats = widget.beats;
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A1A),
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            for (var j = 0; j < beats.length; j++)
+              ListTile(
+                leading: Text(
+                  '${j + 1}',
+                  style: const TextStyle(color: Colors.white38, fontSize: 16),
+                ),
+                title: Text(
+                  beats[j].label.isEmpty ? beats[j].big : beats[j].label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: j == _index
+                        ? FontWeight.w700
+                        : FontWeight.w400,
+                  ),
+                ),
+                selected: j == _index,
+                selectedTileColor: Colors.white10,
+                onTap: () => Navigator.pop(ctx, j),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    _jumpTo(picked);
+  }
+
+  static String _mmss(int seconds) {
+    final m = seconds ~/ 60;
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 }
 

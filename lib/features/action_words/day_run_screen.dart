@@ -3,6 +3,7 @@ import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/widgets/beat_presenter.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/today/today_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,10 +59,48 @@ class DayRunScreen extends ConsumerWidget {
       thinking: weekThinking.isEmpty ? null : weekThinking.first,
     );
 
+    // Open where the day actually is — a mid-program tap lands on the doing
+    // part, a pickup-time tap on the closing handoff — so the teacher isn't
+    // swiping past the morning to reach now. The visible controls make
+    // stepping back to an earlier beat one tap away.
+    final phase =
+        ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
+
     return BeatPresenter(
       beats: beats,
       accent: world.color,
       emoji: world.emoji,
+      initialBeat: initialBeatForPhase(beats, phase),
     );
+  }
+
+  /// Map the wall-clock phase to the beat the run should open on. Public +
+  /// pure so it's unit-testable without pumping the immersive surface.
+  static int initialBeatForPhase(List<DayBeat> beats, DayPhase phase) {
+    int firstOf(List<DayBeatKind> kinds) {
+      for (final k in kinds) {
+        final i = beats.indexWhere((b) => b.kind == k);
+        if (i >= 0) return i;
+      }
+      return 0;
+    }
+
+    switch (phase) {
+      case DayPhase.prep:
+      case DayPhase.arrival:
+        return 0; // open the world from the top
+      case DayPhase.program:
+        // The doing part: the Big Thinking play, else the activity, else watch.
+        return firstOf(const [
+          DayBeatKind.play,
+          DayBeatKind.activity,
+          DayBeatKind.watch,
+        ]);
+      case DayPhase.pickup:
+      case DayPhase.closed:
+        // The closing handoff (→ the reveal).
+        final i = beats.lastIndexWhere((b) => b.kind == DayBeatKind.close);
+        return i < 0 ? 0 : i;
+    }
   }
 }

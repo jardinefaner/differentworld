@@ -3,8 +3,10 @@ import 'dart:io';
 
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/day_run.dart';
+import 'package:differentworld/features/action_words/day_run_screen.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
+import 'package:differentworld/features/today/today_providers.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The "day, on rails" assembler: given the live world (+ its rule + this
@@ -155,6 +157,47 @@ void main() {
         'a drawing',
       ).firstWhere((b) => b.kind == DayBeatKind.bridge);
       expect(bridge.lines.length, 3);
+    });
+  });
+
+  group('initialBeatForPhase — open the run where the day actually is', () {
+    List<DayBeat> fullRun() {
+      final world = loadWorld(4);
+      return buildDayRun(
+        world: world,
+        rules: rulesForWorld(world.id),
+        thinking: loadThinking('adaptation'),
+      );
+    }
+
+    test('prep / arrival open at the top (beat 0)', () {
+      final beats = fullRun();
+      expect(DayRunScreen.initialBeatForPhase(beats, DayPhase.prep), 0);
+      expect(DayRunScreen.initialBeatForPhase(beats, DayPhase.arrival), 0);
+    });
+
+    test('program opens at the doing part (the Big Thinking play beat)', () {
+      final beats = fullRun();
+      final i = DayRunScreen.initialBeatForPhase(beats, DayPhase.program);
+      expect(beats[i].kind, DayBeatKind.play);
+    });
+
+    test('pickup / closed open at the closing handoff', () {
+      final beats = fullRun();
+      for (final phase in [DayPhase.pickup, DayPhase.closed]) {
+        final i = DayRunScreen.initialBeatForPhase(beats, phase);
+        expect(beats[i].kind, DayBeatKind.close, reason: '$phase');
+      }
+    });
+
+    test('the index is always in range, even for a minimal run', () {
+      // A run with no thinking game still resolves to a valid index for
+      // every phase (program falls back to activity → watch → 0).
+      final beats = buildDayRun(world: loadWorld(4));
+      for (final phase in DayPhase.values) {
+        final i = DayRunScreen.initialBeatForPhase(beats, phase);
+        expect(i, inInclusiveRange(0, beats.length - 1), reason: '$phase');
+      }
     });
   });
 }
