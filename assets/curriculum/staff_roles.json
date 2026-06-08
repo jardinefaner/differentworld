@@ -1,0 +1,87 @@
+{
+  "title": "The staff ladder",
+  "subtitle": "Everyone starts as Shadow. You climb by practice, not by time.",
+  "roles": [
+    {
+      "id": "shadow",
+      "name": "Shadow",
+      "emoji": "👣",
+      "duration": "Days 1–3",
+      "desc": "Day one. You watch. You follow. You learn the rhythm before you touch anything.",
+      "canDo": [
+        "Watch the lead teacher",
+        "Learn the kids' names",
+        "Hand out materials",
+        "Sit with kids during activities",
+        "Join the circle"
+      ],
+      "cantDo": [
+        "Run an activity solo",
+        "Handle conflict alone",
+        "Make schedule decisions",
+        "Talk to parents about progress"
+      ]
+    },
+    {
+      "id": "hand",
+      "name": "Extra Hands",
+      "emoji": "🤲",
+      "duration": "Days 4–10",
+      "desc": "You know the room. You know the names. Now you help — without leading.",
+      "canDo": [
+        "Set up materials before each block",
+        "Help individual kids with writing or drawing",
+        "Run the timer for spells",
+        "Walk with kids during outdoor time",
+        "Manage snack and lunch logistics",
+        "Take photos of work for documentation"
+      ],
+      "cantDo": [
+        "Run the opening or closing ritual solo",
+        "Handle a meltdown alone",
+        "Change the schedule",
+        "Send parent messages"
+      ]
+    },
+    {
+      "id": "voice",
+      "name": "Co-Pilot",
+      "emoji": "🗣️",
+      "duration": "Weeks 2–4",
+      "desc": "You run pieces. The lead is still steering, but you're flying sections of the day.",
+      "canDo": [
+        "Run one activity block solo (lead nearby)",
+        "Lead the read-aloud",
+        "Run the verb guessing game at closing",
+        "Handle minor conflicts with the repair script",
+        "Write quick notes about kids",
+        "Read photo labels aloud"
+      ],
+      "cantDo": [
+        "Change the weekly plan",
+        "Handle a crisis alone",
+        "Do the world reveal (that's the lead's moment)",
+        "Hold parent conferences"
+      ]
+    },
+    {
+      "id": "lead",
+      "name": "Conductor",
+      "emoji": "🎯",
+      "duration": "Weeks 4+",
+      "desc": "You can run the room alone. You own the schedule, the rituals, and the relationships.",
+      "canDo": [
+        "Run the full day solo",
+        "Handle crises",
+        "Adapt the schedule",
+        "Do world reveals",
+        "Send parent messages",
+        "Train new helpers",
+        "Add custom activities"
+      ],
+      "cantDo": [
+        "Nothing is off-limits — but always ask for help when you need it. Conductors who never ask burn out."
+      ]
+    }
+  ]
+}

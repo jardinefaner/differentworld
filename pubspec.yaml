@@ -133,6 +133,9 @@ flutter:
     # Verb roles — each of the 12 verbs as a kid JOB (+ helper script +
     # 3-level mission) and a 3-level STAFF skill. One spine, three lives.
     - assets/curriculum/verb_roles.json
+    # The staff growth ladder — Shadow → Extra Hands → Co-Pilot → Conductor,
+    # with can-do / not-yet. Mirrors the kid's own character arc.
+    - assets/curriculum/staff_roles.json
 
   # Variable display fonts for the Speak feature's editorial karaoke
   # (lib/features/speak/). Bundled (NOT runtime-fetched via google_fonts)

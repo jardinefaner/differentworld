@@ -97,6 +97,7 @@ import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/speak/speak_screen.dart';
 import 'package:differentworld/features/spells/spells_screen.dart';
 import 'package:differentworld/features/staff/runbook_screen.dart';
+import 'package:differentworld/features/staff/staff_ladder_screen.dart';
 import 'package:differentworld/features/story/kid_story_screen.dart';
 import 'package:differentworld/features/story/room_story_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
@@ -1041,6 +1042,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => RouteTitle(
               title: 'Book',
               child: BookScreen(subjectId: state.pathParameters['subjectId']!),
+            ),
+          ),
+          // The staff growth ladder — Shadow → Conductor, self-marked.
+          GoRoute(
+            path: '/staff',
+            builder: (_, _) => const RouteTitle(
+              title: 'The staff ladder',
+              child: StaffLadderScreen(),
             ),
           ),
           // The staff runbook — the day moment-by-moment for the grown-ups.
