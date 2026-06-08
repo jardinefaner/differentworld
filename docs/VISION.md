@@ -621,6 +621,27 @@ once it has a home.
     was waiting for).
   - **Threads:** the persistent self (above) + #8 / #9 / #13 / #15 / #16. CREW
     likely maps to classroom **groups**; DREAM likely maps to **missions**.
+- **2026-06-08** — **One day, minute by minute — the operating model.** The
+  user wrote the whole day out, 6:45 setup → departure → parent messages, every
+  minute labeled with the primitives it activates and every person's job named:
+  the **teacher sees**, the **helper models** (writes their own sentence, draws
+  alongside), and the **kids run the room through their picked verbs** — Movers
+  (CARRY) carry, Navigators (FLOW) lead, Scouts (WATCH) report, Spark Plugs
+  (PLAY) start the games. The heart is **Verb Hour**: play it → name it (turn it
+  into a word: "COMMUNICATION") → bridge it (radio → your mom at work → a clay
+  tablet 3,000 years old) → question it (to the Wall) → mission check. The
+  load-bearing constraint is that **the app stays nearly silent**: *"Total
+  screen time in the entire day: under 12 minutes. All teacher-facing. Zero
+  kid-facing. The app touched the day four times — mood (5 sec), verb picks
+  (10 sec), picking an activity (15 sec), parent messages (10 min after kids
+  leave). Everything else was human."* The mantra: ***"The room does the
+  teaching. The verbs do the guiding. The teacher does the seeing. The app does
+  the remembering."*** This is both the dream AND the app's **acceptance
+  contract** — every screen is measured against *"would this survive in that
+  day, at that footprint?"* The full minute-by-minute lives in
+  **[THE_DAY.md](THE_DAY.md)**. (Threads: the 11 primitives; the present/cast
+  spine; the four app-touch surfaces — mood entry, Action Words picks, the
+  `matchActivities` matcher, `buildParentMessage`.)
 
 ---
 
