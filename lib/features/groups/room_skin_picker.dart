@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -99,12 +100,9 @@ class _SkinSheet extends StatelessWidget {
                 ),
               ),
               for (final s in kRoomSkins)
-                ListTile(
-                  leading: Text(s.emoji, style: const TextStyle(fontSize: 26)),
-                  title: Text(s.name),
-                  trailing: s.id == currentId
-                      ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
-                      : null,
+                _SkinPreviewTile(
+                  skin: s,
+                  selected: s.id == currentId,
                   onTap: () => Navigator.of(context).pop(s.id),
                 ),
               if (currentId != null)
@@ -115,6 +113,66 @@ class _SkinSheet extends StatelessWidget {
                   // Empty string = the caller clears the cap.
                   onTap: () => Navigator.of(context).pop(''),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One skin option, previewed as its actual ambient background with the name
+/// in white over it — so the picker IS the gallery.
+class _SkinPreviewTile extends StatelessWidget {
+  const _SkinPreviewTile({
+    required this.skin,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final RoomSkin skin;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 66,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              RoomSkinBackground(skin: skin),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Text(skin.emoji, style: const TextStyle(fontSize: 26)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            skin.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        if (selected)
+                          const Icon(Icons.check_circle, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
