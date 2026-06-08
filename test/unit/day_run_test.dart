@@ -158,6 +158,41 @@ void main() {
       ).firstWhere((b) => b.kind == DayBeatKind.bridge);
       expect(bridge.lines.length, 3);
     });
+
+    test('the play beat suggests a 5-minute timer', () {
+      final play = buildActivityArc(
+        'a maze',
+      ).firstWhere((b) => b.kind == DayBeatKind.play);
+      expect(play.suggestedSeconds, 5 * 60);
+    });
+  });
+
+  group('suggested timer lengths per beat', () {
+    test('the day run carries suggestions on the timed beats only', () {
+      final world = loadWorld(7);
+      final beats = buildDayRun(
+        world: world,
+        rules: rulesForWorld(world.id),
+        thinking: loadThinking('imagination'),
+      );
+      // The Big-Thinking play beat suggests the 5-minute play.
+      final play = beats.firstWhere((b) => b.kind == DayBeatKind.play);
+      expect(play.suggestedSeconds, 5 * 60);
+      // Every Watch beat suggests its video length (whole minutes, > 0).
+      for (final w in beats.where((b) => b.kind == DayBeatKind.watch)) {
+        expect(w.suggestedSeconds, greaterThan(0));
+        expect(w.suggestedSeconds % 60, 0);
+      }
+      // Untimed beats default to 0 (no timer suggested).
+      expect(
+        beats.firstWhere((b) => b.kind == DayBeatKind.open).suggestedSeconds,
+        0,
+      );
+      expect(
+        beats.firstWhere((b) => b.kind == DayBeatKind.close).suggestedSeconds,
+        0,
+      );
+    });
   });
 
   group('initialBeatForPhase — open the run where the day actually is', () {

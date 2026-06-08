@@ -31,6 +31,7 @@ class DayBeat {
     this.big = '',
     this.sub = '',
     this.lines = const [],
+    this.suggestedSeconds = 0,
   });
 
   final DayBeatKind kind;
@@ -46,6 +47,13 @@ class DayBeat {
 
   /// For list beats (verbs, the bridge steps, the activity menu).
   final List<String> lines;
+
+  /// A sensible timer length for this beat, in seconds (0 = none). The
+  /// present surface offers it as the lead option when the teacher sets a
+  /// timer — but it's only a *suggestion*: they can pick any duration and
+  /// the surface remembers their customs. The Watch beat suggests the
+  /// video's length; the Big-Thinking play beat the 5-minute play.
+  final int suggestedSeconds;
 }
 
 /// Assemble the day's run from the live context — the curriculum [world], its
@@ -96,12 +104,14 @@ List<DayBeat> buildDayRun({
         label: 'Watch · ${v.minutes} min',
         big: v.title,
         sub: '→ ${v.after}',
+        suggestedSeconds: v.minutes * 60,
       ),
     if (thinking != null) ...[
       DayBeat(
         kind: DayBeatKind.play,
         label: 'Play it · ${thinking.concept}',
         big: thinking.play,
+        suggestedSeconds: 5 * 60,
       ),
       DayBeat(
         kind: DayBeatKind.name,
@@ -151,6 +161,7 @@ List<DayBeat> buildActivityArc(String activity) {
       label: 'Play it · 5 minutes',
       big: a,
       sub: 'Let it be noisy. One instruction, then go.',
+      suggestedSeconds: 5 * 60,
     ),
     const DayBeat(
       kind: DayBeatKind.name,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/action_words/day_run.dart';
+import 'package:differentworld/features/action_words/present_timer.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -295,7 +296,7 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
             ),
             const SizedBox(width: 8),
             Text(
-              done ? 'Time!' : _mmss(_remaining!),
+              done ? 'Time!' : mmss(_remaining!),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -337,9 +338,10 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
 
   // ── Timer ────────────────────────────────────────────────────────────
 
-  void _startTimer(int minutes) {
+  void _startTimerSeconds(int seconds) {
+    if (seconds <= 0) return;
     _ticker?.cancel();
-    setState(() => _remaining = minutes * 60);
+    setState(() => _remaining = seconds);
     _ticker = Timer.periodic(const Duration(seconds: 1), _tick);
   }
 
@@ -366,54 +368,32 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
   }
 
   Future<void> _pickTimer() async {
-    final running = _remaining != null;
-    final minutes = await showModalBottomSheet<int>(
+    final beats = widget.beats;
+    final suggested = (_index >= 0 && _index < beats.length)
+        ? beats[_index].suggestedSeconds
+        : 0;
+    final remembered = ref.read(presentTimerProvider).value ?? const <int>[];
+    final result = await showModalBottomSheet<({int seconds, bool custom})>(
       context: context,
       backgroundColor: const Color(0xFF1A1A1A),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Set a timer',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: [
-                  for (final m in const [1, 2, 5, 10])
-                    FilledButton(
-                      onPressed: () => Navigator.pop(ctx, m),
-                      child: Text('$m min'),
-                    ),
-                ],
-              ),
-              if (running) ...[
-                const SizedBox(height: 4),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, 0),
-                  child: const Text('Stop timer'),
-                ),
-              ],
-            ],
-          ),
-        ),
+      builder: (ctx) => _TimerSheet(
+        suggestedSeconds: suggested,
+        remembered: remembered,
+        running: _remaining != null,
       ),
     );
-    if (minutes == null || !mounted) return;
-    if (minutes == 0) {
+    if (result == null || !mounted) return;
+    if (result.seconds <= 0) {
       _clearTimer();
-    } else {
-      _startTimer(minutes);
+      return;
+    }
+    _startTimerSeconds(result.seconds);
+    // Only an explicitly-dialed custom value is worth remembering — presets
+    // and the per-beat suggestion are already one tap away.
+    if (result.custom) {
+      unawaited(
+        ref.read(presentTimerProvider.notifier).remember(result.seconds),
+      );
     }
   }
 
@@ -440,9 +420,7 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: j == _index
-                        ? FontWeight.w700
-                        : FontWeight.w400,
+                    fontWeight: j == _index ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
                 selected: j == _index,
@@ -455,12 +433,6 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
     );
     if (picked == null || !mounted) return;
     _jumpTo(picked);
-  }
-
-  static String _mmss(int seconds) {
-    final m = seconds ~/ 60;
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
   }
 }
 
@@ -568,4 +540,145 @@ class _BeatSlide extends StatelessWidget {
       height: 1.2,
     ),
   );
+}
+
+/// The "set a timer" sheet. Leads with the beat's *suggested* length (one
+/// tap), offers quick presets + the teacher's remembered customs, and a
+/// stepper to dial any length. Pops `(seconds, custom)` — `custom` true only
+/// for a dialed value, so the present surface knows what to remember.
+class _TimerSheet extends StatefulWidget {
+  const _TimerSheet({
+    required this.suggestedSeconds,
+    required this.remembered,
+    required this.running,
+  });
+
+  final int suggestedSeconds;
+  final List<int> remembered;
+  final bool running;
+
+  @override
+  State<_TimerSheet> createState() => _TimerSheetState();
+}
+
+class _TimerSheetState extends State<_TimerSheet> {
+  late int _customMin = widget.suggestedSeconds > 0
+      ? (widget.suggestedSeconds / 60).round().clamp(1, 60)
+      : 5;
+
+  static String _label(int seconds) =>
+      seconds % 60 == 0 ? '${seconds ~/ 60} min' : mmss(seconds);
+
+  void _pop(int seconds, {required bool custom}) =>
+      Navigator.pop(context, (seconds: seconds, custom: custom));
+
+  @override
+  Widget build(BuildContext context) {
+    // Quick chips: the fixed presets, then any remembered customs that aren't
+    // already a preset (deduped, whole-minute).
+    const presetMins = [1, 2, 5, 10];
+    final quickMins = <int>[
+      ...presetMins,
+      for (final s in widget.remembered)
+        if (s % 60 == 0 && !presetMins.contains(s ~/ 60)) s ~/ 60,
+    ];
+
+    return Theme(
+      data: ThemeData.dark(useMaterial3: true),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Set a timer',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                if (widget.suggestedSeconds > 0) ...[
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () =>
+                        _pop(widget.suggestedSeconds, custom: false),
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: Text(
+                      'Suggested for this beat · ${_label(widget.suggestedSeconds)}',
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final m in quickMins)
+                      ActionChip(
+                        label: Text('$m min'),
+                        onPressed: () => _pop(m * 60, custom: false),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 4),
+                const Text(
+                  'Custom',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: 'Less',
+                      iconSize: 30,
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: _customMin > 1
+                          ? () => setState(() => _customMin--)
+                          : null,
+                    ),
+                    SizedBox(
+                      width: 84,
+                      child: Text(
+                        '$_customMin min',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'More',
+                      iconSize: 30,
+                      icon: const Icon(Icons.add_circle_outline),
+                      onPressed: _customMin < 60
+                          ? () => setState(() => _customMin++)
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                FilledButton.tonal(
+                  onPressed: () => _pop(_customMin * 60, custom: true),
+                  child: Text('Start $_customMin min'),
+                ),
+                if (widget.running) ...[
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: () => _pop(0, custom: false),
+                    child: const Text('Stop timer'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
