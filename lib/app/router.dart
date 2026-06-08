@@ -15,6 +15,7 @@ import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/thinking_screen.dart';
 import 'package:differentworld/features/action_words/this_week_screen.dart';
 import 'package:differentworld/features/action_words/time_capsule_screen.dart';
+import 'package:differentworld/features/action_words/verb_jobs_screen.dart';
 import 'package:differentworld/features/action_words/wall_screen.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
 import 'package:differentworld/features/action_words/world_present_screen.dart';
@@ -95,6 +96,8 @@ import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/speak/speak_screen.dart';
 import 'package:differentworld/features/spells/spells_screen.dart';
+import 'package:differentworld/features/staff/runbook_screen.dart';
+import 'package:differentworld/features/staff/staff_ladder_screen.dart';
 import 'package:differentworld/features/story/kid_story_screen.dart';
 import 'package:differentworld/features/story/room_story_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
@@ -1039,6 +1042,31 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => RouteTitle(
               title: 'Book',
               child: BookScreen(subjectId: state.pathParameters['subjectId']!),
+            ),
+          ),
+          // The staff growth ladder — Shadow → Conductor, self-marked.
+          GoRoute(
+            path: '/staff',
+            builder: (_, _) => const RouteTitle(
+              title: 'The staff ladder',
+              child: StaffLadderScreen(),
+            ),
+          ),
+          // The staff runbook — the day moment-by-moment for the grown-ups.
+          GoRoute(
+            path: '/runbook',
+            builder: (_, _) => const RouteTitle(
+              title: 'Runbook',
+              child: RunbookScreen(),
+            ),
+          ),
+          // Verb spine — each verb as a kid job (+ script), a 3-level
+          // mission, and a 3-level staff skill. One vocabulary, three lives.
+          GoRoute(
+            path: '/verb-jobs',
+            builder: (_, _) => const RouteTitle(
+              title: 'Jobs & missions',
+              child: VerbJobsScreen(),
             ),
           ),
           // Big Thinking — play → name → bridge → question games.

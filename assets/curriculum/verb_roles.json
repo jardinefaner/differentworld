@@ -1,0 +1,234 @@
+{
+  "title": "Every verb is a job, a mission, and a way to grow",
+  "subtitle": "One vocabulary, three lives: a kid's identity, a kid's job today, a staff member's skill.",
+  "roles": {
+    "carry": {
+      "jobTitle": "The Mover",
+      "jobs": [
+        { "job": "Equipment carrier", "what": "Carry supplies to and from the shelf — blocks to the table, art to the stations, books to the circle.", "helperSays": "You picked CARRY today — that means you're our Mover. When I point at something, you bring it where it needs to go. Ready?" },
+        { "job": "Snack helper", "what": "Carry the snack basket to the table, hand out napkins, carry the trash bag around after.", "helperSays": "Movers carry things for people. Snack time — carry the basket to each person. Don't forget yourself." },
+        { "job": "Clean-up captain", "what": "At clean-up, carry things back to their homes — blocks to the block shelf, crayons to the crayon bin. You know where everything lives.", "helperSays": "Everything has a home. Your job is to carry things home. Go." }
+      ],
+      "mission": {
+        "level1": "Carry one thing across the room for someone without being asked.",
+        "level2": "Carry something heavy. How heavy can you safely go?",
+        "level3": "Carry something FRAGILE without breaking it — a cup of water, a paper tower. The challenge is gentle strength.",
+        "helperGuide": "Don't just say 'carry something' — point at a specific thing, for a specific person. 'See that stack of books? Marcus needs them at his table. Can you carry them?' The 'for someone' part turns carrying into generosity."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Carry materials", "desc": "Set up and clean up. Move chairs, distribute supplies, organize the room." },
+        { "level": 2, "skill": "Carry a kid's bad day", "desc": "When a kid is struggling, absorb some of the weight. 'I'm right here.' Don't fix. Hold." },
+        { "level": 3, "skill": "Carry the room's energy", "desc": "When the room is sinking, YOU lift it — not by being loud, by being steady. Your calm carries the room." }
+      ]
+    },
+    "listen": {
+      "jobTitle": "The Ear",
+      "jobs": [
+        { "job": "Sound checker", "what": "Before the read-aloud: is it quiet enough to hear the story? Model the silence, then give a thumbs-up when the room is ready.", "helperSays": "You picked LISTEN — you're our Ear today. Before story time, check: can we hear? Thumbs up when the room is ready." },
+        { "job": "Message carrier", "what": "When a teacher needs to tell another adult something, the Ear carries it. Listen carefully, repeat exactly.", "helperSays": "Tell Ms. Rodriguez we need more glue sticks. Repeat it back to me first. Perfect. Go." },
+        { "job": "Sound reporter", "what": "During quiet work, the Ear notices sounds. At the end: 'What did the room sound like today?'", "helperSays": "While everyone works, your job is to listen. At the end I'll ask: what did the room sound like today?" }
+      ],
+      "mission": {
+        "level1": "Close your eyes for 30 seconds. Count every sound you hear. How many?",
+        "level2": "Close your eyes for 60 seconds. Don't just count — NAME each sound. 'Clock. Bird. Breathing. Chair squeaking.'",
+        "level3": "Listen to a partner talk for 60 seconds without interrupting. Then repeat back what they said. Did you get it right?",
+        "helperGuide": "The hard part is the silence — kids want to talk. Sit next to them, close YOUR eyes too, model it. When it's over, ask gently: 'What did you hear?' Don't rush the answer."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Listen to instructions", "desc": "Follow the lead's plan. Hear what's being asked of you." },
+        { "level": 2, "skill": "Listen to kids", "desc": "Hear what a kid is SAYING underneath the words. 'I hate this' means 'I'm frustrated' means 'I need help starting.'" },
+        { "level": 3, "skill": "Listen to the room", "desc": "Engaged rooms hum. Bored rooms are flat. Anxious rooms are sharp. Hear the room's mood without looking, and act on it." }
+      ]
+    },
+    "play": {
+      "jobTitle": "The Spark Plug",
+      "jobs": [
+        { "job": "Game starter", "what": "During free play, the Spark Plug starts the game — doesn't wait. 'Let's play tag!' 'Let's build a fort!'", "helperSays": "You picked PLAY — you're our Spark Plug. At recess, your job is to start something fun. Don't wait. Start. Others will join." },
+        { "job": "Energy booster", "what": "If the room feels flat, do something silly on purpose — a dance, a funny face, a weird noise.", "helperSays": "The room is sleepy. Spark Plug — wake us up. Do something that makes people laugh. Ten seconds. GO." },
+        { "job": "Partner finder", "what": "During partner activities, find someone with no partner. 'Want to play with me?'", "helperSays": "Look around — anyone alone? Spark Plugs make sure nobody plays solo unless they want to." }
+      ],
+      "mission": {
+        "level1": "Invent a game with one rule. Play it with someone for two minutes.",
+        "level2": "Make someone laugh today — on purpose. Not by being mean, by being funny or surprising.",
+        "level3": "Take a boring activity and make it fun. Add a timer? A silly voice? A challenge? You decide.",
+        "helperGuide": "PLAY missions are structured joy, not chaos — the constraint makes it play instead of noise. If a kid says 'I don't know how,' start them: 'What if we roll this ball back and forth but say a word each time?' Simple, structured, playful."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Play along", "desc": "Participate. Don't stand on the side. Get on the floor. Draw. Build. Dance." },
+        { "level": 2, "skill": "Play with purpose", "desc": "Use play to reach a resistant kid. 'Want to build something with me?' is an invitation that works most of the time." },
+        { "level": 3, "skill": "Play as medicine", "desc": "Know when the room needs play more than plan. Five minutes of silly play can save a day that's falling apart." }
+      ]
+    },
+    "spark": {
+      "jobTitle": "The Starter",
+      "jobs": [
+        { "job": "First mover", "what": "When the teacher says 'who wants to go first?' — that's you. You volunteer. You break the silence.", "helperSays": "You picked SPARK. Starters go first. When nobody's volunteering, that's your moment. Step up." },
+        { "job": "Idea dropper", "what": "During brainstorming or Wall questions, give the first answer. It gives everyone else permission.", "helperSays": "I'm about to ask a question. Your job: answer FIRST. Even if you're not sure. Your answer opens the door for everyone else's." },
+        { "job": "Supply prepper", "what": "Before an activity, set out the materials. A table that's ready to go sparks action.", "helperSays": "We're about to draw. Put three crayons and one paper at every seat — you're sparking the activity before it starts." }
+      ],
+      "mission": {
+        "level1": "Start a drawing on a blank page within five seconds of sitting down. Don't think — make the first mark.",
+        "level2": "Ask a question nobody has asked today. Any question. Put it on the Wall.",
+        "level3": "Start something other people join — a song, a pattern, a building project. Start it alone. See who comes.",
+        "helperGuide": "SPARK is hardest for shy kids — don't force it. 'Want me to spark it WITH you? We'll go first together.' Two people going first is still going first. By Week 4 the kid who needed a partner is going first alone."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Spark materials", "desc": "Set up an activity so it looks inviting BEFORE kids arrive. Crayons in a rainbow. The book open to a cool page. The setup IS the spark." },
+        { "level": 2, "skill": "Spark a kid", "desc": "Notice when a kid's light goes out. One specific compliment reignites them: 'I noticed you helped Marcus without being asked. That was real.'" },
+        { "level": 3, "skill": "Spark a moment", "desc": "Create the moment that wasn't in the plan. 'Everyone stop — look at the light through that window right now.' That becomes the thing they remember." }
+      ]
+    },
+    "flow": {
+      "jobTitle": "The Navigator",
+      "jobs": [
+        { "job": "Line leader", "what": "When we move as a group, the Navigator leads — not fast, not slow. Smooth. The line follows your pace.", "helperSays": "You picked FLOW — you're our Navigator. When we move, you lead. Walk like water: smooth, steady, no sudden stops." },
+        { "job": "Transition helper", "what": "Between activities, the Navigator helps people move — guiding, not bossy. Like a current that carries people gently.", "helperSays": "Activity's changing. Navigator, help everyone flow to the next spot. Don't push — just go there first and people follow." },
+        { "job": "Gap filler", "what": "If someone needs help but hasn't asked, the Navigator flows to the gap. 'Need a hand?'", "helperSays": "Look around — where's the gap? Who's stuck? Flow there. Don't wait to be asked." }
+      ],
+      "mission": {
+        "level1": "Walk from one side of the room to the other without bumping anything or anyone. Smooth.",
+        "level2": "During cleanup, don't be told what to do. Look around, go to the mess, clean it without instructions.",
+        "level3": "Notice someone stuck or alone. Go to them. Don't say anything — just sit beside them or start helping. Flow to the need.",
+        "helperGuide": "FLOW is reading the room — most kids need help seeing the gap. Point gently: 'See Sofia? She looks stuck. What do you think she needs?' Let the kid DIAGNOSE before they act. The diagnosis IS the flow."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Flow with the schedule", "desc": "Follow the transitions. When the lead says 'circle up,' you move toward the circle. You model the transition." },
+        { "level": 2, "skill": "Flow to need", "desc": "See who needs you before they ask. Move to the stuck kid, the table low on supplies. Be where the gap is." },
+        { "level": 3, "skill": "Flow with chaos", "desc": "When the plan breaks you don't freeze, you flow. Kid throws up? You're already getting paper towels. Fire drill? You're already counting heads." }
+      ]
+    },
+    "build": {
+      "jobTitle": "The Maker",
+      "jobs": [
+        { "job": "Room builder", "what": "Set up the room in the morning — chairs in circles, tables arranged. The room itself is built by the Maker.", "helperSays": "Makers build the world. Today the world is this room. Chairs in a circle for morning, tables ready for writing. You're the architect." },
+        { "job": "Wall manager", "what": "When sticky notes go on the Wall, the Maker places them — straight, organized. The Wall is a structure that needs a builder.", "helperSays": "New answer for the Wall. Maker — where does it go? You decide. The Wall is your building." },
+        { "job": "Fix-it kid", "what": "Something broke — a pencil tip, a torn paper, a fallen tower. The Maker fixes it, or builds a new one.", "helperSays": "Makers don't complain about broken things. They fix them. What's broken? Fix it." }
+      ],
+      "mission": {
+        "level1": "Build something with five objects. Anything. It has to stand on its own.",
+        "level2": "Build something with a partner — but you can't talk. Only build. The building IS the communication.",
+        "level3": "Build something, then explain it. What is it? Why did you make it? What's it for? The explanation is part of the build.",
+        "helperGuide": "BUILD needs materials within reach — set out blocks, tape, paper, boxes before the hour. Be the supply depot. And never build FOR them: if the tower falls, ask 'what could you change?' — never 'put the big one on the bottom.' Let them solve the architecture."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Build alongside", "desc": "When kids build, you build too. Your participation normalizes effort and shows building is what everyone does." },
+        { "level": 2, "skill": "Build routines", "desc": "Be consistent. Same greeting, same spot in the circle, same calm voice. Your consistency builds the kids' safety." },
+        { "level": 3, "skill": "Build the culture", "desc": "Culture is built through a thousand small choices — saying 'we' not 'you,' cleaning up together, admitting when you're wrong. Built by what you do when nobody's evaluating you." }
+      ]
+    },
+    "watch": {
+      "jobTitle": "The Scout",
+      "jobs": [
+        { "job": "Safety watcher", "what": "On walks and outdoor time, the Scout watches for hazards — puddles, holes, sharp things, open gates — and reports to the teacher.", "helperSays": "Scouts see what others miss. On the walk, your eyes are our safety system. See something dangerous? Tell me immediately." },
+        { "job": "Detail noticer", "what": "During activities, the Scout notices small things. 'Leah used her left hand today.' Reports at closing.", "helperSays": "Your job today isn't to DO things — it's to SEE things. At closing I'll ask: what did you notice that nobody else did?" },
+        { "job": "Room reader", "what": "Not a tattletale — a watcher. The Scout observes the room's temperature, not individual crimes.", "helperSays": "Scouts watch the whole room, not one person. Is it calm? Chaotic? Tired? Tell me what you see, not who did what." }
+      ],
+      "mission": {
+        "level1": "Look at one object for 60 seconds. Then close your eyes and describe it from memory. How many details?",
+        "level2": "Watch a partner draw without speaking. After, describe the PROCESS — not the drawing. 'You started with the eyes, then went slow on the hair.'",
+        "level3": "Watch the whole room for five minutes from one spot. Don't move, don't participate. Report: 'Here's what I saw happening in our room today.'",
+        "helperGuide": "WATCH requires stillness — 60 seconds of pure watching is HARD for a five-year-old. Sit and watch alongside them. A clipboard and pencil make watching active instead of passive — the clipboard is the Scout's tool."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Watch the kids", "desc": "Know where every kid is at all times. Count heads every 15 minutes. Not paranoia — responsibility." },
+        { "level": 2, "skill": "Watch for patterns", "desc": "Who's been alone at recess three days running? Who's picking WAIT every day? Who stopped drawing? Patterns are data — watch for them." },
+        { "level": 3, "skill": "Watch without judgment", "desc": "See a struggling kid and don't label them 'difficult.' See a quiet kid and don't label them 'shy.' Watch what IS, not what you think it means." }
+      ]
+    },
+    "wait": {
+      "jobTitle": "The Anchor",
+      "jobs": [
+        { "job": "Door holder", "what": "When we go through doors, the Anchor holds the door until everyone passes, then goes last. Patience in action.", "helperSays": "Anchors hold things steady. When we go through the door, you hold it. Everyone passes, you go last — that's the Anchor's honor." },
+        { "job": "Turn keeper", "what": "During games and partner activities, the Anchor tracks turns — 'who hasn't gone yet?' — so nobody's skipped.", "helperSays": "Anchors make sure everyone gets a turn. Keep track. If someone's been missed, you speak up: 'she hasn't gone yet.'" },
+        { "job": "Patience model", "what": "When the class is waiting — in line, for snack — the Anchor models calm. Stands still. Breathes. Shows what waiting looks like.", "helperSays": "We're waiting and it's hard. Show everyone how. Stand still. Breathe. When they see YOU calm, they calm down too." }
+      ],
+      "mission": {
+        "level1": "Hold still as long as you can. When you move, the timer stops. That's YOUR number.",
+        "level2": "Wait in line without talking or touching anyone the whole time. Your patience is your superpower.",
+        "level3": "Watch someone struggle with something. Wait. Count to 20. If they haven't figured it out by 20, THEN offer help. Not before.",
+        "helperGuide": "WAIT is hardest for energetic kids — don't punish movement. 'Can you wait 10 seconds? Great, now try 15.' Build the muscle slowly, and CELEBRATE it: 'You waited 30 seconds — last week it was 12. Your patience is growing.'"
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Wait your turn", "desc": "Don't jump in when the lead is talking. Don't answer a question directed at a kid. Let the process happen." },
+        { "level": 2, "skill": "Wait before intervening", "desc": "Two kids argue — wait 10 seconds before stepping in. They might solve it. If they do, THEY learned conflict resolution. If you solve it, you learned nothing." },
+        { "level": 3, "skill": "Wait as strategy", "desc": "After a question, count to 7. The silence is uncomfortable but the best answers come after it. The kid who needs 8 seconds will never speak if you only wait 3." }
+      ]
+    },
+    "solve": {
+      "jobTitle": "The Fixer",
+      "jobs": [
+        { "job": "Problem solver", "what": "When something goes wrong — out of blue crayons, a lost shoe — the Fixer doesn't complain, they solve.", "helperSays": "Fixers don't say what's wrong, they say what to do about it. We're out of blue crayons. Mix colors? Use a different blue? You decide." },
+        { "job": "Puzzle keeper", "what": "Keep puzzles organized — pieces in the right box, missing pieces reported. Order from chaos.", "helperSays": "Puzzles need a keeper. Make sure all the pieces are in the right boxes. If one's missing, let me know. You're our puzzle detective." },
+        { "job": "Dispute settler", "what": "When two kids disagree, before a teacher steps in the Fixer asks three questions: what happened, what do you both want, what could work for both?", "helperSays": "Two kids disagree. Before you come to me, try three questions: What happened? What do you both want? What could work for everyone? If you can't, then come to me — but try first." }
+      ],
+      "mission": {
+        "level1": "Complete a puzzle without looking at the box. Solve from shapes and colors alone.",
+        "level2": "Something in the room is 'broken' (the teacher sets up a solvable problem — a locked box with a key hidden nearby). Figure it out.",
+        "level3": "Two people want the same thing (one blue crayon, two kids). Solve it so both are happy. Not 'take turns' — invent a new solution.",
+        "helperGuide": "SOLVE missions MUST be solvable — never give a kid a problem they can't crack. Set it up in advance, know the solution, watch them find it. If truly stuck after three minutes, give ONE hint — a direction, not the answer: 'Have you looked under the red basket?'"
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Solve logistics", "desc": "Out of glue. Printer jammed. Speaker died. Fix it. Don't bring the problem to the lead — bring the solution." },
+        { "level": 2, "skill": "Solve with kids", "desc": "Don't solve FOR them, solve WITH them. 'Hmm, the tower keeps falling. What could we try differently?' Ask, don't tell." },
+        { "level": 3, "skill": "Solve systemically", "desc": "If the same problem keeps happening, the SYSTEM is broken, not the kid. Kids keep losing pencils? The pencil system is wrong. Fix the system, not the behavior." }
+      ]
+    },
+    "help": {
+      "jobTitle": "The Buddy",
+      "jobs": [
+        { "job": "New kid welcomer", "what": "If a new kid joins, the Buddy is their person — sits with them, shows them where everything is.", "helperSays": "Someone new is here. They don't know anything yet — you're their guide. Sit with them, show them everything. Remember how YOU felt on your first day? Make theirs easier." },
+        { "job": "Side-by-side helper", "what": "During writing or drawing, sit next to someone struggling. Don't do it for them — just be there.", "helperSays": "Buddies don't do the work FOR someone — they sit next to them and make hard things less scary. Who looks like they need a buddy right now?" },
+        { "job": "Cleanup partner", "what": "Find someone cleaning alone and help. Don't announce it — just start.", "helperSays": "See someone cleaning alone? Go help without saying anything. Just start. That's the most powerful kind of help — the kind that doesn't need words." }
+      ],
+      "mission": {
+        "level1": "Help one person today without being asked. Don't tell anyone you did it.",
+        "level2": "Find someone stuck. Don't solve it for them — ask 'what part is hard?' Then help with just that part.",
+        "level3": "Help someone who doesn't know they need help. Notice before they ask. Arrive before they struggle. Be there when they look up.",
+        "helperGuide": "HELP can become codependence — watch for the kid who ONLY helps and never does their own work; they're avoiding their own challenge. Gently: 'You've helped three people today — amazing. Now, what do YOU need help with?' Help flows both ways."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Help when asked", "desc": "A kid says 'I need help.' You go. You help. Basic, essential, non-negotiable." },
+        { "level": 2, "skill": "Help without being asked", "desc": "See the need before the kid voices it. They're struggling with scissors — you appear. 'Want me to hold the paper?' Making it possible, not doing it for them." },
+        { "level": 3, "skill": "Help by not helping", "desc": "The hardest level. A kid struggles and you DON'T help because you know they're about to get it. You stand near, radiate confidence, say nothing. They solve it. They grow. Your non-help was the biggest help." }
+      ]
+    },
+    "echo": {
+      "jobTitle": "The Translator",
+      "jobs": [
+        { "job": "Repeat after me", "what": "During instructions, if a kid missed it, the Translator repeats — kid to kid. 'She said to get your journals.'", "helperSays": "Translators repeat things so everyone hears. If someone missed the instructions, YOU tell them. Not me. You." },
+        { "job": "Drawing interpreter", "what": "When a kid shows their drawing, the Translator describes what they SEE. The artist confirms or corrects.", "helperSays": "Look at this drawing. Tell us what you see — not what you think it should be, what you actually see. The artist will tell you if you're right." },
+        { "job": "Story reteller", "what": "After the read-aloud, the Translator retells the story in their own words. Their version, not memorized.", "helperSays": "You listened to the story. Now tell it back — your words, your version. It doesn't have to be perfect. It has to be yours." }
+      ],
+      "mission": {
+        "level1": "Repeat what someone said, but change one word. Keep the meaning. Change the sound.",
+        "level2": "Watch someone draw, then draw your OWN version of the same thing. Not a copy — an echo. Your version.",
+        "level3": "Listen to a kid's answer to the Wall question, then say it back in your own words. 'So you're saying…' See if they nod.",
+        "helperGuide": "ECHO teaches active listening through DOING. The key phrase for helpers: 'What I hear you saying is…' Model it constantly — when a kid tells you something, echo it back. They'll start doing it to each other. Echo is contagious."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Echo instructions", "desc": "Lead says 'circle up.' You say 'let's circle up, everyone.' The instruction travels farther because two voices carry it." },
+        { "level": 2, "skill": "Echo feelings", "desc": "'I hear you saying you're frustrated.' Not fixing, not advising — confirming: I received your signal, I'm sending it back so you know I heard." },
+        { "level": 3, "skill": "Echo the room's values", "desc": "When a kid does something that matches the culture, name it: 'You just helped without being asked — that's what we do here.' Echo the culture back so it becomes conscious." }
+      ]
+    },
+    "shine": {
+      "jobTitle": "The Spotlight",
+      "jobs": [
+        { "job": "Compliment giver", "what": "The Spotlight gives three SPECIFIC compliments a day. Not 'good job' — 'I liked how you drew the tree with the crooked branches. It looked real.'", "helperSays": "Spotlights shine light on other people's goodness. Three compliments today — but REAL and SPECIFIC. Not 'nice drawing.' What specifically was nice?" },
+        { "job": "Work displayer", "what": "Help put finished work on display — the Wall, the Shelf, the drying rack. Good work should be SEEN, not hidden in a folder.", "helperSays": "That drawing deserves to be seen. Spotlight — where should we display it? Help them put it where everyone can see." },
+        { "job": "Declaration leader", "what": "On Mondays, the Spotlight goes first in the Declaration. Going first takes courage — that courage IS the shine.", "helperSays": "Declaration time. Spotlight goes first. You show everyone it's safe to stand up and say who you are. You go. They follow." }
+      ],
+      "mission": {
+        "level1": "Say your name out loud to the whole group. Just your name. That's shining.",
+        "level2": "Share your drawing or your answer with the group. Hold it up. Let people look. Stand there for ten seconds.",
+        "level3": "Tell the group something true about yourself that's hard to say. 'I'm scared of the dark.' Real shining — not performing, being seen.",
+        "helperGuide": "SHINE is courage — some kids shine naturally, some are terrified. NEVER force it. 'Would you like to share? No? Okay. Would you like ME to share it for you? I'll hold it up and you stand next to me.' Gradual, safe. By Week 6 the kid who couldn't say their name is explaining their drawing."
+      },
+      "staffSkills": [
+        { "level": 1, "skill": "Shine light on good work", "desc": "'Look at Leah's drawing — she used three shapes and a pattern.' Specific, not 'good job.' WHAT was good and WHY." },
+        { "level": 2, "skill": "Shine light on invisible moments", "desc": "The kid who helped when nobody watched, who sat with someone lonely. YOU saw it. Name it. That changes their self-image." },
+        { "level": 3, "skill": "Shine as yourself", "desc": "Show the kids who YOU are. Share your own weather. Say 'I'm having a hard day today.' Be a human in front of them, not a role. Your authenticity gives them permission for theirs." }
+      ]
+    }
+  }
+}

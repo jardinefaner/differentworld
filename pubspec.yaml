@@ -127,6 +127,15 @@ flutter:
     - assets/curriculum/ten_worlds.json
     # Big Thinking — play → name → bridge → question games.
     - assets/curriculum/thinking_games.json
+    # The staff runbook — every moment of the day in three lanes
+    # (lead / helper / if-it-breaks). The adult twin of "Play today".
+    - assets/curriculum/staff_runbook.json
+    # Verb roles — each of the 12 verbs as a kid JOB (+ helper script +
+    # 3-level mission) and a 3-level STAFF skill. One spine, three lives.
+    - assets/curriculum/verb_roles.json
+    # The staff growth ladder — Shadow → Extra Hands → Co-Pilot → Conductor,
+    # with can-do / not-yet. Mirrors the kid's own character arc.
+    - assets/curriculum/staff_roles.json
 
   # Variable display fonts for the Speak feature's editorial karaoke
   # (lib/features/speak/). Bundled (NOT runtime-fetched via google_fonts)
