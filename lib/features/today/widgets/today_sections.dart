@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/reveal_overlay.dart';
 import 'package:differentworld/features/action_words/skills.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
@@ -154,8 +155,7 @@ class _ReadyToRunCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${count.done} of ${count.total} set for tomorrow — '
-                        'finish setup.',
+                        '${count.done} of ${count.total} ready — finish setup.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer
                               .withValues(
@@ -227,7 +227,7 @@ class _RightNowCard extends ConsumerWidget {
     if (phase == DayPhase.program) {
       final world = ref.watch(currentWorldProvider);
       if (world != null) {
-        title = 'Present the day';
+        title = "Run today's program";
         line = 'In ${world.name} this week — full-screen, step by step.';
         route = '/play-today';
         icon = Icons.slideshow_outlined;
@@ -332,7 +332,7 @@ _PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
     case DayPhase.program:
       return _PhaseSpec(
         title: 'Program time',
-        line: 'Open today’s schedule to see what’s next.',
+        line: 'See what your room is doing next.',
         route: '/schedule',
         icon: Icons.play_circle_outline,
         container: cs.tertiaryContainer,
@@ -389,6 +389,68 @@ class _PhaseSpec {
   final Color onAccent;
 }
 
+/// One-line announcement shown when the wall clock crosses into a new phase.
+String _phaseAnnouncement(DayPhase phase) => switch (phase) {
+  DayPhase.prep => 'Getting ready for the day',
+  DayPhase.arrival => 'Arrival time — check kids in',
+  DayPhase.program => 'Program time — run the day',
+  DayPhase.pickup => 'Pickup time',
+  DayPhase.closed => 'The program day is over',
+};
+
+/// Persistent safety banner: once the day is running, surfaces children who
+/// still have no attendance decision (the arrival lead has moved on). Error-
+/// toned and tappable straight into the unmarked filter so the gap can't
+/// silently ride through the day.
+class _UnmarkedCheckInBanner extends StatelessWidget {
+  const _UnmarkedCheckInBanner({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: scheme.errorContainer,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            unawaited(context.push('/checklist?filter=unmarked'));
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Icon(Icons.report_outlined, color: scheme.onErrorContainer),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    count == 1
+                        ? '1 child still not checked in — tap to mark '
+                              'attendance'
+                        : '$count children still not checked in — tap to mark '
+                              'attendance',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onErrorContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: scheme.onErrorContainer),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Optional "Today's words" lead-in to Action Words — appears only when
 /// at least one child has picked their words today, so it's invisible for
 /// programs that don't use the feature. docs/ACTION_WORDS.md.
@@ -397,9 +459,23 @@ class _ActionWordsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final n = ref.watch(actionWordsPickedTodayProvider);
+    // Watch the warm reveal line-up (not just the count) so a tap from here
+    // can fire the ceremony directly — and so the data is ready when it does.
+    final n = ref.watch(todaysRevealItemsProvider).length;
     if (n == 0) return const SizedBox.shrink();
+    final phase =
+        ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
+    // From pickup onward, "at closing" IS now — the card becomes the reveal
+    // button so the day's culminating ritual is one tap, not a buried icon
+    // on a screen you'd have to find first.
+    final closing = phase == DayPhase.pickup || phase == DayPhase.closed;
     final theme = Theme.of(context);
+    final title = closing ? 'Closing time' : 'Action Words';
+    final line = closing
+        ? (n == 1 ? 'Reveal 1 world now' : 'Reveal $n worlds now')
+        : (n == 1
+              ? '1 child picked today — reveal their world at closing'
+              : '$n children picked today — reveal their worlds at closing');
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Card(
@@ -408,7 +484,11 @@ class _ActionWordsCard extends ConsumerWidget {
         child: InkWell(
           onTap: () {
             unawaited(HapticFeedback.selectionClick());
-            unawaited(context.push('/action-words'));
+            if (closing) {
+              unawaited(revealAllPicksToday(context, ref));
+            } else {
+              unawaited(context.push('/action-words'));
+            }
           },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
@@ -423,7 +503,7 @@ class _ActionWordsCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.auto_awesome,
+                    closing ? Icons.auto_awesome_motion : Icons.auto_awesome,
                     color: theme.colorScheme.onTertiary,
                   ),
                 ),
@@ -433,7 +513,7 @@ class _ActionWordsCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Action Words',
+                        title,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: theme.colorScheme.onTertiaryContainer,
                           fontWeight: FontWeight.w600,
@@ -441,11 +521,7 @@ class _ActionWordsCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        n == 1
-                            ? '1 child picked today — reveal their world at '
-                                  'closing'
-                            : '$n children picked today — reveal their worlds '
-                                  'at closing',
+                        line,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onTertiaryContainer
                               .withValues(alpha: 0.85),
@@ -741,18 +817,41 @@ class TodayBody extends ConsumerWidget {
     // a cheery hello. Calmer mornings still get the warm greeting.
     var totalFlags = 0;
     var roomsWithFlags = 0;
+    var totalUnmarked = 0;
     for (final g in groups) {
       final state = ref.watch(groupDayStateProvider(g)).value;
-      if (state != null && state.hasFlag) {
+      if (state == null) continue;
+      if (state.hasFlag) {
         totalFlags += state.flagCount;
         roomsWithFlags += 1;
       }
+      totalUnmarked += state.unmarked;
     }
     // The day's current phase drives the time-aware lead card and lets
     // us suppress the standing checklist card during arrival (the lead
     // already leads with check-in there).
     final phase =
         ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
+    // A phase boundary is a real handoff — say so once when the clock crosses
+    // it (not on every Today open: only when the phase actually changes while
+    // this screen is alive). Otherwise the lead card silently morphs and the
+    // teacher only notices if they happen to be looking.
+    //
+    // Intentionally in build(): on a ConsumerWidget, Riverpod de-dupes the
+    // listener across rebuilds and tears it down on unmount, and the
+    // `from == null` guard suppresses the first-build fire. Don't "fix" this
+    // by moving it to a ConsumerStatefulWidget initState — it's correct here.
+    ref.listen<AsyncValue<DayPhase>>(dayPhaseProvider, (prev, next) {
+      final from = prev?.value;
+      final to = next.value;
+      if (from == null || to == null || from == to) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 3),
+          content: Text(_phaseAnnouncement(to)),
+        ),
+      );
+    });
 
     return ResponsivePage(
       bottomPadding: 24,
@@ -769,6 +868,14 @@ class TodayBody extends ConsumerWidget {
               ? Theme.of(context).colorScheme.error
               : null,
         ),
+        // Safety net: once the day is running (program/pickup), anyone still
+        // unmarked is a real accountability gap — a kid with no attendance
+        // decision. The arrival lead has already moved on, so this persists
+        // the unfinished check-in above everything until it's resolved.
+        if ((phase == DayPhase.program || phase == DayPhase.pickup) &&
+            viewer.isDailyLogger &&
+            totalUnmarked > 0)
+          _UnmarkedCheckInBanner(count: totalUnmarked),
         // "Ready to run?" — the pre-9:00 setup check. Renders nothing once the
         // gating preconditions are met (or for non-directors). The first thing
         // a brand-new program sees; vanishes the moment it's set up.
@@ -1303,8 +1410,8 @@ class _PulseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    final row = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Icon(icon, size: 18, color: tint),
@@ -1312,8 +1419,25 @@ class _PulseRow extends StatelessWidget {
           Expanded(
             child: Text(label, style: theme.textTheme.bodyMedium),
           ),
+          // The affordance + the actual wiring: this onTap used to be passed
+          // in but never attached — every pulse row was a silent no-op.
+          if (onTap != null)
+            Icon(
+              Icons.chevron_right,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
         ],
       ),
+    );
+    if (onTap == null) return row;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () {
+        unawaited(HapticFeedback.selectionClick());
+        onTap!.call();
+      },
+      child: row,
     );
   }
 }

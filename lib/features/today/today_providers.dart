@@ -170,9 +170,24 @@ final arrivalProgressProvider = Provider<AsyncValue<ArrivalProgress>>((ref) {
 /// `.distinct()` means the card only rebuilds when the phase actually
 /// changes (not once a minute).
 final dayPhaseProvider = StreamProvider<DayPhase>((ref) async* {
-  yield DayPhase.fromClock(DateTime.now());
-  yield* Stream.periodic(
-    const Duration(minutes: 1),
-    (_) => DayPhase.fromClock(DateTime.now()),
-  ).distinct();
+  var last = DayPhase.fromClock(DateTime.now());
+  yield last;
+  // Re-check each wall-clock minute, aligning the first tick to the next :00
+  // so a boundary crossing is caught within ~1s — not up to 59s late, which
+  // matters now that crossing a phase shows a one-time announcement. Emits
+  // only when the phase actually changes (the old `.distinct()` behaviour).
+  while (true) {
+    final now = DateTime.now();
+    // Sleep to just past the next wall-clock minute (millisecond-accurate, so
+    // a clean :00 second waits a full minute rather than skipping or busy-
+    // looping). Phase boundaries are minute-aligned, so checking each :00
+    // catches every crossing within ~1s.
+    final msToNextMinute = (60 - now.second) * 1000 - now.millisecond;
+    await Future<void>.delayed(Duration(milliseconds: msToNextMinute));
+    final next = DayPhase.fromClock(DateTime.now());
+    if (next != last) {
+      last = next;
+      yield next;
+    }
+  }
 });

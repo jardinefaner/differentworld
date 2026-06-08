@@ -59,6 +59,23 @@ class RevealOverlay {
   }
 }
 
+/// Fire the closing ceremony for everyone with picks today — the ONE action
+/// behind both the Action Words screen's reveal button and Today's closing
+/// CTA. Reads the warm, space-wide [todaysRevealItemsProvider]; a gentle nudge
+/// instead of a blank ceremony when nobody's picked yet.
+Future<void> revealAllPicksToday(BuildContext context, WidgetRef ref) {
+  final items = ref.read(todaysRevealItemsProvider);
+  if (items.isEmpty) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text('No worlds to reveal yet — pick today’s words first.'),
+      ),
+    );
+    return Future<void>.value();
+  }
+  return RevealOverlay.showAll(context, items: items);
+}
+
 class _RevealPage extends ConsumerStatefulWidget {
   const _RevealPage({required this.subject, required this.day});
 

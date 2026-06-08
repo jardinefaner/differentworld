@@ -37,14 +37,19 @@ class ActionWordsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
+    // Warms the space-wide picks so the shared closing action has data here
+    // too, and lets us hide "Reveal all" when nobody has picked yet (no more
+    // tapping into an empty ceremony).
+    final revealItems = ref.watch(todaysRevealItemsProvider);
     return EdgeScaffold(
       actions: [
-        IconButton(
-          tooltip: 'Reveal all',
-          icon: const Icon(Icons.auto_awesome_motion),
-          color: WorldBadge.goldFor(Theme.of(context)),
-          onPressed: () => _revealAll(context, ref),
-        ),
+        if (revealItems.isNotEmpty)
+          IconButton(
+            tooltip: 'Reveal all',
+            icon: const Icon(Icons.auto_awesome_motion),
+            color: WorldBadge.goldFor(Theme.of(context)),
+            onPressed: () => unawaited(revealAllPicksToday(context, ref)),
+          ),
         IconButton(
           tooltip: 'Our worlds',
           icon: const Icon(Icons.menu_book_outlined),
@@ -90,33 +95,6 @@ class ActionWordsScreen extends ConsumerWidget {
         },
       ),
     );
-  }
-
-  /// The end-of-day ceremony: gather every child who has picks today and
-  /// reveal them in one tap-to-advance cycle. Reads each kid's already-watched
-  /// day (the rows keep them warm); a child whose row hasn't resolved yet is
-  /// simply skipped. Empty → a gentle nudge instead of a blank ceremony.
-  void _revealAll(BuildContext context, WidgetRef ref) {
-    final subjects =
-        ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
-    final items = <RevealItem>[];
-    for (final s in subjects) {
-      final day = ref
-          .read(
-            actionWordsForDayProvider((subjectId: s.id, date: todayKey())),
-          )
-          .value;
-      if (day != null && day.hasPicks) items.add((subject: s, day: day));
-    }
-    if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No worlds to reveal yet — pick today’s words first.'),
-        ),
-      );
-      return;
-    }
-    unawaited(RevealOverlay.showAll(context, items: items));
   }
 }
 

@@ -6,6 +6,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -256,22 +257,38 @@ final inventedWorldsProvider = Provider<AsyncValue<List<InventedWorld>>>((ref) {
   });
 });
 
-/// How many children have picked their words today — drives the optional
-/// "Today's words" card on the main Today (renders nothing at 0, so it's
-/// invisible for programs that don't use Action Words).
-final actionWordsPickedTodayProvider = Provider<int>((ref) {
-  final entries = ref.watch(_spaceActionWordsProvider).value ?? const <Entry>[];
-  final today = todayKey();
-  final picked = <String>{};
-  for (final e in entries) {
-    final sid = e.subjectId;
-    if (sid == null) continue;
-    final local = DateTime.tryParse(e.recordedAt)?.toLocal();
-    if (local == null || dateKey(local) != today) continue;
-    if (ActionWordsDay.fromEntry(e).hasPicks) picked.add(sid);
-  }
-  return picked.length;
-});
+/// Today's closing-ceremony line-up: every child who has picked words today,
+/// in roster order, paired with their day. Built from the SPACE-WIDE picks
+/// stream (warm wherever the picks are shown), so the ceremony can fire from
+/// Today — not just from the Action Words screen where the per-child rows
+/// happen to be warm. The record shape matches `RevealItem` (structurally
+/// identical; kept here to avoid importing the overlay's typedef and creating
+/// a cycle). `.length` doubles as the "picked today" count.
+final todaysRevealItemsProvider =
+    Provider<List<({Subject subject, ActionWordsDay day})>>((ref) {
+      final entries =
+          ref.watch(_spaceActionWordsProvider).value ?? const <Entry>[];
+      final subjects =
+          ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
+      final today = todayKey();
+      // Pre-index today's picks by subject (last pick wins) so joining with
+      // the roster is O(subjects + entries), not O(subjects × entries).
+      final pickBySubject = <String, ActionWordsDay>{};
+      for (final e in entries) {
+        final sid = e.subjectId;
+        if (sid == null) continue;
+        final local = DateTime.tryParse(e.recordedAt)?.toLocal();
+        if (local == null || dateKey(local) != today) continue;
+        final day = ActionWordsDay.fromEntry(e);
+        if (day.hasPicks) pickBySubject[sid] = day;
+      }
+      final items = <({Subject subject, ActionWordsDay day})>[];
+      for (final s in subjects) {
+        final day = pickBySubject[s.id];
+        if (day != null) items.add((subject: s, day: day));
+      }
+      return items;
+    });
 
 /// The sorted-verb key for a combo — the lookup key for class worlds.
 String worldComboKey(Set<String> verbs) => (verbs.toList()..sort()).join('+');
