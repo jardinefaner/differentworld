@@ -20,6 +20,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/scale_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -255,6 +256,7 @@ class _Body extends ConsumerWidget {
               visited: visitedWeeks,
               worldCount: worlds.length,
               days: ageDays,
+              week: week,
             ),
             const SizedBox(height: 22),
             // Allies — the party, from the weekly logs (staff-side, full names;
@@ -879,47 +881,41 @@ class _Quests extends StatelessWidget {
     required this.visited,
     required this.worldCount,
     required this.days,
+    required this.week,
   });
 
   final Set<int> visited;
   final int worldCount;
   final int days;
+  final int? week;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pct = worldCount == 0 ? 0.0 : visited.length / worldCount;
     return _Section(
       label: 'Quests · the long game',
       systemId: 'quests',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Worlds visited',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ),
-              Text(
-                '${visited.length} / $worldCount',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: pct,
-              minHeight: 6,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          // COLLECTION as a SCALE — the grid's fill, a position on a continuum.
+          ScaleBar(
+            label: 'Worlds visited',
+            trailing: '${visited.length} / $worldCount',
+            scale: Scale(
+              value: visited.length,
+              max: worldCount == 0 ? 1 : worldCount,
             ),
           ),
+          if (week != null) ...[
+            const SizedBox(height: 14),
+            // LEVEL as a SCALE — Day-1-to-50 in 10-week clothing.
+            ScaleBar(
+              label: 'The journey',
+              trailing: 'Week $week of 10',
+              scale: Scale(value: week!, max: 10),
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
