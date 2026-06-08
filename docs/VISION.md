@@ -416,6 +416,27 @@ once it has a home.
   spine so it casts to the room. (Thread: `buildDayRun` + the `/play-today`
   immersive runsheet, the cast cockpit. Next: two-device cast of the full
   run + auto-advance toggle.)
+- **2026-06-07 (cont.)** — **The STAFF layer — the adults run on rails too,
+  and the 12 verbs are one spine across three lives.** Everything so far is
+  kid/content-facing. The new axis: the app trains and choreographs the
+  *adults*. Three novel pieces. (1) **A staff growth ladder** — Shadow →
+  Extra Hands → Co-Pilot → Conductor — earned by practice not tenure, with
+  can-do / not-yet gating, mirroring the kid's own character arc (the kid
+  becomes a character; the helper becomes a Conductor). (2) **A staff-facing
+  runbook — "Play today" for the grown-ups**: every moment of the day in
+  three lanes — what the LEAD does, what the HELPER does, and IF IT BREAKS
+  (the contingency column nobody builds). The anti-burnout, anti-"where's-
+  everything" twin of the kid run. (3) **The 12 verbs as ONE vocabulary,
+  three lenses**: a kid's *identity* (the verbs they pick — built), a kid's
+  *job for the day* (picked CARRY → you're the Mover, with a helper SCRIPT
+  of exact words to say), and a *staff skill* (CARRY L1 = carry materials,
+  L3 = carry the room's energy). Plus **scripted micro-language**
+  (`helperSays` / `helperGuide`) — telling a nervous new helper *exactly
+  what to say* — the digital "Sub Box": any human who walks in can open it
+  and run the next hour. (Threads: extend the existing Missions feature with
+  verb+level rather than fork it; ties to the Pat/substitute seed
+  `leadSubstituteMemberId`; the staff ladder is a new surface. "Invest in
+  our kids, not AI" includes investing in the humans who hold them.)
 
 - **2026-06-01** — **Group discussions** by topic + age-appropriateness,
   with a library to back them (→ dream #6). **People role deck** —
