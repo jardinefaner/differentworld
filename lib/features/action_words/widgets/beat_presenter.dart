@@ -33,6 +33,7 @@ class BeatPresenter extends ConsumerStatefulWidget {
     required this.accent,
     this.emoji = '',
     this.initialBeat = 0,
+    this.onBeatChanged,
     super.key,
   });
 
@@ -49,6 +50,11 @@ class BeatPresenter extends ConsumerStatefulWidget {
   /// phase (a mid-program open opens at the activity, not beat 1); the
   /// activity arc always starts at 0. Clamped to a valid index.
   final int initialBeat;
+
+  /// Fired with the new beat index whenever the page changes. The day run
+  /// uses it to remember where the teacher was, so re-opening resumes there
+  /// instead of teleporting to the phase's beat; the arc leaves it null.
+  final ValueChanged<int>? onBeatChanged;
 
   @override
   ConsumerState<BeatPresenter> createState() => _BeatPresenterState();
@@ -137,6 +143,7 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   if (!mounted) return;
                   unawaited(HapticFeedback.selectionClick());
                   setState(() => _index = i);
+                  widget.onBeatChanged?.call(i);
                 },
                 itemBuilder: (_, i) => Padding(
                   padding: const EdgeInsets.symmetric(

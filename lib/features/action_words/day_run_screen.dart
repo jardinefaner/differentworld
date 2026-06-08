@@ -67,12 +67,25 @@ class DayRunScreen extends ConsumerWidget {
     // stepping back to an earlier beat one tap away.
     final phase =
         ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
+    final today = todayIso();
+    // ref.read (not watch): this is a mount-time value. Re-opening the run
+    // resumes the remembered beat; while it's up we don't want to yank the
+    // page when the remembered index updates.
+    final resume = ref.read(dayRunResumeProvider);
 
     return BeatPresenter(
       beats: beats,
       accent: world.color,
       emoji: world.emoji,
-      initialBeat: initialBeatForPhase(beats, phase),
+      initialBeat: dayRunStartIndex(
+        beats: beats,
+        phase: phase,
+        today: today,
+        resume: resume,
+      ),
+      onBeatChanged: (i) => ref
+          .read(dayRunResumeProvider.notifier)
+          .remember(date: today, index: i),
     );
   }
 
@@ -105,4 +118,45 @@ class DayRunScreen extends ConsumerWidget {
         return i < 0 ? 0 : i;
     }
   }
+}
+
+/// Remembers where the teacher left the day run so re-opening resumes there
+/// instead of teleporting to the current phase's beat (the program→pickup jump
+/// the pressure-test caught). In-memory, per session — surviving a cold
+/// restart is a deferred nicety.
+@immutable
+class DayRunResume {
+  const DayRunResume({required this.date, required this.index});
+  final String date;
+  final int index;
+}
+
+final dayRunResumeProvider =
+    NotifierProvider<DayRunResumeNotifier, DayRunResume?>(
+      DayRunResumeNotifier.new,
+    );
+
+class DayRunResumeNotifier extends Notifier<DayRunResume?> {
+  @override
+  DayRunResume? build() => null;
+
+  void remember({required String date, required int index}) =>
+      state = DayRunResume(date: date, index: index);
+}
+
+/// Where the day run opens: the remembered beat if it's from [today] and still
+/// in range, otherwise the beat for the current [phase]. Pure + testable.
+int dayRunStartIndex({
+  required List<DayBeat> beats,
+  required DayPhase phase,
+  required String today,
+  DayRunResume? resume,
+}) {
+  if (resume != null &&
+      resume.date == today &&
+      resume.index >= 0 &&
+      resume.index < beats.length) {
+    return resume.index;
+  }
+  return DayRunScreen.initialBeatForPhase(beats, phase);
 }

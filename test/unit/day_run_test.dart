@@ -268,4 +268,60 @@ void main() {
       }
     });
   });
+
+  group('dayRunStartIndex — resume the last beat', () {
+    List<DayBeat> run() {
+      final world = loadWorld(4);
+      return buildDayRun(
+        world: world,
+        rules: rulesForWorld(world.id),
+        thinking: loadThinking('adaptation'),
+      );
+    }
+
+    test('a resume from today, in range, wins over the phase', () {
+      final beats = run();
+      final i = dayRunStartIndex(
+        beats: beats,
+        phase: DayPhase.pickup,
+        today: '2026-06-07',
+        resume: const DayRunResume(date: '2026-06-07', index: 3),
+      );
+      expect(i, 3); // not teleported to the close beat
+    });
+
+    test('a stale (yesterday) resume is ignored → the phase beat', () {
+      final beats = run();
+      final i = dayRunStartIndex(
+        beats: beats,
+        phase: DayPhase.pickup,
+        today: '2026-06-07',
+        resume: const DayRunResume(date: '2026-06-06', index: 3),
+      );
+      expect(beats[i].kind, DayBeatKind.close); // pickup → close
+    });
+
+    test('an out-of-range resume index is ignored → the phase beat', () {
+      final beats = run();
+      final i = dayRunStartIndex(
+        beats: beats,
+        phase: DayPhase.program,
+        today: '2026-06-07',
+        resume: DayRunResume(date: '2026-06-07', index: beats.length + 5),
+      );
+      expect(beats[i].kind, DayBeatKind.play); // program → play
+    });
+
+    test('no resume → the phase beat', () {
+      final beats = run();
+      expect(
+        dayRunStartIndex(
+          beats: beats,
+          phase: DayPhase.prep,
+          today: '2026-06-07',
+        ),
+        0,
+      );
+    });
+  });
 }
