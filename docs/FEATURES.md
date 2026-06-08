@@ -687,6 +687,31 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Staff
+**Path**: `lib/features/staff/`
+**Purpose**: Three bundled-JSON reference surfaces that orient any staff member — especially new helpers and substitutes — to the day's moment-by-moment flow, the 12-verb classroom jobs + challenge ideas, and their own growth arc on the Shadow → Conductor ladder.
+**Personas served**: All staff — especially Pat (substitute orientation), Brianna (onboarding), Jordan (on-the-floor helper script reference).
+**Discovery surfaces**:
+- Routes: `/runbook` (RunbookScreen), `/staff` (StaffLadderScreen), `/verb-jobs` (VerbJobsScreen — in `lib/features/action_words/`)
+- Omnibox: yes — `page.runbook` "Runbook" (keywords: runbook, run book, staff guide, helper guide, moment by moment, what do i do, lead helper, if it breaks, substitute, sub, new helper); `page.staff-ladder` "The staff ladder" (keywords: staff, staff ladder, my role, shadow, extra hands, co-pilot, conductor, training, onboarding, new staff, grow); `page.verb-jobs` "Jobs & missions" (keywords: jobs, classroom jobs, job chart, missions, verb missions, helper script, what to say, staff skills, the mover, the ear, roles)
+- Slash: none
+- Drawer: no — contextual reference surfaces, not top-level nav destinations
+- Settings: no
+**Capabilities**: None — open to all signed-in staff.
+**Data**: None — all three surfaces read bundled JSON assets (`assets/curriculum/staff_runbook.json`, `assets/curriculum/staff_roles.json`, `assets/curriculum/verb_roles.json`). No synced tables. The self-mark on the staff ladder is stored locally via `staffLevelProvider` (SharedPreferences, key `staff.ladder_level`) — NOT synced, NOT a permission gate.
+**Surfaces**:
+- *Runbook screen* — `lib/features/staff/runbook_screen.dart`. `/runbook`: the day moment-by-moment in three lanes (LEAD / HELPER / IF IT BREAKS); read from `staffRunbookProvider`. Pure reference — no per-room state.
+- *Runbook provider + model* — `lib/features/staff/runbook.dart`. `RunbookMoment` (time / name / emoji / lead / helper / ifItBreaks); `staffRunbookProvider` (FutureProvider loading `assets/curriculum/staff_runbook.json`).
+- *Staff ladder screen* — `lib/features/staff/staff_ladder_screen.dart`. `/staff`: four rungs (Shadow → Extra Hands → Co-Pilot → Conductor) each with can-do / can't-do lists; tap to self-mark the current rung via `staffLevelProvider`. Growth reflection, not an authority gate.
+- *Staff ladder provider + model* — `lib/features/staff/staff_ladder.dart`. `StaffRole` (id / name / emoji / duration / desc / canDo / cantDo); `staffRolesProvider` (FutureProvider loading `assets/curriculum/staff_roles.json`); `staffLevelProvider` (AsyncNotifierProvider<StaffLevelNotifier, String> — local SharedPreferences, default `'shadow'`).
+- *Verb jobs screen* — `lib/features/action_words/verb_jobs_screen.dart`. `/verb-jobs`: each of the 12 verbs as a kid JOB for the day (job title + helper script) + 3-level challenge-idea mission + 3-level staff skill. Pure reference content from `verbRolesProvider`. NOTE: the verb-missions here are reference CHALLENGE IDEAS, deliberately distinct from the evidence-backed, catalog-managed Missions feature (`lib/features/missions/`) — they are complementary, not a fork. The Missions feature is the director-configured "real jobs" catalog; these are lightweight challenge prompts keyed to each verb.
+- *Verb roles provider + model* — `lib/features/action_words/verb_roles.dart`. `VerbJob` / `StaffSkill` / `VerbMission` / `VerbRole`; `verbRolesProvider` (FutureProvider loading `assets/curriculum/verb_roles.json`); `verbRoleProvider` (family Provider by verb id).
+**Depends on**: Action Words (shares `verb_roles.dart` + `verbs.dart`; `VerbJobsScreen` lives in `lib/features/action_words/`).
+**Consumed by**: Nothing — these are reference leaf surfaces.
+**Last verified**: 2026-06-07
+
+---
+
 ## Story
 **Path**: `lib/features/story/`
 **Purpose**: TODO — please describe.
@@ -1008,6 +1033,13 @@ surface — preferences + roster + fleet, not primary workflows.
 **Depends on**: `DEEPGRAM_API_KEY` in `.env`, `record` plugin, mic permission.
 **Consumed by**: Omnibox (composer mic — uses the shared `deepgramVoiceProvider` singleton), Entries (observation form body field — form-local `DeepgramVoiceController`), Captures (capture form body field — form-local `DeepgramVoiceController`).
 **Last verified**: 2026-05-23
+
+---
+
+_Run 2026-06-07 (Staff feature cluster)_ — no discovery drift. Updates applied this run:
+- **Staff** — new feature section added. Three routes confirmed in `router.dart`: `/runbook` (RunbookScreen), `/staff` (StaffLadderScreen), `/verb-jobs` (VerbJobsScreen). All three omnibox entries confirmed in `omnibox_catalog.dart`: `page.runbook` → `/runbook`, `page.staff-ladder` → `/staff`, `page.verb-jobs` → `/verb-jobs`. No drawer entries, no nav-destination entries, no settings rows — correct; these are contextual reference surfaces, not top-level destinations. `VerbJobsScreen` lives in `lib/features/action_words/` (not `lib/features/staff/`) because it shares `verb_roles.dart` + `verbs.dart` from that folder; noted in Surfaces + Depends on. Cross-link note: verb-missions in `verb_roles.dart` are reference challenge ideas — explicitly distinct from the catalog-managed Missions feature; distinction documented in both the Staff and Missions sections.
+- **SCHEMA.md** — no changes. All three surfaces read bundled JSON assets; no synced tables, no migrations.
+- Cross-link reconcile: Staff claims no synced tables; no (feature → table) or (table → feature) additions needed.
 
 ---
 
