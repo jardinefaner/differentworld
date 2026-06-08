@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/journey_day_sheet.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worksheet_pdf.dart';
+import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -60,6 +62,38 @@ class ThisWeekScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       builder: (_) => _JourneySheet(spaceId: spaceId),
+    );
+  }
+}
+
+/// The block's ten authored days (the 50-day journey), as a tappable list with
+/// today badged. Renders nothing until the journey is active + blocks have
+/// loaded. The block spans the two weeks this curriculum week belongs to.
+class _FortnightSection extends ConsumerWidget {
+  const _FortnightSection({required this.accent});
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final block = ref.watch(currentBlockProvider);
+    final today = ref.watch(currentProgramDayProvider);
+    if (block == null || block.days.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(text: 'The fortnight, day by day', accent: accent),
+        for (var i = 0; i < block.days.length; i++)
+          JourneyDayRow(
+            day: block.days[i].day,
+            journeyDay: block.days[i],
+            block: block,
+            wallQuestion: i < block.wallQuestions.length
+                ? block.wallQuestions[i]
+                : null,
+            isToday: block.days[i].day == today,
+          ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }
@@ -170,6 +204,11 @@ class _LiveWorld extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 20),
+        // The fortnight day by day — the 50-day journey's ten authored days
+        // for the block this week belongs to. Tap any day to read its full
+        // focus + wall question + room; today is badged. Lets staff prep
+        // ahead, not just see today (renders nothing until blocks load).
+        _FortnightSection(accent: accent),
         // Verbs
         _Label(text: 'This week’s verbs', accent: accent),
         Wrap(
