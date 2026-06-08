@@ -70,6 +70,113 @@ const kForgeConstraints = <String>[
 /// The BOXES — minutes. Short enough to stay play, varied enough to matter.
 const kForgeTimes = <int>[1, 2, 5, 10];
 
+/// The room's actual things, by curriculum world (docs/VISION.md "context-
+/// bound"). When a world is live, the forge can draw its nouns from THIS
+/// week's theme instead of the general set — so Water week forges with water.
+/// Keyed by the curriculum world id.
+const kWorldNouns = <String, List<String>>{
+  'me': [
+    'your own name',
+    'your shadow',
+    'your heartbeat',
+    'a mirror',
+    'your voice',
+    'a self-portrait',
+    'your handprint',
+    'your fingerprint',
+  ],
+  'stories': [
+    'a story',
+    'a character',
+    'a beginning',
+    'a surprise ending',
+    'a hero',
+    'a once-upon-a-time',
+    'a plot twist',
+    'a secret',
+  ],
+  'nature': [
+    'a leaf',
+    'a rock',
+    'a seed',
+    'an ant',
+    'a stick',
+    'a shadow',
+    'a feather',
+    'a handful of dirt',
+  ],
+  'water': [
+    'a cup of water',
+    'a single drop',
+    'a wave',
+    'a paper boat',
+    'an ice cube',
+    'a puddle',
+    'a river of string',
+    'a sponge',
+  ],
+  'music': [
+    'a rhythm',
+    'a clap',
+    'a hum',
+    'a beat',
+    'a silence',
+    'a drum',
+    'a song nobody has heard',
+    'an echo',
+  ],
+  'space': [
+    'a star',
+    'the moon',
+    'a beam of light',
+    'a planet of clay',
+    'a rocket of blocks',
+    'a constellation',
+    'the dark',
+    'a shadow',
+  ],
+  'dreams': [
+    'a dream',
+    'a door',
+    'a cloud',
+    'a wish',
+    'an impossible thing',
+    'the flying you',
+    'a color',
+    'a what-if',
+  ],
+  'time': [
+    'a clock',
+    'a slow breath',
+    'a fast run',
+    'a pause',
+    'a countdown',
+    'a memory',
+    'a single moment',
+    'a tomorrow',
+  ],
+  'feelings': [
+    'a feeling',
+    'the color of a mood',
+    'a calm breath',
+    'a worry',
+    'a joy',
+    'a storm',
+    'a sunny face',
+    'a heavy thing',
+  ],
+  'us': [
+    'a friend',
+    "a friend's idea",
+    'a circle',
+    'a handshake',
+    'a shared story',
+    'a web of string',
+    'a team',
+    'a promise',
+  ],
+};
+
 /// One forged activity: the four parts + a composed one-line instruction and
 /// the verb that anchors it.
 @immutable
@@ -104,15 +211,16 @@ class ForgedActivity {
 /// fastest (so consecutive rolls always feel different), then the constraint,
 /// then the time. The verb is independent — pass [verbId] to LOCK it to what
 /// you're teaching; leave it null to let the seed pick one too.
-ForgedActivity forgeActivity(int seed, {String? verbId}) {
+ForgedActivity forgeActivity(int seed, {String? verbId, List<String>? nouns}) {
   final s = seed.abs();
-  final nounLen = kForgeNouns.length;
+  final nounList = (nouns == null || nouns.isEmpty) ? kForgeNouns : nouns;
+  final nounLen = nounList.length;
   final consLen = kForgeConstraints.length;
   final timeLen = kForgeTimes.length;
 
   final verb =
       (verbId != null ? verbById(verbId) : null) ?? kVerbs[s % kVerbs.length];
-  final noun = kForgeNouns[s % nounLen];
+  final noun = nounList[s % nounLen];
   final constraint = kForgeConstraints[(s ~/ nounLen) % consLen];
   final minutes = kForgeTimes[(s ~/ (nounLen * consLen)) % timeLen];
 

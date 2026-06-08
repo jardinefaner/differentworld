@@ -1,28 +1,33 @@
 import 'dart:async';
 
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/activity_forge/activity_forge.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// `/forge` — **make an activity.** The generative formula made tappable:
-/// verb × noun × constraint × time. Lock a verb to what you're teaching (or
-/// leave it on Any), then roll. The point you can feel: it never runs out.
-class ActivityForgeScreen extends StatefulWidget {
+/// verb × noun × constraint × time. Lock a verb to what you're teaching, draw
+/// the THINGS from this week's live world (or anything), then roll. The point
+/// you can feel: it never runs out.
+class ActivityForgeScreen extends ConsumerStatefulWidget {
   const ActivityForgeScreen({super.key});
 
   @override
-  State<ActivityForgeScreen> createState() => _ActivityForgeScreenState();
+  ConsumerState<ActivityForgeScreen> createState() =>
+      _ActivityForgeScreenState();
 }
 
-class _ActivityForgeScreenState extends State<ActivityForgeScreen> {
+class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
   // Start somewhere varied so the first roll differs per open; then walk the
   // odometer one step at a time.
   int _seed = DateTime.now().microsecondsSinceEpoch & 0x7fffffff;
   String? _verbId;
+  bool _useWorldNouns = true;
 
   void _roll() {
     unawaited(HapticFeedback.selectionClick());
@@ -32,7 +37,14 @@ class _ActivityForgeScreenState extends State<ActivityForgeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final forged = forgeActivity(_seed, verbId: _verbId);
+    final world = ref.watch(currentWorldProvider);
+    final worldNouns = world == null ? null : kWorldNouns[world.id];
+    final useWorld = _useWorldNouns && worldNouns != null;
+    final forged = forgeActivity(
+      _seed,
+      verbId: _verbId,
+      nouns: useWorld ? worldNouns : null,
+    );
     return EdgeScaffold(
       body: ResponsivePage(
         children: [
@@ -40,6 +52,26 @@ class _ActivityForgeScreenState extends State<ActivityForgeScreen> {
             title: 'Make an activity',
             subtitle: 'Verb × noun × constraint × time — a formula, not a list',
           ),
+          // The THINGS: this week's live world, or anything.
+          if (worldNouns != null) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: Text('${world!.emoji} ${world.name} things'),
+                  selected: _useWorldNouns,
+                  onSelected: (_) => setState(() => _useWorldNouns = true),
+                ),
+                ChoiceChip(
+                  label: const Text('🌍 Anything'),
+                  selected: !_useWorldNouns,
+                  onSelected: (_) => setState(() => _useWorldNouns = false),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           // Lock the verb (to what you're teaching) or leave it on Any.
           Wrap(
             spacing: 8,

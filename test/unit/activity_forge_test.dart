@@ -41,6 +41,33 @@ void main() {
     }
   });
 
+  test('world nouns make the forge context-bound', () {
+    final water = kWorldNouns['water']!;
+    for (var s = 0; s < 50; s++) {
+      final f = forgeActivity(s, verbId: 'flow', nouns: water);
+      expect(water, contains(f.noun), reason: 'noun must come from the world');
+    }
+    // Every curriculum world has a non-trivial noun set.
+    const worldIds = [
+      'me',
+      'stories',
+      'nature',
+      'water',
+      'music',
+      'space',
+      'dreams',
+      'time',
+      'feelings',
+      'us',
+    ];
+    for (final id in worldIds) {
+      expect(kWorldNouns[id], isNotNull, reason: '$id has no nouns');
+      expect(kWorldNouns[id]!.length, greaterThanOrEqualTo(6));
+    }
+    // An empty/absent list falls back to the general nouns (never crashes).
+    expect(kForgeNouns, contains(forgeActivity(0, nouns: const []).noun));
+  });
+
   test('the space is large — a formula, not a finite library', () {
     // 12 verbs × 26 nouns × 18 constraints × 4 times.
     expect(ForgedActivity.space, greaterThan(20000));
