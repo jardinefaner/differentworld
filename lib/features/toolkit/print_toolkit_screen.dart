@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
 import 'package:differentworld/features/toolkit/toolkit_pdf.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -78,6 +79,18 @@ class PrintToolkitScreen extends ConsumerWidget {
             subtitle: 'The repair script + the mood-weather scale',
             onTap: () => unawaited(printReferenceCard()),
           ),
+          FeatureCard(
+            leading: const Icon(Icons.public_outlined),
+            title: 'World reveal cards',
+            subtitle: 'One per world — hold up, flip, reveal',
+            onTap: () => _withWorlds(context, ref, printWorldRevealCards),
+          ),
+          FeatureCard(
+            leading: const Icon(Icons.article_outlined),
+            title: 'World summary posters',
+            subtitle: 'Name · question · verbs · rules, one per world',
+            onTap: () => _withWorlds(context, ref, printWorldSummaryCards),
+          ),
           const SizedBox(height: 8),
           FeatureCard(
             leading: const Icon(Icons.menu_book_outlined),
@@ -88,5 +101,23 @@ class PrintToolkitScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Generate a curriculum-driven PDF, guarding the not-yet-loaded case with a
+  /// snackbar so the tap is never a silent no-op.
+  void _withWorlds(
+    BuildContext context,
+    WidgetRef ref,
+    Future<bool> Function(List<CurriculumWorld>) gen,
+  ) {
+    final worlds =
+        ref.read(curriculumWorldsProvider).value ?? const <CurriculumWorld>[];
+    if (worlds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Worlds still loading — try again.')),
+      );
+      return;
+    }
+    unawaited(gen(worlds));
   }
 }
