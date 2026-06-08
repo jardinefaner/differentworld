@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/action_words/wall.dart';
+import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -60,6 +61,7 @@ class WallScreen extends ConsumerWidget {
                 title: 'The Wall · ${world.name}',
                 subtitle: 'The room’s notes for this world — no names',
               ),
+              const _QuestionOfTheDayBanner(),
               if (notes.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 32),
@@ -105,6 +107,71 @@ class WallScreen extends ConsumerWidget {
     );
     if (!ok || !context.mounted) return;
     await ref.read(entryActionsProvider).delete(n.id);
+  }
+}
+
+/// The day's authored question from the 50-day journey, shown as the framing
+/// prompt the room's notes answer today. Renders nothing when the journey
+/// isn't active. Day-aware (one of the block's ten questions per day).
+class _QuestionOfTheDayBanner extends ConsumerWidget {
+  const _QuestionOfTheDayBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final question = ref.watch(todaysWallQuestionProvider);
+    final day = ref.watch(currentProgramDayProvider);
+    final block = ref.watch(currentBlockProvider);
+    if (question == null || day == null || block == null) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final accent = block.color;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withValues(alpha: 0.35)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.help_outline, size: 16, color: accent),
+                const SizedBox(width: 6),
+                Text(
+                  'TODAY’S QUESTION · DAY $day',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: accent,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '“$question”',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                height: 1.25,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Write it big on the wall. The notes below are the room’s answers.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/spell_words.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
+import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/toolkit/toolkit_pdf.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -98,6 +99,12 @@ class PrintToolkitScreen extends ConsumerWidget {
             subtitle: 'Name · question · verbs · rules, one per world',
             onTap: () => _withWorlds(context, ref, printWorldSummaryCards),
           ),
+          FeatureCard(
+            leading: const Icon(Icons.help_outline),
+            title: 'Wall question deck',
+            subtitle: '50 day-by-day questions — one poster per day',
+            onTap: () => _withBlocks(context, ref),
+          ),
           const SizedBox(height: 8),
           FeatureCard(
             leading: const Icon(Icons.menu_book_outlined),
@@ -137,5 +144,16 @@ class PrintToolkitScreen extends ConsumerWidget {
       return;
     }
     unawaited(printSpellWordCards(words));
+  }
+
+  void _withBlocks(BuildContext context, WidgetRef ref) {
+    final blocks = ref.read(worldBlocksProvider).value ?? const <WorldBlock>[];
+    if (blocks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Journey still loading — try again.')),
+      );
+      return;
+    }
+    unawaited(printWallQuestionDeck(blocks));
   }
 }

@@ -2,6 +2,7 @@ import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/spell_words.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 // `spells.dart` also exports a `SpellWord` (a timer-spell's foreign word) —
 // hide it so the beautiful-word `SpellWord` from `spell_words.dart` wins here.
@@ -81,6 +82,64 @@ Future<bool> printVerbCards() {
     doc.addPage(_bigCard(v.label.toUpperCase(), v.lens));
   }
   return Printing.layoutPdf(onLayout: (_) => doc.save(), name: 'Verb cards');
+}
+
+/// One full-page wall-question poster: the world + day on top, the question
+/// huge and centered (it wraps — questions are sentences, not single words),
+/// the room's name at the foot. Print one per program day, laminate, and put
+/// the day's question on the Wall.
+pw.Page _wallQuestionPage(WorldBlock block, int day, String question) =>
+    pw.Page(
+      theme: pw.ThemeData.base(),
+      pageFormat: PdfPageFormat.letter,
+      margin: const pw.EdgeInsets.all(44),
+      build: (ctx) => pw.Column(
+        children: [
+          pw.Text(
+            '${_ascii(block.name).toUpperCase()}  -  DAY $day',
+            style: pw.TextStyle(
+              fontSize: 20,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey600,
+              letterSpacing: 1.5,
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Center(
+              child: pw.Text(
+                _ascii(question),
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(fontSize: 56, fontWeight: pw.FontWeight.bold),
+              ),
+            ),
+          ),
+          pw.Text(
+            'THE WALL  -  differentworld',
+            style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey500),
+          ),
+        ],
+      ),
+    );
+
+/// The 50-question wall deck — every program day's question as a full-page
+/// poster, in journey order. The authored prompts of the 50-day experience,
+/// ready to laminate and put up one per day (ASSETS Bundle 3). Offline-safe
+/// (built-in Helvetica).
+Future<bool> printWallQuestionDeck(List<WorldBlock> blocks) {
+  final doc = pw.Document(creator: 'Different World');
+  for (final block in blocks) {
+    for (var i = 0; i < block.wallQuestions.length; i++) {
+      // Pair each question with its day number (the block's ten days carry the
+      // 1..50 program-day numbers); fall back to positional if days are short.
+      final day =
+          i < block.days.length ? block.days[i].day : i + 1;
+      doc.addPage(_wallQuestionPage(block, day, block.wallQuestions[i]));
+    }
+  }
+  return Printing.layoutPdf(
+    onLayout: (_) => doc.save(),
+    name: 'Wall question deck',
+  );
 }
 
 /// The timer-spell cards (FREEZE, MOVE, …) — the classroom-management casts.
