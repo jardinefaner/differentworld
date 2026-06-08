@@ -131,7 +131,7 @@ class _RightNowCard extends ConsumerWidget {
         line = prog.allIn
             ? 'All ${prog.total} checked in — nice work.'
             : '${prog.inBuilding} of ${prog.total} in · '
-                '${prog.stillOut} still to check in';
+                  '${prog.stillOut} still to check in';
       }
     }
 
@@ -344,9 +344,9 @@ class _ActionWordsCard extends ConsumerWidget {
                       Text(
                         n == 1
                             ? '1 child picked today — reveal their world at '
-                                'closing'
+                                  'closing'
                             : '$n children picked today — reveal their worlds '
-                                'at closing',
+                                  'at closing',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onTertiaryContainer
                               .withValues(alpha: 0.85),
@@ -401,8 +401,9 @@ class _ThisWeekWorldCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       'Start the 10-week journey',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const Icon(Icons.chevron_right),
@@ -437,8 +438,9 @@ class _ThisWeekWorldCard extends ConsumerWidget {
                     children: [
                       Text(
                         'Week ${world.week} · ${world.name}',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -493,8 +495,9 @@ class _TodaySkillCard extends StatelessWidget {
                     children: [
                       Text(
                         'Today’s skill · ${skill.name}',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -529,13 +532,17 @@ class _TodaySkillCard extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-                  child: Text('Skills to teach',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(
+                    'Skills to teach',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
                 for (final s in kSkills)
                   ListTile(
-                    leading:
-                        Text(s.emoji, style: const TextStyle(fontSize: 26)),
+                    leading: Text(
+                      s.emoji,
+                      style: const TextStyle(fontSize: 26),
+                    ),
                     title: Text(s.name),
                     subtitle: Text(s.how),
                   ),
@@ -557,8 +564,15 @@ class _TodayThinkingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final games = ref.watch(thinkingGamesProvider).value ?? const [];
-    final game = thinkingGameForDay(games, DateTime.now());
+    // This week's WORLD game leads; off-curriculum falls back to the rotation.
+    final weekGames = ref.watch(thisWeekThinkingProvider);
+    final fromWeek = weekGames.isNotEmpty;
+    final game = thinkingGameForDay(
+      fromWeek ? weekGames : games,
+      DateTime.now(),
+    );
     if (game == null) return const SizedBox.shrink();
+    final label = fromWeek ? 'This week’s thinking' : 'Today’s thinking';
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Card(
@@ -579,9 +593,10 @@ class _TodayThinkingCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Today’s thinking · ${game.concept}',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                        '$label · ${game.concept}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -643,120 +658,120 @@ class TodayBody extends ConsumerWidget {
     return ResponsivePage(
       bottomPadding: 24,
       children: [
-            ContentHeader(
-              title: space?.name ?? 'Today',
-              subtitle: _subtitleLine(
-                member: member,
-                totalFlags: totalFlags,
-                roomsWithFlags: roomsWithFlags,
-                labels: labels,
-              ),
-              subtitleColor: totalFlags > 0
-                  ? Theme.of(context).colorScheme.error
-                  : null,
-            ),
-            // "A session is live — tap to join" (renders nothing when none).
-            const LiveSessionBanner(),
-            // The live curriculum world (renders nothing until the
-            // 10-week journey is started; shows a setup prompt to the
-            // director). The daily anchor: "this week, the room is in X."
-            const _ThisWeekWorldCard(),
-            // "Today's skill" — one teachable thing a day, with a how
-            // (closes the brief's skill-a-day; staff-only).
-            if (viewer.isDailyLogger) const _TodaySkillCard(),
-            // "Today's thinking" — a play→name→bridge→question game.
-            if (viewer.isDailyLogger) const _TodayThinkingCard(),
-            // Specialist / substitute identity strip — answers the
-            // Coach Sam audit finding ("no UI surface tells Sam what
-            // they are"). Renders nothing for director / lead_teacher
-            // / teacher / guardian because context already makes the
-            // role obvious. Tap → Roles page so Sam can see what their
-            // role can do.
-            const _IdentityStrip(),
-            // Time-aware lead: orients Today to the day's phase
-            // (arrival → check-in, program → schedule, pickup → roster).
-            // Renders nothing after hours. docs/WORKFLOWS.md gap #1.
-            if (viewer.isDailyLogger) const _RightNowCard(),
-            // Morning Checklist is only useful to staff who can
-            // actually mark daily routines — hide for read-only viewers.
-            // Suppressed during arrival, where the Right-now card already
-            // leads with check-in (so the two don't stack as primary
-            // twins).
-            if (viewer.isDailyLogger && phase != DayPhase.arrival)
-              const _ChecklistCallToAction(),
-            if (viewer.isDailyLogger && phase != DayPhase.arrival)
-              const SizedBox(height: 16),
-            // "You're leading N blocks today" — renders nothing if
-            // the signed-in member isn't a lead on any block today.
-            // Naturally hides for non-staff and members with no
-            // assignments.
-            const LeadingTodayCard(),
-            const SizedBox(height: 16),
-            // "Today's words" — only when Action Words is in use today.
-            if (viewer.isDailyLogger) const _ActionWordsCard(),
-            // Unread family messages — staff-side proactive surface
-            // (Wave 60). Renders only when at least one family has
-            // sent a message that nobody on staff has read yet.
-            // Each row taps through to that (subject, guardian)
-            // thread. Hidden for guardians (their messages flow is
-            // through the family lens).
-            const _UnreadMessagesCard(),
-            // Director's morning pulse — aggregates absent kids,
-            // cohorts with substitute coverage today, and
-            // expiring-soon certs into a single card. Renders
-            // nothing when there's nothing to flag (the "all clear"
-            // case doesn't need to consume scroll). Only directors
-            // see this; non-directors hit the early-return.
-            if (viewer.isDirector) _DirectorPulseCard(groups: groups),
-            // Upward loop made visible: the system surfaces one
-            // question here when the data demands it; silent when
-            // it doesn't. UX_DECISIONS §6 / framework upward loop.
-            const TopInsightCard(),
-            const SizedBox(height: 16),
-            // Capability-aware one-tap launchpad. Hides itself when the
-            // viewer has nothing to launch.
-            const QuickActions(),
-            const SizedBox(height: 24),
-            // Wave 114: at desktop widths the group cards flow as a
-            // 2-column wrap. At phone / tablet they stack vertically
-            // (the natural shape for a scroll-with-omnibox layout).
-            // LayoutBuilder reads the current viewport once; cards
-            // self-size in their columns.
-            LayoutBuilder(
-              builder: (ctx, c) {
-                final isWide = c.maxWidth >= 1100;
-                if (!isWide) {
-                  return Column(
-                    children: [
-                      for (final g in groups)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: RepaintBoundary(
-                            child: _GroupTodayCard(group: g),
-                          ),
-                        ),
-                    ],
-                  );
-                }
-                // Desktop: 2-column wrap. Each card claims ~half the
-                // available width minus the column gap.
-                const gap = 12.0;
-                final cardWidth = (c.maxWidth - gap) / 2;
-                return Wrap(
-                  spacing: gap,
-                  runSpacing: gap,
-                  children: [
-                    for (final g in groups)
-                      SizedBox(
-                        width: cardWidth,
-                        child: RepaintBoundary(
-                          child: _GroupTodayCard(group: g),
-                        ),
+        ContentHeader(
+          title: space?.name ?? 'Today',
+          subtitle: _subtitleLine(
+            member: member,
+            totalFlags: totalFlags,
+            roomsWithFlags: roomsWithFlags,
+            labels: labels,
+          ),
+          subtitleColor: totalFlags > 0
+              ? Theme.of(context).colorScheme.error
+              : null,
+        ),
+        // "A session is live — tap to join" (renders nothing when none).
+        const LiveSessionBanner(),
+        // The live curriculum world (renders nothing until the
+        // 10-week journey is started; shows a setup prompt to the
+        // director). The daily anchor: "this week, the room is in X."
+        const _ThisWeekWorldCard(),
+        // "Today's skill" — one teachable thing a day, with a how
+        // (closes the brief's skill-a-day; staff-only).
+        if (viewer.isDailyLogger) const _TodaySkillCard(),
+        // "Today's thinking" — a play→name→bridge→question game.
+        if (viewer.isDailyLogger) const _TodayThinkingCard(),
+        // Specialist / substitute identity strip — answers the
+        // Coach Sam audit finding ("no UI surface tells Sam what
+        // they are"). Renders nothing for director / lead_teacher
+        // / teacher / guardian because context already makes the
+        // role obvious. Tap → Roles page so Sam can see what their
+        // role can do.
+        const _IdentityStrip(),
+        // Time-aware lead: orients Today to the day's phase
+        // (arrival → check-in, program → schedule, pickup → roster).
+        // Renders nothing after hours. docs/WORKFLOWS.md gap #1.
+        if (viewer.isDailyLogger) const _RightNowCard(),
+        // Morning Checklist is only useful to staff who can
+        // actually mark daily routines — hide for read-only viewers.
+        // Suppressed during arrival, where the Right-now card already
+        // leads with check-in (so the two don't stack as primary
+        // twins).
+        if (viewer.isDailyLogger && phase != DayPhase.arrival)
+          const _ChecklistCallToAction(),
+        if (viewer.isDailyLogger && phase != DayPhase.arrival)
+          const SizedBox(height: 16),
+        // "You're leading N blocks today" — renders nothing if
+        // the signed-in member isn't a lead on any block today.
+        // Naturally hides for non-staff and members with no
+        // assignments.
+        const LeadingTodayCard(),
+        const SizedBox(height: 16),
+        // "Today's words" — only when Action Words is in use today.
+        if (viewer.isDailyLogger) const _ActionWordsCard(),
+        // Unread family messages — staff-side proactive surface
+        // (Wave 60). Renders only when at least one family has
+        // sent a message that nobody on staff has read yet.
+        // Each row taps through to that (subject, guardian)
+        // thread. Hidden for guardians (their messages flow is
+        // through the family lens).
+        const _UnreadMessagesCard(),
+        // Director's morning pulse — aggregates absent kids,
+        // cohorts with substitute coverage today, and
+        // expiring-soon certs into a single card. Renders
+        // nothing when there's nothing to flag (the "all clear"
+        // case doesn't need to consume scroll). Only directors
+        // see this; non-directors hit the early-return.
+        if (viewer.isDirector) _DirectorPulseCard(groups: groups),
+        // Upward loop made visible: the system surfaces one
+        // question here when the data demands it; silent when
+        // it doesn't. UX_DECISIONS §6 / framework upward loop.
+        const TopInsightCard(),
+        const SizedBox(height: 16),
+        // Capability-aware one-tap launchpad. Hides itself when the
+        // viewer has nothing to launch.
+        const QuickActions(),
+        const SizedBox(height: 24),
+        // Wave 114: at desktop widths the group cards flow as a
+        // 2-column wrap. At phone / tablet they stack vertically
+        // (the natural shape for a scroll-with-omnibox layout).
+        // LayoutBuilder reads the current viewport once; cards
+        // self-size in their columns.
+        LayoutBuilder(
+          builder: (ctx, c) {
+            final isWide = c.maxWidth >= 1100;
+            if (!isWide) {
+              return Column(
+                children: [
+                  for (final g in groups)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: RepaintBoundary(
+                        child: _GroupTodayCard(group: g),
                       ),
-                  ],
-                );
-              },
-            ),
+                    ),
+                ],
+              );
+            }
+            // Desktop: 2-column wrap. Each card claims ~half the
+            // available width minus the column gap.
+            const gap = 12.0;
+            final cardWidth = (c.maxWidth - gap) / 2;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [
+                for (final g in groups)
+                  SizedBox(
+                    width: cardWidth,
+                    child: RepaintBoundary(
+                      child: _GroupTodayCard(group: g),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }
@@ -1098,11 +1113,12 @@ class _DirectorPulseCard extends ConsumerWidget {
     final viewer = ref.watch(viewerProvider);
     final needFollowUp = viewer.featureIncidentReports
         ? (ref.watch(incidentsInSpaceProvider).value ?? const <Incident>[])
-            .where((i) => !i.parentNotified)
-            .length
+              .where((i) => !i.parentNotified)
+              .length
         : 0;
 
-    final nothing = absent == 0 &&
+    final nothing =
+        absent == 0 &&
         substituteGroups == 0 &&
         expiring == 0 &&
         needFollowUp == 0;
@@ -1312,8 +1328,9 @@ class _UnreadMessagesCard extends ConsumerWidget {
           ? Text(
               '+${threads.length - visible.length}',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer
-                    .withValues(alpha: 0.7),
+                color: theme.colorScheme.onPrimaryContainer.withValues(
+                  alpha: 0.7,
+                ),
               ),
             )
           : null,

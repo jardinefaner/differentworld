@@ -3,7 +3,188 @@
   "subtitle": "Play it. Name it. Use it everywhere. Then ask the question with no answer.",
   "games": [
     {
+      "id": "unique",
+      "week": 1,
+      "emoji": "🔍",
+      "concept": "UNIQUE",
+      "meaning": "One of a kind — no two of you have ever existed.",
+      "play": "Press your thumb in ink and stamp it on paper. Look at it under a magnifying glass. Now look at your neighbor's. They're completely different.",
+      "name": "UNIQUE. One of a kind. No two fingerprints in the history of the human species have ever been the same — not once, not ever. Seven billion people and nobody has your pattern.",
+      "bridge": [
+        "Where else? Your voice — say your name; nobody says it exactly like you. Your laugh — close your eyes and you can tell who's laughing without looking.",
+        "Deeper: even your handwriting. When two kids write the same letter A, they still look different. Your face, your walk, your smell, your ideas — every one a fingerprint.",
+        "Deepest: everything about you is unique, all at once, no exceptions. There has never been another you, and there never will be again."
+      ],
+      "question": "If everything about you is unique, is it possible to be normal?"
+    },
+    {
+      "id": "container",
+      "week": 1,
+      "emoji": "🧍",
+      "concept": "CONTAINER",
+      "meaning": "Your body holds everything that is you.",
+      "play": "Lie down on butcher paper, full size, and your partner traces all the way around you. Stand up and look at your outline.",
+      "name": "CONTAINER. Your body is a container. Like a cup holds water, your body holds everything that's you — your thoughts, your feelings, your lunch, your blood, your memories, your name. All of it inside this outline.",
+      "bridge": [
+        "Where else? A house holds a family. A school holds kids. A neighborhood holds houses.",
+        "Deeper: a city holds neighborhoods, a country holds cities, the earth holds countries, the universe holds earths. You're a container inside a container inside a container.",
+        "Deepest: keep going out — what holds the universe? Nobody knows. You just walked to the edge of what anyone knows."
+      ],
+      "question": "What's the biggest container? Is there something that holds the universe?"
+    },
+    {
+      "id": "connection",
+      "week": 2,
+      "emoji": "🎒",
+      "concept": "CONNECTION",
+      "meaning": "Creativity is connecting things nobody connected before.",
+      "play": "Pull three random objects from a bag — a spoon, a sock, a toy car. Make one story that uses all three. Every group gets different objects and makes a different story.",
+      "name": "CONNECTION. A story is what happens when you connect things that don't seem related. The spoon and the sock have nothing in common — until you INVENT a connection. That's creativity: connecting things nobody connected before.",
+      "bridge": [
+        "Where else? Every invention is a story bag. Someone connected bread and cheese — grilled cheese. Someone connected a wheel and a chair — wheelchair.",
+        "Deeper: someone connected a phone and a camera — and now it's in your mom's pocket. Two separate things, one new thing, because somebody connected them.",
+        "Deepest: the next invention doesn't exist yet because nobody's connected the two things yet. Maybe you will."
+      ],
+      "question": "What two things in this room have never been connected before? Connect them — what did you just invent?"
+    },
+    {
+      "id": "prediction",
+      "week": 2,
+      "emoji": "🔮",
+      "concept": "PREDICTION",
+      "meaning": "Your brain is always guessing what happens next.",
+      "play": "Read a story and stop in the middle: 'What happens next?' Everyone guesses. Then finish reading — were they right?",
+      "name": "PREDICTION. Your brain is a guessing machine. It's ALWAYS predicting what happens next — when you walk it predicts where the floor is, when someone starts a sentence it guesses the end, when you hear a story it writes the next page before the author does.",
+      "bridge": [
+        "Where else? You predict all day without noticing — what's for snack, whether it'll rain, whether your friend will play with you.",
+        "Deeper: some predictions are right, some are wrong. A wrong prediction isn't a failure — it's a SURPRISE. A surprise is just a prediction that didn't come true.",
+        "Deepest: and surprises are where learning lives. If you already knew, there'd be nothing to learn. Being wrong is how you find out something new."
+      ],
+      "question": "What's better — being right, or being surprised?"
+    },
+    {
+      "id": "system",
+      "week": 3,
+      "emoji": "🐜",
+      "concept": "SYSTEM",
+      "meaning": "Parts that look separate but are actually connected.",
+      "play": "Go outside and find two living things — an ant and a tree. Watch both for two minutes. How are they different? How are they the SAME?",
+      "name": "SYSTEM. The ant and the tree seem completely different. But the ant eats the tree's fruit, and the tree needs the ant to spread its seeds. They need each other. That's a SYSTEM — parts that look separate but are actually connected.",
+      "bridge": [
+        "Where else? Your body is a system — lungs breathe air, blood carries it, the heart pumps the blood, the brain uses it to think. Remove one part and the whole thing stops.",
+        "Deeper: a family is a system. A classroom is a system. Remove one kid from this room and the room FEELS different.",
+        "Deepest: you're a part of every system you're in — and the system isn't whole without you."
+      ],
+      "question": "If you removed yourself from this room, what would be missing? Not your body — what would FEEL different?"
+    },
+    {
+      "id": "adaptation",
+      "week": 4,
+      "emoji": "💧",
+      "concept": "ADAPTATION",
+      "meaning": "Becoming what the moment needs without losing what you are.",
+      "play": "Pour the same water into five containers — a cup, a bowl, a flat plate, a bottle, a glove. Same water, five completely different shapes.",
+      "name": "ADAPTATION. The water didn't fight the container or insist it was a cup shape — it became the bowl. Same water, new shape. That's adaptation: becoming what the situation needs without losing what you are.",
+      "bridge": [
+        "Where else? You adapt all day. You're different with your mom than with your friends, different at school than at home, different tired than energized.",
+        "Deeper: is that being fake? No — it's being water. The you who whispers in the library and the you who shouts on the playground are the SAME you. You adapted.",
+        "Deepest: same water, a hundred containers, always still water. You can change shape everywhere you go and never stop being you."
+      ],
+      "question": "Are you the same person everywhere — or a different person in every container?"
+    },
+    {
+      "id": "rhythm",
+      "week": 5,
+      "emoji": "👏",
+      "concept": "RHYTHM",
+      "meaning": "Sound and silence working together — the pause is part of it.",
+      "play": "Clap a pattern — clap-clap-pause, clap-clap-pause. Everyone joins in. Change it — clap-pause-clap-clap. The room adjusts. Change it again.",
+      "name": "RHYTHM. A rhythm is a pattern that repeats — but here's the secret: the PAUSE is part of it. Without the silence between claps it's just noise. The gap matters as much as the sound.",
+      "bridge": [
+        "Where else? Your day has a rhythm — wake, school, eat, play, sleep. Your week has one — weekdays, weekend, weekdays, weekend.",
+        "Deeper: your life has a rhythm — baby, kid, teenager, adult, old. Summer is the pause between two school years, and the pause is where you grow.",
+        "Deepest: the pauses are as important as the stages. Everything with rhythm needs the gap — even you."
+      ],
+      "question": "What happens if you remove all the pauses — no silence, no summer, no sleep, no rest?"
+    },
+    {
+      "id": "scale",
+      "week": 6,
+      "emoji": "🌌",
+      "concept": "SCALE",
+      "meaning": "How big you are depends on what you compare yourself to.",
+      "play": "Outside, stretch your arms as wide as they go — 'everything between your fingers is how big you think you are.' Now look up: 'that's how big space is.' Hold both at once.",
+      "name": "SCALE. How big something is depends on what you compare it to. You're big next to an ant, small next to a building, tiny next to the earth, invisible next to the sun. But the ant thinks you're the whole world.",
+      "bridge": [
+        "Where else? Problems have scale too. 'She took my crayon' feels enormous right now. Next to 'is there life on other planets?' it's tiny.",
+        "Deeper: that doesn't mean the crayon doesn't matter — it means you can hold BOTH. The tiny problem and the infinite question, at the same time.",
+        "Deepest: that's what scale gives you — room for everything at once."
+      ],
+      "question": "Does being small make you unimportant? The earth is a tiny dot — but YOU live on it."
+    },
+    {
+      "id": "imagination",
+      "week": 7,
+      "emoji": "🚪",
+      "concept": "IMAGINATION",
+      "meaning": "Building something real from nothing.",
+      "play": "Lights off, eyes closed. Narrate slowly: 'You walk a path into a forest. There's a door. You open it — what's inside?' Then: 'Open your eyes and draw what was behind the door.'",
+      "name": "IMAGINATION. You just saw something that doesn't exist. No door, no forest — but you SAW it. Your brain built it from nothing. That power — building something real from nothing — is the most powerful tool humans have.",
+      "bridge": [
+        "Where else? The chair you're sitting on was imagined before it was built. Someone closed their eyes, saw a chair that didn't exist yet, then made it real.",
+        "Deeper: everything human-made in this room was imagined first. The room was imagined. This program was imagined — someone saw kids picking verbs, then built it.",
+        "Deepest: the drawings you just made are blueprints for things that don't exist yet. They could be real someday."
+      ],
+      "question": "What's behind YOUR door? Could it be real someday — and what would it take to build it?"
+    },
+    {
+      "id": "attention",
+      "week": 8,
+      "emoji": "🐢",
+      "concept": "ATTENTION",
+      "meaning": "Slowing down enough to let things in.",
+      "play": "Two kids cross the room — one runs, one walks as slowly as possible. The runner finishes in five seconds; the walker takes two minutes. 'Who saw more?'",
+      "name": "ATTENTION. Speed makes you miss things; slowness makes you see them. The walker noticed the crack in the floor, the web in the corner, the light through the window. The runner saw only the finish line. Attention isn't trying hard — it's slowing down enough to let things in.",
+      "bridge": [
+        "Where else? This is why WAIT is a verb. Scroll fast through photos and you see nothing; go slow and you see everything.",
+        "Deeper: eat fast, taste nothing; eat slow, taste everything. Talk fast, say nothing; talk slow, say something real.",
+        "Deepest: speed is the enemy of attention. What you rush past, you never really see."
+      ],
+      "question": "What are you moving too fast to see? What would you notice if you went slower?"
+    },
+    {
+      "id": "blend",
+      "week": 9,
+      "emoji": "🎨",
+      "concept": "BLEND",
+      "meaning": "You're never just one feeling — you're always a mix.",
+      "play": "Fill three cups with water and add food coloring — red, blue, yellow. Pour red into blue: purple. Yellow into blue: green. You can't un-mix them.",
+      "name": "BLEND. Feelings are like colors. You're never pure red or pure blue — you're always a BLEND. Happy AND nervous at the same time is purple. Excited AND scared is green. The blend is normal; pure is rare.",
+      "bridge": [
+        "Where else? 'How are you feeling?' is a trick question — the answer is never one word. It's 'kind of happy but also tired and a little hungry and thinking about my dog.'",
+        "Deeper: that's not four feelings — it's one blend. YOUR blend, right now. It'll be a different blend in an hour.",
+        "Deepest: you're a cup of mixed colors and the mix changes all day. That's not confusing — that's being alive."
+      ],
+      "question": "Is there a feeling that has no name yet — a blend nobody's named? What would you call it?"
+    },
+    {
+      "id": "community",
+      "week": 10,
+      "emoji": "🕸️",
+      "concept": "COMMUNITY",
+      "meaning": "You're not just in the web — you ARE the web.",
+      "play": "Stand in a circle holding a string. Pass the end across to someone and say one thing you learned from them this summer. Keep going until the string is a web. Now one person lets go — the web sags. Another lets go — it sags more.",
+      "name": "COMMUNITY. The web doesn't work without any single person. You're not just IN the community — you ARE the community. Without you, the web has a hole. The string doesn't know who's important; every hand holds the same weight.",
+      "bridge": [
+        "Where else? This room is a web. Your family is a web. Your neighborhood is a web.",
+        "Deeper: every person you've been kind to is a string you're holding; every person who's been kind to you is a string they're holding. You can't see the web, but it's there.",
+        "Deepest: every verb you practiced this summer — CARRY, HELP, LISTEN, SHINE — was a string connecting you to someone else."
+      ],
+      "question": "When you leave on Friday, the web goes with you — not the string, the feeling. Who will you stay connected to, and how?"
+    },
+    {
       "id": "dominoes",
+      "week": 0,
       "emoji": "➡️",
       "concept": "CAUSE AND EFFECT",
       "meaning": "One thing makes the next thing happen.",
@@ -18,6 +199,7 @@
     },
     {
       "id": "telephone",
+      "week": 0,
       "emoji": "📞",
       "concept": "DRIFT",
       "meaning": "Things change a little every time they travel.",
@@ -32,6 +214,7 @@
     },
     {
       "id": "mirror",
+      "week": 0,
       "emoji": "🪞",
       "concept": "EMPATHY",
       "meaning": "Seeing through someone else so completely your body moves like theirs.",
@@ -46,6 +229,7 @@
     },
     {
       "id": "blindfold",
+      "week": 0,
       "emoji": "🤝",
       "concept": "TRUST",
       "meaning": "I can't do this alone, and I believe you won't let me fall.",
@@ -60,6 +244,7 @@
     },
     {
       "id": "sorting",
+      "week": 0,
       "emoji": "🗂️",
       "concept": "PERSPECTIVE",
       "meaning": "The objects don't change — your way of seeing them does.",
@@ -74,6 +259,7 @@
     },
     {
       "id": "balance",
+      "week": 0,
       "emoji": "⚖️",
       "concept": "BALANCE",
       "meaning": "Not being still — constantly moving in tiny ways to LOOK still.",

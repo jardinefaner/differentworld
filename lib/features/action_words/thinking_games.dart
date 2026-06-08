@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,23 +23,29 @@ class ThinkingGame {
     required this.name,
     required this.bridge,
     required this.question,
+    this.week = 0,
   });
 
   factory ThinkingGame.fromJson(Map<String, dynamic> j) => ThinkingGame(
-        id: (j['id'] as String?) ?? '',
-        emoji: (j['emoji'] as String?) ?? '💡',
-        concept: (j['concept'] as String?) ?? '',
-        meaning: (j['meaning'] as String?) ?? '',
-        play: (j['play'] as String?) ?? '',
-        name: (j['name'] as String?) ?? '',
-        bridge: [
-          for (final b in (j['bridge'] as List? ?? const [])) b.toString(),
-        ],
-        question: (j['question'] as String?) ?? '',
-      );
+    id: (j['id'] as String?) ?? '',
+    emoji: (j['emoji'] as String?) ?? '💡',
+    concept: (j['concept'] as String?) ?? '',
+    meaning: (j['meaning'] as String?) ?? '',
+    play: (j['play'] as String?) ?? '',
+    name: (j['name'] as String?) ?? '',
+    bridge: [
+      for (final b in (j['bridge'] as List? ?? const [])) b.toString(),
+    ],
+    question: (j['question'] as String?) ?? '',
+    week: (j['week'] as num?)?.toInt() ?? 0,
+  );
 
   final String id;
   final String emoji;
+
+  /// The curriculum week this game belongs to (1–10), tying it to that week's
+  /// world — or 0 for an "anytime" game that fits no specific world.
+  final int week;
 
   /// The NAME — the one-word concept ("CAUSE AND EFFECT", "DRIFT"). The spell.
   final String concept;
@@ -61,8 +68,9 @@ class ThinkingGame {
 
 /// The Big Thinking deck, loaded once from the bundled JSON (offline-first).
 final thinkingGamesProvider = FutureProvider<List<ThinkingGame>>((ref) async {
-  final raw =
-      await rootBundle.loadString('assets/curriculum/thinking_games.json');
+  final raw = await rootBundle.loadString(
+    'assets/curriculum/thinking_games.json',
+  );
   final decoded = jsonDecode(raw);
   if (decoded is! Map<String, dynamic>) return const [];
   final games = decoded['games'];
@@ -76,8 +84,29 @@ final thinkingGamesProvider = FutureProvider<List<ThinkingGame>>((ref) async {
 /// A suggested thinking game for [now] — rotates one per day, deterministic.
 ThinkingGame? thinkingGameForDay(List<ThinkingGame> games, DateTime now) {
   if (games.isEmpty) return null;
-  final day = DateTime(now.year, now.month, now.day)
-      .difference(DateTime(2026))
-      .inDays;
+  final day = DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).difference(DateTime(2026)).inDays;
   return games[day.abs() % games.length];
 }
+
+/// The thinking game(s) tied to a curriculum [week] (1–10). Some weeks have
+/// two; an off-curriculum week (null/0) has none.
+List<ThinkingGame> thinkingGamesForWeek(List<ThinkingGame> games, int? week) {
+  if (week == null || week == 0) return const [];
+  return [
+    for (final g in games)
+      if (g.week == week) g,
+  ];
+}
+
+/// This week's thinking game(s) — the ones tied to the live curriculum world.
+/// Empty when the journey isn't set up or no game maps to the current week.
+final thisWeekThinkingProvider = Provider<List<ThinkingGame>>((ref) {
+  final week = ref.watch(currentCurriculumWeekProvider);
+  final games =
+      ref.watch(thinkingGamesProvider).value ?? const <ThinkingGame>[];
+  return thinkingGamesForWeek(games, week);
+});

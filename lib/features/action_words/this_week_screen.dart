@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
@@ -43,13 +44,13 @@ class ThisWeekScreen extends ConsumerWidget {
       body: worldsLoading
           ? const LoadingSlot()
           : world == null
-              ? _NotLive(
-                  isDirector: viewer.isDirector,
-                  onSetup: viewer.spaceId == null
-                      ? null
-                      : () => _manage(context, ref, viewer.spaceId),
-                )
-              : _LiveWorld(world: world),
+          ? _NotLive(
+              isDirector: viewer.isDirector,
+              onSetup: viewer.spaceId == null
+                  ? null
+                  : () => _manage(context, ref, viewer.spaceId),
+            )
+          : _LiveWorld(world: world),
     );
   }
 
@@ -71,6 +72,11 @@ class _LiveWorld extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final accent = world.color;
+    // This world's Big Thinking game(s) — play → name → bridge → question.
+    final thinking = thinkingGamesForWeek(
+      ref.watch(thinkingGamesProvider).value ?? const [],
+      world.week,
+    );
     return ResponsivePage(
       children: [
         const ContentHeader(
@@ -97,15 +103,17 @@ class _LiveWorld extends ConsumerWidget {
               Text(
                 world.name,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 '“${world.question}”',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -206,8 +214,9 @@ class _LiveWorld extends ConsumerWidget {
                       children: [
                         Text(
                           '${v.title}  ·  ${v.minutes} min',
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         Text(
                           '→ ${v.after}',
@@ -228,6 +237,46 @@ class _LiveWorld extends ConsumerWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          const SizedBox(height: 20),
+        ],
+        // Big thinking — this world's play→name→bridge→question game(s).
+        if (thinking.isNotEmpty) ...[
+          _Label(text: 'Big thinking', accent: accent),
+          for (final g in thinking)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                onTap: () => unawaited(context.push('/thinking')),
+                borderRadius: BorderRadius.circular(10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${g.emoji}  ', style: const TextStyle(fontSize: 18)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            g.concept,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            g.meaning,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, size: 18),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 20),
         ],
         // Activities
@@ -298,10 +347,9 @@ class _Label extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: Theme.of(context)
-            .textTheme
-            .labelLarge
-            ?.copyWith(color: accent, letterSpacing: 0.4),
+        style: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(color: accent, letterSpacing: 0.4),
       ),
     );
   }
@@ -318,14 +366,16 @@ class _NotLive extends StatelessWidget {
       return const EmptyState(
         icon: Icons.calendar_today_outlined,
         title: 'The journey hasn’t started',
-        message: 'Once your director sets the start date, this week’s world '
+        message:
+            'Once your director sets the start date, this week’s world '
             'shows up here.',
       );
     }
     return EmptyState(
       icon: Icons.rocket_launch_outlined,
       title: 'Start the 10-week journey',
-      message: 'Set the week your program begins (or jump to the week you’re '
+      message:
+          'Set the week your program begins (or jump to the week you’re '
           'on now). The live world appears here and on Today.',
       action: FilledButton.icon(
         onPressed: onSetup,
@@ -357,8 +407,10 @@ class _JourneySheet extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                child: Text('The 10-week journey',
-                    style: theme.textTheme.titleMedium),
+                child: Text(
+                  'The 10-week journey',
+                  style: theme.textTheme.titleMedium,
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
@@ -374,7 +426,10 @@ class _JourneySheet extends ConsumerWidget {
                   leading: Text(w.emoji, style: const TextStyle(fontSize: 26)),
                   title: Text('Week ${w.week} · ${w.name}'),
                   trailing: w.week == liveWeek
-                      ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
+                      ? Icon(
+                          Icons.check_circle,
+                          color: theme.colorScheme.primary,
+                        )
                       : null,
                   onTap: () async {
                     final nav = Navigator.of(context);
@@ -408,13 +463,13 @@ class _JourneySheet extends ConsumerWidget {
               if (liveWeek != null)
                 ListTile(
                   leading: Icon(Icons.clear, color: theme.colorScheme.error),
-                  title: Text('Clear the journey',
-                      style: TextStyle(color: theme.colorScheme.error)),
+                  title: Text(
+                    'Clear the journey',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
                   onTap: () async {
                     final nav = Navigator.of(context);
-                    await ref
-                        .read(worldScheduleActionsProvider)
-                        .clear(spaceId);
+                    await ref.read(worldScheduleActionsProvider).clear(spaceId);
                     nav.pop();
                   },
                 ),
