@@ -301,6 +301,14 @@ keep the map fresh, and three agents maintain + query them.
   architecture.** When adding a feature, check it's expressible as a
   combination of these eleven; needing a twelfth is a signal, not a
   default. A screen that obeys the eleven laws feels like the system.
+- **[docs/VERTICALS.md](docs/VERTICALS.md)** — the *where else it fits*:
+  the two axes of portability. The ENGINE (Space/Member/Group/Subject/
+  Entry) re-skins to five operational verticals (childcare / construction
+  / healthcare / hospitality / manufacturing — the `verticalLabelsProvider`
+  switch is LIVE; a picker + curriculum-gate are the gaps). The EXPERIENCE
+  (the eleven primitives + bundled content) re-skins to human-development
+  contexts (teams / elders / families / therapy / camps). Childcare is the
+  first content pack, not the ceiling.
 - **[docs/FEATURES.md](docs/FEATURES.md)** — folder-grained list of
   every feature in `lib/features/`. Each entry has a fixed shape:
   purpose, personas served, discovery surfaces (routes / omnibox /
