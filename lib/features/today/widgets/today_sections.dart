@@ -101,12 +101,6 @@ class _ChecklistCallToAction extends ConsumerWidget {
   }
 }
 
-/// Time-aware lead card: orients the whole Today screen to the day's
-/// current phase and points to the surface that matters *right now* —
-/// arrival → check-in, program → schedule, pickup → the roster. The
-/// phase comes from the wall clock via [dayPhaseProvider]; this card
-/// only *leads the eye* to surfaces that already exist — no new data
-/// layer (docs/WORKFLOWS.md gap #1, wave 1). Hidden after hours.
 /// "Ready to run?" — the pre-9:00 setup check. Director-only, and only while
 /// a gating precondition is still unmet; vanishes the moment the day is ready.
 class _ReadyToRunCard extends ConsumerWidget {
@@ -185,6 +179,12 @@ class _ReadyToRunCard extends ConsumerWidget {
   }
 }
 
+/// The time-aware lead card — the first useful move on Today. Orients the
+/// whole screen to the day's current phase via the wall clock
+/// ([dayPhaseProvider]) and points to the surface that matters *right now*:
+/// arrival → check-in, **program → run the day on rails** (when a curriculum
+/// world is live), pickup → the roster. It only *leads the eye* to surfaces
+/// that already exist — no new data layer. Hidden after hours.
 class _RightNowCard extends ConsumerWidget {
   const _RightNowCard();
 
@@ -214,6 +214,26 @@ class _RightNowCard extends ConsumerWidget {
       }
     }
 
+    // Program: when the 10-week journey is live, the sharpest "now" action
+    // isn't "go read the schedule" — it's to run the day on rails. Point
+    // straight at the present surface so the room's sequence plays beat by
+    // beat (the synthesis of /play-today + this card). Falls back to the
+    // generic schedule spec when no world is live.
+    var title = spec.title;
+    var route = spec.route;
+    var icon = spec.icon;
+    // Calmer eyebrow before the program opens — nothing's urgent yet.
+    final eyebrow = phase == DayPhase.prep ? 'COMING UP' : 'RIGHT NOW';
+    if (phase == DayPhase.program) {
+      final world = ref.watch(currentWorldProvider);
+      if (world != null) {
+        title = 'Present the day';
+        line = 'In ${world.name} this week — full-screen, step by step.';
+        route = '/play-today';
+        icon = Icons.slideshow_outlined;
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Card(
@@ -222,7 +242,7 @@ class _RightNowCard extends ConsumerWidget {
         child: InkWell(
           onTap: () {
             unawaited(HapticFeedback.selectionClick());
-            unawaited(context.push(spec.route));
+            unawaited(context.push(route));
           },
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
@@ -235,7 +255,7 @@ class _RightNowCard extends ConsumerWidget {
                     color: spec.accent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(spec.icon, color: spec.onAccent),
+                  child: Icon(icon, color: spec.onAccent),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -243,7 +263,7 @@ class _RightNowCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'RIGHT NOW',
+                        eyebrow,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: spec.onContainer.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w700,
@@ -252,7 +272,7 @@ class _RightNowCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        spec.title,
+                        title,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: spec.onContainer,
                           fontWeight: FontWeight.w600,
@@ -290,7 +310,7 @@ _PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
     case DayPhase.prep:
       return _PhaseSpec(
         title: 'Getting ready',
-        line: 'Program opens soon — peek at today’s schedule.',
+        line: 'Peek at today’s schedule before the rush.',
         route: '/schedule',
         icon: Icons.wb_twilight_outlined,
         container: cs.tertiaryContainer,
@@ -312,7 +332,7 @@ _PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
     case DayPhase.program:
       return _PhaseSpec(
         title: 'Program time',
-        line: 'Blocks are running — here’s what’s now and next.',
+        line: 'Open today’s schedule to see what’s next.',
         route: '/schedule',
         icon: Icons.play_circle_outline,
         container: cs.tertiaryContainer,
@@ -336,7 +356,7 @@ _PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
       // the calm prep spec so the switch stays exhaustive.
       return _PhaseSpec(
         title: 'Getting ready',
-        line: 'Program opens soon — peek at today’s schedule.',
+        line: 'Peek at today’s schedule before the rush.',
         route: '/schedule',
         icon: Icons.wb_twilight_outlined,
         container: cs.tertiaryContainer,
@@ -755,6 +775,12 @@ class TodayBody extends ConsumerWidget {
         const _ReadyToRunCard(),
         // "A session is live — tap to join" (renders nothing when none).
         const LiveSessionBanner(),
+        // Time-aware lead — the FIRST thing on Today is the move that
+        // matters right now: arrival → check-in, program → run the day on
+        // rails, pickup → roster. It leads the screen so the default view
+        // IS the next useful action, not a wall of cards to hunt through
+        // (the "less hunting" principle). Renders nothing after hours.
+        if (viewer.isDailyLogger) const _RightNowCard(),
         // The live curriculum world (renders nothing until the
         // 10-week journey is started; shows a setup prompt to the
         // director). The daily anchor: "this week, the room is in X."
@@ -771,10 +797,6 @@ class TodayBody extends ConsumerWidget {
         // role obvious. Tap → Roles page so Sam can see what their
         // role can do.
         const _IdentityStrip(),
-        // Time-aware lead: orients Today to the day's phase
-        // (arrival → check-in, program → schedule, pickup → roster).
-        // Renders nothing after hours. docs/WORKFLOWS.md gap #1.
-        if (viewer.isDailyLogger) const _RightNowCard(),
         // Morning Checklist is only useful to staff who can
         // actually mark daily routines — hide for read-only viewers.
         // Suppressed during arrival, where the Right-now card already
