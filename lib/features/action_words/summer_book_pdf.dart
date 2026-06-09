@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:differentworld/features/action_words/summer_book.dart';
+import 'package:differentworld/shared/print/pdf_output.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 /// Lays out a child's whole summer as a printable keepsake — the capstone
 /// (docs/VISION.md). Built-in Helvetica so it renders fully OFFLINE; an
@@ -232,8 +232,8 @@ pw.Widget _closing(SummerBook book) {
 Future<Uint8List> renderSummerBookBytes(SummerBook book) =>
     buildSummerBookDoc(book).save();
 
-/// Open the print / share sheet for a child's Summer Book.
-Future<bool> printSummerBook(SummerBook book) => Printing.layoutPdf(
-  onLayout: (_) => renderSummerBookBytes(book),
+/// A child's Summer Book — download on web, print on native.
+Future<bool> printSummerBook(SummerBook book) async => emitPdfBytes(
   name: '${book.firstName} — A Different World',
+  bytes: await renderSummerBookBytes(book),
 );

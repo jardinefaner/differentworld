@@ -4,9 +4,9 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/vehicles/vehicle_deep_link.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart'
     show VehicleLogKind;
+import 'package:differentworld/shared/print/pdf_output.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 /// Builds a printable PDF that carries a QR code for [vehicle]'s
 /// checkout flow.
@@ -132,16 +132,16 @@ Future<Uint8List> buildVehicleCheckoutQrPdf({
 
 /// Opens the platform print dialog for [vehicle]'s checkout QR.
 ///
-/// Wraps [buildVehicleCheckoutQrPdf] + `Printing.layoutPdf` so the
-/// caller is one tap away from a finished sticker. On desktop platforms
-/// this routes to the OS print dialog; on mobile it opens the
-/// system share / print sheet.
+/// Wraps [buildVehicleCheckoutQrPdf] + `emitPdfBytes` so the caller is one tap
+/// away from a finished sticker — downloaded on web, OS print dialog on native.
 Future<void> printVehicleCheckoutQr({
   required Vehicle vehicle,
   String kind = VehicleLogKind.checkout,
-}) {
-  return Printing.layoutPdf(
-    onLayout: (_) => buildVehicleCheckoutQrPdf(vehicle: vehicle, kind: kind),
-    name: '${vehicle.name} — Check ${kind == VehicleLogKind.checkout ? 'out' : 'in'} QR',
+}) async {
+  final bytes = await buildVehicleCheckoutQrPdf(vehicle: vehicle, kind: kind);
+  await emitPdfBytes(
+    name: '${vehicle.name} — Check '
+        '${kind == VehicleLogKind.checkout ? 'out' : 'in'} QR',
+    bytes: bytes,
   );
 }

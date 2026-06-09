@@ -7,7 +7,7 @@ import 'package:differentworld/features/action_words/world_rules.dart';
 // `spells.dart` also exports a `SpellWord` (a timer-spell's foreign word) —
 // hide it so the beautiful-word `SpellWord` from `spell_words.dart` wins here.
 import 'package:differentworld/features/spells/spells.dart' hide SpellWord;
-import 'package:differentworld/features/toolkit/pdf_output.dart';
+import 'package:differentworld/shared/print/pdf_output.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 

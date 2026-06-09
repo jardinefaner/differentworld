@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/shared/print/pdf_output.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 
 /// Printable activity worksheets for the curriculum. One bordered box per
 /// activity — the prompt up top, a generous blank space below to draw or
@@ -142,22 +142,21 @@ Future<Uint8List> renderWorksheetsBytes(
   return buildWorksheetsDoc(worlds, heading: heading).save();
 }
 
-/// Open the print/share sheet for one world's worksheets.
-Future<bool> printWorldWorksheets(CurriculumWorld world) {
-  return Printing.layoutPdf(
-    onLayout: (_) =>
-        renderWorksheetsBytes([world], heading: '${world.name} — Worksheets'),
-    name: '${world.name} worksheets',
-  );
-}
+/// One world's worksheets — download on web, print on native.
+Future<bool> printWorldWorksheets(CurriculumWorld world) async => emitPdfBytes(
+      name: '${world.name} worksheets',
+      bytes: await renderWorksheetsBytes(
+        [world],
+        heading: '${world.name} — Worksheets',
+      ),
+    );
 
-/// Open the print/share sheet for the whole 10-week worksheet packet.
-Future<bool> printAllWorksheets(List<CurriculumWorld> worlds) {
-  return Printing.layoutPdf(
-    onLayout: (_) => renderWorksheetsBytes(
-      worlds,
-      heading: 'If You Built a World — Worksheets',
-    ),
-    name: 'All worksheets',
-  );
-}
+/// The whole 10-week worksheet packet — download on web, print on native.
+Future<bool> printAllWorksheets(List<CurriculumWorld> worlds) async =>
+    emitPdfBytes(
+      name: 'All worksheets',
+      bytes: await renderWorksheetsBytes(
+        worlds,
+        heading: 'If You Built a World — Worksheets',
+      ),
+    );
