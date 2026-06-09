@@ -7,6 +7,7 @@ import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/journey_day_sheet.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
+import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -399,6 +400,19 @@ class _CastRow extends StatelessWidget {
           onPressed: () => unawaited(context.push('/this-week')),
           icon: const Icon(Icons.rocket_launch_outlined),
           label: const Text('This week'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => unawaited(
+            showCastToRoom(
+              context,
+              mirrorRoute: '/journey',
+              mirrorSubtitle:
+                  'Open the journey here, then mirror to the TV — or set it '
+                  'auto-advancing for a hands-free season opener.',
+            ),
+          ),
+          icon: const Icon(Icons.cast),
+          label: const Text('Cast to the room'),
         ),
       ],
     );

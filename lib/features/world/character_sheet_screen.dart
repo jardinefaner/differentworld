@@ -12,6 +12,7 @@ import 'package:differentworld/features/action_words/week_log.dart';
 import 'package:differentworld/features/action_words/widgets/thinking_game_sheet.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/story/moment.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
@@ -806,6 +807,19 @@ class _Links extends StatelessWidget {
           onPressed: () => unawaited(context.push('/growth/$subjectId')),
           icon: const Icon(Icons.play_circle_outline),
           label: const Text('Play their story'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => unawaited(
+            showCastToRoom(
+              context,
+              mirrorRoute: '/growth/$subjectId',
+              mirrorSubtitle:
+                  'Open their story here, then mirror to the TV — great at '
+                  'pickup. Tap auto-advance to let it play itself.',
+            ),
+          ),
+          icon: const Icon(Icons.cast),
+          label: const Text('Cast their story'),
         ),
         OutlinedButton.icon(
           onPressed: () => unawaited(context.push('/book/$subjectId')),

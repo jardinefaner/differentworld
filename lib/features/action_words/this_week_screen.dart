@@ -9,6 +9,7 @@ import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -345,42 +346,13 @@ class _LiveWorld extends ConsumerWidget {
   }
 }
 
-/// Two ways to cast a world: mirror this device's screen (cable / AirPlay,
-/// no code) or send it to a separate paired screen via the join-code flow.
+/// Cast this world to the room — the shared mirror-vs-paired chooser.
 Future<void> _castOptions(BuildContext context, CurriculumWorld world) {
-  return showGlassSheet<void>(
-    context: context,
-    builder: (sheetCtx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.screen_share_outlined),
-            title: const Text('Mirror to this screen'),
-            subtitle: const Text(
-              'Show it right here — for a projector by cable or AirPlay',
-            ),
-            onTap: () {
-              final router = GoRouter.of(sheetCtx);
-              Navigator.of(sheetCtx).pop();
-              unawaited(router.push('/present-world/${world.id}'));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.cast),
-            title: const Text('Send to a paired screen'),
-            subtitle: const Text(
-              'The screen shows a code; enter it, then drive from here',
-            ),
-            onTap: () {
-              final router = GoRouter.of(sheetCtx);
-              Navigator.of(sheetCtx).pop();
-              unawaited(router.push('/cast'));
-            },
-          ),
-        ],
-      ),
-    ),
+  return showCastToRoom(
+    context,
+    mirrorRoute: '/present-world/${world.id}',
+    mirrorLabel: 'Mirror to this screen',
+    mirrorSubtitle: 'Show it right here — for a projector by cable or AirPlay.',
   );
 }
 
