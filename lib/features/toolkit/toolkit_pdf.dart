@@ -124,6 +124,66 @@ pw.Page _wallQuestionPage(WorldBlock block, int day, String question) =>
       ),
     );
 
+/// A single day's teacher sheet: world + day header, the day's title, the
+/// minute-by-minute focus, and the room/soundtrack — what a sub needs to run
+/// the day from paper.
+pw.Page _dayFocusPage(WorldBlock block, int day, JourneyDay d) => pw.Page(
+  theme: pw.ThemeData.base(),
+  pageFormat: PdfPageFormat.letter,
+  margin: const pw.EdgeInsets.all(48),
+  build: (ctx) => pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        _ascii('${block.name.toUpperCase()}  -  DAY $day'),
+        style: const pw.TextStyle(
+          fontSize: 12,
+          letterSpacing: 3,
+          color: PdfColors.grey600,
+        ),
+      ),
+      pw.SizedBox(height: 4),
+      pw.Text(
+        _ascii(d.title),
+        style: pw.TextStyle(fontSize: 30, fontWeight: pw.FontWeight.bold),
+      ),
+      pw.SizedBox(height: 18),
+      _heading('Today’s focus'),
+      pw.Text(_ascii(d.focus), style: const pw.TextStyle(fontSize: 14)),
+      pw.SizedBox(height: 20),
+      _heading('The room'),
+      pw.Text(
+        _ascii(block.room),
+        style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey800),
+      ),
+      pw.SizedBox(height: 8),
+      pw.Text(
+        _ascii('Soundtrack: ${block.soundtrack}'),
+        style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+      ),
+    ],
+  ),
+);
+
+/// One day's offline pack: the wall-question poster + the teacher day sheet.
+/// "For each day, print what you need" — generated, not hand-assembled.
+Future<bool> printDay({
+  required WorldBlock block,
+  required int day,
+  required JourneyDay journeyDay,
+  String? wallQuestion,
+  int copies = 1,
+}) =>
+    emitPdf(
+      name: 'Day $day - ${journeyDay.title}',
+      copies: copies,
+      pages: () => [
+        if (wallQuestion != null && wallQuestion.isNotEmpty)
+          _wallQuestionPage(block, day, wallQuestion),
+        _dayFocusPage(block, day, journeyDay),
+      ],
+    );
+
 /// The 50-question wall deck — every program day's question as a full-page
 /// poster, in journey order. The authored prompts of the 50-day experience,
 /// ready to laminate and put up one per day (ASSETS Bundle 3). Offline-safe

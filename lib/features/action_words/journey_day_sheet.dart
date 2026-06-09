@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/action_words/world_blocks.dart';
+import 'package:differentworld/features/toolkit/toolkit_pdf.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -147,8 +148,24 @@ Future<void> showJourneyDaySheet(
                   ],
                 ),
               ],
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => unawaited(
+                    printDay(
+                      block: block,
+                      day: day,
+                      journeyDay: journeyDay,
+                      wallQuestion: wallQuestion,
+                    ),
+                  ),
+                  icon: const Icon(Icons.print_outlined),
+                  label: const Text('Print this day'),
+                ),
+              ),
               if (isToday) ...[
-                const SizedBox(height: 22),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
