@@ -12,6 +12,7 @@ import 'package:differentworld/features/action_words/activity_match_screen.dart'
 import 'package:differentworld/features/action_words/book_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/day_run_screen.dart';
+import 'package:differentworld/features/action_words/growth_arc_screen.dart';
 import 'package:differentworld/features/action_words/journey_tour_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
@@ -1072,6 +1073,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/journey',
             builder: (_, _) => const JourneyTourScreen(),
+          ),
+          // A child's GROWTH ARC — their story so far (words lived, worlds
+          // collected, emerging title), cast on the present spine. The
+          // showcase as an in-app compilation (docs/VISION.md).
+          GoRoute(
+            path: '/growth/:subjectId',
+            builder: (_, state) => GrowthArcScreen(
+              subjectId: state.pathParameters['subjectId']!,
+            ),
           ),
           // A child's Book — their 10-week journey grouped by world.
           GoRoute(
