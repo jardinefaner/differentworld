@@ -14,6 +14,7 @@ import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/day_run_screen.dart';
 import 'package:differentworld/features/action_words/growth_arc_screen.dart';
 import 'package:differentworld/features/action_words/journey_tour_screen.dart';
+import 'package:differentworld/features/action_words/program_hub_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/thinking_screen.dart';
@@ -1081,6 +1082,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/growth/:subjectId',
             builder: (_, state) => GrowthArcScreen(
               subjectId: state.pathParameters['subjectId']!,
+            ),
+          ),
+          // The SEASON HUB — the whole 10-week program on one screen (where we
+          // are, the two layers, today, the journey, each child's arc). The
+          // in-app counterpart to docs/PROGRAM.md.
+          GoRoute(
+            path: '/program',
+            builder: (_, _) => const RouteTitle(
+              title: 'The program',
+              child: ProgramHubScreen(),
             ),
           ),
           // A child's Book — their 10-week journey grouped by world.

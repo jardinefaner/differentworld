@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -212,4 +213,34 @@ final todaysWallQuestionProvider = Provider<String?>((ref) {
   final blocks = ref.watch(worldBlocksProvider).value;
   if (blocks == null) return null;
   return wallQuestionForDay(blocks, day);
+});
+
+/// The single canonical "where are we in the season" — bundling both layers of
+/// skin (see docs/PROGRAM.md): the immersive `block` (the 2-week world the room
+/// becomes) AND the week's `world` (the curriculum focus — verbs / activities /
+/// videos). One source of truth so no two surfaces name the current world
+/// differently. Null when the journey isn't active (or content still loading).
+typedef SeasonPosition = ({
+  int day, // 1–50
+  int week, // 1–10
+  WorldBlock block, // the immersive world (where you live)
+  CurriculumWorld? world, // the week's focus (what you work on); may lag-load
+  JourneyDay? journeyDay, // today's title + focus
+  String? wallQuestion, // today's wall question
+});
+
+/// Today's season position, or null when the journey isn't active.
+final seasonPositionProvider = Provider<SeasonPosition?>((ref) {
+  final day = ref.watch(currentProgramDayProvider);
+  final week = ref.watch(currentCurriculumWeekProvider);
+  final block = ref.watch(currentBlockProvider);
+  if (day == null || week == null || block == null) return null;
+  return (
+    day: day,
+    week: week,
+    block: block,
+    world: ref.watch(currentWorldProvider),
+    journeyDay: ref.watch(todaysJourneyDayProvider),
+    wallQuestion: ref.watch(todaysWallQuestionProvider),
+  );
 });
