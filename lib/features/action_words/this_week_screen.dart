@@ -66,9 +66,8 @@ class ThisWeekScreen extends ConsumerWidget {
   }
 }
 
-/// The block's ten authored days (the 50-day journey), as a tappable list with
-/// today badged. Renders nothing until the journey is active + blocks have
-/// loaded. The block spans the two weeks this curriculum week belongs to.
+/// This weekly world's five authored days, as a tappable list with today
+/// badged. Renders nothing until the journey is active + worlds have loaded.
 class _FortnightSection extends ConsumerWidget {
   const _FortnightSection({required this.accent});
   final Color accent;
@@ -81,7 +80,7 @@ class _FortnightSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Label(text: 'The fortnight, day by day', accent: accent),
+        _Label(text: 'This week, day by day', accent: accent),
         for (var i = 0; i < block.days.length; i++)
           JourneyDayRow(
             day: block.days[i].day,
@@ -204,10 +203,10 @@ class _LiveWorld extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 20),
-        // The fortnight day by day — the 50-day journey's ten authored days
-        // for the block this week belongs to. Tap any day to read its full
-        // focus + wall question + room; today is badged. Lets staff prep
-        // ahead, not just see today (renders nothing until blocks load).
+        // This week, day by day — the weekly world's five authored days. Tap
+        // any day to read its full focus + wall question + room; today is
+        // badged. Lets staff prep ahead, not just see today (renders nothing
+        // until the worlds load).
         _FortnightSection(accent: accent),
         // Verbs
         _Label(text: 'This week’s verbs', accent: accent),

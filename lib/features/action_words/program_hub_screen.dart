@@ -276,7 +276,7 @@ class _TwoLayers extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                '${position.block.name}  ·  weeks ${position.block.weeks}',
+                '${position.block.name}  ·  week ${position.block.week}',
                 style: theme.textTheme.bodyLarge,
               ),
             ),
@@ -322,12 +322,12 @@ class _JourneyAhead extends ConsumerWidget {
           accent: theme.colorScheme.onSurfaceVariant,
         ),
         const SizedBox(height: 10),
-        Row(
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
           children: [
-            for (final b in blocks) ...[
-              Expanded(child: _JourneyChip(block: b, isCurrent: b == current)),
-              if (b != blocks.last) const SizedBox(width: 6),
-            ],
+            for (final b in blocks)
+              _JourneyChip(block: b, isCurrent: b == current),
           ],
         ),
       ],
@@ -345,6 +345,7 @@ class _JourneyChip extends StatelessWidget {
     final theme = Theme.of(context);
     final accent = block.color;
     return Container(
+      width: 58,
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
       decoration: BoxDecoration(
         color: isCurrent
@@ -359,7 +360,7 @@ class _JourneyChip extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             // A word, not just color, marks "current" (no color-only signal).
-            isCurrent ? 'NOW' : 'wk ${block.weeks}',
+            isCurrent ? 'NOW' : 'wk ${block.week}',
             style: theme.textTheme.labelSmall?.copyWith(
               color: isCurrent ? accent : theme.colorScheme.onSurfaceVariant,
               fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w500,

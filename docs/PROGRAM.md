@@ -33,64 +33,62 @@ today's day-of-50, the wall question, the room setup. **This is the engine.**
 
 ---
 
-## The two layers — the immersive world vs the week's focus
+## The two layers — one world, two content packs
 
-The program is themed **twice at once** — the "two layers of skin"
-([VISION.md](VISION.md), 2026-06-07):
+A weekly world is described by **two aligned packs** — the "two layers of skin"
+([VISION.md](VISION.md), 2026-06-07), now keyed 1:1 (same `week` / `id` /
+`name` / `emoji` / `color`):
 
-- **The immersive WORLD** (`world_blocks.json`) — a **2-week** setting the room
-  physically becomes: arrival ritual, room dress, soundtrack, a key moment, the
-  transition out. *Where the child is living.* Five of them across the summer:
-  🪞 Me · 🌿 Nature · 🌊 Water · 🚀 Space+Dreams · 💛 Feelings+Us.
-- **The week's FOCUS** (`ten_worlds.json`) — a **1-week** curriculum lens: the
-  featured verbs, the activities, the Watch→Do videos, the reveal-world
-  matching. *What the child is working on.* Ten of them: Me · Stories · Nature ·
-  Water · Music · Space · Dreams · Time · Feelings · Us.
+- **The lived experience** (`world_blocks.json`, `WorldBlock`) — what the room
+  physically becomes for the week: arrival ritual, room dress, soundtrack, the
+  spell-words, the wall-question bank, the key moment, the transition out, and
+  the week's **five authored days** (title + minute-by-minute focus).
+- **The curriculum** (`ten_worlds.json`, `CurriculumWorld`) — the same world's
+  featured **verbs**, **activities**, **Watch→Do videos**, and reveal-world
+  matching.
 
-These are **different roles**, not competitors — so a surface should never show
-*both* as "World of X." The block is the **world** (the noun); the week is the
-**focus** (the work). Lead with the day number (unambiguous), name the block as
-the world, and present the week only as its verbs/activities.
+`block.week == world.week` for every week, so `seasonPositionProvider` exposes
+them as one position. A surface names the world once (from either pack — they
+agree) and presents the verbs as "this week's focus."
 
-### ⚠️ Open decision — the two packs are different journeys
+### ✅ Resolved — ten weekly worlds is the canonical journey
 
-The five immersive worlds and the ten weekly foci do **not** thematically nest
-(authored at different times — `ten_worlds` from `docs/curriculum/`,
-`world_blocks` ingested 2026-06-08 from the FullExperience prototype):
+The decision (2026-06-09): a **new world every week** (VISION's kid-side dream),
+so `ten_worlds`' ten weekly worlds are canonical and `world_blocks` was
+**restructured from 5 fortnight blocks into 10 weekly worlds** to match —
+harvesting the FullExperience prototype's day content for the 7 worlds it
+covered (Me · Nature · Water · Space · Dreams · Feelings · Us, splitting the two
+merged blocks) and authoring three fresh (Stories · Music · Time). Both packs
+now align exactly:
 
-| Wk | Days | Immersive world (block) | Week focus (ten_worlds) | Coherent? |
-|----|------|-------------------------|--------------------------|-----------|
-| 1  | 1–5  | 🪞 World of Me          | Me                       | ✅ |
-| 2  | 6–10 | 🪞 World of Me          | Stories                  | ~ |
-| 3  | 11–15| 🌿 World of Nature      | Nature                   | ✅ |
-| 4  | 16–20| 🌿 World of Nature      | Water                    | ~ |
-| 5  | 21–25| 🌊 World of Water       | **Music**                | ❌ |
-| 6  | 26–30| 🌊 World of Water       | **Space**                | ❌ |
-| 7  | 31–35| 🚀 Space + Dreams       | Dreams                   | ~ |
-| 8  | 36–40| 🚀 Space + Dreams       | **Time**                 | ❌ |
-| 9  | 41–45| 💛 Feelings + Us        | Feelings                 | ✅ |
-| 10 | 46–50| 💛 Feelings + Us        | Us                       | ~ |
+| Wk | Days | The world (both packs agree) |
+|----|------|------------------------------|
+| 1  | 1–5  | 🪞 World of Me |
+| 2  | 6–10 | 📚 World of Stories |
+| 3  | 11–15| 🌿 World of Nature |
+| 4  | 16–20| 🌊 World of Water |
+| 5  | 21–25| 🎵 World of Music |
+| 6  | 26–30| 🚀 World of Space |
+| 7  | 31–35| 💭 World of Dreams |
+| 8  | 36–40| ⏳ World of Time |
+| 9  | 41–45| 💛 World of Feelings |
+| 10 | 46–50| ✨ World of Us |
 
-Weeks 5–6 are the tell: a *Music* and *Space* curriculum inside a *Water*
-world doesn't read. **A coherent program needs one canonical journey.** The
-recommendation (un-acted, awaiting the call): make **`world_blocks` canonical**
-(it's the richer, newer design — it carries the actual daily substance:
-environment, the day's focus, the wall-question bank), and re-key
-`ten_worlds`' verb/activity/video content to the 5-world structure so the week
-focus always sits inside its world. Until then, surfaces lead with the **block
-+ day number** and treat the week only as a verb/activity list — never a second
-world title.
+Each world is **five days** (`blockForDay` → world index `(day−1) ~/ 5 ==
+week−1`). The newly-authored worlds (Stories / Music / Time) and the split
+environments (Dreams / Us) are solid first drafts grounded in `ten_worlds`'
+taglines / questions / activities — the user's to refine. Transform script:
+`tool/restructure_world_blocks.py`.
 
 ---
 
-## The six zoom levels (the whole system, one row each)
+## The five zoom levels (the whole system, one row each)
 
 | Zoom | Span | Content pack | Cast surface | The human's job |
 |---|---|---|---|---|
 | **Minute** | the daily loop | [THE_DAY.md](THE_DAY.md) | — | room teaches; app touches the day 4× (~12 min) |
 | **Day** | one day | `world_blocks` focus + `thinking_games` | `/play-today` | advance the run; mood · picks · activity · messages |
-| **Fortnight** | a block (10 days) | `world_blocks` (arrival→transition) | `/this-week` fortnight list | dress the room day 1, flip it day 10 |
-| **Week** | a curriculum world | `ten_worlds` (verbs · activities · videos) | `/this-week` | run the week's verbs + activities |
+| **Week** | one weekly world (5 days) | both packs (environment + days + verbs + activities) | `/this-week` · the day list | dress the room day 1, flip it day 5; run the verbs |
 | **Season** | 10 weeks / 50 days | both packs, in order | `/journey` · the season hub | orient staff/families; season opener |
 | **Child** | the whole arc, per kid | their `action_words` entries | `/growth/:id` · book · sheet | cast their story at closing / pickup |
 
@@ -136,10 +134,11 @@ Closing reveal (1 tap) is the fifth, optional, emotional-peak touch.
 
 ## So far — whole / partial / missing for a full 10-week run
 
-**Whole (end-to-end):** the season clock · the day on rails (`/play-today`) ·
-the fortnight with room prep · wall-question-of-the-day · the print decks ·
-kid + teacher verb picks · the growth arc · all cast surfaces. *A director sets
-one date and the program runs.*
+**Whole (end-to-end):** the season clock · **one canonical journey** (both packs
+aligned 1:1, 10 weekly worlds) · the day on rails (`/play-today`) · the weekly
+world with room prep · wall-question-of-the-day · the print decks · kid +
+teacher verb picks · the growth arc · the **season hub** (`/program`) · all cast
+surfaces. *A director sets one date and the program runs.*
 
 **Partial:** the **staff layer** (`staff_runbook` + ladder exist; per-day
 choreography thin) · the **family season view** (today works; the whole-arc
@@ -148,12 +147,11 @@ drawing, age=dailies — seeded, not built) · the **kid-facing footprint** (the
 new `/action-words/pick` is in tension with THE_DAY's "zero kid-facing" — it's
 an *opt-in alternative* to the physical cards, not the default; decide which).
 
-**Missing:** **the one canonical journey** (the two packs above) · the
-per-day **academic binder pages** (THE_DAY's "Day 14: write I like ___" — the
-writing/ABC/drawing drills aren't bundled; `world_blocks` has the *focus*, not
-the full page) · the **Summer Book** render for the whole 50 days (dream #1's
-year-end keepsake) · a **season hub** (the in-app counterpart to this doc —
-where-we-are + this-week + today + the arc + each child; *being built*).
+**Missing:** the per-day **academic binder pages** (THE_DAY's "Day 14: write I
+like ___" — the writing/ABC/drawing drills aren't bundled; `world_blocks` has
+the *focus*, not the full page) · the **Summer Book** render for the whole 50
+days (dream #1's year-end keepsake) · **refinement of the three newly-authored
+worlds** (Stories / Music / Time are solid first drafts; the user's to polish).
 
 ---
 
@@ -164,7 +162,8 @@ Every season-level surface is measured against:
 1. **One date, zero re-config.** Nothing should ask the director to set up a
    day that the start date already implies.
 2. **One canonical "where are we."** No two surfaces name the current world
-   differently (the seam above is the standing violation).
+   differently — satisfied now that both packs align 1:1 and
+   `seasonPositionProvider` is the single source.
 3. **The day feeds the book.** Every touch a child's day takes must accrete
    into their record — or it's a ledger entry, not a story.
 4. **Survives a substitute.** A human who walks in on Day 27 can open the app

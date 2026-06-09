@@ -33,18 +33,24 @@ class JourneyDay {
 /// becomes, the words for the wall, the bank of questions, the key moment,
 /// and its ten authored days.
 ///
-/// This is the narrative layer ABOVE the 10-week curriculum: where
-/// `ten_worlds.json` (`CurriculumWorld`) is the verb / facet / activity
-/// catalog, `world_blocks.json` is the *lived experience* — what the room
-/// looks and sounds like, the arrival ritual, the transition out. Five blocks
-/// of ten days each = the whole summer. Loaded from the bundle (offline-first).
+/// This is the narrative layer ABOVE the 10-week curriculum, aligned 1:1 with
+/// it: where `ten_worlds.json` (`CurriculumWorld`) is the verb / facet /
+/// activity catalog for each weekly world, `world_blocks.json` is the same
+/// world's *lived experience* — what the room looks and sounds like, the
+/// arrival ritual, the transition out, and its five authored days. Ten weekly
+/// worlds of five days each = the whole 50-day summer (one world per week, the
+/// canonical "new world every week" journey). Same `week`/`id`/`name`/`emoji`/
+/// `color` as the matching `CurriculumWorld`. Loaded from the bundle
+/// (offline-first). The class name is historical — a "block" is now one weekly
+/// world.
 @immutable
 class WorldBlock {
   const WorldBlock({
+    required this.week,
+    required this.id,
     required this.name,
     required this.emoji,
     required this.color,
-    required this.weeks,
     required this.arrival,
     required this.room,
     required this.soundtrack,
@@ -56,10 +62,11 @@ class WorldBlock {
   });
 
   factory WorldBlock.fromJson(Map<String, dynamic> j) => WorldBlock(
+        week: (j['week'] as num?)?.toInt() ?? 0,
+        id: (j['id'] as String?) ?? '',
         name: (j['name'] as String?) ?? '',
         emoji: (j['emoji'] as String?) ?? '🌍',
         color: _parseHexColor(j['color'] as String?),
-        weeks: (j['weeks'] as String?) ?? '',
         arrival: (j['arrival'] as String?) ?? '',
         room: (j['room'] as String?) ?? '',
         soundtrack: (j['soundtrack'] as String?) ?? '',
@@ -78,35 +85,38 @@ class WorldBlock {
         ],
       );
 
+  /// The curriculum week (1–10) this world IS — matches the `CurriculumWorld`.
+  final int week;
+
+  /// The stable id (`me`, `stories`, …) — matches the `CurriculumWorld`.
+  final String id;
+
   final String name;
   final String emoji;
   final Color color;
 
-  /// Human label of which curriculum weeks this block spans, e.g. "1-2".
-  final String weeks;
-
-  /// What the kids walk into on the Monday this block begins.
+  /// What the kids walk into on the Monday this world begins.
   final String arrival;
 
-  /// How the room is dressed for the two weeks.
+  /// How the room is dressed for the week.
   final String room;
 
-  /// The ambient sound bed for the block.
+  /// The ambient sound bed for the world.
   final String soundtrack;
 
-  /// The five spell-words featured on the wall this block.
+  /// The spell-words featured on the wall this world.
   final List<String> words;
 
-  /// Ten wall questions — one surfaces per day of the block.
+  /// Wall questions — one surfaces per day of the world.
   final List<String> wallQuestions;
 
-  /// The one moment that, if it lands, IS the program for this block.
+  /// The one moment that, if it lands, IS the program for this world.
   final String keyMoment;
 
-  /// How the room dissolves into the next world on the final Friday.
+  /// How the room dissolves into the next world on the final day.
   final String transition;
 
-  /// The ten authored days (program-day numbers within this block).
+  /// The five authored days (program-day numbers within this world).
   final List<JourneyDay> days;
 }
 
@@ -118,26 +128,27 @@ Color _parseHexColor(String? hex) {
   return value == null ? const Color(0xFF888888) : Color(value);
 }
 
-/// The full 50-day journey (five two-week blocks), loaded once from the
-/// bundled JSON. Offline-first: the asset ships in the app bundle, no network.
+/// The full 50-day journey (ten weekly worlds), loaded once from the bundled
+/// JSON. Offline-first: the asset ships in the app bundle, no network. Sorted
+/// by week so index == week − 1.
 final worldBlocksProvider = FutureProvider<List<WorldBlock>>((ref) async {
   final raw = await rootBundle.loadString('assets/curriculum/world_blocks.json');
   final decoded = jsonDecode(raw);
   if (decoded is! Map<String, dynamic>) return const [];
-  final blocks = decoded['blocks'];
-  if (blocks is! List) return const [];
+  final worlds = decoded['worlds'];
+  if (worlds is! List) return const [];
   return [
-    for (final b in blocks)
+    for (final b in worlds)
       if (b is Map<String, dynamic>) WorldBlock.fromJson(b),
-  ];
+  ]..sort((a, b) => a.week.compareTo(b.week));
 });
 
-/// The block (two-week world) that contains program [day] (1–50). Clamped to
-/// the first / last block for out-of-range days so callers always get the
-/// nearest world. Null only when [blocks] is empty. Pure + testable.
+/// The weekly world that contains program [day] (1–50) — five days per world,
+/// so world index == (day − 1) ~/ 5 == week − 1. Clamped to the first / last
+/// world for out-of-range days. Null only when [blocks] is empty. Pure.
 WorldBlock? blockForDay(List<WorldBlock> blocks, int day) {
   if (blocks.isEmpty) return null;
-  final idx = ((day - 1) ~/ 10).clamp(0, blocks.length - 1);
+  final idx = ((day - 1) ~/ 5).clamp(0, blocks.length - 1);
   return blocks[idx];
 }
 
@@ -153,12 +164,12 @@ JourneyDay? journeyDayForDay(List<WorldBlock> blocks, int day) {
 }
 
 /// The wall question for program [day] (1–50) — the day's question drawn from
-/// its block's bank of ten (one per day of the two-week block). Null when the
-/// block has no questions. Pure + testable.
+/// its weekly world's bank (one per day of the five-day world). Null when the
+/// world has no questions. Pure + testable.
 String? wallQuestionForDay(List<WorldBlock> blocks, int day) {
   final b = blockForDay(blocks, day);
   if (b == null || b.wallQuestions.isEmpty) return null;
-  final within = (day - 1) % 10; // 0–9 within the block
+  final within = (day - 1) % 5; // 0–4 within the weekly world
   return b.wallQuestions[within % b.wallQuestions.length];
 }
 
@@ -216,15 +227,16 @@ final todaysWallQuestionProvider = Provider<String?>((ref) {
 });
 
 /// The single canonical "where are we in the season" — bundling both layers of
-/// skin (see docs/PROGRAM.md): the immersive `block` (the 2-week world the room
-/// becomes) AND the week's `world` (the curriculum focus — verbs / activities /
-/// videos). One source of truth so no two surfaces name the current world
-/// differently. Null when the journey isn't active (or content still loading).
+/// skin (see docs/PROGRAM.md): the immersive `block` (the weekly world the room
+/// becomes — its environment + days) AND the week's `world` (the curriculum
+/// focus — verbs / activities / videos). Now aligned 1:1 (same week/id/name),
+/// so `block` and `world` describe the SAME world at two grains. One source of
+/// truth. Null when the journey isn't active (or content still loading).
 typedef SeasonPosition = ({
   int day, // 1–50
   int week, // 1–10
-  WorldBlock block, // the immersive world (where you live)
-  CurriculumWorld? world, // the week's focus (what you work on); may lag-load
+  WorldBlock block, // the weekly world's environment + days
+  CurriculumWorld? world, // the same world's verbs / activities; may lag-load
   JourneyDay? journeyDay, // today's title + focus
   String? wallQuestion, // today's wall question
 });

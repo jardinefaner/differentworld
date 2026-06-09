@@ -139,10 +139,11 @@ flutter:
     # The staff growth ladder — Shadow → Extra Hands → Co-Pilot → Conductor,
     # with can-do / not-yet. Mirrors the kid's own character arc.
     - assets/curriculum/staff_roles.json
-    # The 50-day journey — five two-week "worlds" (Me / Nature / Water /
-    # Space+Dreams / Feelings+Us), each with its environment (arrival / room /
-    # soundtrack), wall-question bank, spell-words, key moment, and ten authored
-    # days (title + focus). The lived experience above the verb catalog.
+    # The 50-day journey — ten WEEKLY worlds (aligned 1:1 with ten_worlds.json:
+    # Me / Stories / Nature / Water / Music / Space / Dreams / Time / Feelings /
+    # Us), each with its environment (arrival / room / soundtrack), wall-question
+    # bank, spell-words, key moment, and five authored days (title + focus). The
+    # lived experience above the verb catalog.
     - assets/curriculum/world_blocks.json
 
   # Variable display fonts for the Speak feature's editorial karaoke

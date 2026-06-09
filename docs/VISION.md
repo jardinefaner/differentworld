@@ -679,6 +679,15 @@ once it has a home.
   footprint live in **[PROGRAM.md](PROGRAM.md)**. (Threads: THE_DAY.md is the
   day; this is the season; the missing in-app **season hub** is the counterpart
   surface, being built.)
+  - **2026-06-09 (resolved + built).** The user chose **ten weekly worlds** as
+    canonical ("a new world every week"). `world_blocks.json` was restructured
+    from 5 fortnight blocks into **10 weekly worlds aligned 1:1 with
+    `ten_worlds`** (Me · Stories · Nature · Water · Music · Space · Dreams ·
+    Time · Feelings · Us) — harvesting the prototype's content for the 7 worlds
+    it covered and authoring three fresh (Stories / Music / Time, the user's to
+    refine). The seam is closed: `block.week == world.week`, one
+    `seasonPositionProvider`. The **season hub** shipped at `/program`. Five
+    zoom levels now (the fortnight collapsed into the week).
 
 ---
 
