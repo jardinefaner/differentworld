@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/activity_runtime/presenter_shortcuts.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_controller.dart';
+import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -62,6 +63,10 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
     unawaited(
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
     );
+    // On web, immersiveSticky is a no-op — ask for real browser fullscreen.
+    // This route is pushed straight off a tap, so we're inside the browser's
+    // transient-activation window and the request is honoured. No-op on native.
+    enterWebFullscreen();
     _scheduleHide();
   }
 
@@ -70,6 +75,7 @@ class _GameFullscreenScreenState<S> extends State<GameFullscreenScreen<S>> {
     _hideTimer?.cancel();
     // Restore the app's default (EdgeScaffold draws under the bars).
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    exitWebFullscreen();
     super.dispose();
   }
 

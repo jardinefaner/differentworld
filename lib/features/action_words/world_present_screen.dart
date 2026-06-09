@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
+import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -143,6 +144,18 @@ class _WorldPresentScreenState extends ConsumerState<WorldPresentScreen> {
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
+              // Fullscreen — top-left, web only (native is already fullscreen
+              // via immersiveSticky). The "view it on the TV" toggle.
+              if (webFullscreenSupported)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: IconButton(
+                    tooltip: 'Fullscreen',
+                    icon: const Icon(Icons.fullscreen, color: Colors.white70),
+                    onPressed: () => unawaited(toggleWebFullscreen()),
+                  ),
+                ),
               // Progress dots
               Positioned(
                 bottom: 16,

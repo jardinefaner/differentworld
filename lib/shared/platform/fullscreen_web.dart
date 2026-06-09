@@ -17,3 +17,18 @@ Future<void> toggleWebFullscreen() async {
     doc.documentElement?.requestFullscreen();
   }
 }
+
+/// Enter fullscreen. Honoured only within the browser's transient-activation
+/// window after a user gesture (so call it straight off a tap / route push).
+void enterWebFullscreen() {
+  if (web.document.fullscreenElement == null) {
+    web.document.documentElement?.requestFullscreen();
+  }
+}
+
+/// Exit fullscreen if currently in it.
+void exitWebFullscreen() {
+  if (web.document.fullscreenElement != null) {
+    web.document.exitFullscreen();
+  }
+}

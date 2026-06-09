@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
+import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,6 +94,10 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
   void _toggleFullscreen() {
     setState(() => _fullscreen = !_fullscreen);
     unawaited(_applyFullscreen());
+    // On web, immersiveSticky is a no-op — drive the real browser Fullscreen
+    // API too (no-op on native) so a cast receiver in a desktop/TV browser
+    // actually fills the screen.
+    unawaited(toggleWebFullscreen());
     _revealControls();
   }
 

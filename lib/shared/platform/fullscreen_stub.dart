@@ -7,3 +7,9 @@ bool get isWebFullscreen => false;
 
 /// Toggle browser fullscreen — a no-op off web.
 Future<void> toggleWebFullscreen() async {}
+
+/// Enter browser fullscreen — a no-op off web.
+void enterWebFullscreen() {}
+
+/// Exit browser fullscreen — a no-op off web.
+void exitWebFullscreen() {}
