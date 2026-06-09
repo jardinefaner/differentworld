@@ -85,6 +85,8 @@ dependencies:
   # Browser Fullscreen API for the present surfaces on web (lib/shared/platform/
   # fullscreen_web.dart). Native uses SystemChrome.immersiveSticky instead.
   web: ^1.1.1
+  # Masonry (varied-size) gallery for the per-child day hub.
+  flutter_staggered_grid_view: ^0.7.0
   permission_handler: ^12.0.1
 
   # Crash + error reporting. SENTRY_DSN in .env enables; without it,

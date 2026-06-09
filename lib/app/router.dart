@@ -117,6 +117,7 @@ import 'package:differentworld/features/surveys/survey_table_screen.dart';
 import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
+import 'package:differentworld/features/today/child_day_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/toolkit/print_toolkit_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_screen.dart';
@@ -701,6 +702,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => DrawSelfScreen(
                   subjectId: state.pathParameters['id']!,
                   displayName: state.extra as String?,
+                ),
+              ),
+              // The per-child daily bundle — avatar, today's words, mood, the
+              // room's day, photo capture, and the moments gallery, one page.
+              GoRoute(
+                path: 'subjects/:id/day',
+                builder: (_, state) => RouteTitle(
+                  title: 'Today',
+                  child: ChildDayScreen(
+                    subjectId: state.pathParameters['id']!,
+                  ),
                 ),
               ),
               GoRoute(

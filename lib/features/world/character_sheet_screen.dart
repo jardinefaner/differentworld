@@ -804,6 +804,11 @@ class _Links extends StatelessWidget {
       runSpacing: 10,
       children: [
         FilledButton.icon(
+          onPressed: () => unawaited(context.push('/subjects/$subjectId/day')),
+          icon: const Icon(Icons.today_outlined),
+          label: const Text('Today'),
+        ),
+        OutlinedButton.icon(
           onPressed: () => unawaited(context.push('/growth/$subjectId')),
           icon: const Icon(Icons.play_circle_outline),
           label: const Text('Play their story'),

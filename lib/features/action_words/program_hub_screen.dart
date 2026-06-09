@@ -434,7 +434,7 @@ class _ChildrenArcs extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _MiniLabel(
-          text: 'The children · their stories so far',
+          text: 'The children · tap for their day',
           accent: theme.colorScheme.onSurfaceVariant,
         ),
         const SizedBox(height: 10),
@@ -467,8 +467,8 @@ class _ChildArcRow extends ConsumerWidget {
       leading: PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
       title: fullName,
       subtitle: subtitle,
-      trailing: const Icon(Icons.play_circle_outline),
-      onTap: () => unawaited(context.push('/growth/${subject.id}')),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => unawaited(context.push('/subjects/${subject.id}/day')),
     );
   }
 }
