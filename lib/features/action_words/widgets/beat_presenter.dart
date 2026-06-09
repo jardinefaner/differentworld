@@ -4,6 +4,7 @@ import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/present_timer.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
+import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -191,6 +192,22 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
+              // Fullscreen — top-left, WEB ONLY. Native already hides the
+              // system bars via immersiveSticky; on web the browser chrome
+              // stays unless the Fullscreen API is invoked from a tap. This is
+              // the "view it fullscreen on the TV" control when casting from a
+              // laptop tab.
+              if (webFullscreenSupported)
+                Positioned(
+                  key: const ValueKey('bp-fullscreen'),
+                  top: 8,
+                  left: 8,
+                  child: IconButton(
+                    tooltip: 'Fullscreen',
+                    icon: const Icon(Icons.fullscreen, color: Colors.white70),
+                    onPressed: () => unawaited(toggleWebFullscreen()),
+                  ),
+                ),
               // The cast timer — top-centre, room-readable, tap to clear.
               if (_remaining != null)
                 Positioned(

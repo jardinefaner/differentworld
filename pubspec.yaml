@@ -82,6 +82,9 @@ dependencies:
   # endpoint and receives partial / final transcripts back.
   record: ^6.2.0
   web_socket_channel: ^3.0.3
+  # Browser Fullscreen API for the present surfaces on web (lib/shared/platform/
+  # fullscreen_web.dart). Native uses SystemChrome.immersiveSticky instead.
+  web: ^1.1.1
   permission_handler: ^12.0.1
 
   # Crash + error reporting. SENTRY_DSN in .env enables; without it,
