@@ -660,6 +660,25 @@ once it has a home.
   8 bundles) live in **[ASSETS.md](ASSETS.md)**. (Threads: the print toolkit,
   the poster engine, the summer book, the daily content banks that are still
   missing.)
+- **2026-06-08** — **The season, synthesized — "how can we synthesize
+  everything for a 10-week program."** The zoom-level ABOVE the day: how a
+  single 10-week / 50-day program is set up, unfolds, and leaves each child a
+  book. The spine is **one date** (`program_start_date`) that drives both the
+  weekly curriculum (`ten_worlds`) AND the 50-day journey (`world_blocks`); the
+  six zoom levels (minute → day → fortnight → week → season → child) each pair a
+  content pack with a cast surface and a human job; the 12 verbs thread through
+  as identity / job / skill; the per-child `action_words` accrete into the
+  growth book. The synthesis surfaced the **standing seam**: the two content
+  packs encode **two different journeys** (5 immersive fortnight worlds vs 10
+  weekly foci) that don't nest — weeks 5–6 put a *Music/Space* curriculum inside
+  a *Water* world. The reframe that resolves the everyday confusion: they're the
+  **two layers of skin** (2026-06-07) — the block is the immersive WORLD, the
+  week is the curriculum FOCUS — so no surface should show both as "World of X."
+  The deeper content-merge (one canonical journey) is an **open decision** for
+  the user. Full season operating model + the acceptance contract at the season
+  footprint live in **[PROGRAM.md](PROGRAM.md)**. (Threads: THE_DAY.md is the
+  day; this is the season; the missing in-app **season hub** is the counterpart
+  surface, being built.)
 
 ---
 
