@@ -70,6 +70,13 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
   Timer? _ticker;
   int? _remaining;
 
+  // Hands-free auto-advance: when on, the run plays itself (for an unattended
+  // TV — the journey at a season opener, a child's growth arc at pickup). Loops
+  // at the end. Default off; the teacher opts in.
+  Timer? _autoTimer;
+  bool _autoPlaying = false;
+  static const _autoAdvanceInterval = Duration(seconds: 8);
+
   int get _count => widget.beats.length;
 
   @override
@@ -101,11 +108,37 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _autoTimer?.cancel();
     _immersive.exit();
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     unawaited(WakelockPlus.disable());
     _page.dispose();
     super.dispose();
+  }
+
+  void _toggleAutoPlay() {
+    if (!mounted) return;
+    setState(() => _autoPlaying = !_autoPlaying);
+    unawaited(HapticFeedback.selectionClick());
+    if (_autoPlaying) {
+      _scheduleAutoAdvance();
+    } else {
+      _autoTimer?.cancel();
+      _autoTimer = null;
+    }
+  }
+
+  void _scheduleAutoAdvance() {
+    _autoTimer?.cancel();
+    _autoTimer = Timer.periodic(_autoAdvanceInterval, (_) {
+      if (!mounted || !_autoPlaying) return;
+      // Loop at the end so an unattended showcase runs forever.
+      if (_index >= _count - 1) {
+        _jumpTo(0);
+      } else {
+        _go(1);
+      }
+    });
   }
 
   @override
@@ -226,10 +259,17 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _ctrl(
-                      Icons.timer_outlined,
-                      'Set a timer',
-                      () => unawaited(_pickTimer()),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _autoPlayCtrl(),
+                        const SizedBox(width: 4),
+                        _ctrl(
+                          Icons.timer_outlined,
+                          'Set a timer',
+                          () => unawaited(_pickTimer()),
+                        ),
+                      ],
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -295,6 +335,22 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
     onPressed: onTap,
     style: IconButton.styleFrom(
       backgroundColor: Colors.white.withValues(alpha: 0.12),
+    ),
+  );
+
+  /// Play/pause hands-free auto-advance. Tinted with the room accent while
+  /// playing so "it's running itself" reads from across the room.
+  Widget _autoPlayCtrl() => IconButton(
+    tooltip: _autoPlaying ? 'Pause auto-advance' : 'Auto-advance (hands-free)',
+    icon: Icon(
+      _autoPlaying ? Icons.pause : Icons.play_arrow,
+      color: Colors.white,
+    ),
+    onPressed: _toggleAutoPlay,
+    style: IconButton.styleFrom(
+      backgroundColor: _autoPlaying
+          ? widget.accent.withValues(alpha: 0.55)
+          : Colors.white.withValues(alpha: 0.12),
     ),
   );
 
