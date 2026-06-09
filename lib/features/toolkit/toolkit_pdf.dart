@@ -8,6 +8,7 @@ import 'package:differentworld/features/action_words/world_rules.dart';
 // hide it so the beautiful-word `SpellWord` from `spell_words.dart` wins here.
 import 'package:differentworld/features/spells/spells.dart' hide SpellWord;
 import 'package:differentworld/shared/print/pdf_output.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -19,18 +20,73 @@ import 'package:pdf/widgets.dart' as pw;
 /// Helvetica can't draw emoji, so these are WORD-forward cards — the verb word
 /// in huge letters is what laminates and goes in the basket; a teacher can
 /// sticker the emoji on after. `_ascii` maps the curriculum's curly quotes /
-/// dashes into the Latin-1 subset Helvetica can render.
-String _ascii(String s) => s
-    .replaceAll('—', '-')
-    .replaceAll('–', '-')
-    .replaceAll('‘', "'")
-    .replaceAll('’', "'")
-    .replaceAll('“', '"')
-    .replaceAll('”', '"')
-    .replaceAll('→', '->')
-    .replaceAll('…', '...')
-    .replaceAll('•', '-')
-    .replaceAll(' ', ' ');
+/// dashes into the Latin-1 subset Helvetica can render. The built-in PDF
+/// Helvetica has NO Unicode support (it warns + drops the glyph), so we also
+/// fold accents to plain ASCII — a translated word like "Arrête" prints as
+/// "Arrete"; the phonetic hint beside it ("ah-RET") carries the real sound.
+String _ascii(String s) {
+  var out = s
+      .replaceAll('—', '-')
+      .replaceAll('–', '-')
+      .replaceAll('‘', "'")
+      .replaceAll('’', "'")
+      .replaceAll('“', '"')
+      .replaceAll('”', '"')
+      .replaceAll('→', '->')
+      .replaceAll('…', '...')
+      .replaceAll('•', '-')
+      .replaceAll(' ', ' ');
+  _accentFolds.forEach((from, to) => out = out.replaceAll(from, to));
+  return out;
+}
+
+/// Accented Latin → plain ASCII, so the built-in Helvetica never hits a glyph
+/// it can't draw (the "Helvetica has no Unicode support" warning).
+const Map<String, String> _accentFolds = {
+  'á': 'a',
+  'à': 'a',
+  'â': 'a',
+  'ä': 'a',
+  'ã': 'a',
+  'å': 'a',
+  'é': 'e',
+  'è': 'e',
+  'ê': 'e',
+  'ë': 'e',
+  'í': 'i',
+  'ì': 'i',
+  'î': 'i',
+  'ï': 'i',
+  'ó': 'o',
+  'ò': 'o',
+  'ô': 'o',
+  'ö': 'o',
+  'õ': 'o',
+  'ú': 'u',
+  'ù': 'u',
+  'û': 'u',
+  'ü': 'u',
+  'ç': 'c',
+  'ñ': 'n',
+  'ß': 'ss',
+  'Á': 'A',
+  'À': 'A',
+  'Â': 'A',
+  'Ä': 'A',
+  'É': 'E',
+  'È': 'E',
+  'Ê': 'E',
+  'Ë': 'E',
+  'Í': 'I',
+  'Î': 'I',
+  'Ó': 'O',
+  'Ô': 'O',
+  'Ö': 'O',
+  'Ú': 'U',
+  'Ü': 'U',
+  'Ç': 'C',
+  'Ñ': 'N',
+};
 
 /// How to act out each verb without words (the closing guessing game). Static
 /// reference content; keyed by verb id.
@@ -75,14 +131,52 @@ pw.Page _bigCard(String big, String sub) => pw.Page(
   ),
 );
 
-/// 12 full-page verb cards (the word huge + its lens). Laminate, basket, pick 3.
-Future<bool> printVerbCards({int copies = 1}) => emitPdf(
-  name: 'Verb cards',
-  copies: copies,
-  pages: () => [
-    for (final v in kVerbs) _bigCard(v.label.toUpperCase(), v.lens),
-  ],
+/// The bundled monochrome emoji font (subset to the card glyphs), loaded once.
+/// Helvetica can't draw emoji; this is the fallback that can. Cached so a
+/// multi-copy print doesn't re-decode it.
+pw.Font? _emojiFontCache;
+Future<pw.Font> _emojiFont() async => _emojiFontCache ??= pw.Font.ttf(
+  await rootBundle.load('assets/fonts/NotoEmoji.ttf'),
 );
+
+/// One verb card: the emoji big up top (now that we embed an emoji font), the
+/// verb word huge, its lens underneath. Laminate, basket, pick 3.
+pw.Page _verbCard(Verb v, pw.Font emoji) => pw.Page(
+  theme: pw.ThemeData.base(),
+  pageFormat: PdfPageFormat.letter,
+  margin: const pw.EdgeInsets.all(40),
+  build: (ctx) => pw.Center(
+    child: pw.Column(
+      mainAxisAlignment: pw.MainAxisAlignment.center,
+      children: [
+        pw.Text(v.emoji, style: pw.TextStyle(font: emoji, fontSize: 130)),
+        pw.SizedBox(height: 18),
+        pw.Text(
+          _ascii(v.label.toUpperCase()),
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(fontSize: 92, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 20),
+        pw.Text(
+          _ascii(v.lens),
+          textAlign: pw.TextAlign.center,
+          style: const pw.TextStyle(fontSize: 28, color: PdfColors.grey700),
+        ),
+      ],
+    ),
+  ),
+);
+
+/// 12 full-page verb cards — emoji + the word + its lens. Laminate, basket,
+/// pick 3.
+Future<bool> printVerbCards({int copies = 1}) async {
+  final emoji = await _emojiFont();
+  return emitPdf(
+    name: 'Verb cards',
+    copies: copies,
+    pages: () => [for (final v in kVerbs) _verbCard(v, emoji)],
+  );
+}
 
 /// One full-page wall-question poster: the world + day on top, the question
 /// huge and centered (it wraps — questions are sentences, not single words),
@@ -173,16 +267,15 @@ Future<bool> printDay({
   required JourneyDay journeyDay,
   String? wallQuestion,
   int copies = 1,
-}) =>
-    emitPdf(
-      name: 'Day $day - ${journeyDay.title}',
-      copies: copies,
-      pages: () => [
-        if (wallQuestion != null && wallQuestion.isNotEmpty)
-          _wallQuestionPage(block, day, wallQuestion),
-        _dayFocusPage(block, day, journeyDay),
-      ],
-    );
+}) => emitPdf(
+  name: 'Day $day - ${journeyDay.title}',
+  copies: copies,
+  pages: () => [
+    if (wallQuestion != null && wallQuestion.isNotEmpty)
+      _wallQuestionPage(block, day, wallQuestion),
+    _dayFocusPage(block, day, journeyDay),
+  ],
+);
 
 /// The 50-question wall deck — every program day's question as a full-page
 /// poster, in journey order. The authored prompts of the 50-day experience,
@@ -205,14 +298,71 @@ Future<bool> printWallQuestionDeck(List<WorldBlock> blocks, {int copies = 1}) =>
       ],
     );
 
-/// The timer-spell cards (FREEZE, MOVE, …) — the classroom-management casts.
+/// One spell card: the English command huge, then every language version to
+/// read aloud — the word + a phonetic hint + the language. The pronunciation
+/// reference for the classroom-management casts (FREEZE, MOVE, …).
+pw.Page _spellCard(Spell s) => pw.Page(
+  theme: pw.ThemeData.base(),
+  pageFormat: PdfPageFormat.letter,
+  margin: const pw.EdgeInsets.all(44),
+  build: (ctx) => pw.Column(
+    children: [
+      pw.SizedBox(height: 28),
+      pw.Text(
+        _ascii(s.english.toUpperCase()),
+        style: pw.TextStyle(fontSize: 88, fontWeight: pw.FontWeight.bold),
+      ),
+      pw.SizedBox(height: 4),
+      pw.Text(
+        spellTimeLabel(s.durationSeconds),
+        style: const pw.TextStyle(fontSize: 22, color: PdfColors.grey500),
+      ),
+      pw.SizedBox(height: 34),
+      pw.Text(
+        'SAY IT IN',
+        style: pw.TextStyle(
+          fontSize: 13,
+          letterSpacing: 3,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.grey600,
+        ),
+      ),
+      pw.SizedBox(height: 16),
+      for (final w in s.words)
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 16),
+          child: pw.Column(
+            children: [
+              // _ascii folds accents (Arrête → Arrete) so Helvetica renders it
+              // — the phonetic hint below carries the real sound.
+              pw.Text(
+                _ascii(w.word),
+                style: pw.TextStyle(
+                  fontSize: 32,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 2),
+              pw.Text(
+                _ascii('"${w.pronunciation}"   -   ${w.language}'),
+                style: const pw.TextStyle(
+                  fontSize: 17,
+                  color: PdfColors.grey700,
+                ),
+              ),
+            ],
+          ),
+        ),
+    ],
+  ),
+);
+
+/// The timer-spell cards (FREEZE, MOVE, …) — each with all its language
+/// versions + pronunciations to read aloud.
 Future<bool> printTimerSpellCards({int copies = 1}) => emitPdf(
   name: 'Timer spell cards',
   copies: copies,
-  pages: () => [
-    for (final s in kSpells)
-      _bigCard(s.english.toUpperCase(), '${s.durationSeconds}s'),
-  ],
+  pages: () => [for (final s in kSpells) _spellCard(s)],
 );
 
 /// The back of a spell-word card: the word, its meaning, the gesture, and the

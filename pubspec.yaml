@@ -148,6 +148,11 @@ flutter:
     # bank, spell-words, key moment, and five authored days (title + focus). The
     # lived experience above the verb catalog.
     - assets/curriculum/world_blocks.json
+    # Monochrome emoji font (subset to the ~25 emoji used on printed cards),
+    # loaded via rootBundle for the PDF toolkit so verb cards can show 📦 👂 …
+    # offline. Helvetica can't draw emoji; this fills only those glyphs (~18 KB).
+    # OFL-licensed (NotoEmoji-OFL.txt beside it).
+    - assets/fonts/NotoEmoji.ttf
 
   # Variable display fonts for the Speak feature's editorial karaoke
   # (lib/features/speak/). Bundled (NOT runtime-fetched via google_fonts)
