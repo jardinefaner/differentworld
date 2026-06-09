@@ -27,6 +27,11 @@ Future<void> showJourneyDaySheet(
     builder: (sheetCtx) {
       final theme = Theme.of(sheetCtx);
       final accent = block.color;
+      // Boundary days carry the room logistics: the FIRST day of a block is
+      // when the room gets dressed (arrival); the LAST is when it dissolves
+      // into the next world (transition).
+      final isFirstDay = block.days.isNotEmpty && day == block.days.first.day;
+      final isLastDay = block.days.isNotEmpty && day == block.days.last.day;
       return SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -61,6 +66,24 @@ Future<void> showJourneyDaySheet(
                   ),
                 ],
               ),
+              if (isFirstDay && block.arrival.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _BoundaryCallout(
+                  icon: Icons.meeting_room_outlined,
+                  label: 'Set up the room today',
+                  text: block.arrival,
+                  accent: accent,
+                ),
+              ],
+              if (isLastDay && block.transition.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _BoundaryCallout(
+                  icon: Icons.swap_horiz,
+                  label: 'Hand off to the next world',
+                  text: block.transition,
+                  accent: accent,
+                ),
+              ],
               const SizedBox(height: 18),
               _FocusLabel(text: 'Today’s focus', accent: accent),
               const SizedBox(height: 6),
@@ -170,6 +193,8 @@ class JourneyDayRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = block.color;
+    final isFirstDay = block.days.isNotEmpty && day == block.days.first.day;
+    final isLastDay = block.days.isNotEmpty && day == block.days.last.day;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Material(
@@ -236,11 +261,74 @@ class JourneyDayRow extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                 ],
+                if (isFirstDay)
+                  Tooltip(
+                    message: 'Set up the room',
+                    child: Icon(Icons.meeting_room_outlined,
+                        size: 16, color: accent),
+                  )
+                else if (isLastDay)
+                  Tooltip(
+                    message: 'Flip the room',
+                    child: Icon(Icons.swap_horiz, size: 16, color: accent),
+                  ),
+                if (isFirstDay || isLastDay) const SizedBox(width: 4),
                 const Icon(Icons.chevron_right, size: 18),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A prominent room-logistics callout for a block-boundary day — "set up the
+/// room" on the first day, "hand off to the next world" on the last. Stronger
+/// than the steady-state environment rows because it's a do-it-today action.
+class _BoundaryCallout extends StatelessWidget {
+  const _BoundaryCallout({
+    required this.icon,
+    required this.label,
+    required this.text,
+    required this.accent,
+  });
+  final IconData icon;
+  final String label;
+  final String text;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: accent),
+              const SizedBox(width: 8),
+              Text(
+                label.toUpperCase(),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(text, style: theme.textTheme.bodyMedium),
+        ],
       ),
     );
   }
