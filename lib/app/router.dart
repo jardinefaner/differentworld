@@ -5,6 +5,7 @@ import 'package:differentworld/core/db/app_database.dart'
     show Entry, Export, Invite, Mission, Subject;
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/action_words_kid_screen.dart';
 import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/activity_arc_screen.dart';
 import 'package:differentworld/features/action_words/activity_match_screen.dart';
@@ -261,6 +262,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                         child: ActivityMatchScreen(initialVerbs: verbs),
                       );
                     },
+                  ),
+                  // The kid-facing pick (3 segments) — placed BEFORE the
+                  // 1-segment :subjectId so '/action-words/pick/<id>' resolves
+                  // here, not as a child id. Locks into kid mode on mount.
+                  GoRoute(
+                    path: 'pick/:subjectId',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Pick your words',
+                      child: ActionWordsKidScreen(
+                        subjectId: state.pathParameters['subjectId']!,
+                      ),
+                    ),
                   ),
                   GoRoute(
                     path: ':subjectId',

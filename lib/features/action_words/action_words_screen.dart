@@ -195,24 +195,32 @@ class _KidRow extends ConsumerWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-        trailing: hasPicks
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _Dots(done: day!.doneCount, total: kPicksPerDay),
-                  IconButton(
-                    tooltip: 'Reveal ${subject.firstName}’s world',
-                    icon: const Icon(Icons.auto_awesome),
-                    color: WorldBadge.goldFor(theme),
-                    onPressed: () => RevealOverlay.show(
-                      context,
-                      subject: subject,
-                      day: day,
-                    ),
-                  ),
-                ],
-              )
-            : const Icon(Icons.chevron_right),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Hand the device to the child to pick their own three words.
+            IconButton(
+              tooltip: 'Let ${subject.firstName} pick',
+              icon: const Icon(Icons.front_hand_outlined),
+              onPressed: () =>
+                  unawaited(context.push('/action-words/pick/${subject.id}')),
+            ),
+            if (hasPicks) ...[
+              _Dots(done: day!.doneCount, total: kPicksPerDay),
+              IconButton(
+                tooltip: 'Reveal ${subject.firstName}’s world',
+                icon: const Icon(Icons.auto_awesome),
+                color: WorldBadge.goldFor(theme),
+                onPressed: () => RevealOverlay.show(
+                  context,
+                  subject: subject,
+                  day: day,
+                ),
+              ),
+            ] else
+              const Icon(Icons.chevron_right),
+          ],
+        ),
       ),
     );
   }

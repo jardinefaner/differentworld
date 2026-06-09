@@ -115,6 +115,10 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
   /// accidentally unlock.
   int _staffTapCount = 0;
   Timer? _staffTapReset;
+  // Guards against a second 5-tap burst stacking a second exit dialog while
+  // the first PIN dialog is still open (a kid hammering the corner during
+  // staff entry).
+  bool _exitDialogOpen = false;
   static const _staffTapTarget = 5;
   // Wave 139: tightened from 1500ms → 800ms between consecutive taps.
   // The window is *between taps* (each tap reschedules the reset
@@ -515,25 +519,32 @@ class _SurveyTakeScreenState extends ConsumerState<SurveyTakeScreen>
     if (_staffTapCount >= _staffTapTarget) {
       _staffTapCount = 0;
       _staffTapReset = null;
-      final result = await showKidModeExitDialog(context, ref);
-      if (!mounted) return;
-      switch (result) {
-        case KidModeExitResult.unlocked:
-        case KidModeExitResult.noPinConfigured:
-          setState(() => _staffUnlocked = true);
-          // Wave 148: cut any in-flight TTS the moment staff
-          // unlocks. They're about to leave; the kid is no longer
-          // listening; the voice should not keep narrating
-          // questions on the way out.
-          unawaited(_tts.stop());
-          ref.read(kidModeLockedRouteProvider.notifier).pin(null);
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            const SnackBar(
-              content: Text('Unlocked. Press back to exit.'),
-            ),
-          );
-        case KidModeExitResult.cancelled:
-          break;
+      // Re-entrancy guard: don't stack a second PIN dialog if one is open.
+      if (_exitDialogOpen) return;
+      _exitDialogOpen = true;
+      try {
+        final result = await showKidModeExitDialog(context, ref);
+        if (!mounted) return;
+        switch (result) {
+          case KidModeExitResult.unlocked:
+          case KidModeExitResult.noPinConfigured:
+            setState(() => _staffUnlocked = true);
+            // Wave 148: cut any in-flight TTS the moment staff
+            // unlocks. They're about to leave; the kid is no longer
+            // listening; the voice should not keep narrating
+            // questions on the way out.
+            unawaited(_tts.stop());
+            ref.read(kidModeLockedRouteProvider.notifier).pin(null);
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+              const SnackBar(
+                content: Text('Unlocked. Press back to exit.'),
+              ),
+            );
+          case KidModeExitResult.cancelled:
+            break;
+        }
+      } finally {
+        _exitDialogOpen = false;
       }
       return;
     }
