@@ -288,18 +288,7 @@ class _ReleaseSheetState extends ConsumerState<_ReleaseSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const GlassDragHandle(bottomMargin: 16),
               Text(
                 'Release ${entry.fullName}',
                 style: theme.textTheme.titleLarge,

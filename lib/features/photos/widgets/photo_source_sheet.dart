@@ -142,15 +142,7 @@ class _PhotoSourceSheetState extends ConsumerState<PhotoSourceSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 12),
+          const GlassDragHandle(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(

@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/story/story_providers.dart';
 import 'package:differentworld/features/story/wrap.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +23,7 @@ class WrapSheet extends ConsumerStatefulWidget {
     required String subjectName,
     String? subjectId,
   }) {
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (_) => WrapSheet(subjectName: subjectName, subjectId: subjectId),
@@ -67,18 +68,7 @@ class _WrapSheetState extends ConsumerState<WrapSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const GlassDragHandle(bottomMargin: 16),
               SegmentedButton<bool>(
                 segments: const [
                   ButtonSegment(value: false, label: Text('Today')),

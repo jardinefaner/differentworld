@@ -337,18 +337,7 @@ class _TagSheetState extends ConsumerState<_TagSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const GlassDragHandle(bottomMargin: 16),
               Text(widget.activity.name, style: theme.textTheme.titleLarge),
               Text(
                 'Which 3 words does this practice?',
@@ -480,18 +469,7 @@ class _NewActivitySheetState extends ConsumerState<_NewActivitySheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const GlassDragHandle(bottomMargin: 16),
               Text('New activity', style: theme.textTheme.titleLarge),
               const SizedBox(height: 12),
               TextField(

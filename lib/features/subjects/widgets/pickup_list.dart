@@ -182,18 +182,7 @@ class PickupPersonSheetState extends State<PickupPersonSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              const GlassDragHandle(bottomMargin: 16),
               Text(
                 widget.existing == null ? 'Add pickup person' : 'Edit pickup person',
                 style: theme.textTheme.titleLarge,

@@ -533,6 +533,32 @@ Shapes:
   `showGlassSheet(context: ctx, builder: ...)` from `glass_panel.dart`.
 - `GlassPanelShape.overlay` — full-screen panels (omnibox
   suggestion list). Inline in `app_shell.dart`.
+- `GlassPanelShape.side` — right-docked full-height "third panel"
+  (rounded left edge only). What a `showGlassSheet` becomes at
+  desktop widths; you rarely use it directly.
+
+**`showGlassSheet` is responsive by viewport width (Wave 180).** One
+helper, three presentations — pick a sheet, get the right one for free:
+phone (< 840) → bottom sheet; small-tablet / landscape (840–1200) →
+centered dialog; desktop (≥ 1200, where the nav rail is a column) →
+right-docked `GlassPanelShape.side` panel that slides in over the
+(lightly-dimmed) page, completing the `rail | content | panel` layout.
+It stays a `Navigator` route at every width, so `Navigator.pop(result)`
+/ `await showGlassSheet(...)` is unchanged — re-skinning a sheet for
+desktop costs ZERO call-site edits. Opt a sheet out of the desktop
+treatments with `dialogAtDesktop: false` (stays a bottom sheet
+everywhere — for genuinely one-handed gestural pickers only). The side
+panel adds the `Material` + `SafeArea` that `showGeneralDialog` lacks,
+raises the IME on autofocus once the slide-in completes, and routes its
+close button + Esc through `maybePop` so `DismissGuard` still fires.
+
+**Drag-handle pills: use `GlassDragHandle`, never a hand-rolled
+`Container(width: 36, height: 4, …)`.** It reads `GlassSheetScope` (set
+by `showGlassSheet` around every body) and renders the grab-pill ONLY on
+the bottom-sheet surface — it self-suppresses in the dialog + side-panel
+shapes, where a stray "draggable" pill is a meaningless artifact. Any new
+sheet body that wants a handle gets one that adapts to all three widths
+for free.
 
 When you need glass for a new surface (e.g. a context-menu sheet, a
 help bubble, a system-message banner):

@@ -24,6 +24,7 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:differentworld/shared/widgets/skeleton.dart';
@@ -887,7 +888,7 @@ class _TodaySkillCard extends StatelessWidget {
   }
 
   Future<void> _browse(BuildContext context) {
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (_) => SafeArea(

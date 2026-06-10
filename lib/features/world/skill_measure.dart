@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -146,7 +147,7 @@ Future<void> showSkillMeasureSheet(
   required String firstName,
   String? groupId,
 }) {
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
     isScrollControlled: true,
     builder: (_) => _SkillMeasureSheet(
