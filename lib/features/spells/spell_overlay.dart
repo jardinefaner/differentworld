@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/features/spells/spells.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +85,7 @@ class _SpellPageState extends State<_SpellPage>
   Widget build(BuildContext context) {
     final done = _remaining <= 0;
     return Theme(
-      data: ThemeData.dark(useMaterial3: true),
+      data: buildDarkTheme(),
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(

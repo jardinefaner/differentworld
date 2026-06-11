@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/present_timer.dart';
@@ -678,7 +679,7 @@ class _TimerSheetState extends State<_TimerSheet> {
     ];
 
     return Theme(
-      data: ThemeData.dark(useMaterial3: true),
+      data: buildDarkTheme(),
       child: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

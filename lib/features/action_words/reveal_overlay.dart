@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/widgets/become_strip.dart';
@@ -156,7 +157,10 @@ class _RevealPageState extends ConsumerState<_RevealPage>
 
     // Dark theme so the badge + chips read on black, whatever the app theme.
     return Theme(
-      data: ThemeData.dark(useMaterial3: true),
+      // The app's dark theme (Jost + AppColors + component vocab) instead of a
+      // bare ThemeData.dark — keeps the reveal in the same visual language as
+      // the rest of the app. The black backdrop + gold glow below are unchanged.
+      data: buildDarkTheme(),
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
@@ -411,7 +415,10 @@ class _RevealCyclePageState extends ConsumerState<_RevealCyclePage>
     final isLast = _i + 1 >= n;
 
     return Theme(
-      data: ThemeData.dark(useMaterial3: true),
+      // The app's dark theme (Jost + AppColors + component vocab) instead of a
+      // bare ThemeData.dark — keeps the reveal in the same visual language as
+      // the rest of the app. The black backdrop + gold glow below are unchanged.
+      data: buildDarkTheme(),
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
