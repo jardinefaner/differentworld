@@ -10,6 +10,7 @@ import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/week_log.dart';
 import 'package:differentworld/features/action_words/widgets/thinking_game_sheet.dart';
+import 'package:differentworld/features/action_words/world_arc.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
@@ -235,6 +236,7 @@ class _Body extends ConsumerWidget {
             const SizedBox(height: 16),
             _Weather(subjectId: subjectId),
             const SizedBox(height: 22),
+            const _WorldStage(),
             _Section(
               label: 'Abilities · the 12 verbs',
               systemId: 'abilities',
@@ -787,6 +789,81 @@ class _Milestones extends StatelessWidget {
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// This world's RPG stage — guidance for where the summer-long character arc is
+/// right now: how the avatar evolves this world, the spells to earn, the tools
+/// that unlock, and how inventory / allies / lore / weather deepen. Reads the
+/// per-world arc (world_arc.json). Renders nothing until the journey is active.
+class _WorldStage extends ConsumerWidget {
+  const _WorldStage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final arc = ref.watch(currentWorldArcProvider);
+    if (arc == null) return const SizedBox.shrink();
+    final world = ref.watch(currentWorldProvider);
+    final rpg = arc.rpg;
+    final rows = <(String, String)>[
+      ('🎨 Avatar', rpg.avatar),
+      ('📛 Name · title', rpg.name),
+      ('✨ Spells', rpg.spells),
+      ('🔧 Tools', rpg.tools),
+      ('🎒 Inventory', rpg.inventory),
+      ('🤝 Allies', rpg.allies),
+      ('📜 Lore', rpg.lore),
+      ('🌤 Weather', rpg.weather),
+    ];
+    return Column(
+      children: [
+        _Section(
+          label: world != null
+              ? 'This world · ${world.name}'
+              : 'This world’s stage',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final (label, text) in rows)
+                if (text.isNotEmpty) _StageRow(label: label, text: text),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+      ],
+    );
+  }
+}
+
+class _StageRow extends StatelessWidget {
+  const _StageRow({required this.label, required this.text});
+  final String label;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+          ),
         ],
       ),
     );
