@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:flutter/material.dart';
@@ -44,11 +45,11 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
 
   // Per-pair palette — each slide gets its own two-tone split.
   static const _palette = <(Color, Color)>[
-    (Color(0xFFEF5350), Color(0xFF42A5F5)),
-    (Color(0xFFFFA726), Color(0xFF26A69A)),
-    (Color(0xFFAB47BC), Color(0xFF66BB6A)),
-    (Color(0xFF5C6BC0), Color(0xFFFFCA28)),
-    (Color(0xFFEC407A), Color(0xFF29B6F6)),
+    (ActivityPalette.red, ActivityPalette.blue),
+    (ActivityPalette.amber, ActivityPalette.teal),
+    (ActivityPalette.purple, ActivityPalette.green),
+    (ActivityPalette.indigo, ActivityPalette.yellow),
+    (ActivityPalette.pink, ActivityPalette.lightBlue),
   ];
 
   @override
@@ -58,7 +59,7 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
   String get title => 'This or That';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF42A5F5));
+  GameVibe get vibe => const GameVibe(accent: ActivityPalette.blue);
 
   @override
   String? get liveRoute => '/live/this-or-that';

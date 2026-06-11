@@ -221,3 +221,27 @@ abstract final class Radii {
   static const double lg = 20;
   static const double pill = 24;
 }
+
+/// The **categorical** colour wheel for activities, games, and present-mode
+/// tiles — each surface picks one as its identity colour (a brain break is
+/// teal, the math game is blue, …). NOT semantic chrome (that's the
+/// [ColorScheme]); this is a deliberately bright, varied set for at-a-glance
+/// recognition. Centralised here so the "activity colour language" is one
+/// system instead of the same Material-400 hexes copy-pasted across a dozen
+/// files. All `static const` → safe to use inside `const` card lists.
+abstract final class ActivityPalette {
+  static const Color blue = Color(0xFF42A5F5);
+  static const Color indigo = Color(0xFF5C6BC0);
+  static const Color teal = Color(0xFF26A69A);
+  static const Color tealDeep = Color(0xFF00897B);
+  static const Color amber = Color(0xFFFFA726);
+  static const Color yellow = Color(0xFFFFCA28);
+  static const Color pink = Color(0xFFEC407A);
+  static const Color purple = Color(0xFFAB47BC);
+  static const Color deepPurple = Color(0xFF7E57C2);
+  static const Color green = Color(0xFF66BB6A);
+  static const Color cyan = Color(0xFF26C6DA);
+  static const Color lightBlue = Color(0xFF29B6F6);
+  static const Color red = Color(0xFFEF5350);
+  static const Color brown = Color(0xFF8D6E63);
+}

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/discussions.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -25,12 +26,12 @@ class _GroupDiscussionScreenState extends State<GroupDiscussionScreen> {
   // Per-prompt full-screen colors so each starter feels distinct
   // ("color the whole screen" — docs/VISION.md dream #10).
   static const _palette = <Color>[
-    Color(0xFF5C6BC0), // indigo
-    Color(0xFF26A69A), // teal
-    Color(0xFFEC407A), // bloom
-    Color(0xFFAB47BC), // orchid
-    Color(0xFFFFA726), // amber
-    Color(0xFF42A5F5), // sky
+    ActivityPalette.indigo, // indigo
+    ActivityPalette.teal, // teal
+    ActivityPalette.pink, // bloom
+    ActivityPalette.purple, // orchid
+    ActivityPalette.amber, // amber
+    ActivityPalette.blue, // sky
   ];
 
   _Phase _phase = _Phase.setup;

@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +16,14 @@ class _Cue {
 }
 
 const _cues = <_Cue>[
-  _Cue('👀', 'Eyes up', Color(0xFF42A5F5)),
-  _Cue('🤫', 'Quiet please', Color(0xFF7E57C2)),
-  _Cue('👂', 'Listen', Color(0xFF26A69A)),
-  _Cue('✋', 'Hands up', Color(0xFFEC407A)),
-  _Cue('🧹', 'Clean up', Color(0xFFFFA726)),
-  _Cue('🚶', 'Line up', Color(0xFF5C6BC0)),
-  _Cue('🧊', 'Freeze', Color(0xFF29B6F6)),
-  _Cue('🌬️', 'Breathe', Color(0xFF66BB6A)),
+  _Cue('👀', 'Eyes up', ActivityPalette.blue),
+  _Cue('🤫', 'Quiet please', ActivityPalette.deepPurple),
+  _Cue('👂', 'Listen', ActivityPalette.teal),
+  _Cue('✋', 'Hands up', ActivityPalette.pink),
+  _Cue('🧹', 'Clean up', ActivityPalette.amber),
+  _Cue('🚶', 'Line up', ActivityPalette.indigo),
+  _Cue('🧊', 'Freeze', ActivityPalette.lightBlue),
+  _Cue('🌬️', 'Breathe', ActivityPalette.green),
 ];
 
 class CueState {
@@ -44,7 +45,7 @@ class CuesGame extends GameDefinition<CueState> {
   String get title => 'Signals';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF42A5F5));
+  GameVibe get vibe => const GameVibe(accent: ActivityPalette.blue);
 
   @override
   String? get liveRoute => '/live/cues';

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/roles.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -26,14 +27,14 @@ class RoleCardsScreen extends StatefulWidget {
 class _RoleCardsScreenState extends State<RoleCardsScreen> {
   // A calm palette, cycled by index so neighbours never clash.
   static const _palette = <Color>[
-    Color(0xFF66BB6A), // leaf green
-    Color(0xFF42A5F5), // sky
-    Color(0xFFFFA726), // amber
-    Color(0xFF26A69A), // teal
-    Color(0xFFAB47BC), // orchid
-    Color(0xFF8D6E63), // bark
-    Color(0xFFEC407A), // bloom
-    Color(0xFF5C6BC0), // dusk
+    ActivityPalette.green, // leaf green
+    ActivityPalette.blue, // sky
+    ActivityPalette.amber, // amber
+    ActivityPalette.teal, // teal
+    ActivityPalette.purple, // orchid
+    ActivityPalette.brown, // bark
+    ActivityPalette.pink, // bloom
+    ActivityPalette.indigo, // dusk
   ];
 
   int _deckIndex = 0;

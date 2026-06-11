@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -20,42 +21,42 @@ class PresentHubScreen extends StatelessWidget {
       title: 'Cast to a screen',
       tagline: 'Phone is the remote — pick, switch, control',
       icon: Icons.cast,
-      color: Color(0xFF00897B),
+      color: ActivityPalette.tealDeep,
       route: '/cast',
     ),
     _PresentCard(
       title: 'Now & Next',
       tagline: "What's on now — and next",
       icon: Icons.calendar_view_day_outlined,
-      color: Color(0xFF26A69A),
+      color: ActivityPalette.teal,
       route: '/present/now-next',
     ),
     _PresentCard(
       title: 'Quick Poll',
       tagline: 'Vote together, see the winner',
       icon: Icons.how_to_vote_outlined,
-      color: Color(0xFF5C6BC0),
+      color: ActivityPalette.indigo,
       route: '/present/poll',
     ),
     _PresentCard(
       title: 'Spotlight',
       tagline: 'Fair turns — spin for a name',
       icon: Icons.star_outline,
-      color: Color(0xFFFFA726),
+      color: ActivityPalette.amber,
       route: '/present/picker',
     ),
     _PresentCard(
       title: 'Signals',
       tagline: 'Eyes up · Clean up · Breathe',
       icon: Icons.campaign_outlined,
-      color: Color(0xFF42A5F5),
+      color: ActivityPalette.blue,
       route: '/present/cues',
     ),
     _PresentCard(
       title: 'Brain Break Games',
       tagline: 'Riddles, This or That, Charades…',
       icon: Icons.sports_esports_outlined,
-      color: Color(0xFFAB47BC),
+      color: ActivityPalette.purple,
       route: '/breaks',
     ),
   ];
