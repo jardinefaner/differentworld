@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:flutter/material.dart';
@@ -88,9 +89,14 @@ class WorldBadge extends StatelessWidget {
     );
   }
 
-  /// Soft gold accent — the brief's signature. Tuned per brightness so it
-  /// stays legible on both themes.
-  static Color goldFor(ThemeData theme) => theme.brightness == Brightness.dark
-      ? const Color(0xFFE6C079)
-      : const Color(0xFF9A7B2E);
+  /// Soft gold accent — the brief's signature. Now sourced from the
+  /// [AppColors] theme extension (one tuned-per-brightness home). The
+  /// brightness ternary is kept only as a fallback for contexts that
+  /// override the theme locally without re-registering the extension
+  /// (e.g. the reveal overlay's forced `ThemeData.dark`).
+  static Color goldFor(ThemeData theme) =>
+      theme.extension<AppColors>()?.gold ??
+      (theme.brightness == Brightness.dark
+          ? const Color(0xFFE6C079)
+          : const Color(0xFF9A7B2E));
 }

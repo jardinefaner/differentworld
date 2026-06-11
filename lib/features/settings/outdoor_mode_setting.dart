@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // shared_preferences IS listed as a direct dep in pubspec.yaml; the
@@ -128,14 +129,27 @@ ThemeData outdoorTheme() {
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: scheme,
+    fontFamily: AppType.ui,
     scaffoldBackgroundColor: scheme.surface,
-    // Heavier weight on body text so it stays readable against glare.
-    textTheme: const TextTheme(
-      bodyMedium: TextStyle(fontWeight: FontWeight.w600),
-      bodyLarge: TextStyle(fontWeight: FontWeight.w600),
-      titleMedium: TextStyle(fontWeight: FontWeight.w700),
-      titleLarge: TextStyle(fontWeight: FontWeight.w800),
+    // The shared type ramp (so outdoor speaks the same voice), but with
+    // heavier weight on the text that has to survive glare.
+    textTheme: AppType.textTheme().copyWith(
+      bodyLarge: AppType.textTheme().bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+      bodyMedium: AppType.textTheme().bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+      titleMedium: AppType.textTheme().titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+      titleLarge: AppType.textTheme().titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
     ),
+    // Register the palette extension so `extension<AppColors>()!` is
+    // non-null in outdoor mode too. Outdoor is dark-based → the pale gold.
+    extensions: const <ThemeExtension<dynamic>>[AppColors.dark],
     // No tonal elevation tints — flat surfaces read more clearly
     // when there's no shadow to anchor depth.
     appBarTheme: AppBarTheme(
