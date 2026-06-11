@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -113,8 +114,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Different World',
-                    style: theme.textTheme.headlineMedium,
+                    'DIFFERENT WORLD',
+                    semanticsLabel: 'Different World',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      letterSpacing: AppType.tracking,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),

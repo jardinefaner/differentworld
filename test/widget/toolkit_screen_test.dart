@@ -128,7 +128,7 @@ void main() {
       await pumpCatalog(tester);
       await tester.enterText(find.byType(TextField), 'xyzzy123');
       await tester.pump();
-      expect(find.text('No tools match'), findsOneWidget);
+      expect(find.text('NO TOOLS MATCH'), findsOneWidget);
       expect(find.text('Clear search'), findsOneWidget);
     });
   });
@@ -194,10 +194,10 @@ void main() {
         const _TestHarness(child: ToolkitScreen()),
       );
       await tester.pumpAndSettle();
-      // The right-pane placeholder uses ContentHeader title.
-      expect(find.text('Pick a tool'), findsOneWidget);
-      // The left rail header "Toolkit" should be visible too.
-      expect(find.text('Toolkit'), findsOneWidget);
+      // The right-pane placeholder uses ContentHeader title (uppercased).
+      expect(find.text('PICK A TOOL'), findsOneWidget);
+      // The left rail header "Toolkit" should be visible too (uppercased).
+      expect(find.text('TOOLKIT'), findsOneWidget);
     });
   });
 }

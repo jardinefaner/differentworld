@@ -166,6 +166,13 @@ flutter:
   # at runtime with `fontVariations` (e.g. FontVariation('wght', 720)).
   # OFL-licensed; license text sits beside each .ttf.
   fonts:
+    # Jost — the app's primary typeface (lib/app/design_tokens.dart). A
+    # geometric / Futura-style sans; the whole UI ramp is built from it,
+    # with the thin-tracked-uppercase treatment carrying the brand voice.
+    # Single variable TTF (Thin→Black); set weight via fontWeight.
+    - family: Jost
+      fonts:
+        - asset: assets/fonts/Jost.ttf
     - family: Fraunces
       fonts:
         - asset: assets/fonts/Fraunces.ttf

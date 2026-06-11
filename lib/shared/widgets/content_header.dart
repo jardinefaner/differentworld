@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// In-content title + subtitle that lives at the top of a screen's
@@ -88,7 +89,14 @@ class ContentHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: t),
+                // Hero treatment: tracked uppercase (the brand voice). The
+                // display string is capped; `semanticsLabel` keeps the
+                // original case so screen readers don't spell it out.
+                Text(
+                  title.toUpperCase(),
+                  semanticsLabel: title,
+                  style: t?.copyWith(letterSpacing: AppType.tracking),
+                ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 4),
                   Text(subtitle!, style: s),

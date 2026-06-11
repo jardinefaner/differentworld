@@ -24,7 +24,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TextField), findsNothing);
-    expect(find.text('Group Discussion'), findsOneWidget);
+    expect(find.text('GROUP DISCUSSION'), findsOneWidget);
     expect(find.text('✨  Any topic'), findsOneWidget);
     expect(find.textContaining('Start —'), findsOneWidget);
   });

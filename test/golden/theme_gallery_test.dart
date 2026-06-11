@@ -23,7 +23,7 @@ void main() {
   group('theme gallery', () {
     setUpAll(() async {
       await ensureGoldenBootstrap();
-      for (final family in const ['Fraunces', 'SpaceGrotesk', 'Anton']) {
+      for (final family in const ['Jost']) {
         final loader = FontLoader(family)
           ..addFont(rootBundle.load('assets/fonts/$family.ttf'));
         await loader.load();
@@ -86,10 +86,16 @@ class _Gallery extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Different World', style: theme.textTheme.displaySmall),
             Text(
-              'design tokens — Fraunces + Space Grotesk',
-              style: theme.textTheme.bodyMedium?.copyWith(
+              'DIFFERENT WORLD',
+              style: theme.textTheme.displaySmall?.copyWith(
+                letterSpacing: AppType.tracking,
+              ),
+            ),
+            const SizedBox(height: Insets.xs),
+            Text(
+              'DESIGN TOKENS · JOST',
+              style: theme.textTheme.labelMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
             ),

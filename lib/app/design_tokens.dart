@@ -53,133 +53,151 @@ class AppColors extends ThemeExtension<AppColors> {
   }
 }
 
-/// The two bundled typefaces + the full Material text ramp built from them.
+/// The typeface + the full Material text ramp built from it.
 ///
-/// Both fonts ship in `assets/fonts/` and are declared in pubspec — they
-/// are NOT fetched at runtime (that would break offline-first; see the
-/// `PdfGoogleFonts` gotcha in CLAUDE.md). Speak already uses them for its
-/// editorial stage; this promotes them to the whole app's voice.
+/// The whole ramp is **Jost** — a geometric / Futura-style sans bundled in
+/// `assets/fonts/` (NOT runtime-fetched; that would break offline-first, see
+/// the `PdfGoogleFonts` gotcha in CLAUDE.md). One family, like the reference:
+/// the hierarchy comes from **weight + case + tracking**, not from mixing
+/// fonts. The brand voice is *thin, wide-tracked, uppercase* — so the top of
+/// the ramp is light (w300) and loosely tracked, meant to be UPPERCASED at the
+/// hero call sites (login wordmark, page titles, empty-state titles, the small
+/// "eyebrow" labels). Body stays sentence-case at a normal weight for
+/// readability + screen-reader sanity — the vibe lives in the hero moments.
+///
+/// (Casing can't live in a [TextStyle], so uppercasing happens at the call
+/// site — see [AppType.tracking] for the extra letter-spacing a hero/eyebrow
+/// should stack on top when it goes all-caps.)
 abstract final class AppType {
-  /// High-contrast display serif — warm, editorial, a little characterful.
-  /// Used for the expressive top of the ramp (display + headline): page
-  /// titles via `ContentHeader`, empty-state titles, ceremony text.
-  static const display = 'Fraunces';
+  /// The display / hero voice — thin, geometric, made to be tracked + capped.
+  /// Same family as [ui]; the difference is weight, case, and spacing.
+  static const display = 'Jost';
 
-  /// Geometric grotesque — clean and even at small sizes. Used for
-  /// everything dense + functional (title / body / label): card titles,
-  /// section headings, body copy, buttons, chips. Also the global default.
-  static const ui = 'SpaceGrotesk';
+  /// The functional voice (title / body / label). Same Jost family — set as
+  /// the global default so any unstyled `Text` speaks it too.
+  static const ui = 'Jost';
 
-  /// The Material 3 ramp, re-voiced. Sizes track the M3 scale; letter-
-  /// spacing is tightened at the top (the M3 defaults read loose for a
-  /// warm product) and weights are nudged up so hierarchy is legible
-  /// without relying on size alone. Colours are intentionally omitted so
-  /// each style inherits the scheme's on-surface colour per brightness.
+  /// Extra letter-spacing to STACK on a display/eyebrow style when it's
+  /// uppercased at the call site — tracked caps need more air than the
+  /// mixed-case ramp bakes in. e.g. `style.copyWith(letterSpacing:
+  /// AppType.tracking)` on a `Text('TODAY')`.
+  static const double tracking = 3;
+
+  /// The Material 3 ramp, re-voiced for the thin-geometric vibe. Sizes track
+  /// the M3 scale; the top is light (w300) + airy; everything is positively
+  /// tracked. Colours are omitted so each style inherits the scheme's
+  /// on-surface colour per brightness.
   static TextTheme textTheme() => const TextTheme(
         displayLarge: TextStyle(
           fontFamily: display,
           fontSize: 57,
-          fontWeight: FontWeight.w600,
-          height: 1.12,
-          letterSpacing: -0.5,
+          fontWeight: FontWeight.w300,
+          height: 1.08,
+          letterSpacing: 1,
         ),
         displayMedium: TextStyle(
           fontFamily: display,
           fontSize: 45,
-          fontWeight: FontWeight.w600,
-          height: 1.16,
-          letterSpacing: -0.25,
+          fontWeight: FontWeight.w300,
+          height: 1.12,
+          letterSpacing: 1,
         ),
         displaySmall: TextStyle(
           fontFamily: display,
           fontSize: 36,
-          fontWeight: FontWeight.w600,
-          height: 1.22,
+          fontWeight: FontWeight.w300,
+          height: 1.18,
+          letterSpacing: 1,
         ),
         headlineLarge: TextStyle(
           fontFamily: display,
           fontSize: 32,
-          fontWeight: FontWeight.w600,
-          height: 1.25,
+          fontWeight: FontWeight.w300,
+          height: 1.22,
+          letterSpacing: 0.8,
         ),
         headlineMedium: TextStyle(
           fontFamily: display,
           fontSize: 28,
-          fontWeight: FontWeight.w600,
-          height: 1.29,
+          fontWeight: FontWeight.w400,
+          height: 1.26,
+          letterSpacing: 0.6,
         ),
         // Page titles (ContentHeader) + wide empty-state titles land here —
-        // the most-seen "big" style, so it carries the serif voice.
+        // the most-seen "big" style. w400 so it stays crisp when uppercased.
         headlineSmall: TextStyle(
           fontFamily: display,
           fontSize: 24,
-          fontWeight: FontWeight.w600,
-          height: 1.33,
+          fontWeight: FontWeight.w400,
+          height: 1.3,
+          letterSpacing: 0.5,
         ),
         titleLarge: TextStyle(
           fontFamily: ui,
           fontSize: 22,
-          fontWeight: FontWeight.w600,
-          height: 1.27,
+          fontWeight: FontWeight.w500,
+          height: 1.3,
+          letterSpacing: 0.3,
         ),
         // FeatureCard row titles.
         titleMedium: TextStyle(
           fontFamily: ui,
           fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           height: 1.5,
-          letterSpacing: 0.1,
+          letterSpacing: 0.3,
         ),
         // SectionCard headings.
         titleSmall: TextStyle(
           fontFamily: ui,
           fontSize: 14,
-          fontWeight: FontWeight.w600,
-          height: 1.43,
-          letterSpacing: 0.1,
+          fontWeight: FontWeight.w500,
+          height: 1.45,
+          letterSpacing: 0.4,
         ),
         bodyLarge: TextStyle(
           fontFamily: ui,
           fontSize: 16,
           fontWeight: FontWeight.w400,
-          height: 1.5,
-          letterSpacing: 0.15,
+          height: 1.55,
+          letterSpacing: 0.3,
         ),
         bodyMedium: TextStyle(
           fontFamily: ui,
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          height: 1.43,
-          letterSpacing: 0.2,
+          height: 1.5,
+          letterSpacing: 0.3,
         ),
         bodySmall: TextStyle(
           fontFamily: ui,
           fontSize: 12,
           fontWeight: FontWeight.w400,
-          height: 1.33,
-          letterSpacing: 0.2,
+          height: 1.4,
+          letterSpacing: 0.4,
         ),
-        // Button + chip labels — semibold so they pop against the surface.
+        // Button + eyebrow labels — medium weight, tracked. These are the
+        // small all-caps moments, so the baked-in tracking is generous.
         labelLarge: TextStyle(
           fontFamily: ui,
           fontSize: 14,
-          fontWeight: FontWeight.w600,
-          height: 1.43,
-          letterSpacing: 0.1,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          letterSpacing: 0.8,
         ),
         labelMedium: TextStyle(
           fontFamily: ui,
           fontSize: 12,
-          fontWeight: FontWeight.w600,
-          height: 1.33,
-          letterSpacing: 0.4,
+          fontWeight: FontWeight.w500,
+          height: 1.35,
+          letterSpacing: 1.2,
         ),
         labelSmall: TextStyle(
           fontFamily: ui,
           fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           height: 1.45,
-          letterSpacing: 0.4,
+          letterSpacing: 1.5,
         ),
       );
 }

@@ -42,7 +42,8 @@ void main() {
     // login screen.
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Different World'), findsOneWidget);
+    // The login wordmark renders tracked-uppercase.
+    expect(find.text('DIFFERENT WORLD'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
   });
 }

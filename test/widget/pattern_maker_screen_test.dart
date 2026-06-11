@@ -34,7 +34,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Make a Pattern'), findsOneWidget);
+    expect(find.text('MAKE A PATTERN'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Snap your tile'), findsOneWidget);
   });
 
