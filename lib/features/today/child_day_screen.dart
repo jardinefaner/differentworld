@@ -5,6 +5,7 @@ import 'package:differentworld/features/action_words/action_words_providers.dart
 import 'package:differentworld/features/action_words/journey_day_sheet.dart';
 import 'package:differentworld/features/action_words/mood.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/action_words/world_arc.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
@@ -71,6 +72,7 @@ class _ChildDayScreenState extends ConsumerState<ChildDayScreen> {
           const SizedBox(height: 20),
           _TodaysWords(subjectId: subject.id, groupId: subject.groupId),
           const SizedBox(height: 20),
+          const _TodaysMissions(),
           _MoodRow(subjectId: subject.id, groupId: subject.groupId),
           const SizedBox(height: 20),
           const _RoomToday(),
@@ -317,6 +319,110 @@ class _VerbChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The current world's missions — a focused few of today's daily missions
+/// ("pick 1-2"), with a "see all" into the full world arc (daily + weekly +
+/// project). The kid-as-player "things to do" layer. Renders nothing until the
+/// journey is active.
+class _TodaysMissions extends ConsumerWidget {
+  const _TodaysMissions();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final arc = ref.watch(currentWorldArcProvider);
+    final day = ref.watch(currentProgramDayProvider);
+    if (arc == null || day == null || arc.missions.daily.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final picks = dailyMissionsForDay(arc.missions.daily, day);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(child: _Label(text: 'Missions · pick 1-2')),
+            TextButton(
+              onPressed: () => unawaited(_showMissionsSheet(context, arc)),
+              child: const Text('See all'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        for (final m in picks)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.bolt_outlined,
+                    size: 16, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(m, style: theme.textTheme.bodyMedium),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+}
+
+Future<void> _showMissionsSheet(BuildContext context, WorldArc arc) {
+  return showGlassSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheetCtx) {
+      final theme = Theme.of(sheetCtx);
+      Widget bullet(String text) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.bolt_outlined,
+                    size: 16, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+              ],
+            ),
+          );
+      return SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Missions',
+                style: theme.textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              const _Label(text: 'Daily · pick 1-2 each day'),
+              const SizedBox(height: 8),
+              for (final m in arc.missions.daily) bullet(m),
+              if (arc.missions.weekly.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                const _Label(text: 'This week'),
+                const SizedBox(height: 8),
+                for (final m in arc.missions.weekly) bullet(m),
+              ],
+              if (arc.missions.project.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                const _Label(text: 'The project'),
+                const SizedBox(height: 8),
+                Text(arc.missions.project, style: theme.textTheme.bodyMedium),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 /// The five-emoji mood row; today's pick highlighted.

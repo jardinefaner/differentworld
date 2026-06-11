@@ -1,0 +1,324 @@
+{
+  "worlds": [
+    {
+      "week": 1,
+      "id": "me",
+      "missions": {
+        "daily": [
+          "Draw one new destination on your body planet map",
+          "Say your Declaration out loud to someone new",
+          "Find one thing about yourself you didn't know yesterday",
+          "Look in the mirror for 30 seconds — what do you notice?",
+          "Ask someone: 'what do you notice about me?'",
+          "Write one sentence about who you are today",
+          "Teach someone your 4-note anthem",
+          "Add one rule to your personal world's rule book",
+          "Find someone with the same eye color, shoe size, or birthday month",
+          "Draw your hand from memory without looking, then compare"
+        ],
+        "weekly": [
+          "Complete your body planet map with all 10 destinations and mascots"
+        ],
+        "project": "By the end of this world: your journal has your avatar, Declaration card, body planet map, 3 rules, 4-note anthem, fingerprint, and baby-photo comparison. Seven artifacts about YOU."
+      },
+      "rpg": {
+        "avatar": "Stage 1 of 10. Base form — your real self-portrait using the mirror. Draw what you SEE. Drawn in the journal and on the body planet map at once: the portrait IS the planet.",
+        "name": "First Declaration ever. Most kids pick simple titles: 'The Fast One,' 'Captain Dinosaur,' 'The Girl Who Likes Purple.' All perfect. Title complexity grows over the summer.",
+        "spells": "UNIQUE (one of a kind — your fingerprint), ENORMOUS (really big — your imagination), SHIMMER (soft glow — your eyes when excited), GENTLE (soft strength), FIERCE (strong softness).",
+        "tools": "Pencil (extends your finger into lasting marks). Mirror (shows what everyone else sees). Magnifying glass (makes the small enormous).",
+        "inventory": "Journal cover. Declaration card. Body planet map. Fingerprint page. Baby photo. 3 Rules page. 4-Note anthem. Self-portrait. Mood logs.",
+        "allies": "First allies through body tracing (you need a partner). Travel-passport stamps from planet tours. 'Marcus traced me. Sofia stamped my passport.'",
+        "lore": "The Wall starts blank. By the end: questions answered ten different ways. The first shared mythology. 'What's heavy?' answered 10 ways.",
+        "weather": "Learning the system. Most kids pick 4-5 at first (don't trust that low numbers are safe). Honest 2s and 3s appear later — that shift IS the culture forming."
+      }
+    },
+    {
+      "week": 2,
+      "id": "stories",
+      "missions": {
+        "daily": [
+          "Add one sentence to a story someone else started",
+          "Tell a true thing that happened to you as a 'once upon a time'",
+          "Pull 3 objects and invent how they connect",
+          "Retell a famous story from the side character's eyes",
+          "Draw the map of a story — where it begins, the trouble, the end",
+          "Find the hero, the helper, and the trouble in a book you read",
+          "Make up a one-line story about the person next to you",
+          "Give a boring object a secret backstory",
+          "End a story three different ways",
+          "Catch yourself living a 'and then…' moment and name it"
+        ],
+        "weekly": [
+          "Write (or tell) one whole story of your own, beginning to end, and put it in your journal"
+        ],
+        "project": "By the end of this world: a story you authored, a story map, a 'told from the wrong character' retelling, and your line from the class one-word story. You learn a story is just a chain of 'and then.'"
+      },
+      "rpg": {
+        "avatar": "Stage 2 of 10. Story form — the narrator self. A cloak made of pages? A quill for a hand? Speech-bubble hair? Draw the YOU that tells the tale. Paste beside stage 1.",
+        "name": "Titles gain a story shape: 'The One Who Begins,' 'Captain Once-Upon,' 'The Girl with a Thousand Endings.' Your title is the first line of your own legend.",
+        "spells": "ONCE (every story's first word), WEAVE (threading parts into one), HERO (the one who acts), TWIST (the turn nobody saw), BEGIN (the bravest word).",
+        "tools": "The story bag (random objects → forced connection). The blank page (the scariest, most powerful tool). Your own voice (a told story needs no pencil).",
+        "inventory": "Your authored story. A story map. The 'wrong character' retelling. Your one word from the class story. The first-line of your title.",
+        "allies": "Story-river partners (you can't tell a circle story alone). 'Ava added the dragon, then I added the door.' Co-authors of something nobody planned.",
+        "lore": "The Wall fills with story-questions: 'who is the hero of YOUR story?' 'whose side have you never heard?' The room learns every villain is someone's hero.",
+        "weather": "Mood-as-plot: 'today felt like the middle of a story — the hard part.' Kids start narrating their own feelings, which is the first step to steering them."
+      }
+    },
+    {
+      "week": 3,
+      "id": "nature",
+      "missions": {
+        "daily": [
+          "Check your seed — draw today's growth even if nothing changed",
+          "Find one bug and watch it for 60 seconds without touching",
+          "Add one new thing to your 50-step map",
+          "Collect one natural object for your inventory",
+          "Listen outside for 30 seconds — count every sound",
+          "Find something in nature that matches your mood",
+          "Identify one living thing nobody else noticed",
+          "Smell three different things outside — describe each",
+          "Touch tree bark — describe the texture in one word",
+          "Find the oldest thing visible from where you stand"
+        ],
+        "weekly": [
+          "Complete the 50-step map with at least 20 landmarks, then press 5 different leaves into your journal with labels"
+        ],
+        "project": "By the end of this world: a seed-growth log, the 50-step map, pressed leaves, a food chain, a bug drawing, a sound map, and a bark rubbing. This section should feel rougher and more organic than the Me section."
+      },
+      "rpg": {
+        "avatar": "Stage 3 of 10. Nature evolution — the wild got into you. Leaf crown? Vine arms? Bark skin? Moss on the shoulders? Draw what nature GAVE you. Paste beside the last stage.",
+        "name": "Titles incorporate nature: 'The Bug Watcher,' 'Captain Leaf,' 'The Girl Who Talks to Trees.' The metaphors are growing.",
+        "spells": "CANOPY (ceiling of leaves), HABITAT (where something lives), NOCTURNAL (awake at night), SYMBIOSIS (two things helping each other), EROSION (wearing away slowly).",
+        "tools": "Magnifying glass UNLOCKED (extends the eyes to the tiny). Clipboard for Scouts (makes walking into research). Seed cup (a living tool that teaches patience). Collection bag.",
+        "inventory": "Pressed leaves. Bark rubbings. Bug drawings. Sound maps. Seed log. Natural objects. The 50-step map. Food chain. Each item physically rougher than Week 1 — from outside.",
+        "allies": "Bug-safari partners. Sound-map pairs. 'Jayden showed me the coolest beetle.' Nature creates allies through shared discovery.",
+        "lore": "The Wall goes organic: 'what's patient?' 'if trees could talk…' The answer 'a seed' next to 'sadness' from Week 1 gives the Wall RANGE.",
+        "weather": "Mood weather connects to real weather. 'Raining outside and I feel rainy too.' The link between inside and outside is nature's emotional lesson."
+      }
+    },
+    {
+      "week": 4,
+      "id": "water",
+      "missions": {
+        "daily": [
+          "Water your seed — it still needs you",
+          "Find water somewhere you didn't expect it",
+          "Move water between containers without spilling",
+          "Taste water slowly — what does it actually taste like?",
+          "Draw a drop's journey from cloud to cup",
+          "Find 3 objects — predict sink or float, then test",
+          "Listen to water for 30 seconds (faucet, rain, pour)",
+          "Hold ice — time how long until you can't anymore",
+          "Find something translucent — hold it to the light",
+          "Pour water as slowly as possible — time your longest pour"
+        ],
+        "weekly": [
+          "Map every water source and drain in the building, then build a working water obstacle course"
+        ],
+        "project": "By the end of this world: a water-cycle diagram, a plumbing map, sink/float data, an ice-melt timeline, a slow-pour record, a 'water inside me' page, and a diffusion drawing. The seed should show real growth — nature carried into the water world."
+      },
+      "rpg": {
+        "avatar": "Stage 4 of 10. Water form — flowing hair, wave hands, ripple patterns. Or draw yourself AS water: translucent, seeing through to the destinations inside. The avatar turns fluid.",
+        "name": "Titles flow: 'The River,' 'Captain Splash.' 'The Fast One' becomes 'The Fast Current.' The metaphors are evolving.",
+        "spells": "EVAPORATE (watch it on the sidewalk), CURRENT (feel it in a stream), TRANSLUCENT (wet paper on a window), RIPPLE (one drop, rings outward), CASCADE (water over steps of cups).",
+        "tools": "Eyedroppers (precision — single drops). Funnels (direct flow). Sponges (absorb and release). All about CONTROL of something that resists control.",
+        "inventory": "Water-cycle diagram. Plumbing map. Sink/float chart. Ice-melt data. Diffusion drawing. Water-xylophone recording. Sponge-relay time.",
+        "allies": "Water-obstacle-course partners. Sponge-relay teams. Sink/float debates. Water creates allies through mess and laughter.",
+        "lore": "The Wall goes deep: 'where does water go down the drain?' 'can water remember?' Kids compare feelings to water without being asked.",
+        "weather": "Weather as 'your mood so far this summer.' Weeks of data; patterns visible. Self-awareness from their own collected numbers."
+      }
+    },
+    {
+      "week": 5,
+      "id": "music",
+      "missions": {
+        "daily": [
+          "Find a rhythm in something that isn't an instrument",
+          "Teach someone a 4-beat clap and pass it around",
+          "Hum a feeling without using any words",
+          "Make one instrument from cups, rubber bands, or rice",
+          "Find the highest and lowest sound in the room",
+          "Tap your name's rhythm — how many beats is it?",
+          "Listen for 30 seconds and 'play' the sounds back",
+          "Add one note to the room's growing song",
+          "Move the way a song tells you to, then freeze when it stops",
+          "Find the beat in your own heartbeat"
+        ],
+        "weekly": [
+          "Build an instrument, then play one 4-note song on it and teach it to a partner"
+        ],
+        "project": "By the end of this world: a made instrument, a tuned water-xylophone tune, a recording of the room's song, and your name written as a rhythm. You learn music is the first language — older than words."
+      },
+      "rpg": {
+        "avatar": "Stage 5 of 10. Music form — sound waves for hair, notes orbiting your head, a body that hums. Draw the YOU that the room can hear. Halfway through the evolution.",
+        "name": "Titles find their rhythm: 'The Drum,' 'Captain Melody,' 'The One Who Keeps the Beat.' Some titles you can almost hear.",
+        "spells": "RHYTHM (the beat under everything), MELODY (the tune on top), RESONATE (when a sound makes another sound), HARMONY (different notes, one thing), TEMPO (how fast time feels).",
+        "tools": "Your own body (the first instrument — clap, stomp, hum). Found-sound makers (cups, jars, rubber bands). The water glasses (pitch you can pour). The recorder (catch a sound and keep it).",
+        "inventory": "A made instrument. The room's-song recording. Your name-as-rhythm. The hum-telephone result. A 'sound map' of one place.",
+        "allies": "Call-and-response partners (a song needs an echo). The room band (everyone is one sound). 'My beat plus your melody made the song.'",
+        "lore": "The Wall asks: 'where does a sound go when it stops?' 'can you draw a song?' The room discovers that noise becomes music the moment it's made on purpose.",
+        "weather": "Mood-as-soundtrack: 'mine was drums, fast and happy.' Kids give their feelings a tempo — fast and loud, or slow and quiet."
+      }
+    },
+    {
+      "week": 6,
+      "id": "space",
+      "missions": {
+        "daily": [
+          "Name something bigger than you, then bigger than THAT — keep going",
+          "Invent one alien with 3 verb habits",
+          "Draw one constellation on the ceiling star map",
+          "Walk the distance between two planets in the yard",
+          "Find the farthest thing you can see from where you stand",
+          "Describe this room as an alien seeing it for the first time",
+          "Stretch your arms wide — that's how big you think you are; now look up",
+          "Write one line of your message to the future",
+          "Name a star after a feeling",
+          "Find a shadow and follow it for one minute"
+        ],
+        "weekly": [
+          "Create a complete alien species — drawing, name, habitat, 3 habits, food, and language"
+        ],
+        "project": "By the end of this world: a named star on the ceiling, an alien-species page, a planet-walk diagram, your Pale-Blue-Dot response, and a SEALED message to the future. You learn how small the Earth is — and that small doesn't mean unimportant."
+      },
+      "rpg": {
+        "avatar": "Stage 6 of 10. Space form — you against infinite dark, glowing at the edges, tiny and vast at once. Draw the YOU that floats on the pale blue dot. Paste beside the last stage.",
+        "name": "Titles go cosmic: 'The Star Who Waits,' 'Captain Constellation,' 'The Comet.' The kid who was 'The Fast One' might now be 'The Comet.'",
+        "spells": "CONSTELLATION (a pattern you draw in the stars), GRAVITY (what holds you down), ORBIT (going around and around), VAST (bigger than you can hold), STELLAR (made of star-stuff — you are).",
+        "tools": "Flashlight UNLOCKED (extends the sun). The yard (scaled to the solar system). White crayon on black paper (drawing with light on darkness). Your arms wide (the universe's measuring stick).",
+        "inventory": "Alien-species page. Star-name card. Planet-walk data. Pale-Blue-Dot response. The SEALED letter to the future. A constellation drawing.",
+        "allies": "Planet-walk partners. Alien cross-pollination: 'my alien and your alien should meet.' Shared smallness makes a strong team.",
+        "lore": "The Wall asks the biggest questions: 'what's the farthest thing you can see?' 'does being small make you unimportant?' Answers turn into poetry.",
+        "weather": "Scale-weather: 'my problem felt huge, but next to the universe…' Kids learn to zoom out on a feeling — perspective as a superpower."
+      }
+    },
+    {
+      "week": 7,
+      "id": "dreams",
+      "missions": {
+        "daily": [
+          "Close your eyes for 30 seconds — describe what you 'saw'",
+          "Draw something that only exists in your imagination",
+          "Tell someone about a dream — real or invented",
+          "Draw a scary dream, then make it silly or friendly",
+          "Invent something impossible and explain what it does",
+          "Walk through a door in your imagination — what's behind it?",
+          "Draw the room but make everything wrong (surreal)",
+          "Remember one dream before it fades and draw it",
+          "Connect two things that could never connect",
+          "Make a melting-clock kind of picture — real and unreal at once"
+        ],
+        "weekly": [
+          "Keep a dream journal for the week — draw each morning before the dream fades"
+        ],
+        "project": "By the end of this world: a dream journal, a 'behind the door' drawing, a surreal classroom, a nightmare-flip, and an impossible invention. The wildest pages of the whole book — imagination with no rules."
+      },
+      "rpg": {
+        "avatar": "Stage 7 of 10. Dream form — no rules. Fly, glow, be transparent, be enormous or microscopic. The freest drawing of the summer. Imagination fully unleashed.",
+        "name": "Titles drift dreamward: 'The Dreamer,' 'The One Behind the Door,' 'Captain Impossible.' Titles you can't quite hold — like a dream the morning after.",
+        "spells": "SURREAL (real and unreal at once), LUMINOUS (glowing softly — the crown-jewel word), REVERIE (a waking dream), DRIFT (going wherever the mind goes), IMAGINE (the engine of everything).",
+        "tools": "Sleep masks (block the outside so the inside can project). The guided daydream (a door, a path, a room you build with closed eyes). Surreal-art supplies (draw the world wrong on purpose).",
+        "inventory": "Dream-journal pages. The 'behind the door' drawing. A surreal classroom. A nightmare-flip. An impossible invention.",
+        "allies": "Dream-sharing partners (an unusual intimacy). 'You were IN my dream.' The room learns that telling a dream makes it real for a second.",
+        "lore": "The Wall enters its deepest phase: 'where do you go when you're asleep?' 'is a dream real while it's happening?' The answers become small poems.",
+        "weather": "Two weathers now — waking and dreaming. 'How did you feel in your dream?' Kids meet their own subconscious at age six."
+      }
+    },
+    {
+      "week": 8,
+      "id": "time",
+      "missions": {
+        "daily": [
+          "Sit perfectly still and feel one minute pass — was it long or short?",
+          "Bring or draw 'you at 1' next to 'you now'",
+          "Find the oldest thing you can touch today",
+          "Race in slow motion — last one to the wall (without stopping) wins",
+          "Open your message to the future, or write one to open later",
+          "Map one spot at morning, noon, and now — what changed?",
+          "Plant or water something and promise to wait for it",
+          "Guess when 60 seconds is up with your eyes closed",
+          "Find something that changed without anyone watching",
+          "Name one thing worth waiting for"
+        ],
+        "weekly": [
+          "Build a paper-strip timeline across the room — your birthday, today, the dinosaurs, the first star"
+        ],
+        "project": "By the end of this world: a stillness record, a before/after of yourself, the long timeline, and a sealed message to the future. You learn you can't see time — but you can feel it, and patience is a skill you can grow."
+      },
+      "rpg": {
+        "avatar": "Stage 8 of 10. Time form — you at three ages at once, or a clock for a heart, or trailing motion like a long exposure. Draw the YOU that is always changing. Paste beside the last stage.",
+        "name": "Titles deepen with time: 'The Patient One,' 'Captain Someday,' 'The One Who Waits.' The fast kid might finally become 'The Long Game.'",
+        "spells": "ETERNAL (never ending), FLEETING (gone in a blink), ANCIENT (older than anyone), PATIENT (strong enough to wait), MOMENT (the only time that's real — now).",
+        "tools": "The sand timer (you can watch time fall). The stillness minute (feel it pass). The timeline strip (time you can stand next to). The sealed letter (a message you mail to a future you).",
+        "inventory": "A stillness record. A before/after of yourself. The room timeline. The sealed letter. The four-maps-of-one-spot.",
+        "allies": "Slow-race partners (winning by waiting). Timeline builders. 'We're all on the same strip, tiny next to forever.' Patience, shared.",
+        "lore": "The Wall asks: 'is a minute the same length for everyone?' 'what's worth waiting for?' The room learns the same minute is long in a line and short in a game.",
+        "weather": "Looking-back weather: 'how do I feel about this summer ending?' Kids hold the whole stretch at once — anticipation and a little ache."
+      }
+    },
+    {
+      "week": 9,
+      "id": "feelings",
+      "missions": {
+        "daily": [
+          "Name your feeling using a COLOR, not a word",
+          "Notice someone's mood without asking — just watch",
+          "Draw today's feeling as weather in your journal",
+          "Mix two colors and call it a feeling nobody's named",
+          "Show a feeling on your face — can a partner read it?",
+          "Find where a feeling lives in your body and color it",
+          "Name a feeling that's two feelings at once",
+          "Comfort someone, or yourself, with one calm thing",
+          "Tell a feeling it's allowed to be here",
+          "Catch a feeling changing — draw it in three panels"
+        ],
+        "weekly": [
+          "Complete your feelings body-map AND a color-mixing emotion experiment"
+        ],
+        "project": "By the end of this world: a feelings body-map, a color-mixing 'blend' drawing, a three-panel feeling-evolution, and an anonymous 'something nobody knows I feel' note. You learn you're never just one feeling — you're always a blend."
+      },
+      "rpg": {
+        "avatar": "Stage 9 of 10. Feelings form — colors blooming from the chest, weather across the face, a body that shows what's inside. Draw the YOU that feels everything. Almost the final form.",
+        "name": "Titles turn inward: 'The One Who Feels Everything,' 'Captain Empathy,' 'The Heart.' The bravest titles of the summer.",
+        "spells": "EMPATHY (feeling what others feel), RESILIENT (bouncing back), TENDER (soft on purpose), ANTICIPATION (the ache before something good), BRAVE (feeling it and doing it anyway).",
+        "tools": "The mood-weather scale (name it to tame it). Color-mixing cups (feelings blend like paint). The anonymous wall (say it without your name). The repair script (what happened / how it felt / what's next).",
+        "inventory": "A feelings body-map. A color-mixing drawing. A three-panel feeling-evolution. The anonymous note. Ten weeks of mood logs, read as one story.",
+        "allies": "Empathy partners (read a face, check if you're right). 'I could see it in your eyes.' The room learns that feeling for someone is its own kind of strength.",
+        "lore": "The Wall's deepest question: 'what's something nobody knows you feel?' Anonymous, read aloud, the room goes silent. 'Now we know.'",
+        "weather": "Mood weather comes home — the whole point. 'How are you, really?' is finally a question the room can answer honestly, in color."
+      }
+    },
+    {
+      "week": 10,
+      "id": "us",
+      "missions": {
+        "daily": [
+          "Add one more person to your ally page",
+          "Help someone without them noticing",
+          "Give one specific compliment using a spell word",
+          "Tell someone one thing you learned from them",
+          "Walk through the room slowly — what would you miss most?",
+          "Choose your best work from any world — explain why",
+          "Write one sentence to your future self",
+          "Hold the string web — pass it to someone you learned from",
+          "Pick the ONE verb you'll take home and say why",
+          "Say your final Declaration out loud, in past tense"
+        ],
+        "weekly": [
+          "Prepare the gallery — choose your 5 best works across all the worlds, mount them, and write labels"
+        ],
+        "project": "THE FINAL PROJECT: the journal complete. Every section filled. The avatar strip with all 10 stages. The collection grid colored. The ally page full. The spell book. Ten weeks of mood weather. The time capsule OPENED. The journal IS the summer — fat, messy, heavy, irreplaceable. Ready for The Show."
+      },
+      "rpg": {
+        "avatar": "Stage 10 of 10 — the FINAL FORM. The best parts of every stage: nature's crown, water's flow, music's hum, dreams' flight, space's glow, feelings' colors. Combined. Drawn on the last page, facing the mirror sticker on the inside back cover. The drawn self looks at the real self. The book closes on that.",
+        "name": "The FINAL DECLARATION, in past tense: 'This WAS my book.' The title is no longer chosen — it's REVEALED, from the cumulative data: most-practiced verb + most-visited world. 'The Dolphin Who Carries.'",
+        "spells": "TOGETHER (stronger than alone), BELONG (you have a place here), EPHEMERAL (lasting only a moment — the summer), INFINITE (never ending — the game continues), WE (the last and biggest word).",
+        "tools": "Every tool unlocked — the full kit. But the final tool isn't on the shelf. The string web reveals it: the most powerful tool is the person next to you.",
+        "inventory": "EVERYTHING. Fifty days across ten worlds. Plus the gallery, the certificate, and the time-capsule letter, OPENED. The journal is full.",
+        "allies": "Every name in the room, on every ally page. The string web fills the gaps. The final entry: 'Everyone. We made this room together.'",
+        "lore": "The final Wall: 'what will you remember?' 'what verb will you take home?' The Wall reflects on itself. Every answer photographed. This is the archive.",
+        "weather": "The last check — after the Declaration, after the gallery, after families leave. Most fingers are 5: genuine, not performed. And a 3 because it's ending is the most honest weather of the summer."
+      }
+    }
+  ]
+}

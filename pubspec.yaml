@@ -150,6 +150,10 @@ flutter:
     # bank, spell-words, key moment, and five authored days (title + focus). The
     # lived experience above the verb catalog.
     - assets/curriculum/world_blocks.json
+    # The per-weekly-world MISSIONS (daily / weekly / project) + RPG progression
+    # (avatar evolution, spells, tools, inventory, allies, lore, weather) — the
+    # kid-as-player layer, keyed 1:1 with the 10 weekly worlds.
+    - assets/curriculum/world_arc.json
     # Monochrome emoji font (subset to the ~25 emoji used on printed cards),
     # loaded via rootBundle for the PDF toolkit so verb cards can show 📦 👂 …
     # offline. Helvetica can't draw emoji; this fills only those glyphs (~18 KB).
