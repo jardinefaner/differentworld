@@ -51,6 +51,15 @@ class AppColors extends ThemeExtension<AppColors> {
     if (other is! AppColors) return this;
     return AppColors(gold: Color.lerp(gold, other.gold, t) ?? gold);
   }
+
+  /// A light, AA-passing tint of [accent] for use as TEXT or an icon on a
+  /// DARK surface. The bright categorical accents (teal, blue, …) only reach
+  /// ~3:1 on near-black — below WCAG AA. Blending the accent lightly over
+  /// white yields a pale accent-tinted near-white that keeps the colour cue
+  /// while clearing 4.5:1. Use for captions/labels on the immersive (black)
+  /// surfaces; the raw accent stays fine for fills, borders, and large glyphs.
+  static Color readableOnDark(Color accent) =>
+      Color.alphaBlend(accent.withValues(alpha: 0.30), Colors.white);
 }
 
 /// The typeface + the full Material text ramp built from it.

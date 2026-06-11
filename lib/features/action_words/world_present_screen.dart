@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
@@ -234,12 +235,15 @@ class _TitleSlide extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          world.name,
+          world.name.toUpperCase(),
+          semanticsLabel: world.name,
           textAlign: TextAlign.center,
           style: const TextStyle(
+            fontFamily: AppType.display,
             color: Colors.white,
             fontSize: 56,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 2,
           ),
         ),
         const SizedBox(height: 16),
@@ -281,6 +285,7 @@ class _BigText extends StatelessWidget {
           big,
           textAlign: TextAlign.center,
           style: const TextStyle(
+            fontFamily: AppType.display,
             color: Colors.white,
             fontSize: 44,
             fontWeight: FontWeight.w600,
@@ -325,6 +330,7 @@ class _VerbsSlide extends StatelessWidget {
               child: Text(
                 '${v.emoji}  ${v.label.toUpperCase()}',
                 style: const TextStyle(
+                  fontFamily: AppType.display,
                   color: Colors.white,
                   fontSize: 40,
                   fontWeight: FontWeight.w700,

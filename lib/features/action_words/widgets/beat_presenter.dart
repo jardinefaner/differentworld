@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/features/action_words/house_timer.dart';
@@ -537,7 +538,9 @@ class _BeatSlide extends StatelessWidget {
       beat.label.toUpperCase(),
       textAlign: TextAlign.center,
       style: TextStyle(
-        color: Color.alphaBlend(accent.withValues(alpha: 0.9), Colors.white70),
+        // AA-safe on the dark slide — a pale accent tint, not the raw accent
+        // (teal/blue only hit ~3:1 on near-black).
+        color: AppColors.readableOnDark(accent),
         fontSize: 20,
         letterSpacing: 4,
         fontWeight: FontWeight.w600,
