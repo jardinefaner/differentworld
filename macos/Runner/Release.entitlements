@@ -4,5 +4,15 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- Outbound HTTPS/WSS for Supabase + PowerSync. Without this the
+	     sandbox blocks ALL network access and sync hangs forever. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Microphone for voice dictation (record plugin supports macOS). -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+	<!-- NSOpenPanel/NSSavePanel powerbox grants: image picks + PDF saves. -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
 </dict>
 </plist>

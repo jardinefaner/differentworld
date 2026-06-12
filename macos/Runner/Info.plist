@@ -35,10 +35,14 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Different World uses the camera to take photos for activities and records.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>$(PRODUCT_COPYRIGHT)</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Different World uses the microphone for voice dictation — what you say becomes text in the composer and observation notes.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>
