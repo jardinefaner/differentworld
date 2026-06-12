@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/toolkit/toolkit_pdf.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -40,6 +41,11 @@ Future<void> showJourneyDaySheet(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Grab-pill: marks this as a pull-to-dismiss sheet (it renders
+              // only on the phone bottom-sheet surface; self-suppresses in the
+              // tablet dialog / desktop side-panel). Without it the full-height
+              // sheet read as a chrome-less screen — "where's the back button?"
+              const Center(child: GlassDragHandle()),
               Row(
                 children: [
                   Text(block.emoji, style: const TextStyle(fontSize: 36)),
@@ -271,7 +277,9 @@ class JourneyDayRow extends StatelessWidget {
                     child: Text(
                       'Today',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
+                        // Luminance-aware: the lighter world accents (yellow,
+                        // gold, cyan) failed AA with hardcoded white.
+                        color: AppColors.onAccent(accent),
                         fontWeight: FontWeight.w700,
                       ),
                     ),

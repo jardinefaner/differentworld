@@ -60,6 +60,17 @@ class AppColors extends ThemeExtension<AppColors> {
   /// surfaces; the raw accent stays fine for fills, borders, and large glyphs.
   static Color readableOnDark(Color accent) =>
       Color.alphaBlend(accent.withValues(alpha: 0.30), Colors.white);
+
+  /// Black or white TEXT/icon — whichever is legible ON a solid [fill].
+  /// Picks by perceived luminance, so a LIGHT accent fill (the yellow,
+  /// gold, cyan, pale-lavender world colours) gets near-black text
+  /// instead of the low-contrast white that a hardcoded `Colors.white`
+  /// produced on those lighter accents (≈2.5:1 — below WCAG AA). Use
+  /// wherever a chip / badge sits on a raw accent fill.
+  static Color onAccent(Color fill) =>
+      ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
+          ? Colors.white
+          : Colors.black87;
 }
 
 /// The typeface + the full Material text ramp built from it.
