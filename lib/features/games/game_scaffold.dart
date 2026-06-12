@@ -94,10 +94,16 @@ class GameScaffold<S> extends StatelessWidget {
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= _wideBreakpoint;
                   final stage = def.buildStage(context, state);
-                  final revealLabel = def.revealLabel(revealed: wire['r'] == true);
+                  final revealLabel = def.revealLabel(
+                    revealed: wire['r'] == true,
+                  );
                   // Full control override (poll, timer, …): one layout — the
                   // stage fills, the game's own controls sit in the bar.
-                  final custom = def.buildControls(context, state, controller.send);
+                  final custom = def.buildControls(
+                    context,
+                    state,
+                    controller.send,
+                  );
                   if (custom != null) {
                     return Column(
                       children: [
@@ -125,18 +131,22 @@ class GameScaffold<S> extends StatelessWidget {
                       : SafeArea(
                           child: Column(
                             children: [
-                              SizedBox(height: 220, child: stage),
-                              Expanded(
-                                child: _GameControlPanel(
-                                  wire: wire,
-                                  done: done,
-                                  active: active,
-                                  revealLabel: revealLabel,
-                                  onIntent: _send,
-                                  onDone: () {
-                                    if (context.canPop()) context.pop();
-                                  },
-                                ),
+                              // The stage takes every pixel the controls don't
+                              // need. A fixed-height stage (was 220) clipped
+                              // any game whose stage stacks vertically — the
+                              // riddle prompt + its revealed answer card sat
+                              // below the fold and read as "cut off" on
+                              // phones.
+                              Expanded(child: stage),
+                              _GameControlPanel(
+                                wire: wire,
+                                done: done,
+                                active: active,
+                                revealLabel: revealLabel,
+                                onIntent: _send,
+                                onDone: () {
+                                  if (context.canPop()) context.pop();
+                                },
                               ),
                             ],
                           ),
@@ -275,99 +285,108 @@ class _GameControlPanel extends StatelessWidget {
     final index = _intOf(wire, 'i', 0);
     final total = _intOf(wire, 'n', 1);
     final revealed = wire['r'] == true;
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Text(
-            done ? 'Round complete!' : 'Slide ${index + 1} of $total',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const Spacer(),
-          if (done) ...[
-            Icon(
-              Icons.celebration_outlined,
-              size: 44,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 8),
+    // Same themed surface as the wide control bar. The panel used to sit
+    // directly on the stage's near-black vibe surface while using THEME
+    // text colors — in light mode that's dark-on-dark (unreadable), and
+    // either way the controls looked locked to one brightness while the
+    // rest of the app follows the system theme.
+    return Material(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Text(
-              'Play again for a fresh round — new questions every time.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              done ? 'Round complete!' : 'Slide ${index + 1} of $total',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 64,
-              child: FilledButton.icon(
-                onPressed: () => onIntent(GameIntent.reset),
-                icon: const Icon(Icons.replay),
-                label: const Text(
-                  'Play again',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            if (done) ...[
+              Icon(
+                Icons.celebration_outlined,
+                size: 44,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Play again for a fresh round — new questions every time.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: onDone,
-                icon: const Icon(Icons.check),
-                label: const Text('Done'),
-              ),
-            ),
-          ] else ...[
-            SizedBox(
-              width: double.infinity,
-              height: 72,
-              child: FilledButton.icon(
-                onPressed: active.contains(GameIntent.next)
-                    ? () => onIntent(GameIntent.next)
-                    : null,
-                icon: const Icon(Icons.arrow_forward, size: 28),
-                label: const Text(
-                  'Next',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: active.contains(GameIntent.back)
-                        ? () => onIntent(GameIntent.back)
-                        : null,
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Back'),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 64,
+                child: FilledButton.icon(
+                  onPressed: () => onIntent(GameIntent.reset),
+                  icon: const Icon(Icons.replay),
+                  label: const Text(
+                    'Play again',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: active.contains(GameIntent.reveal)
-                        ? () => onIntent(GameIntent.reveal)
-                        : null,
-                    icon: Icon(
-                      revealed
-                          ? Icons.visibility_off
-                          : Icons.lightbulb_outline,
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: onDone,
+                  icon: const Icon(Icons.check),
+                  label: const Text('Done'),
+                ),
+              ),
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                height: 72,
+                child: FilledButton.icon(
+                  onPressed: active.contains(GameIntent.next)
+                      ? () => onIntent(GameIntent.next)
+                      : null,
+                  icon: const Icon(Icons.arrow_forward, size: 28),
+                  label: const Text(
+                    'Next',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: active.contains(GameIntent.back)
+                          ? () => onIntent(GameIntent.back)
+                          : null,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Back'),
                     ),
-                    label: Text(revealLabel),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: active.contains(GameIntent.reveal)
+                          ? () => onIntent(GameIntent.reveal)
+                          : null,
+                      icon: Icon(
+                        revealed
+                            ? Icons.visibility_off
+                            : Icons.lightbulb_outline,
+                      ),
+                      label: Text(revealLabel),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
