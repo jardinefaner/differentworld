@@ -1,5 +1,6 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/shared/breakpoints.dart';
+import 'package:differentworld/shared/widgets/center_or_scroll.dart';
 import 'package:flutter/material.dart';
 
 /// Default empty state for any list / data screen.
@@ -7,6 +8,11 @@ import 'package:flutter/material.dart';
 /// Per CLAUDE.md, every data screen must design its empty state — never
 /// just an empty white surface. Use this widget for the standard layout:
 /// icon, title, optional message, optional action button.
+///
+/// **Scroll-safe**: the content centers when it fits, and scrolls when it
+/// doesn't (short viewport + large text — e.g. phone landscape at 200%
+/// dynamic type). Without this it overflows on small/landscape screens at
+/// high text scale.
 class EmptyState extends StatelessWidget {
   const EmptyState({
     required this.icon,
@@ -33,50 +39,50 @@ class EmptyState extends StatelessWidget {
     final iconSize = isWide ? 96.0 : 64.0;
     final maxWidth = isWide ? 480.0 : 360.0;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: iconSize,
-                color: theme.colorScheme.primary.withValues(alpha: 0.7),
-              ),
-              SizedBox(height: isWide ? 24 : 20),
+    final content = Padding(
+      padding: const EdgeInsets.all(32),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: iconSize,
+              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+            ),
+            SizedBox(height: isWide ? 24 : 20),
+            Text(
+              title.toUpperCase(),
+              semanticsLabel: title,
+              style: (isWide
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.titleMedium)
+                  ?.copyWith(letterSpacing: AppType.tracking),
+              textAlign: TextAlign.center,
+            ),
+            if (message != null) ...[
+              SizedBox(height: isWide ? 12 : 8),
               Text(
-                title.toUpperCase(),
-                semanticsLabel: title,
+                message!,
                 style: (isWide
-                        ? theme.textTheme.headlineSmall
-                        : theme.textTheme.titleMedium)
-                    ?.copyWith(letterSpacing: AppType.tracking),
+                        ? theme.textTheme.bodyMedium
+                        : theme.textTheme.bodySmall)
+                    ?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
-              if (message != null) ...[
-                SizedBox(height: isWide ? 12 : 8),
-                Text(
-                  message!,
-                  style: (isWide
-                          ? theme.textTheme.bodyMedium
-                          : theme.textTheme.bodySmall)
-                      ?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              if (action != null) ...[
-                SizedBox(height: isWide ? 32 : 24),
-                action!,
-              ],
             ],
-          ),
+            if (action != null) ...[
+              SizedBox(height: isWide ? 32 : 24),
+              action!,
+            ],
+          ],
         ),
       ),
     );
+
+    return CenterOrScroll(child: content);
   }
 }

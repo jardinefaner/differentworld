@@ -1,4 +1,5 @@
 import 'package:differentworld/shared/breakpoints.dart';
+import 'package:differentworld/shared/widgets/center_or_scroll.dart';
 import 'package:flutter/material.dart';
 
 /// Error variant of `EmptyState` with a built-in retry button.
@@ -43,7 +44,7 @@ class ErrorState extends StatelessWidget {
     final iconSize = isWide ? 96.0 : 64.0;
     final maxWidth = isWide ? 480.0 : 360.0;
 
-    return Center(
+    return CenterOrScroll(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: ConstrainedBox(
