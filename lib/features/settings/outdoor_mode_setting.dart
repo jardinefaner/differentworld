@@ -125,6 +125,7 @@ ColorScheme outdoorColorScheme() {
 /// already exports the standard light + dark themes).
 ThemeData outdoorTheme() {
   final scheme = outdoorColorScheme();
+  final t = AppType.textTheme();
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
@@ -133,19 +134,11 @@ ThemeData outdoorTheme() {
     scaffoldBackgroundColor: scheme.surface,
     // The shared type ramp (so outdoor speaks the same voice), but with
     // heavier weight on the text that has to survive glare.
-    textTheme: AppType.textTheme().copyWith(
-      bodyLarge: AppType.textTheme().bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-      bodyMedium: AppType.textTheme().bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-      titleMedium: AppType.textTheme().titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-      titleLarge: AppType.textTheme().titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
+    textTheme: t.copyWith(
+      bodyLarge: t.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+      bodyMedium: t.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      titleMedium: t.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+      titleLarge: t.titleLarge?.copyWith(fontWeight: FontWeight.w800),
     ),
     // Register the palette extension so `extension<AppColors>()!` is
     // non-null in outdoor mode too. Outdoor is dark-based → the pale gold.

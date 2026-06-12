@@ -274,6 +274,7 @@ class _BigText extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
+          semanticsLabel: label,
           style: const TextStyle(
             color: Colors.white54,
             fontSize: 20,
@@ -329,6 +330,7 @@ class _VerbsSlide extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 '${v.emoji}  ${v.label.toUpperCase()}',
+                semanticsLabel: v.label,
                 style: const TextStyle(
                   fontFamily: AppType.display,
                   color: Colors.white,

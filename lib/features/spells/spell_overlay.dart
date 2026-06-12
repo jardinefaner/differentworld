@@ -6,6 +6,9 @@ import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// The app dark theme, computed once (not per `setState` rebuild).
+final ThemeData _darkTheme = buildDarkTheme();
+
 /// Casts a spell — a fullscreen dark countdown (the brief's one loud
 /// moment): the big emoji breathes, the foreign **word** leads, a timer
 /// ticks down. Pushed on the root navigator so no app chrome floats over
@@ -85,7 +88,7 @@ class _SpellPageState extends State<_SpellPage>
   Widget build(BuildContext context) {
     final done = _remaining <= 0;
     return Theme(
-      data: buildDarkTheme(),
+      data: _darkTheme,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(

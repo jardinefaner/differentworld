@@ -15,6 +15,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// One child + their day, for the closing reveal cycle.
 typedef RevealItem = ({Subject subject, ActionWordsDay day});
 
+/// The app dark theme, computed once and shared by the always-dark reveal
+/// pages — `buildDarkTheme()` runs two `ColorScheme.fromSeed` passes, so we
+/// don't want it re-run on every `setState` rebuild.
+final ThemeData _darkTheme = buildDarkTheme();
+
 /// The closing reveal — the day's world appears with a glow, e.g.
 /// "Maya was 🐬 Dolphin today." The only loud-ish moment in a calm app.
 ///
@@ -123,21 +128,30 @@ class _RevealPageState extends ConsumerState<_RevealPage>
     // would send two writes (the upsert is idempotent, but two concurrent
     // Drift transactions touch the same row). Mirrors _SkillMeasureSheet.
     if (name.isEmpty || _naming) return;
-    setState(() {
-      _naming = true;
-      _named = true;
-    });
-    await ref
-        .read(actionWordsActionsProvider)
-        .setWorldName(
-          subjectId: widget.subject.id,
-          groupId: widget.subject.groupId,
-          date: todayKey(),
-          name: name,
-        );
-    // The page is about to close; guard so a fast back-during-write can't
+    setState(() => _naming = true);
+    try {
+      await ref
+          .read(actionWordsActionsProvider)
+          .setWorldName(
+            subjectId: widget.subject.id,
+            groupId: widget.subject.groupId,
+            date: todayKey(),
+            name: name,
+          );
+    } on Object catch (_) {
+      // Don't claim the world is named if the write failed — reset + let the
+      // user retry instead of silently dismissing the naming UI.
+      if (!mounted) return;
+      setState(() => _naming = false);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('Couldn’t save the name — try again.')),
+      );
+      return;
+    }
+    // Only now is it truly named. Guard so a fast back-during-write can't
     // resume into a disposed state.
     if (!mounted) return;
+    setState(() => _named = true);
   }
 
   @override
@@ -160,7 +174,7 @@ class _RevealPageState extends ConsumerState<_RevealPage>
       // The app's dark theme (Jost + AppColors + component vocab) instead of a
       // bare ThemeData.dark — keeps the reveal in the same visual language as
       // the rest of the app. The black backdrop + gold glow below are unchanged.
-      data: buildDarkTheme(),
+      data: _darkTheme,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
@@ -418,7 +432,7 @@ class _RevealCyclePageState extends ConsumerState<_RevealCyclePage>
       // The app's dark theme (Jost + AppColors + component vocab) instead of a
       // bare ThemeData.dark — keeps the reveal in the same visual language as
       // the rest of the app. The black backdrop + gold glow below are unchanged.
-      data: buildDarkTheme(),
+      data: _darkTheme,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(

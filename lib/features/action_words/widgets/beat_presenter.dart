@@ -12,6 +12,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+/// The app dark theme, computed once (not per `setState`/stepper rebuild).
+final ThemeData _darkTheme = buildDarkTheme();
+
 /// The one immersive **present surface** for any ordered run of [DayBeat]s —
 /// the day's run of show (`/play-today`) and any single activity's story arc
 /// (`/arc`) both render through this (docs/VISION.md "with present/cast… like a
@@ -536,6 +539,7 @@ class _BeatSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     final caption = Text(
       beat.label.toUpperCase(),
+      semanticsLabel: beat.label,
       textAlign: TextAlign.center,
       style: TextStyle(
         // AA-safe on the dark slide — a pale accent tint, not the raw accent
@@ -682,7 +686,7 @@ class _TimerSheetState extends State<_TimerSheet> {
     ];
 
     return Theme(
-      data: buildDarkTheme(),
+      data: _darkTheme,
       child: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

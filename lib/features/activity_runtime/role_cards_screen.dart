@@ -275,6 +275,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
+      semanticsLabel: label,
       style: TextStyle(
         color: color,
         fontWeight: FontWeight.w800,
