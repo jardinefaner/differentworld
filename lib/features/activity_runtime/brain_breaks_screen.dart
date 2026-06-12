@@ -21,6 +21,9 @@ class BrainBreaksScreen extends StatelessWidget {
 
   // `final` (not const): the deck composition is platform-dependent —
   // camera-backed cards only exist where there's a usable camera.
+  // Memoized on first access for the whole isolate: in tests, set the
+  // platform (e.g. `TargetPlatformVariant`) BEFORE pumping this screen
+  // — see brain_breaks_platform_test.dart.
   static final _cards = <_BreakCard>[
     const _BreakCard(
       title: 'Quick Picks',

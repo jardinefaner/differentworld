@@ -120,6 +120,11 @@ List<SlashCommand> matchSlashCommands(String? typedName, {Viewer? viewer}) {
 /// users will memorize these, so churn is expensive. Adding a new
 /// one should add a real capability the omnibox catalog can't
 /// already do via typed search.
+///
+/// Memoized top-level `final` with platform-conditional entries: the
+/// first access freezes the composition for the isolate. In tests,
+/// set the platform (e.g. `TargetPlatformVariant`) BEFORE anything
+/// touches this list — see brain_breaks_platform_test.dart.
 final List<SlashCommand> allSlashCommands = <SlashCommand>[
   SlashCommand(
     name: 'today',
