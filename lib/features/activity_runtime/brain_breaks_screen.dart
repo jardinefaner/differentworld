@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -18,113 +19,118 @@ import 'package:go_router/go_router.dart';
 class BrainBreaksScreen extends StatelessWidget {
   const BrainBreaksScreen({super.key});
 
-  static const _cards = <_BreakCard>[
-    _BreakCard(
+  // `final` (not const): the deck composition is platform-dependent —
+  // camera-backed cards only exist where there's a usable camera.
+  static final _cards = <_BreakCard>[
+    const _BreakCard(
       title: 'Quick Picks',
       tagline: 'This or that?',
       icon: Icons.swap_horiz,
       color: ActivityPalette.pink,
       route: '/activity/this-or-that',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Act It Out',
       tagline: 'Say it as if…',
       icon: Icons.theater_comedy,
       color: ActivityPalette.purple,
       route: '/activity/as-if',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Beat the Letter',
       tagline: 'Words that start with…',
       icon: Icons.abc,
       color: ActivityPalette.teal,
       route: '/activity/starts-with',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Math Game',
       tagline: 'One question at a time',
       icon: Icons.quiz_outlined,
       color: ActivityPalette.blue,
       route: '/activity/math-game',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Many Paths',
       tagline: 'How many ways to a number?',
       icon: Icons.calculate,
       color: ActivityPalette.indigo,
       route: '/activity/math',
     ),
-    _BreakCard(
-      title: 'Photo Studio',
-      tagline: 'Capture the moment',
-      icon: Icons.photo_camera,
-      color: ActivityPalette.amber,
-      route: '/activity/photo',
-    ),
-    _BreakCard(
+    // Camera-dependent: hidden where there's no in-app camera
+    // (docs/PLATFORM_RUBRIC.md P1 — no dead "take a photo" buttons).
+    if (isMobileCapturePlatform)
+      const _BreakCard(
+        title: 'Photo Studio',
+        tagline: 'Capture the moment',
+        icon: Icons.photo_camera,
+        color: ActivityPalette.amber,
+        route: '/activity/photo',
+      ),
+    const _BreakCard(
       title: 'Role Cards',
       tagline: 'Be an animal — or an astronaut',
       icon: Icons.pets,
       color: ActivityPalette.green,
       route: '/activity/roles',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Make a Pattern',
       tagline: 'Snap a tile, watch it repeat',
       icon: Icons.grid_on,
       color: ActivityPalette.deepPurple,
       route: '/activity/pattern',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Group Talk',
       tagline: 'Discuss — by topic & age',
       icon: Icons.forum_outlined,
       color: ActivityPalette.cyan,
       route: '/activity/discussions',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Riddle Me This',
       tagline: 'Guess the answer',
       icon: Icons.lightbulb_outline,
       color: ActivityPalette.yellow,
       route: '/activity/riddles',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Reveal the Picture',
       tagline: 'Call a square, guess the picture',
       icon: Icons.grid_on,
       color: ActivityPalette.cyan,
       route: '/activity/grid-reveal',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Mindful Minute',
       tagline: 'Breathe together',
       icon: Icons.spa_outlined,
       color: ActivityPalette.teal,
       route: '/activity/breathe',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Fact or Fib',
       tagline: 'True, or made up?',
       icon: Icons.fact_check_outlined,
       color: ActivityPalette.deepPurple,
       route: '/activity/fact-or-fib',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Story Starters',
       tagline: 'Build a story together',
       icon: Icons.auto_stories_outlined,
       color: ActivityPalette.indigo,
       route: '/activity/story',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Rhyme Time',
       tagline: 'How many rhymes?',
       icon: Icons.music_note_outlined,
       color: ActivityPalette.pink,
       route: '/activity/rhyme-time',
     ),
-    _BreakCard(
+    const _BreakCard(
       title: 'Charades',
       tagline: 'Act it out — phone + screen',
       icon: Icons.theater_comedy_outlined,

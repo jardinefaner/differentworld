@@ -5,6 +5,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -202,18 +203,23 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     aliases: const ['quiz', 'quickmath'],
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/math-game')),
   ),
-  SlashCommand(
-    name: 'photo',
-    label: '/photo {prompt}',
-    hint: 'Open the photo studio (optional prompt)',
-    icon: Icons.photo_camera_outlined,
-    aliases: const ['camera', 'photos'],
-    exec: (ctx, _, args) {
-      final p = (args ?? '').trim();
-      final q = p.isEmpty ? '' : '?prompt=${Uri.encodeComponent(p)}';
-      unawaited(ctx.push('/activity/photo$q'));
-    },
-  ),
+  // Photo Studio is camera-dependent, so the command only exists on
+  // platforms with a usable in-app camera (docs/PLATFORM_RUBRIC.md P1:
+  // never advertise a dead capture affordance). The screen itself still
+  // degrades to "No camera here" if reached by deep link elsewhere.
+  if (isMobileCapturePlatform)
+    SlashCommand(
+      name: 'photo',
+      label: '/photo {prompt}',
+      hint: 'Open the photo studio (optional prompt)',
+      icon: Icons.photo_camera_outlined,
+      aliases: const ['camera', 'photos'],
+      exec: (ctx, _, args) {
+        final p = (args ?? '').trim();
+        final q = p.isEmpty ? '' : '?prompt=${Uri.encodeComponent(p)}';
+        unawaited(ctx.push('/activity/photo$q'));
+      },
+    ),
   SlashCommand(
     name: 'thisorthat',
     label: '/thisorthat',
