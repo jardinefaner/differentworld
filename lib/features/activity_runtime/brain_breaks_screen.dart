@@ -149,6 +149,13 @@ class BrainBreaksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cells must GROW with the user's text scale — a fixed childAspectRatio
+    // is the fixed-height-around-text trap (a11y-basics; caught by the
+    // overflow gauntlet): at the 1.5x floor / 2.0x ceiling the wrapped
+    // title + tagline need more vertical room than a 0.9-ratio cell has,
+    // and the tile's antialias clip was silently cutting them off.
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final tileExtent = 140 + 64 * scale;
     return EdgeScaffold(
       showBack: false,
       actions: [
@@ -171,13 +178,15 @@ class BrainBreaksScreen extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              child: GridView.extent(
+              child: GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                maxCrossAxisExtent: 220,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.9,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: tileExtent,
+                ),
                 children: [
                   for (final card in _cards)
                     _BreakCardTile(
@@ -233,6 +242,10 @@ class _BreakCardTile extends StatelessWidget {
               const Spacer(),
               Text(
                 card.title,
+                // Final guard for extreme narrow×scale combos; the cell
+                // height already grows with text scale (build above).
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,

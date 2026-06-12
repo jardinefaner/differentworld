@@ -1,5 +1,6 @@
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
@@ -80,6 +81,11 @@ void main() {
           ],
           child: _scaledApp(s, const InsightsScreen()),
         ),
+    // Provider-free (static deck); the card grid's fixed-height cells are
+    // exactly the "fixed-height container around text" a11y trap, so the
+    // deck earns a permanent gauntlet slot.
+    'breaks': (s) =>
+        ProviderScope(child: _scaledApp(s, const BrainBreaksScreen())),
   };
 
   for (final scale in scales) {
