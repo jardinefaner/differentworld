@@ -1,0 +1,70 @@
+name: Desktop builds (macOS + iOS)
+
+# Compile checks for the Apple targets, on a macOS runner. Split from
+# ci.yml because macOS runners are slower to schedule and these targets
+# change rarely — so this runs on a weekly heartbeat, on demand, and on
+# PRs that actually touch the native shells or dependencies (a plugin
+# bump can break pod install with no Dart diff at all).
+#
+# Builds are unsigned (--debug / --no-codesign): they prove entitlements,
+# Podfile resolution, plugin compilation, and deployment-target floors —
+# everything except the (deferred) signing configs.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays 06:00 UTC — catches rot from runner-image / toolchain drift
+    # even in weeks with no native-shell changes.
+    - cron: '0 6 * * 1'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'macos/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/desktop-builds.yml'
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apple:
+    name: Build macOS + iOS (unsigned)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # pubspec declares .env as an asset; stub values, never real config.
+      - name: Write stub .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=https://stub.supabase.co
+          SUPABASE_ANON_KEY=stub-anon-key
+          POWERSYNC_URL=https://stub.powersync.journeyapps.com
+          SENTRY_DSN=
+          EOF
+
+      # Proves the sandbox entitlements + Info.plist edits and the
+      # macOS pod set still build.
+      - name: Build macOS
+        run: flutter build macos --debug
+
+      # First-class pod install for the iOS target (the repo has no
+      # ios/Podfile.lock yet) — this is where a plugin raising its iOS
+      # floor above the Podfile's `platform :ios` pin fails with a
+      # named pod.
+      - name: Build iOS (no codesign)
+        run: flutter build ios --debug --no-codesign

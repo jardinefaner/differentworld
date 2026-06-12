@@ -1,0 +1,163 @@
+name: CI
+
+# The multiplatform regression net. deploy-web.yml only proves the WEB
+# bundle, and only after a push lands on main — this workflow proves
+# analyze + tests + the Android and web builds on every PR, so breakage
+# on the other platforms is visible before merge instead of at the next
+# local `flutter build`. Desktop (macOS/iOS) builds live in
+# desktop-builds.yml on a macOS runner.
+#
+# All jobs write a stub .env first: pubspec declares `.env` as an asset
+# (flutter_dotenv reads it at startup), so test/build asset bundling
+# needs the file to exist. Values are inert — tests mock Supabase and
+# never dial out; real config is injected only by the deploy workflow.
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '.idea/**'
+      - 'scripts/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '.idea/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+concurrency:
+  # One run per branch/PR; a new push supersedes the in-flight run.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.41.2'
+
+jobs:
+  checks:
+    name: Analyze + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      # Drift unit tests open in-memory SQLite through dart:ffi, which
+      # dlopens libsqlite3 on Linux.
+      - name: Install sqlite3
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Write stub .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=https://stub.supabase.co
+          SUPABASE_ANON_KEY=stub-anon-key
+          POWERSYNC_URL=https://stub.powersync.journeyapps.com
+          SENTRY_DSN=
+          EOF
+
+      # Codegen freshness gate: regenerate Drift/freezed/json output and
+      # fail if it differs from what's committed — catches "edited the
+      # table, forgot build_runner" before it ships as a runtime mismatch.
+      - name: Check generated code is committed
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code --stat -- lib test || {
+            echo "::error::Generated code is stale. Run 'dart run build_runner build' and commit the result."
+            exit 1
+          }
+
+      - name: Analyze
+        run: flutter analyze
+
+      # Goldens self-skip unless RUN_GOLDENS=1 (they're rasterizer-
+      # sensitive and regenerated locally), so this is unit + widget.
+      - name: Test
+        run: flutter test
+
+  build-android:
+    name: Build Android (debug APK)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Write stub .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=https://stub.supabase.co
+          SUPABASE_ANON_KEY=stub-anon-key
+          POWERSYNC_URL=https://stub.powersync.journeyapps.com
+          SENTRY_DSN=
+          EOF
+
+      # Debug build: validates gradle config, manifest merge, and that
+      # every plugin's Android side still compiles — without needing the
+      # (deferred) release keystore.
+      - name: Build APK
+        run: flutter build apk --debug
+
+  build-web:
+    name: Build web (release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Setup PowerSync web assets
+        run: dart run powersync:setup_web
+
+      - name: Write stub .env
+        run: |
+          cat > .env <<EOF
+          SUPABASE_URL=https://stub.supabase.co
+          SUPABASE_ANON_KEY=stub-anon-key
+          POWERSYNC_URL=https://stub.powersync.journeyapps.com
+          SENTRY_DSN=
+          EOF
+
+      # Same flags as deploy-web.yml so a PR that breaks the deploy
+      # build fails here first.
+      - name: Build web
+        run: flutter build web --base-href "/differentworld/" --release
