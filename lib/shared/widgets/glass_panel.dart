@@ -207,6 +207,13 @@ Future<T?> showGlassSheet<T>({
   // < 840 (phone): the bottom sheet, as ever.
   return showModalBottomSheet<T>(
     context: context,
+    // Root navigator so the sheet renders ABOVE the AppShell chrome. On the
+    // nested shell navigator (the default), a tall `isScrollControlled` sheet
+    // extends up THROUGH the floating top-chrome pills, which paint over its
+    // top (title / drag handle / first field get half-hidden). The dialog +
+    // side-panel branches already use the root navigator (showDialog /
+    // showGeneralDialog default to it); this aligns the bottom sheet with them.
+    useRootNavigator: true,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     showDragHandle: showDragHandle,
