@@ -1,5 +1,9 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+# Global iOS floor, pinned explicitly so `pod install` fails loudly (with
+# a named pod) instead of mysteriously when a plugin bump raises its
+# minimum. 13.0 = the highest minimum among current plugins
+# (camera_avfoundation) and matches the Runner target's
+# IPHONEOS_DEPLOYMENT_TARGET. Raise both together if a plugin demands it.
+platform :ios, '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

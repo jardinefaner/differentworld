@@ -7,7 +7,11 @@ plugins {
 
 android {
     namespace = "com.jardine.differentworld"
-    compileSdk = flutter.compileSdkVersion
+    // SDK levels pinned explicitly (they were Flutter 3.41.2's defaults,
+    // resolved at build time) so the values are auditable in VCS and a
+    // Flutter upgrade can't silently move them. Play requires
+    // targetSdk >= 35 for app updates as of Aug 2025; review yearly.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -24,8 +28,8 @@ android {
         applicationId = "com.jardine.differentworld"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 24
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
