@@ -30,16 +30,20 @@ class FloatingBack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = context.canPop();
     final scheme = Theme.of(context).colorScheme;
     return GlassPill(
       padding: EdgeInsets.zero,
       child: IconButton(
         tooltip: semanticsLabel,
         icon: Icon(Icons.arrow_back, color: scheme.onSurface),
+        // Read canPop at TAP time, not build time — the stack can change
+        // after this pill builds, so a build-captured value goes stale
+        // (Interaction Guard). Pop the current route if there's one to pop,
+        // else route to the fallback (home by default) so back never
+        // dead-ends or exits unexpectedly.
         onPressed: onPressed ??
             () {
-              if (canPop) {
+              if (context.canPop()) {
                 context.pop();
               } else {
                 context.go(fallbackRoute);

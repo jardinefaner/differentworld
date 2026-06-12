@@ -26,6 +26,7 @@ import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/live_block_strip.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
 import 'package:differentworld/shared/widgets/route_chrome.dart';
+import 'package:differentworld/shared/widgets/shell_back_action.dart';
 import 'package:differentworld/shared/widgets/shell_metrics.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -105,6 +106,12 @@ class _AppShellState extends ConsumerState<AppShell> {
   /// (drawer "Search anything" tile) but the bar-tap path uses this
   /// flag instead.
   bool _searchOverlayOpen = false;
+
+  /// Re-entrancy guard for the "Close Different World?" confirm dialog. A
+  /// second back gesture in the window before the dialog route mounts must
+  /// not stack a second dialog (the documented "gesture → async dialog
+  /// re-entrancy" class). Set true while the dialog is in flight.
+  bool _confirmExitOpen = false;
 
   @override
   void initState() {
@@ -196,7 +203,10 @@ class _AppShellState extends ConsumerState<AppShell> {
   void _collapse() {
     _clear();
     _focus.unfocus();
-    final loc = GoRouterState.of(context).matchedLocation;
+    // uri.path, NOT matchedLocation — inside the ShellRoute builder
+    // matchedLocation is shell-relative and unreliable, so it could miss
+    // `/search` and leave the route on the stack.
+    final loc = GoRouterState.of(context).uri.path;
     if (loc == '/search') {
       context.pop();
     }
@@ -488,43 +498,57 @@ class _AppShellState extends ConsumerState<AppShell> {
         viewer is! GuardianViewer &&
         viewportWidth >= Breakpoints.tablet;
 
-    // Compute whether the current route is at the root — if so,
-    // a back gesture would exit the app entirely. We intercept
-    // those gestures and show a confirmation dialog so the user
-    // knows what they're about to do.
+    // ── Back / swipe model (Wave: reliable nav) ──────────────────────
+    // The authoritative "is there a route to pop" signal is the SHELL
+    // navigator's own canPop() — a fact about the real stack — NOT
+    // `matchedLocation` (shell-relative + unreliable inside a ShellRoute
+    // builder) and NOT `context.canPop()` (reflects the imputed match
+    // list, which lies when a route was reached via `go`).
     //
-    // For non-root routes (e.g. /groups/abc), let the back propagate
-    // normally (no intercept) — PopScope.canPop=true means default
-    // pop happens as usual.
+    // The rule (decided in onPopInvokedWithResult below):
+    //   • shell can pop             → let the system pop normally.
+    //   • shell can't pop, not home → return HOME. A top-level route
+    //                                 reached via `go` replaced the stack,
+    //                                 so there's nothing to pop — going home
+    //                                 beats silently exiting the app (the
+    //                                 "back/swipe exits" bug).
+    //   • shell can't pop, at home  → confirm app exit.
+    //   • overlay open              → close the overlay first.
     //
-    // In kid mode the shell delegates to the kid-mode handler; don't
-    // double-intercept.
+    // AppShell depends on GoRouterState (below), so it rebuilds on every
+    // navigation — `shellCanPop`/`location` are recomputed each route
+    // change and the captured closure values stay fresh.
     final routerState = GoRouterState.of(context);
-    final location = routerState.matchedLocation;
-    final atRoot = location == '/' && !inKidMode;
+    // Full active location — reliable, unlike matchedLocation. (Verified
+    // on device: matchedLocation stays at `/breaks` while uri.path is the
+    // real child route.)
+    final location = routerState.uri.path;
+    // `context.canPop()` resolves to the shell navigator's real
+    // `canPop()` (go_router's delegate walks the ShellRouteMatch). NOTE it
+    // is stale-by-ONE here: AppShell (the ShellRoute builder) builds BEFORE
+    // its child navigator processes the just-pushed page, so right after a
+    // push from a 1-deep stack this still reads the pre-push value. That's
+    // why this build-time read is used only as a CONSERVATIVE gate, and the
+    // back handler RE-READS canPop at gesture time (when the stack has
+    // settled) to make the final decision. See docs/NAV_MIGRATION.md.
+    final shellCanPop = context.canPop();
     // Immersive activity routes (games, This or That, pattern, role cards)
     // hide the omnibox bar + reclaim its bottom space — like kid mode but
-    // WITHOUT the lock (back still exits). They're full-screen surfaces;
-    // the bar both clutters them and steals the ~76 dp their layouts need
-    // (which is what overflowed once they were de-locked from kid mode).
-    //
-    // Use the full URI path, NOT matchedLocation — inside a ShellRoute
-    // builder matchedLocation reflects the SHELL's match (verified on
-    // device: it stays at `/breaks` while uri.path is the child route).
+    // WITHOUT the lock. They're full-screen surfaces; the bar both clutters
+    // them and steals the ~76 dp their layouts need.
     final isImmersive =
-        routerState.uri.path.startsWith('/activity/') ||
+        location.startsWith('/activity/') ||
         ref.watch(speakImmersiveProvider) ||
         ref.watch(castImmersiveProvider);
 
-    // When the suggestion overlay is open, the system back gesture
-    // (swipe-from-left-edge on Android, swipe-back on iOS) should
-    // close the OVERLAY first — not pop the underlying route. Without
-    // this, a user who tapped the omnibox on /groups/abc and then
-    // swiped back would land on Today (route popped) instead of just
-    // returning to the page they were on. canPop: false intercepts;
-    // the handler below decides what to actually do based on which
-    // overlay (if any) is currently visible.
-    final canPop = !atRoot && !_searchOverlayOpen;
+    // PopScope.canPop=true → the system pops the shell navigator normally
+    // (drill-ins reached via `push`); false → we intercept below and decide
+    // (close overlay / go home / confirm exit). The decision table lives in
+    // shell_back_action.dart so it's unit-tested independently of the shell.
+    final canPop = shellShouldAllowSystemPop(
+      shellCanPop: shellCanPop,
+      overlayOpen: _searchOverlayOpen,
+    );
 
     // Keyboard shortcuts — desktop-/web-friendly verbs. Cmd-K opens
     // the omnibox (the universal "go anywhere" verb), Esc closes the
@@ -551,41 +575,85 @@ class _AppShellState extends ConsumerState<AppShell> {
         canPop: canPop,
         onPopInvokedWithResult: (didPop, _) async {
           if (didPop) return;
-          // First: did the back come from the overlay being open? If so,
-          // close it and stop — the user wanted to dismiss the overlay,
-          // not pop the route.
-          if (_searchOverlayOpen) {
-            _closeSearchOverlay();
-            return;
-          }
-          // Otherwise we're at root (canPop=false because of atRoot) and
-          // the user tried to back out of the app entirely. Confirm.
-          if (!mounted) return;
-          final shouldExit = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Close Different World?'),
-              content: const Text(
-                'You can come back anytime — your work is saved.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Stay'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  child: const Text('Close'),
-                ),
-              ],
-            ),
+          // We only get here when the build-time gate (canPop) was false, so
+          // RE-READ canPop + location at GESTURE TIME — the navigator stack
+          // has settled by now, unlike the stale-by-one build-time read.
+          // This is what makes a first-level push (home → detail) pop back
+          // to home properly instead of falling through to go-home. Same
+          // decision table the unit test pins (shell_back_action.dart).
+          final freshLocation = GoRouterState.of(context).uri.path;
+          final action = decideShellBack(
+            shellCanPop: context.canPop(),
+            overlayOpen: _searchOverlayOpen,
+            inKidMode: ref.read(kidModeProvider),
+            atHomeRoot: freshLocation == '/' || freshLocation == '/login',
           );
-          if (shouldExit ?? false) {
-            // `SystemNavigator.pop()` finishes the activity on Android
-            // (returns to launcher) and is a no-op on iOS (Apple HIG
-            // forbids programmatic exit). That's fine — iOS users
-            // background via the home gesture.
-            await SystemNavigator.pop();
+          switch (action) {
+            case ShellBackAction.closeOverlay:
+              // Overlay open → close it (don't touch the underlying route).
+              _closeSearchOverlay();
+              return;
+            case ShellBackAction.kidModeNoop:
+              // The router's kidModeLockedRouteProvider redirect owns the
+              // lock; back is a deliberate no-op on a locked surface (the
+              // staff exit is the 5-tap gesture).
+              return;
+            case ShellBackAction.systemPop:
+              // Build-time gate read "can't pop" (stale-by-one right after a
+              // push), but the settled stack CAN pop → pop via go_router so
+              // the URL stays in sync with the navigator. (mounted is true
+              // synchronously here, but guard for parity with the others.)
+              if (!mounted) return;
+              if (context.canPop()) context.pop();
+              return;
+            case ShellBackAction.goHome:
+              // Nothing to pop AND not at a home root → a top-level route
+              // whose shell stack was replaced via `go`. Return HOME instead
+              // of letting the pop exit the app. The fix for "back/swipe
+              // exits at some screens" + "back goes somewhere I never
+              // visited" — home is always the predictable destination.
+              if (!mounted) return;
+              context.go('/');
+              return;
+            case ShellBackAction.confirmExit:
+              break;
+          }
+          // confirmExit: at a home root with nothing to pop → the user is
+          // leaving the app. Confirm. Re-entrancy guard: a second back in
+          // the window before the dialog route mounts must not stack a
+          // second dialog.
+          if (!mounted || _confirmExitOpen) return;
+          _confirmExitOpen = true;
+          try {
+            final shouldExit = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Close Different World?'),
+                content: const Text(
+                  'You can come back anytime — your work is saved.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: const Text('Stay'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            );
+            if (!mounted) return;
+            if (shouldExit ?? false) {
+              // `SystemNavigator.pop()` finishes the activity on Android
+              // (returns to launcher) and is a no-op on iOS (Apple HIG
+              // forbids programmatic exit). That's fine — iOS users
+              // background via the home gesture.
+              await SystemNavigator.pop();
+            }
+          } finally {
+            _confirmExitOpen = false;
           }
         },
         child: Scaffold(
@@ -612,7 +680,6 @@ class _AppShellState extends ConsumerState<AppShell> {
                         query: query,
                         mode: mode,
                         showDrawer: false, // hamburger pill hidden at desktop
-                        atRoot: atRoot,
                         isImmersive: isImmersive,
                         context: context,
                       ),
@@ -627,7 +694,6 @@ class _AppShellState extends ConsumerState<AppShell> {
                   query: query,
                   mode: mode,
                   showDrawer: showDrawer,
-                  atRoot: atRoot,
                   isImmersive: isImmersive,
                   context: context,
                 ),
@@ -649,7 +715,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     required String query,
     required OmniboxMode mode,
     required bool showDrawer,
-    required bool atRoot,
     required bool isImmersive,
     required BuildContext context,
   }) {
