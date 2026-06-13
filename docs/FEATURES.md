@@ -465,8 +465,30 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Entry action on Quick Picks* — `lib/features/activity_runtime/this_or_that_screen.dart`. `SecondaryActionButton` (cast icon, tooltip "Present on a big screen") → `context.push('/live/this-or-that')`. Primary discovery path for the This-or-That live session.
 - *Brain Breaks deck card* — `lib/features/activity_runtime/brain_breaks_screen.dart`. "Charades" card → `/live/charades`.
 **Depends on**: ActivityRuntime (`content_bank.dart` — seeds This-or-That pairs and the 24 Charades prompts via `ContentKind.charades`); Games (`game_registry.dart` — `gameById` resolves game ids in the `/join` route and in `LiveSessionBanner._gameName`).
-**Consumed by**: Today (`live_session_banner.dart` mounted in `today_sections.dart`; `activeSessionsProvider` drives the banner).
+**Consumed by**: Today (`live_session_banner.dart` mounted in `today_sections.dart`; `activeSessionsProvider` drives the banner); LiveBoard (imports `CastSession` + `generateSessionCode` from this feature's cast spine).
 **Last verified**: 2026-06-03
+
+---
+
+## LiveBoard
+**Path**: `lib/features/live_board/`
+**Purpose**: The phone as a live classroom instrument — the teacher types or picks, and every joined room screen updates in real time with a big auto-fit render (Big Word, Spell-for-me).
+**Personas served**: Maya, Jordan, Coach Sam.
+**Discovery surfaces**:
+- Routes: `/live-board` → `LiveBoardScreen`
+- Omnibox: yes — `present.live-board` ("Live Board", gated `viewer is! GuardianViewer`; keywords: live board, board, big word, spell, spell for me, instrument, highlight word, show on screen, present word) → `/live-board`
+- Slash: none
+- Drawer: no — reached via Present hub (`/present`), which is a canonical nav destination
+- Settings: no
+**Capabilities**: Staff-only (`viewer is! GuardianViewer` gate in omnibox catalog; no explicit cap key beyond being a signed-in non-guardian).
+**Data**: None — ephemeral Realtime broadcast only. No synced tables, no Drift writes, no PowerSync involvement (same class as the cast spine it rides).
+**Surfaces**:
+- *LiveBoardScreen* — `lib/features/live_board/live_board_screen.dart`. The caster: shows a join code, a live peer count, a 16:9 preview of what the room sees, and a segmented instrument switcher (Big Word / Spell-for-me). Big Word: one `TextField`; every keystroke re-broadcasts. Spell-for-me: a horizontal avatar row from `subjectsInSpaceProvider` (tap to pick) or a name text field when the roster is empty, plus a word field; broadcasts both. Owns one `CastSession.cast(code)` (created in `initState`, disposed in `dispose`); all stream listeners guard `mounted`. Enables wakelock on mount, disables on dispose.
+- *BoardGame* — `lib/features/live_board/board_game.dart`. A cast-only `GameDefinition<BoardState>` with `gameId = 'board'`. Registered in `game_registry.dart` so the existing cast receiver (`cast_receiver.dart`) renders it for free with no receiver changes. `buildStage` switches on `BoardInstrument` (idle / word / spell). All content auto-fits via `FittedBox` — the design law. The reducer is a no-op (the caster re-casts the full `BoardState` on every edit). `seedsFromContentBank = false` so it stays out of the standard game launcher.
+- *Present hub card* — `_PresentCard('Live Board', route: '/live-board')` in `lib/features/games/present_hub_screen.dart`. One of seven cards on the `/present` hub grid; the primary visual entry point for the feature.
+**Depends on**: LiveSession (cast spine — `CastSession` from `lib/features/live_session/cast_session.dart`; `generateSessionCode` from `lib/features/live_session/live_game_screen.dart`), Games (`game_registry.dart` — `BoardGame` is registered there so the receiver can resolve it by id), Subjects (`subjectsInSpaceProvider` — Spell-for-me avatar picker reads the enrolled roster).
+**Consumed by**: LiveSession (cast receiver resolves `BoardGame` via `gameById('board')` in `game_registry.dart` and calls `buildStage` on it).
+**Last verified**: 2026-06-13
 
 ---
 
