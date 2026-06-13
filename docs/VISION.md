@@ -380,6 +380,48 @@ not "games" — and (2) give existing content (the schedule, the photo feed) a
 A dated log so nothing spoken is lost. Promote each into a theme above
 once it has a home.
 
+- **2026-06-13** — **The day is a fixed ROUTINE: morning intro, then play +
+  write on paper, cumulative.** In the user's words: *"i want the class to be
+  routine, all the worlds intro in the morning, and rest are play time and
+  writing their answers on paper, cumulative."* The day has a standing shape,
+  the same every day: the **MORNING is the world intro** — the ritual open
+  where the room is introduced to its world (the week's world, cast big), and
+  the **REST of the day is PLAY TIME + kids WRITING THEIR ANSWERS ON PAPER** —
+  by hand, analog, no screens in their faces (extends dream #4, "no typing").
+  And it's **CUMULATIVE** — the paper answers build over the term into each
+  child's book / portfolio (the proof of who they became, → dream #1). The
+  app's three jobs in this routine: (1) **open the morning** with the world
+  intro on the present/cast spine; (2) **prompt** the questions the kids answer
+  on paper (the wall questions, the day's verbs); (3) **capture the paper back**
+  so it accumulates — staff photograph the sheet → attachment → the Summer
+  Book / growth arc. The screen is the launchpad and the ledger; the *thinking*
+  happens on paper, in the room. (Threads: `/play-today` run-of-show + the
+  day-run engine, the wall questions, the two skins room×week, Summer Book #1,
+  time capsules, observation photos → attachments. **Open forks:** (a) is it
+  ALL ten worlds intro'd each morning, or the WEEK'S world each morning as the
+  standing ritual? (b) does the app photograph the paper to make it cumulative
+  — or stay fully analog with staff curating a few into the book?)
+- **2026-06-13 (cont.)** — **Role is the spine: your role reshapes the whole
+  screen — different tools for different roles.** In the user's words: *"i want
+  roles to be a huge part of this… your role changes the UI and functions of
+  your screen, different tools for different roles."* This **escalates dream #2**
+  ("this is you and these are your tools") from *toggle a few affordances* to
+  *the app reconfigures around who you are* — the home, the toolset, the
+  available functions all change by role, so two people open the same app to two
+  different surfaces. Three role axes already live in the codebase, and "role"
+  may mean any/all of them: (1) **staff job** — director / lead / teacher /
+  assistant / specialist, today a capability gate via `viewerProvider`; (2) the
+  **8 archetypes** — Visionary / Doer / Protector / Anchor / Connector / Sage /
+  Seeker / Beacon (identity cards, dream #2); (3) the **kid classroom job** —
+  the verb-jobs (Mover / Helper / Keeper…) with `helperSays` scripts (dream #16,
+  the staff layer). The gate already exists (capabilities); the lift is
+  **role-as-home**: a tailored landing + tool palette per role, not one app with
+  hidden bits. (Threads: dream #2 + IDENTITY_SYSTEM.md, dream #16 missions/
+  verb-jobs, the staff ladder, `viewerProvider` / capabilities. **Open fork:**
+  which axis drives the screen — the staff job, the archetype, or the kid job?
+  Likely layered: staff job picks the *home*, archetype tunes the *tools*, kid
+  job reshapes the *kid-mode* surface.)
+
 - **2026-06-07** — **The "why", said plainly.** In the user's words: *"this
   is going to be where we invest in our kids… the subscription and the
   scale, proximity, documentation, legacy. Because one day, if AI takes over
