@@ -454,6 +454,37 @@ once it has a home.
   independently (screen A on slide 1, B on slide 2), which needs per-target
   addressing on top of the broadcast. Start with mirror-all; per-screen is the
   bigger unlock for stations/centers.)
+- **2026-06-13 (cont.)** — **The phone as the live classroom INSTRUMENT —
+  conduct the room's screen, moment to moment.** In the user's words: *"i want
+  this phone to be a tool to really run the class during, too. like when
+  reading, i tap a word on the phone, and that's what gets bolded/highlighted…
+  like when a child wants me to spell something because they're writing, i
+  click an avatar on the phone, type the spelling, present screen shows the
+  avatar and the word next to each other… all must fit in screen."* The present
+  layer isn't only pre-built slides/games — it's a **live canvas the teacher
+  plays from the phone** during class, for spontaneous micro-moments. Two named
+  instruments: (1) **Tap-to-highlight reading** — shared text up big; the
+  teacher taps a word on the phone and THAT word bolds/highlights on the room
+  screen (follow-along reading, teacher-paced). (2) **Spell-for-me** — a kid
+  asks how to spell something while writing; the teacher taps the kid's avatar,
+  types the word, and the room screen shows **avatar + word, side by side,
+  big.** The unifying law: **everything auto-fits the screen** — big, legible,
+  no scroll, scales to the content. The build is closer than it sounds: the
+  **Speak engine already has active-word highlighting + `FittedBox` auto-fit +
+  15 big-text layouts**, and the broadcast/cast spine + one-phone-many-screens
+  push it to the room. The move: a **live "board" / instrument mode** — a phone
+  control surface with quick instruments, each rendering an auto-fit big layout
+  to every screen. Extends dream #18 (the classroom remote is the product, not
+  the games) into the *unscripted* moment. **Candidate instruments** (the "what
+  else"): highlight-a-word · spell-for-me (avatar + word) · reveal a word/letter
+  at a time · sound-it-out (syllables/phonemes, tap each) · spotlight/point at
+  part of an image · big number + live tally (count together) · whose-turn
+  (push a kid's avatar big) · show-and-tell (push a kid's drawing/photo big) ·
+  two-up compare · attention/quiet cue · hold/freeze the current thing. Each is
+  a small "instrument" on one shared spine. (Threads: `speak/` engine,
+  `live_session.dart` broadcast, the present/cast cockpit, one-phone-many-
+  screens. **Design law to enforce everywhere on the present surface:
+  auto-fit — text scales to fill, never scrolls, never clips.**)
 
 - **2026-06-07** — **The "why", said plainly.** In the user's words: *"this
   is going to be where we invest in our kids… the subscription and the
