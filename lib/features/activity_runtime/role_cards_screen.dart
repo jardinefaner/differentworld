@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/roles.dart';
+import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -74,18 +75,26 @@ class _RoleCardsScreenState extends State<RoleCardsScreen> {
               // Bottom 96 clears the floating omnibox bar (~76) so the last
               // grid row isn't hidden behind it (rubric A3).
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-              child: GridView.extent(
+              child: GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                maxCrossAxisExtent: 150,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.82,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 150,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  // Cell grows with text scale (smaller cells than the other
+                  // decks) so name + "builds …" never clip.
+                  mainAxisExtent: 120 + 64 * (MediaQuery.textScalerOf(context).scale(14) / 14),
+                ),
                 children: [
                   for (var i = 0; i < deck.cards.length; i++)
-                    _RoleTile(
-                      role: deck.cards[i],
+                    AccentCardTile(
                       color: _palette[i % _palette.length],
+                      emoji: deck.cards[i].emoji,
+                      title: deck.cards[i].name,
+                      tagline: 'builds ${deck.cards[i].builds}',
+                      semanticLabel:
+                          'Role: ${deck.cards[i].name}, builds ${deck.cards[i].builds}',
                       onTap: () => _open(context, deck.cards[i]),
                     ),
                 ],
@@ -134,66 +143,6 @@ class _DeckSwitcher extends StatelessWidget {
   }
 }
 
-class _RoleTile extends StatelessWidget {
-  const _RoleTile({
-    required this.role,
-    required this.color,
-    required this.onTap,
-  });
-
-  final RoleCard role;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    // One clean announcement instead of three loose text fragments
-    // (rubric E2).
-    return Semantics(
-      button: true,
-      label: 'Role: ${role.name}, builds ${role.builds}',
-      excludeSemantics: true,
-      child: Material(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(role.emoji, style: const TextStyle(fontSize: 40)),
-                const Spacer(),
-                Text(
-                  role.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.onAccent(color),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'builds ${role.builds}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.onAccent(color).withValues(alpha: 0.85),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// The full face of one role card — reused by the browse sheet now, and
 /// (next slices) the immersive "Today I am ___" pick + the printable PDF.

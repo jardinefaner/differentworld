@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -78,17 +79,24 @@ class PresentHubScreen extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              child: GridView.extent(
+              child: GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                maxCrossAxisExtent: 220,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.9,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  // Cell grows with text scale so the title/tagline never clip
+                  // (the fixed-childAspectRatio trap; see brain_breaks).
+                  mainAxisExtent: 140 + 64 * _textScale(context),
+                ),
                 children: [
                   for (final card in _cards)
-                    _PresentCardTile(
-                      card: card,
+                    AccentCardTile(
+                      color: card.color,
+                      icon: card.icon,
+                      title: card.title,
+                      tagline: card.tagline,
                       onTap: () => unawaited(context.push(card.route)),
                     ),
                 ],
@@ -117,49 +125,7 @@ class _PresentCard {
   final String route;
 }
 
-class _PresentCardTile extends StatelessWidget {
-  const _PresentCardTile({required this.card, required this.onTap});
-
-  final _PresentCard card;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: card.color,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(card.icon, color: AppColors.onAccent(card.color), size: 36),
-              const Spacer(),
-              Text(
-                card.title,
-                style: TextStyle(
-                  color: AppColors.onAccent(card.color),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                card.tagline,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.onAccent(card.color).withValues(alpha: 0.85),
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+/// Title-text-relative scale (1.0 = OS default) so cells grow with the
+/// user's text-size setting instead of clipping at a fixed aspect ratio.
+double _textScale(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(14) / 14;

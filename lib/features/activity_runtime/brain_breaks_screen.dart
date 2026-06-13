@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/shared/platform.dart';
+import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -189,8 +190,11 @@ class BrainBreaksScreen extends StatelessWidget {
                 ),
                 children: [
                   for (final card in _cards)
-                    _BreakCardTile(
-                      card: card,
+                    AccentCardTile(
+                      color: card.color,
+                      icon: card.icon,
+                      title: card.title,
+                      tagline: card.tagline,
                       onTap: () => unawaited(context.push(card.route)),
                     ),
                 ],
@@ -217,55 +221,4 @@ class _BreakCard {
   final IconData icon;
   final Color color;
   final String route;
-}
-
-class _BreakCardTile extends StatelessWidget {
-  const _BreakCardTile({required this.card, required this.onTap});
-
-  final _BreakCard card;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: card.color,
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(card.icon, color: AppColors.onAccent(card.color), size: 36),
-              const Spacer(),
-              Text(
-                card.title,
-                // Final guard for extreme narrow×scale combos; the cell
-                // height already grows with text scale (build above).
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.onAccent(card.color),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                card.tagline,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppColors.onAccent(card.color).withValues(alpha: 0.85),
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

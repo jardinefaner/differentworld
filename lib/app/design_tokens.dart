@@ -91,16 +91,24 @@ class AppColors extends ThemeExtension<AppColors> {
   static Color readableOnDark(Color accent) =>
       Color.alphaBlend(accent.withValues(alpha: 0.30), Colors.white);
 
-  /// Black or white TEXT/icon — whichever is legible ON a solid [fill].
-  /// Picks by perceived luminance, so a LIGHT accent fill (the yellow,
-  /// gold, cyan, pale-lavender world colours) gets near-black text
-  /// instead of the low-contrast white that a hardcoded `Colors.white`
-  /// produced on those lighter accents (≈2.5:1 — below WCAG AA). Use
-  /// wherever a chip / badge sits on a raw accent fill.
-  static Color onAccent(Color fill) =>
-      ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
-          ? Colors.white
-          : Colors.black87;
+  /// Near-black or white TEXT/icon — whichever is legible ON a solid [fill].
+  /// A hardcoded `Colors.white` on a LIGHT accent (the yellow, amber, blue,
+  /// teal world/activity colours) only reaches ≈2–3:1 — below WCAG AA. This
+  /// returns the higher-contrast of the two foregrounds.
+  ///
+  /// It compares the WCAG contrast ratio of each against [fill] directly
+  /// (via `computeLuminance`) rather than a single luminance threshold —
+  /// `estimateBrightnessForColor` crosses over at 0.15 and mis-picks the
+  /// mid-tones (e.g. deepPurple: black ≈4.2:1 when white is ≈5:1). Picking
+  /// the better of the two crosses over at the WCAG midpoint (~0.179), so the
+  /// winner clears AA for ANY fill. Used wherever a chip/card/badge sits on a
+  /// content-accent fill (see `AccentCardTile`, docs/THEME_ADHERENCE.md).
+  static Color onAccent(Color fill) {
+    final l = fill.computeLuminance();
+    final contrastOnWhite = 1.05 / (l + 0.05);
+    final contrastOnBlack = (l + 0.05) / 0.05;
+    return contrastOnBlack >= contrastOnWhite ? Colors.black87 : Colors.white;
+  }
 }
 
 /// The typeface + the full Material text ramp built from it.
