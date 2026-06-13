@@ -26,6 +26,13 @@ class PresentHubScreen extends StatelessWidget {
       route: '/cast',
     ),
     _PresentCard(
+      title: 'Live Board',
+      tagline: 'Type a word, spell for a kid — live on every screen',
+      icon: Icons.draw_outlined,
+      color: ActivityPalette.cyan,
+      route: '/live-board',
+    ),
+    _PresentCard(
       title: 'Now & Next',
       tagline: "What's on now — and next",
       icon: Icons.calendar_view_day_outlined,

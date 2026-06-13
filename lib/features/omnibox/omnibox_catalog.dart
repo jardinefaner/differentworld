@@ -758,6 +758,25 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ),
     if (viewer is! GuardianViewer)
       OmniboxEntry(
+        id: 'present.live-board',
+        label: 'Live Board',
+        category: OmniboxCategory.page,
+        icon: Icons.draw_outlined,
+        keywords: const [
+          'live board',
+          'board',
+          'big word',
+          'spell',
+          'spell for me',
+          'instrument',
+          'highlight word',
+          'show on screen',
+          'present word',
+        ],
+        onSelect: (ctx, _) => ctx.push('/live-board'),
+      ),
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
         id: 'present.now-next',
         label: 'Now & Next board',
         category: OmniboxCategory.page,

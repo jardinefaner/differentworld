@@ -15,6 +15,7 @@ import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/live_board/board_game.dart';
 
 /// Every host-run game, by id — the single source of truth for resolving a
 /// game from a session. This is the keystone for "one place to join"
@@ -43,6 +44,10 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   // content-bank loop, resolved by gameById so the receiver renders it.
   WorldCastGame(),
   ConductorGame(),
+  // The Live Board — the phone-as-instrument surface (docs/LIVE_BOARD.md).
+  // Cast-only: driven by LiveBoardScreen via castStage, rendered by the
+  // existing cast receiver.
+  BoardGame(),
 ];
 
 /// Resolve a game by its [GameDefinition.id]. Returns null for an id this

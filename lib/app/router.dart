@@ -74,6 +74,7 @@ import 'package:differentworld/features/invites/invite_create_screen.dart';
 import 'package:differentworld/features/invites/invite_share_screen.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/launch/launch_screen.dart';
+import 'package:differentworld/features/live_board/live_board_screen.dart';
 import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/cast_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
@@ -1290,6 +1291,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/cast',
             builder: (_, _) => const CastScreen(),
+          ),
+          // The Live Board — the phone as a classroom instrument
+          // (docs/LIVE_BOARD.md). Casts to the room screens via the same
+          // spine as /cast; room screens join through the cast receiver.
+          GoRoute(
+            path: '/live-board',
+            builder: (_, _) => const LiveBoardScreen(),
           ),
           GoRoute(
             path: '/present/poll',

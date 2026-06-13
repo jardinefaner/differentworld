@@ -1,0 +1,82 @@
+// The Live Board presentable (docs/LIVE_BOARD.md): the stages the cast
+// receiver renders. Pins the wire-state round-trip + that each instrument
+// shows its content (and stays inside its bounds — the auto-fit law).
+
+import 'package:differentworld/features/live_board/board_game.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  const game = BoardGame();
+
+  group('BoardState wire round-trips', () {
+    test('word', () {
+      final s = BoardState.fromMap(
+        const BoardState(instrument: BoardInstrument.word, word: 'cat').toMap(),
+      );
+      expect(s.instrument, BoardInstrument.word);
+      expect(s.word, 'cat');
+    });
+
+    test('spell carries name + word', () {
+      final s = BoardState.fromMap(
+        const BoardState(
+          instrument: BoardInstrument.spell,
+          name: 'Maya',
+          word: 'because',
+        ).toMap(),
+      );
+      expect(s.instrument, BoardInstrument.spell);
+      expect(s.name, 'Maya');
+      expect(s.word, 'because');
+    });
+
+    test('unknown/empty kind decodes to idle', () {
+      expect(
+        BoardState.fromMap(const <String, dynamic>{}).instrument,
+        BoardInstrument.idle,
+      );
+    });
+  });
+
+  // A realistic room-screen size; the auto-fit stages scale to fill it.
+  Widget host(BoardState state) => MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 640,
+              height: 360,
+              child: Builder(
+                builder: (context) => game.buildStage(context, state),
+              ),
+            ),
+          ),
+        ),
+      );
+
+  testWidgets('word stage shows the word', (tester) async {
+    await tester.pumpWidget(
+      host(const BoardState(instrument: BoardInstrument.word, word: 'cat')),
+    );
+    expect(find.text('cat'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('spell stage shows the word (avatar + word)', (tester) async {
+    await tester.pumpWidget(
+      host(const BoardState(
+        instrument: BoardInstrument.spell,
+        name: 'Maya',
+        word: 'because',
+      )),
+    );
+    await tester.pump();
+    expect(find.text('because'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('idle stage prompts for an instrument', (tester) async {
+    await tester.pumpWidget(host(const BoardState()));
+    expect(find.textContaining('instrument'), findsOneWidget);
+  });
+}
