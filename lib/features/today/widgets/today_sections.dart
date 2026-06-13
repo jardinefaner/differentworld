@@ -23,6 +23,7 @@ import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
+import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
@@ -989,6 +990,45 @@ class _TodayThinkingCard extends ConsumerWidget {
   }
 }
 
+/// The curriculum quartet (world anchor + day focus + skill + thinking)
+/// folded into one collapsed-by-default disclosure. Before the journey
+/// starts it's just the world card (the director's setup prompt / nothing
+/// for others); once a world is live it collapses the whole cluster behind a
+/// single "Today's plan" row with a glanceable "world · day" summary, so
+/// Today leads with the time-aware action instead of a wall of cards.
+class _TodaysPlanSection extends ConsumerWidget {
+  const _TodaysPlanSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final world = ref.watch(currentWorldProvider);
+    // No journey yet → keep the world card's setup prompt visible (director)
+    // or nothing (others). Nothing to collapse.
+    if (world == null) return const _ThisWeekWorldCard();
+    final isLogger = ref.watch(viewerProvider).isDailyLogger;
+    final day = ref.watch(currentProgramDayProvider);
+    final summary = day != null ? '${world.name} · Day $day' : world.name;
+    // Collapsed by default: lead with the action, tuck the plan one tap away.
+    // The body stays built (CollapsibleSection keeps it warm) so the cards'
+    // provider watches don't cold-flash on expand.
+    return CollapsibleSection(
+      title: "Today's plan",
+      icon: Icons.auto_stories_outlined,
+      collapsedSummary: summary,
+      initiallyExpanded: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _ThisWeekWorldCard(),
+          if (isLogger) const _TodaysFocusCard(),
+          if (isLogger) const _TodaySkillCard(),
+          if (isLogger) const _TodayThinkingCard(),
+        ],
+      ),
+    );
+  }
+}
+
 class TodayBody extends ConsumerWidget {
   const TodayBody({
     required this.member,
@@ -1082,20 +1122,13 @@ class TodayBody extends ConsumerWidget {
         // IS the next useful action, not a wall of cards to hunt through
         // (the "less hunting" principle). Renders nothing after hours.
         if (viewer.isDailyLogger) const _RightNowCard(),
-        // The live curriculum world (renders nothing until the
-        // 10-week journey is started; shows a setup prompt to the
-        // director). The daily anchor: "this week, the room is in X."
-        const _ThisWeekWorldCard(),
-        // "Today's focus" — the DAY-level deepening: Day N's title, the
-        // wall question, and (on tap) the full plan + room/soundtrack/key
-        // moment + a one-tap "Run today". Renders nothing until the
-        // journey is active. Staff-only.
-        if (viewer.isDailyLogger) const _TodaysFocusCard(),
-        // "Today's skill" — one teachable thing a day, with a how
-        // (closes the brief's skill-a-day; staff-only).
-        if (viewer.isDailyLogger) const _TodaySkillCard(),
-        // "Today's thinking" — a play→name→bridge→question game.
-        if (viewer.isDailyLogger) const _TodayThinkingCard(),
+        // The day's curriculum plan — world anchor + day focus + skill +
+        // thinking — folded into ONE collapsible so first paint shows the
+        // time-aware lead, not a wall of co-equal cards (Today was the app's
+        // noisiest screen, 9/10 — docs/CLARITY_RUBRIC.md). Expands to the full
+        // plan; the collapsed summary keeps "world · day" glanceable.
+        // Self-hides / shows the director setup prompt until the journey starts.
+        const _TodaysPlanSection(),
         // Specialist / substitute identity strip — answers the
         // Coach Sam audit finding ("no UI surface tells Sam what
         // they are"). Renders nothing for director / lead_teacher
