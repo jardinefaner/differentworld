@@ -533,48 +533,6 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
         onChanged: (v) => _update(_opts.copyWith(fitShape: v)),
       ),
       const SizedBox(height: 12),
-      _label(context, 'Page orientation'),
-      const SizedBox(height: 6),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: SegmentedButton<PosterOrientation>(
-          showSelectedIcon: false,
-          segments: const [
-            // Labels ellipsize so the 3 segments degrade gracefully at large
-            // text scales; the icon still distinguishes each option (E3).
-            ButtonSegment(
-              value: PosterOrientation.auto,
-              label: Text('Auto', overflow: TextOverflow.ellipsis),
-              icon: Icon(Icons.auto_awesome_outlined),
-            ),
-            ButtonSegment(
-              value: PosterOrientation.portrait,
-              label: Text('Portrait', overflow: TextOverflow.ellipsis),
-              icon: Icon(Icons.crop_portrait),
-            ),
-            ButtonSegment(
-              value: PosterOrientation.landscape,
-              label: Text('Landscape', overflow: TextOverflow.ellipsis),
-              icon: Icon(Icons.crop_landscape),
-            ),
-          ],
-          selected: {_opts.orientation},
-          onSelectionChanged: (s) =>
-              _update(_opts.copyWith(orientation: s.first)),
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        switch (_opts.orientation) {
-          PosterOrientation.auto =>
-            'Picks the page turn that best fits the image.',
-          PosterOrientation.portrait => 'Forces every page portrait (tall).',
-          PosterOrientation.landscape =>
-            'Forces every page landscape (wide).',
-        },
-        style: caption,
-      ),
-      const SizedBox(height: 8),
       _label(context, 'Fit'),
       const SizedBox(height: 6),
       Align(
@@ -637,6 +595,50 @@ class _PosterScreenState extends ConsumerState<PosterScreen> {
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Page orientation moved here (off first paint) so Size + Fit lead
+            // (poster was 🔴 — docs/CLARITY_RUBRIC.md). Auto handles it for
+            // most; the override lives with the other print details.
+            _label(context, 'Page orientation'),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<PosterOrientation>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: PosterOrientation.auto,
+                    label: Text('Auto', overflow: TextOverflow.ellipsis),
+                    icon: Icon(Icons.auto_awesome_outlined),
+                  ),
+                  ButtonSegment(
+                    value: PosterOrientation.portrait,
+                    label: Text('Portrait', overflow: TextOverflow.ellipsis),
+                    icon: Icon(Icons.crop_portrait),
+                  ),
+                  ButtonSegment(
+                    value: PosterOrientation.landscape,
+                    label: Text('Landscape', overflow: TextOverflow.ellipsis),
+                    icon: Icon(Icons.crop_landscape),
+                  ),
+                ],
+                selected: {_opts.orientation},
+                onSelectionChanged: (s) =>
+                    _update(_opts.copyWith(orientation: s.first)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              switch (_opts.orientation) {
+                PosterOrientation.auto =>
+                  'Picks the page turn that best fits the image.',
+                PosterOrientation.portrait =>
+                  'Forces every page portrait (tall).',
+                PosterOrientation.landscape =>
+                  'Forces every page landscape (wide).',
+              },
+              style: caption,
+            ),
+            const SizedBox(height: 16),
             _label(context, 'Paper'),
             const SizedBox(height: 6),
             Align(
