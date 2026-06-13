@@ -7,6 +7,7 @@ import 'package:differentworld/features/activity_forge/activity_forge.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +36,49 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
   void _roll() {
     unawaited(HapticFeedback.selectionClick());
     setState(() => _seed = (_seed + 1) & 0x7fffffff);
+  }
+
+  String _verbLabel() {
+    if (_verbId == null) return 'Any verb';
+    final v = kVerbs.where((v) => v.id == _verbId).firstOrNull;
+    return v == null ? 'Any verb' : 'Verb: ${v.emoji} ${v.label}';
+  }
+
+  /// Pick (or clear) the locked verb in a sheet — replaces the 13-chip wall.
+  Future<void> _pickVerb() async {
+    await showGlassSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetCtx) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Any verb'),
+                selected: _verbId == null,
+                onSelected: (_) {
+                  setState(() => _verbId = null);
+                  Navigator.of(sheetCtx).pop();
+                },
+              ),
+              for (final v in kVerbs)
+                ChoiceChip(
+                  label: Text('${v.emoji} ${v.label}'),
+                  selected: _verbId == v.id,
+                  onSelected: (_) {
+                    setState(() => _verbId = v.id);
+                    Navigator.of(sheetCtx).pop();
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _keep(ForgedActivity forged) {
@@ -93,23 +137,19 @@ class _ActivityForgeScreenState extends ConsumerState<ActivityForgeScreen> {
             ),
             const SizedBox(height: 10),
           ],
-          // Lock the verb (to what you're teaching) or leave it on Any.
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                label: const Text('Any verb'),
-                selected: _verbId == null,
-                onSelected: (_) => setState(() => _verbId = null),
+          // Lock the verb to what you're teaching — ONE control, not a wall
+          // of 13 chips (forge was 🔴, the chip wall buried the hero card —
+          // docs/CLARITY_RUBRIC.md). Tap to pick; the forged card leads.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ActionChip(
+              avatar: Icon(
+                _verbId == null ? Icons.lock_open_outlined : Icons.lock_outline,
+                size: 18,
               ),
-              for (final v in kVerbs)
-                ChoiceChip(
-                  label: Text('${v.emoji} ${v.label}'),
-                  selected: _verbId == v.id,
-                  onSelected: (_) => setState(() => _verbId = v.id),
-                ),
-            ],
+              label: Text(_verbLabel()),
+              onPressed: _pickVerb,
+            ),
           ),
           const SizedBox(height: 16),
           _ForgedCard(forged: forged),
