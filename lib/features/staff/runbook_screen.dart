@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/staff/runbook.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -75,7 +76,7 @@ class _MomentCard extends StatelessWidget {
           _Lane(
             label: 'Helper',
             body: moment.helper,
-            tone: const Color(0xFF51CF66),
+            tone: AppColors.growthOf(theme),
           ),
           _Lane(
             label: 'If it breaks',

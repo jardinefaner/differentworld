@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -86,7 +87,7 @@ class _VerbCard extends StatelessWidget {
           _GuideBox(
             label: 'Helper guide',
             body: role.mission.helperGuide,
-            tone: const Color(0xFF51CF66),
+            tone: AppColors.growthOf(theme),
           ),
           const SizedBox(height: 10),
           _Label('Staff growth', accent),

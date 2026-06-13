@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/activity_script.dart';
 import 'package:differentworld/features/activity_runtime/math_inverse.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -362,7 +363,11 @@ class _VerdictChip extends StatelessWidget {
         theme.colorScheme.tertiary,
         Icons.refresh,
       ),
-      _ => ('Yes! that makes $target', Colors.green, Icons.check_circle),
+      _ => (
+        'Yes! that makes $target',
+        AppColors.growthOf(theme),
+        Icons.check_circle,
+      ),
     };
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

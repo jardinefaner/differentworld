@@ -31,26 +31,56 @@ import 'package:flutter/material.dart';
 /// amber, a "live session" pulse) becomes a field here, not a new literal.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
-  const AppColors({required this.gold});
+  const AppColors({required this.gold, required this.growth});
 
   /// The world-signature accent. Legible on its own brightness:
   /// a soft pale gold on dark surfaces, a deeper antique gold on light.
   final Color gold;
 
-  /// Light-theme values — the deeper gold so it reads on white.
-  static const light = AppColors(gold: Color(0xFF9A7B2E));
+  /// The "positive / can-do / correct" green. Tuned per brightness so it
+  /// passes AA as TEXT on BOTH themes — the recurring `Color(0xFF51CF66)`
+  /// literal that was copy-pasted across staff-ladder / runbook / verb-jobs /
+  /// scale-bar / math-runner only reads on dark (≈2:1 on a light surface).
+  final Color growth;
 
-  /// Dark-theme values — the pale gold so it reads on black.
-  static const dark = AppColors(gold: Color(0xFFE6C079));
+  /// Light-theme values — deeper tones so they read on the warm-white surface.
+  static const light = AppColors(
+    gold: Color(0xFF9A7B2E),
+    growth: Color(0xFF2E7D32),
+  );
+
+  /// Dark-theme values — paler tones so they read on the near-black surface.
+  static const dark = AppColors(
+    gold: Color(0xFFE6C079),
+    growth: Color(0xFF7BD491),
+  );
 
   @override
-  AppColors copyWith({Color? gold}) => AppColors(gold: gold ?? this.gold);
+  AppColors copyWith({Color? gold, Color? growth}) =>
+      AppColors(gold: gold ?? this.gold, growth: growth ?? this.growth);
 
   @override
   AppColors lerp(ThemeExtension<AppColors>? other, double t) {
     if (other is! AppColors) return this;
-    return AppColors(gold: Color.lerp(gold, other.gold, t) ?? gold);
+    return AppColors(
+      gold: Color.lerp(gold, other.gold, t) ?? gold,
+      growth: Color.lerp(growth, other.growth, t) ?? growth,
+    );
   }
+
+  /// The brightness-correct [gold] for [theme], with a fallback for contexts
+  /// that override the theme without re-registering this extension (forced
+  /// dark overlays). Reads the SAME token instances — no hex copy that drifts.
+  static Color goldOf(ThemeData theme) =>
+      theme.extension<AppColors>()?.gold ??
+      (theme.brightness == Brightness.dark ? dark.gold : light.gold);
+
+  /// The brightness-correct [growth] for [theme] (same fallback contract as
+  /// [goldOf]). Use instead of a hardcoded green for can-do / correct / up
+  /// labels so they pass AA on light AND follow dark/light.
+  static Color growthOf(ThemeData theme) =>
+      theme.extension<AppColors>()?.growth ??
+      (theme.brightness == Brightness.dark ? dark.growth : light.growth);
 
   /// A light, AA-passing tint of [accent] for use as TEXT or an icon on a
   /// DARK surface. The bright categorical accents (teal, blue, …) only reach

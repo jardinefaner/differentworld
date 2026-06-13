@@ -238,7 +238,7 @@ class _BreakCardTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(card.icon, color: Colors.white, size: 36),
+              Icon(card.icon, color: AppColors.onAccent(card.color), size: 36),
               const Spacer(),
               Text(
                 card.title,
@@ -246,8 +246,8 @@ class _BreakCardTile extends StatelessWidget {
                 // height already grows with text scale (build above).
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.onAccent(card.color),
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
@@ -258,7 +258,7 @@ class _BreakCardTile extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: AppColors.onAccent(card.color).withValues(alpha: 0.85),
                   fontSize: 13,
                 ),
               ),

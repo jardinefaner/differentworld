@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// **SCALE** — the eleventh primitive (docs/PRIMITIVES.md): a position on a
@@ -70,7 +71,7 @@ class ScaleBar extends StatelessWidget {
                 '${delta % 1 == 0 ? delta.toInt() : delta}',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: up
-                      ? const Color(0xFF51CF66)
+                      ? AppColors.growthOf(theme)
                       : theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                 ),

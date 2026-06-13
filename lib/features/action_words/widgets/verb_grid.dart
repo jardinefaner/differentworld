@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -66,9 +67,7 @@ class _VerbCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final gold = theme.brightness == Brightness.dark
-        ? const Color(0xFFE6C079)
-        : const Color(0xFF9A7B2E);
+    final gold = AppColors.goldOf(theme);
     return Semantics(
       button: true,
       selected: selected,

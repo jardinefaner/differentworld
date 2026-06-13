@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
@@ -21,9 +22,7 @@ class WorldBookScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final gold = theme.brightness == Brightness.dark
-        ? const Color(0xFFE6C079)
-        : const Color(0xFF9A7B2E);
+    final gold = AppColors.goldOf(theme);
     final async = ref.watch(inventedWorldsProvider);
 
     return EdgeScaffold(

@@ -170,8 +170,8 @@ class _RoleTile extends StatelessWidget {
                   role.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.onAccent(color),
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
@@ -182,7 +182,7 @@ class _RoleTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: AppColors.onAccent(color).withValues(alpha: 0.85),
                     fontSize: 12,
                   ),
                 ),

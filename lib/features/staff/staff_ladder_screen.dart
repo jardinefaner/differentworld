@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/staff/staff_ladder.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -182,7 +183,7 @@ class _RoleCard extends StatelessWidget {
           _ListBlock(
             label: 'Can do',
             items: role.canDo,
-            tone: const Color(0xFF51CF66),
+            tone: AppColors.growthOf(theme),
           ),
           if (role.cantDo.isNotEmpty) ...[
             const SizedBox(height: 10),
