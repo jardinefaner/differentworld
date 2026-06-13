@@ -12,6 +12,7 @@ import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
+import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -106,6 +107,22 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
             );
           }
           final caps = space.caps;
+          // Count of enabled tracked features → the collapsed-section peek,
+          // so collapsing keeps the glanceable signal (CLARITY_RUBRIC.md).
+          const trackedKeys = <(String, bool)>[
+            (SpaceCaps.featureObservations, true),
+            (SpaceCaps.featureMealLogging, true),
+            (SpaceCaps.featureNapLogging, true),
+            (SpaceCaps.featureDiaperLogging, false),
+            (SpaceCaps.featureIncidentReports, true),
+            (SpaceCaps.featureMedicationLog, false),
+            (SpaceCaps.featureFieldTrips, false),
+            (SpaceCaps.featureFamilyLogin, false),
+            (SpaceCaps.featureBilling, false),
+          ];
+          final trackedOn = trackedKeys
+              .where((k) => caps.getBool(k.$1, fallback: k.$2))
+              .length;
           return FormBody(
             padding: const EdgeInsets.only(bottom: 32),
             children: [
@@ -119,110 +136,149 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
               ),
               const _SectionLabel(label: 'Vertical'),
               _VerticalPickerTile(
-                currentKey:
-                    caps.getString(SpaceCaps.vertical) ?? 'childcare',
+                currentKey: caps.getString(SpaceCaps.vertical) ?? 'childcare',
                 onChanged: (key) => _setVertical(spaceId, key),
               ),
-              const _SectionLabel(label: "What's tracked"),
-                CapSwitch(
-                  label: 'Observations',
-                  subtitle: 'Quick narrative + photo capture for kids',
-                  value: caps.getBool(
-                    SpaceCaps.featureObservations,
-                    fallback: true,
-                  ),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureObservations, v),
-                ),
-                CapSwitch(
-                  label: 'Meal logging',
-                  subtitle: 'Daily meals/snacks per child',
-                  value: caps.getBool(
-                    SpaceCaps.featureMealLogging,
-                    fallback: true,
-                  ),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureMealLogging, v),
-                ),
-                CapSwitch(
-                  label: 'Nap logging',
-                  subtitle: 'Start, end, and quality',
-                  value: caps.getBool(
-                    SpaceCaps.featureNapLogging,
-                    fallback: true,
-                  ),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureNapLogging, v),
-                ),
-                CapSwitch(
-                  label: 'Diaper logging',
-                  subtitle: 'Default off — enable for infant/toddler programs',
-                  value: caps.getBool(SpaceCaps.featureDiaperLogging),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureDiaperLogging, v),
-                ),
-                CapSwitch(
-                  label: 'Incident reports',
-                  subtitle: 'Structured reports + parent notification',
-                  value: caps.getBool(
-                    SpaceCaps.featureIncidentReports,
-                    fallback: true,
-                  ),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureIncidentReports, v),
-                ),
-                CapSwitch(
-                  label: 'Medication log',
-                  subtitle:
-                      'Track doses given (requires certified staff member)',
-                  value: caps.getBool(SpaceCaps.featureMedicationLog),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureMedicationLog, v),
-                ),
-                CapSwitch(
-                  label: 'Field trips',
-                  subtitle: 'Trips + permission slips',
-                  value: caps.getBool(SpaceCaps.featureFieldTrips),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureFieldTrips, v),
-                ),
-                CapSwitch(
-                  label: 'Family login',
-                  subtitle: 'Family-facing app access (coming soon)',
-                  value: caps.getBool(SpaceCaps.featureFamilyLogin),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureFamilyLogin, v),
-                ),
-                CapSwitch(
-                  label: 'Billing',
-                  subtitle: 'Attendance-based invoicing (coming soon)',
-                  value: caps.getBool(SpaceCaps.featureBilling),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.featureBilling, v),
-                ),
-                const _SectionLabel(label: 'Defaults'),
-                CapSwitch(
-                  label: 'Photo consent by default',
-                  subtitle:
-                      'New enrollments start with photo consent enabled. '
-                      'Turn off if you require explicit per-family opt-in.',
-                  value: caps.getBool(SpaceCaps.photoDefaultConsent),
-                  onChanged: (v) => _setCap(spaceId,SpaceCaps.photoDefaultConsent, v),
-                ),
-                _TimerPresetsTile(spaceId: spaceId),
-                _PlayLengthTile(spaceId: spaceId),
-                const _SectionLabel(label: 'Day rhythm'),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                  child: Text(
-                    'When the day shifts gears. The Today screen leads with '
-                    'the right next move for each window — retime them for a '
-                    'camp or full-day program.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+              // Three collapsed groups so first paint is the vertical picker
+              // + 3 rows, not a wall of ~13 toggles (docs/CLARITY_RUBRIC.md —
+              // was 🔴 overwhelming). Each opens on tap; "What's tracked"
+              // keeps a "N on" peek while collapsed.
+              const SizedBox(height: 12),
+              CollapsibleSection(
+                title: "What's tracked",
+                icon: Icons.tune,
+                collapsedSummary: '$trackedOn of ${trackedKeys.length} on',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CapSwitch(
+                      label: 'Observations',
+                      subtitle: 'Quick narrative + photo capture for kids',
+                      value: caps.getBool(
+                        SpaceCaps.featureObservations,
+                        fallback: true,
+                      ),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureObservations, v),
                     ),
-                  ),
+                    CapSwitch(
+                      label: 'Meal logging',
+                      subtitle: 'Daily meals/snacks per child',
+                      value: caps.getBool(
+                        SpaceCaps.featureMealLogging,
+                        fallback: true,
+                      ),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureMealLogging, v),
+                    ),
+                    CapSwitch(
+                      label: 'Nap logging',
+                      subtitle: 'Start, end, and quality',
+                      value: caps.getBool(
+                        SpaceCaps.featureNapLogging,
+                        fallback: true,
+                      ),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureNapLogging, v),
+                    ),
+                    CapSwitch(
+                      label: 'Diaper logging',
+                      subtitle:
+                          'Default off — enable for infant/toddler programs',
+                      value: caps.getBool(SpaceCaps.featureDiaperLogging),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureDiaperLogging, v),
+                    ),
+                    CapSwitch(
+                      label: 'Incident reports',
+                      subtitle: 'Structured reports + parent notification',
+                      value: caps.getBool(
+                        SpaceCaps.featureIncidentReports,
+                        fallback: true,
+                      ),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureIncidentReports, v),
+                    ),
+                    CapSwitch(
+                      label: 'Medication log',
+                      subtitle:
+                          'Track doses given (requires certified staff member)',
+                      value: caps.getBool(SpaceCaps.featureMedicationLog),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureMedicationLog, v),
+                    ),
+                    CapSwitch(
+                      label: 'Field trips',
+                      subtitle: 'Trips + permission slips',
+                      value: caps.getBool(SpaceCaps.featureFieldTrips),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureFieldTrips, v),
+                    ),
+                    CapSwitch(
+                      label: 'Family login',
+                      subtitle: 'Family-facing app access (coming soon)',
+                      value: caps.getBool(SpaceCaps.featureFamilyLogin),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureFamilyLogin, v),
+                    ),
+                    CapSwitch(
+                      label: 'Billing',
+                      subtitle: 'Attendance-based invoicing (coming soon)',
+                      value: caps.getBool(SpaceCaps.featureBilling),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.featureBilling, v),
+                    ),
+                  ],
                 ),
-                _PhaseWindowsSection(spaceId: spaceId),
-                const SizedBox(height: 32),
-              ],
-            );
+              ),
+              CollapsibleSection(
+                title: 'Defaults',
+                icon: Icons.settings_suggest_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CapSwitch(
+                      label: 'Photo consent by default',
+                      subtitle:
+                          'New enrollments start with photo consent enabled. '
+                          'Turn off if you require explicit per-family opt-in.',
+                      value: caps.getBool(SpaceCaps.photoDefaultConsent),
+                      onChanged: (v) =>
+                          _setCap(spaceId, SpaceCaps.photoDefaultConsent, v),
+                    ),
+                    _TimerPresetsTile(spaceId: spaceId),
+                    _PlayLengthTile(spaceId: spaceId),
+                  ],
+                ),
+              ),
+              CollapsibleSection(
+                title: 'Day rhythm',
+                icon: Icons.schedule_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                      child: Text(
+                        'When the day shifts gears. The Today screen leads '
+                        'with the right next move for each window — retime '
+                        'them for a camp or full-day program.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    _PhaseWindowsSection(spaceId: spaceId),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          );
         },
       ),
     );
   }
-
 }
 
 // Riverpod 3 family providers don't have a stable public-typed name.
@@ -522,7 +578,10 @@ class _TimerPresetsSheetState extends ConsumerState<_TimerPresetsSheet> {
                     label: Text('$m min'),
                     onDeleted: _working.length > 1
                         ? () => unawaited(
-                            _save([for (final x in _working) if (x != m) x]),
+                            _save([
+                              for (final x in _working)
+                                if (x != m) x,
+                            ]),
                           )
                         : null,
                   ),
@@ -759,8 +818,9 @@ class _VerticalPickerRow extends StatelessWidget {
                         '${preset.subjectPlural} · ${preset.entry}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: selected
-                              ? scheme.onPrimaryContainer
-                                  .withValues(alpha: 0.85)
+                              ? scheme.onPrimaryContainer.withValues(
+                                  alpha: 0.85,
+                                )
                               : scheme.onSurfaceVariant,
                         ),
                       ),
