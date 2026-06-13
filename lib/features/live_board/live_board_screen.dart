@@ -11,6 +11,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -38,6 +39,11 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   BoardInstrument _active = BoardInstrument.word;
   final _wordCtrl = TextEditingController();
   final _spellWordCtrl = TextEditingController();
+  // Explicit focus nodes (owned here) so switching instruments reliably
+  // re-takes focus + re-shows the IME — `autofocus` only fires on first mount
+  // and drops the keyboard on a fast re-switch (Interaction Guard).
+  final _wordFocus = FocusNode();
+  final _spellFocus = FocusNode();
   String _spellName = '';
 
   @override
@@ -54,6 +60,9 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
       }),
     );
     _session = session;
+    // Focus the first instrument's field once the frame is up (IME show is a
+    // post-frame op on Android; requestFocus alone doesn't raise it).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusActive());
   }
 
   @override
@@ -65,7 +74,23 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
     unawaited(_session?.dispose());
     _wordCtrl.dispose();
     _spellWordCtrl.dispose();
+    _wordFocus.dispose();
+    _spellFocus.dispose();
     super.dispose();
+  }
+
+  /// Take focus on the active instrument's field and raise the IME. Split out
+  /// so the instrument switch and first mount share one reliable path
+  /// (requestFocus + an explicit post-frame TextInput.show — CLAUDE.md
+  /// interaction invariant 4).
+  void _focusActive() {
+    if (!mounted) return;
+    (_active == BoardInstrument.spell ? _spellFocus : _wordFocus).requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
+      }
+    });
   }
 
   BoardState get _state => switch (_active) {
@@ -89,6 +114,7 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   void _setInstrument(BoardInstrument i) {
     setState(() => _active = i);
     _push();
+    _focusActive();
   }
 
   @override
@@ -139,10 +165,15 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
             ),
             const SizedBox(height: 16),
             if (_active == BoardInstrument.word)
-              _WordControls(controller: _wordCtrl, onChanged: (_) => _push())
+              _WordControls(
+                controller: _wordCtrl,
+                focusNode: _wordFocus,
+                onChanged: (_) => _push(),
+              )
             else
               _SpellControls(
                 wordController: _spellWordCtrl,
+                wordFocus: _spellFocus,
                 selectedName: _spellName,
                 onPickName: (n) {
                   setState(() => _spellName = n);
@@ -210,17 +241,22 @@ class _JoinCard extends StatelessWidget {
 }
 
 class _WordControls extends StatelessWidget {
-  const _WordControls({required this.controller, required this.onChanged});
+  const _WordControls({
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+  });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       onChanged: onChanged,
-      autofocus: true,
       style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
       decoration: const InputDecoration(
         labelText: 'Word',
@@ -233,12 +269,14 @@ class _WordControls extends StatelessWidget {
 class _SpellControls extends ConsumerWidget {
   const _SpellControls({
     required this.wordController,
+    required this.wordFocus,
     required this.selectedName,
     required this.onPickName,
     required this.onWordChanged,
   });
 
   final TextEditingController wordController;
+  final FocusNode wordFocus;
   final String selectedName;
   final ValueChanged<String> onPickName;
   final ValueChanged<String> onWordChanged;
@@ -270,6 +308,7 @@ class _SpellControls extends ConsumerWidget {
                 final name = s.firstName;
                 final selected = name == selectedName;
                 return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => onPickName(name),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -306,8 +345,8 @@ class _SpellControls extends ConsumerWidget {
         const SizedBox(height: 16),
         TextField(
           controller: wordController,
+          focusNode: wordFocus,
           onChanged: onWordChanged,
-          autofocus: true,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
           decoration: const InputDecoration(
             labelText: 'Spell it',
