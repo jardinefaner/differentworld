@@ -169,37 +169,13 @@ class _LiveWorld extends ConsumerWidget {
               icon: const Icon(Icons.cast),
               label: const Text('Cast to the room'),
             ),
+            // The 6 secondary verbs were a wall of co-equal buttons (this-week
+            // was 🔴, 8 equal CTAs — docs/CLARITY_RUBRIC.md). Now one "More"
+            // opens them in a sheet so Play today + Cast clearly lead.
             OutlinedButton.icon(
-              onPressed: () => context.push(
-                '/action-words/activities?verbs=${world.featuredVerbs.join(',')}',
-              ),
-              icon: const Icon(Icons.local_activity_outlined),
-              label: const Text('Activities'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/forge'),
-              icon: const Icon(Icons.casino_outlined),
-              label: const Text('Make one'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => unawaited(printWorldWorksheets(world)),
-              icon: const Icon(Icons.print_outlined),
-              label: const Text('Worksheets'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/wall'),
-              icon: const Icon(Icons.dashboard_customize_outlined),
-              label: const Text('The Wall'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/time-capsules'),
-              icon: const Icon(Icons.lock_clock_outlined),
-              label: const Text('Time capsules'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/action-words/different-worlds'),
-              icon: const Icon(Icons.public_outlined),
-              label: const Text('Explore all worlds'),
+              onPressed: () => _moreActions(context, world),
+              icon: const Icon(Icons.more_horiz),
+              label: const Text('More'),
             ),
           ],
         ),
@@ -353,6 +329,63 @@ Future<void> _castOptions(BuildContext context, CurriculumWorld world) {
     mirrorRoute: '/present-world/${world.id}',
     mirrorLabel: 'Mirror to this screen',
     mirrorSubtitle: 'Show it right here — for a projector by cable or AirPlay.',
+  );
+}
+
+/// The secondary world verbs, moved off the action row into a sheet so the
+/// row leads with Play today + Cast (docs/CLARITY_RUBRIC.md).
+Future<void> _moreActions(BuildContext context, CurriculumWorld world) {
+  void go(String route) {
+    Navigator.of(context).pop();
+    unawaited(context.push(route));
+  }
+
+  return showGlassSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.local_activity_outlined),
+            title: const Text('Activities'),
+            onTap: () => go(
+              '/action-words/activities?verbs=${world.featuredVerbs.join(',')}',
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.casino_outlined),
+            title: const Text('Make one'),
+            onTap: () => go('/forge'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.print_outlined),
+            title: const Text('Worksheets'),
+            onTap: () {
+              Navigator.of(context).pop();
+              unawaited(printWorldWorksheets(world));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard_customize_outlined),
+            title: const Text('The Wall'),
+            onTap: () => go('/wall'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock_clock_outlined),
+            title: const Text('Time capsules'),
+            onTap: () => go('/time-capsules'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.public_outlined),
+            title: const Text('Explore all worlds'),
+            onTap: () => go('/action-words/different-worlds'),
+          ),
+        ],
+      ),
+    ),
   );
 }
 
