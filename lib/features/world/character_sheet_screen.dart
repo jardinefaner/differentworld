@@ -248,6 +248,7 @@ class _Body extends ConsumerWidget {
               title: 'The full sheet',
               icon: Icons.auto_awesome_outlined,
               collapsedSummary: 'abilities · skills · spells · quests',
+              initiallyExpanded: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

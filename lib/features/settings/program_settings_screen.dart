@@ -148,6 +148,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                 title: "What's tracked",
                 icon: Icons.tune,
                 collapsedSummary: '$trackedOn of ${trackedKeys.length} on',
+                initiallyExpanded: false,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -234,6 +235,8 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
               CollapsibleSection(
                 title: 'Defaults',
                 icon: Icons.settings_suggest_outlined,
+                collapsedSummary: 'photo consent · timer · play length',
+                initiallyExpanded: false,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -254,6 +257,8 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
               CollapsibleSection(
                 title: 'Day rhythm',
                 icon: Icons.schedule_outlined,
+                collapsedSummary: 'arrival → activities → pickup → close',
+                initiallyExpanded: false,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
