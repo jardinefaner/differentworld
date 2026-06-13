@@ -421,6 +421,39 @@ once it has a home.
   which axis drives the screen — the staff job, the archetype, or the kid job?
   Likely layered: staff job picks the *home*, archetype tunes the *tools*, kid
   job reshapes the *kid-mode* surface.)
+- **2026-06-13 (cont.)** — **Digital manipulatives: democratizing the systems
+  to think without AI.** In the user's words: *"just like we have manipulatives
+  and building blocks, that's what we're doing too… we're giving them the
+  systems to function without AI… we're democratizing education… and also,
+  giving them the tools using the phone."* The framing that ties the whole app
+  together: the thinking tools (Systems Thinking, the 12 verbs, the worlds, the
+  role decks) are **manipulatives for the mind** — the digital equivalent of
+  blocks and counters a child moves with their hands. The phone is the
+  *delivery* of those manipulatives, not the destination (it hands the tool
+  over, the thinking happens off-screen — paper, room, out loud). **Democratizing
+  education** = every child and every teacher gets the same first-class thinking
+  systems, free of needing an AI to do it for them — so when the machines can
+  do everything, a kid still knows how to *imagine and reason*. (Sharpens the
+  north star + the 2026-06-07 "why" + dream #494 thinking-tools; the test for
+  any feature: is it a manipulative that builds a capacity, or a crutch that
+  replaces one?)
+- **2026-06-13 (cont.)** — **One phone, MANY screens — opt-in screen control.**
+  In the user's words: *"for the presentation, each user can let their screen be
+  controlled by one user… instead of one phone, one screen, now it's one phone,
+  many screens."* Extends dreams #14 + #18. The present/cast layer is *framed*
+  today as one-phone-one-screen (the cast cockpit drives a single receiver), but
+  the **Realtime broadcast spine already pushes canonical state to EVERY device
+  on the join code** and re-broadcasts on each presence join — so 1→N is already
+  true at the transport level; presence already counts the joiners. The dream
+  promotes it to first-class: a device **opts in** ("let the teacher drive my
+  screen"), and one host phone drives them all at once — every kid's tablet
+  becomes a slaved screen of the one presenter. (Thread: `live_session.dart`
+  broadcast/presence, cast cockpit/receiver. **Open fork:** *mirror-all* —
+  every screen shows the same thing the host drives (nearly free on today's
+  broadcast) — vs *per-screen control* — the host drives each device
+  independently (screen A on slide 1, B on slide 2), which needs per-target
+  addressing on top of the broadcast. Start with mirror-all; per-screen is the
+  bigger unlock for stations/centers.)
 
 - **2026-06-07** — **The "why", said plainly.** In the user's words: *"this
   is going to be where we invest in our kids… the subscription and the
