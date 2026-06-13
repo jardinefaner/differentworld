@@ -89,14 +89,16 @@ class WorldBadge extends StatelessWidget {
     );
   }
 
-  /// Soft gold accent — the brief's signature. Now sourced from the
+  /// Soft gold accent — the brief's signature. Sourced from the
   /// [AppColors] theme extension (one tuned-per-brightness home). The
   /// brightness ternary is kept only as a fallback for contexts that
   /// override the theme locally without re-registering the extension
-  /// (e.g. the reveal overlay's forced `ThemeData.dark`).
+  /// (e.g. the reveal overlay's forced `ThemeData.dark`) — and it reads
+  /// the SAME token instances, never a copy of their hex (so the fallback
+  /// can't drift from the source of truth).
   static Color goldFor(ThemeData theme) =>
       theme.extension<AppColors>()?.gold ??
       (theme.brightness == Brightness.dark
-          ? const Color(0xFFE6C079)
-          : const Color(0xFF9A7B2E));
+          ? AppColors.dark.gold
+          : AppColors.light.gold);
 }

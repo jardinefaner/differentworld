@@ -44,6 +44,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history so the diff-scoped theme-adherence check can
+          # resolve the PR base (or HEAD~1 on a push to main).
+          fetch-depth: 0
+
+      # Cheap, deps-free gate: no NEW hardcoded colors in themed surfaces
+      # (the dark/light + contrast bug class). Diff-scoped — see
+      # docs/THEME_ADHERENCE.md. Runs before the slow Flutter steps so a
+      # bypass fails fast.
+      - name: Theme adherence
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          bash scripts/check_theme_adherence.sh "$BASE"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2

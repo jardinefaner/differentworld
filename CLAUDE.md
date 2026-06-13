@@ -577,6 +577,37 @@ consistency across chrome is what makes the floating language
 read as "one system" instead of "a bunch of slightly translucent
 things."
 
+### Color: one theme, enforced — never hardcode on a themed surface
+
+The app has ONE centralized theme (`lib/app/theme.dart` +
+`design_tokens.dart` → seeded `ColorScheme` light/dark + the
+`AppColors` extension). A bare `Colors.white` / `Colors.black` /
+`Color(0xFF…)` for a fill or text on a normal surface is a bug — it
+can't follow OS dark/light and is the root of the recurring
+dark/light + "white-on-light pill" defects. Read color from
+`Theme.of(context).colorScheme.<role>` or
+`Theme.of(context).extension<AppColors>()`.
+
+- **Content-driven colors** (a world `block.color`, a `vibe.accent`
+  from JSON) aren't theme colors — no theme governs them. When one is
+  a FILL behind text/icons, pick the foreground for contrast:
+  `AppColors.onAccent(fill)` (black/white by luminance — the light
+  worlds fail white-on-light) or `AppColors.readableOnDark(accent)`
+  (a pale AA tint for accent text on a dark surface).
+- **Hardcoding IS allowed** only on the four raw-canvas types — print/
+  PDF, projection/immersive stages, camera viewfinders, and the
+  palette/scheme definitions. The authoritative list + the contract
+  live in **[docs/THEME_ADHERENCE.md](docs/THEME_ADHERENCE.md)**.
+- **The boundary trap**: a control/HUD region inside an immersive
+  surface (a game's control bar over the stage) is THEMED even though
+  the stage is raw. Painting theme text on the raw stage is the
+  `game_scaffold` bug — controls sit on `surfaceContainerHighest`.
+- **Teeth**: `scripts/check_theme_adherence.sh` (diff-scoped; runs in
+  CI) fails on a NEW hardcode in a themed surface; the **Flutter Theme
+  Guard** agent runs in the Review Council for the judgment the regex
+  can't. A genuinely-new raw canvas gets added to the allowlist in the
+  same change.
+
 ### Composition primitives — reach for these before you build
 
 A new feature's first `build()` should be **composition**, not
