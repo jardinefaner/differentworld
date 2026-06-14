@@ -8,6 +8,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
+import 'package:differentworld/features/identity/widgets/archetype_card.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/settings/settings_actions.dart';
@@ -228,6 +229,14 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                // "How you show up" — the self-authored archetype (decorates,
+                // never gates). Editable only on your OWN profile.
+                ArchetypeCard(
+                  memberId: member.id,
+                  archetypeId: caps.getString(MemberCaps.archetype),
+                  editable: me?.id == member.id,
                 ),
                 const SizedBox(height: 12),
                 const TabBar(

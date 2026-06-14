@@ -53,6 +53,11 @@ class Viewer {
   /// switches per the Council audit).
   String get roleLabel => RoleLabels.of(roleKey);
 
+  /// The member's self-authored archetype id (docs/IDENTITY_SYSTEM.md §2), or
+  /// null if unset. Resolve to the catalog entry with `archetypeById` in the
+  /// UI layer (core doesn't depend on features). Decorates, never gates.
+  String? get archetypeId => memberCaps.getString(MemberCaps.archetype);
+
   // ---------------------------------------------------------------------
   // Capability accessors
   // ---------------------------------------------------------------------

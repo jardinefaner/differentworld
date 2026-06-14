@@ -203,6 +203,11 @@ abstract class MemberCaps {
   static const String canManageSchedule = CoreCaps.canManageSchedule;
   static const String isSpecialist = CoreCaps.isSpecialist;
 
+  /// The member's self-authored archetype id (docs/IDENTITY_SYSTEM.md §2 —
+  /// "how you show up"). A STRING cap, not a gate: it decorates the surface
+  /// (warms / reorders), never grants or denies. One of `kArchetypes` ids.
+  static const String archetype = 'archetype';
+
   // Childcare-specific (kept here for compat; prefer ChildcareCaps
   // in new code so it's grep-able by vertical)
   static const String canRecordMeal = ChildcareCaps.canRecordMeal;

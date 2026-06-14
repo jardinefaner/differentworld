@@ -65,6 +65,18 @@ class MemberCapActions {
     await db.membersDao.updateCapabilities(memberId, caps.toJson());
   }
 
+  /// Set the member's self-authored archetype (docs/IDENTITY_SYSTEM.md §2).
+  /// A string cap that decorates, never gates. Pass null to clear. Same
+  /// read-merge-write shape as [setSpecialty]. Self-authored — the UI only
+  /// offers this on the viewer's OWN profile.
+  Future<void> setArchetype(String memberId, String? archetypeId) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final m = await db.membersDao.findById(memberId);
+    if (m == null) return;
+    final caps = m.caps.setting(MemberCaps.archetype, archetypeId);
+    await db.membersDao.updateCapabilities(memberId, caps.toJson());
+  }
+
   // Cert add/remove + expiry moved to CertActions in
   // lib/features/certifications/certifications_providers.dart now that
   // certifications are a first-class entity (UX_DECISIONS §8).
