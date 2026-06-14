@@ -6,6 +6,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/identity/archetypes.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
+import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -41,10 +42,12 @@ class MainDrawer extends ConsumerWidget {
         ? null
         : archetypeById(viewer.archetypeId);
 
-    // Canonical nav — the SAME list the desktop rail renders, so the
-    // two can never drift. Capability gates + badge counts live in
-    // buildNavDestinations; the drawer just renders each entry.
-    final destinations = buildNavDestinations(viewer);
+    // Canonical nav layout — the SAME structure the desktop rail
+    // renders, so the two can never drift. Capability gates, badge
+    // counts, and grouping all live in nav_destinations; the drawer
+    // just renders each band. On a phone the groups collapse so the
+    // drawer opens to the short daily spine instead of a 16-item wall.
+    final nav = buildNavLayout(viewer);
 
     // Wave 54: drawer surface uses the shared GlassPanel so the
     // staff drawer reads as part of the same floating-chrome
@@ -242,18 +245,15 @@ class MainDrawer extends ConsumerWidget {
                 ),
               ),
 
-              // Canonical top-level destinations (shared with the
-              // desktop rail). Everything narrower (Classrooms, Team,
-              // Program settings, Billing, Activities, Locations, etc.)
-              // lives in the omnibox. A `dividerBefore` entry becomes
-              // whitespace here — the drawer has no divider lines by
-              // design (the rail renders the same break as a Divider).
+              // The daily spine (flat) + the collapsible groups, all
+              // scrollable. Groups open collapsed so the drawer lands on
+              // the short core list; tap a header to reveal its surfaces.
+              // Settings is pinned below the scroll area (see footer).
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.only(bottom: 8),
                   children: [
-                    for (final d in destinations) ...[
-                      if (d.dividerBefore) const SizedBox(height: 12),
+                    for (final d in nav.spine)
                       _DrawerTile(
                         // Stable per-route key: the list grows / shrinks
                         // with capability gates, so without keys Flutter
@@ -266,10 +266,45 @@ class MainDrawer extends ConsumerWidget {
                         onTap: () => _go(context, d.route),
                         countProvider: d.countProvider,
                       ),
-                    ],
+                    for (final g in nav.groups)
+                      CollapsibleSection(
+                        key: ValueKey('nav-group-${g.title}'),
+                        title: g.title,
+                        icon: g.icon,
+                        initiallyExpanded: false,
+                        // Indent the group's items so the hierarchy reads
+                        // at a glance under the collapsible header.
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Column(
+                            children: [
+                              for (final d in g.items)
+                                _DrawerTile(
+                                  key: ValueKey('nav-${d.route}'),
+                                  icon: d.icon,
+                                  label: d.label,
+                                  onTap: () => _go(context, d.route),
+                                  countProvider: d.countProvider,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
+
+              // Footer — Settings pinned to the bottom edge so it's always
+              // one tap away regardless of how far the groups expand.
+              for (final d in nav.footer)
+                _DrawerTile(
+                  key: ValueKey('nav-${d.route}'),
+                  icon: d.icon,
+                  label: d.label,
+                  onTap: () => _go(context, d.route),
+                  countProvider: d.countProvider,
+                ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
