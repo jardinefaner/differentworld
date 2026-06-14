@@ -31,6 +31,28 @@ void main() {
       expect(s.word, 'because');
     });
 
+    test('number carries the count + label', () {
+      final s = BoardState.fromMap(
+        const BoardState(
+          instrument: BoardInstrument.number,
+          number: 12,
+          word: 'days together',
+        ).toMap(),
+      );
+      expect(s.instrument, BoardInstrument.number);
+      expect(s.number, 12);
+      expect(s.word, 'days together');
+    });
+
+    test('turn carries the kid name', () {
+      final s = BoardState.fromMap(
+        const BoardState(instrument: BoardInstrument.turn, name: 'Aria')
+            .toMap(),
+      );
+      expect(s.instrument, BoardInstrument.turn);
+      expect(s.name, 'Aria');
+    });
+
     test('unknown/empty kind decodes to idle', () {
       expect(
         BoardState.fromMap(const <String, dynamic>{}).instrument,
@@ -72,6 +94,28 @@ void main() {
     );
     await tester.pump();
     expect(find.text('because'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('number stage shows the count + label', (tester) async {
+    await tester.pumpWidget(
+      host(const BoardState(
+        instrument: BoardInstrument.number,
+        number: 12,
+        word: 'days together',
+      )),
+    );
+    expect(find.text('12'), findsOneWidget);
+    expect(find.text('days together'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('turn stage shows whose turn', (tester) async {
+    await tester.pumpWidget(
+      host(const BoardState(instrument: BoardInstrument.turn, name: 'Aria')),
+    );
+    await tester.pump();
+    expect(find.textContaining('Aria'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

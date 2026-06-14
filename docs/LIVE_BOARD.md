@@ -45,12 +45,15 @@ it with no roster/catalog access — the caster puts the kid's name in the state
 
 ## Instruments
 
-**Shipped (Wave 1)**
+**Shipped (Waves 1–2)**
 - **Big word** — type a word; the room shows it huge, auto-fit.
 - **Spell-for-me** — pick a kid (roster avatar) or type a name + a word; the
   room shows the avatar (initials) and the word, side by side, big.
+- **Count together** — a big number with an optional label; tap −/＋ and the
+  room counts along.
+- **Whose turn** — tap a kid's avatar; the room shows it big with their name.
 
-**Next (Wave 2+ — the "what else")**
+**Next (Wave 3+ — the "what else")**
 - Highlight-a-word reading (paste text up big; tap a word → it bolds) — reuses
   the `speak/` engine's active-word highlight + the 15 auto-fit layouts.
 - Reveal a word/sentence one piece at a time · sound-it-out (syllables) · big

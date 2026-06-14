@@ -45,6 +45,9 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   final _wordFocus = FocusNode();
   final _spellFocus = FocusNode();
   String _spellName = '';
+  int _number = 0;
+  final _numberLabelCtrl = TextEditingController();
+  String _turnName = '';
 
   @override
   void initState() {
@@ -74,6 +77,7 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
     unawaited(_session?.dispose());
     _wordCtrl.dispose();
     _spellWordCtrl.dispose();
+    _numberLabelCtrl.dispose();
     _wordFocus.dispose();
     _spellFocus.dispose();
     super.dispose();
@@ -85,7 +89,18 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   /// interaction invariant 4).
   void _focusActive() {
     if (!mounted) return;
-    (_active == BoardInstrument.spell ? _spellFocus : _wordFocus).requestFocus();
+    switch (_active) {
+      case BoardInstrument.word:
+        _wordFocus.requestFocus();
+      case BoardInstrument.spell:
+        _spellFocus.requestFocus();
+      case BoardInstrument.number:
+      case BoardInstrument.turn:
+      case BoardInstrument.idle:
+        // No text field on these — drop the keyboard, don't raise the IME.
+        FocusManager.instance.primaryFocus?.unfocus();
+        return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
@@ -101,6 +116,13 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
             word: _spellWordCtrl.text,
             name: _spellName,
           ),
+        BoardInstrument.number => BoardState(
+            instrument: BoardInstrument.number,
+            number: _number,
+            word: _numberLabelCtrl.text,
+          ),
+        BoardInstrument.turn =>
+          BoardState(instrument: BoardInstrument.turn, name: _turnName),
         BoardInstrument.idle => const BoardState(),
       };
 
@@ -147,40 +169,70 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            SegmentedButton<BoardInstrument>(
-              segments: const [
-                ButtonSegment(
-                  value: BoardInstrument.word,
-                  label: Text('Big word'),
-                  icon: Icon(Icons.text_fields),
-                ),
-                ButtonSegment(
-                  value: BoardInstrument.spell,
-                  label: Text('Spell for me'),
-                  icon: Icon(Icons.spellcheck),
-                ),
-              ],
-              selected: {_active},
-              onSelectionChanged: (s) => _setInstrument(s.first),
+            // The instrument rack — a scrollable chip row so it grows as we
+            // add instruments (docs/LIVE_BOARD.md).
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final i in const [
+                    (BoardInstrument.word, 'Big word', Icons.text_fields),
+                    (BoardInstrument.spell, 'Spell', Icons.spellcheck),
+                    (BoardInstrument.number, 'Count', Icons.pin_outlined),
+                    (BoardInstrument.turn, 'Whose turn', Icons.groups_outlined),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        avatar: Icon(i.$3, size: 18),
+                        label: Text(i.$2),
+                        selected: _active == i.$1,
+                        onSelected: (_) => _setInstrument(i.$1),
+                      ),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
-            if (_active == BoardInstrument.word)
-              _WordControls(
-                controller: _wordCtrl,
-                focusNode: _wordFocus,
-                onChanged: (_) => _push(),
-              )
-            else
-              _SpellControls(
-                wordController: _spellWordCtrl,
-                wordFocus: _spellFocus,
-                selectedName: _spellName,
-                onPickName: (n) {
-                  setState(() => _spellName = n);
-                  _push();
-                },
-                onWordChanged: (_) => _push(),
-              ),
+            switch (_active) {
+              BoardInstrument.word => _WordControls(
+                  controller: _wordCtrl,
+                  focusNode: _wordFocus,
+                  onChanged: (_) => _push(),
+                ),
+              BoardInstrument.spell => _SpellControls(
+                  wordController: _spellWordCtrl,
+                  wordFocus: _spellFocus,
+                  selectedName: _spellName,
+                  onPickName: (n) {
+                    setState(() => _spellName = n);
+                    _push();
+                  },
+                  onWordChanged: (_) => _push(),
+                ),
+              BoardInstrument.number => _NumberControls(
+                  number: _number,
+                  labelController: _numberLabelCtrl,
+                  onStep: (delta) {
+                    setState(() => _number = (_number + delta).clamp(0, 9999));
+                    _push();
+                  },
+                  onReset: () {
+                    setState(() => _number = 0);
+                    _push();
+                  },
+                  onLabelChanged: (_) => _push(),
+                ),
+              BoardInstrument.turn => _RosterPicker(
+                  selectedName: _turnName,
+                  onPick: (n) {
+                    setState(() => _turnName = n);
+                    _push();
+                  },
+                ),
+              BoardInstrument.idle => const SizedBox.shrink(),
+            },
           ],
         ),
       ),
@@ -266,7 +318,7 @@ class _WordControls extends StatelessWidget {
   }
 }
 
-class _SpellControls extends ConsumerWidget {
+class _SpellControls extends StatelessWidget {
   const _SpellControls({
     required this.wordController,
     required this.wordFocus,
@@ -282,66 +334,11 @@ class _SpellControls extends ConsumerWidget {
   final ValueChanged<String> onWordChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final subjects = ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Who asked?', style: theme.textTheme.labelMedium),
-        const SizedBox(height: 8),
-        if (subjects.isEmpty)
-          // No roster — let the teacher type the name.
-          TextField(
-            onChanged: onPickName,
-            decoration: const InputDecoration(labelText: 'Name'),
-          )
-        else
-          SizedBox(
-            height: 84,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: subjects.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (context, i) {
-                final s = subjects[i];
-                final name = s.firstName;
-                final selected = name == selectedName;
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onPickName(name),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: selected
-                                ? theme.colorScheme.primary
-                                : Colors.transparent,
-                            width: 3,
-                          ),
-                        ),
-                        child: PersonAvatar(name: name, radius: 26),
-                      ),
-                      const SizedBox(height: 4),
-                      SizedBox(
-                        width: 64,
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.labelSmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+        _RosterPicker(selectedName: selectedName, onPick: onPickName),
         const SizedBox(height: 16),
         TextField(
           controller: wordController,
@@ -354,6 +351,141 @@ class _SpellControls extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Count-together controls: a big −/＋ stepper + an optional label. Reset
+/// zeroes it. No text field is auto-focused (counting is tap-driven).
+class _NumberControls extends StatelessWidget {
+  const _NumberControls({
+    required this.number,
+    required this.labelController,
+    required this.onStep,
+    required this.onReset,
+    required this.onLabelChanged,
+  });
+
+  final int number;
+  final TextEditingController labelController;
+  final ValueChanged<int> onStep;
+  final VoidCallback onReset;
+  final ValueChanged<String> onLabelChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            IconButton.filledTonal(
+              iconSize: 36,
+              onPressed: number > 0 ? () => onStep(-1) : null,
+              icon: const Icon(Icons.remove),
+            ),
+            Expanded(
+              child: Text(
+                '$number',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            IconButton.filledTonal(
+              iconSize: 36,
+              onPressed: () => onStep(1),
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: labelController,
+          onChanged: onLabelChanged,
+          decoration: const InputDecoration(
+            labelText: 'Label (optional)',
+            hintText: 'e.g. days together · kids here · books read',
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: number == 0 ? null : onReset,
+            icon: const Icon(Icons.restart_alt),
+            label: const Text('Reset'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The roster avatar strip — tap a kid to select them. Shared by Spell-for-me
+/// and Whose-turn. Falls back to a name field when there's no roster yet.
+class _RosterPicker extends ConsumerWidget {
+  const _RosterPicker({required this.selectedName, required this.onPick});
+
+  final String selectedName;
+  final ValueChanged<String> onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final subjects =
+        ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
+    if (subjects.isEmpty) {
+      return TextField(
+        onChanged: onPick,
+        decoration: const InputDecoration(labelText: 'Name'),
+      );
+    }
+    return SizedBox(
+      height: 84,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: subjects.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, i) {
+          final name = subjects[i].firstName;
+          final selected = name == selectedName;
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onPick(name),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected
+                          ? theme.colorScheme.primary
+                          : Colors.transparent,
+                      width: 3,
+                    ),
+                  ),
+                  child: PersonAvatar(name: name, radius: 26),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  width: 64,
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

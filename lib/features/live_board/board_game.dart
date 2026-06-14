@@ -12,28 +12,39 @@ import 'package:flutter/material.dart';
 ///
 /// The render law is **auto-fit**: every instrument scales its content to fill
 /// the screen and never scrolls or clips (`FittedBox`). "All must fit."
-enum BoardInstrument { idle, word, spell }
+enum BoardInstrument { idle, word, spell, number, turn }
 
 class BoardState {
   const BoardState({
     this.instrument = BoardInstrument.idle,
     this.word = '',
     this.name = '',
+    this.number = 0,
   });
 
   factory BoardState.fromMap(Map<String, dynamic> m) => BoardState(
         instrument: switch (m['kind'] as String?) {
           'word' => BoardInstrument.word,
           'spell' => BoardInstrument.spell,
+          'number' => BoardInstrument.number,
+          'turn' => BoardInstrument.turn,
           _ => BoardInstrument.idle,
         },
         word: (m['word'] as String?) ?? '',
         name: (m['name'] as String?) ?? '',
+        number: (m['number'] as num?)?.toInt() ?? 0,
       );
 
   final BoardInstrument instrument;
+
+  /// The big text for `word`; the LABEL under the number for `number`.
   final String word;
+
+  /// The kid's name for `spell` / `turn`.
   final String name;
+
+  /// The count for `number`.
+  final int number;
 
   /// The wire-state the caster broadcasts. Self-describing — the receiver
   /// needs no roster/catalog access.
@@ -41,6 +52,7 @@ class BoardState {
         'kind': instrument.name,
         'word': word,
         'name': name,
+        'number': number,
       };
 }
 
@@ -88,6 +100,9 @@ class BoardGame extends GameDefinition<BoardState> {
     return switch (state.instrument) {
       BoardInstrument.word => _WordStage(word: state.word),
       BoardInstrument.spell => _SpellStage(name: state.name, word: state.word),
+      BoardInstrument.number =>
+        _NumberStage(number: state.number, label: state.word),
+      BoardInstrument.turn => _TurnStage(name: state.name),
       BoardInstrument.idle => const _IdleStage(),
     };
   }
@@ -169,6 +184,89 @@ class _SpellStage extends StatelessWidget {
               avatar,
               const SizedBox(height: 28),
               Flexible(child: Center(child: wordBox)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Count together: one big number, with an optional label under it. Tap the
+/// number up on the phone and the whole room counts along.
+class _NumberStage extends StatelessWidget {
+  const _NumberStage({required this.number, required this.label});
+
+  final int number;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: FittedBox(
+              child: Text(
+                '$number',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+          if (label.trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            FittedBox(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Whose turn: a kid's avatar (initials) big with their name + "'s turn". Fair
+/// turns the whole room can see.
+class _TurnStage extends StatelessWidget {
+  const _TurnStage({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    if (name.trim().isEmpty) return const _IdleStage();
+    return Padding(
+      padding: const EdgeInsets.all(36),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final r = (c.maxHeight * 0.32).clamp(48.0, 200.0);
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              PersonAvatar(name: name, radius: r),
+              const SizedBox(height: 24),
+              Flexible(
+                child: FittedBox(
+                  child: Text(
+                    "$name's turn",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
             ],
           );
         },
