@@ -128,14 +128,18 @@ These have their own canonical guides — don't reinvent:
     `_RightNowCard`, not their `_DirectorPulseCard` (buried at ~pos 13). Closing
     it is a per-role lead-order pick, NOT a screen rebuild; deferred as an opt-in
     refinement because the screen is calm (CLARITY work) and reordering risks it.
-  - **Role-3 (archetype tunes the experience)** — FIRST LIGHT done: the
-    self-authored archetype (`archetypes.dart` + `viewer.archetypeId`, set on the
-    member-detail `ArchetypeCard`) now shows up beside the role line in the
-    drawer. STILL TO DO: let the archetype gently re-order/emphasize the
-    `YourToolsStrip` palette (decorates, never gates — e.g. a Connector floats
-    Messages up, a Protector floats Incidents up). The data hook
-    (`viewer.archetypeId`) is in place; `role_tools.dart` is where the tuning
-    would read it.
+  - **Role-3 (archetype tunes the experience)** — DONE. The self-authored
+    archetype (`archetypes.dart` + `viewer.archetypeId`, set on the member-detail
+    `ArchetypeCard`) shows up beside the role line in the drawer AND now tunes
+    the `YourToolsStrip` palette: `tuneByAffinity` / `tunedToolsFor` in
+    `role_tools.dart` float the archetype's affinity tools to the front (stable
+    partition, role-relative order) and the strip accents that cluster + marks
+    the header with the glyph. Strictly decorates, never gates — it only
+    re-orders tools the role already has; `archetype_test.dart` proves across
+    every role × archetype that tuning never changes palette membership. To tune
+    further, edit `archetypeToolAffinity` (route lists keyed by archetype id; a
+    completeness test guards it). Next expansion surface would be theming the
+    home accent or greeting by archetype — deferred to keep Today calm.
   - **Role-4 (kid verb-job reshapes kid-mode)** — unstarted.
 - **Snap-paper Wave 3** — the starred keepers embedded in the Summer Book PDF
   (needs network-image bytes in an offline-first PDF).

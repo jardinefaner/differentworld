@@ -143,3 +143,53 @@ List<RoleTool> toolsForRole(String roleKey) {
 /// The role's palette for THIS viewer — role order ∩ capability-allowed.
 List<RoleTool> roleToolsFor(Viewer viewer) =>
     toolsForRole(viewer.roleKey).where((t) => t.allowed(viewer)).toList();
+
+// ── Role-3: the archetype tunes the palette ─────────────────────────────────
+
+/// Role-3 (docs/IDENTITY_SYSTEM.md §2 + docs/VISION.md "archetype tunes the
+/// tools"): the self-authored archetype gently re-orders the role palette so the
+/// tools that express *how you show up* lead. It **decorates, never gates** —
+/// it only re-orders tools the role already has; an affinity for a tool the
+/// role lacks is a silent no-op, and no archetype ever adds or removes a tool.
+/// No archetype → the palette is exactly the Role-1 order (the floor).
+///
+/// Keyed by archetype id (the string on [Viewer.archetypeId] / the catalog's
+/// `Archetype.id`) → the tool routes that resonate with that way of showing up.
+/// `archetype_test.dart` asserts every catalog id has an entry and every route
+/// here is a real tool route, so a rename can't silently break the tuning.
+const Map<String, List<String>> archetypeToolAffinity = {
+  'visionary': ['/insights', '/schedule'], // sees ahead, plans
+  'doer': ['/captures/new', '/checklist'], // hands-on, gets it done
+  'protector': ['/pickup', '/checklist'], // safety, accountability
+  'anchor': ['/schedule', '/runbook'], // steady routine
+  'connector': ['/observations', '/present'], // relational, shares
+  'sage': ['/observations', '/insights'], // reflective, deep
+  'seeker': ['/activities', '/breaks', '/live-board'], // explores, plays
+  'beacon': ['/present', '/live-board'], // broadcasts, leads the room
+};
+
+/// Stable partition: float the [archetypeId]'s affinity tools to the front of
+/// [base] in their existing relative order, leaving the rest in role order.
+/// Pure + Viewer-free so it's exhaustively testable. Unknown/null archetype, or
+/// no affinity, returns [base] untouched — the Role-1 floor.
+List<RoleTool> tuneByAffinity(List<RoleTool> base, String? archetypeId) {
+  final affinity = archetypeToolAffinity[archetypeId];
+  if (affinity == null || affinity.isEmpty) return base;
+  final wanted = affinity.toSet();
+  final lead = <RoleTool>[];
+  final rest = <RoleTool>[];
+  for (final t in base) {
+    (wanted.contains(t.route) ? lead : rest).add(t);
+  }
+  return [...lead, ...rest];
+}
+
+/// The viewer's palette, tuned by their archetype (Role-3). Role order ∩
+/// capability (Role-1), then the archetype's gentle re-order on top.
+List<RoleTool> tunedToolsFor(Viewer viewer) =>
+    tuneByAffinity(roleToolsFor(viewer), viewer.archetypeId);
+
+/// Whether the archetype draws [tool] forward — drives the subtle lead-tile
+/// emphasis in the strip. False when no archetype is set.
+bool isAffinityTool(Viewer viewer, RoleTool tool) =>
+    archetypeToolAffinity[viewer.archetypeId]?.contains(tool.route) ?? false;
