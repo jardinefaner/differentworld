@@ -79,6 +79,19 @@ void main() {
         BoardInstrument.idle,
       );
     });
+
+    // FUTURE-PROOFING: the buildStage / _state / controls / chip switches are
+    // exhaustive (the compiler catches a forgotten enum case), but fromMap
+    // maps a STRING → enum, so a new instrument added without a fromMap case
+    // would silently decode to idle. This loops EVERY value and asserts the
+    // wire round-trips back to itself — so adding an instrument without wiring
+    // its decode fails here, loudly, instead of shipping a dead chip.
+    test('every BoardInstrument round-trips through the wire', () {
+      for (final i in BoardInstrument.values) {
+        final back = BoardState.fromMap(BoardState(instrument: i).toMap());
+        expect(back.instrument, i, reason: 'fromMap is missing a case for $i');
+      }
+    });
   });
 
   // A realistic room-screen size; the auto-fit stages scale to fill it.
@@ -170,5 +183,16 @@ void main() {
   testWidgets('idle stage prompts for an instrument', (tester) async {
     await tester.pumpWidget(host(const BoardState()));
     expect(find.textContaining('instrument'), findsOneWidget);
+  });
+
+  // FUTURE-PROOFING: every instrument must render its stage without throwing,
+  // even on empty content (the receiver paints it before the teacher types).
+  testWidgets('every instrument renders a stage without error',
+      (tester) async {
+    for (final i in BoardInstrument.values) {
+      await tester.pumpWidget(host(BoardState(instrument: i)));
+      await tester.pump();
+      expect(tester.takeException(), isNull, reason: '$i stage threw');
+    }
   });
 }
