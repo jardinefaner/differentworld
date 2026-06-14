@@ -106,9 +106,12 @@ These have their own canonical guides — don't reinvent:
 
 ## Future-proofing backlog (sequenced, not yet done)
 
-- **Action-layer test harness** — an in-memory Drift DB + a fake staff viewer,
-  so every `EntryActions` / DAO method (esp. the offline-photo footgun path)
-  has a real unit test (CLAUDE.md testing rule; no harness exists yet).
+- ~~Action-layer test harness~~ **DONE** — `test/unit/entry_actions_db_test.dart`
+  opens `AppDatabase.forTesting(NativeDatabase.memory())` + `createMigrator()
+  .createAll()`, seeds a space/member, overrides `appDatabaseProvider` +
+  `viewerProvider`, and runs `EntryActions` end-to-end (the offline-photo
+  footgun is now an executable test). Copy its `setUp` to test any other
+  action/DAO method.
 - **Live Board instrument registry** — fold the per-instrument sites into one
   declaration (id + stage + controls + state) so adding one is a single entry,
   not edits across board_game + the screen. (Deferred: the per-instrument

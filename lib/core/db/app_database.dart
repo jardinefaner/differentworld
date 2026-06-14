@@ -29,6 +29,7 @@ import 'package:differentworld/core/db/dao/vehicles_dao.dart';
 import 'package:differentworld/core/db/dao/weekly_template_dao.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
+import 'package:flutter/foundation.dart';
 // Both drift and powersync export a `Column` class — only import what we
 // actually need from powersync to avoid the ambiguity.
 import 'package:powersync/powersync.dart' show PowerSyncDatabase;
@@ -942,6 +943,15 @@ class Events extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase(PowerSyncDatabase powerSync)
     : super(SqliteAsyncDriftConnection(powerSync));
+
+  /// Test-only: open over a plain Drift executor (e.g.
+  /// `NativeDatabase.memory()`) instead of PowerSync, so the action layer can
+  /// be unit-tested. Production ALWAYS uses the PowerSync constructor (the
+  /// `migration` strategy stays no-op because PowerSync owns the real schema);
+  /// tests materialize the schema themselves with
+  /// `await db.createMigrator().createAll()`. See docs/EXTENDING.md.
+  @visibleForTesting
+  AppDatabase.forTesting(super.e);
 
   @override
   int get schemaVersion => 1;
