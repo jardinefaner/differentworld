@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/identity/archetypes.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/nav_destinations.dart';
@@ -33,6 +34,12 @@ class MainDrawer extends ConsumerWidget {
     // Vertical-aware role label so a construction PM doesn't read as
     // "Project manager" in childcare strings or vice versa.
     final vertical = ref.watch(verticalLabelsProvider).vertical;
+    // The self-authored archetype (docs/IDENTITY_SYSTEM.md §2) shows up where
+    // identity lives — beside the role line. Decorates, never gates; absent
+    // for guardians (no picker) and for anyone who hasn't chosen one.
+    final archetype = viewer is GuardianViewer
+        ? null
+        : archetypeById(viewer.archetypeId);
 
     // Canonical nav — the SAME list the desktop rail renders, so the
     // two can never drift. Capability gates + badge counts live in
@@ -124,12 +131,19 @@ class MainDrawer extends ConsumerWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
-                                      viewer is GuardianViewer
-                                          ? 'Family'
-                                          : RoleLabels.of(
-                                              viewer.roleKey,
-                                              vertical: vertical,
-                                            ),
+                                      () {
+                                        final role = viewer is GuardianViewer
+                                            ? 'Family'
+                                            : RoleLabels.of(
+                                                viewer.roleKey,
+                                                vertical: vertical,
+                                              );
+                                        return archetype == null
+                                            ? role
+                                            : '$role · '
+                                                  '${archetype.glyph} '
+                                                  '${archetype.name}';
+                                      }(),
                                       style: theme.textTheme.bodySmall
                                           ?.copyWith(
                                             color: theme

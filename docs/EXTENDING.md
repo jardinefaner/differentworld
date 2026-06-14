@@ -117,9 +117,26 @@ These have their own canonical guides — don't reinvent:
   not edits across board_game + the screen. (Deferred: the per-instrument
   control STATE makes it a real refactor; the completeness test guards the
   current shape meanwhile.)
-- **Role-as-home Roles 2–4** — role reorders the home LEAD (Role-2); the 8
-  archetypes tune the palette (Role-3, needs per-person archetype assignment);
-  the kid verb-job reshapes kid-mode (Role-4).
+- **Role-as-home Roles 2–4**:
+  - **Role-2 (role shapes the home lead)** — *substantially already done*, not
+    via a reorder but via self-hiding conditional cards in `today_sections.dart`:
+    `_ReadyToRunCard`/`_DirectorPulseCard` (director), `_RightNowCard`/
+    `_ChecklistCallToAction`/`_ActionWordsCard` (daily-logger), `_IdentityStrip`/
+    `_CoveringTodayCard` (specialist/substitute), `LeadingTodayCard` (block
+    leads), `YourToolsStrip` (Role-1 per-role tools). The one *genuine* remaining
+    gap is lead PRIORITY — a director's first card is `_ReadyToRunCard`/
+    `_RightNowCard`, not their `_DirectorPulseCard` (buried at ~pos 13). Closing
+    it is a per-role lead-order pick, NOT a screen rebuild; deferred as an opt-in
+    refinement because the screen is calm (CLARITY work) and reordering risks it.
+  - **Role-3 (archetype tunes the experience)** — FIRST LIGHT done: the
+    self-authored archetype (`archetypes.dart` + `viewer.archetypeId`, set on the
+    member-detail `ArchetypeCard`) now shows up beside the role line in the
+    drawer. STILL TO DO: let the archetype gently re-order/emphasize the
+    `YourToolsStrip` palette (decorates, never gates — e.g. a Connector floats
+    Messages up, a Protector floats Incidents up). The data hook
+    (`viewer.archetypeId`) is in place; `role_tools.dart` is where the tuning
+    would read it.
+  - **Role-4 (kid verb-job reshapes kid-mode)** — unstarted.
 - **Snap-paper Wave 3** — the starred keepers embedded in the Summer Book PDF
   (needs network-image bytes in an offline-first PDF).
 - **Dependency bumps** — `app_links` 7, `powersync` 2.3, `supabase_flutter`
