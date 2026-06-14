@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 ///
 /// The render law is **auto-fit**: every instrument scales its content to fill
 /// the screen and never scrolls or clips (`FittedBox`). "All must fit."
-enum BoardInstrument { idle, word, spell, number, turn, reveal }
+enum BoardInstrument { idle, word, spell, number, turn, reveal, sound }
 
 class BoardState {
   const BoardState({
@@ -29,6 +29,7 @@ class BoardState {
           'number' => BoardInstrument.number,
           'turn' => BoardInstrument.turn,
           'reveal' => BoardInstrument.reveal,
+          'sound' => BoardInstrument.sound,
           _ => BoardInstrument.idle,
         },
         word: (m['word'] as String?) ?? '',
@@ -107,6 +108,8 @@ class BoardGame extends GameDefinition<BoardState> {
       BoardInstrument.turn => _TurnStage(name: state.name),
       BoardInstrument.reveal =>
         _RevealStage(text: state.word, shown: state.number),
+      BoardInstrument.sound =>
+        _SoundStage(text: state.word, lit: state.number),
       BoardInstrument.idle => const _IdleStage(),
     };
   }
@@ -331,6 +334,56 @@ class _RevealStage extends StatelessWidget {
                     ),
                   ),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Split a sound-it-out word into its chunks. The teacher separates sounds
+/// with a hyphen, middot, slash, or space (e.g. "but-ter-fly").
+List<String> soundChunks(String text) => text
+    .split(RegExp(r'[-·/\s]+'))
+    .map((c) => c.trim())
+    .where((c) => c.isNotEmpty)
+    .toList();
+
+/// Sound it out: a word broken into chunks; tap to light each one in turn,
+/// then blend. The lit chunks glow; the rest wait dim. Phonics, room-sized.
+class _SoundStage extends StatelessWidget {
+  const _SoundStage({required this.text, required this.lit});
+
+  final String text;
+  final int lit;
+
+  @override
+  Widget build(BuildContext context) {
+    final chunks = soundChunks(text);
+    if (chunks.isEmpty) return const _IdleStage();
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Center(
+        child: FittedBox(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < chunks.length; i++) ...[
+                if (i > 0)
+                  const Text(
+                    '·',
+                    style: TextStyle(color: Colors.white24, fontSize: 56),
+                  ),
+                Text(
+                  chunks[i],
+                  style: TextStyle(
+                    color: i < lit ? Colors.white : Colors.white24,
+                    fontSize: 72,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

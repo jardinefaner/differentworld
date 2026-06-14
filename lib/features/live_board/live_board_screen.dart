@@ -51,6 +51,9 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   final _revealCtrl = TextEditingController();
   final _revealFocus = FocusNode();
   int _revealShown = 0;
+  final _soundCtrl = TextEditingController();
+  final _soundFocus = FocusNode();
+  int _soundLit = 0;
 
   @override
   void initState() {
@@ -82,9 +85,11 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
     _spellWordCtrl.dispose();
     _numberLabelCtrl.dispose();
     _revealCtrl.dispose();
+    _soundCtrl.dispose();
     _wordFocus.dispose();
     _spellFocus.dispose();
     _revealFocus.dispose();
+    _soundFocus.dispose();
     super.dispose();
   }
 
@@ -101,6 +106,8 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
         _spellFocus.requestFocus();
       case BoardInstrument.reveal:
         _revealFocus.requestFocus();
+      case BoardInstrument.sound:
+        _soundFocus.requestFocus();
       case BoardInstrument.number:
       case BoardInstrument.turn:
       case BoardInstrument.idle:
@@ -134,6 +141,11 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
             instrument: BoardInstrument.reveal,
             word: _revealCtrl.text,
             number: _revealShown,
+          ),
+        BoardInstrument.sound => BoardState(
+            instrument: BoardInstrument.sound,
+            word: _soundCtrl.text,
+            number: _soundLit,
           ),
         BoardInstrument.idle => const BoardState(),
       };
@@ -194,6 +206,7 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
                     (BoardInstrument.number, 'Count', Icons.pin_outlined),
                     (BoardInstrument.turn, 'Whose turn', Icons.groups_outlined),
                     (BoardInstrument.reveal, 'Reveal', Icons.expand_more),
+                    (BoardInstrument.sound, 'Sound it out', Icons.graphic_eq),
                   ])
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -260,6 +273,25 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
                   },
                   onReset: () {
                     setState(() => _revealShown = 0);
+                    _push();
+                  },
+                ),
+              BoardInstrument.sound => _RevealControls(
+                  controller: _soundCtrl,
+                  focusNode: _soundFocus,
+                  shown: _soundLit,
+                  total: soundChunks(_soundCtrl.text).length,
+                  label: 'Word',
+                  hint: 'Separate the sounds with - (e.g. but-ter-fly)',
+                  nextLabel: 'Light next',
+                  minLines: 1,
+                  onLinesChanged: (_) => _push(),
+                  onStep: (delta) {
+                    setState(() => _soundLit = (_soundLit + delta).clamp(0, 99));
+                    _push();
+                  },
+                  onReset: () {
+                    setState(() => _soundLit = 0);
                     _push();
                   },
                 ),
@@ -467,6 +499,10 @@ class _RevealControls extends StatelessWidget {
     required this.onLinesChanged,
     required this.onStep,
     required this.onReset,
+    this.label = 'Lines (one per line)',
+    this.hint = 'Type each line; reveal them one at a time',
+    this.nextLabel = 'Reveal next',
+    this.minLines = 2,
   });
 
   final TextEditingController controller;
@@ -476,6 +512,10 @@ class _RevealControls extends StatelessWidget {
   final ValueChanged<String> onLinesChanged;
   final ValueChanged<int> onStep;
   final VoidCallback onReset;
+  final String label;
+  final String hint;
+  final String nextLabel;
+  final int minLines;
 
   @override
   Widget build(BuildContext context) {
@@ -487,11 +527,11 @@ class _RevealControls extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           onChanged: onLinesChanged,
-          minLines: 2,
+          minLines: minLines,
           maxLines: 6,
-          decoration: const InputDecoration(
-            labelText: 'Lines (one per line)',
-            hintText: 'Type each line; reveal them one at a time',
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
             alignLabelWithHint: true,
           ),
         ),
@@ -509,7 +549,7 @@ class _RevealControls extends StatelessWidget {
                 onPressed: shown < total ? () => onStep(1) : null,
                 icon: const Icon(Icons.expand_more),
                 label: Text(
-                  shown >= total && total > 0 ? 'All shown' : 'Reveal next',
+                  shown >= total && total > 0 ? 'All shown' : nextLabel,
                 ),
               ),
             ),

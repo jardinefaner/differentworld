@@ -66,6 +66,13 @@ void main() {
       expect(s.number, 2);
     });
 
+    test('sound-it-out chunks split on -, ·, /, space', () {
+      expect(soundChunks('but-ter-fly'), ['but', 'ter', 'fly']);
+      expect(soundChunks('c·a·t'), ['c', 'a', 't']);
+      expect(soundChunks('sun  shine'), ['sun', 'shine']);
+      expect(soundChunks('   '), isEmpty);
+    });
+
     test('unknown/empty kind decodes to idle', () {
       expect(
         BoardState.fromMap(const <String, dynamic>{}).instrument,
@@ -143,6 +150,20 @@ void main() {
     expect(find.text('one'), findsOneWidget);
     expect(find.text('two'), findsOneWidget);
     expect(find.text('three'), findsNothing); // not yet revealed
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sound stage lights chunks up to the lit count', (tester) async {
+    await tester.pumpWidget(
+      host(const BoardState(
+        instrument: BoardInstrument.sound,
+        word: 'but-ter-fly',
+        number: 2,
+      )),
+    );
+    expect(find.text('but'), findsOneWidget);
+    expect(find.text('ter'), findsOneWidget);
+    expect(find.text('fly'), findsOneWidget); // shown, just dim until lit
     expect(tester.takeException(), isNull);
   });
 
