@@ -272,6 +272,25 @@ class EntryActions {
     return entryId;
   }
 
+  /// Curate: mark (or unmark) a work sample as a keeper for the Summer Book.
+  /// Merges `in_book` into the existing details so the world/day tags survive.
+  Future<void> setWorkSampleInBook(Entry entry, {required bool inBook}) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    Map<String, dynamic> details;
+    try {
+      details = entry.details.trim().isEmpty
+          ? <String, dynamic>{}
+          : (jsonDecode(entry.details) as Map).cast<String, dynamic>();
+    } on Object catch (_) {
+      details = <String, dynamic>{};
+    }
+    details['in_book'] = inBook;
+    await db.entriesDao.updateDetails(
+      id: entry.id,
+      detailsJson: jsonEncode(details),
+    );
+  }
+
   /// Create a structured incident (docs/WORKFLOWS.md gap #3). The
   /// narrative goes in [text]; the structured fields ride in `details`
   /// JSON ({incident_type, action_taken?, parent_notified}). Reuses the

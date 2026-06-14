@@ -18,6 +18,7 @@ import 'package:differentworld/features/subjects/widgets/health_profile_card.dar
 import 'package:differentworld/features/subjects/widgets/observation_item.dart';
 import 'package:differentworld/features/subjects/widgets/pickup_list.dart';
 import 'package:differentworld/features/subjects/widgets/today_status_card.dart';
+import 'package:differentworld/features/subjects/widgets/work_gallery.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -481,6 +482,17 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
         // leads with Today / Alerts / Observations and the rest is one
         // tap away. Section-anchor keys move onto the CollapsibleSection
         // so the chip TOC still scrolls to the (collapsed) header.
+        // The child's cumulative work — photos of their paper, snapped via
+        // the "Snap work" action above. Star a keeper for the Summer Book
+        // (docs/VISION.md — the routine's "writing on paper, cumulative").
+        const _SectionGap(),
+        CollapsibleSection(
+          title: 'Their work',
+          icon: Icons.collections_outlined,
+          initiallyExpanded: false,
+          child: WorkGallery(subjectId: subject.id),
+        ),
+
         const _SectionGap(),
         CollapsibleSection(
           key: _pickupKey,
