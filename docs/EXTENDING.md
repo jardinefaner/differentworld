@@ -140,7 +140,22 @@ These have their own canonical guides — don't reinvent:
     further, edit `archetypeToolAffinity` (route lists keyed by archetype id; a
     completeness test guards it). Next expansion surface would be theming the
     home accent or greeting by archetype — deferred to keep Today calm.
-  - **Role-4 (kid verb-job reshapes kid-mode)** — unstarted.
+  - **Role-4 (kid verb-job reshapes kid-mode)** — DONE. `KidJobScreen`
+    (`/action-words/job/:subjectId`, `kid_job_screen.dart`) is a kid-mode-locked
+    surface that shows ONE child the verb-jobs their morning picks gave them —
+    each picked verb becomes a big "You are The Mover!" card (jobTitle + level-1
+    mission from `verb_roles.json`) with a kid-tappable "I did it!" toggle
+    (`ActionWordsActions.toggleDone`). Every child's screen is literally
+    different because their three verbs differ — that IS the personalization
+    (the kid analogue of "different tools for different roles"). Reuses the
+    verbatim kid-mode lockdown from `ActionWordsKidScreen` (microtask enter +
+    mounted guard, resume re-engage, 5-tap staff corner, PopScope, pinned
+    route). Launched from the Action Words roster row (`_KidRow`) when the kid
+    has picks. Tests: `action_words_actions_db_test.dart` pins the toggleDone
+    write path; `verb_roles_test.dart` already pins the content (every verb →
+    a complete job). Deferred (shared with the pick screen, not regressions):
+    no-PIN 5-tap unlock is a global kid-mode product decision; a voiceover/TTS
+    pass for pre-readers; reusable `KidModeExitOverlay`.
 - **Snap-paper Wave 3** — the starred keepers embedded in the Summer Book PDF
   (needs network-image bytes in an offline-first PDF).
 - **Dependency bumps** — `app_links` 7, `powersync` 2.3, `supabase_flutter`

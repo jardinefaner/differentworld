@@ -14,6 +14,7 @@ import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/day_run_screen.dart';
 import 'package:differentworld/features/action_words/growth_arc_screen.dart';
 import 'package:differentworld/features/action_words/journey_tour_screen.dart';
+import 'package:differentworld/features/action_words/kid_job_screen.dart';
 import 'package:differentworld/features/action_words/program_hub_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
@@ -275,6 +276,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (_, state) => RouteTitle(
                       title: 'Pick your words',
                       child: ActionWordsKidScreen(
+                        subjectId: state.pathParameters['subjectId']!,
+                      ),
+                    ),
+                  ),
+                  // Role-4: the kid's verb-jobs for the day, kid-mode locked.
+                  // 3 segments so it resolves here, not as a :subjectId.
+                  GoRoute(
+                    path: 'job/:subjectId',
+                    builder: (_, state) => RouteTitle(
+                      title: 'My jobs',
+                      child: KidJobScreen(
                         subjectId: state.pathParameters['subjectId']!,
                       ),
                     ),

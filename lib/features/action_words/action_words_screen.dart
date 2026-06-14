@@ -207,6 +207,13 @@ class _KidRow extends ConsumerWidget {
             ),
             if (hasPicks) ...[
               _Dots(done: day!.doneCount, total: kPicksPerDay),
+              // Role-4: hand the device to the child to DO their verb-jobs.
+              IconButton(
+                tooltip: 'Hand ${subject.firstName} their jobs',
+                icon: const Icon(Icons.assignment_turned_in_outlined),
+                onPressed: () =>
+                    unawaited(context.push('/action-words/job/${subject.id}')),
+              ),
               IconButton(
                 tooltip: 'Reveal ${subject.firstName}’s world',
                 icon: const Icon(Icons.auto_awesome),
