@@ -9,6 +9,7 @@ import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/features/photos/photo_upload_queue.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/text_scale_setting.dart';
+import 'package:differentworld/shared/widgets/orientation_lock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -68,9 +69,11 @@ class DifferentWorldApp extends ConsumerWidget {
       // "No Overlay widget found" assertions on every screen build.
       // It now lives inside AppShell (which sits BELOW the routed
       // Navigator), where the Overlay ancestor exists.
-      builder: (context, child) => AppTextScaleApplier(
-        child: OmniboxShortcuts(
-          child: child ?? const SizedBox.shrink(),
+      builder: (context, child) => OrientationLock(
+        child: AppTextScaleApplier(
+          child: OmniboxShortcuts(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );
