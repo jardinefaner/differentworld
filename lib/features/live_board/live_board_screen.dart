@@ -48,6 +48,9 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   int _number = 0;
   final _numberLabelCtrl = TextEditingController();
   String _turnName = '';
+  final _revealCtrl = TextEditingController();
+  final _revealFocus = FocusNode();
+  int _revealShown = 0;
 
   @override
   void initState() {
@@ -78,8 +81,10 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
     _wordCtrl.dispose();
     _spellWordCtrl.dispose();
     _numberLabelCtrl.dispose();
+    _revealCtrl.dispose();
     _wordFocus.dispose();
     _spellFocus.dispose();
+    _revealFocus.dispose();
     super.dispose();
   }
 
@@ -94,6 +99,8 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
         _wordFocus.requestFocus();
       case BoardInstrument.spell:
         _spellFocus.requestFocus();
+      case BoardInstrument.reveal:
+        _revealFocus.requestFocus();
       case BoardInstrument.number:
       case BoardInstrument.turn:
       case BoardInstrument.idle:
@@ -123,6 +130,11 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
           ),
         BoardInstrument.turn =>
           BoardState(instrument: BoardInstrument.turn, name: _turnName),
+        BoardInstrument.reveal => BoardState(
+            instrument: BoardInstrument.reveal,
+            word: _revealCtrl.text,
+            number: _revealShown,
+          ),
         BoardInstrument.idle => const BoardState(),
       };
 
@@ -181,6 +193,7 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
                     (BoardInstrument.spell, 'Spell', Icons.spellcheck),
                     (BoardInstrument.number, 'Count', Icons.pin_outlined),
                     (BoardInstrument.turn, 'Whose turn', Icons.groups_outlined),
+                    (BoardInstrument.reveal, 'Reveal', Icons.expand_more),
                   ])
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -228,6 +241,25 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
                   selectedName: _turnName,
                   onPick: (n) {
                     setState(() => _turnName = n);
+                    _push();
+                  },
+                ),
+              BoardInstrument.reveal => _RevealControls(
+                  controller: _revealCtrl,
+                  focusNode: _revealFocus,
+                  shown: _revealShown,
+                  total: _revealCtrl.text
+                      .split('\n')
+                      .where((l) => l.trim().isNotEmpty)
+                      .length,
+                  onLinesChanged: (_) => _push(),
+                  onStep: (delta) {
+                    setState(() => _revealShown =
+                        (_revealShown + delta).clamp(0, 99));
+                    _push();
+                  },
+                  onReset: () {
+                    setState(() => _revealShown = 0);
                     _push();
                   },
                 ),
@@ -415,6 +447,85 @@ class _NumberControls extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
             onPressed: number == 0 ? null : onReset,
+            icon: const Icon(Icons.restart_alt),
+            label: const Text('Reset'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Reveal-one-at-a-time controls: type the lines (one per line), then tap
+/// "Reveal next" to build them up on the room screen.
+class _RevealControls extends StatelessWidget {
+  const _RevealControls({
+    required this.controller,
+    required this.focusNode,
+    required this.shown,
+    required this.total,
+    required this.onLinesChanged,
+    required this.onStep,
+    required this.onReset,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final int shown;
+  final int total;
+  final ValueChanged<String> onLinesChanged;
+  final ValueChanged<int> onStep;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: controller,
+          focusNode: focusNode,
+          onChanged: onLinesChanged,
+          minLines: 2,
+          maxLines: 6,
+          decoration: const InputDecoration(
+            labelText: 'Lines (one per line)',
+            hintText: 'Type each line; reveal them one at a time',
+            alignLabelWithHint: true,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: shown > 0 ? () => onStep(-1) : null,
+              icon: const Icon(Icons.undo),
+              label: const Text('Back'),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: shown < total ? () => onStep(1) : null,
+                icon: const Icon(Icons.expand_more),
+                label: Text(
+                  shown >= total && total > 0 ? 'All shown' : 'Reveal next',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$shown of $total revealed',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: shown == 0 ? null : onReset,
             icon: const Icon(Icons.restart_alt),
             label: const Text('Reset'),
           ),

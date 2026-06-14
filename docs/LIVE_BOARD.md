@@ -52,11 +52,12 @@ it with no roster/catalog access — the caster puts the kid's name in the state
 - **Count together** — a big number with an optional label; tap −/＋ and the
   room counts along.
 - **Whose turn** — tap a kid's avatar; the room shows it big with their name.
+- **Reveal one at a time** — type lines; tap to build them up on the room screen (a sentence, poem, list, step sequence).
 
 **Next (Wave 3+ — the "what else")**
 - Highlight-a-word reading (paste text up big; tap a word → it bolds) — reuses
   the `speak/` engine's active-word highlight + the 15 auto-fit layouts.
-- Reveal a word/sentence one piece at a time · sound-it-out (syllables) · big
+- sound-it-out (syllables) · big
   number + live tally · whose-turn (push an avatar) · show-and-tell (push a
   drawing) · spotlight/point · attention-cue · hold/freeze.
 - Per-screen *independent* control (stations/centers) — needs per-target

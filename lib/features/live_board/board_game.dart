@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 ///
 /// The render law is **auto-fit**: every instrument scales its content to fill
 /// the screen and never scrolls or clips (`FittedBox`). "All must fit."
-enum BoardInstrument { idle, word, spell, number, turn }
+enum BoardInstrument { idle, word, spell, number, turn, reveal }
 
 class BoardState {
   const BoardState({
@@ -28,6 +28,7 @@ class BoardState {
           'spell' => BoardInstrument.spell,
           'number' => BoardInstrument.number,
           'turn' => BoardInstrument.turn,
+          'reveal' => BoardInstrument.reveal,
           _ => BoardInstrument.idle,
         },
         word: (m['word'] as String?) ?? '',
@@ -37,13 +38,14 @@ class BoardState {
 
   final BoardInstrument instrument;
 
-  /// The big text for `word`; the LABEL under the number for `number`.
+  /// The big text for `word`; the LABEL under the number for `number`; the
+  /// newline-joined lines for `reveal`.
   final String word;
 
   /// The kid's name for `spell` / `turn`.
   final String name;
 
-  /// The count for `number`.
+  /// The count for `number`; the count of revealed lines for `reveal`.
   final int number;
 
   /// The wire-state the caster broadcasts. Self-describing — the receiver
@@ -103,6 +105,8 @@ class BoardGame extends GameDefinition<BoardState> {
       BoardInstrument.number =>
         _NumberStage(number: state.number, label: state.word),
       BoardInstrument.turn => _TurnStage(name: state.name),
+      BoardInstrument.reveal =>
+        _RevealStage(text: state.word, shown: state.number),
       BoardInstrument.idle => const _IdleStage(),
     };
   }
@@ -270,6 +274,66 @@ class _TurnStage extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Reveal one at a time: the lines build up on the room screen as the teacher
+/// taps "reveal next" — a sentence, a poem, a list, a step sequence.
+class _RevealStage extends StatelessWidget {
+  const _RevealStage({required this.text, required this.shown});
+
+  final String text;
+  final int shown;
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = text
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    if (lines.isEmpty) return const _IdleStage();
+    final revealed = lines.take(shown.clamp(0, lines.length)).toList();
+    if (revealed.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Text(
+            'Ready…',
+            style: TextStyle(color: Colors.white38, fontSize: 28),
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Center(
+        child: FittedBox(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < revealed.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    revealed[i],
+                    style: TextStyle(
+                      // The freshest line is brightest; earlier ones settle.
+                      color: i == revealed.length - 1
+                          ? Colors.white
+                          : Colors.white70,
+                      fontSize: 40,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

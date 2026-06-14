@@ -53,6 +53,19 @@ void main() {
       expect(s.name, 'Aria');
     });
 
+    test('reveal carries lines + shown count', () {
+      final s = BoardState.fromMap(
+        const BoardState(
+          instrument: BoardInstrument.reveal,
+          word: 'one\ntwo\nthree',
+          number: 2,
+        ).toMap(),
+      );
+      expect(s.instrument, BoardInstrument.reveal);
+      expect(s.word, 'one\ntwo\nthree');
+      expect(s.number, 2);
+    });
+
     test('unknown/empty kind decodes to idle', () {
       expect(
         BoardState.fromMap(const <String, dynamic>{}).instrument,
@@ -116,6 +129,20 @@ void main() {
     );
     await tester.pump();
     expect(find.textContaining('Aria'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('reveal stage shows only the revealed lines', (tester) async {
+    await tester.pumpWidget(
+      host(const BoardState(
+        instrument: BoardInstrument.reveal,
+        word: 'one\ntwo\nthree',
+        number: 2,
+      )),
+    );
+    expect(find.text('one'), findsOneWidget);
+    expect(find.text('two'), findsOneWidget);
+    expect(find.text('three'), findsNothing); // not yet revealed
     expect(tester.takeException(), isNull);
   });
 
