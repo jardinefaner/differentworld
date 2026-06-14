@@ -23,6 +23,7 @@ import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
+import 'package:differentworld/features/today/widgets/your_tools_strip.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -1176,6 +1177,12 @@ class TodayBody extends ConsumerWidget {
         // it doesn't. UX_DECISIONS §6 / framework upward loop.
         const TopInsightCard(),
         const SizedBox(height: 16),
+        // Role-as-home (Role-1): the role-tailored tool palette — different
+        // tools for different roles (docs/VISION.md). Self-hides if the role
+        // has no allowed tools. TodayBody is staff-only (guardians get the
+        // family lens), so no guardian gate needed.
+        YourToolsStrip(viewer: viewer),
+        const SizedBox(height: 8),
         // Capability-aware one-tap launchpad. Hides itself when the
         // viewer has nothing to launch.
         const QuickActions(),
