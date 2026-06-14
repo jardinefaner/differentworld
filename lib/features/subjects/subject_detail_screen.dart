@@ -7,6 +7,7 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/entries/work_sample_capture.dart';
 import 'package:differentworld/features/exports/widgets/exports_list.dart';
 import 'package:differentworld/features/incidents/widgets/subject_incidents_section.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -88,6 +89,24 @@ class SubjectDetailScreen extends ConsumerWidget {
               '/observations/new'
               '?groupId=${subjectAsync.value!.groupId ?? ''}'
               '&subjectId=$subjectId',
+            ),
+          ),
+        // Snap the kid's paper into their cumulative work (the routine's
+        // "writing their answers on paper" — docs/VISION.md). One tap →
+        // camera → saved to their work, offline-safe.
+        if (viewer.canObserve &&
+            (subjectAsync.value?.groupId?.isNotEmpty ?? false))
+          SecondaryActionButton(
+            tooltip: 'Snap work',
+            icon: Icons.photo_camera_outlined,
+            onPressed: () => unawaited(
+              snapWork(
+                context,
+                ref,
+                subjectId: subjectId,
+                groupId: subjectAsync.value!.groupId!,
+                subjectName: subjectAsync.value!.firstName,
+              ),
             ),
           ),
         // The child's Story — every captured moment, woven over time.

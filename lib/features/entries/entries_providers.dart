@@ -78,6 +78,15 @@ class EntryKind {
   /// level, no subject. `body` = the instruction; `details` = {verb, noun,
   /// constraint, minutes}. The teacher liked a roll and wants to use it.
   static const String forgedActivity = 'forged_activity';
+
+  /// A WORK SAMPLE — a photo of what a child made on paper (docs/VISION.md
+  /// "the class is a routine … writing their answers on paper, cumulative").
+  /// One row per snapped sheet, per subject. `body` = an optional caption;
+  /// `details` = {world_id?, day?, in_book?}. The photo rides as an
+  /// `attachment` on the entry; the per-child pile + the Summer Book read
+  /// these. Distinct from `observation` (staff narrative) — this is the
+  /// kid's OWN output, the cumulative proof that goes home.
+  static const String workSample = 'work_sample';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -202,6 +211,50 @@ class EntryActions {
       groupId: groupId,
       body: text,
       scheduleBlockId: scheduleBlockId,
+      id: id,
+    );
+    if (photoUrls.isNotEmpty) {
+      final attachments = _ref.read(attachmentActionsProvider);
+      for (var i = 0; i < photoUrls.length; i++) {
+        await attachments.add(
+          id: i < photoIds.length ? photoIds[i] : null,
+          entityKind: 'entry',
+          entityId: entryId,
+          url: photoUrls[i],
+          sortOrder: i,
+        );
+      }
+    }
+    return entryId;
+  }
+
+  /// Create a WORK SAMPLE (docs/VISION.md "writing their answers on paper,
+  /// cumulative") — a photo of a child's paper, kept per subject and fed to
+  /// the per-child pile + the Summer Book. Same offline-safe photo contract
+  /// as [createObservation]: [photoIds] must be the SAME ids the caller
+  /// uploaded under via `uploadOnly(entityKind:'attachment', entityId:)`, or a
+  /// deferred offline upload patches a non-existent row and the photo is
+  /// silently lost. [worldId]/[day] tag the sample to the routine moment.
+  Future<String> createWorkSample({
+    required String subjectId,
+    required String groupId,
+    String caption = '',
+    List<String> photoUrls = const [],
+    List<String> photoIds = const [],
+    String? worldId,
+    int? day,
+    String? id,
+  }) async {
+    final details = <String, dynamic>{
+      'world_id': ?worldId,
+      'day': ?day,
+    };
+    final entryId = await _create(
+      kind: EntryKind.workSample,
+      subjectId: subjectId,
+      groupId: groupId,
+      body: caption,
+      detailsJson: jsonEncode(details),
       id: id,
     );
     if (photoUrls.isNotEmpty) {
