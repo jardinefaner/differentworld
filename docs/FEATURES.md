@@ -240,7 +240,7 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Entries
 **Path**: `lib/features/entries/`
-**Purpose**: Unified daily log — observations, meals, naps, diapers, incidents — all rows in one table with a `kind` discriminator.
+**Purpose**: Unified daily log — observations, meals, naps, diapers, incidents, work samples — all rows in one table with a `kind` discriminator.
 **Personas served**: All staff (Jordan + Coach Sam log; Maya reviews; Marcus + Lauren read).
 **Discovery surfaces**:
 - Routes: `/observations`, `/observations/new`, `/observations/:id/edit`, `/groups/:id/observations`
@@ -254,9 +254,10 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Observations index* — `lib/features/entries/observations_index_screen.dart`. Newest-first feed across all groups (filterable).
 - *Observations screen* — `lib/features/entries/observations_screen.dart`. Per-cohort feed.
 - *Observation form* — `lib/features/entries/observation_form_screen.dart`. Create / edit a single entry; photo attach, voice dictation via Deepgram mic (suffix-icon on the body TextField; owns its own `DeepgramVoiceController` instance — does NOT consume the shared `deepgramVoiceProvider` singleton, to avoid the dual-listener race against AppShell's composer mic).
+- *Entry actions — work sample* — `EntryActions.createWorkSample` + `EntryActions.setWorkSampleInBook` in `lib/features/entries/entries_providers.dart`. `createWorkSample` inserts an `entries` row (`kind='work_sample'`) plus one `attachments` row (photo) in a transaction; `details` = `{world_id?, day?, in_book?}`. `setWorkSampleInBook` amends `details.in_book` on an existing row (curate for Summer Book). No new route — called from `work_sample_capture.dart` (`snapWork`) and from `WorkGallery`'s star button. `EntryKind.workSample = 'work_sample'` is the discriminator constant.
 **Depends on**: Subjects, Groups, Attachments, Photos, Voice (Deepgram dictation on the body field).
-**Consumed by**: Exports (Progress Report compiles entries), Captures (promotion destination), Insights (pattern detection), Family (Lauren read), Today (recent activity card).
-**Last verified**: 2026-06-01
+**Consumed by**: Exports (Progress Report compiles entries), Captures (promotion destination), Insights (pattern detection), Family (Lauren read), Today (recent activity card), Subjects (`WorkGallery` reads `entriesForSubjectProvider` filtered by `EntryKind.workSample`; "Snap work" calls `createWorkSample`).
+**Last verified**: 2026-06-13
 
 ---
 
@@ -472,8 +473,8 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## LiveBoard
 **Path**: `lib/features/live_board/`
-**Purpose**: The phone as a live classroom instrument — the teacher types or picks, and every joined room screen updates in real time with a big auto-fit render (Big Word, Spell-for-me).
-**Personas served**: Maya, Jordan, Coach Sam.
+**Purpose**: The phone as a live classroom instrument — the teacher types or picks, and every joined room screen updates in real time with a big auto-fit render (six instruments: Big Word, Spell-for-me, Count-together, Whose-turn, Reveal one-at-a-time, Sound-it-out).
+**Personas served**: Maya, Jordan, Coach Sam, Brianna, Pat (all daily-logging staff roles; `roleToolsFor` includes Live Board in the lead-teacher, teacher, and specialist palettes).
 **Discovery surfaces**:
 - Routes: `/live-board` → `LiveBoardScreen`
 - Omnibox: yes — `present.live-board` ("Live Board", gated `viewer is! GuardianViewer`; keywords: live board, board, big word, spell, spell for me, instrument, highlight word, show on screen, present word) → `/live-board`
@@ -483,11 +484,11 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: Staff-only (`viewer is! GuardianViewer` gate in omnibox catalog; no explicit cap key beyond being a signed-in non-guardian).
 **Data**: None — ephemeral Realtime broadcast only. No synced tables, no Drift writes, no PowerSync involvement (same class as the cast spine it rides).
 **Surfaces**:
-- *LiveBoardScreen* — `lib/features/live_board/live_board_screen.dart`. The caster: shows a join code, a live peer count, a 16:9 preview of what the room sees, and a segmented instrument switcher (Big Word / Spell-for-me). Big Word: one `TextField`; every keystroke re-broadcasts. Spell-for-me: a horizontal avatar row from `subjectsInSpaceProvider` (tap to pick) or a name text field when the roster is empty, plus a word field; broadcasts both. Owns one `CastSession.cast(code)` (created in `initState`, disposed in `dispose`); all stream listeners guard `mounted`. Enables wakelock on mount, disables on dispose.
-- *BoardGame* — `lib/features/live_board/board_game.dart`. A cast-only `GameDefinition<BoardState>` with `gameId = 'board'`. Registered in `game_registry.dart` so the existing cast receiver (`cast_receiver.dart`) renders it for free with no receiver changes. `buildStage` switches on `BoardInstrument` (idle / word / spell). All content auto-fits via `FittedBox` — the design law. The reducer is a no-op (the caster re-casts the full `BoardState` on every edit). `seedsFromContentBank = false` so it stays out of the standard game launcher.
+- *LiveBoardScreen* — `lib/features/live_board/live_board_screen.dart`. The caster: shows a join code, a live peer count, a 16:9 preview of what the room sees, and a segmented instrument switcher for all six instruments. Big Word (`BoardInstrument.word`): one `TextField`; every keystroke re-broadcasts. Spell-for-me (`BoardInstrument.spell`): horizontal avatar row from `subjectsInSpaceProvider` (tap to pick) or a name text field, plus a word field; broadcasts both. Count-together (`BoardInstrument.number`): tap +/− to drive a shared count + optional label; the room counts along. Whose-turn (`BoardInstrument.turn`): subject roster for fair-turn picking; big avatar + "{name}'s turn" on the room screen. Reveal one-at-a-time (`BoardInstrument.reveal`): multi-line text field; "Reveal next" taps expose one line at a time on the room screen. Sound-it-out (`BoardInstrument.sound`): a hyphen/middot-delimited word is split into phoneme chunks; each tap lights the next chunk. Owns one `CastSession.cast(code)` (created in `initState`, disposed in `dispose`); all stream listeners guard `mounted`. Enables wakelock on mount, disables on dispose.
+- *BoardGame* — `lib/features/live_board/board_game.dart`. A cast-only `GameDefinition<BoardState>` with `gameId = 'board'`. Registered in `game_registry.dart` so the existing cast receiver (`cast_receiver.dart`) renders it for free with no receiver changes. `buildStage` switches on `BoardInstrument` (idle / word / spell / number / turn / reveal / sound). All six instrument stages auto-fit via `FittedBox` — the design law. The reducer is a no-op (the caster re-casts the full `BoardState` on every edit). `seedsFromContentBank = false` so it stays out of the standard game launcher.
 - *Present hub card* — `_PresentCard('Live Board', route: '/live-board')` in `lib/features/games/present_hub_screen.dart`. One of seven cards on the `/present` hub grid; the primary visual entry point for the feature.
-**Depends on**: LiveSession (cast spine — `CastSession` from `lib/features/live_session/cast_session.dart`; `generateSessionCode` from `lib/features/live_session/live_game_screen.dart`), Games (`game_registry.dart` — `BoardGame` is registered there so the receiver can resolve it by id), Subjects (`subjectsInSpaceProvider` — Spell-for-me avatar picker reads the enrolled roster).
-**Consumed by**: LiveSession (cast receiver resolves `BoardGame` via `gameById('board')` in `game_registry.dart` and calls `buildStage` on it).
+**Depends on**: LiveSession (cast spine — `CastSession` from `lib/features/live_session/cast_session.dart`; `generateSessionCode` from `lib/features/live_session/live_game_screen.dart`), Games (`game_registry.dart` — `BoardGame` is registered there so the receiver can resolve it by id), Subjects (`subjectsInSpaceProvider` — Spell-for-me + Whose-turn avatar pickers read the enrolled roster).
+**Consumed by**: LiveSession (cast receiver resolves `BoardGame` via `gameById('board')` in `game_registry.dart` and calls `buildStage` on it); Today (`role_tools.dart` — `_liveBoard` `RoleTool` links `/live-board`; surfaced in `YourToolsStrip` for lead-teacher, teacher, specialist roles).
 **Last verified**: 2026-06-13
 
 ---
@@ -858,12 +859,14 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: Read: all members of the space. Write: `can_manage_space` (create) and `can_observe` (some inline edits).
 **Data**: [subjects](SCHEMA.md#subjects), [guardians](SCHEMA.md#guardians), [subject_guardians](SCHEMA.md#subject_guardians)
 **Surfaces**:
-- *Subject detail* — `lib/features/subjects/subject_detail_screen.dart`. Profile + guardians + recent observations.
+- *Subject detail* — `lib/features/subjects/subject_detail_screen.dart`. Profile + guardians + recent observations. Carries a "Snap work" chrome `IconButton` (calls `snapWork` from `work_sample_capture.dart`; camera on mobile, gallery picker off-mobile; offline-safe attachment-id contract). Below the inline sections renders a "Their work" `CollapsibleSection` containing `WorkGallery`.
 - *Subject edit* — `lib/features/subjects/subject_edit_screen.dart`. Create / update form.
 - *Health profile screen* — `lib/features/subjects/health_profile_screen.dart`. Medical intake (allergies, dietary, IEP, etc.).
-**Depends on**: Groups, Guardians, Photos.
+- *Work gallery* — `lib/features/subjects/widgets/work_gallery.dart`. `WorkGallery(subjectId:)` — horizontal thumbnail strip of all `kind='work_sample'` entries for the child; tap to view full photo; star button toggles `in_book` flag via `EntryActions.setWorkSampleInBook` (curate for the Summer Book).
+- *Work sample capture* — `lib/features/entries/work_sample_capture.dart`. `snapWork(context, ref, {subjectId, groupId, subjectName})` — standalone async helper called from the subject-detail "Snap work" action; handles pick → offline-safe upload → `EntryActions.createWorkSample`; no new route.
+**Depends on**: Groups, Guardians, Photos, Entries (work_sample kind — `createWorkSample` + `setWorkSampleInBook` in `EntryActions`; `entriesForSubjectProvider` filtered by `EntryKind.workSample` in `WorkGallery`).
 **Consumed by**: Attendance, Entries, Exports, Family, Messages, Surveys, Incidents (`subject_detail_screen.dart` imports `subject_incidents_section.dart`; `SubjectIncidentsSection` + jump chip render in the gated Incidents section), World (subject_detail_screen imports `character_sheet_providers.dart`; `_WorldSelfTile` is the entry point for the World feature).
-**Last verified**: 2026-06-06
+**Last verified**: 2026-06-13
 
 ---
 
@@ -1011,7 +1014,7 @@ surface — preferences + roster + fleet, not primary workflows.
 ## Today
 **Path**: `lib/features/today/`
 **Purpose**: The daily launchpad. Root destination. Context-driven cards: morning (attendance, leading-today, captures); afternoon (pickup, end-of-day capture); director pulse (oversight signals).
-**Personas served**: All staff (Jordan + Coach Sam's home base), Maya / Pat (oversight cards), Coach Sam / Brianna (identity strip surfaces "Specialist · Coach" / "Substitute today" so Sam and Brianna orient at a glance).
+**Personas served**: All staff (Jordan + Coach Sam's home base), Maya / Pat (oversight cards), Coach Sam / Brianna (identity strip surfaces "Specialist · Coach" / "Substitute today" so Sam and Brianna orient at a glance). All staff roles (director / lead / teacher / specialist / substitute) each receive a role-tailored "Your tools" strip via `YourToolsStrip`.
 **Discovery surfaces**:
 - Routes: `/` (TodayScreen)
 - Omnibox: yes — "Today"
@@ -1027,9 +1030,10 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Embedded cards* — leading-today (from Schedule), morning-checklist (from Attendance), recent-captures (from Captures), open-tasks (from Tasks), insights (from Insights), unread-messages (deferred).
 - *Director pulse card* — `_DirectorPulseCard` inside `today_screen.dart`. Director-only proactive pulse: surfaces today's absent kids (from group day state), cohorts running on substitute coverage (from schedule), and certs expiring within 30 days (from certs-in-space). Renders nothing on "all clear" so it never adds noise. Shipped 2026-05-22 (Wave 36).
 - *Identity strip* — `_IdentityStrip` inside `today_screen.dart`. Renders only for specialists ("You are: Specialist · Coach") and substitutes ("You are: Substitute today"); silent for director / lead_teacher / teacher / guardian / kitchen because their context makes the role obvious. Tap → `/settings/roles`. Specialist without a specialty assigned gets a tertiary-tinted hint matching the team-list pattern. Closes the Coach Sam identity gap surfaced by persona-audit 2026-05-23. Shipped Wave 40.
-**Depends on**: nearly everything, including LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`), Pickup (pickup-phase "Right now" card routes to `/pickup`), Spaces (`dayPhaseWindowsProvider` reads `spaces.capabilities['phase_windows']`).
+- *Your tools strip* — `lib/features/today/widgets/your_tools_strip.dart`. `YourToolsStrip(viewer:)` rendered inside `TodayBody` in `today_sections.dart` (line 1184). Role-tailored horizontal shortcut strip (role-as-home Role-1); calls `roleToolsFor(viewer)` from `lib/features/today/role_tools.dart` (which calls `toolsForRole(roleKey)` then filters by `RoleTool.allowed(viewer)`). Per-role defaults: director → Insights · Program · Team · Schedule · Present · Capture; lead teacher → Present · Observations · Live Board · Schedule · Brain Breaks · Capture; teacher → Capture · Observations · Brain Breaks · Live Board · Present; specialist → Runbook · Present · Live Board · Activities · Brain Breaks; substitute → Runbook · Checklist · Capture · Pickup; other → Checklist · Capture · Present · Brain Breaks. No new route; links to existing routes only. Capability-gated per tool (`_canObserve`, `_canManageSpace`, `_always`).
+**Depends on**: nearly everything, including LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`), Pickup (pickup-phase "Right now" card routes to `/pickup`), Spaces (`dayPhaseWindowsProvider` reads `spaces.capabilities['phase_windows']`), LiveBoard (`role_tools.dart` links `/live-board` for lead-teacher / teacher / specialist roles).
 **Consumed by**: Nothing — Today is a leaf.
-**Last verified**: 2026-06-08
+**Last verified**: 2026-06-13
 
 ---
 
