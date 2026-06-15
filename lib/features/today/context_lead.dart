@@ -70,6 +70,7 @@ typedef LiveBlockInfo = ({
   String groupId,
   String title,
   String kind,
+  bool isOutdoor,
 });
 
 /// Arrival headcount, as primitives, for the same reason.
@@ -118,6 +119,36 @@ ContextLead? computeContextLead({
             label: 'Trip roster',
             route: '/trips/${live.blockId}',
           ),
+        ],
+      );
+    }
+    // Outdoor activity → away from the room, the immediate utility is a head
+    // count. Lead with it; the run / capture move drops to a chip.
+    if (live.isOutdoor) {
+      return ContextLead(
+        eyebrow: 'OUTSIDE',
+        title: live.title,
+        line: "Keep a head count — you're away from the room.",
+        icon: Icons.wb_sunny_outlined,
+        tone: ContextTone.go,
+        primary: ContextMove(
+          icon: Icons.fact_check_outlined,
+          label: 'Head count',
+          route: '/groups/${live.groupId}/attendance',
+        ),
+        more: [
+          if (worldName != null)
+            const ContextMove(
+              icon: Icons.slideshow_outlined,
+              label: 'Run the session',
+              route: '/play-today',
+            )
+          else
+            const ContextMove(
+              icon: Icons.bolt_outlined,
+              label: 'Observe',
+              route: '/captures/new',
+            ),
         ],
       );
     }
@@ -258,6 +289,7 @@ final contextLeadProvider = Provider.autoDispose<ContextLead?>((ref) {
             groupId: live.groupId,
             title: live.title,
             kind: live.kind,
+            isOutdoor: live.isOutdoor,
           ),
     worldName: world?.name,
     arrival: prog == null

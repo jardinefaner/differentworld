@@ -41,6 +41,7 @@ void main() {
           groupId: 'g1',
           title: 'Nature center',
           kind: BlockKind.fieldTrip,
+          isOutdoor: false,
         ),
       );
       expect(lead, isNotNull);
@@ -63,6 +64,7 @@ void main() {
           groupId: 'g2',
           title: 'STEM lab',
           kind: BlockKind.onSite,
+          isOutdoor: false,
         ),
         worldName: 'Through My Eyes',
       );
@@ -84,12 +86,34 @@ void main() {
           groupId: 'g3',
           title: 'Free play',
           kind: BlockKind.onSite,
+          isOutdoor: false,
         ),
       );
       expect(lead!.primary.route, '/captures/new');
       // No world → no "Observe" chip duplicating the primary; attendance only.
       expect(lead.more, hasLength(1));
       expect(lead.more.single.route, '/groups/g3/attendance');
+    });
+
+    test('an outdoor activity leads with a head count, run drops to a chip', () {
+      final lead = computeContextLead(
+        isLogger: true,
+        phase: DayPhase.program,
+        kidsLabel: 'kids',
+        live: (
+          blockId: 'b4',
+          groupId: 'g4',
+          title: 'Playground',
+          kind: BlockKind.onSite,
+          isOutdoor: true,
+        ),
+        worldName: 'Through My Eyes',
+      );
+      expect(lead!.eyebrow, 'OUTSIDE');
+      expect(lead.primary.label, 'Head count');
+      expect(lead.primary.route, '/groups/g4/attendance');
+      // Even with a world live, the run is secondary outdoors — headcount wins.
+      expect(lead.more.single.route, '/play-today');
     });
 
     test('arrival (no live block) leads with check-in + a headcount line', () {

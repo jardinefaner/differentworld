@@ -6,6 +6,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/identity/archetypes.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
+import 'package:differentworld/features/today/role_tools.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/nav_destinations.dart';
@@ -48,6 +49,14 @@ class MainDrawer extends ConsumerWidget {
     // just renders each band. On a phone the groups collapse so the
     // drawer opens to the short daily spine instead of a 16-item wall.
     final nav = buildNavLayout(viewer);
+
+    // Role-tailored shortcut cluster — rehomed from Today's old YourToolsStrip
+    // (briefing reorg cut it from the home screen; the drawer is the right
+    // place for persistent, identity-driven tool access). The archetype
+    // re-orders it (Role-3); staff only — guardians get the family lens.
+    final tools = viewer is GuardianViewer
+        ? const <RoleTool>[]
+        : tunedToolsFor(viewer);
 
     // Wave 54: drawer surface uses the shared GlassPanel so the
     // staff drawer reads as part of the same floating-chrome
@@ -253,6 +262,36 @@ class MainDrawer extends ConsumerWidget {
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 8),
                   children: [
+                    // "Your tools" — the role-tailored shortcut cluster,
+                    // archetype-ordered. Sits above the daily spine so the
+                    // tools this person reaches for are the first thing in
+                    // the scroll. Self-hides when the role has no tools.
+                    if (tools.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 16, 4),
+                        child: Text(
+                          archetype == null
+                              ? 'Your tools'
+                              : 'Your tools  ${archetype.glyph}',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      for (final t in tools)
+                        _DrawerTile(
+                          key: ValueKey('tool-${t.route}'),
+                          icon: t.icon,
+                          label: t.label,
+                          // Tools can be drill-ins, so push (preserve the
+                          // back stack) rather than go.
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            unawaited(context.push(t.route));
+                          },
+                        ),
+                      const SizedBox(height: 12),
+                    ],
                     for (final d in nav.spine)
                       _DrawerTile(
                         // Stable per-route key: the list grows / shrinks
