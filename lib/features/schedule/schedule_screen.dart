@@ -17,7 +17,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
-import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -178,31 +178,33 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
         actions: (groups.isEmpty || !canEditSchedule)
             ? const <Widget>[]
             : [
-                // Wave 154: shortcut to the weekly-template author.
-                IconButton(
-                  icon: const Icon(Icons.event_repeat),
-                  tooltip: 'Weekly template',
-                  onPressed: () => context.push('/schedule/template'),
-                ),
-                // The day-template builder — shape the day once, drop it
-                // onto a date.
-                IconButton(
-                  icon: const Icon(Icons.view_timeline_outlined),
-                  tooltip: 'Day templates',
-                  onPressed: () => context.push('/schedule/day-templates'),
-                ),
-                PrimaryActionButton(
-                  tooltip: 'New block',
-                  icon: Icons.add,
-                  onPressed: () {
-                    final cohort =
-                        groups[_activeTabIndex.clamp(
-                          0,
-                          groups.length - 1,
-                        )];
-                    unawaited(_createBlockFormless(cohort, date));
-                  },
-                ),
+                OverflowActions([
+                  // Primary verb stays inline; the two template authors
+                  // collapse into "⋯" on a phone.
+                  EdgeAction(
+                    icon: Icons.add,
+                    label: 'New block',
+                    isPrimary: true,
+                    onPressed: () {
+                      final cohort =
+                          groups[_activeTabIndex.clamp(0, groups.length - 1)];
+                      unawaited(_createBlockFormless(cohort, date));
+                    },
+                  ),
+                  // Wave 154: shortcut to the weekly-template author.
+                  EdgeAction(
+                    icon: Icons.event_repeat,
+                    label: 'Weekly template',
+                    onPressed: () => context.push('/schedule/template'),
+                  ),
+                  // The day-template builder — shape the day once, drop it
+                  // onto a date.
+                  EdgeAction(
+                    icon: Icons.view_timeline_outlined,
+                    label: 'Day templates',
+                    onPressed: () => context.push('/schedule/day-templates'),
+                  ),
+                ]),
               ],
         body: groupsAsync.when(
           loading: () => const LoadingSlot(),

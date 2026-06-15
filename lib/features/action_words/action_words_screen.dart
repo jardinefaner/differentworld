@@ -21,6 +21,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -43,23 +44,28 @@ class ActionWordsScreen extends ConsumerWidget {
     final revealItems = ref.watch(todaysRevealItemsProvider);
     return EdgeScaffold(
       actions: [
-        if (revealItems.isNotEmpty)
-          IconButton(
-            tooltip: 'Reveal all',
-            icon: const Icon(Icons.auto_awesome_motion),
-            color: WorldBadge.goldFor(Theme.of(context)),
-            onPressed: () => unawaited(revealAllPicksToday(context, ref)),
+        OverflowActions([
+          // The gold "Reveal all" keeps its tint inline AND in the menu
+          // (iconColor) — the colour is the signal that it's the
+          // celebratory verb.
+          if (revealItems.isNotEmpty)
+            EdgeAction(
+              icon: Icons.auto_awesome_motion,
+              label: 'Reveal all',
+              iconColor: WorldBadge.goldFor(Theme.of(context)),
+              onPressed: () => unawaited(revealAllPicksToday(context, ref)),
+            ),
+          EdgeAction(
+            icon: Icons.menu_book_outlined,
+            label: 'Our worlds',
+            onPressed: () => context.push('/action-words/worlds'),
           ),
-        IconButton(
-          tooltip: 'Our worlds',
-          icon: const Icon(Icons.menu_book_outlined),
-          onPressed: () => context.push('/action-words/worlds'),
-        ),
-        IconButton(
-          tooltip: 'Send home',
-          icon: const Icon(Icons.outgoing_mail),
-          onPressed: () => context.push('/action-words/send'),
-        ),
+          EdgeAction(
+            icon: Icons.outgoing_mail,
+            label: 'Send home',
+            onPressed: () => context.push('/action-words/send'),
+          ),
+        ]),
         const SyncStatusIndicator(),
       ],
       body: subjectsAsync.when(

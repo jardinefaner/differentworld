@@ -14,9 +14,8 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
-import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
-import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -52,45 +51,43 @@ class VehicleDetailScreen extends ConsumerWidget {
       child: EdgeScaffold(
       backFallbackRoute: '/vehicles',
       actions: [
-        // Primary verb (check out / check in) lives in the top-right
-        // pill alongside the other action chrome. The prior
-        // FloatingActionButton.extended overlapped the floating
-        // omnibox bar on phone + stranded itself in the bottom-right
-        // void on desktop. Wave 94 pulls it back into the chrome
-        // row so the action vocabulary is uniform with every other
-        // screen.
-        if (vehicleAsync.value != null && canDrive)
-          PrimaryActionButton(
-            tooltip: isOut ? 'Check in' : 'Check out',
-            icon: isOut
-                ? Icons.assignment_turned_in_outlined
-                : Icons.key_outlined,
-            onPressed: () => context.push(
-              '/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
+        // Primary verb (check out / check in) stays inline; the edit /
+        // QR / photo-checklist verbs collapse into "⋯" on a phone. The
+        // sync indicator sits outside the menu — it's a status, not an
+        // action.
+        OverflowActions([
+          if (vehicleAsync.value != null && canDrive)
+            EdgeAction(
+              icon: isOut
+                  ? Icons.assignment_turned_in_outlined
+                  : Icons.key_outlined,
+              label: isOut ? 'Check in' : 'Check out',
+              isPrimary: true,
+              onPressed: () => context.push(
+                '/vehicles/$vehicleId/${isOut ? 'checkin' : 'checkout'}',
+              ),
             ),
-          ),
-        if (canEdit && vehicleAsync.value != null)
-          SecondaryActionButton(
-            tooltip: 'Print check-out QR',
-            icon: Icons.qr_code_2_outlined,
-            onPressed: () => printVehicleCheckoutQr(
-              vehicle: vehicleAsync.value!,
+          if (canEdit && vehicleAsync.value != null)
+            EdgeAction(
+              icon: Icons.qr_code_2_outlined,
+              label: 'Print check-out QR',
+              onPressed: () =>
+                  printVehicleCheckoutQr(vehicle: vehicleAsync.value!),
             ),
-          ),
-        if (canEdit && vehicleAsync.value != null)
-          SecondaryActionButton(
-            tooltip: 'Photo checklist',
-            icon: Icons.add_a_photo_outlined,
-            onPressed: () =>
-                context.push('/vehicles/$vehicleId/photo-checklist'),
-          ),
-        if (canEdit && vehicleAsync.value != null)
-          SecondaryActionButton(
-            tooltip: 'Edit',
-            icon: Icons.edit_outlined,
-            onPressed: () =>
-                context.push('/vehicles/$vehicleId/edit'),
-          ),
+          if (canEdit && vehicleAsync.value != null)
+            EdgeAction(
+              icon: Icons.add_a_photo_outlined,
+              label: 'Photo checklist',
+              onPressed: () =>
+                  context.push('/vehicles/$vehicleId/photo-checklist'),
+            ),
+          if (canEdit && vehicleAsync.value != null)
+            EdgeAction(
+              icon: Icons.edit_outlined,
+              label: 'Edit',
+              onPressed: () => context.push('/vehicles/$vehicleId/edit'),
+            ),
+        ]),
         const SyncStatusIndicator(),
       ],
       body: vehicleAsync.when(
