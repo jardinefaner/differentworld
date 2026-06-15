@@ -12,6 +12,7 @@ class LiveBlock {
     required this.blockId,
     required this.groupId,
     required this.title,
+    required this.kind,
     required this.startAt,
     required this.endAt,
   });
@@ -19,6 +20,11 @@ class LiveBlock {
   final String blockId;
   final String groupId;
   final String title;
+
+  /// The block's [BlockKind] (`on_site` / `field_trip` / …). Drives the
+  /// contextual lead — a field trip reveals vehicle + trip tools.
+  final String kind;
+
   final DateTime startAt;
   final DateTime endAt;
 }
@@ -78,6 +84,7 @@ final liveBlockForGroupProvider =
     blockId: b.id,
     groupId: b.groupId,
     title: title,
+    kind: b.kind,
     startAt: DateTime.parse(b.startAt).toLocal(),
     endAt: DateTime.parse(b.endAt).toLocal(),
   );

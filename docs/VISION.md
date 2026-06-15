@@ -906,6 +906,49 @@ once it has a home.
   flush rows. This is the **sharpened, enforced form of dream #10**
   (breathable / one visual language) — docs/THEME_ADHERENCE.md is the *colour*
   half of the brand law; this is the *layout* half.
+- **2026-06-14 (cont.)** — **The app reveals the right tools for the moment —
+  context is the navigation.** In the user's words: *"what if the workflow is
+  that we set up the time and context and based on that, the tools reveal
+  themselves… if i'm in a time where there's an activity in a room, it only
+  shows what i can do during that time… if it's a field trip, i can checkout
+  vehicles."* The antidote to feature sprawl is NOT fewer features, or even
+  calmer screens — it's features that **appear only in their moment**. The home
+  surface computes the current **context** and offers the small set of moves
+  that matter right now; everything else recedes into the omnibox (the
+  always-there escape hatch). This is "proximity-based utility" made literal and
+  the sharpest expression of *"the app is the instrument, not the instructor"*:
+  the room + the clock play the instrument; the app hands you the control for
+  the current beat. **Context = five dimensions:** *time* (day phase + the
+  current schedule block), *place* (your room / cohort), *block kind* (activity
+  vs field trip vs break vs meal vs outdoor…), *role* (capability), *state*
+  (unmarked attendance, a flagged kid, a pending pickup). **Reveal logic** maps
+  `(blockKind × phase × role)` → an ordered list of Verbs, each
+  capability-gated — a declarative, testable table. Examples: an **activity
+  block** → run the session · take/edit attendance · log an observation · the
+  wall question · the stopwatch reflection; a **field trip** → check out a
+  vehicle · trip roster + headcount · "left / back" status · trip kids'
+  emergency contacts; **pickup phase** → the release board · who's still here ·
+  the late-pickup timer; **arrival** → who's not checked in · late alerts (and
+  for a director, the cross-room version). The field-trip → vehicles case is the
+  killer demo: vehicles are useless 95% of the time (drawer clutter) and
+  essential during a trip — context turns a buried feature into a just-in-time
+  one, which **generalises to the whole long tail** (every buried feature has a
+  moment where it's the star). **The seed already exists:** `dayPhaseProvider`
+  (arrival/program/pickup/closed), `currentBlockProvider` / `NowNextStrip`, and
+  the Today `_RightNowCard` already does a primitive version (arrival →
+  check-in, program → run the day, pickup → roster). This dream *elevates that
+  one lead card into the whole home surface* — a "now-playing cockpit." **Open
+  design questions:** (1) how the app KNOWS context — inferred (clock + schedule
+  + your room assignment) with a one-tap override, not a manual setup each time;
+  real proximity (door QR / beacon / geofence) is a later layer; (2) reveal
+  GENEROUSLY, never cage — show the block's tools + the always-relevant few,
+  keep the omnibox as the full palette, because a wrong inference that *hides*
+  the tool you need is the failure mode; (3) it's **Today evolved**, not a new
+  screen — the one-edge styling work is the visual foundation, this is the
+  *information* foundation. (Ties: the proximity-utility / instrument dream; the
+  eleven PRIMITIVES — each contextual tool is a Verb; the schedule = the
+  "setlist", each block a "scene" with its own palette, echoing the
+  live-instrument / keyboard-of-beats dream.)
 
 ---
 

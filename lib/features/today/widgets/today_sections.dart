@@ -21,6 +21,7 @@ import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/features/today/widgets/your_tools_strip.dart';
@@ -191,126 +192,132 @@ class _ReadyToRunCard extends ConsumerWidget {
 /// arrival → check-in, **program → run the day on rails** (when a curriculum
 /// world is live), pickup → the roster. It only *leads the eye* to surfaces
 /// that already exist — no new data layer. Hidden after hours.
+/// The contextual lead — Today's one "what matters right now" surface. It
+/// renders [contextLeadProvider]: a moment-aware header plus the 1–3 labeled
+/// moves that moment actually calls for (a field trip reveals the vehicle +
+/// roster; an activity reveals run/observe/attendance). The "only immediate
+/// utility per context" law lives in the provider; this is the renderer.
 class _RightNowCard extends ConsumerWidget {
   const _RightNowCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final phase =
-        ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
-    // After hours, the lead card adds nothing — the greeting already
-    // reads "Good evening". Don't consume scroll.
-    if (phase == DayPhase.closed) return const SizedBox.shrink();
+    final lead = ref.watch(contextLeadProvider);
+    // Nothing to lead with — a signed-in non-logger, or closed for the day.
+    if (lead == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final labels = ref.watch(verticalLabelsProvider);
-    final viewer = ref.watch(viewerProvider);
-    final kids = labels.subjectPlural.toLowerCase();
-    final spec = _phaseSpec(phase, theme.colorScheme, kids);
+    final scheme = theme.colorScheme;
+    final (Color container, Color onContainer, Color accent, Color onAccent) =
+        switch (lead.tone) {
+      ContextTone.go => (
+        scheme.primaryContainer,
+        scheme.onPrimaryContainer,
+        scheme.primary,
+        scheme.onPrimary,
+      ),
+      ContextTone.trip => (
+        scheme.tertiaryContainer,
+        scheme.onTertiaryContainer,
+        scheme.tertiary,
+        scheme.onTertiary,
+      ),
+      ContextTone.pickup => (
+        scheme.secondaryContainer,
+        scheme.onSecondaryContainer,
+        scheme.secondary,
+        scheme.onSecondary,
+      ),
+      ContextTone.calm => (
+        scheme.surfaceContainerHighest,
+        scheme.onSurface,
+        scheme.primary,
+        scheme.onPrimary,
+      ),
+    };
 
-    // Arrival: replace the static line with live "M of N in" progress when
-    // attendance has loaded a non-empty roster (docs/WORKFLOWS.md).
-    var line = spec.line;
-    if (phase == DayPhase.arrival) {
-      final prog = ref.watch(arrivalProgressProvider).value;
-      if (prog != null && prog.total > 0) {
-        line = prog.allIn
-            ? 'All ${prog.total} checked in — nice work.'
-            : '${prog.inBuilding} of ${prog.total} in · '
-                  '${prog.stillOut} still to check in';
-      }
-    }
-
-    // Program: when the 10-week journey is live, the sharpest "now" action
-    // isn't "go read the schedule" — it's to run the day on rails. Point
-    // straight at the present surface so the room's sequence plays beat by
-    // beat (the synthesis of /play-today + this card). Falls back to the
-    // generic schedule spec when no world is live.
-    var title = spec.title;
-    var route = spec.route;
-    var icon = spec.icon;
-    // Calmer eyebrow before the program opens — nothing's urgent yet.
-    final eyebrow = phase == DayPhase.prep ? 'COMING UP' : 'RIGHT NOW';
-    if (phase == DayPhase.program) {
-      final world = ref.watch(currentWorldProvider);
-      // A specialist drops in for a specific block — pointing them at the
-      // whole-day run is the wrong surface (their block shows below via the
-      // leading-today card). A substitute IS the room's lead today, so they
-      // still get the run. Lead teachers / directors always do.
-      if (world != null && !viewer.isSpecialist) {
-        title = "Run today's program";
-        line = 'In ${world.name} this week — full-screen, step by step.';
-        route = '/play-today';
-        icon = Icons.slideshow_outlined;
-      }
-    }
+    final moves = <ContextMove>[lead.primary, ...lead.more];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Card(
-        // Full-bleed to the page edge (no Card margin) so the tinted block's
-        // own left lines up with the cohort rows; the glyph then hangs in the
-        // shared 44dp gutter, landing the text on the one edge.
+        // Full-bleed (no Card margin) so the tinted block's left lines up with
+        // the cohort rows; the glyph hangs in the shared 44dp gutter, landing
+        // the header on the one edge.
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        color: spec.container,
-        child: InkWell(
-          onTap: () {
-            unawaited(HapticFeedback.selectionClick());
-            unawaited(context.push(route));
-          },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 44,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: spec.accent,
-                        borderRadius: BorderRadius.circular(10),
+        color: container,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 44,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(lead.icon, color: onAccent, size: 20),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lead.eyebrow,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: onContainer.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
                       ),
-                      child: Icon(icon, color: spec.onAccent, size: 20),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Text(
+                      lead.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: onContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      lead.line,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: onContainer.withValues(alpha: 0.85),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // The moves. First is primary (filled accent); the rest
+                    // are quieter outlined chips. Only the moment's utility.
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final (i, m) in moves.indexed)
+                          _LeadChip(
+                            move: m,
+                            primary: i == 0,
+                            accent: accent,
+                            onAccent: onAccent,
+                            onContainer: onContainer,
+                            onTap: () {
+                              unawaited(HapticFeedback.selectionClick());
+                              unawaited(context.push(m.route));
+                            },
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        eyebrow,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: spec.onContainer.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: spec.onContainer,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        line,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: spec.onContainer.withValues(alpha: 0.85),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: spec.onContainer),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -318,95 +325,58 @@ class _RightNowCard extends ConsumerWidget {
   }
 }
 
-/// Presentation for one [DayPhase]: copy, icon, destination, colors.
-/// Colors are drawn from the M3 [ColorScheme] (guaranteed-contrast
-/// container/on-container pairs). Arrival owns `primaryContainer` — the
-/// day's loudest moment — and the standing Morning-checklist card is
-/// suppressed during arrival so the two never stack as twins. Every
-/// other phase uses a calmer tone so it never clashes with that
-/// always-present primary card.
-_PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
-  switch (phase) {
-    case DayPhase.prep:
-      return _PhaseSpec(
-        title: 'Getting ready',
-        line: 'Peek at today’s schedule before the rush.',
-        route: '/schedule',
-        icon: Icons.wb_twilight_outlined,
-        container: cs.tertiaryContainer,
-        onContainer: cs.onTertiaryContainer,
-        accent: cs.tertiary,
-        onAccent: cs.onTertiary,
-      );
-    case DayPhase.arrival:
-      return _PhaseSpec(
-        title: 'Arrival time',
-        line: 'Check $kids in as they arrive — see who’s still out.',
-        route: '/checklist?filter=unmarked',
-        icon: Icons.login,
-        container: cs.primaryContainer,
-        onContainer: cs.onPrimaryContainer,
-        accent: cs.primary,
-        onAccent: cs.onPrimary,
-      );
-    case DayPhase.program:
-      return _PhaseSpec(
-        title: 'Program time',
-        line: 'See what your room is doing next.',
-        route: '/schedule',
-        icon: Icons.play_circle_outline,
-        container: cs.tertiaryContainer,
-        onContainer: cs.onTertiaryContainer,
-        accent: cs.tertiary,
-        onAccent: cs.onTertiary,
-      );
-    case DayPhase.pickup:
-      return _PhaseSpec(
-        title: 'Pickup time',
-        line: 'Release $kids to authorized pickup as families arrive.',
-        route: '/pickup',
-        icon: Icons.directions_walk,
-        container: cs.secondaryContainer,
-        onContainer: cs.onSecondaryContainer,
-        accent: cs.secondary,
-        onAccent: cs.onSecondary,
-      );
-    case DayPhase.closed:
-      // Never rendered (the card early-returns on closed) — fall back to
-      // the calm prep spec so the switch stays exhaustive.
-      return _PhaseSpec(
-        title: 'Getting ready',
-        line: 'Peek at today’s schedule before the rush.',
-        route: '/schedule',
-        icon: Icons.wb_twilight_outlined,
-        container: cs.tertiaryContainer,
-        onContainer: cs.onTertiaryContainer,
-        accent: cs.tertiary,
-        onAccent: cs.onTertiary,
-      );
-  }
-}
-
-class _PhaseSpec {
-  const _PhaseSpec({
-    required this.title,
-    required this.line,
-    required this.route,
-    required this.icon,
-    required this.container,
-    required this.onContainer,
+/// A single move inside the contextual lead. The primary move is filled with
+/// the lead's accent; secondary moves are quiet outlined chips on the tint.
+class _LeadChip extends StatelessWidget {
+  const _LeadChip({
+    required this.move,
+    required this.primary,
     required this.accent,
     required this.onAccent,
+    required this.onContainer,
+    required this.onTap,
   });
 
-  final String title;
-  final String line;
-  final String route;
-  final IconData icon;
-  final Color container;
-  final Color onContainer;
+  final ContextMove move;
+  final bool primary;
   final Color accent;
   final Color onAccent;
+  final Color onContainer;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = primary ? onAccent : onContainer;
+    return Material(
+      color: primary ? accent : onContainer.withValues(alpha: 0.10),
+      shape: StadiumBorder(
+        side: primary
+            ? BorderSide.none
+            : BorderSide(color: onContainer.withValues(alpha: 0.22)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(move.icon, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                move.label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: fg,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Fallback orientation for a drop-in — a specialist or substitute who isn't
