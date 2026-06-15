@@ -66,7 +66,10 @@ typedef NavGroup = ({String title, IconData icon, List<NavDestination> items});
 /// spine.
 const List<({String title, IconData icon})> navGroupOrder = [
   (title: 'Activities', icon: Icons.apps_outlined),
-  (title: 'More', icon: Icons.more_horiz),
+  // NOT Icons.more_horiz — that's the action-overflow "⋯" glyph
+  // (overflow_actions.dart); reusing it for a nav group reads as a second
+  // "⋯" menu on the desktop rail. A folder/category glyph instead.
+  (title: 'More', icon: Icons.category_outlined),
 ];
 
 /// The structured nav layout both surfaces render: a flat [spine] at the

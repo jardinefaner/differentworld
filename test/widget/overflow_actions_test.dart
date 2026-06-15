@@ -101,6 +101,43 @@ void main() {
     expect(find.byIcon(Icons.more_horiz), findsNothing);
   });
 
+  testWidgets('all-primary overflow renders no empty "⋯" menu', (
+    tester,
+  ) async {
+    // Three primaries on a phone (budget 1) takes the overflow path, but
+    // primaries never collapse — so the menu would be empty. It must not
+    // render a "⋯" that opens a blank popup.
+    await tester.pumpWidget(
+      _host(
+        OverflowActions([
+          EdgeAction(
+            icon: Icons.add,
+            label: 'A',
+            isPrimary: true,
+            onPressed: () {},
+          ),
+          EdgeAction(
+            icon: Icons.star,
+            label: 'B',
+            isPrimary: true,
+            onPressed: () {},
+          ),
+          EdgeAction(
+            icon: Icons.bolt,
+            label: 'C',
+            isPrimary: true,
+            onPressed: () {},
+          ),
+        ]),
+      ),
+    );
+
+    expect(find.byIcon(Icons.add), findsOneWidget);
+    expect(find.byIcon(Icons.star), findsOneWidget);
+    expect(find.byIcon(Icons.bolt), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz), findsNothing);
+  });
+
   testWidgets('wider viewport keeps more actions inline', (tester) async {
     await tester.pumpWidget(
       _host(

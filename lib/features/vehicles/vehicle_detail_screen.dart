@@ -71,8 +71,9 @@ class VehicleDetailScreen extends ConsumerWidget {
             EdgeAction(
               icon: Icons.qr_code_2_outlined,
               label: 'Print check-out QR',
-              onPressed: () =>
-                  printVehicleCheckoutQr(vehicle: vehicleAsync.value!),
+              onPressed: () => unawaited(
+                printVehicleCheckoutQr(vehicle: vehicleAsync.value!),
+              ),
             ),
           if (canEdit && vehicleAsync.value != null)
             EdgeAction(

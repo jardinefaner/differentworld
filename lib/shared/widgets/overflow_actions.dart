@@ -108,7 +108,10 @@ class OverflowActions extends StatelessWidget {
     }
     return _row([
       for (final a in inline) _inline(a),
-      _OverflowMenu(menu),
+      // `menu` can be empty if the overflow was driven entirely by
+      // primaries (which never collapse) — don't render a "⋯" that opens
+      // an empty popup.
+      if (menu.isNotEmpty) _OverflowMenu(menu),
     ]);
   }
 

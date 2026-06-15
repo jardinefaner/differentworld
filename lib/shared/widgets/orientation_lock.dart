@@ -45,6 +45,20 @@ class _OrientationLockState extends State<OrientationLock> {
     _applyPolicy();
   }
 
+  @override
+  void dispose() {
+    // `setPreferredOrientations` is global process state — it must not
+    // outlive the widget that set it. If we'd locked portrait, restore the
+    // open policy on the way out so a foldable that unmounts this
+    // mid-session (or a test) isn't stranded in portrait until restart.
+    if (_lockedToPortrait ?? false) {
+      unawaited(
+        SystemChrome.setPreferredOrientations(DeviceOrientation.values),
+      );
+    }
+    super.dispose();
+  }
+
   void _applyPolicy() {
     // Web rotates with the browser window; native desktop windows are
     // free-form. Only Android / iOS have a device orientation worth
@@ -56,10 +70,12 @@ class _OrientationLockState extends State<OrientationLock> {
     if (!isMobile) return;
 
     final shortestSide = MediaQuery.sizeOf(context).shortestSide;
-    // `> 0` guards the zero-size first frame some platforms report before
-    // layout — skip until real metrics arrive (a later dependency change
-    // re-runs us).
-    final shouldLock = shortestSide > 0 && shortestSide < Breakpoints.phone;
+    // Hard early-return on the zero-size first frame some platforms report
+    // before layout: recording a policy off bogus metrics would make a
+    // spurious channel call AND seed `_lockedToPortrait` from a lie. A
+    // later dependency change re-runs us with real metrics.
+    if (shortestSide == 0) return;
+    final shouldLock = shortestSide < Breakpoints.phone;
     if (shouldLock == _lockedToPortrait) return;
     _lockedToPortrait = shouldLock;
     unawaited(
