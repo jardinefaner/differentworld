@@ -7,6 +7,7 @@ import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/play-today` — **the day, on rails.** One ordered, full-screen run of show
 /// for the live room: the world, its verbs + rule, Watch → Do, the Big
@@ -22,31 +23,58 @@ class DayRunScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final world = ref.watch(currentWorldProvider);
     if (world == null) {
-      // No live world (journey not set up) — nothing to run.
+      // No live world (the journey isn't set up yet). NOT a dead-end: point
+      // the teacher at the setup surface (/this-week owns "Set up the journey"
+      // + the start-date picker) and always give them a way out — this surface
+      // can be reached as a cold deep link with nothing to pop.
       return Scaffold(
         backgroundColor: Colors.black,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'No world is live yet',
-                  style: TextStyle(color: Colors.white, fontSize: 22),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Set the journey start date to play the day.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white60, fontSize: 15),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  child: const Text('Close'),
-                ),
-              ],
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.map_outlined,
+                    color: Colors.white54,
+                    size: 44,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No world is live yet',
+                    style: TextStyle(color: Colors.white, fontSize: 22),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Set your journey start date and the day plays itself.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white60, fontSize: 15),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/this-week'),
+                    icon: const Icon(Icons.flag_outlined),
+                    label: const Text('Set up your journey'),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: () {
+                      final nav = Navigator.of(context);
+                      if (nav.canPop()) {
+                        nav.pop();
+                      } else {
+                        context.go('/');
+                      }
+                    },
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

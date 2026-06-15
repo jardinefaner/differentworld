@@ -593,28 +593,35 @@ String? entryWorldId(Entry e) {
   }
 }
 
+/// Maps raw [entries] to the room-added rules for [worldId] — each carrying
+/// its entry **id** (so the room can delete a rule it added) plus the trimmed
+/// text. Pure, so the id-carrying contract is unit-testable without a DB.
+List<({String id, String text})> addedWorldRulesFrom(
+  List<Entry> entries,
+  String worldId,
+) => [
+  for (final e in entries)
+    if (entryWorldId(e) == worldId && (e.body ?? '').trim().isNotEmpty)
+      (id: e.id, text: e.body!.trim()),
+];
+
 /// Rules the ROOM added to a world's bible (the "add a rule" mechanic),
 /// newest-first — they layer on top of the authored `kWorldRules`. Keyed by
-/// world id; the value is the rule texts.
+/// world id; each value carries the rule's entry id (for delete) + its text.
 // autoDispose family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
 final addedWorldRulesProvider =
-    StreamProvider.autoDispose.family<List<String>, String>((ref, worldId) async* {
+    StreamProvider.autoDispose.family<List<({String id, String text})>, String>(
+        (ref, worldId) async* {
   final db = await ref.watch(appDatabaseProvider.future);
   final spaceId = ref.watch(viewerProvider).spaceId;
   if (spaceId == null) {
-    yield const [];
+    yield const <({String id, String text})>[];
     return;
   }
   yield* db.entriesDao
       .watchInSpace(spaceId: spaceId, kind: EntryKind.worldRule)
-      .map(
-        (entries) => [
-          for (final e in entries)
-            if (entryWorldId(e) == worldId && (e.body ?? '').trim().isNotEmpty)
-              e.body!.trim(),
-        ],
-      );
+      .map((entries) => addedWorldRulesFrom(entries, worldId));
 });
 
 /// The activities the teacher kept from the forge (space-level), newest first.

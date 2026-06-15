@@ -31,4 +31,18 @@ void main() {
     expect(bytes.lengthInBytes, greaterThan(500));
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
   });
+
+  test('offline fallback note (no QR) — still a valid PDF', () async {
+    // The offline path: no inviteUrl, but a fallback line renders in place of
+    // the dead QR. Must still produce a valid, non-empty PDF.
+    final bytes = await buildWelcomePdf(
+      programName: 'Sunny Days',
+      childFirstName: 'Mateo',
+      facts: const [(label: 'Room', value: 'Otters · 8–10')],
+      inviteFallbackLine:
+          'Your family-app invite will be ready once we are back online.',
+    );
+    expect(bytes.lengthInBytes, greaterThan(500));
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+  });
 }
