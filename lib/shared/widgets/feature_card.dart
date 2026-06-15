@@ -187,23 +187,31 @@ class FeatureCard extends ConsumerWidget {
     // The tap surface — haptics wired into the primitive so every site
     // inherits them (CLAUDE.md "every primary tap fires HapticFeedback").
     // Rectangular ripple when flat (a row), rounded when boxed (a card).
+    // Mark the tappable card as a button so TalkBack / VoiceOver announce
+    // the role — InkWell exposes a tap action but not the button role, and
+    // a `content:` override bypasses the default title Text, so without this
+    // a rich card reads as an unlabeled tappable region. The descendant
+    // Text nodes still supply the spoken label.
     final inner = onTap == null && onLongPress == null
         ? body
-        : InkWell(
-            borderRadius: flat ? null : radius,
-            onTap: onTap == null
-                ? null
-                : () {
-                    unawaited(HapticFeedback.selectionClick());
-                    onTap!();
-                  },
-            onLongPress: onLongPress == null
-                ? null
-                : () {
-                    unawaited(HapticFeedback.mediumImpact());
-                    onLongPress!();
-                  },
-            child: body,
+        : Semantics(
+            button: true,
+            child: InkWell(
+              borderRadius: flat ? null : radius,
+              onTap: onTap == null
+                  ? null
+                  : () {
+                      unawaited(HapticFeedback.selectionClick());
+                      onTap!();
+                    },
+              onLongPress: onLongPress == null
+                  ? null
+                  : () {
+                      unawaited(HapticFeedback.mediumImpact());
+                      onLongPress!();
+                    },
+              child: body,
+            ),
           );
 
     // Calm neutral → a flush ROW: no fill, no box, a bottom hairline to

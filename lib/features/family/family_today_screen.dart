@@ -300,9 +300,13 @@ class _ChildCard extends ConsumerWidget {
                 children: [
                   // Traffic-light scan affordance — same vocabulary as
                   // staff Today so the family lens reads consistently.
+                  // Decorative → excluded from semantics (the status line
+                  // already speaks the state).
                   const Padding(
                     padding: EdgeInsets.only(right: 12),
-                    child: StatusDot(kind: StatusDotKind.needsAttention),
+                    child: ExcludeSemantics(
+                      child: StatusDot(kind: StatusDotKind.needsAttention),
+                    ),
                   ),
                   PersonAvatar(
                     name: '${child.firstName} ${child.lastName}',

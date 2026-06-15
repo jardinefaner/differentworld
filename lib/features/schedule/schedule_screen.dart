@@ -616,11 +616,14 @@ class _CohortDay extends ConsumerWidget {
                     groupNameById: groupNameById,
                   );
                   // The block happening right now (today only) gets the
-                  // agenda's "now line".
-                  final bStart = DateTime.parse(b.startAt).toLocal();
-                  final bEnd = DateTime.parse(b.endAt).toLocal();
+                  // agenda's "now line". tryParse-guarded so a malformed ISO
+                  // from a mid-sync write can't crash the list.
+                  final bStart = DateTime.tryParse(b.startAt)?.toLocal();
+                  final bEnd = DateTime.tryParse(b.endAt)?.toLocal();
                   final nowTs = DateTime.now();
                   final isNow = _isToday &&
+                      bStart != null &&
+                      bEnd != null &&
                       !bStart.isAfter(nowTs) &&
                       bEnd.isAfter(nowTs);
                   return _BlockTile(
@@ -877,8 +880,11 @@ class _BlockTile extends ConsumerWidget {
               },
               child: Padding(
                 // Compensate the 3px accent so the rail's left edge stays
-                // put whether or not the row is accented.
-                padding: EdgeInsets.fromLTRB(accent == null ? 16 : 13, 12, 12, 12),
+                // put whether or not the row is accented. Two const insets
+                // selected by condition — no per-build allocation.
+                padding: accent == null
+                    ? const EdgeInsets.fromLTRB(16, 12, 12, 12)
+                    : const EdgeInsets.fromLTRB(13, 12, 12, 12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1026,7 +1032,7 @@ class _BlockTile extends ConsumerWidget {
                                   horizontal: 8,
                                   vertical: 2,
                                 ),
-                                minimumSize: const Size(0, 28),
+                                minimumSize: const Size(0, 48),
                               ),
                             ),
                           ],
