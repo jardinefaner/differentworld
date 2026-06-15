@@ -24,7 +24,6 @@ import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
-import 'package:differentworld/features/today/widgets/your_tools_strip.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
@@ -38,76 +37,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
-/// Top-of-Today card that launches the Morning Checklist. This is the
-/// primary daily-use entry point — one scroll across every classroom.
-class _ChecklistCallToAction extends ConsumerWidget {
-  const _ChecklistCallToAction();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final labels = ref.watch(verticalLabelsProvider);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      color: theme.colorScheme.primaryContainer,
-      child: InkWell(
-        onTap: () {
-          unawaited(HapticFeedback.selectionClick());
-          unawaited(context.push('/checklist'));
-        },
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.task_alt,
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Morning checklist',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'One scroll, every ${labels.group.toLowerCase()}, '
-                      'mark everyone in.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer.withValues(
-                          alpha: 0.8,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// "Ready to run?" — the pre-9:00 setup check. Director-only, and only while
 /// a gating precondition is still unmet; vanishes the moment the day is ready.
@@ -1103,75 +1032,12 @@ class TodayBody extends ConsumerWidget {
         // IS the next useful action, not a wall of cards to hunt through
         // (the "less hunting" principle). Renders nothing after hours.
         if (viewer.isDailyLogger) const _RightNowCard(),
-        // The day's curriculum plan — world anchor + day focus + skill +
-        // thinking — folded into ONE collapsible so first paint shows the
-        // time-aware lead, not a wall of co-equal cards (Today was the app's
-        // noisiest screen, 9/10 — docs/CLARITY_RUBRIC.md). Expands to the full
-        // plan; the collapsed summary keeps "world · day" glanceable.
-        // Self-hides / shows the director setup prompt until the journey starts.
-        const _TodaysPlanSection(),
-        // Specialist / substitute identity strip — answers the
-        // Coach Sam audit finding ("no UI surface tells Sam what
-        // they are"). Renders nothing for director / lead_teacher
-        // / teacher / guardian because context already makes the
-        // role obvious. Tap → Roles page so Sam can see what their
-        // role can do.
-        const _IdentityStrip(),
-        // Morning Checklist is only useful to staff who can
-        // actually mark daily routines — hide for read-only viewers.
-        // Suppressed during arrival, where the Right-now card already
-        // leads with check-in (so the two don't stack as primary
-        // twins).
-        if (viewer.isDailyLogger && phase != DayPhase.arrival)
-          const _ChecklistCallToAction(),
-        if (viewer.isDailyLogger && phase != DayPhase.arrival)
-          const SizedBox(height: 16),
-        // "You're leading N blocks today" — renders nothing if
-        // the signed-in member isn't a lead on any block today.
-        // Naturally hides for non-staff and members with no
-        // assignments.
-        const LeadingTodayCard(),
-        // Fallback orientation for a drop-in (specialist / substitute) with no
-        // assigned block — the leading-today card is blank for them, so point
-        // them at the runbook instead of a generic Today.
-        const _CoveringTodayCard(),
-        const SizedBox(height: 16),
-        // "Today's words" — only when Action Words is in use today.
-        if (viewer.isDailyLogger) const _ActionWordsCard(),
-        // Unread family messages — staff-side proactive surface
-        // (Wave 60). Renders only when at least one family has
-        // sent a message that nobody on staff has read yet.
-        // Each row taps through to that (subject, guardian)
-        // thread. Hidden for guardians (their messages flow is
-        // through the family lens).
-        const _UnreadMessagesCard(),
-        // Director's morning pulse — aggregates absent kids,
-        // cohorts with substitute coverage today, and
-        // expiring-soon certs into a single card. Renders
-        // nothing when there's nothing to flag (the "all clear"
-        // case doesn't need to consume scroll). Only directors
-        // see this; non-directors hit the early-return.
-        if (viewer.isDirector) _DirectorPulseCard(groups: groups),
-        // Upward loop made visible: the system surfaces one
-        // question here when the data demands it; silent when
-        // it doesn't. UX_DECISIONS §6 / framework upward loop.
-        const TopInsightCard(),
-        const SizedBox(height: 16),
-        // Role-as-home (Role-1): the role-tailored tool palette — different
-        // tools for different roles (docs/VISION.md). Self-hides if the role
-        // has no allowed tools. TodayBody is staff-only (guardians get the
-        // family lens), so no guardian gate needed.
-        YourToolsStrip(viewer: viewer),
-        const SizedBox(height: 8),
-        // Capability-aware one-tap launchpad. Hides itself when the
-        // viewer has nothing to launch.
-        const QuickActions(),
-        const SizedBox(height: 24),
-        // Wave 114: at desktop widths the group cards flow as a
-        // 2-column wrap. At phone / tablet they stack vertically
-        // (the natural shape for a scroll-with-omnibox layout).
-        // LayoutBuilder reads the current viewport once; cards
-        // self-size in their columns.
+        // ── THE ROOMS ── Today's primary data surface, promoted to sit
+        // directly under the lead (briefing reorg). They used to be dead
+        // last, under a dozen meta cards — a teacher opening the app to
+        // check the rooms had to scroll past everything. Now they're second.
+        // At desktop widths they flow as a 2-column wrap; on phone/tablet
+        // they stack. LayoutBuilder reads the viewport once; cards self-size.
         LayoutBuilder(
           builder: (ctx, c) {
             final isWide = c.maxWidth >= 1100;
@@ -1207,6 +1073,38 @@ class TodayBody extends ConsumerWidget {
             );
           },
         ),
+        const SizedBox(height: 16),
+        // "You're leading N blocks today" — the role anchor. Renders nothing
+        // if the member isn't a lead on any block today.
+        const LeadingTodayCard(),
+        // Drop-in (specialist / substitute) fallback when they have no
+        // assigned block — points at the runbook.
+        const _CoveringTodayCard(),
+        // Unread family messages — staff-side proactive surface. Renders only
+        // when a family has sent something nobody on staff has read.
+        const _UnreadMessagesCard(),
+        // Director's morning pulse — absent kids + sub coverage + expiring
+        // certs. Self-hides when all-clear; director-only.
+        if (viewer.isDirector) _DirectorPulseCard(groups: groups),
+        const SizedBox(height: 16),
+        // State-driven launchpad — pending captures / tasks / a vehicle out.
+        // Self-hides when nothing's pending. (The static nav tiles moved to
+        // the omnibox + drawer in the briefing reorg.)
+        const QuickActions(),
+        // The day's curriculum plan — only while it's actionable (prep +
+        // program). During arrival / pickup it's noise; the moment's lead and
+        // the rooms are the job. Reachable any time via the omnibox.
+        if (phase == DayPhase.prep || phase == DayPhase.program) ...[
+          const SizedBox(height: 8),
+          const _TodaysPlanSection(),
+        ],
+        // "Today's words" — only when Action Words is in use today.
+        if (viewer.isDailyLogger) const _ActionWordsCard(),
+        // Specialist / substitute identity strip — self-hides for every
+        // other role (the Coach Sam orientation answer).
+        const _IdentityStrip(),
+        // The system's one surfaced question, when the data demands it.
+        const TopInsightCard(),
       ],
     );
   }
