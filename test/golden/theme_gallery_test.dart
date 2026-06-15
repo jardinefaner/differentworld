@@ -6,6 +6,7 @@ import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '_helpers.dart';
@@ -35,10 +36,12 @@ void main() {
       (tester) async {
         await pumpAt(
           tester,
-          app: MaterialApp(
-            theme: buildLightTheme(),
-            debugShowCheckedModeBanner: false,
-            home: const _Gallery(),
+          app: ProviderScope(
+            child: MaterialApp(
+              theme: buildLightTheme(),
+              debugShowCheckedModeBanner: false,
+              home: const _Gallery(),
+            ),
           ),
           size: const Size(440, 2020),
         );
@@ -55,10 +58,12 @@ void main() {
       (tester) async {
         await pumpAt(
           tester,
-          app: MaterialApp(
-            theme: buildDarkTheme(),
-            debugShowCheckedModeBanner: false,
-            home: const _Gallery(),
+          app: ProviderScope(
+            child: MaterialApp(
+              theme: buildDarkTheme(),
+              debugShowCheckedModeBanner: false,
+              home: const _Gallery(),
+            ),
           ),
           size: const Size(440, 2020),
         );

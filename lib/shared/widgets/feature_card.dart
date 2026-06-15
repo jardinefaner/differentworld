@@ -129,8 +129,12 @@ class FeatureCard extends ConsumerWidget {
     // Calm mode flattens NEUTRAL chrome — transparent + a hairline instead of
     // the heavy fill — so a list of rows reads as one surface, not a stack of
     // boxes. Signal tones keep their tint (that's what makes them a signal).
-    final calm = ref.watch(displayStyleProvider).value == DisplayStyle.calm;
-    final flat = calm && tone == FeatureCardTone.neutral;
+    // Calm AND Clean both flatten neutral chrome. Checked explicitly (not
+    // `!= boxed`) so the null/loading state falls to boxed — matching the
+    // pre-existing behaviour every golden baseline was captured under.
+    final style = ref.watch(displayStyleProvider).value;
+    final flat = (style == DisplayStyle.calm || style == DisplayStyle.clean) &&
+        tone == FeatureCardTone.neutral;
     final bg = flat
         ? Colors.transparent
         : switch (tone) {

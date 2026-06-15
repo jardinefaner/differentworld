@@ -369,15 +369,47 @@ class _DisplayStyleTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calm = ref.watch(displayStyleProvider).value == DisplayStyle.calm;
-    return SwitchListTile(
-      secondary: const Icon(Icons.view_agenda_outlined),
-      title: const Text('Calm layout'),
-      subtitle: const Text('Flatter cards, less boxiness'),
-      value: calm,
-      onChanged: (v) => ref
-          .read(displayStyleProvider.notifier)
-          .set(v ? DisplayStyle.calm : DisplayStyle.boxed),
+    final style = ref.watch(displayStyleProvider).value ?? DisplayStyle.calm;
+    return ListTile(
+      leading: const Icon(Icons.view_agenda_outlined),
+      title: const Text('Display style'),
+      subtitle: Text(style.description),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () async {
+        final picked = await showGlassSheet<DisplayStyle>(
+          context: context,
+          showDragHandle: true,
+          builder: (sheetContext) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+                child: RadioGroup<DisplayStyle>(
+                  groupValue: style,
+                  onChanged: (s) {
+                    if (s == null) return;
+                    Navigator.of(sheetContext).pop(s);
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final option in DisplayStyle.values)
+                        RadioListTile<DisplayStyle>(
+                          title: Text(option.label),
+                          subtitle: Text(option.description),
+                          value: option,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+        if (picked != null) {
+          await ref.read(displayStyleProvider.notifier).set(picked);
+        }
+      },
     );
   }
 }

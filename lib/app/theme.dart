@@ -94,8 +94,10 @@ ButtonStyle _baseButtonStyle() => ButtonStyle(
 /// those opt into the translucent glass surface per-call via
 /// `showGlassSheet` / `GlassPanel`, and a global translucent background
 /// would break every solid dialog (see the glass-chrome note in CLAUDE.md).
-ThemeData _themeFrom(ColorScheme scheme) {
-  final text = AppType.textTheme();
+ThemeData _themeFrom(ColorScheme scheme, {TextTheme? textTheme}) {
+  // The clean "Clean" display style passes AppType.cleanTextTheme(); everyone
+  // else gets the default tracked/thin brand ramp.
+  final text = textTheme ?? AppType.textTheme();
   final isDark = scheme.brightness == Brightness.dark;
   return ThemeData(
     useMaterial3: true,
@@ -175,9 +177,11 @@ ThemeData _themeFrom(ColorScheme scheme) {
   );
 }
 
-ThemeData buildLightTheme() => _themeFrom(appColorScheme(Brightness.light));
+ThemeData buildLightTheme({TextTheme? textTheme}) =>
+    _themeFrom(appColorScheme(Brightness.light), textTheme: textTheme);
 
-ThemeData buildDarkTheme() => _themeFrom(appColorScheme(Brightness.dark));
+ThemeData buildDarkTheme({TextTheme? textTheme}) =>
+    _themeFrom(appColorScheme(Brightness.dark), textTheme: textTheme);
 
 /// The Calm-mode card theme — flattens every raw `Card` app-wide (Today's
 /// cards, detail screens, …): no elevation, no fill (transparent, so it sits
