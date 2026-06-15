@@ -145,7 +145,21 @@ void main() {
         kidsLabel: 'kids',
       );
       expect(lead!.primary.route, '/captures/new');
+      // Non-director: schedule only (one chip).
       expect(lead.more.single.route, '/schedule');
+    });
+
+    test('program-gap gives a director Insights as a second chip', () {
+      final lead = computeContextLead(
+        isLogger: true,
+        phase: DayPhase.program,
+        kidsLabel: 'kids',
+        isDirector: true,
+      );
+      expect(
+        lead!.more.map((m) => m.route),
+        containsAll(<String>['/schedule', '/insights']),
+      );
     });
   });
 }

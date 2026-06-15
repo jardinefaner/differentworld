@@ -200,7 +200,9 @@ class _RightNowCard extends ConsumerWidget {
                     Text(
                       lead.eyebrow,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: onContainer.withValues(alpha: 0.7),
+                        // 0.78 not 0.7 — keeps the eyebrow ≥4.5:1 against the
+                        // container even in the high-contrast outdoor theme.
+                        color: onContainer.withValues(alpha: 0.78),
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
                       ),
@@ -231,6 +233,10 @@ class _RightNowCard extends ConsumerWidget {
                       children: [
                         for (final (i, m) in moves.indexed)
                           _LeadChip(
+                            // Keyed by route so a phase boundary changing the
+                            // move count (1-chip → 2-chip) re-matches chips by
+                            // identity, not list position.
+                            key: ValueKey('lead-${m.route}'),
                             move: m,
                             primary: i == 0,
                             accent: accent,
@@ -264,6 +270,7 @@ class _LeadChip extends StatelessWidget {
     required this.onAccent,
     required this.onContainer,
     required this.onTap,
+    super.key,
   });
 
   final ContextMove move;
@@ -286,21 +293,28 @@ class _LeadChip extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(move.icon, size: 16, color: fg),
-              const SizedBox(width: 6),
-              Text(
-                move.label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: fg,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ],
+        // ≥48dp tap target (CLAUDE.md a11y floor). The chips ARE the lead's
+        // primary interaction — a miss-tap at arrival / headcount is a real
+        // failure — so the hit area meets the floor even though the visual
+        // content is shorter (Row centres within the min-height box).
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(move.icon, size: 16, color: fg),
+                const SizedBox(width: 6),
+                Text(
+                  move.label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: fg,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

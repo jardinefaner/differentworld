@@ -91,6 +91,7 @@ ContextLead? computeContextLead({
   required bool isLogger,
   required DayPhase phase,
   required String kidsLabel,
+  bool isDirector = false,
   LiveBlockInfo? live,
   String? worldName,
   ArrivalInfo? arrival,
@@ -105,7 +106,7 @@ ContextLead? computeContextLead({
       return ContextLead(
         eyebrow: 'ON A TRIP',
         title: live.title,
-        line: 'Check the vehicle out before you roll.',
+        line: 'Check the vehicle out before departure.',
         icon: Icons.directions_bus_outlined,
         tone: ContextTone.trip,
         primary: const ContextMove(
@@ -240,23 +241,31 @@ ContextLead? computeContextLead({
     case DayPhase.program:
       // Program time, but nothing is live — a gap between blocks, or no
       // schedule was entered. Don't pretend; offer the always-useful move.
-      return const ContextLead(
+      // A director's most-reached surface here is program status, so give
+      // them Insights one tap away (it left QuickActions in the reorg).
+      return ContextLead(
         eyebrow: 'RIGHT NOW',
         title: 'Program time',
         line: 'Nothing scheduled right now.',
         icon: Icons.bolt_outlined,
         tone: ContextTone.calm,
-        primary: ContextMove(
+        primary: const ContextMove(
           icon: Icons.bolt_outlined,
           label: 'Capture a moment',
           route: '/captures/new',
         ),
         more: [
-          ContextMove(
+          const ContextMove(
             icon: Icons.event_note_outlined,
             label: 'Schedule',
             route: '/schedule',
           ),
+          if (isDirector)
+            const ContextMove(
+              icon: Icons.lightbulb_outline,
+              label: 'Insights',
+              route: '/insights',
+            ),
         ],
       );
     case DayPhase.closed:
@@ -282,6 +291,7 @@ final contextLeadProvider = Provider.autoDispose<ContextLead?>((ref) {
     isLogger: viewer.isDailyLogger,
     phase: phase,
     kidsLabel: labels.subjectPlural.toLowerCase(),
+    isDirector: viewer.isDirector,
     live: live == null
         ? null
         : (
