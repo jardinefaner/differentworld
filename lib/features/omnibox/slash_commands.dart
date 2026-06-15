@@ -330,6 +330,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/breaks')),
   ),
   SlashCommand(
+    name: 'reflect',
+    label: '/reflect',
+    hint: 'Stopwatch a session, then reflect — growth made visible',
+    icon: Icons.timer_outlined,
+    aliases: const ['reflection', 'stopwatch', 'timer', 'focus', 'session'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/reflect')),
+  ),
+  SlashCommand(
     name: 'present',
     label: '/present',
     hint: 'Present to the room — Now & Next, Poll, Spotlight, Signals',

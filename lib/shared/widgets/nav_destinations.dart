@@ -193,6 +193,12 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       group: 'Activities',
     ),
     const NavDestination(
+      icon: Icons.timer_outlined,
+      label: 'Reflect',
+      route: '/reflect',
+      group: 'Activities',
+    ),
+    const NavDestination(
       icon: Icons.co_present_outlined,
       label: 'Present',
       route: '/present',
