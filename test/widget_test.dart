@@ -42,8 +42,10 @@ void main() {
     // login screen.
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    // The login wordmark renders tracked-uppercase.
-    expect(find.text('DIFFERENT WORLD'), findsOneWidget);
+    // The login wordmark is now DwWordmark — DIFFERENT / WORLD as two
+    // stacked tracked-caps lines (over the Horizon mark).
+    expect(find.text('DIFFERENT'), findsOneWidget);
+    expect(find.text('WORLD'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
   });
 }

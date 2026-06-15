@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Visual tone for a [FeatureCard]. Drives the surface color so the
 /// at-a-glance reading of a list of rows scans correctly even before
@@ -76,7 +78,7 @@ enum FeatureCardTone {
 ///   onTap: () => toggle(subject.id),
 /// )
 /// ```
-class FeatureCard extends StatelessWidget {
+class FeatureCard extends ConsumerWidget {
   const FeatureCard({
     required this.title,
     this.leading,
@@ -120,17 +122,25 @@ class FeatureCard extends StatelessWidget {
   final double borderRadius;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final radius = BorderRadius.circular(borderRadius);
-    final bg = switch (tone) {
-      FeatureCardTone.neutral => scheme.surfaceContainerHighest,
-      FeatureCardTone.selected => scheme.primaryContainer,
-      FeatureCardTone.danger => scheme.errorContainer.withValues(alpha: 0.45),
-      FeatureCardTone.success =>
-        scheme.tertiaryContainer.withValues(alpha: 0.5),
-    };
+    // Calm mode flattens NEUTRAL chrome — transparent + a hairline instead of
+    // the heavy fill — so a list of rows reads as one surface, not a stack of
+    // boxes. Signal tones keep their tint (that's what makes them a signal).
+    final calm = ref.watch(displayStyleProvider).value == DisplayStyle.calm;
+    final flat = calm && tone == FeatureCardTone.neutral;
+    final bg = flat
+        ? Colors.transparent
+        : switch (tone) {
+            FeatureCardTone.neutral => scheme.surfaceContainerHighest,
+            FeatureCardTone.selected => scheme.primaryContainer,
+            FeatureCardTone.danger =>
+              scheme.errorContainer.withValues(alpha: 0.45),
+            FeatureCardTone.success =>
+              scheme.tertiaryContainer.withValues(alpha: 0.5),
+          };
     // Foreground paired to each tone. Default text color over
     // `surfaceContainerHighest` is `onSurface`, but over tinted
     // containers it has to flip to the matching foreground or the
@@ -166,7 +176,15 @@ class FeatureCard extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: radius,
+      shape: flat
+          ? RoundedRectangleBorder(
+              borderRadius: radius,
+              side: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.6),
+                width: 0.5,
+              ),
+            )
+          : RoundedRectangleBorder(borderRadius: radius),
       clipBehavior: Clip.antiAlias,
       child: onTap == null && onLongPress == null
           ? body

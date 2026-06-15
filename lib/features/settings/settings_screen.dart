@@ -4,6 +4,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
@@ -224,6 +225,8 @@ class SettingsScreen extends ConsumerWidget {
               TextSizeTile(),
               _SettingsDivider(),
               _OutdoorModeTile(),
+              _SettingsDivider(),
+              _DisplayStyleTile(),
             ],
           ),
 
@@ -353,6 +356,28 @@ class _SettingsDivider extends StatelessWidget {
       color: Theme.of(context).colorScheme.outlineVariant.withValues(
             alpha: 0.4,
           ),
+    );
+  }
+}
+
+/// The Calm-layout toggle (docs/VISION.md, 2026-06-14). On → neutral cards
+/// flatten to a hairline so a list reads as one continuous surface instead of
+/// a stack of boxes; signal cards keep their tint. Default off (Boxed) for now
+/// — flips to the default once verified across real screens.
+class _DisplayStyleTile extends ConsumerWidget {
+  const _DisplayStyleTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final calm = ref.watch(displayStyleProvider).value == DisplayStyle.calm;
+    return SwitchListTile(
+      secondary: const Icon(Icons.view_agenda_outlined),
+      title: const Text('Calm layout'),
+      subtitle: const Text('Flatter cards, less boxiness'),
+      value: calm,
+      onChanged: (v) => ref
+          .read(displayStyleProvider.notifier)
+          .set(v ? DisplayStyle.calm : DisplayStyle.boxed),
     );
   }
 }
