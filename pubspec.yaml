@@ -69,6 +69,12 @@ dependencies:
   # path_provider already declared above — reused for the TTS
   # cache directory at ${appDocs}/tts/{voice}/{question_id}.mp3.
 
+  # On-device TTS for the Action Words kid voiceover — speaks each verb
+  # aloud for pre-readers (the 4–6 cohort can't read "Carry / Listen").
+  # Uses the platform speech engine, so it's offline-first: no network and
+  # no bundled audio, unlike the Aura 2 survey path above (server MP3s).
+  flutter_tts: ^4.0.0
+
   # Stream composition (already a transitive via PowerSync; declare it
   # explicitly because we use Rx.combineLatest in groups_providers).
   rxdart: ^0.28.0
