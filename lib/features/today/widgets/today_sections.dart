@@ -23,6 +23,7 @@ import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_providers.dart';
+import 'package:differentworld/features/today/widgets/context_pill.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -1045,6 +1046,10 @@ class TodayBody extends ConsumerWidget {
         // rails, pickup → roster. It leads the screen so the default view
         // IS the next useful action, not a wall of cards to hunt through
         // (the "less hunting" principle). Renders nothing after hours.
+        // The correct-me context pill — shows what room/block the lead is
+        // reading from, tappable to pin a different room. Self-hides for
+        // single-room staff and guardians.
+        const ContextPill(),
         if (viewer.isDailyLogger) const _RightNowCard(),
         // ── THE ROOMS ── Today's primary data surface, promoted to sit
         // directly under the lead (briefing reorg). They used to be dead
