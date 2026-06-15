@@ -262,36 +262,6 @@ class MainDrawer extends ConsumerWidget {
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 8),
                   children: [
-                    // "Your tools" — the role-tailored shortcut cluster,
-                    // archetype-ordered. Sits above the daily spine so the
-                    // tools this person reaches for are the first thing in
-                    // the scroll. Self-hides when the role has no tools.
-                    if (tools.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 4, 16, 4),
-                        child: Text(
-                          archetype == null
-                              ? 'Your tools'
-                              : 'Your tools  ${archetype.glyph}',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      for (final t in tools)
-                        _DrawerTile(
-                          key: ValueKey('tool-${t.route}'),
-                          icon: t.icon,
-                          label: t.label,
-                          // Tools can be drill-ins, so push (preserve the
-                          // back stack) rather than go.
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            unawaited(context.push(t.route));
-                          },
-                        ),
-                      const SizedBox(height: 12),
-                    ],
                     for (final d in nav.spine)
                       _DrawerTile(
                         // Stable per-route key: the list grows / shrinks
@@ -304,6 +274,37 @@ class MainDrawer extends ConsumerWidget {
                         label: d.label,
                         onTap: () => _go(context, d.route),
                         countProvider: d.countProvider,
+                      ),
+                    // "Your tools" — the role-tailored shortcut cluster
+                    // (archetype-ordered). COLLAPSED by default, like the nav
+                    // groups, so it never re-lengthens the drawer; tap to
+                    // reveal. Self-hides when the role has no tools.
+                    if (tools.isNotEmpty)
+                      CollapsibleSection(
+                        key: const ValueKey('nav-your-tools'),
+                        title: archetype == null
+                            ? 'Your tools'
+                            : 'Your tools  ${archetype.glyph}',
+                        icon: Icons.build_outlined,
+                        initiallyExpanded: false,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Column(
+                            children: [
+                              for (final t in tools)
+                                _DrawerTile(
+                                  key: ValueKey('tool-${t.route}'),
+                                  icon: t.icon,
+                                  label: t.label,
+                                  // Tools can be drill-ins → push, not go.
+                                  onTap: () {
+                                    Navigator.of(context).pop();
+                                    unawaited(context.push(t.route));
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
                     for (final g in nav.groups)
                       CollapsibleSection(
