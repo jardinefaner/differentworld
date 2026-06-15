@@ -244,6 +244,13 @@ When a new screen lands at a new top-level route, update:
    `dividerBefore:` (drawer renders it as whitespace, rail as a
    `Divider`). If it's a "library" surface (Activities, Locations) it
    belongs under Settings, not the nav list.
+   - **Drawer-length guardrail (regressed twice — once on the nav-slim,
+     once when the cockpit reorg rehomed `YourToolsStrip` there):**
+     anything you add to the drawer's scroll body goes in a **collapsed
+     `CollapsibleSection`**, NEVER a flat list of tiles. The drawer must
+     land on the short daily spine + collapsed group headers; a flat
+     cluster (even a "nice" role palette) re-creates the 16-item wall the
+     slim fixed. One header row until tapped — that's the rule.
 4. **Settings entries** (`lib/features/settings/settings_screen.dart`):
    any settings-section route gets a `ListTile` row in the right
    `_SettingsGroup`. Group new rows with adjacent ones — don't add a
@@ -692,14 +699,17 @@ COPPA in the US) will eventually audit.
   product analytics, it's event-level, never row-level.
 - **Auth tokens never logged.** Supabase access/refresh tokens stay in
   `flutter_secure_storage`-backed channels only.
-- **Vendor API keys** (Deepgram, OpenAI) currently ship in `.env`
-  embedded in the app bundle — recoverable from the APK/IPA. For
-  personal-dev that's acceptable risk; bound it with vendor-side
-  spend caps + rate limits + project-scoped keys. Before external
-  rollout, broker through Supabase Edge Functions so the master key
-  never reaches the device. Full pattern + tier table in
-  `docs/SECRETS.md`. Public config (Supabase URL, anon key, PowerSync
-  URL, Sentry DSN) stays in the binary — RLS is the real gate.
+- **Vendor API keys.** **Deepgram (STT) + the TTS keys are already
+  brokered** — they live as server-side secrets on Supabase Edge
+  Functions (`voice-token`, `tts-generate`), never in `.env` / the app
+  bundle. The client calls the function, gets a short-lived token /
+  result, and the master key never reaches the device. Any NEW vendor
+  key should follow that same broker pattern, not ship in `.env`. Full
+  pattern + tier table in `docs/SECRETS.md`. Public config (Supabase
+  URL, anon key, PowerSync URL, Sentry DSN) stays in the binary — RLS
+  is the real gate. (`.env` holds only that public config; if a key
+  ever needs the device, bound it with vendor-side spend caps + rate
+  limits + project-scoped keys.)
 - **Data export & deletion** — a parent or program admin must be able to
   export all data for a child and request deletion. Plan endpoints when
   we get there.
@@ -1899,8 +1909,18 @@ do / dictate. Some key invariants:
   omnibox mic button toggles a session; the running transcript is
   appended to the composer's existing text (so dictation
   complements typing rather than replacing it).
-  - **Setup**: add `DEEPGRAM_API_KEY` to your `.env`. Without it, the
-    mic button surfaces a "voice not configured" snackbar.
+  - **Setup**: the Deepgram master key is NOT in `.env` — it's a
+    server-side secret on the `voice-token` Supabase Edge Function
+    (`supabase secrets set DEEPGRAM_API_KEY=…`), which mints a ≤30 s
+    token the client uses to open the WS (the master key never ships in
+    the app; see `docs/SECRETS.md` + `supabase/functions/voice-token/`).
+    So STT needs **all three**: the function deployed, that secret set,
+    AND the user signed in. Failure surfaces are explicit: not-signed-in
+    → "Voice dictation requires sign-in."; mic denied → "Microphone
+    permission was declined."; broker/Deepgram failure → an error state
+    with the message. (Verified 2026-06-15: function ACTIVE + secret set,
+    so a live failure is mic-permission or the Deepgram account, not
+    config.)
   - **Permissions**: Android `RECORD_AUDIO` + iOS
     `NSMicrophoneUsageDescription` are wired. `permission_handler`
     requests at the moment of first use.

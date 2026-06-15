@@ -9,6 +9,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/work_sample_capture.dart';
 import 'package:differentworld/features/exports/widgets/exports_list.dart';
+import 'package:differentworld/features/family/welcome_actions.dart';
 import 'package:differentworld/features/incidents/widgets/subject_incidents_section.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/alerts_section.dart';
@@ -121,6 +122,15 @@ class SubjectDetailScreen extends ConsumerWidget {
               icon: Icons.auto_stories_outlined,
               label: 'Story',
               onPressed: () => unawaited(context.push('/story/$subjectId')),
+            ),
+          // First-day welcome — a printable one-pager for the parent: the big
+          // idea + the family-app invite QR + the practicals. Staff-only.
+          if (viewer is! GuardianViewer && subjectAsync.value != null)
+            EdgeAction(
+              icon: Icons.waving_hand_outlined,
+              label: 'First-day welcome',
+              onPressed: () =>
+                  unawaited(generateFirstDayWelcome(context, ref, subjectId)),
             ),
           // The Character Sheet — who they're becoming over the 10 weeks.
           if (subjectAsync.value != null)

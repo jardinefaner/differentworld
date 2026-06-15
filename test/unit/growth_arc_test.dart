@@ -78,5 +78,41 @@ void main() {
       );
       expect(beats.first.sub, contains('1 day.'));
     });
+
+    test('photos are woven in as photo beats, capped at 6', () {
+      final beats = buildGrowthArc(
+        firstName: 'Ada',
+        collection: const ActionWordsCollection(
+          worldCounts: {'ant': 2},
+          verbTotals: {'build': 4},
+          dayCount: 5,
+        ),
+        photos: List.generate(
+          8,
+          (i) => (url: 'path/$i.jpg', caption: 'May ${i + 1}'),
+        ),
+      );
+      final photoBeats =
+          beats.where((b) => b.kind == DayBeatKind.photo).toList();
+      expect(photoBeats, hasLength(6)); // capped
+      expect(photoBeats.first.imageUrl, 'path/0.jpg');
+      expect(photoBeats.first.big, 'May 1');
+      // The open beat still leads; photos come after.
+      expect(beats.first.kind, DayBeatKind.open);
+      expect(beats.indexWhere((b) => b.kind == DayBeatKind.photo),
+          greaterThan(0));
+    });
+
+    test('no photos → no photo beats (arc unchanged)', () {
+      final beats = buildGrowthArc(
+        firstName: 'Ada',
+        collection: const ActionWordsCollection(
+          worldCounts: {'ant': 1},
+          verbTotals: {'build': 1},
+          dayCount: 1,
+        ),
+      );
+      expect(beats.any((b) => b.kind == DayBeatKind.photo), isFalse);
+    });
   });
 }

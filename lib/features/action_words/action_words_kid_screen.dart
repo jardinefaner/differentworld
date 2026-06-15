@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
+import 'package:differentworld/features/action_words/verb_voice.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
@@ -38,6 +39,9 @@ class ActionWordsKidScreen extends ConsumerStatefulWidget {
 class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
     with WidgetsBindingObserver {
   final Set<String> _selected = {};
+  // On-device voiceover so a pre-reader can HEAR each word. Owned here:
+  // stopped in dispose. See verb_voice.dart.
+  final VerbVoice _voice = VerbVoice();
   bool _saving = false;
   bool _saved = false;
   bool _staffUnlocked = false;
@@ -86,6 +90,7 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(_voice.stop());
     ref.read(kidModeProvider.notifier).exit();
     ref.read(kidModeLockedRouteProvider.notifier).pin(null);
     _staffTapReset?.cancel();
@@ -95,6 +100,10 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
 
   void _toggle(String id) {
     if (_saved || _saving) return;
+    // Speak the word on every tap — for a pre-reader, hearing it IS how they
+    // browse, whether the tap selects, deselects, or bounces off the cap.
+    final verb = verbById(id);
+    if (verb != null) unawaited(_voice.speakVerb(verb));
     setState(() {
       if (_selected.remove(id)) {
         unawaited(HapticFeedback.selectionClick());
@@ -121,6 +130,10 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
         _saving = false;
         _saved = true;
       });
+      // Read the three chosen words back so a pre-reader hears their pick.
+      final picked =
+          verbsByIds(_selected.toList()).map((v) => v.label).join(', ');
+      unawaited(_voice.say('Your words today. $picked.'));
     } on Object catch (e, st) {
       // The write is optimistic local Drift, so this is rare — but if it
       // throws we must clear _saving or the kid's button is dead for the rest
@@ -232,6 +245,24 @@ class _ActionWordsKidScreenState extends ConsumerState<ActionWordsKidScreen>
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.volume_up_outlined,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Tap a word to hear it',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               _ProgressDots(filled: _selected.length, total: kPicksPerDay),

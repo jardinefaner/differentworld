@@ -258,6 +258,110 @@ abstract final class AppType {
           letterSpacing: 1.5,
         ),
       );
+
+  /// The CLEAN voice — the opt-in "Clean" display style (docs/VISION.md).
+  /// Same Jost family + the same M3 sizes, but re-voiced to the calm,
+  /// Anthropic/Linear-style restraint the user blessed in the show_widget
+  /// mockups: medium weight (not thin), and TIGHT tracking (not the wide
+  /// brand tracking). Paired with sentence-case headers (ContentHeader drops
+  /// its `.toUpperCase()` in clean mode) — so the hierarchy comes from size +
+  /// weight + whitespace, not from caps + spacing. Only two weights show up:
+  /// w400 body, w500 everything structural.
+  static TextTheme cleanTextTheme() => const TextTheme(
+        displayLarge: TextStyle(
+          fontFamily: display,
+          fontSize: 57,
+          fontWeight: FontWeight.w500,
+          height: 1.1,
+        ),
+        displayMedium: TextStyle(
+          fontFamily: display,
+          fontSize: 45,
+          fontWeight: FontWeight.w500,
+          height: 1.14,
+        ),
+        displaySmall: TextStyle(
+          fontFamily: display,
+          fontSize: 36,
+          fontWeight: FontWeight.w500,
+          height: 1.2,
+        ),
+        headlineLarge: TextStyle(
+          fontFamily: display,
+          fontSize: 32,
+          fontWeight: FontWeight.w500,
+          height: 1.25,
+        ),
+        headlineMedium: TextStyle(
+          fontFamily: display,
+          fontSize: 28,
+          fontWeight: FontWeight.w500,
+          height: 1.29,
+        ),
+        headlineSmall: TextStyle(
+          fontFamily: display,
+          fontSize: 24,
+          fontWeight: FontWeight.w500,
+          height: 1.33,
+        ),
+        titleLarge: TextStyle(
+          fontFamily: ui,
+          fontSize: 22,
+          fontWeight: FontWeight.w500,
+          height: 1.3,
+        ),
+        titleMedium: TextStyle(
+          fontFamily: ui,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          height: 1.5,
+        ),
+        titleSmall: TextStyle(
+          fontFamily: ui,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          height: 1.45,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: ui,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          height: 1.55,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: ui,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: ui,
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          height: 1.4,
+        ),
+        labelLarge: TextStyle(
+          fontFamily: ui,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          letterSpacing: 0.1,
+        ),
+        labelMedium: TextStyle(
+          fontFamily: ui,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          height: 1.35,
+          letterSpacing: 0.2,
+        ),
+        labelSmall: TextStyle(
+          fontFamily: ui,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          height: 1.45,
+          letterSpacing: 0.2,
+        ),
+      );
 }
 
 /// The spacing scale. Use instead of bare numbers so vertical rhythm is

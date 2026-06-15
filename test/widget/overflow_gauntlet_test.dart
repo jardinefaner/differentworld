@@ -170,10 +170,14 @@ void main() {
       final o = await _collectOverflows(
         tester,
         () => host(
-          const ContentHeader(
-            title: long,
-            subtitle: longer,
-            trailing: Icon(Icons.sync),
+          // ContentHeader is now a ConsumerWidget (reads displayStyleProvider
+          // for sentence-case vs uppercase), so it needs a ProviderScope.
+          const ProviderScope(
+            child: ContentHeader(
+              title: long,
+              subtitle: longer,
+              trailing: Icon(Icons.sync),
+            ),
           ),
         ),
         const Size(320, 800),

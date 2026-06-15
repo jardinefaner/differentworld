@@ -273,6 +273,25 @@ ContextLead? computeContextLead({
   }
 }
 
+/// Session-scoped "which room am I in" override for the contextual lead.
+/// null = the default (read across the viewer's rooms, most-recently-started
+/// wins). The context pill sets it so a teacher who floats to another room —
+/// or whose schedule is empty/wrong — can correct what the lead reads from.
+/// Deliberately NOT persisted: it answers "where are you NOW", so it resets
+/// on app restart.
+class ContextRoomOverride extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  /// Pin the lead to [groupId]; pass null to return to "across your rooms".
+  // A named action reads better at the call site (`.pin(id)`) than a setter.
+  // ignore: use_setters_to_change_properties
+  void pin(String? groupId) => state = groupId;
+}
+
+final contextRoomOverrideProvider =
+    NotifierProvider<ContextRoomOverride, String?>(ContextRoomOverride.new);
+
 /// Reads the live providers and hands primitives to [computeContextLead].
 /// Returns null when there's nothing to lead with (non-logger, or closed).
 // Riverpod 3 auto-dispose providers have no stable public type name.
@@ -281,7 +300,12 @@ final contextLeadProvider = Provider.autoDispose<ContextLead?>((ref) {
   final viewer = ref.watch(viewerProvider);
   final phase =
       ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
-  final live = ref.watch(liveBlockProvider);
+  // A pinned room (the context pill) narrows the lead to that room's live
+  // block; otherwise it's whatever's live across the viewer's rooms.
+  final override = ref.watch(contextRoomOverrideProvider);
+  final live = override == null
+      ? ref.watch(liveBlockProvider)
+      : ref.watch(liveBlockForGroupProvider(override));
   final world = ref.watch(currentWorldProvider);
   final labels = ref.watch(verticalLabelsProvider);
   // Headcount only matters (and only loads) during arrival.

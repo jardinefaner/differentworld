@@ -49,6 +49,12 @@ class EntryKind {
   /// {world_id, note_type: problem|dream|feeling|free}.
   static const String wallNote = 'wall_note';
 
+  /// A rule the ROOM added to a world's bible (the "add a rule" community
+  /// mechanic, docs/VISION.md). Space-level (no subject); `body` = the rule
+  /// text; `details` = {world_id}. Shows alongside the authored
+  /// `kWorldRules` on This Week — the bible becomes community-extensible.
+  static const String worldRule = 'world_rule';
+
   /// A time capsule (docs/WORLD.md — Week 8 "seal in a box, open Week 10";
   /// Week 6 "message to the future you"). `body` = what's sealed;
   /// `details` = {sealed_until: ISO date, world_id?}. Hidden until the
@@ -395,6 +401,18 @@ class EntryActions {
     detailsJson: jsonEncode({'world_id': worldId, 'note_type': noteType}),
   );
 
+  /// Add a rule to a world's bible (the "add a rule" community mechanic).
+  /// Space-level (no subject); shows alongside the authored `kWorldRules`
+  /// on This Week. `body` = the rule; `details` = {world_id}.
+  Future<String> addWorldRule({
+    required String text,
+    required String worldId,
+  }) => _create(
+    kind: EntryKind.worldRule,
+    body: text.trim(),
+    detailsJson: jsonEncode({'world_id': worldId}),
+  );
+
   /// Record a Mood Weather check for a child (1–5).
   Future<String> recordMood({
     required String subjectId,
@@ -563,6 +581,40 @@ final wallNotesProvider = StreamProvider.autoDispose<List<Entry>>((ref) async* {
     return;
   }
   yield* db.entriesDao.watchInSpace(spaceId: spaceId, kind: EntryKind.wallNote);
+});
+
+/// The `world_id` an entry is tagged to (from its details JSON), or null.
+String? entryWorldId(Entry e) {
+  try {
+    final d = jsonDecode(e.details) as Map<String, dynamic>;
+    return d['world_id'] as String?;
+  } on Object {
+    return null;
+  }
+}
+
+/// Rules the ROOM added to a world's bible (the "add a rule" mechanic),
+/// newest-first — they layer on top of the authored `kWorldRules`. Keyed by
+/// world id; the value is the rule texts.
+// autoDispose family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final addedWorldRulesProvider =
+    StreamProvider.autoDispose.family<List<String>, String>((ref, worldId) async* {
+  final db = await ref.watch(appDatabaseProvider.future);
+  final spaceId = ref.watch(viewerProvider).spaceId;
+  if (spaceId == null) {
+    yield const [];
+    return;
+  }
+  yield* db.entriesDao
+      .watchInSpace(spaceId: spaceId, kind: EntryKind.worldRule)
+      .map(
+        (entries) => [
+          for (final e in entries)
+            if (entryWorldId(e) == worldId && (e.body ?? '').trim().isNotEmpty)
+              e.body!.trim(),
+        ],
+      );
 });
 
 /// The activities the teacher kept from the forge (space-level), newest first.

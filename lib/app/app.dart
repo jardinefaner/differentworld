@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/app/router.dart';
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/env/env.dart';
@@ -55,14 +56,19 @@ class DifferentWorldApp extends ConsumerWidget {
     // 'boxed' choice reverts), so it applies from the FIRST frame — no boxed
     // flash. Semantic cards keep their tint (the theme colour is just the
     // default; an explicit `color:` wins).
-    final isCalm =
-        ref.watch(displayStyleProvider).value != DisplayStyle.boxed;
+    final style = ref.watch(displayStyleProvider).value;
+    // Calm AND Clean are both flat (only an explicit 'boxed' opts out); Clean
+    // additionally re-voices the type ramp (tight tracking, medium weight,
+    // sentence case) — the show_widget mockup look (docs/VISION.md).
+    final isCalm = style != DisplayStyle.boxed;
+    final cleanText =
+        style == DisplayStyle.clean ? AppType.cleanTextTheme() : null;
     ThemeData calmify(ThemeData t) =>
         isCalm ? t.copyWith(cardTheme: flatCardTheme(t.colorScheme)) : t;
     return MaterialApp.router(
       title: 'Different World',
-      theme: calmify(outdoor ?? buildLightTheme()),
-      darkTheme: calmify(outdoor ?? buildDarkTheme()),
+      theme: calmify(outdoor ?? buildLightTheme(textTheme: cleanText)),
+      darkTheme: calmify(outdoor ?? buildDarkTheme(textTheme: cleanText)),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       // Wrap every routed page in:
