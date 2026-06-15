@@ -244,6 +244,13 @@ When a new screen lands at a new top-level route, update:
    `dividerBefore:` (drawer renders it as whitespace, rail as a
    `Divider`). If it's a "library" surface (Activities, Locations) it
    belongs under Settings, not the nav list.
+   - **Drawer-length guardrail (regressed twice — once on the nav-slim,
+     once when the cockpit reorg rehomed `YourToolsStrip` there):**
+     anything you add to the drawer's scroll body goes in a **collapsed
+     `CollapsibleSection`**, NEVER a flat list of tiles. The drawer must
+     land on the short daily spine + collapsed group headers; a flat
+     cluster (even a "nice" role palette) re-creates the 16-item wall the
+     slim fixed. One header row until tapped — that's the rule.
 4. **Settings entries** (`lib/features/settings/settings_screen.dart`):
    any settings-section route gets a `ListTile` row in the right
    `_SettingsGroup`. Group new rows with adjacent ones — don't add a
