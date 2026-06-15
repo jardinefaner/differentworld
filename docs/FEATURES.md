@@ -241,6 +241,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Cockpit
+**Path**: `lib/features/cockpit/`
+**Purpose**: The clock-driven home — `/now` shows ONE beat at a time (getting ready → good morning → now → field trip → reveal → pickup → send), chosen by the time of day and what's live; you never navigate. The finished shape of "context is the navigation" (docs/VISION.md 2026-06-15; build map in docs/COCKPIT.md).
+**Personas served**: All staff (Maya | Jordan | Coach Sam | Pat — the daily-logger spine)
+**Discovery surfaces**:
+- Routes: `/now`
+- Omnibox: yes — "Now — the cockpit" (keywords: now, cockpit, focus, focus mode, the clock, right now, beat)
+- Slash: none
+- Drawer: no — opt-in beta reached via omnibox + Settings; the plan is for it to REPLACE Today as the home (docs/COCKPIT.md fork ⑤ promotion path), not sit beside it as a second spine destination
+- Settings: yes — "Now — the cockpit" row in the Preferences group
+**Capabilities**: None beyond staff — the contextual lead returns null for guardians, and the router's guardian gate bounces them off `/now`
+**Data**: None directly — composes `dayPhaseProvider`, the live-block providers, and `subjectsInSpaceProvider` through `computeCockpitBeat`, and renders the existing `contextLeadProvider`. No new table.
+**Surfaces**:
+- *Beat engine* — `cockpit_beat.dart`. `computeCockpitBeat(phase, liveBlockKind, sendable)` (pure, unit-tested in `test/unit/cockpit_beat_test.dart`) → a `CockpitBeat`; `cockpitBeatProvider` adapts the live providers (honors the context room override). A live field trip bends the clock (wins over the phase); `reveal` is reached by hand in slice 1.
+- *The cockpit screen* — `now_cockpit_screen.dart`. `NowCockpitScreen`: full-bleed single beat (reuses `ContextLead` verbatim for the live beats; an authored card for the after-pickup send / rest), a pull-down curiosity bar (Today · Schedule · Activities · Worlds · Patterns), and a contextual "Start the reveal" launch.
+**Depends on**: Today (`contextLeadProvider` / `dayPhaseProvider`), Schedule (live-block providers), Subjects; delegates to Present (`/play-today`), Pickup, Messages.
+**Consumed by**: None yet — promotion to the home surface is a later slice.
+**Last verified**: 2026-06-15
+
+---
+
 ## Entries
 **Path**: `lib/features/entries/`
 **Purpose**: Unified daily log — observations, meals, naps, diapers, incidents, work samples — all rows in one table with a `kind` discriminator.
