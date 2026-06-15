@@ -178,3 +178,23 @@ ThemeData _themeFrom(ColorScheme scheme) {
 ThemeData buildLightTheme() => _themeFrom(appColorScheme(Brightness.light));
 
 ThemeData buildDarkTheme() => _themeFrom(appColorScheme(Brightness.dark));
+
+/// The Calm-mode card theme — flattens every raw `Card` app-wide (Today's
+/// cards, detail screens, …): no elevation, no fill (transparent, so it sits
+/// on the page), a hairline outline for definition. A Card that passes an
+/// explicit `color:` (the semantic / signal cards — a `primaryContainer`
+/// "Right now", an `errorContainer` banner) KEEPS its tint, because the theme
+/// colour is only the default. `app.dart` swaps this in when
+/// `displayStyleProvider` is Calm.
+CardThemeData flatCardTheme(ColorScheme scheme) => CardThemeData(
+      elevation: 0,
+      color: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.card),
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.6),
+          width: 0.5,
+        ),
+      ),
+    );
