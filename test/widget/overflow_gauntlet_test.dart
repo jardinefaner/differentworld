@@ -132,12 +132,16 @@ void main() {
         (tester) async {
       final o = await _collectOverflows(
         tester,
+        // FeatureCard is now a ConsumerWidget (reads displayStyleProvider),
+        // so it needs a ProviderScope ancestor.
         () => host(
-          const FeatureCard(
-            leading: CircleAvatar(child: Text('M')),
-            title: long,
-            subtitle: longer,
-            trailing: Icon(Icons.chevron_right),
+          const ProviderScope(
+            child: FeatureCard(
+              leading: CircleAvatar(child: Text('M')),
+              title: long,
+              subtitle: longer,
+              trailing: Icon(Icons.chevron_right),
+            ),
           ),
         ),
         const Size(320, 800),

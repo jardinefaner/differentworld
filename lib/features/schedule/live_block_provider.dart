@@ -12,6 +12,8 @@ class LiveBlock {
     required this.blockId,
     required this.groupId,
     required this.title,
+    required this.kind,
+    required this.isOutdoor,
     required this.startAt,
     required this.endAt,
   });
@@ -19,6 +21,15 @@ class LiveBlock {
   final String blockId;
   final String groupId;
   final String title;
+
+  /// The block's [BlockKind] (`on_site` / `field_trip` / …). Drives the
+  /// contextual lead — a field trip reveals vehicle + trip tools.
+  final String kind;
+
+  /// Whether the block's activity is outdoors. Drives the lead's headcount-
+  /// first treatment away from the room.
+  final bool isOutdoor;
+
   final DateTime startAt;
   final DateTime endAt;
 }
@@ -67,17 +78,19 @@ final liveBlockForGroupProvider =
 
   final activities =
       ref.watch(allActivitiesProvider).value ?? const <Activity>[];
-  final activityName = b.activityId == null
+  final activity = b.activityId == null
       ? null
-      : activities.where((a) => a.id == b.activityId).firstOrNull?.name;
+      : activities.where((a) => a.id == b.activityId).firstOrNull;
   final title = (b.title?.trim().isNotEmpty ?? false)
       ? b.title!.trim()
-      : (activityName ?? 'Activity');
+      : (activity?.name ?? 'Activity');
 
   return LiveBlock(
     blockId: b.id,
     groupId: b.groupId,
     title: title,
+    kind: b.kind,
+    isOutdoor: (activity?.isOutdoor ?? 0) == 1,
     startAt: DateTime.parse(b.startAt).toLocal(),
     endAt: DateTime.parse(b.endAt).toLocal(),
   );

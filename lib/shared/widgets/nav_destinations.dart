@@ -20,7 +20,7 @@ class NavDestination {
     required this.icon,
     required this.label,
     required this.route,
-    this.dividerBefore = false,
+    this.group,
     this.onlyFor,
     this.countProvider,
   });
@@ -33,10 +33,12 @@ class NavDestination {
   /// drill-ins, so the nav never stacks routes on top of each other.
   final String route;
 
-  /// Mark a section break above this item. The drawer renders it as
-  /// extra whitespace (it has no divider lines by design); the rail
-  /// renders it as a [Divider].
-  final bool dividerBefore;
+  /// Which collapsible group this destination belongs to, by group
+  /// title (see [navGroupOrder]). `null` = it's part of the always-
+  /// visible spine (the daily-workflow core), rendered flat at the top
+  /// of the drawer / rail. A non-null group is tucked one tap away
+  /// under a collapsible header so the drawer opens short on a phone.
+  final String? group;
 
   /// If set, the destination only shows when the viewer passes this
   /// check (e.g. Observations needs `canObserve`).
@@ -46,6 +48,71 @@ class NavDestination {
   /// triage, open Tasks). Defined here so both surfaces badge the same
   /// destinations identically. Null → no badge.
   final Provider<int>? countProvider;
+}
+
+/// The route pinned to the very bottom of the nav, below every group —
+/// Settings is always-present but never competes with the daily spine
+/// for the top of the list.
+const String navFooterRoute = '/settings';
+
+/// A collapsible nav group — a titled header (with `icon`) over a set of
+/// `items`. Built by [buildNavLayout] from the [NavDestination.group]
+/// tags so the drawer and rail render identical groupings.
+typedef NavGroup = ({String title, IconData icon, List<NavDestination> items});
+
+/// Group headers, in render order. A destination's [NavDestination.group]
+/// must match one of these `title`s to be placed; the icon decorates the
+/// collapsible header. Order here is the order groups appear below the
+/// spine.
+const List<({String title, IconData icon})> navGroupOrder = [
+  (title: 'Activities', icon: Icons.apps_outlined),
+  // NOT Icons.more_horiz — that's the action-overflow "⋯" glyph
+  // (overflow_actions.dart); reusing it for a nav group reads as a second
+  // "⋯" menu on the desktop rail. A folder/category glyph instead.
+  (title: 'More', icon: Icons.category_outlined),
+];
+
+/// The structured nav layout both surfaces render: a flat [spine] at the
+/// top, the collapsible [groups] in the middle, and a flat [footer]
+/// (Settings) pinned at the bottom. Derived from the single
+/// [buildNavDestinations] list so the drawer and rail can never drift —
+/// they differ only in how they present each band (the drawer collapses
+/// groups; the rail, with vertical room to spare, labels them inline).
+class NavLayout {
+  const NavLayout({
+    required this.spine,
+    required this.groups,
+    required this.footer,
+  });
+
+  final List<NavDestination> spine;
+  final List<NavGroup> groups;
+  final List<NavDestination> footer;
+}
+
+/// Split the canonical (capability-filtered) destination list into
+/// spine / groups / footer. Empty groups (every item gated out) are
+/// dropped so a viewer never sees an empty collapsible header.
+NavLayout buildNavLayout(Viewer viewer) {
+  final all = buildNavDestinations(viewer);
+  final spine = <NavDestination>[];
+  final footer = <NavDestination>[];
+  final byGroup = <String, List<NavDestination>>{};
+  for (final d in all) {
+    if (d.route == navFooterRoute) {
+      footer.add(d);
+    } else if (d.group == null) {
+      spine.add(d);
+    } else {
+      (byGroup[d.group!] ??= <NavDestination>[]).add(d);
+    }
+  }
+  final groups = <NavGroup>[
+    for (final g in navGroupOrder)
+      if (byGroup[g.title]?.isNotEmpty ?? false)
+        (title: g.title, icon: g.icon, items: byGroup[g.title]!),
+  ];
+  return NavLayout(spine: spine, groups: groups, footer: footer);
 }
 
 /// Open-captures count (items awaiting triage) — surfaced as a badge so
@@ -73,7 +140,9 @@ final Provider<int> _openTasksCountProvider = Provider.autoDispose<int>(
 /// preceded by a section break.
 List<NavDestination> buildNavDestinations(Viewer viewer) {
   return <NavDestination>[
-    // ── Daily workflow ──────────────────────────────────────────────
+    // ── Spine: the daily-workflow core (group: null → always visible,
+    //    flat at the top). Six destinations a teacher / director touches
+    //    every shift; everything else lives one tap down in a group.
     const NavDestination(
       icon: Icons.today_outlined,
       label: 'Today',
@@ -91,18 +160,6 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       onlyFor: (v) => v.canObserve,
     ),
     NavDestination(
-      icon: Icons.auto_awesome_outlined,
-      label: 'Action Words',
-      route: '/action-words',
-      onlyFor: (v) => v.canObserve,
-    ),
-    NavDestination(
-      icon: Icons.map_outlined,
-      label: 'Program',
-      route: '/program',
-      onlyFor: (v) => v.canObserve,
-    ),
-    NavDestination(
       icon: Icons.inbox_outlined,
       label: 'Captures',
       route: '/captures',
@@ -114,60 +171,86 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       route: '/tasks',
       countProvider: _openTasksCountProvider,
     ),
-
-    // ── Activities ──────────────────────────────────────────────────
-    const NavDestination(
-      icon: Icons.psychology_outlined,
-      label: 'Tools',
-      route: '/tools',
-    ),
-    const NavDestination(
-      icon: Icons.co_present_outlined,
-      label: 'Present',
-      route: '/present',
-    ),
-    const NavDestination(
-      icon: Icons.bubble_chart_outlined,
-      label: 'Brain Breaks',
-      route: '/breaks',
-    ),
-    const NavDestination(
-      icon: Icons.flag_outlined,
-      label: 'Missions',
-      route: '/settings/missions',
-    ),
-    const NavDestination(
-      icon: Icons.tv,
-      label: 'Brainstorm Board',
-      route: '/board',
-    ),
-
-    // ── Insights + data ─────────────────────────────────────────────
     const NavDestination(
       icon: Icons.insights_outlined,
       label: 'Insights',
       route: '/insights',
     ),
+
+    // ── Group "Activities": the run-an-activity surfaces. Reached a few
+    //    times a day, not every minute — collapsed by default on phone.
+    NavDestination(
+      icon: Icons.auto_awesome_outlined,
+      label: 'Action Words',
+      route: '/action-words',
+      group: 'Activities',
+      onlyFor: (v) => v.canObserve,
+    ),
+    const NavDestination(
+      icon: Icons.psychology_outlined,
+      label: 'Tools',
+      route: '/tools',
+      group: 'Activities',
+    ),
+    const NavDestination(
+      icon: Icons.timer_outlined,
+      label: 'Reflect',
+      route: '/reflect',
+      group: 'Activities',
+    ),
+    const NavDestination(
+      icon: Icons.co_present_outlined,
+      label: 'Present',
+      route: '/present',
+      group: 'Activities',
+    ),
+    const NavDestination(
+      icon: Icons.bubble_chart_outlined,
+      label: 'Brain Breaks',
+      route: '/breaks',
+      group: 'Activities',
+    ),
+    const NavDestination(
+      icon: Icons.flag_outlined,
+      label: 'Missions',
+      route: '/settings/missions',
+      group: 'Activities',
+    ),
+    const NavDestination(
+      icon: Icons.tv,
+      label: 'Brainstorm Board',
+      route: '/board',
+      group: 'Activities',
+    ),
+
+    // ── Group "More": program setup, data collection, and operations —
+    //    visited occasionally, so they don't earn a permanent slot.
+    NavDestination(
+      icon: Icons.map_outlined,
+      label: 'Program',
+      route: '/program',
+      group: 'More',
+      onlyFor: (v) => v.canObserve,
+    ),
     const NavDestination(
       icon: Icons.quiz_outlined,
       label: 'Surveys',
       route: '/surveys',
+      group: 'More',
     ),
-
-    // ── Operations ──────────────────────────────────────────────────
     NavDestination(
       icon: Icons.directions_bus_outlined,
       label: 'Vehicles',
       route: '/vehicles',
+      group: 'More',
       onlyFor: (v) => v.canDrive || v.canManageSpace,
     ),
 
-    // ── Settings (always last) ──────────────────────────────────────
+    // ── Footer: Settings, pinned to the bottom (see navFooterRoute).
     const NavDestination(
       icon: Icons.settings_outlined,
       label: 'Settings',
       route: '/settings',
-      dividerBefore: true,
     ),
   ].where((d) => d.onlyFor == null || d.onlyFor!(viewer)).toList();
 }

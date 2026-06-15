@@ -51,7 +51,8 @@ order: **Today**, **Schedule**, **Observations** (gated `canObserve`),
 **Action Words** (gated `canObserve`), **Program** (gated `canObserve`),
 **Captures**, **Tasks**, **Tools**, **Present**, **Brain Breaks**,
 **Missions**, **Brainstorm Board**, **Insights**, **Surveys**,
-**Vehicles** (gated `canDrive || canManageSpace`), **Settings**. Everything narrower is reachable via the
+**Vehicles** (gated `canDrive || canManageSpace`), **Reflect**,
+**Settings**. Everything narrower is reachable via the
 omnibox (`/search`) or slash commands. Settings is the library / admin
 surface — preferences + roster + fleet, not primary workflows.
 
@@ -489,8 +490,8 @@ surface — preferences + roster + fleet, not primary workflows.
 - *BoardGame* — `lib/features/live_board/board_game.dart`. A cast-only `GameDefinition<BoardState>` with `gameId = 'board'`. Registered in `game_registry.dart` so the existing cast receiver (`cast_receiver.dart`) renders it for free with no receiver changes. `buildStage` switches on `BoardInstrument` (idle / word / spell / number / turn / reveal / sound). All six instrument stages auto-fit via `FittedBox` — the design law. The reducer is a no-op (the caster re-casts the full `BoardState` on every edit). `seedsFromContentBank = false` so it stays out of the standard game launcher.
 - *Present hub card* — `_PresentCard('Live Board', route: '/live-board')` in `lib/features/games/present_hub_screen.dart`. One of seven cards on the `/present` hub grid; the primary visual entry point for the feature.
 **Depends on**: LiveSession (cast spine — `CastSession` from `lib/features/live_session/cast_session.dart`; `generateSessionCode` from `lib/features/live_session/live_game_screen.dart`), Games (`game_registry.dart` — `BoardGame` is registered there so the receiver can resolve it by id), Subjects (`subjectsInSpaceProvider` — Spell-for-me + Whose-turn avatar pickers read the enrolled roster).
-**Consumed by**: LiveSession (cast receiver resolves `BoardGame` via `gameById('board')` in `game_registry.dart` and calls `buildStage` on it); Today (`role_tools.dart` — `_liveBoard` `RoleTool` links `/live-board`; surfaced in `YourToolsStrip` for lead-teacher, teacher, specialist roles).
-**Last verified**: 2026-06-13
+**Consumed by**: LiveSession (cast receiver resolves `BoardGame` via `gameById('board')` in `game_registry.dart` and calls `buildStage` on it); Drawer (`role_tools.dart` — `_liveBoard` `RoleTool` links `/live-board`; surfaced in the drawer's "Your tools" section via `tunedToolsFor()` for lead-teacher, teacher, specialist roles; previously in `YourToolsStrip` on Today, moved in the briefing reorg).
+**Last verified**: 2026-06-15
 
 ---
 
@@ -632,6 +633,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Reflections
+**Path**: `lib/features/reflections/`
+**Purpose**: A count-up stopwatch ritual that turns real work time into a visible growth record — staff run the clock, stop it, rate how it went on a 4-face Scale, and the saved reflections stack into a personal growth strip.
+**Personas served**: All staff (Jordan, Coach Sam, Brianna — the staffer's own growth practice). Kid-scoped entry (passing a `subjectId` so the reflection lands in the child's Book) is planned, not yet wired.
+**Discovery surfaces**:
+- Routes: `/reflect`
+- Omnibox: yes — `page.reflect` "Reflect" (gated `viewer is! GuardianViewer`; keywords: reflect, reflection, stopwatch, timer, focus, session, how it went, growth, accountability)
+- Slash: `/reflect` (aliases: reflection, stopwatch, timer, focus, session)
+- Drawer: yes — "Reflect" in the **Activities** group (`nav_destinations.dart`, after `Present`)
+- Settings: no
+**Capabilities**: None — open to all signed-in staff. No cap key beyond non-guardian.
+**Data**: Reuses [entries](SCHEMA.md#entries) `kind='reflection'` — one row per saved session; `details` JSON = `{seconds, face}` (face 1–4, 0 = not picked); `body` = optional note. `subject_id` nullable — null for a staffer's own session, set for a child's reflection (their Book). No new table or migration. `EntryKind.reflection` constant + `EntryActions.recordReflection(seconds:, face:, note:, subjectId:)` live in `lib/features/entries/entries_providers.dart`.
+**Surfaces**:
+- *Reflection session screen* — `lib/features/reflections/reflection_session_screen.dart`. The main `/reflect` screen: a count-up timer card ("Counting up" → "Stop & reflect" → 4-face picker + optional note + "Save reflection"); below that, the growth strip — all saved reflections newest-first (`_ReflectionTile`: face icon + elapsed time + note + relative timestamp). Past the 2-minute threshold the face rating is required; below it the face is optional. After save the timer resets and begins a fresh session immediately.
+- *Reflection providers* — `lib/features/reflections/reflection_providers.dart`. `ReflectionView` (parses an `Entry` of `kind='reflection'` into typed `seconds` / `face` / `note`); `recentReflectionsProvider` (StreamProvider.autoDispose — watches `entries` in the space filtered by `kind='reflection'`, maps to `List<ReflectionView>` newest-first).
+**Depends on**: Entries (`EntryActions.recordReflection`; `entriesDao.watchInSpace` via `recentReflectionsProvider`).
+**Consumed by**: Nothing yet — leaf surface in slice 1. Slice 2 will surface the growth strip in Today or a dedicated "My growth" tile.
+**Last verified**: 2026-06-14
+
+---
+
 ## Review
 **Path**: `lib/features/review/`
 **Purpose**: Guided reflection — weekly (one-question-per-page walk) and yearly (annual re-grounding).
@@ -666,7 +688,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: Read: all members. Write: `can_manage_schedule` (director / lead-tier). Day-template authoring: `SpaceCaps.dayTemplates` (`day_templates` key on `spaces.capabilities`) — the templates JSON is stored under this cap key; no separate gate is enforced in the UI (any signed-in staff can open the builder, but only members who can write `spaces.capabilities` can mutate it).
 **Data**: [schedule_blocks](SCHEMA.md#schedule_blocks) (read + written by day-template `applyToDate` via `scheduleDao.createDayBlocks`), [activities](SCHEMA.md#activities), [locations](SCHEMA.md#locations), [trip_logistics](SCHEMA.md#trip_logistics), [trip_vehicles](SCHEMA.md#trip_vehicles), [permission_slips](SCHEMA.md#permission_slips), [headcounts](SCHEMA.md#headcounts), [entries](SCHEMA.md#entries) (reads via `schedule_block_id` back-reference — live-block capture tagging, see migration `20260531000002`), [activity_supplies](SCHEMA.md#activity_supplies) (reads via `activitySupplyLinksProvider` in the activity editor), [supplies](SCHEMA.md#supplies) (reads via `suppliesProvider` to populate the pack-list picker in the activity editor), [spaces](SCHEMA.md#spaces) (day-template library stored as JSON in `spaces.capabilities['day_templates']`; read via `currentSpaceProvider`, written via `spaceCapActionsProvider`)
 **Surfaces**:
-- *Schedule screen* — `lib/features/schedule/schedule_screen.dart`. Cohort tabs × time-of-day list (phone-friendly). Top chrome carries two icon buttons: "Weekly template" → `/schedule/template` and "Day templates" → `/schedule/day-templates`. Tablet grid deferred for Maya.
+- *Schedule screen* — `lib/features/schedule/schedule_screen.dart`. Cohort tabs × flush time-rail agenda (phone-friendly). On wide screens, all cohorts render as side-by-side columns (the schedule matrix). Top chrome carries an overflow menu with "New block", "Weekly template" → `/schedule/template`, and "Day templates" → `/schedule/day-templates`. `_BlockTile` renders a live "NOW" line — a primary-colour left accent + tint + NOW pill — when the wall clock falls within a block's `[start, end)` window on today's date (`isNow` flag computed per-block in `_CohortDay.build`). This is a pure UI signal; no new provider or table.
 - *Block edit screen* — `lib/features/schedule/block_edit_screen.dart`. Create / edit one block (start, end, activity, lead, location, kind).
 - *Substitute lead sheet* — `lib/features/schedule/widgets/substitute_lead_sheet.dart`. Modal bottom sheet: pick absent lead → pick cover. Bulk-writes `lead_substitute_member_id` for all matching blocks on the day. Surfaceable directly from the omnibox via "Cover today · {Group.name}" (Pat persona) without first entering the schedule editor.
 - *Leading-today card* — `lib/features/schedule/widgets/leading_today_card.dart`. Embedded on home; signed-in lead's blocks + cabin notes for today.
@@ -675,15 +697,15 @@ surface — preferences + roster + fleet, not primary workflows.
 - *Day template model* — `lib/features/schedule/day_template.dart`. `DayTemplate`, `DayBlock`, `DayBlockKind` palette (11 kinds), `DaySlot` (packed clock window). Pure model + JSON encode/decode helpers (`encodeDayTemplates` / `decodeDayTemplates`). `clockLabel` / `durationLabel` pure formatting functions.
 - *Day template providers* — `lib/features/schedule/day_template_providers.dart`. `dayTemplatesProvider` (Provider — reads `spaces.capabilities['day_templates']` JSON via `currentSpaceProvider.select`); `dayTemplateByIdProvider` (Provider.family); `DayTemplateActions` (Notifier — serialized read-modify-write of the cap JSON; `applyToDate` generates real `schedule_blocks` via `scheduleDao.createDayBlocks`); `dayTemplateActionsProvider`.
 **Depends on**: Groups, Members, Activities, Locations, Vehicles (trip assignment), Entries (reads `schedule_block_id` back-reference for live-block capture tagging), Supplies (pack-list picker in `activity_edit_screen.dart` reads `suppliesProvider` + `activitySupplyLinksProvider`), Spaces (`day_template_providers.dart` reads and writes `spaces.capabilities` via `currentSpaceProvider` + `spaceCapActionsProvider`).
-**Consumed by**: Today (leading-today card), Attendance (block-context for headcounts), Captures (block-context tag), Omnibox (substitute-lead sheet invoked from the per-cohort "Cover today" entry).
-**Last verified**: 2026-06-07
+**Consumed by**: Today (leading-today card; `contextLeadProvider` in `context_lead.dart` reads `liveBlockProvider` for the live-block path of the contextual lead), Attendance (block-context for headcounts), Captures (block-context tag), Omnibox (substitute-lead sheet invoked from the per-cohort "Cover today" entry).
+**Last verified**: 2026-06-15
 
 ---
 
 ## Settings
 **Path**: `lib/features/settings/`
 **Purpose**: Library / admin surfaces — program config, team, fleet, locations, activities, member detail, plus device preferences.
-**Personas served**: Maya (all of it), All staff (preferences + read-only team / vehicles), Helen (text-size override, also reachable from Family Today header), Jordan (outdoor-mode toggle).
+**Personas served**: Maya (all of it), All staff (preferences + read-only team / vehicles), Helen (text-size override, also reachable from Family Today header), Jordan (outdoor-mode toggle + calm-layout toggle).
 **Discovery surfaces**:
 - Routes: `/settings`, `/settings/program`, `/settings/team`, `/settings/team/:id`, `/settings/roles`, `/settings/vehicles`, `/settings/locations`. (Activities lives at `/activities`, not under settings, because it's used more often than configured.)
 - Omnibox: yes — "Settings", "Program settings", "Team", "Roles & permissions", "Vehicles", "Locations", "Activities"
@@ -693,16 +715,16 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: Read: all members. Program settings: `can_manage_space`. Team write / vehicles write: `can_manage_space`. Roles screen is read-only for everyone (the catalog itself is a code constant).
 **Data**: [spaces](SCHEMA.md#spaces) (program settings screen reads + writes `capabilities['timer_presets']` via `HouseTimerActions.setPresetMinutes`; `capabilities['suggest_play_minutes']` via `HouseTimerActions.setPlayMinutes`; `capabilities['phase_windows']` via `DayPhaseActions.setWindows`; all other feature flags via `SpaceCapActions.setCap`/`setStringCap`/`setIntCap`), [members](SCHEMA.md#members), [locations](SCHEMA.md#locations) plus what each sub-screen owns. Roles screen reads no DB — the role catalog is `RoleBundles.rolesFor(vertical)` / `defaultsFor()` in `lib/core/capabilities/`.
 **Surfaces**:
-- *Settings screen* — `lib/features/settings/settings_screen.dart`. Grouped list (Account / Space / Preferences / About).
+- *Settings screen* — `lib/features/settings/settings_screen.dart`. Grouped list (Account / Space / Preferences / About). The **Preferences** group carries: `TextSizeTile` (text scale floor), `_OutdoorModeTile` (high-contrast), `_DisplayStyleTile` (Calm layout toggle — `DisplayStyle.boxed` / `DisplayStyle.calm`; reads/writes `displayStyleProvider` from `lib/features/settings/display_style_setting.dart`; default Boxed; when Calm, neutral `FeatureCard` instances flatten to a hairline so lists read as one continuous surface instead of stacked boxes).
 - *Program settings* — `lib/features/settings/program_settings_screen.dart`. Per-space capability flags + pickup window + "Defaults" section: "Timer presets" `_TimerPresetsTile` (reads `houseTimerPresetsProvider`; taps to a glass sheet that adds/removes whole-minute presets; writes via `HouseTimerActions.setPresetMinutes`) + "Big Thinking play length" `_PlayLengthTile` (inline ± stepper; writes via `HouseTimerActions.setPlayMinutes`) + "Day rhythm" `_PhaseWindowsSection` (four time-pickers for arrival/program/pickup/closed phase boundaries; writes via `DayPhaseActions.setWindows`). All three write `spaces.capabilities` via `SpaceCapActions`.
 - *Team screen* — `lib/features/settings/team_screen.dart`. Members + pending invites.
 - *Member detail* — `lib/features/settings/member_detail_screen.dart`. Per-staff profile + certifications.
 - *Roles & permissions* — `lib/features/settings/roles_screen.dart`. Read-only directory of every role offered in the active vertical + the default capabilities each one ships with. Surfaces cert-gated caps in a separate group so directors don't think "the bundle says false; I'll flip it" without realizing the cert is the actual gate. Shipped 2026-05-22 (Wave 36).
 - *Locations list* — `lib/features/settings/locations_list_screen.dart`. Place catalog for scheduling.
 - *Shared text-size tile / picker* — `lib/features/settings/widgets/text_size_tile.dart`. Public `TextSizeTile` + `showTextSizePicker(context, ref)` helper, reused by Family Today so guardians can reach the override without a Settings screen.
-**Depends on**: Members, Spaces (timer_presets + suggest_play_minutes + phase_windows cap writes; reads via Action Words providers), Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog, Action Words (`houseTimerActionsProvider` + `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` imported from `house_timer.dart`; `DayPhaseActions` + `dayPhaseActionsProvider` imported from `today_providers.dart`).
-**Consumed by**: Most features (config), Helen (text scale — staff AND family-side via shared picker), Jordan (outdoor mode), Family Today (text-size picker).
-**Last verified**: 2026-06-08
+**Depends on**: Members, Spaces (timer_presets + suggest_play_minutes + phase_windows cap writes; reads via Action Words providers), Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog, Action Words (`houseTimerActionsProvider` + `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` imported from `house_timer.dart`; `DayPhaseActions` + `dayPhaseActionsProvider` imported from `today_providers.dart`), `display_style_setting.dart` (SharedPreferences-backed `displayStyleProvider`).
+**Consumed by**: Most features (config), Helen (text scale — staff AND family-side via shared picker), Jordan (outdoor mode + calm layout), Family Today (text-size picker).
+**Last verified**: 2026-06-14
 
 ---
 
@@ -1014,8 +1036,8 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Today
 **Path**: `lib/features/today/`
-**Purpose**: The daily launchpad. Root destination. Context-driven cards: morning (attendance, leading-today, captures); afternoon (pickup, end-of-day capture); director pulse (oversight signals).
-**Personas served**: All staff (Jordan + Coach Sam's home base), Maya / Pat (oversight cards), Coach Sam / Brianna (identity strip surfaces "Specialist · Coach" / "Substitute today" so Sam and Brianna orient at a glance). All staff roles (director / lead / teacher / specialist / substitute) each receive a role-tailored "Your tools" strip via `YourToolsStrip`.
+**Purpose**: The daily launchpad. Root destination. Context-driven cards: a contextual lead that surfaces the one move that matters right now, then the cohort rooms, then state-driven actions (pending captures / tasks / vehicle out), curriculum plan, and director pulse.
+**Personas served**: All staff (Jordan + Coach Sam's home base), Maya / Pat (oversight cards), Coach Sam / Brianna (identity strip surfaces "Specialist · Coach" / "Substitute today" so Sam and Brianna orient at a glance).
 **Discovery surfaces**:
 - Routes: `/` (TodayScreen)
 - Omnibox: yes — "Today"
@@ -1023,18 +1045,24 @@ surface — preferences + roster + fleet, not primary workflows.
 - Drawer: yes — "Today" (main destinations, position 1)
 - Settings: no
 **Capabilities**: None — open to all signed-in staff. Cards self-gate by capability (DirectorPulseCard renders only when `viewer.isDirector` AND there's a signal to flag).
-**Data**: Aggregates from Attendance, Schedule, Captures, Tasks, Insights, Messages, Entries, Certifications. Also reads [spaces](SCHEMA.md#spaces) — `capabilities['phase_windows']` via `dayPhaseWindowsProvider` + `DayPhaseActions.setWindows`; drives `dayPhaseProvider` → the "RIGHT NOW" lead card.
+**Data**: Reads [spaces](SCHEMA.md#spaces) (`capabilities['phase_windows']` via `dayPhaseWindowsProvider`; drives `dayPhaseProvider`), [schedule_blocks](SCHEMA.md#schedule_blocks) (via `liveBlockProvider` in `context_lead.dart` — the live-block path of the contextual lead), [attendance_records](SCHEMA.md#attendance_records) (via `arrivalProgressProvider` — cross-cohort in-building count for the arrival lead), [captures](SCHEMA.md#captures) (open count for `QuickActions`), [tasks](SCHEMA.md#tasks) (open count for `QuickActions`), [groups](SCHEMA.md#groups) (per-group day state for cohort rooms), [entries](SCHEMA.md#entries) (curriculum plan cards), [members](SCHEMA.md#members) (member_certifications consumer for director pulse), [dismissed_insights](SCHEMA.md#dismissed_insights) (via Insights). Does not write to any table.
 **Surfaces**:
 - *Today screen* — `lib/features/today/today_screen.dart`. Card list, refresh on pull.
+- *Contextual lead* — `lib/features/today/context_lead.dart`. `computeContextLead()` (pure function, unit-testable) + `contextLeadProvider` (thin Riverpod adapter). Computes the single "what matters right now" move from (role × day phase × live schedule block × curriculum world × outdoor flag). Returns a `ContextLead` with an eyebrow, title, one-line context, tint tone (`go`/`trip`/`pickup`/`calm`), primary `ContextMove` (route + label + icon), and ≤2 secondary chips. Returns null for non-loggers and after hours (closed phase). Reads `liveBlockProvider` + `arrivalProgressProvider` + `currentWorldProvider` + `dayPhaseProvider`. No writes, no new table.
+- *Right-now card* — `_RightNowCard` in `lib/features/today/widgets/today_sections.dart`. Renders `contextLeadProvider`. Full-bleed `Card` tinted by `ContextTone`; primary move is a filled chip, secondary moves are outlined chips. Sits immediately after the live-session banner, before the cohort rooms (briefing reorg: the rooms are now position 2, right under the lead).
 - *Live-session banner* — `lib/features/live_session/live_session_banner.dart` (cross-feature, mounted in `today_sections.dart`). Auto-shows at the top of Today when `activeSessionsProvider` has active sessions; hidden when none. One-tap join pushes `/join?code=…&game=…`. Multiple live sessions → picker sheet.
-- *Right-now card* — `_RightNowCard` in `lib/features/today/widgets/today_sections.dart`. Time-aware lead card driven by `dayPhaseProvider` (a `StreamProvider<DayPhase>` re-emitting every minute). Shows contextual CTA + destination for each phase: prep = plan the day, arrival → `/checklist` (with live "M of N in · K still to check in" from `arrivalProgressProvider`), program → `/schedule`, pickup → `/pickup`, closed = hidden. Renders only for `viewer.isDailyLogger`. `ArrivalProgress` + `arrivalProgressProvider` live in `today_providers.dart`; cross-cohort rollup of `GroupDayState.inBuildingCount`. Shipped 2026-06-06 (arrival progress wave 5).
-- *Embedded cards* — leading-today (from Schedule), morning-checklist (from Attendance), recent-captures (from Captures), open-tasks (from Tasks), insights (from Insights), unread-messages (deferred).
-- *Director pulse card* — `_DirectorPulseCard` inside `today_screen.dart`. Director-only proactive pulse: surfaces today's absent kids (from group day state), cohorts running on substitute coverage (from schedule), and certs expiring within 30 days (from certs-in-space). Renders nothing on "all clear" so it never adds noise. Shipped 2026-05-22 (Wave 36).
-- *Identity strip* — `_IdentityStrip` inside `today_screen.dart`. Renders only for specialists ("You are: Specialist · Coach") and substitutes ("You are: Substitute today"); silent for director / lead_teacher / teacher / guardian / kitchen because their context makes the role obvious. Tap → `/settings/roles`. Specialist without a specialty assigned gets a tertiary-tinted hint matching the team-list pattern. Closes the Coach Sam identity gap surfaced by persona-audit 2026-05-23. Shipped Wave 40.
-- *Your tools strip* — `lib/features/today/widgets/your_tools_strip.dart`. `YourToolsStrip(viewer:)` rendered inside `TodayBody` in `today_sections.dart` (line 1184). Role-tailored horizontal shortcut strip (role-as-home Role-1); calls `roleToolsFor(viewer)` from `lib/features/today/role_tools.dart` (which calls `toolsForRole(roleKey)` then filters by `RoleTool.allowed(viewer)`). Per-role defaults: director → Insights · Program · Team · Schedule · Present · Capture; lead teacher → Present · Observations · Live Board · Schedule · Brain Breaks · Capture; teacher → Capture · Observations · Brain Breaks · Live Board · Present; specialist → Runbook · Present · Live Board · Activities · Brain Breaks; substitute → Runbook · Checklist · Capture · Pickup; other → Checklist · Capture · Present · Brain Breaks. No new route; links to existing routes only. Capability-gated per tool (`_canObserve`, `_canManageSpace`, `_always`).
-**Depends on**: nearly everything, including LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`), Pickup (pickup-phase "Right now" card routes to `/pickup`), Spaces (`dayPhaseWindowsProvider` reads `spaces.capabilities['phase_windows']`), LiveBoard (`role_tools.dart` links `/live-board` for lead-teacher / teacher / specialist roles).
+- *Cohort rooms* — `_GroupTodayCard` list in `lib/features/today/widgets/today_sections.dart`. Per-group card with status-dot + room glyph + NowNextStrip + attendance state pills. Promoted to position 2 (directly under the lead) in the briefing reorg. Desktop: 2-column wrap. Phone/tablet: vertical stack.
+- *Quick actions* — `lib/features/today/widgets/quick_actions.dart`. State-driven launchpad: vehicle-out return / check-out (`_VehicleQuickTile`), open-capture inbox count, open-task count. Renders nothing when all tiles would be empty. Static nav tiles (New observation, Observations, Surveys, Insights, Team) were removed in the briefing reorg — those are reachable via the omnibox catalog and the drawer.
+- *Director pulse card* — `_DirectorPulseCard` in `today_sections.dart`. Director-only proactive pulse: absent kids, cohorts on substitute coverage, certs expiring within 30 days, incidents needing a family call. Renders nothing on "all clear." Tappable pulse rows route to the relevant surface (checklist / schedule / team / incidents). Shipped Wave 36; rows gained navigation targets in a subsequent wave.
+- *Identity strip* — `_IdentityStrip` in `today_sections.dart`. Renders only for specialists ("You are: Specialist · Coach") and substitutes ("You are: Substitute today"); silent for director / lead_teacher / teacher / guardian / kitchen. Tap → `/settings/roles`. Specialist without a specialty gets a tertiary-tinted hint. Shipped Wave 40.
+- *Leading-today card* — `lib/features/schedule/widgets/leading_today_card.dart` (cross-feature). Staff member's blocks + cabin notes for today.
+- *Covering-today card* — `_CoveringTodayCard` in `today_sections.dart`. Fallback for a specialist or substitute with no assigned block; points them to the runbook. Self-hides when they have blocks (leading-today takes over).
+- *Unread messages card* — `_UnreadMessagesCard` in `today_sections.dart`. Surfaces every (subject, guardian) thread with at least one unread family-sent message. Hidden when inbox is empty.
+- *Today's plan section* — `_TodaysPlanSection` in `today_sections.dart`. Gated to prep and program phases only (hidden during arrival, pickup, closed — those are noise-free moments). Before the journey starts: shows `_ThisWeekWorldCard` (director setup prompt or nothing). Once a world is active: wraps the curriculum quartet in a `CollapsibleSection` ("Today's plan · {world} · Day N", collapsed by default) to lead with the action and tuck the plan one tap away. Contains `_ThisWeekWorldCard` + `_TodaysFocusCard` + `_TodaySkillCard` + `_TodayThinkingCard`.
+**Note on removed surfaces** (briefing reorg): `YourToolsStrip` (`lib/features/today/widgets/your_tools_strip.dart`) was removed from Today and rehomed into the drawer's "Your tools" section (see Drawer). `_ChecklistCallToAction` was removed (the arrival lead covers it). The static nav tiles from `QuickActions` (New observation, Observations, Surveys, Insights, Team) were stripped — those go through omnibox + drawer.
+**Depends on**: nearly everything, including Schedule (`liveBlockProvider` + `leading_today_card.dart` + `schedule_block_id` reads via `contextLeadProvider`), LiveSession (`live_session_banner.dart` cross-imports via `today_sections.dart`), Pickup (pickup-phase lead routes to `/pickup`), Spaces (`dayPhaseWindowsProvider` reads `spaces.capabilities['phase_windows']`), LiveBoard (`role_tools.dart` links `/live-board` — now surfaced in the drawer, not Today directly), Action Words (`context_lead.dart` reads `currentWorldProvider`; `today_sections.dart` renders `_ThisWeekWorldCard`, `_TodaysFocusCard`, `_ActionWordsCard`), Attendance (`arrivalProgressProvider` in `contextLeadProvider`).
 **Consumed by**: Nothing — Today is a leaf.
-**Last verified**: 2026-06-13
+**Last verified**: 2026-06-15
 
 ---
 
@@ -1288,6 +1316,7 @@ _Run 2026-06-03 (Tools + LiveSession lobby + Poster orientation)_ — discovery 
 
 _Last full registry verification: 2026-06-06 (World slice 1 — character_sheets)._
 _Incremental reconcile: 2026-06-08 (timer caps + phase windows caps + attendance natural-key index) — Action Words Capabilities + Status + Depends on + Consumed by updated for `timer_presets` / `suggest_play_minutes` caps. Today Data + Depends on updated for `phase_windows` cap. Settings Data + Program settings surface description + Depends on updated for all three caps + new `_TimerPresetsTile` / `_PlayLengthTile` / `_PhaseWindowsSection` tiles. Cross-links reconciled: Today→spaces and Action Words→spaces and Settings→spaces all bidirectional with SCHEMA.md. No new discovery drift._
+_Incremental reconcile: 2026-06-14 (Reflections + Settings Calm layout) — **Reflections** new feature section added; all four discovery surfaces verified (route `/reflect` in `router.dart`, omnibox `page.reflect` in `omnibox_catalog.dart`, slash `/reflect` in `slash_commands.dart`, drawer "Reflect" in `nav_destinations.dart` Activities group). **Settings** — `_DisplayStyleTile` (`displayStyleProvider`, `DisplayStyle.boxed/calm`) documented in the Preferences group surface description; Personas served + Depends on + Consumed by updated. Top-level orientation blurb updated to include Reflect in the canonical nav list. SCHEMA.md: `entries` `kind` column updated to add `reflection`; Reflections added to `entries` Consumers. No new tables. Cross-link reconcile: Reflections→entries and entries→Reflections now bidirectional. Feature folders `identity`, `games`, `activity_forge`, `launch`, `runtime` exist in code with no FEATURES.md entry — pre-existing gap, flagged below but not in scope for this run._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._

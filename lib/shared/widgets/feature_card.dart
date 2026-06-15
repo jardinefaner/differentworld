@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Visual tone for a [FeatureCard]. Drives the surface color so the
 /// at-a-glance reading of a list of rows scans correctly even before
@@ -76,7 +78,7 @@ enum FeatureCardTone {
 ///   onTap: () => toggle(subject.id),
 /// )
 /// ```
-class FeatureCard extends StatelessWidget {
+class FeatureCard extends ConsumerWidget {
   const FeatureCard({
     required this.title,
     this.leading,
@@ -120,17 +122,25 @@ class FeatureCard extends StatelessWidget {
   final double borderRadius;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final radius = BorderRadius.circular(borderRadius);
-    final bg = switch (tone) {
-      FeatureCardTone.neutral => scheme.surfaceContainerHighest,
-      FeatureCardTone.selected => scheme.primaryContainer,
-      FeatureCardTone.danger => scheme.errorContainer.withValues(alpha: 0.45),
-      FeatureCardTone.success =>
-        scheme.tertiaryContainer.withValues(alpha: 0.5),
-    };
+    // Calm mode flattens NEUTRAL chrome — transparent + a hairline instead of
+    // the heavy fill — so a list of rows reads as one surface, not a stack of
+    // boxes. Signal tones keep their tint (that's what makes them a signal).
+    final calm = ref.watch(displayStyleProvider).value == DisplayStyle.calm;
+    final flat = calm && tone == FeatureCardTone.neutral;
+    final bg = flat
+        ? Colors.transparent
+        : switch (tone) {
+            FeatureCardTone.neutral => scheme.surfaceContainerHighest,
+            FeatureCardTone.selected => scheme.primaryContainer,
+            FeatureCardTone.danger =>
+              scheme.errorContainer.withValues(alpha: 0.45),
+            FeatureCardTone.success =>
+              scheme.tertiaryContainer.withValues(alpha: 0.5),
+          };
     // Foreground paired to each tone. Default text color over
     // `surfaceContainerHighest` is `onSurface`, but over tinted
     // containers it has to flip to the matching foreground or the
@@ -149,7 +159,17 @@ class FeatureCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (leading != null) ...[
+          if (flat)
+            // One edge: the leading HANGS in a fixed gutter so the content
+            // snaps to the same left line on every row (an empty gutter when
+            // there's no leading keeps that edge consistent).
+            SizedBox(
+              width: 44,
+              child: leading == null
+                  ? null
+                  : Align(alignment: Alignment.topLeft, child: leading),
+            )
+          else if (leading != null) ...[
             leading!,
             const SizedBox(width: 12),
           ],
@@ -164,21 +184,20 @@ class FeatureCard extends StatelessWidget {
       ),
     );
 
-    return Material(
-      color: bg,
-      borderRadius: radius,
-      clipBehavior: Clip.antiAlias,
-      child: onTap == null && onLongPress == null
-          ? body
-          : InkWell(
-              borderRadius: radius,
-              // Light haptic on every tap. FeatureCard is the canonical
-              // tap surface used in 11+ sites + every list row that
-              // migrates onto it (drawer rows, vehicle list, team list,
-              // captures, …). Per CLAUDE.md "every primary tap should
-              // fire HapticFeedback" — wiring it into the primitive
-              // means new screens inherit the convention without
-              // having to remember to call it.
+    // The tap surface — haptics wired into the primitive so every site
+    // inherits them (CLAUDE.md "every primary tap fires HapticFeedback").
+    // Rectangular ripple when flat (a row), rounded when boxed (a card).
+    // Mark the tappable card as a button so TalkBack / VoiceOver announce
+    // the role — InkWell exposes a tap action but not the button role, and
+    // a `content:` override bypasses the default title Text, so without this
+    // a rich card reads as an unlabeled tappable region. The descendant
+    // Text nodes still supply the spoken label.
+    final inner = onTap == null && onLongPress == null
+        ? body
+        : Semantics(
+            button: true,
+            child: InkWell(
+              borderRadius: flat ? null : radius,
               onTap: onTap == null
                   ? null
                   : () {
@@ -193,6 +212,32 @@ class FeatureCard extends StatelessWidget {
                     },
               child: body,
             ),
+          );
+
+    // Calm neutral → a flush ROW: no fill, no box, a bottom hairline to
+    // separate rows. Boxed / signal tones → a filled, rounded card.
+    if (flat) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: scheme.outlineVariant.withValues(alpha: 0.5),
+              width: 0.5,
+            ),
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          clipBehavior: Clip.hardEdge,
+          child: inner,
+        ),
+      );
+    }
+    return Material(
+      color: bg,
+      shape: RoundedRectangleBorder(borderRadius: radius),
+      clipBehavior: Clip.antiAlias,
+      child: inner,
     );
   }
 

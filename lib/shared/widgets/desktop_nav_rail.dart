@@ -1,5 +1,6 @@
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -33,12 +34,13 @@ class DesktopNavRail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
 
-    // Canonical nav — the SAME list the mobile drawer renders, so the
-    // two can never drift. Capability gates + badge counts live in
-    // buildNavDestinations; the rail just renders each entry. A
-    // `dividerBefore` entry becomes a [Divider] here (the drawer
-    // renders the same break as whitespace).
-    final destinations = buildNavDestinations(viewer);
+    // Canonical nav layout — the SAME structure the mobile drawer
+    // renders, so the two can never drift. Capability gates, badge
+    // counts, and grouping live in nav_destinations; the rail just
+    // renders each band. Desktop has the vertical room, so groups start
+    // expanded here (still collapsible for a user who wants focus) where
+    // the phone drawer opens them collapsed.
+    final nav = buildNavLayout(viewer);
 
     return GlassPanel(
       child: SafeArea(
@@ -52,13 +54,13 @@ class DesktopNavRail extends ConsumerWidget {
             if (viewer.member != null)
               _ProfileHeader(viewer: viewer),
             const Divider(height: 1),
-            // Canonical nav. Order: highest-traffic on top.
+            // Spine (flat) + collapsible groups, scrollable; Settings is
+            // pinned below so it sits at the rail's bottom edge.
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
-                  for (final d in destinations) ...[
-                    if (d.dividerBefore) const Divider(height: 16),
+                  for (final d in nav.spine)
                     _NavTile(
                       // Stable per-route key — the list grows / shrinks
                       // with capability gates; without keys Flutter would
@@ -71,10 +73,37 @@ class DesktopNavRail extends ConsumerWidget {
                       onTap: () => context.go(d.route),
                       countProvider: d.countProvider,
                     ),
-                  ],
+                  for (final g in nav.groups)
+                    CollapsibleSection(
+                      key: ValueKey('nav-group-${g.title}'),
+                      title: g.title,
+                      icon: g.icon,
+                      child: Column(
+                        children: [
+                          for (final d in g.items)
+                            _NavTile(
+                              key: ValueKey('nav-${d.route}'),
+                              icon: d.icon,
+                              label: d.label,
+                              onTap: () => context.go(d.route),
+                              countProvider: d.countProvider,
+                            ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
+            const Divider(height: 1),
+            for (final d in nav.footer)
+              _NavTile(
+                key: ValueKey('nav-${d.route}'),
+                icon: d.icon,
+                label: d.label,
+                onTap: () => context.go(d.route),
+                countProvider: d.countProvider,
+              ),
+            const SizedBox(height: 8),
           ],
         ),
       ),

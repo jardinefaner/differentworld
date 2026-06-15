@@ -17,7 +17,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
-import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -178,31 +178,33 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
         actions: (groups.isEmpty || !canEditSchedule)
             ? const <Widget>[]
             : [
-                // Wave 154: shortcut to the weekly-template author.
-                IconButton(
-                  icon: const Icon(Icons.event_repeat),
-                  tooltip: 'Weekly template',
-                  onPressed: () => context.push('/schedule/template'),
-                ),
-                // The day-template builder — shape the day once, drop it
-                // onto a date.
-                IconButton(
-                  icon: const Icon(Icons.view_timeline_outlined),
-                  tooltip: 'Day templates',
-                  onPressed: () => context.push('/schedule/day-templates'),
-                ),
-                PrimaryActionButton(
-                  tooltip: 'New block',
-                  icon: Icons.add,
-                  onPressed: () {
-                    final cohort =
-                        groups[_activeTabIndex.clamp(
-                          0,
-                          groups.length - 1,
-                        )];
-                    unawaited(_createBlockFormless(cohort, date));
-                  },
-                ),
+                OverflowActions([
+                  // Primary verb stays inline; the two template authors
+                  // collapse into "⋯" on a phone.
+                  EdgeAction(
+                    icon: Icons.add,
+                    label: 'New block',
+                    isPrimary: true,
+                    onPressed: () {
+                      final cohort =
+                          groups[_activeTabIndex.clamp(0, groups.length - 1)];
+                      unawaited(_createBlockFormless(cohort, date));
+                    },
+                  ),
+                  // Wave 154: shortcut to the weekly-template author.
+                  EdgeAction(
+                    icon: Icons.event_repeat,
+                    label: 'Weekly template',
+                    onPressed: () => context.push('/schedule/template'),
+                  ),
+                  // The day-template builder — shape the day once, drop it
+                  // onto a date.
+                  EdgeAction(
+                    icon: Icons.view_timeline_outlined,
+                    label: 'Day templates',
+                    onPressed: () => context.push('/schedule/day-templates'),
+                  ),
+                ]),
               ],
         body: groupsAsync.when(
           loading: () => const LoadingSlot(),
@@ -613,12 +615,24 @@ class _CohortDay extends ConsumerWidget {
                     activities: activities,
                     groupNameById: groupNameById,
                   );
+                  // The block happening right now (today only) gets the
+                  // agenda's "now line". tryParse-guarded so a malformed ISO
+                  // from a mid-sync write can't crash the list.
+                  final bStart = DateTime.tryParse(b.startAt)?.toLocal();
+                  final bEnd = DateTime.tryParse(b.endAt)?.toLocal();
+                  final nowTs = DateTime.now();
+                  final isNow = _isToday &&
+                      bStart != null &&
+                      bEnd != null &&
+                      !bStart.isAfter(nowTs) &&
+                      bEnd.isAfter(nowTs);
                   return _BlockTile(
                     block: b,
                     activity: activity,
                     location: loc,
                     editable: canEdit,
                     conflictWith: conflictGroupNames,
+                    isNow: isNow,
                     onTap: () => _openBlockSheet(
                       context,
                       ref,
@@ -767,7 +781,13 @@ class _BlockTile extends ConsumerWidget {
     required this.onTap,
     this.editable = false,
     this.conflictWith = const [],
+    this.isNow = false,
   });
+
+  /// True when this block is the one happening RIGHT NOW (today only,
+  /// clock within [start, end)). Drives the agenda's "now line" — a teal
+  /// left accent + tint + NOW pill — so the live block is unmissable.
+  final bool isNow;
 
   final ScheduleBlock block;
   final Activity? activity;
@@ -789,7 +809,6 @@ class _BlockTile extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final start = DateTime.parse(block.startAt).toLocal();
     final end = DateTime.parse(block.endAt).toLocal();
-    final timeLabel = '${_t(start)} – ${_t(end)}';
 
     final isField = block.kind == BlockKind.fieldTrip;
     final isBreak = block.kind == BlockKind.breakBlock;
@@ -810,20 +829,19 @@ class _BlockTile extends ConsumerWidget {
               activity?.name ??
               (isBreak ? 'Break' : ''));
 
-    final container = isField
-        ? scheme.tertiaryContainer
-        : (isBreak
-              ? scheme.surfaceContainerHigh
-              : scheme.surfaceContainerHighest);
-    final onContainer = isField ? scheme.onTertiaryContainer : scheme.onSurface;
-
-    // Wave 155: dim skipped / cancelled blocks so the today view
-    // visually fades them while still showing they were on the
-    // plan. The director / family can read the reason in the edit
-    // sheet.
+    // Only true SIGNALS keep colour in the agenda: the live block (now)
+    // gets a teal now-line + tint + NOW pill, field trips an amber left
+    // edge. Everything else is a flat flush row; skipped blocks dim.
     final isSkipped =
         block.status == BlockStatus.skipped ||
         block.status == BlockStatus.cancelled;
+    final accent = isNow ? scheme.primary : (isField ? scheme.tertiary : null);
+    final bgTint =
+        isNow ? scheme.primaryContainer.withValues(alpha: 0.35) : null;
+    final titleColor = isBreak ? scheme.onSurfaceVariant : scheme.onSurface;
+    final iconColor = isField
+        ? scheme.tertiary
+        : (isNow ? scheme.primary : scheme.onSurfaceVariant);
     return NounScope(
       noun: 'ScheduleBlock',
       id: block.id,
@@ -831,64 +849,129 @@ class _BlockTile extends ConsumerWidget {
       state: <String, Object?>{
         'kind': block.kind,
         'named': blockTitle.isNotEmpty,
+        if (isNow) 'now': true,
         if (isSkipped) 'skipped': true,
         if (conflictWith.isNotEmpty) 'conflict': true,
       },
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-        child: Opacity(
-          opacity: isSkipped ? 0.55 : 1.0,
+      // One-edge agenda row: the time is the left rail (gutter), the block
+      // flush on the text edge, hairline-separated — no per-slot box.
+      child: Opacity(
+        opacity: isSkipped ? 0.55 : 1.0,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: bgTint,
+            border: Border(
+              left: accent == null
+                  ? BorderSide.none
+                  : BorderSide(color: accent, width: 3),
+              bottom: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.5),
+                width: 0.5,
+              ),
+            ),
+          ),
           child: Material(
-            color: container,
-            borderRadius: BorderRadius.circular(14),
-            clipBehavior: Clip.antiAlias,
+            color: Colors.transparent,
+            clipBehavior: Clip.hardEdge,
             child: InkWell(
               onTap: () {
                 unawaited(HapticFeedback.selectionClick());
                 onTap();
               },
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                // Compensate the 3px accent so the rail's left edge stays
+                // put whether or not the row is accented. Two const insets
+                // selected by condition — no per-build allocation.
+                padding: accent == null
+                    ? const EdgeInsets.fromLTRB(16, 12, 12, 12)
+                    : const EdgeInsets.fromLTRB(13, 12, 12, 12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      isField
-                          ? Icons.directions_bus_outlined
-                          : isBreak
-                          ? Icons.local_cafe_outlined
-                          : Icons.local_activity_outlined,
-                      color: onContainer,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                    // Time rail — the agenda's left gutter. Start bold, end
+                    // faint beneath; tabular so digits align down the column.
+                    SizedBox(
+                      width: 48,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            timeLabel,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: onContainer.withValues(alpha: 0.75),
-                              fontWeight: FontWeight.w700,
+                            _t(start),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isNow ? scheme.primary : scheme.onSurface,
+                              fontWeight: FontWeight.w600,
                               fontFeatures: const [
                                 FontFeature.tabularFigures(),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          InlineEditableText(
-                            value: title,
-                            placeholder: 'Name this block',
-                            editable: editable,
-                            clearable: false,
-                            semanticLabel: 'Block name',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: onContainer,
-                              fontWeight: FontWeight.w600,
+                          Text(
+                            _t(end),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
-                            onCommit: (text) => ref
-                                .read(scheduleActionsProvider)
-                                .update_(id: block.id, title: text),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                isField
+                                    ? Icons.directions_bus_outlined
+                                    : isBreak
+                                    ? Icons.local_cafe_outlined
+                                    : Icons.local_activity_outlined,
+                                size: 16,
+                                color: iconColor,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: InlineEditableText(
+                                  value: title,
+                                  placeholder: 'Name this block',
+                                  editable: editable,
+                                  clearable: false,
+                                  semanticLabel: 'Block name',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: titleColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  onCommit: (text) => ref
+                                      .read(scheduleActionsProvider)
+                                      .update_(id: block.id, title: text),
+                                ),
+                              ),
+                              if (isNow) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: scheme.primary,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    'NOW',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: scheme.onPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           if (curriculumSession != null) ...[
                             const SizedBox(height: 4),
@@ -930,7 +1013,7 @@ class _BlockTile extends ConsumerWidget {
                             Text(
                               location!.name,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: onContainer.withValues(alpha: 0.8),
+                                color: scheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -949,35 +1032,35 @@ class _BlockTile extends ConsumerWidget {
                                   horizontal: 8,
                                   vertical: 2,
                                 ),
-                                minimumSize: const Size(0, 28),
+                                minimumSize: const Size(0, 48),
                               ),
                             ),
                           ],
                           if (conflictWith.isNotEmpty) ...[
                             const SizedBox(height: 4),
-                            // Wave 156: warning chip. Director sometimes
-                            // wants this (combined-cohort outdoor) so we
-                            // never block — just surface visibly.
+                            // Warning chip — shared room with another cohort.
+                            // Director sometimes wants this (combined-cohort
+                            // outdoor) so we never block; just surface it.
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.2),
+                                color: scheme.tertiary.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: Colors.amber.withValues(alpha: 0.5),
+                                  color: scheme.tertiary.withValues(alpha: 0.5),
                                   width: 0.5,
                                 ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.warning_amber_rounded,
                                     size: 14,
-                                    color: Colors.amber,
+                                    color: scheme.tertiary,
                                   ),
                                   const SizedBox(width: 4),
                                   Flexible(
@@ -988,7 +1071,7 @@ class _BlockTile extends ConsumerWidget {
                                                 '${conflictWith.join(", ")}',
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
-                                            color: onContainer,
+                                            color: scheme.onSurface,
                                             fontWeight: FontWeight.w600,
                                           ),
                                       overflow: TextOverflow.ellipsis,
@@ -1005,7 +1088,7 @@ class _BlockTile extends ConsumerWidget {
                             Text(
                               block.notes!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: onContainer.withValues(alpha: 0.8),
+                                color: scheme.onSurfaceVariant,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -1016,7 +1099,7 @@ class _BlockTile extends ConsumerWidget {
                     ),
                     Icon(
                       Icons.chevron_right,
-                      color: onContainer.withValues(alpha: 0.6),
+                      color: scheme.onSurfaceVariant,
                     ),
                   ],
                 ),

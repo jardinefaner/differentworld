@@ -24,6 +24,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
@@ -202,6 +203,7 @@ class _ChildCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final myRecord = ref
         .watch(familyAttendanceForSubjectProvider(
           (subjectId: child.id, dateIso: _todayIso),
@@ -213,29 +215,80 @@ class _ChildCard extends ConsumerWidget {
 
     final flagged = status == AttendanceStatus.late ||
         status == AttendanceStatus.absent;
-    final scheme = theme.colorScheme;
 
-    final dotKind = flagged
-        ? StatusDotKind.needsAttention
-        : (status == AttendanceStatus.present
-            ? StatusDotKind.calm
-            : StatusDotKind.neutral);
+    // Status label, coloured by state — grey "Check-in pending", the
+    // status colour otherwise. Shared by both presentations.
+    final statusLine = Text(
+      _statusLabel(status),
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: status == null ? scheme.onSurfaceVariant : status.color(scheme),
+        fontWeight: flagged ? FontWeight.w600 : null,
+      ),
+    );
 
+    // Below-the-header content — identical in both presentations.
+    final below = <Widget>[
+      // Lauren persona's most-anticipated surface — the most recent
+      // observation photo from today, so the family sees the kid's day
+      // before reading anything.
+      _PhotoOfTheMomentPeek(subjectId: child.id),
+      // "What's my kid doing right now / next?" Renders nothing if the
+      // cohort has no schedule today, so the card stays tight.
+      if (child.groupId != null) ...[
+        const SizedBox(height: 10),
+        NowNextStrip(groupId: child.groupId!, compact: true),
+      ],
+      // "Has my child been picked up?" Renders only once released; its
+      // silence is itself the "still here" signal.
+      _PickupStatusLine(subjectId: child.id),
+    ];
+
+    // Neutral → a flush one-edge row (calm-aware via FeatureCard): the
+    // child's face hangs in the shared gutter, name + status on the text
+    // edge, photo / schedule / pickup flush below. Same vocabulary as the
+    // staff Today rows so the two lenses read as one system.
+    if (!flagged) {
+      return FeatureCard(
+        title: '${child.firstName} ${child.lastName}',
+        onTap: () => context.push('/children/${child.id}'),
+        leading: PersonAvatar(
+          name: '${child.firstName} ${child.lastName}',
+          photoUrl: child.photoUrl,
+        ),
+        // One-tap "message staff" shortcut to the per-child thread
+        // (/messages/:subjectId/:guardianId — the shape the detail
+        // screen uses). Pinned to the row's right.
+        trailing: _MessageStaffButton(subjectId: child.id),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${child.firstName} ${child.lastName}',
+              style: theme.textTheme.titleMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            statusLine,
+            ...below,
+          ],
+        ),
+      );
+    }
+
+    // Flagged (late / absent) → keep the tinted SIGNAL card: coloured fill
+    // + border so it's unmissable at a glance. The brand law keeps signals
+    // tinted; only neutral chrome flattens.
     return Card(
       clipBehavior: Clip.antiAlias,
-      // Late / absent → tinted card with a colored top edge so the
-      // flag is unmissable when a parent glances at the family Today.
-      color: flagged
-          ? status!.color(scheme).withValues(alpha: 0.08)
-          : null,
-      shape: flagged
-          ? RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: status!.color(scheme).withValues(alpha: 0.45),
-              ),
-            )
-          : null,
+      color: status!.color(scheme).withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: status.color(scheme).withValues(alpha: 0.45),
+        ),
+      ),
       child: InkWell(
         onTap: () => context.push('/children/${child.id}'),
         child: Padding(
@@ -247,9 +300,13 @@ class _ChildCard extends ConsumerWidget {
                 children: [
                   // Traffic-light scan affordance — same vocabulary as
                   // staff Today so the family lens reads consistently.
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: StatusDot(kind: dotKind),
+                  // Decorative → excluded from semantics (the status line
+                  // already speaks the state).
+                  const Padding(
+                    padding: EdgeInsets.only(right: 12),
+                    child: ExcludeSemantics(
+                      child: StatusDot(kind: StatusDotKind.needsAttention),
+                    ),
                   ),
                   PersonAvatar(
                     name: '${child.firstName} ${child.lastName}',
@@ -266,52 +323,16 @@ class _ChildCard extends ConsumerWidget {
                           style: theme.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          _statusLabel(status),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: status == null
-                                ? scheme.onSurfaceVariant
-                                : status.color(scheme),
-                            fontWeight: flagged ? FontWeight.w600 : null,
-                          ),
-                        ),
+                        statusLine,
                       ],
                     ),
                   ),
-                  // Message-staff shortcut: one tap from the family lens
-                  // to the per-child thread. The kid detail screen also
-                  // exposes Messages, but for "quick ping" the friction-
-                  // free path is the card itself.
-                  //
-                  // Wave 100: route shape was `/messages?subjectId=…`
-                  // which the router doesn't match — the user landed
-                  // on the family-messages index and had to tap again.
-                  // The thread route is `/messages/:subjectId/:guardianId`
-                  // (the same shape family_subject_detail_screen uses).
                   _MessageStaffButton(subjectId: child.id),
-                  if (status != null) ...[
-                    const SizedBox(width: 4),
-                    Icon(status.icon, color: status.color(scheme)),
-                  ],
+                  const SizedBox(width: 4),
+                  Icon(status.icon, color: status.color(scheme)),
                 ],
               ),
-              // Photo of the moment — Lauren persona's most-
-              // anticipated surface. Shows the most recent
-              // observation photo from today (if any) so the
-              // family sees the kid's day before reading anything.
-              _PhotoOfTheMomentPeek(subjectId: child.id),
-              // Compact schedule peek — "what's my kid doing right
-              // now / next?" Renders nothing if the child's cohort
-              // doesn't have a schedule for today, so the card stays
-              // tight when there's nothing to show.
-              if (child.groupId != null) ...[
-                const SizedBox(height: 10),
-                NowNextStrip(groupId: child.groupId!, compact: true),
-              ],
-              // The 4:30 question: has my child been picked up? Renders only
-              // once they've been released (or left early); silence = still
-              // here, which the attendance status above already conveys.
-              _PickupStatusLine(subjectId: child.id),
+              ...below,
             ],
           ),
         ),

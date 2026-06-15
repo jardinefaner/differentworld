@@ -691,6 +691,28 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/tools'),
       ),
+    // Reflect (docs/VISION.md) — the stopwatch-then-reflect ritual: time the
+    // real work, then a required how-did-it-go; saved reflections stack into a
+    // visible growth strip. Staff-facing practice tool.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.reflect',
+        label: 'Reflect',
+        category: OmniboxCategory.page,
+        icon: Icons.timer_outlined,
+        keywords: const [
+          'reflect',
+          'reflection',
+          'stopwatch',
+          'timer',
+          'focus',
+          'session',
+          'how it went',
+          'growth',
+          'accountability',
+        ],
+        onSelect: (ctx, _) => ctx.push('/reflect'),
+      ),
     // Speak — paste a prompt / quote / block, hear it read aloud with big
     // kinetic karaoke subtitles (ElevenLabs). Staff-facing creative tool.
     if (viewer is! GuardianViewer)

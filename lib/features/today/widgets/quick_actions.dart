@@ -59,8 +59,6 @@ class QuickActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewer = ref.watch(viewerProvider);
-    final visibleGroups =
-        ref.watch(groupsProvider).value ?? const <Group>[];
     final openCaptureCount =
         ref.watch(openCapturesProvider).value?.length ?? 0;
     final openTaskCount = ref.watch(openTasksProvider).value?.length ?? 0;
@@ -73,27 +71,19 @@ class QuickActions extends ConsumerWidget {
     // a phone is a real cost — only 3–4 tiles fit at a time, so a
     // tile past index 4 is effectively hidden until the user
     // scrolls horizontally.
+    // State-driven only — QuickActions is the "pending work" launchpad now,
+    // not a navigation grid. Everyday verbs (capture, observations, surveys,
+    // insights, team) live in the app-bar Capture action, the omnibox, and
+    // the drawer (briefing reorg). With nothing pending the whole strip
+    // self-hides, which is the point — a launchpad that only appears when
+    // there's actual pending work, never six static tiles of clutter.
     final tiles = <Widget>[
-      // Capture is always first — the lowest-friction entry. A
-      // teacher mid-class can drop a note in two taps without
-      // committing to a subject.
-      _Tile(
-        icon: Icons.bolt_outlined,
-        label: 'Capture',
-        onTap: () => context.push('/captures/new'),
-      ),
-      // The vehicle tile is a ConsumerWidget that watches
-      // fleetStatusProvider; when the viewer has a vehicle out it
-      // renders "Return {name}" with a count badge — that's pending
-      // work and belongs near the front. When nothing's out, it
-      // renders "Check out a vehicle" (still useful upfront for any
-      // teacher about to leave for a field trip). Director-only
-      // "Fleet" sticks here too — admin-side use is OK to surface
-      // alongside the operational ones.
+      // Vehicle: "Return {name}" with a count when one's out (pending work);
+      // a check-out prompt for drivers. Field-trip checkout is the lead's job.
       if (viewer.canDrive || viewer.canManageSpace)
         _VehicleQuickTile(viewer: viewer),
-      // The triage destinations — only surface when there's actually
-      // something to triage. Count badge makes the pressure visible.
+      // Triage destinations — only when there's something to triage. The
+      // count badge makes the pressure visible.
       if (openCaptureCount > 0)
         _Tile(
           icon: Icons.inbox_outlined,
@@ -107,42 +97,6 @@ class QuickActions extends ConsumerWidget {
           label: 'Tasks',
           badge: '$openTaskCount',
           onTap: () => context.push('/tasks'),
-        ),
-      // Everyday actions — verbs the user reaches for daily. The
-      // observation tiles require BOTH the cap AND at least one
-      // visible group, since the form sheet can't open without a
-      // groupId. Hiding the tiles for a teacher with `canObserve`
-      // but no assignments avoids the tap-to-snackbar dead end.
-      if (viewer.canObserve && visibleGroups.isNotEmpty)
-        _Tile(
-          icon: Icons.edit_note_outlined,
-          label: 'New observation',
-          onTap: () => startNewObservation(context, ref),
-        ),
-      if (viewer.canObserve && visibleGroups.isNotEmpty)
-        _Tile(
-          icon: Icons.menu_book_outlined,
-          label: 'Observations',
-          onTap: () => context.push('/observations'),
-        ),
-      _Tile(
-        icon: Icons.poll_outlined,
-        label: 'Surveys',
-        onTap: () => context.push('/surveys'),
-      ),
-      // Admin / aggregate surfaces — later in the row since they're
-      // not daily destinations. Director-only.
-      if (viewer.canManageSpace)
-        _Tile(
-          icon: Icons.lightbulb_outline,
-          label: 'Insights',
-          onTap: () => context.push('/insights'),
-        ),
-      if (viewer.canManageSpace || viewer.canInviteStaff)
-        _Tile(
-          icon: Icons.groups_outlined,
-          label: 'Team',
-          onTap: () => context.push('/settings/team'),
         ),
     ];
 

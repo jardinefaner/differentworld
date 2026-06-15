@@ -1,5 +1,6 @@
-import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/shared/widgets/dw_wordmark.dart';
+import 'package:differentworld/shared/widgets/horizon_mark.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,54 +74,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Wordmark — gradient-tinted "DW" initials in a soft
-                  // squircle, sized as the hero focal point. Replaces
-                  // the generic school icon that read as "scaffolded."
+                  // The Horizon mark — the real brand logo (a gold sun
+                  // rising over a horizon), squircle-clipped to the app-icon
+                  // lockup. Flat, no shadow — on-brand with the calm
+                  // direction. Replaces the placeholder "dw" gradient tile.
                   Center(
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            scheme.primary,
-                            scheme.tertiary,
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                scheme.primary.withValues(alpha: 0.18),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'dw',
-                          style: theme.textTheme.displaySmall?.copyWith(
-                            color: scheme.onPrimary,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -1,
-                            height: 1,
-                          ),
-                        ),
-                      ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: const HorizonMark(size: 96),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    'DIFFERENT WORLD',
-                    semanticsLabel: 'Different World',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      letterSpacing: AppType.tracking,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+                  // The canonical wordmark widget (Jost, thin, tracked caps).
+                  const Center(child: DwWordmark(size: 30)),
                   const SizedBox(height: 8),
                   Text(
                     'The classroom day, organized.',

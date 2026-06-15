@@ -7,8 +7,10 @@ import 'package:differentworld/core/sync/power_sync_provider.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/features/photos/photo_upload_queue.dart';
+import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/text_scale_setting.dart';
+import 'package:differentworld/shared/widgets/orientation_lock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,10 +50,19 @@ class DifferentWorldApp extends ConsumerWidget {
     final isOutdoor =
         outdoorAsync.value == OutdoorMode.on;
     final outdoor = isOutdoor ? outdoorTheme() : null;
+    // Calm is the default look — flatten every raw Card app-wide (Today's
+    // cards and the rest) via flatCardTheme. Default Calm (only an explicit
+    // 'boxed' choice reverts), so it applies from the FIRST frame — no boxed
+    // flash. Semantic cards keep their tint (the theme colour is just the
+    // default; an explicit `color:` wins).
+    final isCalm =
+        ref.watch(displayStyleProvider).value != DisplayStyle.boxed;
+    ThemeData calmify(ThemeData t) =>
+        isCalm ? t.copyWith(cardTheme: flatCardTheme(t.colorScheme)) : t;
     return MaterialApp.router(
       title: 'Different World',
-      theme: outdoor ?? buildLightTheme(),
-      darkTheme: outdoor ?? buildDarkTheme(),
+      theme: calmify(outdoor ?? buildLightTheme()),
+      darkTheme: calmify(outdoor ?? buildDarkTheme()),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       // Wrap every routed page in:
@@ -68,9 +79,11 @@ class DifferentWorldApp extends ConsumerWidget {
       // "No Overlay widget found" assertions on every screen build.
       // It now lives inside AppShell (which sits BELOW the routed
       // Navigator), where the Overlay ancestor exists.
-      builder: (context, child) => AppTextScaleApplier(
-        child: OmniboxShortcuts(
-          child: child ?? const SizedBox.shrink(),
+      builder: (context, child) => OrientationLock(
+        child: AppTextScaleApplier(
+          child: OmniboxShortcuts(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );

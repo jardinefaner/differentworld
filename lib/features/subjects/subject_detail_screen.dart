@@ -30,10 +30,9 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
+import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
-import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
-import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -80,81 +79,86 @@ class SubjectDetailScreen extends ConsumerWidget {
       title: subjectName.isEmpty ? 'Student' : subjectName,
       child: EdgeScaffold(
       actions: [
-        // Primary verb on the kid's detail screen is "Observation" —
-        // the most-frequent action a teacher does here.
-        if (viewer.canObserve && subjectAsync.value != null)
-          PrimaryActionButton(
-            tooltip: 'New observation',
-            icon: Icons.add,
-            onPressed: () => context.push(
-              '/observations/new'
-              '?groupId=${subjectAsync.value!.groupId ?? ''}'
-              '&subjectId=$subjectId',
-            ),
-          ),
-        // Snap the kid's paper into their cumulative work (the routine's
-        // "writing their answers on paper" — docs/VISION.md). One tap →
-        // camera → saved to their work, offline-safe.
-        if (viewer.canObserve &&
-            (subjectAsync.value?.groupId?.isNotEmpty ?? false))
-          SecondaryActionButton(
-            tooltip: 'Snap work',
-            icon: Icons.photo_camera_outlined,
-            onPressed: () => unawaited(
-              snapWork(
-                context,
-                ref,
-                subjectId: subjectId,
-                groupId: subjectAsync.value!.groupId!,
-                subjectName: subjectAsync.value!.firstName,
+        // Up to six verbs here — past two they crowd a phone, so all but
+        // the primary collapse into the "⋯" menu (OverflowActions). The
+        // sync indicator stays OUTSIDE the menu: it's a status, not an
+        // action, and is the one place online/offline is surfaced.
+        OverflowActions([
+          // Primary verb on the kid's detail screen is "Observation" —
+          // the most-frequent action a teacher does here.
+          if (viewer.canObserve && subjectAsync.value != null)
+            EdgeAction(
+              icon: Icons.add,
+              label: 'New observation',
+              isPrimary: true,
+              onPressed: () => context.push(
+                '/observations/new'
+                '?groupId=${subjectAsync.value!.groupId ?? ''}'
+                '&subjectId=$subjectId',
               ),
             ),
-          ),
-        // The child's Story — every captured moment, woven over time.
-        if (subjectAsync.value != null)
-          SecondaryActionButton(
-            tooltip: 'Story',
-            icon: Icons.auto_stories_outlined,
-            onPressed: () => unawaited(context.push('/story/$subjectId')),
-          ),
-        // The Character Sheet — who they're becoming over the 10 weeks.
-        if (subjectAsync.value != null)
-          SecondaryActionButton(
-            tooltip: 'Character sheet',
-            icon: Icons.badge_outlined,
-            onPressed: () => unawaited(context.push('/subjects/$subjectId/me')),
-          ),
-        // Wave 101: hide-don't-disable. Both Progress report and Edit
-        // require a group id to build the route, but the buttons used
-        // to render even when `groupId` was empty — and silently no-op
-        // when tapped. A student without a group is rare (only
-        // possible mid-rename or right after creation), but rendering
-        // an inert button on a high-traffic surface is the wrong
-        // shape. Gate visibility on `groupId != null && isNotEmpty`.
-        if (viewer.canObserve &&
-            (subjectAsync.value?.groupId?.isNotEmpty ?? false))
-          SecondaryActionButton(
-            tooltip: 'Progress report',
-            icon: Icons.description_outlined,
-            onPressed: () => unawaited(
-              context.push(
-                '/groups/${subjectAsync.value!.groupId}'
-                '/students/$subjectId/progress-report',
+          // Snap the kid's paper into their cumulative work (the routine's
+          // "writing their answers on paper" — docs/VISION.md). One tap →
+          // camera → saved to their work, offline-safe.
+          if (viewer.canObserve &&
+              (subjectAsync.value?.groupId?.isNotEmpty ?? false))
+            EdgeAction(
+              icon: Icons.photo_camera_outlined,
+              label: 'Snap work',
+              onPressed: () => unawaited(
+                snapWork(
+                  context,
+                  ref,
+                  subjectId: subjectId,
+                  groupId: subjectAsync.value!.groupId!,
+                  subjectName: subjectAsync.value!.firstName,
+                ),
               ),
             ),
-          ),
-        if (viewer.canManageSpace &&
-            (subjectAsync.value?.groupId?.isNotEmpty ?? false))
-          SecondaryActionButton(
-            tooltip: 'Edit',
-            icon: Icons.edit_outlined,
-            onPressed: () => unawaited(
-              context.push(
-                '/groups/${subjectAsync.value!.groupId}'
-                '/students/$subjectId/edit',
+          // The child's Story — every captured moment, woven over time.
+          if (subjectAsync.value != null)
+            EdgeAction(
+              icon: Icons.auto_stories_outlined,
+              label: 'Story',
+              onPressed: () => unawaited(context.push('/story/$subjectId')),
+            ),
+          // The Character Sheet — who they're becoming over the 10 weeks.
+          if (subjectAsync.value != null)
+            EdgeAction(
+              icon: Icons.badge_outlined,
+              label: 'Character sheet',
+              onPressed: () =>
+                  unawaited(context.push('/subjects/$subjectId/me')),
+            ),
+          // Wave 101: hide-don't-disable. Both Progress report and Edit
+          // require a group id to build the route, so gate visibility on
+          // `groupId != null && isNotEmpty` rather than rendering an inert
+          // button that silently no-ops.
+          if (viewer.canObserve &&
+              (subjectAsync.value?.groupId?.isNotEmpty ?? false))
+            EdgeAction(
+              icon: Icons.description_outlined,
+              label: 'Progress report',
+              onPressed: () => unawaited(
+                context.push(
+                  '/groups/${subjectAsync.value!.groupId}'
+                  '/students/$subjectId/progress-report',
+                ),
               ),
             ),
-          ),
+          if (viewer.canManageSpace &&
+              (subjectAsync.value?.groupId?.isNotEmpty ?? false))
+            EdgeAction(
+              icon: Icons.edit_outlined,
+              label: 'Edit',
+              onPressed: () => unawaited(
+                context.push(
+                  '/groups/${subjectAsync.value!.groupId}'
+                  '/students/$subjectId/edit',
+                ),
+              ),
+            ),
+        ]),
         const SyncStatusIndicator(),
       ],
       body: subjectAsync.when(

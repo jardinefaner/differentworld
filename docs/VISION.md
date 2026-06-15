@@ -794,6 +794,161 @@ once it has a home.
     refine). The seam is closed: `block.week == world.week`, one
     `seasonPositionProvider`. The **season hub** shipped at `/program`. Five
     zoom levels now (the fortnight collapsed into the week).
+- **2026-06-14** — **A world's bible is a living CONSTITUTION, not a script —
+  "add a rule" makes the community its co-author.** In the user's words:
+  *"this whole app is really about systems, coordinations, and proximity-based
+  utility… when we create a world, what do we need to start thinking from the
+  beginning to create its own 'bible'… imagination, pretend… and 'add a rule'
+  mechanic, treating the app as community-based."* Today `world_rules.dart`
+  ships **3 authored, verb-tagged rules per world** (Water: *"take the shape of
+  whatever holds you"* …) — the FOUNDING seed of the bible. The dream turns the
+  bible from shipped-content into a **living document the community AMENDS**: an
+  **"add a rule"** mechanic where a room / crew / kid co-authors the world's
+  law. The leap is from a world you VISIT to one you BELONG to — and the act of
+  writing the rules together **is the lesson** (systems are made by people and
+  can be changed by people → the 2026-06-13 "democratizing the systems to
+  think" reframe, made literal). What to settle **from the beginning** so the
+  data model can hold a living bible: (1) **provenance** — every added rule
+  knows who / when / which world it was born in (that's what makes it *theirs*);
+  (2) **scope** — world / room / crew / kid / program (maps to Space / Group /
+  Subject); (3) **ratification** — who holds the pen (lean: kids propose → the
+  room votes via the present engine #18 → staff ratify — kid-voice with a safety
+  rail); (4) **founding vs amended** — the shipped 3 are immutable premise; the
+  community adds *beside* them ("the world's rules + our rules"); (5)
+  **lifespan** — versioned / retired, never deleted; "the rules we made this
+  summer" lands as a page in the Book (#1); (6) **proximity-surfacing** — a rule
+  appears **where/when it's lived** (world rules on the morning cast, room rules
+  in the room, a kid's vow on the me-screen), never a list to memorize. This
+  ties the whole thesis: the bible is the world's **SYSTEM** (laws make it
+  actable, not just a theme), adding/ratifying a rule is **COORDINATION** (a
+  community agreeing how to play), and surfacing by where-you-are is
+  **PROXIMITY-BASED UTILITY**. (Threads: dream #5 make-our-own-rules + the
+  shipped anonymous board; #13 one-engine-many-worlds; #16 missions; #18
+  present/control as both the vote AND the surface; WORLD.md's "Rules" facet +
+  `world_rules.dart`; the 2026-06-13 democratizing-systems reframe. **Open
+  forks:** who holds the pen; which scopes ship v1; can the founding 3 ever be
+  amended; the exact proximity surfaces.)
+- **2026-06-14 (cont.)** — **The pen is the phone, in the room, live —
+  present/control IS the system of how we learn.** Answering "who holds the
+  pen?", in the user's words: *"a staff holds the phone up to control the tv
+  with me engaging and guiding the experience, this is going to be the system
+  of how we learn when we give it time…"* The governance fork **dissolves**:
+  rules aren't co-authored in a form or a settings screen — they're made in the
+  **live present/control moment** (#14/#18), with a human GUIDING. The triad is
+  the unit of learning: **staff + phone (the conductor's baton) + TV (the shared
+  attention)**, the teacher engaging the room. The app is the **instrument, not
+  the instructor** — *"the room does the teaching; the app does the
+  remembering"* (2026-06-08). Consequence for **"add a rule"**: it's a **live
+  beat**, not a feature — the teacher, phone in hand, proposes → the room
+  answers out loud / hands up (the present-engine poll, already shipped) → tap
+  to ratify → it lands BIG on the TV → it's canon → into the bible + the Book.
+  It reuses the live spine end-to-end (This-or-That present/control), with no
+  separate rules-admin surface. *"When we give it time"* = it's **cumulative**:
+  the same loop, daily, compounds a world's bible + each kid's book over the
+  season — a long-arc pedagogy, not a demo. The reframe this forces on the whole
+  app: if the live session is THE system, then every world-facet + primitive
+  wants a **beat the teacher can play from the phone** — highlight-a-word ·
+  spell-for-me · reveal · vote · **add-a-rule** … — the instrument's *keys*
+  (extends the 2026-06-13 "phone as live classroom instrument" dream). Threads:
+  #14/#18 present-control; #5 make-our-own-rules; the 2026-06-08 acceptance
+  contract (*"under 12 minutes, all teacher-facing"* — the app stays nearly
+  silent); the cumulative paper → Book arc.
+- **2026-06-14 (cont.)** — **Stopwatch, not Pomodoro — then a REQUIRED
+  reflection: growth + accountability made visible.** In the user's words:
+  *"instead of pomodoro, we use stopwatch, then we require a reflection from
+  user… this is growth and accountability visible."* The swap is philosophical:
+  **Pomodoro is a box imposed on you** (a fixed countdown that says "stop"
+  wherever you are — external structure, productivity-optimization); **a
+  stopwatch is the honest measure of what actually happened** (open-ended, you
+  stop when the work is done, it records the *truth* of the effort). On-brand to
+  the core: the app doesn't impose structure (the compliance-ledger move it was
+  built to invert) — it meets reality and *remembers* it. The **required
+  reflection turns the number into meaning**: time alone is a quantity; the
+  reflection is "what did this become." Required = **accountability** (you
+  account for the time, not just clock it); accumulated = **growth visible** (the
+  reflections + times stack into a record you can SEE). In the primitives: this
+  is **Timer** (the count-UP variant) + **Question/Reflect** (the prompt on stop)
+  + maybe **Scale** ("how did it go?") — the **Pace** beat of the live keyboard
+  (2026-06-14), reframed from countdown to stopwatch+reflect, feeding the **Book**
+  (#1) / character sheet / staff runbook (that's the "visible"). **The guardrail
+  that keeps it from rotting:** accountability here is **to yourself** — your own
+  visible growth trend, *never* a ranking, leaderboard, or comparison (that would
+  betray the no-punishment vow #4/#11; "accountability" must not become
+  surveillance). **Open forks:** who reflects (kid daily → Book / staff block →
+  runbook / both — likely both, same atom, different surface); what the
+  reflection IS (a sentence / **voice or a tap-a-face Scale for the no-typing
+  4–6s** / a drawing / a photo of the paper); when it's required (every stop, or
+  only past a threshold so it's meaningful, not nagging); visible to whom (self
+  always; room / family / director — all, layered). Threads: the 11 primitives
+  (Timer + Question + Scale); the Pace beat; #1 the Book; #16 missions/dailies
+  ("age = dailies"); #4/#11 no-punishment.
+- **2026-06-14 (cont.)** — **The CALM look IS the brand: one left edge,
+  flush-left, flat — everywhere, no exceptions.** In the user's words: *"the
+  widgets you showed me in show_widget is how i like the app to look like.. the
+  one edge, the flush-left… to all.. it is our brand."* The felt clutter was
+  TWO things — boxiness AND indentation/centering. The brand answer, now law:
+  (1) **one left edge** — every header / title / subtitle starts at the same x;
+  hierarchy comes from type weight + whitespace, never from indentation or
+  centering (the login wordmark is the one hero-centering exception); (2)
+  **hang the chrome** — icons / avatars / dots live in a gutter to the LEFT of
+  that edge, never pushing the text in; (3) **right-align the meta** — counts /
+  times / badges on one right edge; (4) **flat** — no boxes; neutral cards
+  become flush rows / flat hairline surfaces, while SIGNAL cards (the "Right
+  now" lead, error banners, world accents) keep their tint so they pop against
+  the calm. Lineage (the references the user blessed): **Linear's 2026 "calmer
+  interface"** (recede-don't-compete, fewer icons / separators, structure
+  without boxes), **iA Writer / Things 3** (flush-left calm), the **Swiss /
+  International Typographic Style** (flush-left ragged-right as the *honest*
+  alignment; hierarchy via type + grid). SHIPPED: the Calm display setting
+  (default on; toggle-off reverts), `FeatureCard` → flush one-edge rows, an
+  app-wide `flatCardTheme` (every raw Card flat). REMAINING for TOTAL
+  consistency: convert the hand-rolled custom layouts (Today's rich cards) into
+  flush rows. This is the **sharpened, enforced form of dream #10**
+  (breathable / one visual language) — docs/THEME_ADHERENCE.md is the *colour*
+  half of the brand law; this is the *layout* half.
+- **2026-06-14 (cont.)** — **The app reveals the right tools for the moment —
+  context is the navigation.** In the user's words: *"what if the workflow is
+  that we set up the time and context and based on that, the tools reveal
+  themselves… if i'm in a time where there's an activity in a room, it only
+  shows what i can do during that time… if it's a field trip, i can checkout
+  vehicles."* The antidote to feature sprawl is NOT fewer features, or even
+  calmer screens — it's features that **appear only in their moment**. The home
+  surface computes the current **context** and offers the small set of moves
+  that matter right now; everything else recedes into the omnibox (the
+  always-there escape hatch). This is "proximity-based utility" made literal and
+  the sharpest expression of *"the app is the instrument, not the instructor"*:
+  the room + the clock play the instrument; the app hands you the control for
+  the current beat. **Context = five dimensions:** *time* (day phase + the
+  current schedule block), *place* (your room / cohort), *block kind* (activity
+  vs field trip vs break vs meal vs outdoor…), *role* (capability), *state*
+  (unmarked attendance, a flagged kid, a pending pickup). **Reveal logic** maps
+  `(blockKind × phase × role)` → an ordered list of Verbs, each
+  capability-gated — a declarative, testable table. Examples: an **activity
+  block** → run the session · take/edit attendance · log an observation · the
+  wall question · the stopwatch reflection; a **field trip** → check out a
+  vehicle · trip roster + headcount · "left / back" status · trip kids'
+  emergency contacts; **pickup phase** → the release board · who's still here ·
+  the late-pickup timer; **arrival** → who's not checked in · late alerts (and
+  for a director, the cross-room version). The field-trip → vehicles case is the
+  killer demo: vehicles are useless 95% of the time (drawer clutter) and
+  essential during a trip — context turns a buried feature into a just-in-time
+  one, which **generalises to the whole long tail** (every buried feature has a
+  moment where it's the star). **The seed already exists:** `dayPhaseProvider`
+  (arrival/program/pickup/closed), `currentBlockProvider` / `NowNextStrip`, and
+  the Today `_RightNowCard` already does a primitive version (arrival →
+  check-in, program → run the day, pickup → roster). This dream *elevates that
+  one lead card into the whole home surface* — a "now-playing cockpit." **Open
+  design questions:** (1) how the app KNOWS context — inferred (clock + schedule
+  + your room assignment) with a one-tap override, not a manual setup each time;
+  real proximity (door QR / beacon / geofence) is a later layer; (2) reveal
+  GENEROUSLY, never cage — show the block's tools + the always-relevant few,
+  keep the omnibox as the full palette, because a wrong inference that *hides*
+  the tool you need is the failure mode; (3) it's **Today evolved**, not a new
+  screen — the one-edge styling work is the visual foundation, this is the
+  *information* foundation. (Ties: the proximity-utility / instrument dream; the
+  eleven PRIMITIVES — each contextual tool is a Verb; the schedule = the
+  "setlist", each block a "scene" with its own palette, echoing the
+  live-instrument / keyboard-of-beats dream.)
 
 ---
 

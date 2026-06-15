@@ -88,6 +88,7 @@ import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
 import 'package:differentworld/features/poster/poster_screen.dart';
+import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
@@ -1238,6 +1239,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/tools',
             builder: (_, _) =>
                 const RouteTitle(title: 'Tools', child: ToolsScreen()),
+          ),
+          // Reflect — the stopwatch-then-reflect ritual: time the real work,
+          // then a required how-did-it-go; saved reflections stack into a
+          // visible growth strip (docs/VISION.md, 2026-06-14).
+          GoRoute(
+            path: '/reflect',
+            builder: (_, _) => const RouteTitle(
+              title: 'Reflect',
+              child: ReflectionSessionScreen(),
+            ),
           ),
           // Speak — paste a prompt / quote / block, hear it read with big
           // kinetic karaoke subtitles (ElevenLabs via the tts-subtitles

@@ -41,8 +41,8 @@ of the SQL.
 **RLS gist**: relaxed (`current_user = 'authenticated'`); GRANT-level scoping does the real gating.
 **Sync rule**: `by_space` stream; `WHERE space_id IN (SELECT space_id FROM members WHERE id = auth.user_id())`.
 **Natural-key index**: `attendance_records_subject_date_key UNIQUE (subject_id, date)` — added by migration `20260607000001_attendance_subject_date_unique.sql` after de-duplicating existing collisions. This is the index the PowerSync connector's `_naturalKeyByTable['attendance_records'] = 'subject_id,date'` upsert path relies on; without it, concurrent writes from two devices could produce duplicate rows for the same child + day.
-**Consumers**: [Attendance](FEATURES.md#attendance), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (direct PostgREST via `familyAttendanceForSubjectProvider` — not in `by_guardian` stream; 2-level subquery deferred).
-**Last verified**: 2026-06-08
+**Consumers**: [Attendance](FEATURES.md#attendance), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (direct PostgREST via `familyAttendanceForSubjectProvider` — not in `by_guardian` stream; 2-level subquery deferred), [Today](FEATURES.md#today) (`arrivalProgressProvider` — cross-cohort rollup of in-building vs. still-out counts, read by `contextLeadProvider` during the arrival phase to show "M of N in · K to go" in the contextual lead).
+**Last verified**: 2026-06-15
 
 ---
 
@@ -131,7 +131,7 @@ of the SQL.
 - `id`, `space_id`
 - `group_id` (uuid → groups.id, nullable for cross-cohort entries)
 - `subject_id` (uuid → subjects.id, nullable for cohort-wide entries)
-- `kind` (text — `observation` / `meal` / `nap` / `diaper` / `incident` / `departure` / `action_words` / `skill_measure` / `work_sample` / etc.)
+- `kind` (text — `observation` / `meal` / `nap` / `diaper` / `incident` / `departure` / `action_words` / `skill_measure` / `work_sample` / `reflection` / etc.)
 - `text` (text — narrative / body; for `incident` rows, staff-only — can name other children)
 - `details` (jsonb — schema depends on kind; for `incident`: `{incident_type, action_taken?, parent_notified, family_note?}`)
 - `photo_url` (text, nullable — bucket-relative path; stripped for guardian reads of incidents)
@@ -140,8 +140,8 @@ of the SQL.
 - `schedule_block_id` (uuid, nullable — no FK; see migration `20260531000002_entry_schedule_block.sql`. Intentionally FK-free so entries survive block deletion with their tag intact.)
 **RLS gist**: relaxed (`for select to authenticated using(true)`). Guardian-side reads of `kind='incident'` rows MUST go through the `app.family_incidents_for_subject(caller_uid, p_subject_id)` RPC (migration `20260606000002_family_incidents_rpc.sql`), which strips `text` / `photo_url` / `details.action_taken` server-side before rows leave Postgres and enforces the guardian↔child link + surfaced-only policy. Direct `entries` reads by a guardian device would expose the full narrative over the wire even though RLS is `using(true)`.
 **Sync rule**: `by_space` (no publication/sync-rule change needed — entries was already replicated and `SELECT *` covers the new column).
-**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (observations via direct PostgREST `familyEntriesForSubjectProvider`; incidents via server-stripping RPC `familyIncidentsForSubjectProvider`), [Review](FEATURES.md#review), [Schedule](FEATURES.md#schedule) (live-block capture tagging — see docs/LIVE_BLOCK_CONTEXT.md), [Incidents](FEATURES.md#incidents) (`kind='incident'`), [Pickup](FEATURES.md#pickup) (`kind='departure'`), [Action Words](FEATURES.md#action-words) (`kind='action_words'` — one row per subject per date; `details` = `{verb_picks, done, world_name?, word_of_day?, note}`), [Missions](FEATURES.md#missions) (`kind='mission'` — one row per Do-board completion; `details.missionId` identifies which mission; read via `missionCompletionsProvider`), [World](FEATURES.md#world) (`kind='skill_measure'` — one row per (subject, skill measurement); `details` = `{skill, value}`; read by `latestSkillValues` in `skill_measure.dart` to power the Skills section on CharacterSheetScreen; also reads `kind='week_log'` for Spells + Allies aggregation), [Subjects](FEATURES.md#subjects) (`kind='work_sample'` — one row per snapped paper sheet per subject; `details` = `{world_id?, day?, in_book?}`; photo rides as an `attachment` on the entry; read via `entriesForSubjectProvider` filtered by `EntryKind.workSample` in `WorkGallery`; written via `EntryActions.createWorkSample`).
-**Last verified**: 2026-06-13
+**Consumers**: [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports) (Progress Report), [Captures](FEATURES.md#captures) (promotion destination), [Insights](FEATURES.md#insights), [Family](FEATURES.md#family) (observations via direct PostgREST `familyEntriesForSubjectProvider`; incidents via server-stripping RPC `familyIncidentsForSubjectProvider`), [Review](FEATURES.md#review), [Schedule](FEATURES.md#schedule) (live-block capture tagging — see docs/LIVE_BLOCK_CONTEXT.md), [Incidents](FEATURES.md#incidents) (`kind='incident'`), [Pickup](FEATURES.md#pickup) (`kind='departure'`), [Action Words](FEATURES.md#action-words) (`kind='action_words'` — one row per subject per date; `details` = `{verb_picks, done, world_name?, word_of_day?, note}`), [Missions](FEATURES.md#missions) (`kind='mission'` — one row per Do-board completion; `details.missionId` identifies which mission; read via `missionCompletionsProvider`), [World](FEATURES.md#world) (`kind='skill_measure'` — one row per (subject, skill measurement); `details` = `{skill, value}`; read by `latestSkillValues` in `skill_measure.dart` to power the Skills section on CharacterSheetScreen; also reads `kind='week_log'` for Spells + Allies aggregation), [Subjects](FEATURES.md#subjects) (`kind='work_sample'` — one row per snapped paper sheet per subject; `details` = `{world_id?, day?, in_book?}`; photo rides as an `attachment` on the entry; read via `entriesForSubjectProvider` filtered by `EntryKind.workSample` in `WorkGallery`; written via `EntryActions.createWorkSample`), [Reflections](FEATURES.md#reflections) (`kind='reflection'` — one row per stopwatch session; `details` = `{seconds, face}`; `body` = optional note; `subject_id` nullable — null for staff's own session, set for a child's reflection; written via `EntryActions.recordReflection`; read via `recentReflectionsProvider` in `reflection_providers.dart`).
+**Last verified**: 2026-06-14
 
 ---
 
@@ -386,8 +386,8 @@ of the SQL.
 - `notes` (text, nullable)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
-**Consumers**: [Schedule](FEATURES.md#schedule) (block editor + day-template builder `applyToDate` writes via `scheduleDao.createDayBlocks`), [Today](FEATURES.md#today) (LeadingTodayCard).
-**Last verified**: 2026-06-07
+**Consumers**: [Schedule](FEATURES.md#schedule) (block editor + day-template builder `applyToDate` writes via `scheduleDao.createDayBlocks`), [Today](FEATURES.md#today) (LeadingTodayCard; `contextLeadProvider` reads `liveBlockProvider` for the live-block path of the contextual lead).
+**Last verified**: 2026-06-15
 
 ---
 
@@ -616,7 +616,11 @@ of the SQL.
 
 _Last full registry verification: 2026-06-07 (Play Today / Skills / System Games / Print Toolkit) — `entries` table: `skill_measure` added to `kind` column values list; World added to Consumers (reads `skill_measure` + `week_log` kinds for character-sheet synthesis). No new tables — all four new features are migration-free (bundled JSON / new EntryKind on existing `entries` table)._
 
+_Incremental reconcile: 2026-06-15 (Today cockpit + briefing reorg) — No new tables or migrations. `schedule_blocks` Consumers updated: Today added (reads `liveBlockProvider` via `contextLeadProvider`). `attendance_records` Consumers updated: Today added (`arrivalProgressProvider` — arrival-phase contextual lead). No SCHEMA.md table entries added or removed. Cross-link additions: `Today **Data**` now explicitly lists `schedule_blocks` and `attendance_records`._
+
 _Incremental reconcile: 2026-06-08 (timer caps + phase windows caps + attendance natural-key index) — `spaces` `capabilities` key-columns extended to enumerate `timer_presets`, `suggest_play_minutes`, `phase_windows`. `spaces` Consumers updated: Settings + Today added as named consumers of the new caps; Action Words updated to include the two timer-preset cap reads. `attendance_records` Natural-key index section added (migration `20260607000001_attendance_subject_date_unique.sql`). No new tables._
+
+_Incremental reconcile: 2026-06-14 (Reflections feature) — `entries` table: `reflection` added to `kind` column values list; Reflections added to Consumers (`kind='reflection'`, `details={seconds,face}`, `body`=optional note, `subject_id` nullable). No new tables — Reflections is migration-free (new EntryKind on the existing `entries` table)._
 
 _Incremental reconcile: 2026-06-08 (50-day journey content layer, commits dbdd137/d91e8e4/5df388c/af650ad) — No new synced tables. `assets/curriculum/world_blocks.json` is bundled content (rootBundle), not a Drift/Supabase table; no SCHEMA.md entry warranted. FEATURES.md Action Words section updated: `**Data**` notes the bundled world_blocks.json; `**Surfaces**` adds `world_blocks.dart` (models + providers), `journey_day_sheet.dart` (shared sheet + JourneyDayRow), `_TodaysFocusCard` (Today), `_FortnightSection` (this_week_screen), `_QuestionOfTheDayBanner` (wall_screen); `**Consumed by**` adds Toolkit (imports `world_blocks.dart` for `printWallQuestionDeck`); `**Status**` updated. FEATURES.md Toolkit section: `**Surfaces**` updated to list "Wall question deck" FeatureCard + `printWallQuestionDeck`; `**Depends on**` updated to include `world_blocks.dart`; `**Last verified**` bumped to 2026-06-08._
 

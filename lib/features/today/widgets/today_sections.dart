@@ -21,11 +21,12 @@ import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/widgets/leading_today_card.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
-import 'package:differentworld/features/today/widgets/your_tools_strip.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
@@ -36,76 +37,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
-/// Top-of-Today card that launches the Morning Checklist. This is the
-/// primary daily-use entry point — one scroll across every classroom.
-class _ChecklistCallToAction extends ConsumerWidget {
-  const _ChecklistCallToAction();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final labels = ref.watch(verticalLabelsProvider);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      color: theme.colorScheme.primaryContainer,
-      child: InkWell(
-        onTap: () {
-          unawaited(HapticFeedback.selectionClick());
-          unawaited(context.push('/checklist'));
-        },
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.task_alt,
-                  color: theme.colorScheme.onPrimary,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Morning checklist',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'One scroll, every ${labels.group.toLowerCase()}, '
-                      'mark everyone in.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer.withValues(
-                          alpha: 0.8,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// "Ready to run?" — the pre-9:00 setup check. Director-only, and only while
 /// a gating precondition is still unmet; vanishes the moment the day is ready.
@@ -190,117 +121,138 @@ class _ReadyToRunCard extends ConsumerWidget {
 /// arrival → check-in, **program → run the day on rails** (when a curriculum
 /// world is live), pickup → the roster. It only *leads the eye* to surfaces
 /// that already exist — no new data layer. Hidden after hours.
+/// The contextual lead — Today's one "what matters right now" surface. It
+/// renders [contextLeadProvider]: a moment-aware header plus the 1–3 labeled
+/// moves that moment actually calls for (a field trip reveals the vehicle +
+/// roster; an activity reveals run/observe/attendance). The "only immediate
+/// utility per context" law lives in the provider; this is the renderer.
 class _RightNowCard extends ConsumerWidget {
   const _RightNowCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final phase =
-        ref.watch(dayPhaseProvider).value ?? DayPhase.fromClock(DateTime.now());
-    // After hours, the lead card adds nothing — the greeting already
-    // reads "Good evening". Don't consume scroll.
-    if (phase == DayPhase.closed) return const SizedBox.shrink();
+    final lead = ref.watch(contextLeadProvider);
+    // Nothing to lead with — a signed-in non-logger, or closed for the day.
+    if (lead == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final labels = ref.watch(verticalLabelsProvider);
-    final viewer = ref.watch(viewerProvider);
-    final kids = labels.subjectPlural.toLowerCase();
-    final spec = _phaseSpec(phase, theme.colorScheme, kids);
+    final scheme = theme.colorScheme;
+    final (Color container, Color onContainer, Color accent, Color onAccent) =
+        switch (lead.tone) {
+      ContextTone.go => (
+        scheme.primaryContainer,
+        scheme.onPrimaryContainer,
+        scheme.primary,
+        scheme.onPrimary,
+      ),
+      ContextTone.trip => (
+        scheme.tertiaryContainer,
+        scheme.onTertiaryContainer,
+        scheme.tertiary,
+        scheme.onTertiary,
+      ),
+      ContextTone.pickup => (
+        scheme.secondaryContainer,
+        scheme.onSecondaryContainer,
+        scheme.secondary,
+        scheme.onSecondary,
+      ),
+      ContextTone.calm => (
+        scheme.surfaceContainerHighest,
+        scheme.onSurface,
+        scheme.primary,
+        scheme.onPrimary,
+      ),
+    };
 
-    // Arrival: replace the static line with live "M of N in" progress when
-    // attendance has loaded a non-empty roster (docs/WORKFLOWS.md).
-    var line = spec.line;
-    if (phase == DayPhase.arrival) {
-      final prog = ref.watch(arrivalProgressProvider).value;
-      if (prog != null && prog.total > 0) {
-        line = prog.allIn
-            ? 'All ${prog.total} checked in — nice work.'
-            : '${prog.inBuilding} of ${prog.total} in · '
-                  '${prog.stillOut} still to check in';
-      }
-    }
-
-    // Program: when the 10-week journey is live, the sharpest "now" action
-    // isn't "go read the schedule" — it's to run the day on rails. Point
-    // straight at the present surface so the room's sequence plays beat by
-    // beat (the synthesis of /play-today + this card). Falls back to the
-    // generic schedule spec when no world is live.
-    var title = spec.title;
-    var route = spec.route;
-    var icon = spec.icon;
-    // Calmer eyebrow before the program opens — nothing's urgent yet.
-    final eyebrow = phase == DayPhase.prep ? 'COMING UP' : 'RIGHT NOW';
-    if (phase == DayPhase.program) {
-      final world = ref.watch(currentWorldProvider);
-      // A specialist drops in for a specific block — pointing them at the
-      // whole-day run is the wrong surface (their block shows below via the
-      // leading-today card). A substitute IS the room's lead today, so they
-      // still get the run. Lead teachers / directors always do.
-      if (world != null && !viewer.isSpecialist) {
-        title = "Run today's program";
-        line = 'In ${world.name} this week — full-screen, step by step.';
-        route = '/play-today';
-        icon = Icons.slideshow_outlined;
-      }
-    }
+    final moves = <ContextMove>[lead.primary, ...lead.more];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Card(
+        // Full-bleed (no Card margin) so the tinted block's left lines up with
+        // the cohort rows; the glyph hangs in the shared 44dp gutter, landing
+        // the header on the one edge.
+        margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        color: spec.container,
-        child: InkWell(
-          onTap: () {
-            unawaited(HapticFeedback.selectionClick());
-            unawaited(context.push(route));
-          },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
+        color: container,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 44,
+                child: Container(
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
-                    color: spec.accent,
-                    borderRadius: BorderRadius.circular(12),
+                    color: accent,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: spec.onAccent),
+                  child: Icon(lead.icon, color: onAccent, size: 20),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        eyebrow,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: spec.onContainer.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lead.eyebrow,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        // 0.78 not 0.7 — keeps the eyebrow ≥4.5:1 against the
+                        // container even in the high-contrast outdoor theme.
+                        color: onContainer.withValues(alpha: 0.78),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: spec.onContainer,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      lead.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: onContainer,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        line,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: spec.onContainer.withValues(alpha: 0.85),
-                        ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      lead.line,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: onContainer.withValues(alpha: 0.85),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 12),
+                    // The moves. First is primary (filled accent); the rest
+                    // are quieter outlined chips. Only the moment's utility.
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final (i, m) in moves.indexed)
+                          _LeadChip(
+                            // Keyed by route so a phase boundary changing the
+                            // move count (1-chip → 2-chip) re-matches chips by
+                            // identity, not list position.
+                            key: ValueKey('lead-${m.route}'),
+                            move: m,
+                            primary: i == 0,
+                            accent: accent,
+                            onAccent: onAccent,
+                            onContainer: onContainer,
+                            onTap: () {
+                              unawaited(HapticFeedback.selectionClick());
+                              unawaited(context.push(m.route));
+                            },
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-                Icon(Icons.chevron_right, color: spec.onContainer),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -308,95 +260,66 @@ class _RightNowCard extends ConsumerWidget {
   }
 }
 
-/// Presentation for one [DayPhase]: copy, icon, destination, colors.
-/// Colors are drawn from the M3 [ColorScheme] (guaranteed-contrast
-/// container/on-container pairs). Arrival owns `primaryContainer` — the
-/// day's loudest moment — and the standing Morning-checklist card is
-/// suppressed during arrival so the two never stack as twins. Every
-/// other phase uses a calmer tone so it never clashes with that
-/// always-present primary card.
-_PhaseSpec _phaseSpec(DayPhase phase, ColorScheme cs, String kids) {
-  switch (phase) {
-    case DayPhase.prep:
-      return _PhaseSpec(
-        title: 'Getting ready',
-        line: 'Peek at today’s schedule before the rush.',
-        route: '/schedule',
-        icon: Icons.wb_twilight_outlined,
-        container: cs.tertiaryContainer,
-        onContainer: cs.onTertiaryContainer,
-        accent: cs.tertiary,
-        onAccent: cs.onTertiary,
-      );
-    case DayPhase.arrival:
-      return _PhaseSpec(
-        title: 'Arrival time',
-        line: 'Check $kids in as they arrive — see who’s still out.',
-        route: '/checklist?filter=unmarked',
-        icon: Icons.login,
-        container: cs.primaryContainer,
-        onContainer: cs.onPrimaryContainer,
-        accent: cs.primary,
-        onAccent: cs.onPrimary,
-      );
-    case DayPhase.program:
-      return _PhaseSpec(
-        title: 'Program time',
-        line: 'See what your room is doing next.',
-        route: '/schedule',
-        icon: Icons.play_circle_outline,
-        container: cs.tertiaryContainer,
-        onContainer: cs.onTertiaryContainer,
-        accent: cs.tertiary,
-        onAccent: cs.onTertiary,
-      );
-    case DayPhase.pickup:
-      return _PhaseSpec(
-        title: 'Pickup time',
-        line: 'Release $kids to authorized pickup as families arrive.',
-        route: '/pickup',
-        icon: Icons.directions_walk,
-        container: cs.secondaryContainer,
-        onContainer: cs.onSecondaryContainer,
-        accent: cs.secondary,
-        onAccent: cs.onSecondary,
-      );
-    case DayPhase.closed:
-      // Never rendered (the card early-returns on closed) — fall back to
-      // the calm prep spec so the switch stays exhaustive.
-      return _PhaseSpec(
-        title: 'Getting ready',
-        line: 'Peek at today’s schedule before the rush.',
-        route: '/schedule',
-        icon: Icons.wb_twilight_outlined,
-        container: cs.tertiaryContainer,
-        onContainer: cs.onTertiaryContainer,
-        accent: cs.tertiary,
-        onAccent: cs.onTertiary,
-      );
-  }
-}
-
-class _PhaseSpec {
-  const _PhaseSpec({
-    required this.title,
-    required this.line,
-    required this.route,
-    required this.icon,
-    required this.container,
-    required this.onContainer,
+/// A single move inside the contextual lead. The primary move is filled with
+/// the lead's accent; secondary moves are quiet outlined chips on the tint.
+class _LeadChip extends StatelessWidget {
+  const _LeadChip({
+    required this.move,
+    required this.primary,
     required this.accent,
     required this.onAccent,
+    required this.onContainer,
+    required this.onTap,
+    super.key,
   });
 
-  final String title;
-  final String line;
-  final String route;
-  final IconData icon;
-  final Color container;
-  final Color onContainer;
+  final ContextMove move;
+  final bool primary;
   final Color accent;
   final Color onAccent;
+  final Color onContainer;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = primary ? onAccent : onContainer;
+    return Material(
+      color: primary ? accent : onContainer.withValues(alpha: 0.10),
+      shape: StadiumBorder(
+        side: primary
+            ? BorderSide.none
+            : BorderSide(color: onContainer.withValues(alpha: 0.22)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        // ≥48dp tap target (CLAUDE.md a11y floor). The chips ARE the lead's
+        // primary interaction — a miss-tap at arrival / headcount is a real
+        // failure — so the hit area meets the floor even though the visual
+        // content is shorter (Row centres within the min-height box).
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(move.icon, size: 16, color: fg),
+                const SizedBox(width: 6),
+                Text(
+                  move.label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: fg,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Fallback orientation for a drop-in — a specialist or substitute who isn't
@@ -1123,75 +1046,12 @@ class TodayBody extends ConsumerWidget {
         // IS the next useful action, not a wall of cards to hunt through
         // (the "less hunting" principle). Renders nothing after hours.
         if (viewer.isDailyLogger) const _RightNowCard(),
-        // The day's curriculum plan — world anchor + day focus + skill +
-        // thinking — folded into ONE collapsible so first paint shows the
-        // time-aware lead, not a wall of co-equal cards (Today was the app's
-        // noisiest screen, 9/10 — docs/CLARITY_RUBRIC.md). Expands to the full
-        // plan; the collapsed summary keeps "world · day" glanceable.
-        // Self-hides / shows the director setup prompt until the journey starts.
-        const _TodaysPlanSection(),
-        // Specialist / substitute identity strip — answers the
-        // Coach Sam audit finding ("no UI surface tells Sam what
-        // they are"). Renders nothing for director / lead_teacher
-        // / teacher / guardian because context already makes the
-        // role obvious. Tap → Roles page so Sam can see what their
-        // role can do.
-        const _IdentityStrip(),
-        // Morning Checklist is only useful to staff who can
-        // actually mark daily routines — hide for read-only viewers.
-        // Suppressed during arrival, where the Right-now card already
-        // leads with check-in (so the two don't stack as primary
-        // twins).
-        if (viewer.isDailyLogger && phase != DayPhase.arrival)
-          const _ChecklistCallToAction(),
-        if (viewer.isDailyLogger && phase != DayPhase.arrival)
-          const SizedBox(height: 16),
-        // "You're leading N blocks today" — renders nothing if
-        // the signed-in member isn't a lead on any block today.
-        // Naturally hides for non-staff and members with no
-        // assignments.
-        const LeadingTodayCard(),
-        // Fallback orientation for a drop-in (specialist / substitute) with no
-        // assigned block — the leading-today card is blank for them, so point
-        // them at the runbook instead of a generic Today.
-        const _CoveringTodayCard(),
-        const SizedBox(height: 16),
-        // "Today's words" — only when Action Words is in use today.
-        if (viewer.isDailyLogger) const _ActionWordsCard(),
-        // Unread family messages — staff-side proactive surface
-        // (Wave 60). Renders only when at least one family has
-        // sent a message that nobody on staff has read yet.
-        // Each row taps through to that (subject, guardian)
-        // thread. Hidden for guardians (their messages flow is
-        // through the family lens).
-        const _UnreadMessagesCard(),
-        // Director's morning pulse — aggregates absent kids,
-        // cohorts with substitute coverage today, and
-        // expiring-soon certs into a single card. Renders
-        // nothing when there's nothing to flag (the "all clear"
-        // case doesn't need to consume scroll). Only directors
-        // see this; non-directors hit the early-return.
-        if (viewer.isDirector) _DirectorPulseCard(groups: groups),
-        // Upward loop made visible: the system surfaces one
-        // question here when the data demands it; silent when
-        // it doesn't. UX_DECISIONS §6 / framework upward loop.
-        const TopInsightCard(),
-        const SizedBox(height: 16),
-        // Role-as-home (Role-1): the role-tailored tool palette — different
-        // tools for different roles (docs/VISION.md). Self-hides if the role
-        // has no allowed tools. TodayBody is staff-only (guardians get the
-        // family lens), so no guardian gate needed.
-        YourToolsStrip(viewer: viewer),
-        const SizedBox(height: 8),
-        // Capability-aware one-tap launchpad. Hides itself when the
-        // viewer has nothing to launch.
-        const QuickActions(),
-        const SizedBox(height: 24),
-        // Wave 114: at desktop widths the group cards flow as a
-        // 2-column wrap. At phone / tablet they stack vertically
-        // (the natural shape for a scroll-with-omnibox layout).
-        // LayoutBuilder reads the current viewport once; cards
-        // self-size in their columns.
+        // ── THE ROOMS ── Today's primary data surface, promoted to sit
+        // directly under the lead (briefing reorg). They used to be dead
+        // last, under a dozen meta cards — a teacher opening the app to
+        // check the rooms had to scroll past everything. Now they're second.
+        // At desktop widths they flow as a 2-column wrap; on phone/tablet
+        // they stack. LayoutBuilder reads the viewport once; cards self-size.
         LayoutBuilder(
           builder: (ctx, c) {
             final isWide = c.maxWidth >= 1100;
@@ -1227,6 +1087,38 @@ class TodayBody extends ConsumerWidget {
             );
           },
         ),
+        const SizedBox(height: 16),
+        // "You're leading N blocks today" — the role anchor. Renders nothing
+        // if the member isn't a lead on any block today.
+        const LeadingTodayCard(),
+        // Drop-in (specialist / substitute) fallback when they have no
+        // assigned block — points at the runbook.
+        const _CoveringTodayCard(),
+        // Unread family messages — staff-side proactive surface. Renders only
+        // when a family has sent something nobody on staff has read.
+        const _UnreadMessagesCard(),
+        // Director's morning pulse — absent kids + sub coverage + expiring
+        // certs. Self-hides when all-clear; director-only.
+        if (viewer.isDirector) _DirectorPulseCard(groups: groups),
+        const SizedBox(height: 16),
+        // State-driven launchpad — pending captures / tasks / a vehicle out.
+        // Self-hides when nothing's pending. (The static nav tiles moved to
+        // the omnibox + drawer in the briefing reorg.)
+        const QuickActions(),
+        // The day's curriculum plan — only while it's actionable (prep +
+        // program). During arrival / pickup it's noise; the moment's lead and
+        // the rooms are the job. Reachable any time via the omnibox.
+        if (phase == DayPhase.prep || phase == DayPhase.program) ...[
+          const SizedBox(height: 8),
+          const _TodaysPlanSection(),
+        ],
+        // "Today's words" — only when Action Words is in use today.
+        if (viewer.isDailyLogger) const _ActionWordsCard(),
+        // Specialist / substitute identity strip — self-hides for every
+        // other role (the Coach Sam orientation answer).
+        const _IdentityStrip(),
+        // The system's one surfaced question, when the data demands it.
+        const TopInsightCard(),
       ],
     );
   }
@@ -1273,92 +1165,99 @@ class _GroupTodayCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final stateAsync = ref.watch(groupDayStateProvider(group));
 
-    final dotKind = stateAsync.value == null
-        ? StatusDotKind.neutral
-        : _dotKindFor(stateAsync.value!);
+    final state = stateAsync.value;
+    final dotKind = state == null ? StatusDotKind.neutral : _dotKindFor(state);
+    // Marked-of-total, pinned to the row's right edge — the glanceable
+    // headline (the pills below break it down). Hidden until the roster
+    // loads or when the cohort has no children enrolled.
+    final countLabel = (state == null || state.totalSubjects == 0)
+        ? null
+        : '${state.markedCount} of ${state.totalSubjects}';
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          unawaited(HapticFeedback.selectionClick());
-          unawaited(context.push('/groups/${group.id}'));
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    // One-edge row: the scan-dot + room glyph hang in FeatureCard's leading
+    // gutter (the same 44dp column every row shares), the name + counts sit on
+    // the text edge, and the schedule strip + day-state pills flush below. The
+    // standalone "take attendance" icon is gone — the row taps into the cohort
+    // and the tappable "unmarked" pill is the fast path into attendance.
+    return FeatureCard(
+      // `content` overrides the title/subtitle column; `title` stays the
+      // semantic name (FeatureCard requires it, falls back to it).
+      title: group.name,
+      onTap: () => context.push('/groups/${group.id}'),
+      leading: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatusDot(kind: dotKind),
+          const SizedBox(height: 8),
+          Icon(
+            Icons.meeting_room_outlined,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Row(
-                children: [
-                  // Traffic-light scan affordance — the eye lands here
-                  // first, before the room name. Glow ring when a kid
-                  // is flagged so you find that one row in a list of N.
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: StatusDot(kind: dotKind),
-                  ),
-                  CircleAvatar(
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    foregroundColor: theme.colorScheme.onPrimaryContainer,
-                    child: const Icon(Icons.meeting_room_outlined),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          group.name,
-                          style: theme.textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (group.ageRange != null)
-                          Text(
-                            group.ageRange!,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Take attendance',
-                    icon: const Icon(Icons.fact_check_outlined),
-                    onPressed: () =>
-                        context.push('/groups/${group.id}/attendance'),
-                  ),
-                ],
+              Expanded(
+                child: Text(
+                  group.name,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const SizedBox(height: 12),
-              // "Now / Next" schedule strip — tells the staff scanner
-              // what the room is doing this very moment without having
-              // to open the schedule editor. Renders nothing if the
-              // cohort has no blocks today.
-              NowNextStrip(groupId: group.id),
-              const SizedBox(height: 12),
-              stateAsync.when(
-                // Shaped skeleton instead of a "Loading…" line — the
-                // layout doesn't jump when the data lands.
-                loading: () => const SkeletonShimmer(
-                  child: Row(
-                    children: [
-                      SkeletonBox(width: 84, height: 22, radius: 11),
-                      SizedBox(width: 8),
-                      SkeletonBox(width: 64, height: 22, radius: 11),
-                    ],
+              if (countLabel != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  countLabel,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                error: (_, _) => _StateLine(
-                  text: 'Tap to retry.',
-                  color: theme.colorScheme.error,
-                ),
-                data: (state) => _DayStateRow(state: state, groupId: group.id),
-              ),
+              ],
             ],
           ),
-        ),
+          if (group.ageRange != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Text(
+                group.ageRange!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          const SizedBox(height: 10),
+          // "Now / Next" schedule strip — tells the staff scanner what the
+          // room is doing this very moment without opening the editor.
+          // Renders nothing if the cohort has no blocks today.
+          NowNextStrip(groupId: group.id),
+          const SizedBox(height: 10),
+          stateAsync.when(
+            // Shaped skeleton instead of a "Loading…" line — the layout
+            // doesn't jump when the data lands.
+            loading: () => const SkeletonShimmer(
+              child: Row(
+                children: [
+                  SkeletonBox(width: 84, height: 22, radius: 11),
+                  SizedBox(width: 8),
+                  SkeletonBox(width: 64, height: 22, radius: 11),
+                ],
+              ),
+            ),
+            error: (_, _) => _StateLine(
+              text: 'Tap to retry.',
+              color: theme.colorScheme.error,
+            ),
+            data: (state) => _DayStateRow(state: state, groupId: group.id),
+          ),
+        ],
       ),
     );
   }

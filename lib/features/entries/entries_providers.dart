@@ -87,6 +87,16 @@ class EntryKind {
   /// these. Distinct from `observation` (staff narrative) — this is the
   /// kid's OWN output, the cumulative proof that goes home.
   static const String workSample = 'work_sample';
+
+  /// A REFLECTION — the stopwatch-then-reflect ritual (docs/VISION.md,
+  /// 2026-06-14: "stopwatch, not pomodoro … this is growth and accountability
+  /// visible"). The honest time spent on a thing PLUS a required
+  /// how-did-it-go, kept as an entry so it flows into the Book / character
+  /// sheet / runbook — the accumulating record IS the "visible growth".
+  /// `details` = {seconds:int, face:1-4}; `body` = the optional note.
+  /// subjectId set → a child's reflection (→ their Book); subjectId null →
+  /// a staffer's own practice (scheduleBlockId tags the block it followed).
+  static const String reflection = 'reflection';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -396,6 +406,28 @@ class EntryActions {
     subjectId: subjectId,
     groupId: groupId,
     detailsJson: jsonEncode({'value': value.clamp(1, 5), 'part': ?part}),
+  );
+
+  /// Record a REFLECTION (the stopwatch-then-reflect ritual). Works for a
+  /// child (pass [subjectId] → their Book) OR a staffer's own practice (no
+  /// subject; [scheduleBlockId] tags the block it followed). [face] is the
+  /// 1–4 tap-a-face scale ("how did it go"); [note] is the optional line.
+  /// The honest [seconds] is whatever the stopwatch measured — never a
+  /// pomodoro box.
+  Future<String> recordReflection({
+    required int seconds,
+    required int face,
+    String? note,
+    String? subjectId,
+    String? groupId,
+    String? scheduleBlockId,
+  }) => _create(
+    kind: EntryKind.reflection,
+    subjectId: subjectId,
+    groupId: groupId,
+    scheduleBlockId: scheduleBlockId,
+    body: (note != null && note.trim().isNotEmpty) ? note.trim() : null,
+    detailsJson: jsonEncode({'seconds': seconds, 'face': face.clamp(0, 4)}),
   );
 
   /// Record a measured SKILL data point for a child (the RPG "stats that
