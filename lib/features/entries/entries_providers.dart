@@ -427,7 +427,7 @@ class EntryActions {
     groupId: groupId,
     scheduleBlockId: scheduleBlockId,
     body: (note != null && note.trim().isNotEmpty) ? note.trim() : null,
-    detailsJson: jsonEncode({'seconds': seconds, 'face': face.clamp(1, 4)}),
+    detailsJson: jsonEncode({'seconds': seconds, 'face': face.clamp(0, 4)}),
   );
 
   /// Record a measured SKILL data point for a child (the RPG "stats that

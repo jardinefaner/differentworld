@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/reflections/reflection_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
-import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
-import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Below this many seconds a session is "just a quick timer" — no reflection
+/// is demanded (so the Stop button never trains dread). At/above, the face is
+/// required (docs/VISION.md: "require the reflection only past a threshold").
+const _reflectThresholdSeconds = 120;
 
 /// The four how-did-it-go faces (the tap-a-face Scale primitive). Value is
 /// `index + 1` (1–4); the colour follows the scheme so it reads in both modes.
@@ -69,8 +72,12 @@ class _ReflectionSessionScreenState
     setState(() => _reflecting = true);
   }
 
+  /// Past the threshold a how-did-it-go is required; below it the face is
+  /// optional (a quick timer shouldn't demand a reflection).
+  bool get _faceRequired => _seconds >= _reflectThresholdSeconds;
+
   Future<void> _save() async {
-    if (_saving || _face == 0) return;
+    if (_saving || (_face == 0 && _faceRequired)) return;
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.maybeOf(context);
     try {
@@ -112,6 +119,8 @@ class _ReflectionSessionScreenState
   @override
   Widget build(BuildContext context) {
     final reflections = ref.watch(recentReflectionsProvider);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return EdgeScaffold(
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -126,6 +135,7 @@ class _ReflectionSessionScreenState
             elapsed: _fmt(_seconds),
             reflecting: _reflecting,
             face: _face,
+            faceRequired: _faceRequired,
             saving: _saving,
             note: _note,
             onStop: _stop,
@@ -133,27 +143,50 @@ class _ReflectionSessionScreenState
             onSave: _save,
           ),
           const SizedBox(height: 24),
-          Text(
-            'Your growth — visible',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
+          Text('Your growth — visible', style: theme.textTheme.titleSmall),
           const SizedBox(height: 4),
+          // Every branch here is a ListView CHILD, so it must be intrinsically
+          // sized — no Center / Expanded / full-bleed EmptyState (they need a
+          // bounded parent height and crash a list with `hasSize`).
           reflections.when(
-            loading: () => const LoadingSlot(),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 28),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+              ),
+            ),
             error: (_, _) => const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Text('Could not load your reflections.'),
             ),
             data: (rows) {
               if (rows.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: EmptyState(
-                    icon: Icons.timeline_outlined,
-                    title: 'No reflections yet',
-                    message:
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.timeline_outlined,
+                        size: 34,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
                         'Finish a session above and your first one lands here '
                         '— then it only grows.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
                   ),
                 );
               }
@@ -173,6 +206,7 @@ class _SessionCard extends StatelessWidget {
     required this.elapsed,
     required this.reflecting,
     required this.face,
+    required this.faceRequired,
     required this.saving,
     required this.note,
     required this.onStop,
@@ -183,6 +217,7 @@ class _SessionCard extends StatelessWidget {
   final String elapsed;
   final bool reflecting;
   final int face;
+  final bool faceRequired;
   final bool saving;
   final TextEditingController note;
   final VoidCallback onStop;
@@ -233,6 +268,15 @@ class _SessionCard extends StatelessWidget {
                     ),
                 ],
               ),
+              if (!faceRequired)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Optional for a quick one',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ),
               const SizedBox(height: 14),
               TextField(
                 controller: note,
@@ -245,8 +289,10 @@ class _SessionCard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               FilledButton(
-                // Required: can't save the session without saying how it went.
-                onPressed: (saving || face == 0) ? null : onSave,
+                // Past the threshold a face is required; below it a quick
+                // session can save without one.
+                onPressed:
+                    (saving || (face == 0 && faceRequired)) ? null : onSave,
                 child: saving
                     ? const SizedBox(
                         width: 18,
