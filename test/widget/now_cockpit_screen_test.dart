@@ -10,6 +10,7 @@
 // Providers are overridden so the screen renders deterministically without
 // the live clock / schedule / Drift stack.
 
+import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
@@ -54,7 +55,8 @@ Future<void> _pump(
         '/program',
         '/insights',
         '/play-today',
-        '/messages',
+        '/action-words',
+        '/action-words/send',
       ])
         GoRoute(
           path: p,
@@ -68,8 +70,10 @@ Future<void> _pump(
       overrides: [
         cockpitBeatProvider.overrideWith((ref) => beat),
         contextLeadProvider.overrideWith((ref) => lead),
-        // No curriculum world running → the reveal launch must stay hidden.
+        // No curriculum world running → the reveal launch must stay hidden,
+        // and the morning card falls back to "A new day".
         currentWorldProvider.overrideWith((ref) => null),
+        seasonPositionProvider.overrideWith((ref) => null),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -97,14 +101,28 @@ void main() {
         (tester) async {
       await _pump(tester, beat: CockpitBeat.send);
       expect(find.text('Send today home'), findsOneWidget);
-      expect(find.text('Open messages'), findsOneWidget);
+      expect(find.text('Send home'), findsOneWidget);
     });
 
     testWidgets('the closed beat renders the rest state, no send button',
         (tester) async {
       await _pump(tester, beat: CockpitBeat.closed);
       expect(find.text('All done for today'), findsOneWidget);
-      expect(find.text('Open messages'), findsNothing);
+      expect(find.text('Send home'), findsNothing);
+    });
+
+    testWidgets('the morning beat leads with the verb pick', (tester) async {
+      await _pump(tester, beat: CockpitBeat.goodMorning, lead: _lead);
+      expect(find.text('GOOD MORNING'), findsOneWidget);
+      expect(find.text("Pick today's verbs"), findsOneWidget);
+      // The arrival lead's move rides alongside as a secondary chip.
+      expect(find.text('Run the session'), findsOneWidget);
+    });
+
+    testWidgets('the reveal beat offers the closing launch', (tester) async {
+      await _pump(tester, beat: CockpitBeat.reveal);
+      expect(find.text('Reveal the day'), findsOneWidget);
+      expect(find.text('Start the reveal'), findsOneWidget);
     });
 
     testWidgets('the curiosity bar toggles open to reveal Layer-2 places',
