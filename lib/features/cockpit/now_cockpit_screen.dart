@@ -1,3 +1,4 @@
+import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -30,6 +31,9 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
   Widget build(BuildContext context) {
     final beat = ref.watch(cockpitBeatProvider);
     final lead = ref.watch(contextLeadProvider);
+    // The reveal only makes sense (and only has a non-dead-end destination)
+    // when a curriculum world is running — gate the launch on it.
+    final hasWorld = ref.watch(currentWorldProvider) != null;
     return EdgeScaffold(
       body: SafeArea(
         child: Column(
@@ -44,6 +48,7 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
                 key: const ValueKey('cockpit-beat-body'),
                 beat: beat,
                 lead: lead,
+                hasWorld: hasWorld,
               ),
             ),
           ],
@@ -76,16 +81,16 @@ class _CuriosityBar extends StatelessWidget {
     final scheme = theme.colorScheme;
     return Column(
       children: [
-        // The handle — tap to wade in / out.
+        // The handle — tap to wade in / out. ≥48dp tap target (a11y floor).
         InkWell(
           onTap: onToggle,
           borderRadius: BorderRadius.circular(12),
           child: Semantics(
             button: true,
-            label: open ? 'Hide more places' : 'Pull down for more places',
+            label: open ? 'Hide more places' : 'Show more places',
             child: Container(
               width: double.infinity,
-              constraints: const BoxConstraints(minHeight: 36),
+              constraints: const BoxConstraints(minHeight: 48),
               alignment: Alignment.center,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -98,11 +103,22 @@ class _CuriosityBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Icon(
-                    open ? Icons.expand_less : Icons.expand_more,
-                    size: 18,
-                    color: scheme.onSurfaceVariant,
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        open ? 'Less' : 'More places',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Icon(
+                        open ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -143,15 +159,21 @@ class _CuriosityBar extends StatelessWidget {
 /// after-pickup beats ([CockpitBeat.send] / [CockpitBeat.closed]) — where the
 /// lead is null — get a cockpit-authored card.
 class _BeatBody extends StatelessWidget {
-  const _BeatBody({required this.beat, required this.lead, super.key});
+  const _BeatBody({
+    required this.beat,
+    required this.lead,
+    required this.hasWorld,
+    super.key,
+  });
 
   final CockpitBeat beat;
   final ContextLead? lead;
+  final bool hasWorld;
 
   @override
   Widget build(BuildContext context) {
     if (lead != null) {
-      return _LeadCard(lead: lead!, beat: beat);
+      return _LeadCard(lead: lead!, beat: beat, hasWorld: hasWorld);
     }
     return _AfterPickupCard(beat: beat);
   }
@@ -165,34 +187,69 @@ class _BeatBody extends StatelessWidget {
       ContextTone.calm => (s.surfaceContainerHighest, s.onSurface),
     };
 
+/// Full-bleed beat frame: the [bg] colour fills the surface (the emotional
+/// arc — colour by the moment), the content is centred + width-capped for
+/// wide devices, and the whole thing SCROLLS when text scales up (200%) so the
+/// primary action never gets pushed off-screen.
+Widget _beatFrame(
+  BuildContext context, {
+  required Color bg,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    color: bg,
+    child: LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+                child: IntrinsicHeight(child: child),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class _LeadCard extends StatelessWidget {
-  const _LeadCard({required this.lead, required this.beat});
+  const _LeadCard({
+    required this.lead,
+    required this.beat,
+    required this.hasWorld,
+  });
 
   final ContextLead lead;
   final CockpitBeat beat;
+  final bool hasWorld;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final (bg, fg) = _toneColors(theme.colorScheme, lead.tone);
     // The reveal is a manual beat (COCKPIT.md fork ③): surface it as a quiet
-    // secondary launch during the live program / pickup window, where casting
-    // the day's worlds actually happens.
-    final showReveal = beat == CockpitBeat.now || beat == CockpitBeat.pickup;
-    return Container(
-      width: double.infinity,
-      color: bg,
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+    // secondary launch during the live program / pickup window — but ONLY when
+    // a curriculum world is actually running, or /play-today is a dead end.
+    final showReveal =
+        hasWorld && (beat == CockpitBeat.now || beat == CockpitBeat.pickup);
+    return _beatFrame(
+      context,
+      bg: bg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           Icon(lead.icon, size: 40, color: fg),
           const Spacer(),
           Text(
             lead.eyebrow,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: fg.withValues(alpha: 0.7),
+              color: fg,
               letterSpacing: 1.2,
               fontWeight: FontWeight.w600,
             ),
@@ -214,6 +271,7 @@ class _LeadCard extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
@@ -276,14 +334,12 @@ class _AfterPickupCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isSend = beat == CockpitBeat.send;
-    return Container(
-      width: double.infinity,
-      color: scheme.surfaceContainerHighest,
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+    return _beatFrame(
+      context,
+      bg: scheme.surfaceContainerHighest,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
           Icon(
             isSend ? Icons.mark_email_unread_outlined : Icons.nightlight_outlined,
             size: 40,
@@ -291,7 +347,7 @@ class _AfterPickupCard extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            isSend ? 'AFTER PICKUP' : "THAT'S A WRAP",
+            isSend ? 'AFTER PICKUP' : "DAY'S DONE",
             style: theme.textTheme.labelMedium?.copyWith(
               color: scheme.onSurfaceVariant,
               letterSpacing: 1.2,
@@ -310,13 +366,14 @@ class _AfterPickupCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             isSend
-                ? "A note's ready for each family — add a sentence and send."
+                ? 'Open messages to reach each family.'
                 : 'Nothing left on the board. See you tomorrow.',
             style: theme.textTheme.titleMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
           ),
           const Spacer(),
+          const SizedBox(height: 16),
           if (isSend)
             SizedBox(
               width: double.infinity,
