@@ -553,33 +553,48 @@ class _SummaryBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
-              ...AttendanceStatus.values.where((s) => (counts[s] ?? 0) > 0).map(
-                (s) {
-                  final color = s.color(theme.colorScheme);
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Row(
-                      children: [
-                        Icon(s.icon, size: 14, color: color),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${counts[s]}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+              // The status chips scroll horizontally if they can't all fit —
+              // many non-zero statuses, or a large text-scale floor (the
+              // accessibility setting), would otherwise overflow this single
+              // Row and stripe the summary bar. The "N unmarked" tail stays
+              // pinned right.
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      ...AttendanceStatus.values
+                          .where((s) => (counts[s] ?? 0) > 0)
+                          .map((s) {
+                            final color = s.color(theme.colorScheme);
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Row(
+                                children: [
+                                  Icon(s.icon, size: 14, color: color),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${counts[s]}',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: color,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                    ],
+                  ),
+                ),
               ),
-              const Spacer(),
-              if (unmarked > 0)
+              if (unmarked > 0) ...[
+                const SizedBox(width: 8),
                 Text(
                   '$unmarked unmarked',
                   style: theme.textTheme.bodySmall,
                 ),
+              ],
             ],
           ),
         ),
