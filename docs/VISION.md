@@ -950,6 +950,92 @@ once it has a home.
   "setlist", each block a "scene" with its own palette, echoing the
   live-instrument / keyboard-of-beats dream.)
 
+- **2026-06-15** — **The app is a clock that knows your kids — progressive
+  disclosure through time.** The full, worked shape of the 2026-06-14
+  "context is the navigation" dream, taken to its end: not a lead card on top
+  of a Today screen, but **the whole surface IS the clock.** In the user's
+  words: *"The app shows one thing at a time. The right thing at the right
+  time. Nothing else exists until you need it… the screen follows the clock.
+  At 9:10 you see the verb picker. At 1:00 you see activities. At 2:45 you see
+  the reveal. At 3:00 you see parent messages. You never navigate."* The
+  governing metaphor: ***the ocean has the surface, the shallows, and the deep
+  — you stand on the shore and see the surface; that's enough; you can wade in,
+  you can dive, but you never HAVE to. The app is an ocean with a beautiful
+  shore.***
+
+  **Three layers, revealed by clock / week / curiosity:**
+  - **LAYER 1 — THE SURFACE** (what you see without trying): ONE card, no
+    tabs, no nav, that *changes automatically by time of day.* The beats:
+    **9:00 Good Morning** (date · day-of-journey · this week's world · 10
+    names, tap-a-name → mood weather) → **9:10 Verb Pick** (name selector + 12
+    verb emojis; 3 taps/kid; a whisper-faint world emoji appears as you pick =
+    the teacher sees the reveal first) → **9:15–12:30 "Now"** (the current
+    schedule block as one card + progress bar + a one-sentence world-matched
+    activity suggestion; below, 10 kid circles each showing their 3 verbs, tap
+    → mini-card + quick note) → **1:00 Verb Hour** (the Now card, suggestions
+    expanded to 3–4 activities matched to today's picks) → **2:45 Reveal**
+    (dark, dramatic; tap a kid → 3 verbs pulse in → the world emoji GLOWS to
+    center → *"Leah was 🐬 Dolphin today"*; swipe through 10, ~5 sec each) →
+    **3:00 Send** (after kids leave; a per-kid pre-written parent message — the
+    ONLY thing to fill is one observation sentence — then COPY → paste). *"The
+    'Now' screen is where the teacher lives 80% of the day… glanceable in 2
+    seconds, actionable in 5, closeable in 1."*
+  - **LAYER 2 — THE SHALLOWS** (pull DOWN to reveal — a *curiosity* bar, NOT a
+    nav bar; most days you never touch it): 📋 Today · 👤 Kids (character
+    sheets, for Friday reflections + conferences, never mid-day) · 📖
+    Activities (browse by world or verb) · 🌟 Collection (the room's
+    worlds-visited — observational, not comparative) · 📊 Patterns (the data
+    view — Friday/Sunday prep, never during the day).
+  - **LAYER 3 — THE DEEP** (a separate **"conductor" web dashboard on a
+    laptop**, not the phone — touched once a week): weekly planning, monthly
+    reports, the **end-of-summer auto-generated per-child report → PDF.** *"The
+    app lives on Layer 1. The dashboard lives on Layer 3. They never compete
+    for attention."*
+
+  **Continuity is the app's job; today is the teacher's.** Every RPG system
+  stays continuous with near-zero management: *avatar* prompted each new-world
+  Monday (5 prompts/50 days), *title* each Monday (Declaration Day), *level* =
+  the auto-incrementing journey number, *spells* = auto-suggested
+  word-of-the-day, *missions* = auto-suggested (completion implicit in filled
+  verb dots), *collection* auto-fills from the reveal (the reveal IS the data
+  entry), *weather* = 3 prompts/day, *lore/Wall* = a Friday "photograph the
+  Wall" → Wall Archive. *Allies + inventory stay analog — the physical journal
+  IS the inventory.*
+
+  **The laws:** **one-thumb** (tap/swipe only — the other hand holds a crayon,
+  a kid, a coffee; the sole typed input is one parent-message sentence) ·
+  **the emotional arc matches the room** (calm 9:00 → warm 9:15 → utilitarian
+  midday → **dark/glowing reveal, the app's finest moment** → quiet/reflective
+  send) · a hard **NOT list**: no notifications during activities, no
+  gamification beyond the collection grid, no kid-facing screens by default (a
+  kid build, if any, is exactly 3 screens: pick / dots / reveal), no social
+  features, **no AI in v1** (verb→world is a lookup table; suggestions are a
+  filtered tagged library; the message is a template). ***"The app is just a
+  filing cabinet that knows what time it is."*** The acceptance test: *"If the
+  teacher is thinking about the app during Verb Hour, the app failed. If the
+  reveal makes a kid gasp, it succeeded."*
+  - **Status:** vision → **partly built, needs unification.** The pieces exist
+    as separate, navigated surfaces; the dream fuses them into ONE clock-driven
+    surface. Shipped toward it: the **contextual lead / context pill** (Today's
+    `_RightNowCard` + `contextLeadProvider` — the 2026-06-14 seed),
+    `dayPhaseProvider` + `liveBlockProvider` (the clock), the **present/beat
+    spine = the Reveal** (`BeatPresenter`, growth arc), **Send** (welcome PDF +
+    messages + `buildParentMessage`), **Verb Pick** (`action_words_kid_screen`),
+    mood weather, the `/program` season hub. The GAP is the **frame**: today
+    these are reached by navigation; the dream makes the *surface itself* the
+    clock (an auto-advancing single card) with nav demoted to **pull-down
+    curiosity**, plus the **Layer-3 conductor web dashboard** (doesn't exist).
+  - **Threads:** the DIRECT continuation of the 2026-06-14 "context is the
+    navigation" cockpit dream (this is its finished shape); the 2026-06-08
+    acceptance contract (*"under 12 minutes, all teacher-facing"* — this is
+    HOW); #10 breathable / one-language; #14/#18 present-control = the Reveal;
+    #1 the Book = Layer 3's summer report; the eleven primitives (each beat is
+    a primitive). **Open forks:** does the surface AUTO-advance by clock or
+    offer a one-tap "next beat" (the wrong-inference-hides-the-tool failure
+    mode from 2026-06-14 argues for generous + overridable); how an
+    off-schedule day (field trip, rain) bends the clock; whether Layer 2 is
+    literally a pull-down gesture on mobile.
+
 ---
 
 ## How to keep this alive (for future me)
