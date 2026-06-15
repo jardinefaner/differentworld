@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/invites/invite_code.dart';
+import 'package:differentworld/core/sync/power_sync_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/family/welcome_pdf.dart';
@@ -60,10 +61,15 @@ Future<void> generateFirstDayWelcome(
   // This week's curriculum world (drives the dinner question).
   final world = ref.read(currentWorldProvider);
 
-  // Best-effort guardian invite → the family-app QR. Never blocks the page.
+  // The guardian invite → the family-app QR. Only mint + embed it when we're
+  // ONLINE: an invite created offline hasn't synced to the server yet, so a
+  // parent scanning the QR right away would land on "invalid invite". Offline
+  // → omit the QR and print a note instead (the rest of the page is the value).
+  final connected = ref.read(syncStatusProvider).value?.connected ?? false;
   String? inviteUrl;
   String? inviteCode;
-  if (spaceId != null) {
+  String? inviteFallbackLine;
+  if (connected && spaceId != null) {
     try {
       final invite = await ref.read(inviteActionsProvider).createGuardianInvite(
             spaceId: spaceId,
@@ -79,6 +85,10 @@ Future<void> generateFirstDayWelcome(
     } on Object catch (e, st) {
       if (kDebugMode) debugPrint('[welcome] invite create failed: $e\n$st');
     }
+  } else if (!connected) {
+    inviteFallbackLine =
+        'Your family-app invite will be ready once we’re back online — '
+        'just ask us for it.';
   }
 
   final facts = <WelcomeFact>[
@@ -102,6 +112,7 @@ Future<void> generateFirstDayWelcome(
     dinnerQuestion: world?.question,
     inviteUrl: inviteUrl,
     inviteCode: inviteCode,
+    inviteFallbackLine: inviteFallbackLine,
   );
 
   await Printing.layoutPdf(

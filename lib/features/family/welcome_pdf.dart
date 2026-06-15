@@ -40,6 +40,7 @@ Future<Uint8List> buildWelcomePdf({
   String? contactLine,
   String? inviteUrl,
   String? inviteCode,
+  String? inviteFallbackLine,
 }) async {
   final doc = pw.Document(
     title: 'Welcome - ${_safe(childFirstName)}',
@@ -76,55 +77,64 @@ Future<Uint8List> buildWelcomePdf({
           ),
           pw.SizedBox(height: 22),
           // The app invite - the anxiety-killer: how they'll see the day.
-          pw.Container(
-            padding: const pw.EdgeInsets.all(14),
-            decoration: pw.BoxDecoration(
-              color: PdfColors.grey100,
-              borderRadius: pw.BorderRadius.circular(8),
-            ),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                if (inviteUrl != null) ...[
-                  pw.BarcodeWidget(
-                    data: inviteUrl,
-                    barcode: pw.Barcode.qrCode(),
-                    width: 92,
-                    height: 92,
-                  ),
-                  pw.SizedBox(width: 14),
-                ],
-                pw.Expanded(
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'See $child at school, live',
-                        style:
-                            pw.TextStyle(font: bold, fontSize: 15, color: teal),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        "Scan to join the family app: today's photo, the words "
-                        'they chose, when they are checked in and picked up, '
-                        'and a direct line to their teacher.',
-                        style: pw.TextStyle(
-                            font: font, fontSize: 11, lineSpacing: 2),
-                      ),
-                      if (inviteCode != null) ...[
-                        pw.SizedBox(height: 6),
+          // Online → a QR to the family app. Offline → a note instead of a
+          // dead QR (an invite minted offline hasn't synced to the server
+          // yet, so scanning it would land on "invalid invite"). When there's
+          // no invite at all, the whole block is omitted.
+          if (inviteUrl != null || inviteFallbackLine != null) ...[
+            pw.Container(
+              padding: const pw.EdgeInsets.all(14),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.grey100,
+                borderRadius: pw.BorderRadius.circular(8),
+              ),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  if (inviteUrl != null) ...[
+                    pw.BarcodeWidget(
+                      data: inviteUrl,
+                      barcode: pw.Barcode.qrCode(),
+                      width: 92,
+                      height: 92,
+                    ),
+                    pw.SizedBox(width: 14),
+                  ],
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
                         pw.Text(
-                          'Code: ${_safe(inviteCode)}',
-                          style: pw.TextStyle(font: bold, fontSize: 12),
+                          'See $child at school, live',
+                          style: pw.TextStyle(
+                              font: bold, fontSize: 15, color: teal),
                         ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          inviteUrl != null
+                              ? "Scan to join the family app: today's photo, "
+                                  'the words they chose, when they are checked '
+                                  'in and picked up, and a direct line to their '
+                                  'teacher.'
+                              : _safe(inviteFallbackLine!),
+                          style: pw.TextStyle(
+                              font: font, fontSize: 11, lineSpacing: 2),
+                        ),
+                        if (inviteCode != null) ...[
+                          pw.SizedBox(height: 6),
+                          pw.Text(
+                            'Code: ${_safe(inviteCode)}',
+                            style: pw.TextStyle(font: bold, fontSize: 12),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          pw.SizedBox(height: 18),
+            pw.SizedBox(height: 18),
+          ],
           if (worldName != null) ...[
             pw.Text(
               "THIS WEEK'S WORLD",

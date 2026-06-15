@@ -13,6 +13,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -208,9 +209,14 @@ class _LiveWorld extends ConsumerWidget {
         _Label(text: 'The rules of this world', accent: accent),
         for (final rule in rulesForWorld(world.id))
           _RuleLine(text: rule.text, accent: accent),
-        for (final text in ref.watch(addedWorldRulesProvider(world.id)).value ??
-            const <String>[])
-          _RuleLine(text: text, accent: accent, added: true),
+        for (final rule in ref.watch(addedWorldRulesProvider(world.id)).value ??
+            const <({String id, String text})>[])
+          _RuleLine(
+            text: rule.text,
+            accent: accent,
+            added: true,
+            onDelete: () => unawaited(_deleteAddedRule(context, ref, rule.id)),
+          ),
         const SizedBox(height: 4),
         Align(
           alignment: Alignment.centerLeft,
@@ -541,11 +547,20 @@ class _JourneySheet extends ConsumerWidget {
 /// a rule the ROOM added gets a `+` + a quiet "your room" tag, so the bible
 /// visibly distinguishes the curriculum's rules from the class's own.
 class _RuleLine extends StatelessWidget {
-  const _RuleLine({required this.text, required this.accent, this.added = false});
+  const _RuleLine({
+    required this.text,
+    required this.accent,
+    this.added = false,
+    this.onDelete,
+  });
 
   final String text;
   final Color accent;
   final bool added;
+
+  /// Delete handler. Only room-added rules pass one; authored (canon) rules
+  /// leave it null and stay undeletable — the world's own rules are premise.
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -565,7 +580,7 @@ class _RuleLine extends StatelessWidget {
               ),
             ),
           ),
-          if (added)
+          if (added) ...[
             Padding(
               padding: const EdgeInsets.only(left: 8, top: 2),
               child: Text(
@@ -575,6 +590,16 @@ class _RuleLine extends StatelessWidget {
                 ),
               ),
             ),
+            if (onDelete != null)
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(Icons.close, size: 18),
+                tooltip: 'Delete this rule',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+          ],
         ],
       ),
     );
@@ -591,6 +616,24 @@ Future<void> _showAddRuleSheet(
     showDragHandle: true,
     builder: (_) => _AddRuleSheet(worldId: worldId),
   );
+}
+
+/// Delete a rule the ROOM added to a world's bible (confirmed first). Authored
+/// canon rules never reach here — only `_RuleLine(added: true)` wires onDelete,
+/// so the world's own rules stay immutable premise.
+Future<void> _deleteAddedRule(
+  BuildContext context,
+  WidgetRef ref,
+  String id,
+) async {
+  final ok = await confirmDestructive(
+    context,
+    title: 'Delete this rule?',
+    message: "It'll be removed from this world's bible for your room. "
+        "The world's own rules stay.",
+  );
+  if (!ok) return;
+  await ref.read(entryActionsProvider).delete(id);
 }
 
 /// The one-field "add a rule" sheet. A short rule the room lives by, written
