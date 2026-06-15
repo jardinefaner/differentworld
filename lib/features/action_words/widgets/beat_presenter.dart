@@ -340,21 +340,25 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
         ),
       ),
       const SizedBox(height: 6),
-      Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (var i = 0; i < widget.beats.length; i++)
-            Container(
-              width: 7,
-              height: 7,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: i == _index ? Colors.white : Colors.white24,
-              ),
-            ),
-        ],
+      // A FIXED-WIDTH track, not per-beat dots: one dot per beat overflowed
+      // the control bar on a long run (the bar's middle slot is ~100 dp; 11+
+      // beats × 13 dp blew 26 px past the edge on a Pixel — 2026-06-15). The
+      // track scales to any beat count and the "i / N" text above carries the
+      // exact position. White on the dark immersive stage (a raw canvas — see
+      // THEME_ADHERENCE), matching the rest of these controls.
+      SizedBox(
+        width: 72,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: widget.beats.isEmpty
+                ? 0
+                : (_index + 1) / widget.beats.length,
+            minHeight: 4,
+            backgroundColor: Colors.white24,
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        ),
       ),
     ],
   );
