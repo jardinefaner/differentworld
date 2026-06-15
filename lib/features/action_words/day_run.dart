@@ -33,9 +33,16 @@ class DayBeat {
     this.lines = const [],
     this.suggestedSeconds = 0,
     this.emoji = '',
+    this.guidance = '',
   });
 
   final DayBeatKind kind;
+
+  /// The STAFF's "your move" cue for this beat — what to say, what to watch
+  /// for, when to advance. Shown ONLY on the phone (the conductor's score),
+  /// never on the big screen. Empty → [beatGuidance] supplies a templated
+  /// default for the [kind]; authored per-beat overrides can fill this later.
+  final String guidance;
 
   /// Small caption above the headline ("WEEK 4 · WATCH · 3 MIN").
   final String label;
@@ -61,6 +68,58 @@ class DayBeat {
   /// video's length; the Big-Thinking play beat the 5-minute play.
   final int suggestedSeconds;
 }
+
+/// The staff cue for a beat — its authored [DayBeat.guidance] if set, else a
+/// templated default by [DayBeatKind]. Pure + testable. Shown phone-side only
+/// (the conductor's score); never cast to the room screen.
+String beatGuidance(DayBeat beat) {
+  if (beat.guidance.trim().isNotEmpty) return beat.guidance.trim();
+  return switch (beat.kind) {
+    DayBeatKind.open =>
+      "Set the scene — say the world's name big. Move on when eyes are up.",
+    DayBeatKind.question =>
+      "Ask it out loud. Take 2–3 answers; don't resolve them. Move when the "
+          'room is curious.',
+    DayBeatKind.verbs =>
+      "Name today's words. Have each kid claim one. Move when everyone has.",
+    DayBeatKind.rule =>
+      'Say the rule, then ask "why might that matter?" Move when they get it.',
+    DayBeatKind.watch =>
+      'Play the clip — watch THEM, not the screen. Move when it ends.',
+    DayBeatKind.play =>
+      'Let them play it, hands-on. Watch for the first kid who finds the '
+          'pattern, then move to Name.',
+    DayBeatKind.name =>
+      'Name what they did together. Spell the key word out loud. Move when '
+          'they can say it back.',
+    DayBeatKind.bridge =>
+      'Ask "where else does this happen?" Take a few. Move when they have '
+          'stretched it.',
+    DayBeatKind.ask =>
+      "Pose the Wall question — don't answer it. Let it sit, then send them "
+          'to it.',
+    DayBeatKind.activity =>
+      "Send them to the activity, set a timer, circulate — don't hover.",
+    DayBeatKind.close =>
+      'Gather back. One word each on what they made. Hand off to the reveal.',
+  };
+}
+
+/// A short name for a beat kind — labels the "Next — {…}" control so the staff
+/// sees what's coming without reading ahead.
+String beatKindShortLabel(DayBeatKind kind) => switch (kind) {
+      DayBeatKind.open => 'Open',
+      DayBeatKind.question => 'Question',
+      DayBeatKind.verbs => 'Words',
+      DayBeatKind.rule => 'Rule',
+      DayBeatKind.watch => 'Watch',
+      DayBeatKind.play => 'Play',
+      DayBeatKind.name => 'Name it',
+      DayBeatKind.bridge => 'Bridge',
+      DayBeatKind.ask => 'Ask',
+      DayBeatKind.activity => 'Activity',
+      DayBeatKind.close => 'Close',
+    };
 
 /// Assemble the day's run from the live context — the curriculum [world], its
 /// [rules], and this week's [thinking] game (the headline one). Pure +

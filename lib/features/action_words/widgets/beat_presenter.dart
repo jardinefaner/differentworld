@@ -40,8 +40,14 @@ class BeatPresenter extends ConsumerStatefulWidget {
     this.emoji = '',
     this.initialBeat = 0,
     this.onBeatChanged,
+    this.showGuidance = true,
     super.key,
   });
+
+  /// Show the staff "your move" guidance card above the controls — the
+  /// conductor's score (what to say / watch for / what's next), per beat.
+  /// On for the day run + activity arc; a tour can pass false.
+  final bool showGuidance;
 
   /// The ordered run. Rendered one beat per full-screen page.
   final List<DayBeat> beats;
@@ -254,6 +260,24 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   left: 0,
                   right: 0,
                   child: Center(child: _timerPill()),
+                ),
+              // Staff "your move" guidance — the conductor's score. Sits just
+              // above the controls; ignores pointers so the tap-to-advance
+              // zones still fire through it. (A future two-device cast keeps
+              // it off the room screen entirely; for now it's bottom chrome.)
+              if (widget.showGuidance &&
+                  beatGuidance(beats[_index]).isNotEmpty)
+                Positioned(
+                  key: const ValueKey('bp-guidance'),
+                  left: 8,
+                  right: 8,
+                  bottom: 58,
+                  child: _GuidanceCard(
+                    text: beatGuidance(beats[_index]),
+                    nextLabel: _index < _count - 1
+                        ? beatKindShortLabel(beats[_index + 1].kind)
+                        : null,
+                  ),
                 ),
               // Control bar — timer · ‹ index/dots › · jump-to-beat.
               Positioned(
@@ -776,6 +800,80 @@ class _TimerSheetState extends State<_TimerSheet> {
                     child: const Text('Stop timer'),
                   ),
                 ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The staff's "your move" card — the conductor's-score line for the current
+/// beat, shown on the phone above the controls. `IgnorePointer` so the
+/// tap-to-advance zones beneath it still fire.
+class _GuidanceCard extends StatelessWidget {
+  const _GuidanceCard({required this.text, this.nextLabel});
+
+  final String text;
+  final String? nextLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return IgnorePointer(
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+            decoration: BoxDecoration(
+              color: scheme.surface.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: 0.5),
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.bolt_outlined, size: 14, color: scheme.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      'YOUR MOVE',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    if (nextLabel != null) ...[
+                      const Spacer(),
+                      Text(
+                        'Next: $nextLabel',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  text,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurface,
+                    height: 1.4,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
