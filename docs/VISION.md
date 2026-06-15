@@ -882,6 +882,30 @@ once it has a home.
   always; room / family / director — all, layered). Threads: the 11 primitives
   (Timer + Question + Scale); the Pace beat; #1 the Book; #16 missions/dailies
   ("age = dailies"); #4/#11 no-punishment.
+- **2026-06-14 (cont.)** — **The CALM look IS the brand: one left edge,
+  flush-left, flat — everywhere, no exceptions.** In the user's words: *"the
+  widgets you showed me in show_widget is how i like the app to look like.. the
+  one edge, the flush-left… to all.. it is our brand."* The felt clutter was
+  TWO things — boxiness AND indentation/centering. The brand answer, now law:
+  (1) **one left edge** — every header / title / subtitle starts at the same x;
+  hierarchy comes from type weight + whitespace, never from indentation or
+  centering (the login wordmark is the one hero-centering exception); (2)
+  **hang the chrome** — icons / avatars / dots live in a gutter to the LEFT of
+  that edge, never pushing the text in; (3) **right-align the meta** — counts /
+  times / badges on one right edge; (4) **flat** — no boxes; neutral cards
+  become flush rows / flat hairline surfaces, while SIGNAL cards (the "Right
+  now" lead, error banners, world accents) keep their tint so they pop against
+  the calm. Lineage (the references the user blessed): **Linear's 2026 "calmer
+  interface"** (recede-don't-compete, fewer icons / separators, structure
+  without boxes), **iA Writer / Things 3** (flush-left calm), the **Swiss /
+  International Typographic Style** (flush-left ragged-right as the *honest*
+  alignment; hierarchy via type + grid). SHIPPED: the Calm display setting
+  (default on; toggle-off reverts), `FeatureCard` → flush one-edge rows, an
+  app-wide `flatCardTheme` (every raw Card flat). REMAINING for TOTAL
+  consistency: convert the hand-rolled custom layouts (Today's rich cards) into
+  flush rows. This is the **sharpened, enforced form of dream #10**
+  (breathable / one visual language) — docs/THEME_ADHERENCE.md is the *colour*
+  half of the brand law; this is the *layout* half.
 
 ---
 
