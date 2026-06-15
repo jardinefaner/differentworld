@@ -102,6 +102,7 @@ import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/schedule/trip_detail_screen.dart';
 import 'package:differentworld/features/schedule/weekly_template_screen.dart';
+import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/roles_screen.dart';
@@ -240,6 +241,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Conductor',
                   child: ConductorScreen(),
+                ),
+              ),
+              // Today, always reachable by name — the curiosity bar links here
+              // when the cockpit has taken over the home slot (COCKPIT.md s4).
+              GoRoute(
+                path: 'today',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Today',
+                  child: TodayScreen(),
                 ),
               ),
               GoRoute(
@@ -1825,7 +1835,13 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
       _handleVehicleLink(next);
     });
 
-    return const TodayScreen();
+    // Slice 4 (docs/COCKPIT.md): the home surface is Today by default, or the
+    // clock-driven cockpit when the director has opted in. Today is never lost
+    // — it's reachable at /today (the cockpit's curiosity bar links there).
+    final cockpitAsHome = ref.watch(cockpitAsHomeProvider).value ?? false;
+    return cockpitAsHome
+        ? const NowCockpitScreen(key: ValueKey('cockpit-home'))
+        : const TodayScreen(key: ValueKey('today-home'));
   }
 }
 

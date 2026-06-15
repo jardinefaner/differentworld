@@ -63,7 +63,7 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
 /// NOT a nav bar: a curiosity affordance most days go untouched. (The exact
 /// set is tunable; these are the staff routes that exist today.)
 const _curiosityDestinations = <({IconData icon, String label, String route})>[
-  (icon: Icons.today_outlined, label: 'Today', route: '/'),
+  (icon: Icons.today_outlined, label: 'Today', route: '/today'),
   (icon: Icons.calendar_month_outlined, label: 'Schedule', route: '/schedule'),
   (icon: Icons.psychology_outlined, label: 'Activities', route: '/tools'),
   (icon: Icons.public_outlined, label: 'Worlds', route: '/program'),
