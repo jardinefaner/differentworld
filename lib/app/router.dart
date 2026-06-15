@@ -39,6 +39,7 @@ import 'package:differentworld/features/attendance/morning_checklist_screen.dart
 import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
+import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
 import 'package:differentworld/features/entries/observation_form_screen.dart';
@@ -232,6 +233,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const RouteTitle(
                   title: 'Now',
                   child: NowCockpitScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'conductor',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Conductor',
+                  child: ConductorScreen(),
                 ),
               ),
               GoRoute(
