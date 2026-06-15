@@ -7,14 +7,21 @@ import 'package:flutter_test/flutter_test.dart';
 /// is always present.
 void main() {
   group('beatGuidance', () {
-    test('every beat kind has a non-empty staff cue', () {
+    test('every TEACHING beat kind has a non-empty staff cue', () {
       for (final kind in DayBeatKind.values) {
+        // A photo beat is a keepsake to sit with, not a move to make — it's
+        // intentionally cue-less (see the dedicated test below).
+        if (kind == DayBeatKind.photo) continue;
         expect(
           beatGuidance(DayBeat(kind: kind)).trim(),
           isNotEmpty,
           reason: 'kind $kind has no guidance',
         );
       }
+    });
+
+    test('a photo beat has no staff cue (keepsake, not a move)', () {
+      expect(beatGuidance(const DayBeat(kind: DayBeatKind.photo)), isEmpty);
     });
 
     test('an authored guidance overrides the template', () {

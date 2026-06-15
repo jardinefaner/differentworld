@@ -18,6 +18,7 @@ enum DayBeatKind {
   bridge, // Big Thinking — where else (the zoom-out)
   ask, // Big Thinking — the question for the Wall
   activity, // the do-it activity menu
+  photo, // a keepsake image — a child's work sample / moment (growth arc)
   close, // the closing handoff (→ reveal)
 }
 
@@ -34,9 +35,15 @@ class DayBeat {
     this.suggestedSeconds = 0,
     this.emoji = '',
     this.guidance = '',
+    this.imageUrl = '',
   });
 
   final DayBeatKind kind;
+
+  /// For [DayBeatKind.photo] — a (signed) image URL to render full-bleed.
+  /// The growth arc fills this from the child's work-sample / observation
+  /// attachments so the story shows what they MADE, not just stats.
+  final String imageUrl;
 
   /// The STAFF's "your move" cue for this beat — what to say, what to watch
   /// for, when to advance. Shown ONLY on the phone (the conductor's score),
@@ -100,6 +107,9 @@ String beatGuidance(DayBeat beat) {
           'to it.',
     DayBeatKind.activity =>
       "Send them to the activity, set a timer, circulate — don't hover.",
+    // A keepsake photo beat (growth arc) carries no staff cue — it's a
+    // moment to sit with, not a move to make.
+    DayBeatKind.photo => '',
     DayBeatKind.close =>
       'Gather back. One word each on what they made. Hand off to the reveal.',
   };
@@ -118,6 +128,7 @@ String beatKindShortLabel(DayBeatKind kind) => switch (kind) {
       DayBeatKind.bridge => 'Bridge',
       DayBeatKind.ask => 'Ask',
       DayBeatKind.activity => 'Activity',
+      DayBeatKind.photo => 'Photo',
       DayBeatKind.close => 'Close',
     };
 

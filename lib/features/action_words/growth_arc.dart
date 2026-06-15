@@ -18,13 +18,20 @@ World? _worldById(String id) {
 /// most, the worlds they collected, their emerging title — auto-curated from
 /// the data already on the device. Cast it to the room or send it home.
 ///
+/// One of the child's keepsake images for the arc — a (signed) `url` and a
+/// short `caption`. The screen resolves these from the child's work-sample /
+/// observation attachments before calling [buildGrowthArc]; the builder stays
+/// pure (no network) so it remains unit-testable + cast-safe.
+typedef GrowthPhoto = ({String url, String caption});
+
 /// Pure + deterministic so it's unit-testable and can cross the cast wire.
-/// Sourced entirely from [ActionWordsCollection] (their every `action_words`
-/// day), so it needs no network and no media pipeline — photos are a deferred
-/// enhancement (a future `DayBeatKind.photo` + signed-URL beat).
+/// The verb / world / title beats come from [ActionWordsCollection]; [photos]
+/// (the child's actual moments) are woven through the worlds so the arc shows
+/// what they MADE, not just stats — the "drawing becomes a film" idea.
 List<DayBeat> buildGrowthArc({
   required String firstName,
   required ActionWordsCollection collection,
+  List<GrowthPhoto> photos = const [],
 }) {
   final name = firstName.trim().isEmpty ? 'You' : firstName.trim();
 
@@ -66,6 +73,37 @@ List<DayBeat> buildGrowthArc({
       return byCount != 0 ? byCount : a.key.compareTo(b.key);
     });
 
+  // Weave the child's actual photos through the worlds — world, photo, world,
+  // photo … — so the arc plays as a visual story, not a stat sheet.
+  final worldBeats = <DayBeat>[
+    for (final e in worldEntries.take(5))
+      if (_worldById(e.key) case final w?)
+        DayBeat(
+          kind: DayBeatKind.open,
+          label: '${e.value} ${e.value == 1 ? 'day' : 'days'} as',
+          big: w.name,
+          sub: w.title,
+          emoji: w.emoji,
+        ),
+  ];
+  final photoBeats = <DayBeat>[
+    for (final p in photos.take(6))
+      DayBeat(
+        kind: DayBeatKind.photo,
+        label: 'A moment',
+        big: p.caption,
+        imageUrl: p.url,
+      ),
+  ];
+  final woven = <DayBeat>[];
+  final weaveLen = worldBeats.length > photoBeats.length
+      ? worldBeats.length
+      : photoBeats.length;
+  for (var i = 0; i < weaveLen; i++) {
+    if (i < worldBeats.length) woven.add(worldBeats[i]);
+    if (i < photoBeats.length) woven.add(photoBeats[i]);
+  }
+
   return [
     DayBeat(
       kind: DayBeatKind.open,
@@ -82,15 +120,7 @@ List<DayBeat> buildGrowthArc({
         label: 'The words you lived most',
         lines: topVerbLines,
       ),
-    for (final e in worldEntries.take(5))
-      if (_worldById(e.key) case final w?)
-        DayBeat(
-          kind: DayBeatKind.open,
-          label: '${e.value} ${e.value == 1 ? 'day' : 'days'} as',
-          big: w.name,
-          sub: w.title,
-          emoji: w.emoji,
-        ),
+    ...woven,
     if (collection.collectedWorlds > 0)
       DayBeat(
         kind: DayBeatKind.open,

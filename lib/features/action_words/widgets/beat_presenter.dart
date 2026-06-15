@@ -6,6 +6,7 @@ import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/present_timer.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/shared/platform/fullscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -574,6 +575,56 @@ class _BeatSlide extends StatelessWidget {
         fontWeight: FontWeight.w600,
       ),
     );
+
+    // A keepsake photo — the child's actual moment, full-bleed, with the
+    // caption over a bottom scrim. (Growth arc; docs/VISION.md "drawing
+    // becomes a film".) Signed URL resolved by the screen; graceful on a slow
+    // / failed load so the reel never stalls on a dark void.
+    if (beat.kind == DayBeatKind.photo) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          if (beat.imageUrl.isNotEmpty)
+            // The app's signed-URL + cached photo widget (the attachment
+            // carries a Storage PATH, not a usable URL — PersonPhotoNetwork
+            // mints + caches the signed URL). Covers by default.
+            PersonPhotoNetwork(
+              urlOrPath: beat.imageUrl,
+              placeholderBuilder: (_) => const ColoredBox(
+                color: Colors.black,
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.white70),
+                ),
+              ),
+            ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(28, 72, 28, 44),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black87],
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  caption,
+                  if (beat.big.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _headline(beat.big, 30),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     // The world hero.
     if (beat.kind == DayBeatKind.open) {
