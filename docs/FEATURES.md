@@ -51,7 +51,8 @@ order: **Today**, **Schedule**, **Observations** (gated `canObserve`),
 **Action Words** (gated `canObserve`), **Program** (gated `canObserve`),
 **Captures**, **Tasks**, **Tools**, **Present**, **Brain Breaks**,
 **Missions**, **Brainstorm Board**, **Insights**, **Surveys**,
-**Vehicles** (gated `canDrive || canManageSpace`), **Settings**. Everything narrower is reachable via the
+**Vehicles** (gated `canDrive || canManageSpace`), **Reflect**,
+**Settings**. Everything narrower is reachable via the
 omnibox (`/search`) or slash commands. Settings is the library / admin
 surface — preferences + roster + fleet, not primary workflows.
 
@@ -632,6 +633,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Reflections
+**Path**: `lib/features/reflections/`
+**Purpose**: A count-up stopwatch ritual that turns real work time into a visible growth record — staff run the clock, stop it, rate how it went on a 4-face Scale, and the saved reflections stack into a personal growth strip.
+**Personas served**: All staff (Jordan, Coach Sam, Brianna — the staffer's own growth practice). Kid-scoped entry (passing a `subjectId` so the reflection lands in the child's Book) is planned, not yet wired.
+**Discovery surfaces**:
+- Routes: `/reflect`
+- Omnibox: yes — `page.reflect` "Reflect" (gated `viewer is! GuardianViewer`; keywords: reflect, reflection, stopwatch, timer, focus, session, how it went, growth, accountability)
+- Slash: `/reflect` (aliases: reflection, stopwatch, timer, focus, session)
+- Drawer: yes — "Reflect" in the **Activities** group (`nav_destinations.dart`, after `Present`)
+- Settings: no
+**Capabilities**: None — open to all signed-in staff. No cap key beyond non-guardian.
+**Data**: Reuses [entries](SCHEMA.md#entries) `kind='reflection'` — one row per saved session; `details` JSON = `{seconds, face}` (face 1–4, 0 = not picked); `body` = optional note. `subject_id` nullable — null for a staffer's own session, set for a child's reflection (their Book). No new table or migration. `EntryKind.reflection` constant + `EntryActions.recordReflection(seconds:, face:, note:, subjectId:)` live in `lib/features/entries/entries_providers.dart`.
+**Surfaces**:
+- *Reflection session screen* — `lib/features/reflections/reflection_session_screen.dart`. The main `/reflect` screen: a count-up timer card ("Counting up" → "Stop & reflect" → 4-face picker + optional note + "Save reflection"); below that, the growth strip — all saved reflections newest-first (`_ReflectionTile`: face icon + elapsed time + note + relative timestamp). Past the 2-minute threshold the face rating is required; below it the face is optional. After save the timer resets and begins a fresh session immediately.
+- *Reflection providers* — `lib/features/reflections/reflection_providers.dart`. `ReflectionView` (parses an `Entry` of `kind='reflection'` into typed `seconds` / `face` / `note`); `recentReflectionsProvider` (StreamProvider.autoDispose — watches `entries` in the space filtered by `kind='reflection'`, maps to `List<ReflectionView>` newest-first).
+**Depends on**: Entries (`EntryActions.recordReflection`; `entriesDao.watchInSpace` via `recentReflectionsProvider`).
+**Consumed by**: Nothing yet — leaf surface in slice 1. Slice 2 will surface the growth strip in Today or a dedicated "My growth" tile.
+**Last verified**: 2026-06-14
+
+---
+
 ## Review
 **Path**: `lib/features/review/`
 **Purpose**: Guided reflection — weekly (one-question-per-page walk) and yearly (annual re-grounding).
@@ -683,7 +705,7 @@ surface — preferences + roster + fleet, not primary workflows.
 ## Settings
 **Path**: `lib/features/settings/`
 **Purpose**: Library / admin surfaces — program config, team, fleet, locations, activities, member detail, plus device preferences.
-**Personas served**: Maya (all of it), All staff (preferences + read-only team / vehicles), Helen (text-size override, also reachable from Family Today header), Jordan (outdoor-mode toggle).
+**Personas served**: Maya (all of it), All staff (preferences + read-only team / vehicles), Helen (text-size override, also reachable from Family Today header), Jordan (outdoor-mode toggle + calm-layout toggle).
 **Discovery surfaces**:
 - Routes: `/settings`, `/settings/program`, `/settings/team`, `/settings/team/:id`, `/settings/roles`, `/settings/vehicles`, `/settings/locations`. (Activities lives at `/activities`, not under settings, because it's used more often than configured.)
 - Omnibox: yes — "Settings", "Program settings", "Team", "Roles & permissions", "Vehicles", "Locations", "Activities"
@@ -693,16 +715,16 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: Read: all members. Program settings: `can_manage_space`. Team write / vehicles write: `can_manage_space`. Roles screen is read-only for everyone (the catalog itself is a code constant).
 **Data**: [spaces](SCHEMA.md#spaces) (program settings screen reads + writes `capabilities['timer_presets']` via `HouseTimerActions.setPresetMinutes`; `capabilities['suggest_play_minutes']` via `HouseTimerActions.setPlayMinutes`; `capabilities['phase_windows']` via `DayPhaseActions.setWindows`; all other feature flags via `SpaceCapActions.setCap`/`setStringCap`/`setIntCap`), [members](SCHEMA.md#members), [locations](SCHEMA.md#locations) plus what each sub-screen owns. Roles screen reads no DB — the role catalog is `RoleBundles.rolesFor(vertical)` / `defaultsFor()` in `lib/core/capabilities/`.
 **Surfaces**:
-- *Settings screen* — `lib/features/settings/settings_screen.dart`. Grouped list (Account / Space / Preferences / About).
+- *Settings screen* — `lib/features/settings/settings_screen.dart`. Grouped list (Account / Space / Preferences / About). The **Preferences** group carries: `TextSizeTile` (text scale floor), `_OutdoorModeTile` (high-contrast), `_DisplayStyleTile` (Calm layout toggle — `DisplayStyle.boxed` / `DisplayStyle.calm`; reads/writes `displayStyleProvider` from `lib/features/settings/display_style_setting.dart`; default Boxed; when Calm, neutral `FeatureCard` instances flatten to a hairline so lists read as one continuous surface instead of stacked boxes).
 - *Program settings* — `lib/features/settings/program_settings_screen.dart`. Per-space capability flags + pickup window + "Defaults" section: "Timer presets" `_TimerPresetsTile` (reads `houseTimerPresetsProvider`; taps to a glass sheet that adds/removes whole-minute presets; writes via `HouseTimerActions.setPresetMinutes`) + "Big Thinking play length" `_PlayLengthTile` (inline ± stepper; writes via `HouseTimerActions.setPlayMinutes`) + "Day rhythm" `_PhaseWindowsSection` (four time-pickers for arrival/program/pickup/closed phase boundaries; writes via `DayPhaseActions.setWindows`). All three write `spaces.capabilities` via `SpaceCapActions`.
 - *Team screen* — `lib/features/settings/team_screen.dart`. Members + pending invites.
 - *Member detail* — `lib/features/settings/member_detail_screen.dart`. Per-staff profile + certifications.
 - *Roles & permissions* — `lib/features/settings/roles_screen.dart`. Read-only directory of every role offered in the active vertical + the default capabilities each one ships with. Surfaces cert-gated caps in a separate group so directors don't think "the bundle says false; I'll flip it" without realizing the cert is the actual gate. Shipped 2026-05-22 (Wave 36).
 - *Locations list* — `lib/features/settings/locations_list_screen.dart`. Place catalog for scheduling.
 - *Shared text-size tile / picker* — `lib/features/settings/widgets/text_size_tile.dart`. Public `TextSizeTile` + `showTextSizePicker(context, ref)` helper, reused by Family Today so guardians can reach the override without a Settings screen.
-**Depends on**: Members, Spaces (timer_presets + suggest_play_minutes + phase_windows cap writes; reads via Action Words providers), Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog, Action Words (`houseTimerActionsProvider` + `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` imported from `house_timer.dart`; `DayPhaseActions` + `dayPhaseActionsProvider` imported from `today_providers.dart`).
-**Consumed by**: Most features (config), Helen (text scale — staff AND family-side via shared picker), Jordan (outdoor mode), Family Today (text-size picker).
-**Last verified**: 2026-06-08
+**Depends on**: Members, Spaces (timer_presets + suggest_play_minutes + phase_windows cap writes; reads via Action Words providers), Vehicles, Locations, Activities, Invites, Certifications, Capabilities catalog, Action Words (`houseTimerActionsProvider` + `houseTimerPresetsProvider` + `houseSuggestPlayMinutesProvider` imported from `house_timer.dart`; `DayPhaseActions` + `dayPhaseActionsProvider` imported from `today_providers.dart`), `display_style_setting.dart` (SharedPreferences-backed `displayStyleProvider`).
+**Consumed by**: Most features (config), Helen (text scale — staff AND family-side via shared picker), Jordan (outdoor mode + calm layout), Family Today (text-size picker).
+**Last verified**: 2026-06-14
 
 ---
 
@@ -1288,6 +1310,7 @@ _Run 2026-06-03 (Tools + LiveSession lobby + Poster orientation)_ — discovery 
 
 _Last full registry verification: 2026-06-06 (World slice 1 — character_sheets)._
 _Incremental reconcile: 2026-06-08 (timer caps + phase windows caps + attendance natural-key index) — Action Words Capabilities + Status + Depends on + Consumed by updated for `timer_presets` / `suggest_play_minutes` caps. Today Data + Depends on updated for `phase_windows` cap. Settings Data + Program settings surface description + Depends on updated for all three caps + new `_TimerPresetsTile` / `_PlayLengthTile` / `_PhaseWindowsSection` tiles. Cross-links reconciled: Today→spaces and Action Words→spaces and Settings→spaces all bidirectional with SCHEMA.md. No new discovery drift._
+_Incremental reconcile: 2026-06-14 (Reflections + Settings Calm layout) — **Reflections** new feature section added; all four discovery surfaces verified (route `/reflect` in `router.dart`, omnibox `page.reflect` in `omnibox_catalog.dart`, slash `/reflect` in `slash_commands.dart`, drawer "Reflect" in `nav_destinations.dart` Activities group). **Settings** — `_DisplayStyleTile` (`displayStyleProvider`, `DisplayStyle.boxed/calm`) documented in the Preferences group surface description; Personas served + Depends on + Consumed by updated. Top-level orientation blurb updated to include Reflect in the canonical nav list. SCHEMA.md: `entries` `kind` column updated to add `reflection`; Reflections added to `entries` Consumers. No new tables. Cross-link reconcile: Reflections→entries and entries→Reflections now bidirectional. Feature folders `identity`, `games`, `activity_forge`, `launch`, `runtime` exist in code with no FEATURES.md entry — pre-existing gap, flagged below but not in scope for this run._
 _If a feature is missing from this file, the feature-mapper agent will
 add a stub the next time it runs. Don't hand-write entries unless
 you're also updating the agent's view of truth._
