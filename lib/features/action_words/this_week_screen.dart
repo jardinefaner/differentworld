@@ -9,6 +9,7 @@ import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -17,6 +18,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -200,25 +202,26 @@ class _LiveWorld extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 20),
-        // The world's three rules — every kid hears all three; each kid's
-        // verbs decide which one is theirs.
-        if (rulesForWorld(world.id).isNotEmpty) ...[
-          _Label(text: 'The rules of this world', accent: accent),
-          for (final rule in rulesForWorld(world.id))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('§  ', style: TextStyle(color: accent, height: 1.4)),
-                  Expanded(
-                    child: Text(rule.text, style: theme.textTheme.bodyMedium),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 20),
-        ],
+        // The world's rules — the authored ones (every kid hears all three;
+        // their verbs decide which is theirs) PLUS any the ROOM added (the
+        // "add a rule" mechanic; docs/VISION.md). The bible is extensible.
+        _Label(text: 'The rules of this world', accent: accent),
+        for (final rule in rulesForWorld(world.id))
+          _RuleLine(text: rule.text, accent: accent),
+        for (final text in ref.watch(addedWorldRulesProvider(world.id)).value ??
+            const <String>[])
+          _RuleLine(text: text, accent: accent, added: true),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () =>
+                unawaited(_showAddRuleSheet(context, ref, world.id)),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add a rule'),
+          ),
+        ),
+        const SizedBox(height: 20),
         // Watch -> Do
         if (world.videos.isNotEmpty) ...[
           _Label(text: 'Watch → Do', accent: accent),
@@ -528,6 +531,147 @@ class _JourneySheet extends ConsumerWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One rule line in the world bible. Authored rules are marked `§` (canon);
+/// a rule the ROOM added gets a `+` + a quiet "your room" tag, so the bible
+/// visibly distinguishes the curriculum's rules from the class's own.
+class _RuleLine extends StatelessWidget {
+  const _RuleLine({required this.text, required this.accent, this.added = false});
+
+  final String text;
+  final Color accent;
+  final bool added;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(added ? '+  ' : '§  ',
+              style: TextStyle(color: accent, height: 1.4)),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontStyle: added ? FontStyle.italic : null,
+              ),
+            ),
+          ),
+          if (added)
+            Padding(
+              padding: const EdgeInsets.only(left: 8, top: 2),
+              child: Text(
+                'your room',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _showAddRuleSheet(
+  BuildContext context,
+  WidgetRef ref,
+  String worldId,
+) {
+  return showGlassSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => _AddRuleSheet(worldId: worldId),
+  );
+}
+
+/// The one-field "add a rule" sheet. A short rule the room lives by, written
+/// into the world's bible (an `EntryKind.worldRule` entry).
+class _AddRuleSheet extends ConsumerStatefulWidget {
+  const _AddRuleSheet({required this.worldId});
+
+  final String worldId;
+
+  @override
+  ConsumerState<_AddRuleSheet> createState() => _AddRuleSheetState();
+}
+
+class _AddRuleSheetState extends ConsumerState<_AddRuleSheet> {
+  final _controller = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _saving) return;
+    setState(() => _saving = true);
+    final nav = Navigator.of(context);
+    unawaited(HapticFeedback.selectionClick());
+    await ref
+        .read(entryActionsProvider)
+        .addWorldRule(text: text, worldId: widget.worldId);
+    if (!mounted) return;
+    nav.pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          4,
+          20,
+          16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Add a rule', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'A rule your room lives by — it joins this world’s bible.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
+              minLines: 1,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'e.g. We clean up together',
+              ),
+              onSubmitted: (_) => unawaited(_save()),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                onPressed: _saving ? null : () => unawaited(_save()),
+                child: const Text('Add to the bible'),
+              ),
+            ),
+          ],
         ),
       ),
     );
