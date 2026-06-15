@@ -219,14 +219,26 @@ class SettingsScreen extends ConsumerWidget {
           // aren't built); the text-size override is live so Helen-
           // type users can boost the UI above their OS dynamic-type
           // slider without leaving Different World.
-          const _SettingsGroup(
+          _SettingsGroup(
             label: 'Preferences',
             children: [
-              TextSizeTile(),
-              _SettingsDivider(),
-              _OutdoorModeTile(),
-              _SettingsDivider(),
-              _DisplayStyleTile(),
+              const TextSizeTile(),
+              const _SettingsDivider(),
+              const _OutdoorModeTile(),
+              const _SettingsDivider(),
+              const _DisplayStyleTile(),
+              const _SettingsDivider(),
+              // The clock-driven cockpit (docs/COCKPIT.md) — opt-in while it
+              // proves itself; the plan is for it to become the home surface.
+              ListTile(
+                leading: const Icon(Icons.center_focus_strong_outlined),
+                title: const Text('Now — the cockpit'),
+                subtitle: const Text(
+                  'One screen at a time, led by the clock (beta)',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/now'),
+              ),
             ],
           ),
 
