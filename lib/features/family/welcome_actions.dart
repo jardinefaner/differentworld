@@ -19,11 +19,18 @@ import 'package:printing/printing.dart';
 /// — it creates a 30-day guardian invite if it can, and if that fails (no
 /// capability / offline) the welcome still prints WITHOUT the QR, because the
 /// rest of the page is the value.
+///
+/// Re-entrancy-guarded per subject: the native print dialog takes a beat to
+/// appear, so an impatient double-tap would otherwise mint a SECOND guardian
+/// invite. The guard drops re-taps while one is in flight.
+final Set<String> _welcomeInFlight = <String>{};
+
 Future<void> generateFirstDayWelcome(
   BuildContext context,
   WidgetRef ref,
   String subjectId,
 ) async {
+  if (_welcomeInFlight.contains(subjectId)) return;
   final messenger = ScaffoldMessenger.maybeOf(context);
   final viewer = ref.read(viewerProvider);
   final subject = ref.read(subjectByIdProvider(subjectId)).value;
@@ -33,7 +40,9 @@ Future<void> generateFirstDayWelcome(
     );
     return;
   }
-  final spaceId = viewer.spaceId;
+  _welcomeInFlight.add(subjectId);
+  try {
+    final spaceId = viewer.spaceId;
   final programName = (viewer.space?.name ?? '').trim().isEmpty
       ? 'our program'
       : viewer.space!.name;
@@ -99,6 +108,9 @@ Future<void> generateFirstDayWelcome(
     onLayout: (_) => bytes,
     name: 'Welcome — ${subject.firstName}',
   );
+  } finally {
+    _welcomeInFlight.remove(subjectId);
+  }
 }
 
 /// "18:00" → "6:00 PM". Returns the input unchanged if it isn't HH:mm.

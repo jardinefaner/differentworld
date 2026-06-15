@@ -217,7 +217,9 @@ class _PickerRow extends StatelessWidget {
     final scheme = theme.colorScheme;
     return InkWell(
       onTap: onTap,
-      child: Padding(
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [

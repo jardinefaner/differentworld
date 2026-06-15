@@ -19,7 +19,10 @@ import 'package:intl/intl.dart';
 final growthArcPhotosProvider =
     FutureProvider.autoDispose.family<List<GrowthPhoto>, String>(
   (ref, subjectId) async {
-    final entries = await ref.watch(
+    // ref.read (not watch): the arc is a one-time snapshot built when the
+    // screen opens — a live subscription per attachment would re-subscribe N
+    // providers on every rebuild and thrash the reel mid-cast on sync events.
+    final entries = await ref.read(
       entriesForSubjectProvider(
         (subjectId: subjectId, kind: EntryKind.observation),
       ).future,
@@ -27,7 +30,7 @@ final growthArcPhotosProvider =
     final photos = <GrowthPhoto>[];
     for (final e in entries) {
       if (photos.length >= 6) break;
-      final atts = await ref.watch(
+      final atts = await ref.read(
         attachmentsForEntityProvider((kind: 'entry', id: e.id)).future,
       );
       if (atts.isEmpty) continue;

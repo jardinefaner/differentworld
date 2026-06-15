@@ -537,7 +537,7 @@ class _JourneySheet extends ConsumerWidget {
   }
 }
 
-/// One rule line in the world bible. Authored rules are marked `§` (canon);
+/// One rule line in the world bible. Authored rules are marked `•` (canon);
 /// a rule the ROOM added gets a `+` + a quiet "your room" tag, so the bible
 /// visibly distinguishes the curriculum's rules from the class's own.
 class _RuleLine extends StatelessWidget {
@@ -555,7 +555,7 @@ class _RuleLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(added ? '+  ' : '§  ',
+          Text(added ? '+  ' : '•  ',
               style: TextStyle(color: accent, height: 1.4)),
           Expanded(
             child: Text(
@@ -658,6 +658,7 @@ class _AddRuleSheetState extends ConsumerState<_AddRuleSheet> {
               textCapitalization: TextCapitalization.sentences,
               minLines: 1,
               maxLines: 3,
+              maxLength: 200,
               decoration: const InputDecoration(
                 hintText: 'e.g. We clean up together',
               ),

@@ -922,7 +922,7 @@ class _GuidanceCard extends StatelessWidget {
                     color: scheme.onSurface,
                     height: 1.4,
                   ),
-                  maxLines: 3,
+                  maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],

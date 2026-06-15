@@ -64,6 +64,6 @@ extension DisplayStyleLabel on DisplayStyle {
   String get description => switch (this) {
         DisplayStyle.boxed => 'Filled cards, each its own box',
         DisplayStyle.calm => 'Flat one-edge cards — the default',
-        DisplayStyle.clean => 'Calm, plus tight sentence-case type',
+        DisplayStyle.clean => 'Calm, plus smaller, lighter headings',
       };
 }
