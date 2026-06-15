@@ -26,6 +26,7 @@ import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/features/today/widgets/your_tools_strip.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
@@ -247,6 +248,10 @@ class _RightNowCard extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Card(
+        // Full-bleed to the page edge (no Card margin) so the tinted block's
+        // own left lines up with the cohort rows; the glyph then hangs in the
+        // shared 44dp gutter, landing the text on the one edge.
+        margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         color: spec.container,
         child: InkWell(
@@ -255,19 +260,24 @@ class _RightNowCard extends ConsumerWidget {
             unawaited(context.push(route));
           },
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
             child: Row(
               children: [
-                Container(
+                SizedBox(
                   width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: spec.accent,
-                    borderRadius: BorderRadius.circular(12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: spec.accent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, color: spec.onAccent, size: 20),
+                    ),
                   ),
-                  child: Icon(icon, color: spec.onAccent),
                 ),
-                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1273,92 +1283,99 @@ class _GroupTodayCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final stateAsync = ref.watch(groupDayStateProvider(group));
 
-    final dotKind = stateAsync.value == null
-        ? StatusDotKind.neutral
-        : _dotKindFor(stateAsync.value!);
+    final state = stateAsync.value;
+    final dotKind = state == null ? StatusDotKind.neutral : _dotKindFor(state);
+    // Marked-of-total, pinned to the row's right edge — the glanceable
+    // headline (the pills below break it down). Hidden until the roster
+    // loads or when the cohort has no children enrolled.
+    final countLabel = (state == null || state.totalSubjects == 0)
+        ? null
+        : '${state.markedCount} of ${state.totalSubjects}';
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          unawaited(HapticFeedback.selectionClick());
-          unawaited(context.push('/groups/${group.id}'));
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    // One-edge row: the scan-dot + room glyph hang in FeatureCard's leading
+    // gutter (the same 44dp column every row shares), the name + counts sit on
+    // the text edge, and the schedule strip + day-state pills flush below. The
+    // standalone "take attendance" icon is gone — the row taps into the cohort
+    // and the tappable "unmarked" pill is the fast path into attendance.
+    return FeatureCard(
+      // `content` overrides the title/subtitle column; `title` stays the
+      // semantic name (FeatureCard requires it, falls back to it).
+      title: group.name,
+      onTap: () => context.push('/groups/${group.id}'),
+      leading: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatusDot(kind: dotKind),
+          const SizedBox(height: 8),
+          Icon(
+            Icons.meeting_room_outlined,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Row(
-                children: [
-                  // Traffic-light scan affordance — the eye lands here
-                  // first, before the room name. Glow ring when a kid
-                  // is flagged so you find that one row in a list of N.
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: StatusDot(kind: dotKind),
-                  ),
-                  CircleAvatar(
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    foregroundColor: theme.colorScheme.onPrimaryContainer,
-                    child: const Icon(Icons.meeting_room_outlined),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          group.name,
-                          style: theme.textTheme.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (group.ageRange != null)
-                          Text(
-                            group.ageRange!,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Take attendance',
-                    icon: const Icon(Icons.fact_check_outlined),
-                    onPressed: () =>
-                        context.push('/groups/${group.id}/attendance'),
-                  ),
-                ],
+              Expanded(
+                child: Text(
+                  group.name,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const SizedBox(height: 12),
-              // "Now / Next" schedule strip — tells the staff scanner
-              // what the room is doing this very moment without having
-              // to open the schedule editor. Renders nothing if the
-              // cohort has no blocks today.
-              NowNextStrip(groupId: group.id),
-              const SizedBox(height: 12),
-              stateAsync.when(
-                // Shaped skeleton instead of a "Loading…" line — the
-                // layout doesn't jump when the data lands.
-                loading: () => const SkeletonShimmer(
-                  child: Row(
-                    children: [
-                      SkeletonBox(width: 84, height: 22, radius: 11),
-                      SizedBox(width: 8),
-                      SkeletonBox(width: 64, height: 22, radius: 11),
-                    ],
+              if (countLabel != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  countLabel,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                error: (_, _) => _StateLine(
-                  text: 'Tap to retry.',
-                  color: theme.colorScheme.error,
-                ),
-                data: (state) => _DayStateRow(state: state, groupId: group.id),
-              ),
+              ],
             ],
           ),
-        ),
+          if (group.ageRange != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Text(
+                group.ageRange!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          const SizedBox(height: 10),
+          // "Now / Next" schedule strip — tells the staff scanner what the
+          // room is doing this very moment without opening the editor.
+          // Renders nothing if the cohort has no blocks today.
+          NowNextStrip(groupId: group.id),
+          const SizedBox(height: 10),
+          stateAsync.when(
+            // Shaped skeleton instead of a "Loading…" line — the layout
+            // doesn't jump when the data lands.
+            loading: () => const SkeletonShimmer(
+              child: Row(
+                children: [
+                  SkeletonBox(width: 84, height: 22, radius: 11),
+                  SizedBox(width: 8),
+                  SkeletonBox(width: 64, height: 22, radius: 11),
+                ],
+              ),
+            ),
+            error: (_, _) => _StateLine(
+              text: 'Tap to retry.',
+              color: theme.colorScheme.error,
+            ),
+            data: (state) => _DayStateRow(state: state, groupId: group.id),
+          ),
+        ],
       ),
     );
   }
