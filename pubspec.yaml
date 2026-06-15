@@ -122,6 +122,13 @@ dev_dependencies:
   json_serializable: ^6.13.2
   very_good_analysis: ^10.2.0
 
+  # Brand-face generators — run once after the Horizon mark changes
+  # (the source PNG is built by tool/render_brand_assets.dart):
+  #   dart run flutter_launcher_icons
+  #   dart run flutter_native_splash:create
+  flutter_launcher_icons: ^0.14.0
+  flutter_native_splash: ^2.4.0
+
 flutter:
   uses-material-design: true
 
@@ -184,3 +191,31 @@ flutter:
     - family: Anton
       fonts:
         - asset: assets/fonts/Anton.ttf
+
+# ── Brand face ──────────────────────────────────────────────────────────────
+# The Horizon mark (assets/brand/icon.png, painted by
+# tool/render_brand_assets.dart) → real launcher icons + splash across every
+# platform, replacing the stock Flutter icon. Brand teal #2A9D8F.
+flutter_launcher_icons:
+  image_path: "assets/brand/icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 21
+  adaptive_icon_background: "#2A9D8F"
+  adaptive_icon_foreground: "assets/brand/icon.png"
+  web:
+    generate: true
+    background_color: "#2A9D8F"
+    theme_color: "#2A9D8F"
+  macos:
+    generate: true
+  windows:
+    generate: true
+
+flutter_native_splash:
+  color: "#2A9D8F"
+  image: "assets/brand/icon.png"
+  android_12:
+    color: "#2A9D8F"
+    image: "assets/brand/icon.png"

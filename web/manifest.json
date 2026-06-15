@@ -3,7 +3,7 @@
     "short_name": "Different World",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#F8F7F4",
+    "background_color": "#2A9D8F",
     "theme_color": "#2A9D8F",
     "description": "Different World — offline-first classroom planning & logging for early-childhood program staff.",
     "orientation": "portrait-primary",

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<!-- Deep links go EXCLUSIVELY through the app_links package
+	<dict>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<!-- Deep links go EXCLUSIVELY through the app_links package
 	     (lib/features/invites/deep_link_listener.dart), which
 	     translates differentworld://v/<id>/<kind> and
 	     differentworld://invite/<code> into the right go_router route.
@@ -15,104 +15,106 @@
 	     404s with "We can't find that page." Supabase's OAuth callback
 	     has its own listener and is unaffected. Keep in sync with the
 	     flutter_deeplinking_enabled meta-data in AndroidManifest.xml. -->
-	<key>FlutterDeepLinkingEnabled</key>
-	<false/>
-	<key>CFBundleDisplayName</key>
-	<string>Differentworld</string>
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>differentworld</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>$(FLUTTER_BUILD_NAME)</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>com.jardine.differentworld.auth</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.jardine.differentworld</string>
-			</array>
-		</dict>
-		<dict>
-			<!-- Invite deep links — differentworld://invite/<code>.
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
+		<key>CFBundleDisplayName</key>
+		<string>Differentworld</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>differentworld</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(FLUTTER_BUILD_NAME)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLName</key>
+				<string>com.jardine.differentworld.auth</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.jardine.differentworld</string>
+				</array>
+			</dict>
+			<dict>
+				<!-- Invite deep links — differentworld://invite/<code>.
 			     Universal Links over https://differentworld.app/invite/*
 			     can be added later by configuring an Associated Domain
 			     entitlement + hosting apple-app-site-association. -->
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>CFBundleURLName</key>
-			<string>com.jardine.differentworld.invite</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>differentworld</string>
-			</array>
-		</dict>
-	</array>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-		<key>UISceneConfigurations</key>
+				<key>CFBundleTypeRole</key>
+				<string>Viewer</string>
+				<key>CFBundleURLName</key>
+				<string>com.jardine.differentworld.invite</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>differentworld</string>
+				</array>
+			</dict>
+		</array>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<key>UIApplicationSceneManifest</key>
 		<dict>
-			<key>UIWindowSceneSessionRoleApplication</key>
-			<array>
-				<dict>
-					<key>UISceneClassName</key>
-					<string>UIWindowScene</string>
-					<key>UISceneConfigurationName</key>
-					<string>flutter</string>
-					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-					<key>UISceneStoryboardFile</key>
-					<string>Main</string>
-				</dict>
-			</array>
+			<key>UIApplicationSupportsMultipleScenes</key>
+			<false/>
+			<key>UISceneConfigurations</key>
+			<dict>
+				<key>UIWindowSceneSessionRoleApplication</key>
+				<array>
+					<dict>
+						<key>UISceneClassName</key>
+						<string>UIWindowScene</string>
+						<key>UISceneConfigurationName</key>
+						<string>flutter</string>
+						<key>UISceneDelegateClassName</key>
+						<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+						<key>UISceneStoryboardFile</key>
+						<string>Main</string>
+					</dict>
+				</array>
+			</dict>
 		</dict>
-	</dict>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<!-- Photo capture for person avatars (staff + students). -->
-	<key>NSCameraUsageDescription</key>
-	<string>Take a photo for your staff or student profile.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo for your staff or student profile.</string>
-	<!-- Voice dictation in the omnibox composer. Audio is streamed to
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UISupportedInterfaceOrientations~ipad</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<!-- Photo capture for person avatars (staff + students). -->
+		<key>NSCameraUsageDescription</key>
+		<string>Take a photo for your staff or student profile.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Choose a photo for your staff or student profile.</string>
+		<!-- Voice dictation in the omnibox composer. Audio is streamed to
 	     Deepgram for live transcription and discarded — no audio is
 	     stored on-device or uploaded to our own servers. -->
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Dictate captures and observations by voice instead of typing.</string>
-</dict>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Dictate captures and observations by voice instead of typing.</string>
+		<key>UIStatusBarHidden</key>
+		<false/>
+	</dict>
 </plist>
