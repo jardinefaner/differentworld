@@ -360,10 +360,10 @@ class _SettingsDivider extends StatelessWidget {
   }
 }
 
-/// The Calm-layout toggle (docs/VISION.md, 2026-06-14). On → neutral cards
-/// flatten to a hairline so a list reads as one continuous surface instead of
-/// a stack of boxes; signal cards keep their tint. Default off (Boxed) for now
-/// — flips to the default once verified across real screens.
+/// The Calm-layout toggle (docs/VISION.md, 2026-06-14). On (the default) →
+/// neutral cards become flush rows on one left edge (chrome hangs in the
+/// gutter), so a list reads as one continuous surface instead of a stack of
+/// boxes; signal cards keep their tint. Toggle off to revert to boxed cards.
 class _DisplayStyleTile extends ConsumerWidget {
   const _DisplayStyleTile();
 

@@ -17,9 +17,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Read via [displayStyleProvider]; `FeatureCard` watches it and restyles.
 enum DisplayStyle { boxed, calm }
 
-/// Persisted choice. Defaults to [DisplayStyle.boxed] for now — the live app
-/// is unchanged until the user opts in; once Calm is verified across real
-/// screens it becomes the default.
+/// Persisted choice. **Defaults to [DisplayStyle.calm]** — the one-edge / flat
+/// direction is the app's look now; an explicit toggle-off reverts to boxed.
 final displayStyleProvider =
     AsyncNotifierProvider<DisplayStyleNotifier, DisplayStyle>(
   DisplayStyleNotifier.new,
@@ -31,9 +30,11 @@ class DisplayStyleNotifier extends AsyncNotifier<DisplayStyle> {
   @override
   Future<DisplayStyle> build() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_kKey) == 'calm'
-        ? DisplayStyle.calm
-        : DisplayStyle.boxed;
+    // Calm is the DEFAULT now (the one-edge / flat direction the user chose);
+    // only an explicit 'boxed' choice reverts to the old filled cards.
+    return prefs.getString(_kKey) == 'boxed'
+        ? DisplayStyle.boxed
+        : DisplayStyle.calm;
   }
 
   Future<void> set(DisplayStyle style) async {

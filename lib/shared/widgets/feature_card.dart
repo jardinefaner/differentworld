@@ -159,7 +159,17 @@ class FeatureCard extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (leading != null) ...[
+          if (flat)
+            // One edge: the leading HANGS in a fixed gutter so the content
+            // snaps to the same left line on every row (an empty gutter when
+            // there's no leading keeps that edge consistent).
+            SizedBox(
+              width: 44,
+              child: leading == null
+                  ? null
+                  : Align(alignment: Alignment.topLeft, child: leading),
+            )
+          else if (leading != null) ...[
             leading!,
             const SizedBox(width: 12),
           ],
@@ -174,43 +184,52 @@ class FeatureCard extends ConsumerWidget {
       ),
     );
 
+    // The tap surface — haptics wired into the primitive so every site
+    // inherits them (CLAUDE.md "every primary tap fires HapticFeedback").
+    // Rectangular ripple when flat (a row), rounded when boxed (a card).
+    final inner = onTap == null && onLongPress == null
+        ? body
+        : InkWell(
+            borderRadius: flat ? null : radius,
+            onTap: onTap == null
+                ? null
+                : () {
+                    unawaited(HapticFeedback.selectionClick());
+                    onTap!();
+                  },
+            onLongPress: onLongPress == null
+                ? null
+                : () {
+                    unawaited(HapticFeedback.mediumImpact());
+                    onLongPress!();
+                  },
+            child: body,
+          );
+
+    // Calm neutral → a flush ROW: no fill, no box, a bottom hairline to
+    // separate rows. Boxed / signal tones → a filled, rounded card.
+    if (flat) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: scheme.outlineVariant.withValues(alpha: 0.5),
+              width: 0.5,
+            ),
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          clipBehavior: Clip.hardEdge,
+          child: inner,
+        ),
+      );
+    }
     return Material(
       color: bg,
-      shape: flat
-          ? RoundedRectangleBorder(
-              borderRadius: radius,
-              side: BorderSide(
-                color: scheme.outlineVariant.withValues(alpha: 0.6),
-                width: 0.5,
-              ),
-            )
-          : RoundedRectangleBorder(borderRadius: radius),
+      shape: RoundedRectangleBorder(borderRadius: radius),
       clipBehavior: Clip.antiAlias,
-      child: onTap == null && onLongPress == null
-          ? body
-          : InkWell(
-              borderRadius: radius,
-              // Light haptic on every tap. FeatureCard is the canonical
-              // tap surface used in 11+ sites + every list row that
-              // migrates onto it (drawer rows, vehicle list, team list,
-              // captures, …). Per CLAUDE.md "every primary tap should
-              // fire HapticFeedback" — wiring it into the primitive
-              // means new screens inherit the convention without
-              // having to remember to call it.
-              onTap: onTap == null
-                  ? null
-                  : () {
-                      unawaited(HapticFeedback.selectionClick());
-                      onTap!();
-                    },
-              onLongPress: onLongPress == null
-                  ? null
-                  : () {
-                      unawaited(HapticFeedback.mediumImpact());
-                      onLongPress!();
-                    },
-              child: body,
-            ),
+      child: inner,
     );
   }
 
