@@ -13,6 +13,7 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
@@ -106,31 +107,21 @@ class _StillHereRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: EdgeInsets.zero,
-      child: ListTile(
-        leading: PersonAvatar(
-          name: entry.fullName,
-          photoUrl: entry.subject.photoUrl,
-        ),
-        title: Text(entry.fullName),
-        subtitle: Text(
-          entry.group.name,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        trailing: canRelease
-            ? FilledButton.tonalIcon(
-                onPressed: () => _openRelease(context, ref, entry),
-                icon: const Icon(Icons.directions_walk, size: 18),
-                label: const Text('Release'),
-              )
-            : null,
-        onTap: canRelease ? () => _openRelease(context, ref, entry) : null,
+    return FeatureCard(
+      leading: PersonAvatar(
+        name: entry.fullName,
+        photoUrl: entry.subject.photoUrl,
       ),
+      title: entry.fullName,
+      subtitle: entry.group.name,
+      trailing: canRelease
+          ? FilledButton.tonalIcon(
+              onPressed: () => _openRelease(context, ref, entry),
+              icon: const Icon(Icons.directions_walk, size: 18),
+              label: const Text('Release'),
+            )
+          : null,
+      onTap: canRelease ? () => _openRelease(context, ref, entry) : null,
     );
   }
 }
@@ -145,7 +136,6 @@ class _ReleasedRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final dep = entry.departure;
     final when = dep == null ? null : DateTime.tryParse(dep.recordedAt)?.toLocal();
     final to = (dep?.body ?? '').trim();
@@ -159,8 +149,7 @@ class _ReleasedRow extends ConsumerWidget {
       ];
       subtitle = parts.isEmpty ? 'Picked up' : parts.join(' · ');
     }
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
+    return FeatureCard(
       leading: Opacity(
         opacity: 0.6,
         child: PersonAvatar(
@@ -168,13 +157,8 @@ class _ReleasedRow extends ConsumerWidget {
           photoUrl: entry.subject.photoUrl,
         ),
       ),
-      title: Text(entry.fullName),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
+      title: entry.fullName,
+      subtitle: subtitle,
       // Only board releases (which carry a departure entry) can be undone;
       // an early_pickup is an attendance fact, edited in attendance.
       trailing: canRelease && dep != null
