@@ -167,6 +167,10 @@ flutter:
     # (avatar evolution, spells, tools, inventory, allies, lore, weather) — the
     # kid-as-player layer, keyed 1:1 with the 10 weekly worlds.
     - assets/curriculum/world_arc.json
+    # Card-game decks — label-free picture cards + a manifest.json per deck
+    # (docs/CARD_GAMES.md). Sliced offline; the word lives in the manifest as
+    # DATA so games can hide / show / match it. Directory form bundles all files.
+    - assets/card_games/everyday/
     # Monochrome emoji font (subset to the ~25 emoji used on printed cards),
     # loaded via rootBundle for the PDF toolkit so verb cards can show 📦 👂 …
     # offline. Helvetica can't draw emoji; this fills only those glyphs (~18 KB).
