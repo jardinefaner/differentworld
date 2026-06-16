@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
@@ -239,6 +242,8 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/now'),
               ),
+              const _SettingsDivider(),
+              const _CockpitHomeTile(),
             ],
           ),
 
@@ -376,6 +381,28 @@ class _SettingsDivider extends StatelessWidget {
 /// neutral cards become flush rows on one left edge (chrome hangs in the
 /// gutter), so a list reads as one continuous surface instead of a stack of
 /// boxes; signal cards keep their tint. Toggle off to revert to boxed cards.
+/// Toggles whether the clock-driven cockpit takes the home slot
+/// (docs/COCKPIT.md slice 4). Off by default; Today is never lost — it stays
+/// reachable at /today (the cockpit's "More places").
+class _CockpitHomeTile extends ConsumerWidget {
+  const _CockpitHomeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(cockpitAsHomeProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.home_outlined),
+      title: const Text('Cockpit as home'),
+      subtitle: const Text(
+        'Open into the clock-driven screen; Today moves to More places',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(cockpitAsHomeProvider.notifier).set(value: v)),
+    );
+  }
+}
+
 class _DisplayStyleTile extends ConsumerWidget {
   const _DisplayStyleTile();
 

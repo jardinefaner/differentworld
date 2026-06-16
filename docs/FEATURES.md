@@ -246,18 +246,20 @@ surface — preferences + roster + fleet, not primary workflows.
 **Purpose**: The clock-driven home — `/now` shows ONE beat at a time (getting ready → good morning → now → field trip → reveal → pickup → send), chosen by the time of day and what's live; you never navigate. The finished shape of "context is the navigation" (docs/VISION.md 2026-06-15; build map in docs/COCKPIT.md).
 **Personas served**: All staff (Maya | Jordan | Coach Sam | Pat — the daily-logger spine)
 **Discovery surfaces**:
-- Routes: `/now`
-- Omnibox: yes — "Now — the cockpit" (keywords: now, cockpit, focus, focus mode, the clock, right now, beat)
+- Routes: `/now`, `/conductor`, `/today`
+- Omnibox: yes — `page.now` "Now — the cockpit" (keywords: now, cockpit, focus, focus mode, the clock, right now, beat); `page.conductor` "Conductor — the planning desk" (keywords: conductor, dashboard, planning, desk, reports, books, export, the deep, laptop, overview)
 - Slash: none
-- Drawer: no — opt-in beta reached via omnibox + Settings; the plan is for it to REPLACE Today as the home (docs/COCKPIT.md fork ⑤ promotion path), not sit beside it as a second spine destination
-- Settings: yes — "Now — the cockpit" row in the Preferences group
+- Drawer: no — opt-in beta reached via omnibox + Settings; the cockpit can replace Today as the home surface via "Cockpit as home" in Settings; Today is always reachable at `/today` (the cockpit's curiosity bar links there)
+- Settings: yes — "Now — the cockpit" row (navigate to `/now`) and "Cockpit as home" switch (promotes `/now` to the home slot, demoting Today to `/today`), both in the Preferences group
 **Capabilities**: None beyond staff — the contextual lead returns null for guardians, and the router's guardian gate bounces them off `/now`
-**Data**: None directly — composes `dayPhaseProvider`, the live-block providers, and `subjectsInSpaceProvider` through `computeCockpitBeat`, and renders the existing `contextLeadProvider`. No new table.
+**Data**: [subjects](SCHEMA.md#subjects) (read by `ConductorScreen` via `subjectsInSpaceProvider` to populate the every-child-book grid). All other state is composed from other features' providers (`dayPhaseProvider`, live-block providers, `contextLeadProvider`, `seasonPositionProvider`) — no new table. `cockpit_home_setting.dart` persists `settings.cockpit_as_home` in SharedPreferences (not a synced table).
 **Surfaces**:
-- *Beat engine* — `cockpit_beat.dart`. `computeCockpitBeat(phase, liveBlockKind, sendable)` (pure, unit-tested in `test/unit/cockpit_beat_test.dart`) → a `CockpitBeat`; `cockpitBeatProvider` adapts the live providers (honors the context room override). A live field trip bends the clock (wins over the phase); `reveal` is reached by hand in slice 1.
-- *The cockpit screen* — `now_cockpit_screen.dart`. `NowCockpitScreen`: full-bleed single beat (reuses `ContextLead` verbatim for the live beats; an authored card for the after-pickup send / rest), a pull-down curiosity bar (Today · Schedule · Activities · Worlds · Patterns), and a contextual "Start the reveal" launch.
-**Depends on**: Today (`contextLeadProvider` / `dayPhaseProvider`), Schedule (live-block providers), Subjects; delegates to Present (`/play-today`), Pickup, Messages.
-**Consumed by**: None yet — promotion to the home surface is a later slice.
+- *Beat engine* — `cockpit_beat.dart`. `computeCockpitBeat(phase, liveBlockKind, sendable, closingReveal)` (pure, unit-tested in `test/unit/cockpit_beat_test.dart`) → a `CockpitBeat`; `cockpitBeatProvider` adapts the live providers (honors the context room override). A live field trip bends the clock (wins over the phase). `closingRevealProvider` (StreamProvider.autoDispose) ticks each minute and is true in the last 20 minutes of program time when a world is active, auto-flipping `DayPhase.program` to `CockpitBeat.reveal`.
+- *The cockpit screen* — `now_cockpit_screen.dart`. `NowCockpitScreen`: full-bleed single beat. Slice 2 adds beat-specific body widgets: `_MorningCard` (good-morning beat — verb-pick CTA + season position + arrival lead moves), `_RevealCard` (closing-window beat — "Start the reveal" → `/play-today`), `_AfterPickupCard` (send/closed — now routes to `/action-words/send`, not `/messages`). Live beats (getting-ready / now / field-trip / pickup) continue to use `_LeadCard` (contextual lead). Curiosity bar destinations updated: "Today" now links to `/today` (not `/`).
+- *Conductor screen* — `conductor_screen.dart`. `ConductorScreen` at `/conductor`: the Layer-3 planning desk designed for larger screens. Shows the season position (week / day / world name), two week-anchor actions (The week's plan → `/program`; Send home → `/action-words/send`), and a full child-roster grid (each child's `FeatureCard` → `/book/:subjectId`). Reuses `seasonPositionProvider` + `subjectsInSpaceProvider`; no new data.
+- *Cockpit home setting* — `lib/features/settings/cockpit_home_setting.dart`. `cockpitAsHomeProvider` (AsyncNotifierProvider<CockpitAsHomeNotifier, bool>) — persists `settings.cockpit_as_home` in SharedPreferences. When true, `_SignedInHome` (router) renders `NowCockpitScreen` at `/`; Today is still reachable at `/today`.
+**Depends on**: Today (`contextLeadProvider` / `dayPhaseProvider`), Schedule (live-block providers), Subjects (`subjectsInSpaceProvider` in ConductorScreen), Action Words (`seasonPositionProvider` in ConductorScreen + `_MorningCard`); delegates to Present (`/play-today`), Action Words (`/action-words/send`), Action Words (`/book/:subjectId`).
+**Consumed by**: Router (`_SignedInHome` reads `cockpitAsHomeProvider` to pick the home surface at `/`).
 **Last verified**: 2026-06-15
 
 ---

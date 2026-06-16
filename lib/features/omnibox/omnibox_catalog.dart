@@ -66,7 +66,9 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       icon: Icons.today_outlined,
       keywords: const ['home', 'dashboard', 'now'],
       contextTags: const ['morning', 'afternoon'],
-      onSelect: (ctx, _) => ctx.go('/'),
+      // /today (not /) so "Today" always lands on Today — even when the
+      // cockpit has taken the home slot (cockpitAsHomeProvider, COCKPIT.md s4).
+      onSelect: (ctx, _) => ctx.go('/today'),
     ),
     OmniboxEntry(
       id: 'page.now',
@@ -85,6 +87,25 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ],
       contextTags: const ['morning', 'afternoon', 'evening'],
       onSelect: (ctx, _) => ctx.push('/now'),
+    ),
+    OmniboxEntry(
+      id: 'page.conductor',
+      label: 'Conductor — the planning desk',
+      category: OmniboxCategory.page,
+      icon: Icons.dashboard_customize_outlined,
+      keywords: const [
+        'conductor',
+        'dashboard',
+        'planning',
+        'desk',
+        'reports',
+        'books',
+        'export',
+        'the deep',
+        'laptop',
+        'overview',
+      ],
+      onSelect: (ctx, _) => ctx.push('/conductor'),
     ),
     OmniboxEntry(
       id: 'page.schedule',

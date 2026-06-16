@@ -72,15 +72,55 @@ void main() {
       );
     });
 
-    test('reveal is never auto-selected (slice 1 — reached by the beat rail)', () {
+    test('reveal is not auto-selected without the closing window', () {
       for (final phase in DayPhase.values) {
         for (final sendable in [true, false]) {
           expect(
+            // closingReveal defaults to false.
             computeCockpitBeat(phase: phase, sendable: sendable),
             isNot(CockpitBeat.reveal),
           );
         }
       }
+    });
+
+    group('slice 2 — the closing window flips program to the reveal', () {
+      test('program + closingReveal → reveal', () {
+        expect(
+          computeCockpitBeat(phase: DayPhase.program, closingReveal: true),
+          CockpitBeat.reveal,
+        );
+      });
+
+      test('a live field trip still wins over the closing window', () {
+        expect(
+          computeCockpitBeat(
+            phase: DayPhase.program,
+            liveBlockKind: BlockKind.fieldTrip,
+            closingReveal: true,
+          ),
+          CockpitBeat.fieldTrip,
+        );
+      });
+
+      test('closingReveal only affects program — other phases ignore it', () {
+        expect(
+          computeCockpitBeat(phase: DayPhase.prep, closingReveal: true),
+          CockpitBeat.gettingReady,
+        );
+        expect(
+          computeCockpitBeat(phase: DayPhase.arrival, closingReveal: true),
+          CockpitBeat.goodMorning,
+        );
+        expect(
+          computeCockpitBeat(phase: DayPhase.pickup, closingReveal: true),
+          CockpitBeat.pickup,
+        );
+        expect(
+          computeCockpitBeat(phase: DayPhase.closed, closingReveal: true),
+          CockpitBeat.closed,
+        );
+      });
     });
   });
 }

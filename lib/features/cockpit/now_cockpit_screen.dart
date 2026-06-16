@@ -1,3 +1,4 @@
+import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/today/context_lead.dart';
@@ -62,7 +63,7 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
 /// NOT a nav bar: a curiosity affordance most days go untouched. (The exact
 /// set is tunable; these are the staff routes that exist today.)
 const _curiosityDestinations = <({IconData icon, String label, String route})>[
-  (icon: Icons.today_outlined, label: 'Today', route: '/'),
+  (icon: Icons.today_outlined, label: 'Today', route: '/today'),
   (icon: Icons.calendar_month_outlined, label: 'Schedule', route: '/schedule'),
   (icon: Icons.psychology_outlined, label: 'Activities', route: '/tools'),
   (icon: Icons.public_outlined, label: 'Worlds', route: '/program'),
@@ -172,10 +173,26 @@ class _BeatBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (lead != null) {
-      return _LeadCard(lead: lead!, beat: beat, hasWorld: hasWorld);
+    switch (beat) {
+      // Slice 2: the program-specific beats get their own inline body instead
+      // of the generic lead — morning leads with the verb pick, the closing
+      // window with the reveal.
+      case CockpitBeat.goodMorning:
+        return _MorningCard(lead: lead);
+      case CockpitBeat.reveal:
+        return const _RevealCard();
+      case CockpitBeat.send:
+      case CockpitBeat.closed:
+        return _AfterPickupCard(beat: beat);
+      // The live beats (and prep) reuse the contextual lead verbatim.
+      case CockpitBeat.gettingReady:
+      case CockpitBeat.now:
+      case CockpitBeat.fieldTrip:
+      case CockpitBeat.pickup:
+        return lead != null
+            ? _LeadCard(lead: lead!, beat: beat, hasWorld: hasWorld)
+            : _AfterPickupCard(beat: beat);
     }
-    return _AfterPickupCard(beat: beat);
   }
 }
 
@@ -366,7 +383,7 @@ class _AfterPickupCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             isSend
-                ? 'Open messages to reach each family.'
+                ? "Each child's note is ready — copy it and send."
                 : 'Nothing left on the board. See you tomorrow.',
             style: theme.textTheme.titleMedium?.copyWith(
               color: scheme.onSurfaceVariant,
@@ -378,16 +395,199 @@ class _AfterPickupCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () => context.push('/messages'),
+                onPressed: () => context.push('/action-words/send'),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   textStyle: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 icon: const Icon(Icons.send_outlined),
-                label: const Text('Open messages'),
+                label: const Text('Send home'),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Morning beat — greeting + the journey position, leading with the verb pick
+/// (the 9:10 signature move, docs/VISION.md) and the arrival lead's check-in
+/// alongside. Warm "go" tone — the room waking up.
+class _MorningCard extends ConsumerWidget {
+  const _MorningCard({required this.lead});
+
+  final ContextLead? lead;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final position = ref.watch(seasonPositionProvider);
+    final world = position?.world;
+    final bg = scheme.primaryContainer;
+    final fg = scheme.onPrimaryContainer;
+    final lead = this.lead;
+    return _beatFrame(
+      context,
+      bg: bg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.wb_sunny_outlined, size: 40, color: fg),
+          const Spacer(),
+          Text(
+            'GOOD MORNING',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: fg,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            world != null ? 'Day ${position!.day}' : 'A new day',
+            style: theme.textTheme.displaySmall?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w600,
+              height: 1.05,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            world != null
+                ? '${world.emoji}  ${world.name} · week ${position!.week}'
+                : "Check the room in, then pick today's words.",
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: fg.withValues(alpha: 0.9),
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.push('/action-words'),
+              style: FilledButton.styleFrom(
+                backgroundColor: fg,
+                foregroundColor: bg,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                textStyle: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: const Text("Pick today's verbs"),
+            ),
+          ),
+          if (lead != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => context.push(lead.primary.route),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: fg,
+                    side: BorderSide(color: fg.withValues(alpha: 0.4)),
+                  ),
+                  icon: Icon(lead.primary.icon, size: 18),
+                  label: Text(lead.primary.label),
+                ),
+                for (final move in lead.more)
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(move.route),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: fg,
+                      side: BorderSide(color: fg.withValues(alpha: 0.4)),
+                    ),
+                    icon: Icon(move.icon, size: 18),
+                    label: Text(move.label),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The closing-window reveal launch. Themed (the dark immersive stage itself
+/// lives at /play-today, the destination); a bold primary fill marks it as THE
+/// moment of the day, distinct from the utilitarian "now".
+class _RevealCard extends ConsumerWidget {
+  const _RevealCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final bg = scheme.primary;
+    final fg = scheme.onPrimary;
+    return _beatFrame(
+      context,
+      bg: bg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.auto_awesome_outlined, size: 40, color: fg),
+          const Spacer(),
+          Text(
+            'THE CLOSING',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: fg,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Reveal the day',
+            style: theme.textTheme.displaySmall?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w600,
+              height: 1.05,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Gather the room — each child becomes who they were today.',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: fg.withValues(alpha: 0.9),
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.push('/play-today'),
+              style: FilledButton.styleFrom(
+                backgroundColor: fg,
+                foregroundColor: bg,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                textStyle: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              icon: const Icon(Icons.play_circle_outline),
+              label: const Text('Start the reveal'),
+            ),
+          ),
+          // Never cage: the reveal auto-appears near pickup, but a teacher
+          // still mid-activity can stay in program — the reveal stays one tap
+          // away on the now lead ("Start the reveal").
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () =>
+                  ref.read(revealDismissedProvider.notifier).dismiss(),
+              style: TextButton.styleFrom(foregroundColor: fg),
+              icon: const Icon(Icons.keyboard_return, size: 18),
+              label: const Text('Not yet — stay in program'),
+            ),
+          ),
         ],
       ),
     );
