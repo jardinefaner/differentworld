@@ -204,18 +204,22 @@ screen).** Each reuses an existing `GameIntent`:
 - **What's Missing?** ✅ — `draw` + a marked card; three beats per round
   (study → quiz → reveal) so it overrides `buildControls`. Routes
   `/present/whats-missing` + `/live/whats-missing`. Pink vibe `0xFFEC407A`.
-- **Memory / Match** — `memory`; `pick` two to flip.
+- **Memory / Match** ✅ — `pick` two to flip; a match locks, a miss clears on
+  the next tap (host-paced, no timer). Big board = `buildStage` (casts to the
+  room), compact mirror = `buildControls` (the teacher's remote). Routes
+  `/present/memory-match` + `/live/memory-match`. Indigo vibe `0xFF5C6BC0`.
 - **Sort It** — `byCategory`; `pick` a bucket.
 - **Bingo** — `bingo`; `tally` / `pick` marks.
 - **Three-Card Story** — `draw(3)`; `reveal`/`next` (the *Three* primitive).
 
-> **`liveGames` registry caveat.** The three shipped deck games are
-> `seedsFromContentBank = false` and — like the other data-seeded
-> presentables — are NOT in the `liveGames` registry. The present/control
-> live flow works (both devices open `/live/<id>` and seed from the deck),
-> but the join-by-code controller path (`gameById`) can't resolve them until
-> the cast flow can hand a joining controller a deck seed. Same deferred gap
-> for all three; re-evaluate together.
+> **Registry + cast.** All four deck games are `seedsFromContentBank = false`
+> (hidden from the cast launcher's content-bank browse loop, since they need a
+> deck seed) BUT they ARE registered in `liveGames` — like `WorldCast` /
+> `Conductor` — so `gameById` resolves them. That's what lets the cast
+> receiver, the join-by-code path, and the live-session banner render them
+> from the deck seed that rides the wire-state. (Registering a
+> `seedsFromContentBank=false` game is the documented pattern; Name It
+> originally missed it — fixed alongside the wave-3 trio + Memory.)
 
 Every wave-3 game is a single file + one registry line. No engine, no cast
 wiring, no new schema.

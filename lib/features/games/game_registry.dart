@@ -8,13 +8,17 @@ import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
+import 'package:differentworld/features/games/games/memory_match_game.dart';
+import 'package:differentworld/features/games/games/name_it_game.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
+import 'package:differentworld/features/games/games/odd_one_out_game.dart';
 import 'package:differentworld/features/games/games/picker_game.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/games/games/whats_missing_game.dart';
 import 'package:differentworld/features/live_board/board_game.dart';
 
 /// Every host-run game, by id — the single source of truth for resolving a
@@ -44,6 +48,14 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   // content-bank loop, resolved by gameById so the receiver renders it.
   WorldCastGame(),
   ConductorGame(),
+  // Deck-seeded card games (docs/CARD_GAMES.md). seedsFromContentBank=false
+  // (hidden from the launcher's content-bank loop), but registered so gameById
+  // resolves them — the cast receiver + join-by-code + live banner render from
+  // the deck seed that rides the wire-state.
+  NameItGame(),
+  OddOneOutGame(),
+  WhatsMissingGame(),
+  MemoryMatchGame(),
   // The Live Board — the phone-as-instrument surface (docs/LIVE_BOARD.md).
   // Cast-only: driven by LiveBoardScreen via castStage, rendered by the
   // existing cast receiver.
