@@ -16,11 +16,13 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/glass_pill.dart';
+import 'package:differentworld/shared/widgets/horizon_mark.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
 import 'package:differentworld/shared/widgets/scale_bar.dart';
+import 'package:differentworld/shared/widgets/search_bar_pill.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
@@ -196,6 +198,22 @@ void main() {
           ),
         ),
       ],
+    ),
+  );
+
+  _plate(
+    'atoms/horizon_mark',
+    height: 220,
+    (_) => const Center(child: HorizonMark(size: 132)),
+  );
+
+  _plate(
+    'atoms/search_bar_pill',
+    height: 140,
+    (_) => SearchBarPill(
+      controller: TextEditingController(text: 'Maya'),
+      onChanged: (_) {},
+      onClose: () {},
     ),
   );
 
