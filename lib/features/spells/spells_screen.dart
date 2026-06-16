@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/spells/spell_overlay.dart';
 import 'package:differentworld/features/spells/spells.dart';
@@ -59,9 +60,7 @@ class _SpellTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gold = theme.brightness == Brightness.dark
-        ? const Color(0xFFE6C079)
-        : const Color(0xFF9A7B2E);
+    final gold = AppColors.goldOf(theme);
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(20),

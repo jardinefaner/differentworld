@@ -168,7 +168,10 @@ class _VehiclePhotoShotsEditScreenState
               margin: const EdgeInsets.symmetric(vertical: 4),
               child: ListTile(
                 leading: locked
-                    ? const Icon(Icons.lock_outline, color: Colors.amber)
+                    ? Icon(
+                        Icons.lock_outline,
+                        color: Theme.of(context).colorScheme.tertiary,
+                      )
                     : ReorderableDragStartListener(
                         index: i,
                         child: const Icon(Icons.drag_handle),
