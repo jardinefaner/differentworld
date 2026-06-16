@@ -59,6 +59,7 @@ import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
+import 'package:differentworld/features/games/games/memory_match_screen.dart';
 import 'package:differentworld/features/games/games/name_it_screen.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/odd_one_out_screen.dart';
@@ -1412,6 +1413,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/whats-missing',
             builder: (_, _) => const WhatsMissingScreen(live: true),
+          ),
+          // Memory / Match — concentration over the picture deck; tap two, a
+          // match locks (docs/CARD_GAMES.md). Deck-seeded; custom remote.
+          GoRoute(
+            path: '/present/memory-match',
+            builder: (_, _) => const MemoryMatchScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/memory-match',
+            builder: (_, _) => const MemoryMatchScreen(live: true),
           ),
           // The Poster tool — tile one image across N×N letter pages to
           // print + tape into a big poster.

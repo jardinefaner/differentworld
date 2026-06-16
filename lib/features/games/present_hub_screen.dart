@@ -61,6 +61,13 @@ class PresentHubScreen extends StatelessWidget {
       route: '/present/whats-missing',
     ),
     _PresentCard(
+      title: 'Memory',
+      tagline: 'Match the pairs — tap two to flip',
+      icon: Icons.grid_view_rounded,
+      color: ActivityPalette.indigo,
+      route: '/present/memory-match',
+    ),
+    _PresentCard(
       title: 'Quick Poll',
       tagline: 'Vote together, see the winner',
       icon: Icons.how_to_vote_outlined,
