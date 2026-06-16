@@ -419,8 +419,8 @@ of the SQL.
 - `withdrawn_at` (timestamptz, nullable)
 **RLS gist**: relaxed for staff. Guardian self-reads via direct PostgREST through `subject_guardians` join.
 **Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
-**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [Incidents](FEATURES.md#incidents) (log screen reads `subjectsInSpaceProvider` to resolve child identity on each card), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name).
-**Last verified**: 2026-06-06 (Incidents added as consumer — log screen reads subjects)
+**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [Incidents](FEATURES.md#incidents) (log screen reads `subjectsInSpaceProvider` to resolve child identity on each card), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name), [Cockpit](FEATURES.md#cockpit) (`subjectsInSpaceProvider` read by `ConductorScreen` to build the every-child-book grid).
+**Last verified**: 2026-06-15 (Cockpit added as consumer — ConductorScreen reads subjectsInSpaceProvider)
 
 ---
 
