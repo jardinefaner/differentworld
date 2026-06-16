@@ -119,10 +119,13 @@ void main() {
       expect(find.text('Run the session'), findsOneWidget);
     });
 
-    testWidgets('the reveal beat offers the closing launch', (tester) async {
+    testWidgets('the reveal beat offers the closing launch + an escape',
+        (tester) async {
       await _pump(tester, beat: CockpitBeat.reveal);
       expect(find.text('Reveal the day'), findsOneWidget);
       expect(find.text('Start the reveal'), findsOneWidget);
+      // Never cage: a way back to the live program is always present.
+      expect(find.text('Not yet — stay in program'), findsOneWidget);
     });
 
     testWidgets('the curiosity bar toggles open to reveal Layer-2 places',

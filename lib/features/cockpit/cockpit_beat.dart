@@ -97,6 +97,20 @@ final closingRevealProvider = StreamProvider.autoDispose<bool>((ref) async* {
   yield* Stream<bool>.periodic(const Duration(minutes: 1), (_) => within());
 });
 
+/// Session flag: the teacher chose to STAY in the live program when the closing
+/// reveal auto-appeared. Suppresses the auto-reveal so the cockpit never cages
+/// them ("never cage", COCKPIT.md fork ①) — the reveal stays one tap away (the
+/// now lead's "Start the reveal", or the omnibox). In-memory; resets next launch.
+class RevealDismissed extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void dismiss() => state = true;
+}
+
+final revealDismissedProvider =
+    NotifierProvider<RevealDismissed, bool>(RevealDismissed.new);
+
 /// Reads the live providers and resolves the current beat. Honors the context
 /// room override (the same pin the context pill sets) so a teacher who floats
 /// rooms gets the right room's live block.
@@ -112,10 +126,15 @@ final cockpitBeatProvider = Provider.autoDispose<CockpitBeat>((ref) {
   // Sendable = the day had kids, so `closed` becomes "send home" rather than
   // the rest state. Cheap read; refined per-child in a later slice.
   final subjects = ref.watch(subjectsInSpaceProvider).value;
+  // The teacher can dismiss the auto-reveal to stay in program — then the beat
+  // falls back to `now` (whose lead still offers "Start the reveal").
+  final dismissed = ref.watch(revealDismissedProvider);
+  final closingReveal =
+      !dismissed && (ref.watch(closingRevealProvider).value ?? false);
   return computeCockpitBeat(
     phase: phase,
     liveBlockKind: live?.kind,
     sendable: subjects != null && subjects.isNotEmpty,
-    closingReveal: ref.watch(closingRevealProvider).value ?? false,
+    closingReveal: closingReveal,
   );
 });

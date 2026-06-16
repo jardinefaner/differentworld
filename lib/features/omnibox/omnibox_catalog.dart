@@ -66,7 +66,9 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       icon: Icons.today_outlined,
       keywords: const ['home', 'dashboard', 'now'],
       contextTags: const ['morning', 'afternoon'],
-      onSelect: (ctx, _) => ctx.go('/'),
+      // /today (not /) so "Today" always lands on Today — even when the
+      // cockpit has taken the home slot (cockpitAsHomeProvider, COCKPIT.md s4).
+      onSelect: (ctx, _) => ctx.go('/today'),
     ),
     OmniboxEntry(
       id: 'page.now',

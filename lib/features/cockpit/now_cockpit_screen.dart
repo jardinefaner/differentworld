@@ -516,11 +516,11 @@ class _MorningCard extends ConsumerWidget {
 /// The closing-window reveal launch. Themed (the dark immersive stage itself
 /// lives at /play-today, the destination); a bold primary fill marks it as THE
 /// moment of the day, distinct from the utilitarian "now".
-class _RevealCard extends StatelessWidget {
+class _RevealCard extends ConsumerWidget {
   const _RevealCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final bg = scheme.primary;
@@ -572,6 +572,20 @@ class _RevealCard extends StatelessWidget {
               ),
               icon: const Icon(Icons.play_circle_outline),
               label: const Text('Start the reveal'),
+            ),
+          ),
+          // Never cage: the reveal auto-appears near pickup, but a teacher
+          // still mid-activity can stay in program — the reveal stays one tap
+          // away on the now lead ("Start the reveal").
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () =>
+                  ref.read(revealDismissedProvider.notifier).dismiss(),
+              style: TextButton.styleFrom(foregroundColor: fg),
+              icon: const Icon(Icons.keyboard_return, size: 18),
+              label: const Text('Not yet — stay in program'),
             ),
           ),
         ],

@@ -38,7 +38,7 @@ class ConductorScreen extends ConsumerWidget {
           children: [
             const ContentHeader(
               title: 'Conductor',
-              subtitle: 'Your planning desk — best on a larger screen',
+              subtitle: 'Your planning desk — the week at a glance',
             ),
             _SeasonOverview(position: position),
             const SizedBox(height: 8),
