@@ -61,12 +61,14 @@ import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/name_it_screen.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
+import 'package:differentworld/features/games/games/odd_one_out_screen.dart';
 import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
 import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
@@ -1390,6 +1392,26 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/name-it',
             builder: (_, _) => const NameItScreen(live: true),
+          ),
+          // Odd One Out — three from a category + one stranger; tap Reveal and
+          // the odd card rings itself (docs/CARD_GAMES.md). Deck-seeded.
+          GoRoute(
+            path: '/present/odd-one-out',
+            builder: (_, _) => const OddOneOutScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/odd-one-out',
+            builder: (_, _) => const OddOneOutScreen(live: true),
+          ),
+          // What's Missing — study the set, hide one, name what vanished
+          // (docs/CARD_GAMES.md). Three beats per round; deck-seeded.
+          GoRoute(
+            path: '/present/whats-missing',
+            builder: (_, _) => const WhatsMissingScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/whats-missing',
+            builder: (_, _) => const WhatsMissingScreen(live: true),
           ),
           // The Poster tool — tile one image across N×N letter pages to
           // print + tape into a big poster.
