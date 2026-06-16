@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
+import 'package:differentworld/features/live_session/cast_chrome_button.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
@@ -278,6 +279,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     // returns SizedBox.shrink in release so it costs nothing).
     final actionsForPill = <Widget>[
       if (kDebugMode) const DebugViewerToggle(),
+      // App-wide cast (docs/LIVE_SESSIONS.md): one tap to the screen from any
+      // staff route — slice 1 opens the launcher. Auto-hidden in immersive /
+      // kid-mode (the whole chrome is). Guardians don't cast.
+      if (ref.read(viewerProvider).isDailyLogger) const CastChromeButton(),
       ...chrome.actions,
     ];
     if (actionsForPill.isNotEmpty) {
