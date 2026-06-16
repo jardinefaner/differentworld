@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/db/app_database.dart' show Entry;
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
@@ -114,7 +115,8 @@ class _Strip extends ConsumerWidget {
                         height: 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.green.withValues(alpha: alpha.value),
+                          color: AppColors.growthOf(theme)
+                              .withValues(alpha: alpha.value),
                         ),
                       ),
                     ),
@@ -123,7 +125,7 @@ class _Strip extends ConsumerWidget {
                   Text(
                     'LIVE',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.green,
+                      color: AppColors.growthOf(theme),
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.8,
                     ),
@@ -248,9 +250,9 @@ class _MomentSheet extends ConsumerWidget {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.green,
+                    color: AppColors.growthOf(theme),
                   ),
                 ),
                 const SizedBox(width: 8),

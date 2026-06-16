@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
@@ -429,7 +430,9 @@ class _VehicleInspectionScreenState
               children: [
                 Icon(
                   allOut ? Icons.check_circle : Icons.warning_amber_rounded,
-                  color: allOut ? Colors.green : theme.colorScheme.error,
+                  color: allOut
+                      ? AppColors.growthOf(theme)
+                      : theme.colorScheme.error,
                 ),
                 const SizedBox(width: 8),
                 Text('Everyone out?', style: theme.textTheme.titleMedium),
@@ -439,7 +442,9 @@ class _VehicleInspectionScreenState
                       ? 'All out ✓'
                       : '${stillOn.length} of ${_boardedIds.length} still on board',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: allOut ? Colors.green : theme.colorScheme.error,
+                    color: allOut
+                        ? AppColors.growthOf(theme)
+                        : theme.colorScheme.error,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

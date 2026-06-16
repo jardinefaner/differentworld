@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/launch/launch_readiness.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -33,7 +34,7 @@ class LaunchScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
             decoration: BoxDecoration(
               color: ready
-                  ? const Color(0xFF51CF66).withValues(alpha: 0.12)
+                  ? AppColors.growthOf(theme).withValues(alpha: 0.12)
                   : theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
             ),
@@ -42,7 +43,7 @@ class LaunchScreen extends ConsumerWidget {
                 Icon(
                   ready ? Icons.check_circle : Icons.pending_outlined,
                   color: ready
-                      ? const Color(0xFF2F9E44)
+                      ? AppColors.growthOf(theme)
                       : theme.colorScheme.onSurfaceVariant,
                   size: 30,
                 ),
@@ -89,7 +90,7 @@ class _ReadyRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final (icon, tone) = switch (item.status) {
-      ReadyStatus.done => (Icons.check_circle, const Color(0xFF2F9E44)),
+      ReadyStatus.done => (Icons.check_circle, AppColors.growthOf(theme)),
       ReadyStatus.todo => (
         Icons.radio_button_unchecked,
         theme.colorScheme.primary,
