@@ -55,7 +55,7 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ---
 
-## Catalogued — 16 of ~45 visual components
+## Catalogued — 18 of ~55 visual components
 
 ### Atoms
 
@@ -82,23 +82,25 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | AccentCardTile | [accent_card_tile.dart] | activity-palettes (teal, pink, amber) | ✅ | [light](molecules/accent_card_tile__light.png) · [dark](molecules/accent_card_tile__dark.png) |
 | CapabilityLockedTile | [capability_locked_tile.dart] | locked card overlay | ✅ | [light](molecules/capability_locked_tile__light.png) · [dark](molecules/capability_locked_tile__dark.png) |
 | CollapsibleSection | [collapsible_section.dart] | collapsed · expanded states | ✅ one-edge | [light](molecules/collapsible_section__light.png) · [dark](molecules/collapsible_section__dark.png) |
+| NoAccess | [no_access.dart] | access denied state | ✅ | [light](molecules/no_access__light.png) · [dark](molecules/no_access__dark.png) |
+| LoadingSlot | [async_loading.dart] | list shimmer, card stack, spinner variants | ✅ | [light](molecules/loading_slot__light.png) · [dark](molecules/loading_slot__dark.png) |
 
 ---
 
 ## Not yet catalogued (the curator tracks these)
 
-`lib/shared/widgets/` is ~50 files / **~45 public visual widget classes**. **16 plates
-catalogued; ~29 visual components remain** (the rest are sub-widgets or
+`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **18 plates
+catalogued; ~37 visual components remain** (the rest are sub-widgets or
 non-visual). Animated / blur components need a fixed-pump plate first so
-`pumpAndSettle` can't hang on a forever-animation — confirmed by grep:
-`async_loading` (LoadingSlot), `glass_panel`, `glass_pill`, `skeleton`,
-`app_shell`, `live_block_strip`.
+`pumpAndSettle` can't hang on a forever-animation — **confirmed working via
+`_platePumped` helper (pumps fixed frames)** — the remaining ⚠️ mark is unblocked:
+`glass_panel`, `glass_pill`, `skeleton` (shimmer variants), `app_shell`,
+`live_block_strip`.
 
 **Atoms** — HorizonMark, SearchBarPill, FloatingBack, FloatingHamburger,
-GlassPill ⚠️blur, Skeleton ⚠️shimmer.
+GlassPill ⚠️blur, SkeletonBox / SkeletonLine / SkeletonList / SkeletonCards / SkeletonListTile ⚠️shimmer, NavCountBadge, InlineEditableText.
 
-**Molecules** — NoAccess, FormBody, SubjectPickerSheet, OverflowActions,
-LoadingSlot ⚠️shimmer, GlassPanel ⚠️blur.
+**Molecules** — FormBody, SubjectPickerSheet, OverflowActions, GlassPanel ⚠️blur, GlassDragHandle.
 
 **Organisms** (seeded harness — need a `ProviderScope` + routing world) —
 EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, MasterDetailScaffold,
@@ -129,3 +131,5 @@ DismissGuard, CenterOrScroll, DebugViewerToggle.
 [accent_card_tile.dart]: ../lib/shared/widgets/accent_card_tile.dart
 [capability_locked_tile.dart]: ../lib/shared/widgets/capability_locked_tile.dart
 [collapsible_section.dart]: ../lib/shared/widgets/collapsible_section.dart
+[no_access.dart]: ../lib/shared/widgets/no_access.dart
+[async_loading.dart]: ../lib/shared/widgets/async_loading.dart

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
@@ -13,6 +14,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_banner.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
+import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
@@ -364,6 +366,32 @@ void main() {
       ],
     ),
   );
+
+  _plate(
+    'molecules/no_access',
+    (_) => const NoAccess(),
+  );
+
+  // Loading states animate forever (shimmer / spinner) → fixed-pump, not settle.
+  _platePumped(
+    'molecules/loading_slot',
+    height: 440,
+    (ctx) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('list', style: Theme.of(ctx).textTheme.labelSmall),
+        const SizedBox(height: 6),
+        const SizedBox(height: 160, child: LoadingSlot()),
+        const SizedBox(height: Insets.lg),
+        Text('cards', style: Theme.of(ctx).textTheme.labelSmall),
+        const SizedBox(height: 6),
+        const SizedBox(
+          height: 160,
+          child: LoadingSlot(variant: LoadingVariant.cards),
+        ),
+      ],
+    ),
+  );
 }
 
 /// A small captioned wrapper for atom plates (the glyph + its label below).
@@ -417,6 +445,56 @@ void _plate(
           ),
           size: Size(440, height),
         );
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('../../gallery/${name}__$mode.png'),
+        );
+      },
+      skip: !runGoldens,
+    );
+  }
+}
+
+/// Like [_plate] but for components with a forever-animation (shimmer, spinner):
+/// pump a fixed number of frames instead of `pumpAndSettle`, which would hang
+/// waiting for an animation that never settles. Captures a mid-animation frame.
+void _platePumped(
+  String name,
+  Widget Function(BuildContext) build, {
+  double height = 360,
+  int frames = 5,
+}) {
+  for (final mode in const ['light', 'dark']) {
+    testWidgets(
+      '$name · $mode',
+      (tester) async {
+        await tester.binding.setSurfaceSize(Size(440, height));
+        tester.view.physicalSize = Size(440, height);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              theme: mode == 'dark' ? buildDarkTheme() : buildLightTheme(),
+              debugShowCheckedModeBanner: false,
+              home: Scaffold(
+                body: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(Insets.lg),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Builder(builder: build),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        for (var i = 0; i < frames; i++) {
+          await tester.pump(const Duration(milliseconds: 120));
+        }
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('../../gallery/${name}__$mode.png'),
