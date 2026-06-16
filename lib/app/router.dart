@@ -59,6 +59,7 @@ import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
+import 'package:differentworld/features/games/games/name_it_screen.dart';
 import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/picker_screen.dart';
 import 'package:differentworld/features/games/games/poll_game.dart';
@@ -1379,6 +1380,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/live/now-next',
             builder: (_, _) => const NowNextScreen(live: true),
+          ),
+          // Name It — picture-card vocabulary game over the bundled deck
+          // (docs/CARD_GAMES.md). Deck-seeded like Now & Next.
+          GoRoute(
+            path: '/present/name-it',
+            builder: (_, _) => const NameItScreen(live: false),
+          ),
+          GoRoute(
+            path: '/live/name-it',
+            builder: (_, _) => const NameItScreen(live: true),
           ),
           // The Poster tool — tile one image across N×N letter pages to
           // print + tape into a big poster.

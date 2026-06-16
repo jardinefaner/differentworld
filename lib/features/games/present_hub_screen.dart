@@ -40,6 +40,13 @@ class PresentHubScreen extends StatelessWidget {
       route: '/present/now-next',
     ),
     _PresentCard(
+      title: 'Name It',
+      tagline: 'Picture up — say the word',
+      icon: Icons.style_outlined,
+      color: ActivityPalette.purple,
+      route: '/present/name-it',
+    ),
+    _PresentCard(
       title: 'Quick Poll',
       tagline: 'Vote together, see the winner',
       icon: Icons.how_to_vote_outlined,
