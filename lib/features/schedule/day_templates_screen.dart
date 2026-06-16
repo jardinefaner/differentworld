@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/schedule/day_template.dart';
 import 'package:differentworld/features/schedule/day_template_providers.dart';
+import 'package:differentworld/features/schedule/widgets/apply_day_template_sheet.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -25,6 +26,7 @@ class DayTemplatesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final templates = ref.watch(dayTemplatesProvider);
+    final spaceId = ref.watch(viewerProvider).spaceId;
 
     return EdgeScaffold(
       backFallbackRoute: '/schedule',
@@ -54,7 +56,8 @@ class DayTemplatesScreen extends ConsumerWidget {
                   title: 'Day templates',
                   subtitle: 'The shapes of your day — drop one onto a date',
                 ),
-                for (final t in templates) _TemplateCard(template: t),
+                for (final t in templates)
+                  _TemplateCard(template: t, spaceId: spaceId),
               ],
             ),
     );
@@ -74,8 +77,9 @@ class DayTemplatesScreen extends ConsumerWidget {
 }
 
 class _TemplateCard extends StatelessWidget {
-  const _TemplateCard({required this.template});
+  const _TemplateCard({required this.template, this.spaceId});
   final DayTemplate template;
+  final String? spaceId;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +100,20 @@ class _TemplateCard extends StatelessWidget {
         tone: template.isOverfilled
             ? FeatureCardTone.danger
             : FeatureCardTone.neutral,
-        trailing: const Icon(Icons.chevron_right),
+        // The connection that makes a template usable: apply it to a day
+        // straight from the list — no editor drill. Tapping the card still
+        // opens the editor to reshape it.
+        trailing: (spaceId == null || template.blocks.isEmpty)
+            ? const Icon(Icons.chevron_right)
+            : FilledButton.tonalIcon(
+                onPressed: () => showApplyDayTemplateSheet(
+                  context,
+                  template: template,
+                  spaceId: spaceId!,
+                ),
+                icon: const Icon(Icons.event_available, size: 18),
+                label: const Text('Apply'),
+              ),
         onTap: () => context.push('/schedule/day-templates/${template.id}'),
       ),
     );
