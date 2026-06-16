@@ -194,16 +194,28 @@ Never embed bytes in the state; embed the path.
 - **Charades → Act It Out**: feed `draw(deck, 1)` to the existing secret-role
   game (it already has the actor-only screen).
 
-**Wave 3 — new card games (each = one `GameDefinition` + add to `liveGames`).**
-Cast is automatic (`liveRoute`). Each reuses an existing `GameIntent`:
-- **Name It** — `hiddenCard`; `reveal` shows the word + voiceover (flutter_tts
-  is wired). Pure Reveal. *First net-new — tiniest.*
-- **Odd One Out** — `oddOneOut`; `pick` the wrong one.
+**Wave 3 — new card games (each = one `GameDefinition` + a deck-seeding
+screen).** Each reuses an existing `GameIntent`:
+- **Name It** ✅ — `draw`; `reveal` shows the word (`i/n/d/r`). Pure Reveal.
+  Routes `/present/name-it` + `/live/name-it`.
+- **Odd One Out** ✅ — `oddOneOut`; `reveal` rings the stranger, the other
+  three dim (`i/n/d/r`). Routes `/present/odd-one-out` + `/live/odd-one-out`.
+  Coral vibe `0xFFFF7043`.
+- **What's Missing?** ✅ — `draw` + a marked card; three beats per round
+  (study → quiz → reveal) so it overrides `buildControls`. Routes
+  `/present/whats-missing` + `/live/whats-missing`. Pink vibe `0xFFEC407A`.
 - **Memory / Match** — `memory`; `pick` two to flip.
-- **What's Missing?** — `whatsMissing`; `reveal` the gone one.
 - **Sort It** — `byCategory`; `pick` a bucket.
 - **Bingo** — `bingo`; `tally` / `pick` marks.
 - **Three-Card Story** — `draw(3)`; `reveal`/`next` (the *Three* primitive).
+
+> **`liveGames` registry caveat.** The three shipped deck games are
+> `seedsFromContentBank = false` and — like the other data-seeded
+> presentables — are NOT in the `liveGames` registry. The present/control
+> live flow works (both devices open `/live/<id>` and seed from the deck),
+> but the join-by-code controller path (`gameById`) can't resolve them until
+> the cast flow can hand a joining controller a deck seed. Same deferred gap
+> for all three; re-evaluate together.
 
 Every wave-3 game is a single file + one registry line. No engine, no cast
 wiring, no new schema.

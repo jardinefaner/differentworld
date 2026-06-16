@@ -47,6 +47,20 @@ class PresentHubScreen extends StatelessWidget {
       route: '/present/name-it',
     ),
     _PresentCard(
+      title: 'Odd One Out',
+      tagline: 'Three match, one doesn’t — spot it',
+      icon: Icons.category_outlined,
+      color: ActivityPalette.red,
+      route: '/present/odd-one-out',
+    ),
+    _PresentCard(
+      title: "What's Missing",
+      tagline: 'Study the set — what vanished?',
+      icon: Icons.visibility_off_outlined,
+      color: ActivityPalette.pink,
+      route: '/present/whats-missing',
+    ),
+    _PresentCard(
       title: 'Quick Poll',
       tagline: 'Vote together, see the winner',
       icon: Icons.how_to_vote_outlined,
