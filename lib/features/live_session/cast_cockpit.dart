@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/features/action_words/conductor.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/world_cast_game.dart';
@@ -11,6 +10,7 @@ import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
+import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,14 +32,9 @@ class CastCockpit extends ConsumerStatefulWidget {
 }
 
 class _CastCockpitState extends ConsumerState<CastCockpit> {
-  CastSession? _session;
-  final _subs = <StreamSubscription<dynamic>>[];
-  Map<String, dynamic> _meta = CastSession.idleState;
-  LiveStatus _status = LiveStatus.connecting;
-  int _peers = 0;
-  // The "can't reach a screen → run solo" banner. Re-armed each time the
-  // session (re)enters the error state so a transient blip that the teacher
-  // dismissed reappears if the connection drops again.
+  // The session is owned by [castSessionProvider] — it persists across
+  // navigation (the anchor). The cockpit only DRIVES it. These two flags are
+  // phone-local UI state.
   bool _errorBannerDismissed = false;
   // The launcher is the home; casting hides it, "Switch" brings it back. It's
   // phone-local — opening it never changes what the screen is showing.
@@ -49,58 +44,39 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
   void initState() {
     super.initState();
     unawaited(WakelockPlus.enable()); // the remote shouldn't sleep mid-session
-    final session = CastSession.cast(
-      client: ref.read(supabaseProvider),
-      code: widget.code,
-    );
-    _subs
-      ..add(
-        session.states.listen((v) {
-          if (mounted) setState(() => _meta = v);
-        }),
-      )
-      ..add(
-        session.peers.listen((v) {
-          if (mounted) setState(() => _peers = v);
-        }),
-      )
-      ..add(
-        session.status.listen((v) {
-          if (!mounted) return;
-          setState(() {
-            // Re-arm the solo banner on each fresh transition INTO error.
-            if (v == LiveStatus.error && _status != LiveStatus.error) {
-              _errorBannerDismissed = false;
-            }
-            _status = v;
-          });
-        }),
-      );
-    _session = session;
+    // Become the authority on this code (idempotent — reuses the live session
+    // if we're already casting it). Deferred off the build phase: the chrome
+    // pill watches this provider, and writing a watched provider mid-build is
+    // the "modified provider while the widget tree was building" trap.
+    unawaited(Future.microtask(() {
+      if (mounted) {
+        ref.read(castSessionProvider.notifier).start(widget.code);
+      }
+    }));
   }
 
   @override
   void dispose() {
     unawaited(WakelockPlus.disable());
-    for (final sub in _subs) {
-      unawaited(sub.cancel());
-    }
-    unawaited(_session?.dispose());
+    // Do NOT dispose the session — it lives in castSessionProvider so the cast
+    // PERSISTS when we leave (only an explicit Stop ends it). The anchor.
     super.dispose();
   }
 
   ContentSource _contentNow() =>
       ContentEngine(ref.read(bankedContentProvider).value ?? curatedSeeds);
 
+  CastSessionController get _cast => ref.read(castSessionProvider.notifier);
+
   void _castGame(GameDefinition<dynamic> def) {
-    _session?.cast(def, _contentNow());
+    _cast.castGame(def, _contentNow());
     setState(() => _showLauncher = false);
   }
 
   /// Cast the live curriculum world — an explicit-seed presentable, not a
   /// content-bank game, so it goes through castStage (docs/WORLD.md).
   void _castWorld(CurriculumWorld world) {
-    _session?.castStage(WorldCastGame.gameId, worldCastSeed(world));
+    _cast.castStage(WorldCastGame.gameId, worldCastSeed(world));
     setState(() => _showLauncher = false);
   }
 
@@ -114,25 +90,33 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
       builder: (_) => const _ConductSheet(),
     );
     if (text == null || text.trim().isEmpty) return;
-    _session?.castStage(ConductorGame.gameId, conductorSeed(text));
+    _cast.castStage(ConductorGame.gameId, conductorSeed(text));
     if (mounted) setState(() => _showLauncher = false);
   }
 
   void _send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
-    final id = CastSession.gameIdOf(_meta);
+    final id = CastSession.gameIdOf(ref.read(castSessionProvider).meta);
     final def = id == null ? null : gameById(id);
     // "Play again" re-casts with FRESH content (the pure reducer can't pull
     // new content); everything else reduces on the authority.
     if (intent == GameIntent.reset && def != null) {
-      _session?.cast(def, _contentNow());
+      _cast.castGame(def, _contentNow());
     } else {
-      _session?.send(intent, args);
+      _cast.send(intent, args);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final gameId = CastSession.gameIdOf(_meta);
+    final snap = ref.watch(castSessionProvider);
+    // Re-arm the solo banner on each fresh transition INTO error.
+    ref.listen(castSessionProvider, (prev, next) {
+      if (next.status == LiveStatus.error &&
+          (prev?.status ?? LiveStatus.connecting) != LiveStatus.error) {
+        setState(() => _errorBannerDismissed = false);
+      }
+    });
+    final gameId = CastSession.gameIdOf(snap.meta);
     final def = gameId == null ? null : gameById(gameId);
     // The live world is the one thing a stranded caster can still present
     // locally (the present screen runs without a Receiver). Null when the
@@ -142,15 +126,19 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     return Column(
       children: [
         _CockpitHeader(
-          status: _status,
-          peers: _peers,
+          status: snap.status,
+          peers: snap.peers,
           code: widget.code,
           casting: def?.title,
           onLeave: widget.onLeave,
+          onStop: () {
+            _cast.stop();
+            widget.onLeave();
+          },
         ),
         // No second screen / lost the link? Don't strand the teacher driving a
         // dead cast — offer to show this week's world on just this device.
-        if (_status == LiveStatus.error && !_errorBannerDismissed)
+        if (snap.status == LiveStatus.error && !_errorBannerDismissed)
           _CastErrorBanner(
             onDismiss: () => setState(() => _errorBannerDismissed = true),
             onSolo: world == null
@@ -172,12 +160,12 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
         else ...[
           Expanded(
             key: const ValueKey('cockpit-driving'),
-            child: _Driving(def: def, meta: _meta, send: _send),
+            child: _Driving(def: def, meta: snap.meta, send: _send),
           ),
           _SwitchBar(
             onSwitch: () => setState(() => _showLauncher = true),
             onStop: () {
-              _session?.clearStage();
+              _cast.clearStage();
               setState(() => _showLauncher = true);
             },
           ),
@@ -679,6 +667,7 @@ class _CockpitHeader extends StatelessWidget {
     required this.code,
     required this.casting,
     required this.onLeave,
+    required this.onStop,
   });
 
   final LiveStatus status;
@@ -686,6 +675,7 @@ class _CockpitHeader extends StatelessWidget {
   final String code;
   final String? casting;
   final VoidCallback onLeave;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
@@ -741,10 +731,17 @@ class _CockpitHeader extends StatelessWidget {
             ),
           ),
           TextButton.icon(
+            onPressed: onStop,
+            icon: const Icon(Icons.stop_circle_outlined,
+                color: Colors.redAccent),
+            label: const Text('Stop', style: TextStyle(color: Colors.redAccent)),
+          ),
+          TextButton.icon(
             onPressed: onLeave,
             icon: const Icon(Icons.close, color: Colors.white70),
-            // "Leave" not "End" — this returns the phone to the lobby; the
-            // screen stays on (idle) until it's closed there.
+            // "Leave" MINIMIZES — the cast persists in castSessionProvider and
+            // the chrome pill keeps showing the code on every screen. Only
+            // "Stop" ends the session.
             label: const Text('Leave', style: TextStyle(color: Colors.white70)),
           ),
         ],

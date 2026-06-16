@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:differentworld/features/live_session/cast_cockpit.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/live_session/cast_receiver.dart';
+import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart'
     show generateSessionCode;
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -32,6 +35,18 @@ class _CastScreenState extends ConsumerState<CastScreen> {
   void initState() {
     super.initState();
     _immersive = ref.read(castImmersiveProvider.notifier);
+    // Resume a live cast: if a session is already up (the persistent anchor),
+    // open straight into the cockpit on its code — tapping the chrome pill
+    // from anywhere lands on the controls, not the lobby.
+    final snap = ref.read(castSessionProvider);
+    if (snap.active && snap.code != null) {
+      _mode = _Mode.cast;
+      _code = snap.code!;
+      // Provider write off the build phase (AppShell watches castImmersive).
+      unawaited(Future.microtask(() {
+        if (mounted) _immersive.enter();
+      }));
+    }
   }
 
   @override
