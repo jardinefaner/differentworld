@@ -55,7 +55,7 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ---
 
-## Catalogued — 20 of ~55 visual components
+## Catalogued — 22 of ~55 visual components
 
 ### Atoms
 
@@ -68,6 +68,8 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | DwWordmark | [dw_wordmark.dart] | logotype + tagline | ✅ | [light](atoms/dw_wordmark__light.png) · [dark](atoms/dw_wordmark__dark.png) |
 | ScaleBar | [scale_bar.dart] | range scales with label + trailing | ✅ | [light](atoms/scale_bar__light.png) · [dark](atoms/scale_bar__dark.png) |
 | GlassPill | [glass_pill.dart] | frosted chrome pill (blur captures over content) | ✅ | [light](atoms/glass_pill__light.png) · [dark](atoms/glass_pill__dark.png) |
+| HorizonMark | [horizon_mark.dart] | brand mark (teal field, gold sun, white horizon) | ✅ | [light](atoms/horizon_mark__light.png) · [dark](atoms/horizon_mark__dark.png) |
+| SearchBarPill | [search_bar_pill.dart] | search input in glass pill (leading icon, trailing close button) | ✅ | [light](atoms/search_bar_pill__light.png) · [dark](atoms/search_bar_pill__dark.png) |
 
 ### Molecules
 
@@ -91,26 +93,31 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ## Not yet catalogued (the curator tracks these)
 
-`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **20 plates
-catalogued; ~35 visual components remain** (the rest are sub-widgets or
+`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **22 plates
+catalogued; ~33 visual components remain** (the rest are sub-widgets or
 non-visual). Two techniques cover the hard cases: the `_platePumped` helper
 (pumps fixed frames) for forever-animations (shimmer / spinner), and — confirmed
-this batch — **`BackdropFilter` blur DOES capture in goldens** (the glass frost
+in Wave 8 — **`BackdropFilter` blur DOES capture in goldens** (the glass frost
 renders over a backdrop), so glass catalogues with the normal `_plate`.
-Remaining ⚠️: `skeleton` (shimmer variants), `app_shell`, `live_block_strip`.
 
-**Atoms** — HorizonMark, SearchBarPill, FloatingBack, FloatingHamburger,
-SkeletonBox / SkeletonLine / SkeletonList / SkeletonCards / SkeletonListTile ⚠️shimmer, NavCountBadge, InlineEditableText.
+Remaining ⚠️ animated/blur flags:
+- `SkeletonShimmer` — infinite shimmer animation, needs `_platePumped` with fixed-frame iteration
+- `LiveBlockStrip` — countdown timer animation, needs frame limit
+- `AppShell` — the root shell with live providers, needs full harness
 
-**Molecules** — FormBody, SubjectPickerSheet, OverflowActions, GlassDragHandle.
+**Atoms** (9 remaining) — FloatingBack, FloatingHamburger, NavCountBadge,
+InlineEditableText, SkeletonBox, SkeletonLine, SkeletonList, SkeletonCards,
+SkeletonListTile.
 
-**Organisms** (seeded harness — need a `ProviderScope` + routing world) —
+**Molecules** (3 remaining) — FormBody, GlassDragHandle, OverflowActions.
+
+**Organisms** (10 remaining, each needs `ProviderScope` + routing harness) —
 EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, MasterDetailScaffold,
-FloatingActions, ResponsivePage, ResponsiveGrid, LiveBlockStrip ⚠️.
+FloatingActions, ResponsivePage, ResponsiveGrid, LiveBlockStrip ⚠️,
+SliverResponsiveGrid.
 
-**Non-visual / behavioural (no plate)** — ShellMetrics, NavDestinations,
-RouteChrome, RouteTitle, ShellBackAction, OrientationLock, HoverTap,
-DismissGuard, CenterOrScroll, DebugViewerToggle.
+**Non-visual / behavioural (no plate, do not catalogue)** — CenterOrScroll,
+DebugViewerToggle, DismissGuard, HoverTap, OrientationLock, RouteTitle.
 
 [feedback in CLAUDE.md]: ../CLAUDE.md
 [docs/THEME_ADHERENCE.md]: ../docs/THEME_ADHERENCE.md
@@ -137,3 +144,5 @@ DismissGuard, CenterOrScroll, DebugViewerToggle.
 [glass_pill.dart]: ../lib/shared/widgets/glass_pill.dart
 [glass_panel.dart]: ../lib/shared/widgets/glass_panel.dart
 [async_loading.dart]: ../lib/shared/widgets/async_loading.dart
+[horizon_mark.dart]: ../lib/shared/widgets/horizon_mark.dart
+[search_bar_pill.dart]: ../lib/shared/widgets/search_bar_pill.dart
