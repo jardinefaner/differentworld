@@ -2,17 +2,24 @@ import 'dart:convert';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/app/theme.dart';
+import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
+import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
+import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/dw_wordmark.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_banner.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
+import 'package:differentworld/shared/widgets/progress_dots.dart';
+import 'package:differentworld/shared/widgets/scale_bar.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
+import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,6 +108,62 @@ void main() {
         PersonAvatar(name: 'Maya Okonkwo'),
         PersonAvatar(name: 'Devon Lee', radius: 26),
         PersonAvatar(name: 'Sam', radius: 34),
+      ],
+    ),
+  );
+
+  _plate(
+    'atoms/status_dot',
+    height: 170,
+    (_) => const Wrap(
+      spacing: Insets.xl,
+      runSpacing: Insets.lg,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _Labeled('calm', StatusDot(kind: StatusDotKind.calm, size: 18)),
+        _Labeled('progress', StatusDot(kind: StatusDotKind.progress, size: 18)),
+        _Labeled(
+          'attention',
+          StatusDot(kind: StatusDotKind.needsAttention, size: 18),
+        ),
+        _Labeled('neutral', StatusDot(kind: StatusDotKind.neutral, size: 18)),
+      ],
+    ),
+  );
+
+  _plate(
+    'atoms/progress_dots',
+    height: 160,
+    (_) => const Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Labeled('step 1 of 4', ProgressDots(count: 4, current: 0)),
+        SizedBox(height: Insets.lg),
+        _Labeled('step 3 of 4', ProgressDots(count: 4, current: 2)),
+      ],
+    ),
+  );
+
+  _plate(
+    'atoms/dw_wordmark',
+    height: 240,
+    (_) => const Center(child: DwWordmark(tagline: 'imagination, first')),
+  );
+
+  _plate(
+    'atoms/scale_bar',
+    height: 230,
+    (_) => const Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ScaleBar(scale: Scale(value: 3, max: 5), label: 'Mood', trailing: '3 / 5'),
+        SizedBox(height: Insets.xl),
+        ScaleBar(
+          scale: Scale(value: 23, max: 50, previous: 10),
+          label: 'Journey',
+          trailing: 'Day 23',
+        ),
       ],
     ),
   );
@@ -216,6 +279,109 @@ void main() {
       ],
     ),
   );
+
+  _plate(
+    'molecules/accent_card_tile',
+    height: 320,
+    (_) => Wrap(
+      spacing: Insets.md,
+      runSpacing: Insets.md,
+      children: [
+        SizedBox(
+          width: 190,
+          height: 140,
+          child: AccentCardTile(
+            color: ActivityPalette.teal,
+            title: 'Now & Next',
+            tagline: "What's on now",
+            icon: Icons.calendar_view_day_outlined,
+            onTap: () {},
+          ),
+        ),
+        SizedBox(
+          width: 190,
+          height: 140,
+          child: AccentCardTile(
+            color: ActivityPalette.pink,
+            title: "What's Missing",
+            tagline: 'Memory game',
+            icon: Icons.visibility_off_outlined,
+            onTap: () {},
+          ),
+        ),
+        SizedBox(
+          width: 190,
+          height: 140,
+          child: AccentCardTile(
+            color: ActivityPalette.amber,
+            title: 'Spotlight',
+            tagline: 'Fair turns',
+            icon: Icons.star_outline,
+            onTap: () {},
+          ),
+        ),
+      ],
+    ),
+  );
+
+  _plate(
+    'molecules/capability_locked_tile',
+    height: 180,
+    (_) => const CapabilityLockedTile(
+      tooltip: 'Turn on Field Trips in Settings',
+      child: FeatureCard(
+        leading: Icon(Icons.directions_bus_outlined),
+        title: 'Field trips',
+        subtitle: 'Locked for this room',
+      ),
+    ),
+  );
+
+  _plate(
+    'molecules/collapsible_section',
+    height: 300,
+    (_) => const Column(
+      children: [
+        CollapsibleSection(
+          icon: Icons.family_restroom_outlined,
+          title: 'Guardians',
+          collapsedSummary: '3 guardians',
+          child: Column(
+            children: [
+              FeatureCard(
+                leading: Icon(Icons.person_outline),
+                title: 'Ana Okonkwo',
+                subtitle: 'Mother · primary',
+              ),
+              FeatureCard(
+                leading: Icon(Icons.person_outline),
+                title: 'Devon Lee',
+                subtitle: 'Father',
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// A small captioned wrapper for atom plates (the glyph + its label below).
+class _Labeled extends StatelessWidget {
+  const _Labeled(this.label, this.child);
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          child,
+          const SizedBox(height: 6),
+          Text(label, style: Theme.of(context).textTheme.labelSmall),
+        ],
+      );
 }
 
 /// Render one component's plate (its variants) under light + dark, each written

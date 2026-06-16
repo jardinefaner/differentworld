@@ -55,7 +55,7 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ---
 
-## Catalogued
+## Catalogued — 16 of ~45 visual components
 
 ### Atoms
 
@@ -63,6 +63,10 @@ after adding or restyling a shared widget (`Agent component-curator`).
 |---|---|---|---|---|
 | Action buttons | [primary_action_button.dart], [secondary_action_button.dart], [destructive_button.dart] + themed Filled/Tonal/Outlined/Text | pill actions, all button kinds, destructive | ✅ | [light](atoms/action_buttons__light.png) · [dark](atoms/action_buttons__dark.png) |
 | PersonAvatar | [person_avatar.dart] | initials, 3 radii | ✅ | [light](atoms/person_avatar__light.png) · [dark](atoms/person_avatar__dark.png) |
+| StatusDot | [status_dot.dart] | calm · progress · needsAttention · neutral | ✅ | [light](atoms/status_dot__light.png) · [dark](atoms/status_dot__dark.png) |
+| ProgressDots | [progress_dots.dart] | step indicators (0 of N, current position) | ✅ | [light](atoms/progress_dots__light.png) · [dark](atoms/progress_dots__dark.png) |
+| DwWordmark | [dw_wordmark.dart] | logotype + tagline | ✅ | [light](atoms/dw_wordmark__light.png) · [dark](atoms/dw_wordmark__dark.png) |
+| ScaleBar | [scale_bar.dart] | range scales with label + trailing | ✅ | [light](atoms/scale_bar__light.png) · [dark](atoms/scale_bar__dark.png) |
 
 ### Molecules
 
@@ -75,25 +79,26 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | ErrorState | [error_state.dart] | title + detail + retry | ✅ | [light](molecules/error_state__light.png) · [dark](molecules/error_state__dark.png) |
 | ErrorBanner | [error_banner.dart] | message + retry + dismiss | ✅ | [light](molecules/error_banner__light.png) · [dark](molecules/error_banner__dark.png) |
 | CapSwitch | [cap_switch.dart] | on · off+disabled | ✅ | [light](molecules/cap_switch__light.png) · [dark](molecules/cap_switch__dark.png) |
+| AccentCardTile | [accent_card_tile.dart] | activity-palettes (teal, pink, amber) | ✅ | [light](molecules/accent_card_tile__light.png) · [dark](molecules/accent_card_tile__dark.png) |
+| CapabilityLockedTile | [capability_locked_tile.dart] | locked card overlay | ✅ | [light](molecules/capability_locked_tile__light.png) · [dark](molecules/capability_locked_tile__dark.png) |
+| CollapsibleSection | [collapsible_section.dart] | collapsed · expanded states | ✅ one-edge | [light](molecules/collapsible_section__light.png) · [dark](molecules/collapsible_section__dark.png) |
 
 ---
 
 ## Not yet catalogued (the curator tracks these)
 
-`lib/shared/widgets/` is ~50 files / **67 public widget classes**. **9 plates
-catalogued; ~30 visual components remain** (the rest are sub-widgets or
+`lib/shared/widgets/` is ~50 files / **~45 public visual widget classes**. **16 plates
+catalogued; ~29 visual components remain** (the rest are sub-widgets or
 non-visual). Animated / blur components need a fixed-pump plate first so
 `pumpAndSettle` can't hang on a forever-animation — confirmed by grep:
 `async_loading` (LoadingSlot), `glass_panel`, `glass_pill`, `skeleton`,
 `app_shell`, `live_block_strip`.
 
-**Atoms** — StatusDot, ProgressDots, ScaleBar, DwWordmark, HorizonMark,
-SearchBarPill, FloatingBack, FloatingHamburger, GlassPill ⚠️blur,
-Skeleton ⚠️shimmer.
+**Atoms** — HorizonMark, SearchBarPill, FloatingBack, FloatingHamburger,
+GlassPill ⚠️blur, Skeleton ⚠️shimmer.
 
-**Molecules** — AccentCardTile, CapabilityLockedTile, CollapsibleSection,
-NoAccess, FormBody, SubjectPickerSheet, OverflowActions, LoadingSlot
-⚠️shimmer, GlassPanel ⚠️blur.
+**Molecules** — NoAccess, FormBody, SubjectPickerSheet, OverflowActions,
+LoadingSlot ⚠️shimmer, GlassPanel ⚠️blur.
 
 **Organisms** (seeded harness — need a `ProviderScope` + routing world) —
 EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, MasterDetailScaffold,
@@ -117,3 +122,10 @@ DismissGuard, CenterOrScroll, DebugViewerToggle.
 [error_state.dart]: ../lib/shared/widgets/error_state.dart
 [error_banner.dart]: ../lib/shared/widgets/error_banner.dart
 [cap_switch.dart]: ../lib/shared/widgets/cap_switch.dart
+[status_dot.dart]: ../lib/shared/widgets/status_dot.dart
+[progress_dots.dart]: ../lib/shared/widgets/progress_dots.dart
+[dw_wordmark.dart]: ../lib/shared/widgets/dw_wordmark.dart
+[scale_bar.dart]: ../lib/shared/widgets/scale_bar.dart
+[accent_card_tile.dart]: ../lib/shared/widgets/accent_card_tile.dart
+[capability_locked_tile.dart]: ../lib/shared/widgets/capability_locked_tile.dart
+[collapsible_section.dart]: ../lib/shared/widgets/collapsible_section.dart
