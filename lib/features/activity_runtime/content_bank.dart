@@ -54,6 +54,12 @@ abstract class ContentKind {
   /// A charades prompt to act out — payload `{word, category}`. The actor's
   /// phone shows the word; the room sees only the category.
   static const charades = 'charades';
+
+  /// A picture card from a deck (docs/CARD_GAMES.md) — payload
+  /// `{id, label, image, category, letter, deck}`. The `image` is a bundled
+  /// asset path or a Storage URL; the word lives in `label` as DATA so games
+  /// can hide / show / match it. One kind, read by every card game.
+  static const picture = 'picture';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where

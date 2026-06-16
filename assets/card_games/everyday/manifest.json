@@ -1,0 +1,247 @@
+{
+  "deck": "everyday",
+  "title": "Everyday objects",
+  "version": 1,
+  "cards": [
+    {
+      "id": "violin",
+      "label": "violin",
+      "category": "music",
+      "image": "01-violin.png"
+    },
+    {
+      "id": "alarm-clock",
+      "label": "alarm clock",
+      "category": "home",
+      "image": "02-alarm-clock.png"
+    },
+    {
+      "id": "backpack",
+      "label": "backpack",
+      "category": "school",
+      "image": "03-backpack.png"
+    },
+    {
+      "id": "banana",
+      "label": "banana",
+      "category": "food",
+      "image": "04-banana.png"
+    },
+    {
+      "id": "candle",
+      "label": "candle",
+      "category": "home",
+      "image": "05-candle.png"
+    },
+    {
+      "id": "basketball",
+      "label": "basketball",
+      "category": "sports",
+      "image": "06-basketball.png"
+    },
+    {
+      "id": "feather",
+      "label": "feather",
+      "category": "nature",
+      "image": "07-feather.png"
+    },
+    {
+      "id": "teacup",
+      "label": "teacup",
+      "category": "home",
+      "image": "08-teacup.png"
+    },
+    {
+      "id": "telescope",
+      "label": "telescope",
+      "category": "science",
+      "image": "09-telescope.png"
+    },
+    {
+      "id": "camera",
+      "label": "camera",
+      "category": "tech",
+      "image": "10-camera.png"
+    },
+    {
+      "id": "pineapple",
+      "label": "pineapple",
+      "category": "food",
+      "image": "11-pineapple.png"
+    },
+    {
+      "id": "globe",
+      "label": "globe",
+      "category": "school",
+      "image": "12-globe.png"
+    },
+    {
+      "id": "hammer",
+      "label": "hammer",
+      "category": "tools",
+      "image": "13-hammer.png"
+    },
+    {
+      "id": "lantern",
+      "label": "lantern",
+      "category": "home",
+      "image": "14-lantern.png"
+    },
+    {
+      "id": "puzzle-piece",
+      "label": "puzzle piece",
+      "category": "toys",
+      "image": "15-puzzle-piece.png"
+    },
+    {
+      "id": "roller-skate",
+      "label": "roller skate",
+      "category": "sports",
+      "image": "16-roller-skate.png"
+    },
+    {
+      "id": "toothbrush",
+      "label": "toothbrush",
+      "category": "home",
+      "image": "17-toothbrush.png"
+    },
+    {
+      "id": "paintbrush",
+      "label": "paintbrush",
+      "category": "art",
+      "image": "18-paintbrush.png"
+    },
+    {
+      "id": "suitcase",
+      "label": "suitcase",
+      "category": "travel",
+      "image": "19-suitcase.png"
+    },
+    {
+      "id": "sunglasses",
+      "label": "sunglasses",
+      "category": "clothing",
+      "image": "20-sunglasses.png"
+    },
+    {
+      "id": "microphone",
+      "label": "microphone",
+      "category": "music",
+      "image": "21-microphone.png"
+    },
+    {
+      "id": "bicycle-helmet",
+      "label": "bicycle helmet",
+      "category": "sports",
+      "image": "22-bicycle-helmet.png"
+    },
+    {
+      "id": "baseball",
+      "label": "baseball",
+      "category": "sports",
+      "image": "23-baseball.png"
+    },
+    {
+      "id": "chess-piece-rook",
+      "label": "chess piece rook",
+      "category": "toys",
+      "image": "24-chess-piece-rook.png"
+    },
+    {
+      "id": "starfish",
+      "label": "starfish",
+      "category": "nature",
+      "image": "25-starfish.png"
+    },
+    {
+      "id": "notebook",
+      "label": "notebook",
+      "category": "school",
+      "image": "26-notebook.png"
+    },
+    {
+      "id": "key",
+      "label": "key",
+      "category": "home",
+      "image": "27-key.png"
+    },
+    {
+      "id": "garden-hose",
+      "label": "garden hose",
+      "category": "tools",
+      "image": "28-garden-hose.png"
+    },
+    {
+      "id": "calculator",
+      "label": "calculator",
+      "category": "school",
+      "image": "29-calculator.png"
+    },
+    {
+      "id": "ice-cream-cone",
+      "label": "ice cream cone",
+      "category": "food",
+      "image": "30-ice-cream-cone.png"
+    },
+    {
+      "id": "desk-lamp",
+      "label": "desk lamp",
+      "category": "home",
+      "image": "31-desk-lamp.png"
+    },
+    {
+      "id": "gift-box",
+      "label": "gift box",
+      "category": "home",
+      "image": "32-gift-box.png"
+    },
+    {
+      "id": "hat",
+      "label": "hat",
+      "category": "clothing",
+      "image": "33-hat.png"
+    },
+    {
+      "id": "shampoo-bottle",
+      "label": "shampoo bottle",
+      "category": "home",
+      "image": "34-shampoo-bottle.png"
+    },
+    {
+      "id": "cd-dvd",
+      "label": "cd dvd",
+      "category": "tech",
+      "image": "35-cd-dvd.png"
+    },
+    {
+      "id": "sandwich",
+      "label": "sandwich",
+      "category": "food",
+      "image": "36-sandwich.png"
+    },
+    {
+      "id": "cactus",
+      "label": "cactus",
+      "category": "nature",
+      "image": "37-cactus.png"
+    },
+    {
+      "id": "measuring-tape",
+      "label": "measuring tape",
+      "category": "tools",
+      "image": "38-measuring-tape.png"
+    },
+    {
+      "id": "paper-clip",
+      "label": "paper clip",
+      "category": "school",
+      "image": "39-paper-clip.png"
+    },
+    {
+      "id": "dice",
+      "label": "dice",
+      "category": "toys",
+      "image": "40-dice.png"
+    }
+  ]
+}
