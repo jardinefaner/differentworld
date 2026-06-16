@@ -55,7 +55,7 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ---
 
-## Catalogued — 18 of ~55 visual components
+## Catalogued — 20 of ~55 visual components
 
 ### Atoms
 
@@ -67,6 +67,7 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | ProgressDots | [progress_dots.dart] | step indicators (0 of N, current position) | ✅ | [light](atoms/progress_dots__light.png) · [dark](atoms/progress_dots__dark.png) |
 | DwWordmark | [dw_wordmark.dart] | logotype + tagline | ✅ | [light](atoms/dw_wordmark__light.png) · [dark](atoms/dw_wordmark__dark.png) |
 | ScaleBar | [scale_bar.dart] | range scales with label + trailing | ✅ | [light](atoms/scale_bar__light.png) · [dark](atoms/scale_bar__dark.png) |
+| GlassPill | [glass_pill.dart] | frosted chrome pill (blur captures over content) | ✅ | [light](atoms/glass_pill__light.png) · [dark](atoms/glass_pill__dark.png) |
 
 ### Molecules
 
@@ -84,23 +85,24 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | CollapsibleSection | [collapsible_section.dart] | collapsed · expanded states | ✅ one-edge | [light](molecules/collapsible_section__light.png) · [dark](molecules/collapsible_section__dark.png) |
 | NoAccess | [no_access.dart] | access denied state | ✅ | [light](molecules/no_access__light.png) · [dark](molecules/no_access__dark.png) |
 | LoadingSlot | [async_loading.dart] | list shimmer, card stack, spinner variants | ✅ | [light](molecules/loading_slot__light.png) · [dark](molecules/loading_slot__dark.png) |
+| GlassPanel | [glass_panel.dart] | frosted sheet surface (the floating-glass chrome) | ✅ | [light](molecules/glass_panel__light.png) · [dark](molecules/glass_panel__dark.png) |
 
 ---
 
 ## Not yet catalogued (the curator tracks these)
 
-`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **18 plates
-catalogued; ~37 visual components remain** (the rest are sub-widgets or
-non-visual). Animated / blur components need a fixed-pump plate first so
-`pumpAndSettle` can't hang on a forever-animation — **confirmed working via
-`_platePumped` helper (pumps fixed frames)** — the remaining ⚠️ mark is unblocked:
-`glass_panel`, `glass_pill`, `skeleton` (shimmer variants), `app_shell`,
-`live_block_strip`.
+`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **20 plates
+catalogued; ~35 visual components remain** (the rest are sub-widgets or
+non-visual). Two techniques cover the hard cases: the `_platePumped` helper
+(pumps fixed frames) for forever-animations (shimmer / spinner), and — confirmed
+this batch — **`BackdropFilter` blur DOES capture in goldens** (the glass frost
+renders over a backdrop), so glass catalogues with the normal `_plate`.
+Remaining ⚠️: `skeleton` (shimmer variants), `app_shell`, `live_block_strip`.
 
 **Atoms** — HorizonMark, SearchBarPill, FloatingBack, FloatingHamburger,
-GlassPill ⚠️blur, SkeletonBox / SkeletonLine / SkeletonList / SkeletonCards / SkeletonListTile ⚠️shimmer, NavCountBadge, InlineEditableText.
+SkeletonBox / SkeletonLine / SkeletonList / SkeletonCards / SkeletonListTile ⚠️shimmer, NavCountBadge, InlineEditableText.
 
-**Molecules** — FormBody, SubjectPickerSheet, OverflowActions, GlassPanel ⚠️blur, GlassDragHandle.
+**Molecules** — FormBody, SubjectPickerSheet, OverflowActions, GlassDragHandle.
 
 **Organisms** (seeded harness — need a `ProviderScope` + routing world) —
 EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, MasterDetailScaffold,
@@ -132,4 +134,6 @@ DismissGuard, CenterOrScroll, DebugViewerToggle.
 [capability_locked_tile.dart]: ../lib/shared/widgets/capability_locked_tile.dart
 [collapsible_section.dart]: ../lib/shared/widgets/collapsible_section.dart
 [no_access.dart]: ../lib/shared/widgets/no_access.dart
+[glass_pill.dart]: ../lib/shared/widgets/glass_pill.dart
+[glass_panel.dart]: ../lib/shared/widgets/glass_panel.dart
 [async_loading.dart]: ../lib/shared/widgets/async_loading.dart

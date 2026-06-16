@@ -14,6 +14,8 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_banner.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/glass_pill.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -165,6 +167,33 @@ void main() {
           scale: Scale(value: 23, max: 50, previous: 10),
           label: 'Journey',
           trailing: 'Day 23',
+        ),
+      ],
+    ),
+  );
+
+  // Glass = BackdropFilter; render OVER a busy backdrop so the frost is visible.
+  _plate(
+    'atoms/glass_pill',
+    height: 220,
+    (_) => Stack(
+      fit: StackFit.expand,
+      children: [
+        _glassBackdrop(),
+        Center(
+          child: GlassPill(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+                IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.more_horiz),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     ),
@@ -392,7 +421,55 @@ void main() {
       ],
     ),
   );
+
+  _plate(
+    'molecules/glass_panel',
+    height: 320,
+    (ctx) => Stack(
+      fit: StackFit.expand,
+      children: [
+        _glassBackdrop(),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: GlassPanel(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Glass sheet', style: Theme.of(ctx).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'A frosted surface over the page — the floating-glass chrome.',
+                    style: Theme.of(ctx).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
+
+/// A busy backdrop (colour stripes) so the frosted-glass blur has something to
+/// frost — glass over an empty surface only shows its tint.
+Widget _glassBackdrop() => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final c in const [
+          Color(0xFF2A9D8F),
+          Color(0xFFE9C46A),
+          Color(0xFFE76F51),
+          Color(0xFF264653),
+          Color(0xFF457B9D),
+          Color(0xFF2A9D8F),
+        ])
+          Expanded(child: ColoredBox(color: c)),
+      ],
+    );
 
 /// A small captioned wrapper for atom plates (the glyph + its label below).
 class _Labeled extends StatelessWidget {
