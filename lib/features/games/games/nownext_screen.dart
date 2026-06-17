@@ -1,3 +1,4 @@
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/games/data_seeded_game.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -23,6 +24,29 @@ String _title(String? title, String kind) {
   return t.isEmpty ? _kindLabel(kind) : t;
 }
 
+/// Map today's schedule [blocks] to the Now & Next wire-state — sorted by
+/// start, positioned on the block happening NOW (or the next upcoming). Shared
+/// by the single-device present screen ([NowNextScreen]) and the cockpit's cast
+/// tile, so both surfaces produce the identical board.
+Map<String, dynamic> nowNextSeed(List<ScheduleBlock> blocks) {
+  final sorted = [...blocks]..sort((a, b) => a.startAt.compareTo(b.startAt));
+  final now = DateTime.now();
+  var current = 0;
+  for (var i = 0; i < sorted.length; i++) {
+    current = i;
+    final end = DateTime.tryParse(sorted[i].endAt)?.toLocal();
+    // First block that hasn't ended = now-or-next; else fall to the last.
+    if (end != null && now.isBefore(end)) break;
+  }
+  return {
+    'blocks': [
+      for (final b in sorted)
+        [_title(b.title, b.kind), _fmtTime(b.startAt), b.kind],
+    ],
+    'i': current,
+  };
+}
+
 /// Seeds Now & Next from today's schedule (Drift, not the content bank), then
 /// hands off via [DataSeededGame] (docs/VISION.md #18). Starts on the block
 /// happening now (or the next upcoming). The resolved blocks ride in the
@@ -38,25 +62,7 @@ class NowNextScreen extends ConsumerWidget {
       def: const NowNextGame(),
       live: live,
       data: ref.watch(scheduleDayProvider(todayKey())),
-      seed: (blocks) {
-        final sorted = [...blocks]
-          ..sort((a, b) => a.startAt.compareTo(b.startAt));
-        final now = DateTime.now();
-        var current = 0;
-        for (var i = 0; i < sorted.length; i++) {
-          current = i;
-          final end = DateTime.tryParse(sorted[i].endAt)?.toLocal();
-          // First block that hasn't ended = now-or-next; else fall to the last.
-          if (end != null && now.isBefore(end)) break;
-        }
-        return {
-          'blocks': [
-            for (final b in sorted)
-              [_title(b.title, b.kind), _fmtTime(b.startAt), b.kind],
-          ],
-          'i': current,
-        };
-      },
+      seed: nowNextSeed,
     );
   }
 }

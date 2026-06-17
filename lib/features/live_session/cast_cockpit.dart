@@ -9,10 +9,14 @@ import 'package:differentworld/features/activity_runtime/content_bank_providers.
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/games/games/nownext_game.dart';
+import 'package:differentworld/features/games/games/nownext_screen.dart';
 import 'package:differentworld/features/games/games/timer_game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
+import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -95,6 +99,17 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     if (mounted) setState(() => _showLauncher = false);
   }
 
+  /// Cast Now & Next — today's schedule on the screen, advanced from the phone.
+  /// Reads the day's blocks (Drift) and seeds the wire; an empty day shows the
+  /// game's own "no schedule yet" stage. `.future` so the first emission has
+  /// landed before we seed (the cockpit doesn't otherwise watch the schedule).
+  Future<void> _castNowNext() async {
+    final blocks = await ref.read(scheduleDayProvider(todayKey()).future);
+    if (!mounted) return;
+    _cast.castStage(const NowNextGame().id, nowNextSeed(blocks));
+    setState(() => _showLauncher = false);
+  }
+
   void _send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
     final id = CastSession.gameIdOf(ref.read(castSessionProvider).meta);
     final def = id == null ? null : gameById(id);
@@ -156,6 +171,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
               presentWorld: world,
               onPresentWorld: _castWorld,
               onConduct: _castConductor,
+              onNowNext: _castNowNext,
             ),
           )
         else ...[
@@ -248,6 +264,7 @@ class _Launcher extends StatelessWidget {
     this.presentWorld,
     this.onPresentWorld,
     this.onConduct,
+    this.onNowNext,
   });
 
   final void Function(GameDefinition<dynamic>) onPick;
@@ -260,6 +277,9 @@ class _Launcher extends StatelessWidget {
 
   /// Open the Conduct text-entry (cast any text, then tap words to spotlight).
   final VoidCallback? onConduct;
+
+  /// Cast today's schedule as Now & Next (advanced from the phone).
+  final VoidCallback? onNowNext;
 
   @override
   Widget build(BuildContext context) {
@@ -281,6 +301,15 @@ class _Launcher extends StatelessWidget {
             subtitle: 'Cast text, tap a word',
             color: const Color(0xFF2A6B7A),
             onTap: onConduct!,
+          ),
+        // Now & Next — today's schedule on the screen, advanced from the phone.
+        if (onNowNext != null)
+          _SimpleTile(
+            icon: Icons.view_agenda_outlined,
+            title: 'Now & Next',
+            subtitle: "Today's schedule",
+            color: const Color(0xFF4C7A5C),
+            onTap: onNowNext!,
           ),
         // Visual Timer — a countdown on the screen, driven from the phone. Casts
         // with its default 5:00 seed; not a game, so it isn't in the loop below.
