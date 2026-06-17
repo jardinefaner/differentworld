@@ -76,7 +76,7 @@ class AccentCardTile extends StatelessWidget {
                 style: TextStyle(
                   color: fg,
                   fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               if (tagline case final t?) ...[

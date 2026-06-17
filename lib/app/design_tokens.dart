@@ -392,18 +392,21 @@ abstract final class Radii {
 /// system instead of the same Material-400 hexes copy-pasted across a dozen
 /// files. All `static const` → safe to use inside `const` card lists.
 abstract final class ActivityPalette {
-  static const Color blue = Color(0xFF42A5F5);
-  static const Color indigo = Color(0xFF5C6BC0);
-  static const Color teal = Color(0xFF26A69A);
-  static const Color tealDeep = Color(0xFF00897B);
-  static const Color amber = Color(0xFFFFA726);
-  static const Color yellow = Color(0xFFFFCA28);
-  static const Color pink = Color(0xFFEC407A);
-  static const Color purple = Color(0xFFAB47BC);
-  static const Color deepPurple = Color(0xFF7E57C2);
-  static const Color green = Color(0xFF66BB6A);
-  static const Color cyan = Color(0xFF26C6DA);
-  static const Color lightBlue = Color(0xFF29B6F6);
-  static const Color red = Color(0xFFEF5350);
-  static const Color brown = Color(0xFF8D6E63);
+  // Harmonized to the calm, on-brand sensibility (same family as GameAccents in
+  // game.dart) — desaturated from the old Material-400 brights so the activity
+  // tiles + game stages read calm, not loud. Still distinct per slot.
+  static const Color blue = Color(0xFF5784A8);
+  static const Color indigo = Color(0xFF6E6FA8);
+  static const Color teal = Color(0xFF2A9D8F);
+  static const Color tealDeep = Color(0xFF1D7A6E);
+  static const Color amber = Color(0xFFC79A3E);
+  static const Color yellow = Color(0xFFD4B45A);
+  static const Color pink = Color(0xFFC25E7E);
+  static const Color purple = Color(0xFF9A6BAE);
+  static const Color deepPurple = Color(0xFF7C6BAE);
+  static const Color green = Color(0xFF5E9E6B);
+  static const Color cyan = Color(0xFF4F9AAE);
+  static const Color lightBlue = Color(0xFF5E97B8);
+  static const Color red = Color(0xFFC85A52);
+  static const Color brown = Color(0xFF8B7363);
 }

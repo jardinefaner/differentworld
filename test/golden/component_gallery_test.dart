@@ -705,19 +705,25 @@ void main() {
 
 /// A busy backdrop (colour stripes) so the frosted-glass blur has something to
 /// frost — glass over an empty surface only shows its tint.
-Widget _glassBackdrop() => Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final c in const [
-          Color(0xFF2A9D8F),
-          Color(0xFFE9C46A),
-          Color(0xFFE76F51),
-          Color(0xFF264653),
-          Color(0xFF457B9D),
-          Color(0xFF2A9D8F),
-        ])
-          Expanded(child: ColoredBox(color: c)),
-      ],
+Widget _glassBackdrop() => Container(
+      color: const Color(0xFFEFEAE2),
+      alignment: Alignment.topLeft,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final w in const [320.0, 240.0, 300.0, 180.0, 260.0])
+            Container(
+              height: 13,
+              width: w,
+              margin: const EdgeInsets.only(bottom: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFCFC8BB),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+        ],
+      ),
     );
 
 /// A small captioned wrapper for atom plates (the glyph + its label below).
