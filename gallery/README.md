@@ -55,7 +55,7 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ---
 
-## Catalogued — 28 of ~55 visual components
+## Catalogued — 32 of ~55 visual components
 
 ### Atoms
 
@@ -95,13 +95,22 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | FormBody | [form_body.dart] | form container with insets (padding, keyboard room) | ✅ | [light](molecules/form_body__light.png) · [dark](molecules/form_body__dark.png) |
 | OverflowActions | [overflow_actions.dart] | action buttons overflow menu (EdgeAction items) | ✅ | [light](molecules/overflow_actions__light.png) · [dark](molecules/overflow_actions__dark.png) |
 
+### Organisms (standalone — no harness)
+
+| Component | Source | Variants shown | Calm | PNGs |
+|---|---|---|---|---|
+| FloatingActions | [floating_actions.dart] | glass action pill (frosted, over content) | ✅ | [light](organisms/floating_actions__light.png) · [dark](organisms/floating_actions__dark.png) |
+| ResponsivePage | [responsive_page.dart] | width-clamped scroll page | ✅ | [light](organisms/responsive_page__light.png) · [dark](organisms/responsive_page__dark.png) |
+| ResponsiveGrid | [responsive_grid.dart] | adaptive columns (desktop width) | ✅ | [light](organisms/responsive_grid__light.png) · [dark](organisms/responsive_grid__dark.png) |
+| MasterDetailScaffold | [master_detail_scaffold.dart] | two-pane at ≥1200dp (list + detail) | ✅ | [light](organisms/master_detail_scaffold__light.png) · [dark](organisms/master_detail_scaffold__dark.png) |
+
 ---
 
 ## Not yet catalogued (the curator tracks these)
 
-`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **28 plates
-catalogued; ~27 visual components remain** (the rest are organisms or
-non-visual). The `_platePumped` helper (pumps fixed frames) covers forever-animations
+`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **32 plates
+catalogued** — all atoms + molecules (bar GlassDragHandle) + the 4 standalone
+organisms. The remainder are harness-organisms or non-visual. The `_platePumped` helper (pumps fixed frames) covers forever-animations
 (shimmer / spinner); **`BackdropFilter` blur DOES capture in goldens** (glass frost
 renders properly).
 
@@ -113,10 +122,10 @@ Remaining ⚠️ animated/blur flags:
 
 **Molecules** (1 remaining) — GlassDragHandle (self-suppresses without GlassSheetScope; defers to sheet harness).
 
-**Organisms** (10 remaining, each needs `ProviderScope` + routing harness) —
-EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, MasterDetailScaffold,
-FloatingActions, ResponsivePage, ResponsiveGrid, LiveBlockStrip ⚠️,
-SliverResponsiveGrid.
+**Organisms** (6 remaining — need a `ProviderScope` + routing harness) —
+EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, LiveBlockStrip ⚠️,
+SliverResponsiveGrid. (FloatingActions, ResponsivePage, ResponsiveGrid,
+MasterDetailScaffold render standalone — now catalogued above.)
 
 **Non-visual / behavioural (no plate, do not catalogue)** — CenterOrScroll,
 DebugViewerToggle, DismissGuard, HoverTap, OrientationLock, RouteTitle,
@@ -140,6 +149,10 @@ GlassSheetScope.
 [progress_dots.dart]: ../lib/shared/widgets/progress_dots.dart
 [dw_wordmark.dart]: ../lib/shared/widgets/dw_wordmark.dart
 [scale_bar.dart]: ../lib/shared/widgets/scale_bar.dart
+[floating_actions.dart]: ../lib/shared/widgets/floating_actions.dart
+[responsive_page.dart]: ../lib/shared/widgets/responsive_page.dart
+[responsive_grid.dart]: ../lib/shared/widgets/responsive_grid.dart
+[master_detail_scaffold.dart]: ../lib/shared/widgets/master_detail_scaffold.dart
 [accent_card_tile.dart]: ../lib/shared/widgets/accent_card_tile.dart
 [capability_locked_tile.dart]: ../lib/shared/widgets/capability_locked_tile.dart
 [collapsible_section.dart]: ../lib/shared/widgets/collapsible_section.dart

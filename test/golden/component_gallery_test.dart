@@ -14,6 +14,7 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_banner.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
+import 'package:differentworld/shared/widgets/floating_actions.dart';
 import 'package:differentworld/shared/widgets/floating_back.dart';
 import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
@@ -21,12 +22,15 @@ import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/glass_pill.dart';
 import 'package:differentworld/shared/widgets/horizon_mark.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
+import 'package:differentworld/shared/widgets/master_detail_scaffold.dart';
 import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
+import 'package:differentworld/shared/widgets/responsive_grid.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/scale_bar.dart';
 import 'package:differentworld/shared/widgets/search_bar_pill.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
@@ -591,6 +595,112 @@ void main() {
       ),
     ]),
   );
+
+  // ── ORGANISMS (standalone — no provider/routing harness) ─────────────────
+  _plate(
+    'organisms/floating_actions',
+    height: 200,
+    (_) => Stack(
+      fit: StackFit.expand,
+      children: [
+        _glassBackdrop(),
+        Align(
+          alignment: Alignment.topRight,
+          child: FloatingActions(
+            children: [
+              PrimaryActionButton(
+                tooltip: 'Add',
+                icon: Icons.add,
+                onPressed: () {},
+              ),
+              SecondaryActionButton(
+                tooltip: 'Search',
+                icon: Icons.search,
+                onPressed: () {},
+              ),
+              SecondaryActionButton(
+                tooltip: 'Sync',
+                icon: Icons.cloud_done_outlined,
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  _plate(
+    'organisms/responsive_page',
+    height: 420,
+    (_) => const ResponsivePage(
+      children: [
+        ContentHeader(title: 'Today', subtitle: 'Sunny Room · 12 children'),
+        FeatureCard(
+          leading: Icon(Icons.person_outline),
+          title: 'Maya Okonkwo',
+          subtitle: 'Checked in · 8:42 AM',
+        ),
+        FeatureCard(
+          leading: Icon(Icons.person_outline),
+          title: 'Devon Lee',
+          subtitle: 'Checked in · 8:50 AM',
+        ),
+      ],
+    ),
+  );
+
+  _plate(
+    'organisms/responsive_grid',
+    height: 320,
+    width: 1100,
+    (_) => ResponsiveGrid(
+      itemCount: 4,
+      itemBuilder: (_, i) => AccentCardTile(
+        color: const [
+          ActivityPalette.teal,
+          ActivityPalette.pink,
+          ActivityPalette.amber,
+          ActivityPalette.indigo,
+        ][i],
+        title: const ['Now & Next', "What's Missing", 'Spotlight', 'Memory'][i],
+        tagline: 'Tap to present',
+        icon: Icons.play_circle_outline,
+        onTap: () {},
+      ),
+    ),
+  );
+
+  _plate(
+    'organisms/master_detail_scaffold',
+    height: 420,
+    width: 1320,
+    (_) => MasterDetailScaffold(
+      list: ListView(
+        children: const [
+          FeatureCard(
+            leading: Icon(Icons.person_outline),
+            title: 'Maya Okonkwo',
+            subtitle: 'Sunny Room',
+          ),
+          FeatureCard(
+            leading: Icon(Icons.person_outline),
+            title: 'Devon Lee',
+            subtitle: 'Sunny Room',
+          ),
+          FeatureCard(
+            tone: FeatureCardTone.selected,
+            leading: Icon(Icons.person_outline),
+            title: 'Ana Ruiz',
+            subtitle: 'Sunny Room',
+          ),
+        ],
+      ),
+      detail: const Center(
+        child: Text('Ana Ruiz', style: TextStyle(fontSize: 24)),
+      ),
+    ),
+  );
 }
 
 /// A busy backdrop (colour stripes) so the frosted-glass blur has something to
@@ -635,6 +745,7 @@ void _plate(
   String name,
   Widget Function(BuildContext) build, {
   double height = 360,
+  double width = 440,
 }) {
   for (final mode in const ['light', 'dark']) {
     testWidgets(
@@ -659,7 +770,7 @@ void _plate(
               ),
             ),
           ),
-          size: Size(440, height),
+          size: Size(width, height),
         );
         await expectLater(
           find.byType(MaterialApp),
