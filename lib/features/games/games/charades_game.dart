@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// Charades on the unified game framework (docs/GAMES.md, the three-device
@@ -123,35 +124,27 @@ class CharadesGame extends GameDefinition<CharadesState> {
   // The ROOM (presenter) — category + score, never the word.
   @override
   Widget buildStage(BuildContext context, CharadesState s) {
-    final theme = Theme.of(context);
     if (s.done) return _wrap(context, s);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'ACT IT OUT — NO WORDS!',
-            style: TextStyle(
-              color: Colors.white54,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            s.category,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.displaySmall?.copyWith(
-              color: vibe.accent,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            '${s.found} guessed',
-            style: const TextStyle(color: Colors.white70, fontSize: 20),
-          ),
-        ],
+    final theme = Theme.of(context);
+    return GameStage.frame(
+      context,
+      eyebrow: 'Act it out — no words',
+      hero: Text(
+        s.category,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.displaySmall?.copyWith(
+          color: vibe.accent,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: GameStage.counter(
+          context,
+          value: '${s.found}',
+          caption: 'guessed',
+          accent: vibe.accent,
+        ),
       ),
     );
   }
@@ -159,38 +152,17 @@ class CharadesGame extends GameDefinition<CharadesState> {
   // The ACTOR + the TEACHER — the secret word.
   @override
   Widget buildSecretStage(BuildContext context, CharadesState state) {
-    final theme = Theme.of(context);
     if (state.done) return _wrap(context, state);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'ACT THIS OUT — NO TALKING!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white54,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              state.word,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "(${state.category} · the room can't see this)",
-              style: const TextStyle(color: Colors.white38),
-            ),
-          ],
+    return GameStage.frame(
+      context,
+      eyebrow: 'Act this out — no talking',
+      hero: GameStage.hero(context, state.word),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Text(
+          "(${state.category} · the room can't see this)",
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white38),
         ),
       ),
     );

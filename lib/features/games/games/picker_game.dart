@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// Spotlight — a DATA-driven presentable (docs/VISION.md #18). Fair turns:
@@ -108,41 +109,19 @@ class PickerGame extends GameDefinition<PickerState> {
         ),
       );
     }
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              s.spun ? '🎉' : '🎯',
-              style: const TextStyle(fontSize: 72),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              s.spun ? "You're up!" : "Who's next?",
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontWeight: FontWeight.w500,
-                letterSpacing: 2,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 20),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Text(
-                s.spun ? s.current : 'Tap Spin',
-                key: ValueKey(s.spun ? s.current : '_prompt'),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  color: s.spun ? vibe.accent : Colors.white24,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ],
+    return GameStage.frame(
+      context,
+      eyebrow: s.spun ? "You're up!" : "Who's next?",
+      hero: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: Text(
+          s.spun ? s.current : 'Tap Spin',
+          key: ValueKey(s.spun ? s.current : '_prompt'),
+          textAlign: TextAlign.center,
+          style: theme.textTheme.displaySmall?.copyWith(
+            color: s.spun ? vibe.accent : Colors.white24,
+            fontWeight: FontWeight.w400,
+          ),
         ),
       ),
     );
