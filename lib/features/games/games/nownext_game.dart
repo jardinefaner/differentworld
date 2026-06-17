@@ -212,6 +212,8 @@ class _Banner extends StatelessWidget {
           width: big ? 2 : 1,
         ),
       ),
+      // One column per card: the label, then the icon + title row, then the
+      // time on its own line below — Col[label, Row[icon, title], time].
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -246,19 +248,19 @@ class _Banner extends StatelessWidget {
                       ),
                 ),
               ),
-              if ((block?.time ?? '').isNotEmpty) ...[
-                const SizedBox(width: 12),
-                Text(
-                  block!.time,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                    fontSize: big ? 22 : 16,
-                  ),
-                ),
-              ],
             ],
           ),
+          if ((block?.time ?? '').isNotEmpty) ...[
+            SizedBox(height: big ? 12 : 8),
+            Text(
+              block!.time,
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w700,
+                fontSize: big ? 22 : 16,
+              ),
+            ),
+          ],
         ],
       ),
     );
