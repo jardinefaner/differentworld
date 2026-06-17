@@ -1,5 +1,7 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// Fact or Fib on the framework (docs/GAMES.md Wave 1b). A claim shows big,
@@ -122,67 +124,47 @@ class FactOrFibGame extends GameDefinition<FactState> {
 
   @override
   Widget buildStage(BuildContext context, FactState s) {
-    final theme = Theme.of(context);
     if (s.done) {
       return _Recap(count: s.items.length);
     }
     final (statement, isTrue, note) = s.current;
-    return Center(
-      child: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  statement,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  s.revealed ? '' : 'True, or fib? Vote with your hands',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white38,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _Verdict(
-                      label: 'True',
-                      highlight: s.revealed && isTrue,
-                      dim: s.revealed && !isTrue,
-                    ),
-                    const SizedBox(width: 16),
-                    _Verdict(
-                      label: 'Fib',
-                      highlight: s.revealed && !isTrue,
-                      dim: s.revealed && isTrue,
-                    ),
-                  ],
-                ),
-                if (s.revealed) ...[
-                  const SizedBox(height: 20),
-                  Text(
-                    note,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+    return GameStage.frame(
+      context,
+      eyebrow: s.revealed ? null : 'True, or fib?',
+      hero: GameStage.hero(context, statement),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 28),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _Verdict(
+                label: 'True',
+                accent: vibe.accent,
+                highlight: s.revealed && isTrue,
+                dim: s.revealed && !isTrue,
+              ),
+              const SizedBox(width: 12),
+              _Verdict(
+                label: 'Fib',
+                accent: vibe.accent,
+                highlight: s.revealed && !isTrue,
+                dim: s.revealed && isTrue,
+              ),
+            ],
           ),
-        ),
+          if (s.revealed) ...[
+            const SizedBox(height: 24),
+            Text(
+              note,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white70,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -191,11 +173,13 @@ class FactOrFibGame extends GameDefinition<FactState> {
 class _Verdict extends StatelessWidget {
   const _Verdict({
     required this.label,
+    required this.accent,
     required this.highlight,
     required this.dim,
   });
 
   final String label;
+  final Color accent;
   final bool highlight;
   final bool dim;
 
@@ -203,21 +187,24 @@ class _Verdict extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 240),
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
       decoration: BoxDecoration(
         color: highlight
-            ? Colors.greenAccent
-            : Colors.white.withValues(alpha: dim ? 0.04 : 0.10),
-        borderRadius: BorderRadius.circular(16),
+            ? accent
+            : Colors.white.withValues(alpha: dim ? 0.04 : 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: highlight
+            ? null
+            : Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: highlight
-              ? Colors.black87
+              ? AppColors.onAccent(accent)
               : (dim ? Colors.white24 : Colors.white),
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
+          fontSize: 19,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
