@@ -150,14 +150,12 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
             style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 20),
-          Text(
-            '${s.found}',
-            style: theme.textTheme.displaySmall?.copyWith(
-              color: vibe.accent,
-              fontWeight: FontWeight.w400,
-            ),
+          GameStage.counter(
+            context,
+            value: '${s.found}',
+            caption: 'found',
+            accent: vibe.accent,
           ),
-          const Text('found', style: TextStyle(color: Colors.white54)),
         ],
       ),
     );

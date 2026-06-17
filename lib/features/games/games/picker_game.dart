@@ -124,7 +124,7 @@ class PickerGame extends GameDefinition<PickerState> {
               s.spun ? "You're up!" : "Who's next?",
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.6),
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w500,
                 letterSpacing: 2,
                 fontSize: 16,
               ),
@@ -138,7 +138,7 @@ class PickerGame extends GameDefinition<PickerState> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.displaySmall?.copyWith(
                   color: s.spun ? vibe.accent : Colors.white24,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),

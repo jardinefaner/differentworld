@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// On-brand type + structure for game stages (docs/GAMES.md — the "fully calm"
@@ -62,5 +63,80 @@ abstract final class GameStage {
             ),
           ),
         ),
+      );
+
+  /// THE choice pill — the ONE atom every game uses for a choice (True/Fib, a
+  /// poll option, a math answer, a reveal slot). Flat with a hairline by
+  /// default; FILLS with the accent when chosen/correct; DIMS when it's a
+  /// rejected alternative. With [trailing] (a count) it becomes a full-width
+  /// row. One pill, every game — so the deck shares its interactive atom.
+  static Widget option(
+    BuildContext context,
+    String label, {
+    required Color accent,
+    bool selected = false,
+    bool dimmed = false,
+    String? trailing,
+    double fontSize = 18,
+  }) {
+    final fg = selected
+        ? AppColors.onAccent(accent)
+        : (dimmed ? Colors.white24 : Colors.white);
+    final labelText = Text(
+      label,
+      style: TextStyle(color: fg, fontSize: fontSize, fontWeight: FontWeight.w500),
+    );
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+      decoration: BoxDecoration(
+        color: selected
+            ? accent
+            : Colors.white.withValues(alpha: dimmed ? 0.04 : 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: selected
+            ? null
+            : Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: trailing == null
+          ? labelText
+          : Row(
+              children: [
+                Expanded(child: labelText),
+                Text(
+                  trailing,
+                  style: TextStyle(color: fg.withValues(alpha: 0.75), fontSize: fontSize),
+                ),
+              ],
+            ),
+    );
+  }
+
+  /// THE score atom — a big accent number + a muted caption ("FOUND", "3 / 8").
+  /// The shared counter for every game that keeps a tally.
+  static Widget counter(
+    BuildContext context, {
+    required String value,
+    required String caption,
+    required Color accent,
+  }) =>
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w400,
+                ),
+          ),
+          Text(
+            caption.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.white38,
+                  letterSpacing: 1.4,
+                ),
+          ),
+        ],
       );
 }

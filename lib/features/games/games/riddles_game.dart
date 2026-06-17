@@ -198,7 +198,7 @@ class _Recap extends StatelessWidget {
               'Nice riddling!',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 6),

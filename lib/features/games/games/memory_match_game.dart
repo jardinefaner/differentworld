@@ -222,7 +222,7 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
               '${s.pairsFound} / ${s.pairsTotal} pairs',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 16),

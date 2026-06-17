@@ -288,7 +288,7 @@ class _MissingCard extends StatelessWidget {
             style: TextStyle(
               color: accent,
               fontSize: 56,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ),

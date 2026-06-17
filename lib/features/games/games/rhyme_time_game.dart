@@ -100,18 +100,11 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
       ),
       body: Padding(
         padding: const EdgeInsets.only(top: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${s.found}',
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: vibe.accent,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const Text('found', style: TextStyle(color: Colors.white38)),
-          ],
+        child: GameStage.counter(
+          context,
+          value: '${s.found}',
+          caption: 'found',
+          accent: vibe.accent,
         ),
       ),
     );

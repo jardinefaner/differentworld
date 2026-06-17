@@ -128,3 +128,38 @@ if gfiles:
         gd.text((cx + 4, cy + GCH + 6), name, font=F_LABEL, fill=INK)
     gimg.save("gallery/games_contact_sheet.png")
     print(f"wrote gallery/games_contact_sheet.png — {len(gfiles)} games")
+
+
+# ── worlds sheet ─────────────────────────────────────────────────────────
+# The curriculum layer: the action-words atoms + molecules (dark surface).
+wfiles = sorted(glob.glob("gallery/worlds/*.png"))
+wfiles = [(os.path.basename(f).replace(".png", ""), f)
+          for f in wfiles if "contact" not in f]
+if wfiles:
+    WCOLS, WCW, WCH = 3, 300, 300
+    ww = PAD * 2 + WCOLS * WCW + (WCOLS - 1) * GAP
+    wrows = (len(wfiles) + WCOLS - 1) // WCOLS
+    wh = PAD + 60 + wrows * (WCH + LABEL_H + GAP) + PAD
+    wimg = Image.new("RGB", (ww, wh), BG)
+    wd = ImageDraw.Draw(wimg)
+    wd.text((PAD, PAD), "The worlds — action-words layer", font=F_TITLE, fill=INK)
+    wd.text((PAD, PAD + 42), f"{len(wfiles)} surfaces · the curriculum vocabulary",
+            font=F_LABEL, fill=MUTED)
+    wy = PAD + 60
+    for i, (name, path) in enumerate(wfiles):
+        col, row = i % WCOLS, i // WCOLS
+        cx = PAD + col * (WCW + GAP)
+        cy = wy + row * (WCH + LABEL_H + GAP)
+        wd.rounded_rectangle((cx, cy, cx + WCW, cy + WCH), radius=12,
+                             fill=(15, 15, 20), outline=(42, 44, 52), width=1)
+        try:
+            src = Image.open(path).convert("RGB")
+        except Exception:
+            continue
+        scale = min((WCW - 16) / src.width, (WCH - 16) / src.height)
+        nw, nh = max(1, int(src.width * scale)), max(1, int(src.height * scale))
+        src = src.resize((nw, nh), Image.LANCZOS)
+        wimg.paste(src, (cx + (WCW - nw) // 2, cy + (WCH - nh) // 2))
+        wd.text((cx + 4, cy + WCH + 6), name, font=F_LABEL, fill=INK)
+    wimg.save("gallery/worlds_contact_sheet.png")
+    print(f"wrote gallery/worlds_contact_sheet.png — {len(wfiles)} worlds")

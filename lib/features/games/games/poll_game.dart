@@ -1,5 +1,7 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// Quick Poll — the first NON-game presentable (docs/VISION.md #18). Proves
@@ -112,48 +114,31 @@ class PollGame extends GameDefinition<PollState> {
 
   @override
   Widget buildStage(BuildContext context, PollState s) {
-    final theme = Theme.of(context);
-    return SafeArea(
-      bottom: false,
-      child: Center(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    s.question,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  for (var i = 0; i < s.options.length; i++) ...[
-                    _OptionBar(
-                      label: s.options[i],
-                      count: s.counts[i],
-                      maxCount: s.maxCount,
-                      winner: s.revealed && s.maxCount > 0 && i == s.winnerIndex,
-                      accent: vibe.accent,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  const SizedBox(height: 8),
-                  Text(
-                    s.totalVotes == 0
-                        ? 'Vote with your hands'
-                        : '${s.totalVotes} votes',
-                    style: const TextStyle(color: Colors.white38),
-                  ),
-                ],
+    return GameStage.frame(
+      context,
+      hero: GameStage.hero(context, s.question, maxLines: 3),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < s.options.length; i++) ...[
+              _OptionBar(
+                label: s.options[i],
+                count: s.counts[i],
+                maxCount: s.maxCount,
+                winner: s.revealed && s.maxCount > 0 && i == s.winnerIndex,
+                accent: vibe.accent,
+                showCount: s.totalVotes > 0,
               ),
+              const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              s.totalVotes == 0 ? 'Vote with your hands' : '${s.totalVotes} votes',
+              style: const TextStyle(color: Colors.white38),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -197,6 +182,7 @@ class _OptionBar extends StatelessWidget {
     required this.maxCount,
     required this.winner,
     required this.accent,
+    required this.showCount,
   });
 
   final String label;
@@ -204,59 +190,60 @@ class _OptionBar extends StatelessWidget {
   final int maxCount;
   final bool winner;
   final Color accent;
+  final bool showCount;
 
   @override
   Widget build(BuildContext context) {
     final frac = maxCount == 0 ? 0.0 : count / maxCount;
+    final fg = winner ? AppColors.onAccent(accent) : Colors.white;
     return LayoutBuilder(
       builder: (context, constraints) {
-        return SizedBox(
-          height: 56,
+        // A hairline row (like the option atom) whose accent WASH grows with the
+        // vote share — invisible at 0, so an unvoted poll reads as clean rows,
+        // not stacked grey slabs. The winner fills solid on reveal.
+        return Container(
+          height: 52,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+          ),
           child: Stack(
             children: [
-              // track
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              // fill ∝ votes
               AnimatedContainer(
                 duration: const Duration(milliseconds: 280),
                 curve: Curves.easeOut,
                 width: constraints.maxWidth * frac,
-                decoration: BoxDecoration(
-                  color: winner ? accent : Colors.white.withValues(alpha: 0.20),
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                color: winner ? accent : accent.withValues(alpha: 0.26),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Row(
                   children: [
                     if (winner) ...[
-                      const Icon(Icons.emoji_events, color: Colors.black87, size: 20),
+                      Icon(Icons.emoji_events, color: fg, size: 18),
                       const SizedBox(width: 8),
                     ],
                     Expanded(
                       child: Text(
                         label,
                         style: TextStyle(
-                          color: winner ? Colors.black87 : Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
+                          color: fg,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    Text(
-                      '$count',
-                      style: TextStyle(
-                        color: winner ? Colors.black87 : Colors.white70,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                    if (showCount)
+                      Text(
+                        '$count',
+                        style: TextStyle(
+                          color: winner ? fg : Colors.white54,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

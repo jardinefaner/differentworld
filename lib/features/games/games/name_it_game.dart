@@ -153,7 +153,7 @@ class NameItGame extends GameDefinition<NameItState> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.displaySmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),

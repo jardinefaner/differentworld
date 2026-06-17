@@ -101,11 +101,9 @@ class CuesGame extends GameDefinition<CueState> {
             Text(
               cue.label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
                 color: Colors.white,
-                fontSize: 52,
-                fontWeight: FontWeight.w900,
-                shadows: [Shadow(color: Colors.black26, blurRadius: 8)],
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
