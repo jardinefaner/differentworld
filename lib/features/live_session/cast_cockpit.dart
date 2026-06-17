@@ -9,6 +9,7 @@ import 'package:differentworld/features/activity_runtime/content_bank_providers.
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/games/games/timer_game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
@@ -281,6 +282,15 @@ class _Launcher extends StatelessWidget {
             color: const Color(0xFF2A6B7A),
             onTap: onConduct!,
           ),
+        // Visual Timer — a countdown on the screen, driven from the phone. Casts
+        // with its default 5:00 seed; not a game, so it isn't in the loop below.
+        _SimpleTile(
+          icon: Icons.timer_outlined,
+          title: 'Timer',
+          subtitle: 'A countdown on the screen',
+          color: const Color(0xFF50708A),
+          onTap: () => onPick(const TimerGame()),
+        ),
         // Only content-bank games — roster/schedule-seeded ones (Now & Next,
         // Spotlight) would cast an empty stage (docs/LIVE_SESSIONS.md v1 scope).
         for (final def in liveGames.where((d) => d.seedsFromContentBank))

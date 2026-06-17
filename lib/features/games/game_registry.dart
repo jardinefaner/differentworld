@@ -18,6 +18,7 @@ import 'package:differentworld/features/games/games/rhyme_time_game.dart';
 import 'package:differentworld/features/games/games/riddles_game.dart';
 import 'package:differentworld/features/games/games/story_starters_game.dart';
 import 'package:differentworld/features/games/games/this_or_that_game.dart';
+import 'package:differentworld/features/games/games/timer_game.dart';
 import 'package:differentworld/features/games/games/whats_missing_game.dart';
 import 'package:differentworld/features/live_board/board_game.dart';
 
@@ -60,6 +61,10 @@ const List<GameDefinition<dynamic>> liveGames = <GameDefinition<dynamic>>[
   // Cast-only: driven by LiveBoardScreen via castStage, rendered by the
   // existing cast receiver.
   BoardGame(),
+  // Visual Timer (docs/VISION.md #18) — the foundational "time" primitive, the
+  // first castable surface that isn't a game. Cast-only: the cockpit casts it
+  // with a default duration; the receiver ticks locally toward the wire's end.
+  TimerGame(),
 ];
 
 /// Resolve a game by its [GameDefinition.id]. Returns null for an id this
