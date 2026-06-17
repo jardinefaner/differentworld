@@ -169,7 +169,13 @@ class _TimerStageState extends State<_TimerStage> {
   @override
   void didUpdateWidget(_TimerStage old) {
     super.didUpdateWidget(old);
-    _sync();
+    // Re-sync ONLY when the timer-relevant state changed — an unrelated parent
+    // rebuild shouldn't cancel + recreate the ticker (a spurious 250ms stall).
+    if (old.state.running != widget.state.running ||
+        old.state.endAtMs != widget.state.endAtMs ||
+        old.state.remainingSecs != widget.state.remainingSecs) {
+      _sync();
+    }
   }
 
   // Tick only while running; a fresh wire (pause / extend) re-syncs the ticker.
