@@ -1,7 +1,9 @@
 import 'dart:math';
 
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
 import 'package:flutter/material.dart';
 
@@ -121,46 +123,42 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
   @override
   Widget buildStage(BuildContext context, LetterWordsState s) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 128,
-              height: 128,
-              decoration: BoxDecoration(color: vibe.accent, shape: BoxShape.circle),
-              alignment: Alignment.center,
-              child: Text(
-                s.letter,
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 76,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Name ${s.category} that starts with ${s.letter}',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '${s.found}',
-              style: theme.textTheme.displayMedium?.copyWith(
-                color: vibe.accent,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const Text('found', style: TextStyle(color: Colors.white54)),
-          ],
+    return GameStage.frame(
+      context,
+      eyebrow: 'Starts with',
+      hero: Container(
+        width: 132,
+        height: 132,
+        decoration: BoxDecoration(color: vibe.accent, shape: BoxShape.circle),
+        alignment: Alignment.center,
+        child: Text(
+          s.letter,
+          style: TextStyle(
+            color: AppColors.onAccent(vibe.accent),
+            fontSize: 72,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+      ),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 20),
+          Text(
+            'Name ${s.category} that starts with ${s.letter}',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(color: Colors.white70),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            '${s.found}',
+            style: theme.textTheme.displaySmall?.copyWith(
+              color: vibe.accent,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          const Text('found', style: TextStyle(color: Colors.white54)),
+        ],
       ),
     );
   }
