@@ -7,6 +7,8 @@ import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/content_bank_providers.dart';
 import 'package:differentworld/features/activity_runtime/content_engine.dart';
+import 'package:differentworld/features/games/cards/castable_card_games.dart';
+import 'package:differentworld/features/games/cards/picture_deck_provider.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/games/nownext_game.dart';
@@ -110,6 +112,17 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
     setState(() => _showLauncher = false);
   }
 
+  /// Cast a deck-seeded card game — read the bundled picture deck once, build
+  /// the round with the game's SHARED seed (identical to its present screen),
+  /// and cast it on the controller's code. An empty deck shows the game's own
+  /// "no cards" stage.
+  Future<void> _castCard(GameDefinition<dynamic> def, CardSeed seed) async {
+    final cards = await ref.read(pictureDeckProvider.future);
+    if (!mounted) return;
+    _cast.castStage(def.id, seed(cards));
+    setState(() => _showLauncher = false);
+  }
+
   void _send(GameIntent intent, [Map<String, dynamic> args = const {}]) {
     final id = CastSession.gameIdOf(ref.read(castSessionProvider).meta);
     final def = id == null ? null : gameById(id);
@@ -172,6 +185,7 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
               onPresentWorld: _castWorld,
               onConduct: _castConductor,
               onNowNext: _castNowNext,
+              onCastCard: _castCard,
             ),
           )
         else ...[
@@ -265,6 +279,7 @@ class _Launcher extends StatelessWidget {
     this.onPresentWorld,
     this.onConduct,
     this.onNowNext,
+    this.onCastCard,
   });
 
   final void Function(GameDefinition<dynamic>) onPick;
@@ -280,6 +295,9 @@ class _Launcher extends StatelessWidget {
 
   /// Cast today's schedule as Now & Next (advanced from the phone).
   final VoidCallback? onNowNext;
+
+  /// Cast a deck-seeded card game (Name It, Odd One Out, …) with its seed.
+  final void Function(GameDefinition<dynamic> def, CardSeed seed)? onCastCard;
 
   @override
   Widget build(BuildContext context) {
@@ -324,6 +342,12 @@ class _Launcher extends StatelessWidget {
         // Spotlight) would cast an empty stage (docs/LIVE_SESSIONS.md v1 scope).
         for (final def in liveGames.where((d) => d.seedsFromContentBank))
           _LauncherTile(def: def, onTap: () => onPick(def)),
+        // Deck-seeded card games (Name It, Odd One Out, …) — cast from the
+        // bundled picture deck. Listed here, not the loop above, because they
+        // seed from assets, not the content bank (docs/CARD_GAMES.md).
+        if (onCastCard != null)
+          for (final (def, seed) in castableCardGames)
+            _LauncherTile(def: def, onTap: () => onCastCard!(def, seed)),
       ],
     );
   }
