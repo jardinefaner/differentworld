@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/live_session/cast_cockpit.dart';
+import 'package:differentworld/features/live_session/cast_code.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/live_session/cast_receiver.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart'
     show generateSessionCode;
+import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// the **Caster** (this phone): pick what to present, switch it, control it —
 /// all from the phone, while the screen shows only the clean output.
 class CastScreen extends ConsumerStatefulWidget {
-  const CastScreen({super.key});
+  const CastScreen({super.key, this.presentAsScreen = false});
+
+  /// Open straight into receiver (room-screen) mode on the program channel —
+  /// the launch auto-resume + the "make this the room screen" setup pass this.
+  final bool presentAsScreen;
 
   @override
   ConsumerState<CastScreen> createState() => _CastScreenState();
@@ -35,11 +42,20 @@ class _CastScreenState extends ConsumerState<CastScreen> {
   void initState() {
     super.initState();
     _immersive = ref.read(castImmersiveProvider.notifier);
-    // Resume a live cast: if a session is already up (the persistent anchor),
-    // open straight into the cockpit on its code — tapping the chrome pill
-    // from anywhere lands on the controls, not the lobby.
+    final programCode = _programCode();
+    final isScreen =
+        widget.presentAsScreen || (ref.read(roomScreenProvider).value ?? false);
     final snap = ref.read(castSessionProvider);
-    if (snap.active && snap.code != null) {
+    if (isScreen && programCode != null) {
+      // This device is the room screen → resume the receiver on the program
+      // channel. Set once; it just comes back up — no code, no setup.
+      _mode = _Mode.receive;
+      _code = programCode;
+      unawaited(Future.microtask(() {
+        if (mounted) _immersive.enter();
+      }));
+    } else if (snap.active && snap.code != null) {
+      // Resume a live cast: the chrome pill lands on the controls, not lobby.
       _mode = _Mode.cast;
       _code = snap.code!;
       // Provider write off the build phase (AppShell watches castImmersive).
@@ -47,6 +63,15 @@ class _CastScreenState extends ConsumerState<CastScreen> {
         if (mounted) _immersive.enter();
       }));
     }
+    // else → lobby (the default _mode) to pick "cast" or "be the screen".
+  }
+
+  /// The program's stable cast channel — the same code the room screen and
+  /// every phone in this space derive, so they meet with no pairing. Null only
+  /// when the viewer has no space (then the lobby falls back to a manual code).
+  String? _programCode() {
+    final spaceId = ref.read(viewerProvider).spaceId;
+    return spaceId == null ? null : castCodeForSpace(spaceId);
   }
 
   @override
@@ -56,11 +81,16 @@ class _CastScreenState extends ConsumerState<CastScreen> {
   }
 
   void _presentHere() {
+    // The screen joins the PROGRAM channel (not a random code), so every phone
+    // in the space casts to it with no pairing. Persist the flag so this device
+    // auto-resumes as the screen on launch.
+    final code = _programCode() ?? generateSessionCode();
+    unawaited(ref.read(roomScreenProvider.notifier).set(isScreen: true));
     setState(() {
-      _code = generateSessionCode();
+      _code = code;
       _mode = _Mode.receive;
     });
-    _immersive.enter(); // a callback, not build — safe to write the provider
+    _immersive.enter();
   }
 
   void _control(String code) {
@@ -88,7 +118,13 @@ class _CastScreenState extends ConsumerState<CastScreen> {
         _Mode.lobby => EdgeScaffold(
           body: ColoredBox(
             color: const Color(0xFF0C0D14),
-            child: SafeArea(child: _Lobby(onPresent: _presentHere, onJoin: _control)),
+            child: SafeArea(
+            child: _Lobby(
+              onPresent: _presentHere,
+              onJoin: _control,
+              programCode: _programCode(),
+            ),
+          ),
           ),
         ),
         // The Receiver owns its own clean Scaffold — no chrome over the stage.
@@ -113,10 +149,19 @@ class _CastScreenState extends ConsumerState<CastScreen> {
 }
 
 class _Lobby extends StatefulWidget {
-  const _Lobby({required this.onPresent, required this.onJoin});
+  const _Lobby({
+    required this.onPresent,
+    required this.onJoin,
+    this.programCode,
+  });
 
   final VoidCallback onPresent;
   final ValueChanged<String> onJoin;
+
+  /// The program's stable channel — when present, the lobby leads with a
+  /// one-tap "Cast to the room screen" (no code). Null only when there's no
+  /// space (then only the manual-code path shows).
+  final String? programCode;
 
   @override
   State<_Lobby> createState() => _LobbyState();
@@ -160,7 +205,6 @@ class _LobbyState extends State<_Lobby> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 8),
@@ -170,11 +214,23 @@ class _LobbyState extends State<_Lobby> {
                 style: TextStyle(color: Colors.white60),
               ),
               const SizedBox(height: 28),
+              // The everyday path: one tap, no code — cast to the program's
+              // room screen on the shared channel.
+              if (widget.programCode case final code?) ...[
+                _BigCard(
+                  icon: Icons.cast,
+                  title: 'Cast to the room screen',
+                  subtitle: 'Pick a game, world, or activity — it appears on '
+                      'the room screen instantly. No code to type.',
+                  onTap: () => widget.onJoin(code),
+                ),
+                const SizedBox(height: 14),
+              ],
               _BigCard(
-                icon: Icons.cast,
+                icon: Icons.tv,
                 title: 'Use this device as the screen',
-                subtitle: 'Open this on a TV or laptop — it shows a join code '
-                    'for your phone.',
+                subtitle: 'Set this TV or tablet as the room screen once — it '
+                    'remembers, and comes back up on its own.',
                 onTap: widget.onPresent,
               ),
               const SizedBox(height: 14),

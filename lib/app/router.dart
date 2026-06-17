@@ -1343,7 +1343,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           // (pick + drive + switch what's on the screen).
           GoRoute(
             path: '/cast',
-            builder: (_, _) => const CastScreen(),
+            builder: (_, state) => CastScreen(
+              // ?role=screen → open straight into room-screen (receiver) mode
+              // on the program channel (the "make this the screen" setup +
+              // launch auto-resume use it).
+              presentAsScreen:
+                  state.uri.queryParameters['role'] == 'screen',
+            ),
           ),
           // The Live Board — the phone as a classroom instrument
           // (docs/LIVE_BOARD.md). Casts to the room screens via the same

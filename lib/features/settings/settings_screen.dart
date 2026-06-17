@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
@@ -233,6 +234,8 @@ class SettingsScreen extends ConsumerWidget {
               const _DisplayStyleTile(),
               const _SettingsDivider(),
               const _FontChoiceTile(),
+              const _SettingsDivider(),
+              const _RoomScreenTile(),
               const _SettingsDivider(),
               // The clock-driven cockpit (docs/COCKPIT.md) — opt-in while it
               // proves itself; the plan is for it to become the home surface.
@@ -563,6 +566,35 @@ class _FontRow extends StatelessWidget {
       trailing: selected
           ? Icon(Icons.check, color: theme.colorScheme.primary)
           : null,
+    );
+  }
+}
+
+/// Make THIS device the program's persistent room screen — the cast receiver
+/// the room shows it big on. Set once; opening Cast then lands straight in
+/// receiver mode on the program channel (no code), and it persists across
+/// launches. Turning it off stops this device being the screen.
+class _RoomScreenTile extends ConsumerWidget {
+  const _RoomScreenTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isScreen = ref.watch(roomScreenProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.tv_outlined),
+      title: const Text('Room screen'),
+      subtitle: Text(
+        isScreen
+            ? 'This device is the room screen — open Cast to show it.'
+            : 'Make this TV or tablet the screen the room casts to.',
+      ),
+      value: isScreen,
+      onChanged: (v) async {
+        await ref.read(roomScreenProvider.notifier).set(isScreen: v);
+        if (v && context.mounted) {
+          unawaited(context.push('/cast?role=screen'));
+        }
+      },
     );
   }
 }
