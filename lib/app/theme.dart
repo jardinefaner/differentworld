@@ -102,14 +102,15 @@ final _buttonShape = RoundedRectangleBorder(
   borderRadius: BorderRadius.circular(Radii.card),
 );
 
-ButtonStyle _baseButtonStyle() => ButtonStyle(
+ButtonStyle _baseButtonStyle(TextTheme text) => ButtonStyle(
       shape: WidgetStatePropertyAll(_buttonShape),
       minimumSize: const WidgetStatePropertyAll(Size(64, 48)),
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: Insets.xl, vertical: Insets.md),
       ),
-      // labelLarge carries the button voice (Space Grotesk, semibold).
-      textStyle: WidgetStatePropertyAll(AppType.textTheme().labelLarge),
+      // labelLarge carries the button voice — read from the ACTIVE ramp (so it
+      // follows the font picker), not a baked AppType.textTheme() snapshot.
+      textStyle: WidgetStatePropertyAll(text.labelLarge),
     );
 
 /// Assembles a full [ThemeData] from a [ColorScheme]. Light + dark differ
@@ -128,21 +129,22 @@ ThemeData _themeFrom(ColorScheme scheme, {TextTheme? textTheme}) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    // Global default so any stray `Text` without a named style still
-    // speaks Space Grotesk, not Roboto. Named styles in [text] override
-    // per-role (display + headline switch to Fraunces).
-    fontFamily: AppType.ui,
+    // Global default for any stray `Text` without a named style — read from
+    // the ACTIVE body ramp so it follows the font picker (a raw TextStyle with
+    // no family, e.g. a game option pill, inherits THIS). Falls back to the
+    // bundled UI face. Named styles in [text] override per-role.
+    fontFamily: text.bodyMedium?.fontFamily ?? AppType.ui,
     textTheme: text,
     pageTransitionsTheme: _pageTransitions,
     snackBarTheme: _snackBarTheme,
     extensions: <ThemeExtension<dynamic>>[
       if (isDark) AppColors.dark else AppColors.light,
     ],
-    filledButtonTheme: FilledButtonThemeData(style: _baseButtonStyle()),
-    elevatedButtonTheme: ElevatedButtonThemeData(style: _baseButtonStyle()),
-    outlinedButtonTheme: OutlinedButtonThemeData(style: _baseButtonStyle()),
+    filledButtonTheme: FilledButtonThemeData(style: _baseButtonStyle(text)),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: _baseButtonStyle(text)),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: _baseButtonStyle(text)),
     textButtonTheme: TextButtonThemeData(
-      style: _baseButtonStyle().copyWith(
+      style: _baseButtonStyle(text).copyWith(
         // Text buttons are tighter — they sit inline, not as slabs.
         padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(horizontal: Insets.md, vertical: Insets.sm),
