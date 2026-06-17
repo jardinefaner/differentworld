@@ -57,12 +57,11 @@ class GameScaffold<S> extends StatelessWidget {
             ),
           ),
         ),
-        if (def.liveRoute case final route?)
-          SecondaryActionButton(
-            tooltip: 'Present on a big screen',
-            icon: Icons.cast,
-            onPressed: () => unawaited(context.push(route)),
-          ),
+        // No per-game cast icon here: AppShell's CastChromeButton already
+        // shows ONE cast affordance on every staff route (the persistent
+        // anchor + join code), and its /cast cockpit can launch this game
+        // directly (_castGame). A second cast icon in the same pill was the
+        // "two cast icons" duplication.
       ],
       body: StreamBuilder<Map<String, dynamic>>(
         stream: controller.states,
