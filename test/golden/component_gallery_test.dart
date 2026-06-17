@@ -14,10 +14,16 @@ import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_banner.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
+import 'package:differentworld/shared/widgets/floating_back.dart';
+import 'package:differentworld/shared/widgets/floating_hamburger.dart';
+import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/glass_pill.dart';
 import 'package:differentworld/shared/widgets/horizon_mark.dart';
+import 'package:differentworld/shared/widgets/inline_editable_text.dart';
+import 'package:differentworld/shared/widgets/nav_destinations.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
+import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:differentworld/shared/widgets/progress_dots.dart';
@@ -25,6 +31,7 @@ import 'package:differentworld/shared/widgets/scale_bar.dart';
 import 'package:differentworld/shared/widgets/search_bar_pill.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/section_card.dart';
+import 'package:differentworld/shared/widgets/skeleton.dart';
 import 'package:differentworld/shared/widgets/status_dot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
@@ -71,6 +78,7 @@ Future<void> _loadFonts() async {
 }
 
 void _noop(bool _) {}
+Future<void> _noopStr(String _) async {}
 
 void main() {
   setUpAll(() async {
@@ -214,6 +222,65 @@ void main() {
       controller: TextEditingController(text: 'Maya'),
       onChanged: (_) {},
       onClose: () {},
+    ),
+  );
+
+  _plate(
+    'atoms/nav_count_badge',
+    height: 130,
+    (_) => const Wrap(
+      spacing: Insets.lg,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _Labeled('3', NavCountBadge(count: 3)),
+        _Labeled('12', NavCountBadge(count: 12)),
+        _Labeled('150', NavCountBadge(count: 150)),
+      ],
+    ),
+  );
+
+  _plate(
+    'atoms/floating_chrome',
+    height: 200,
+    (_) => Stack(
+      fit: StackFit.expand,
+      children: [
+        _glassBackdrop(),
+        const Align(
+          alignment: Alignment.topLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingHamburger(),
+              SizedBox(width: 8),
+              FloatingBack(),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  _plate(
+    'atoms/inline_editable_text',
+    height: 140,
+    (_) => const InlineEditableText(value: 'Sunny Room', onCommit: _noopStr),
+  );
+
+  _platePumped(
+    'atoms/skeletons',
+    height: 280,
+    (_) => const SkeletonShimmer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonLine(widthFactor: 0.5, height: 24),
+          SizedBox(height: Insets.md),
+          SkeletonBox(width: 120, height: 80),
+          SizedBox(height: Insets.md),
+          SkeletonListTile(hasTrailing: true),
+        ],
+      ),
     ),
   );
 
@@ -480,6 +547,49 @@ void main() {
         ),
       ],
     ),
+  );
+
+  _plate(
+    'molecules/form_body',
+    height: 340,
+    (_) => const FormBody(
+      children: [
+        TextField(
+          decoration: InputDecoration(
+            labelText: 'First name',
+            hintText: 'e.g. Maya',
+          ),
+        ),
+        SizedBox(height: Insets.md),
+        TextField(
+          decoration: InputDecoration(
+            labelText: 'Room',
+            hintText: 'e.g. Sunny Room',
+          ),
+        ),
+      ],
+    ),
+  );
+
+  _plate(
+    'molecules/overflow_actions',
+    height: 160,
+    (_) => OverflowActions([
+      EdgeAction(
+        icon: Icons.add,
+        label: 'Add',
+        onPressed: () {},
+        isPrimary: true,
+      ),
+      EdgeAction(icon: Icons.edit_outlined, label: 'Edit', onPressed: () {}),
+      EdgeAction(icon: Icons.ios_share, label: 'Share', onPressed: () {}),
+      EdgeAction(
+        icon: Icons.delete_outline,
+        label: 'Delete',
+        onPressed: () {},
+        isDestructive: true,
+      ),
+    ]),
   );
 }
 
