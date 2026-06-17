@@ -132,7 +132,7 @@ void main() {
         },
       ],
       'i': 0,
-      'r': true,
+      'r': false,
       'd': false,
     };
     return ColoredBox(
@@ -211,6 +211,15 @@ void _scene(
           ),
         ),
       );
+      // Deck-art `Image.asset`s decode asynchronously — without this the
+      // snapshot fires before they paint and the card stages render as empty
+      // white mats. Precache every Image so the card games show real art.
+      await tester.runAsync(() async {
+        for (final element in find.byType(Image).evaluate()) {
+          final image = element.widget as Image;
+          await precacheImage(image.image, element);
+        }
+      });
       await tester.pumpAndSettle(const Duration(seconds: 1));
       await expectLater(
         find.byType(MaterialApp),
