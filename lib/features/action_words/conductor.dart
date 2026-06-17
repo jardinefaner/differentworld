@@ -60,7 +60,7 @@ class ConductorGame extends GameDefinition<ConductorState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFF4ABED9), surface: Color(0xFF07090C));
+      const GameVibe(accent: GameAccents.slate);
 
   @override
   bool get seedsFromContentBank => false;

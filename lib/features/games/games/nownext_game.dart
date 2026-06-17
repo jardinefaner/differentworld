@@ -56,7 +56,7 @@ class NowNextGame extends GameDefinition<NowNextState> {
   String get title => 'Now & Next';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF26A69A));
+  GameVibe get vibe => const GameVibe(accent: GameAccents.sage);
 
   @override
   String? get liveRoute => '/live/now-next';

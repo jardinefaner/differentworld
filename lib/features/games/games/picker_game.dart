@@ -46,7 +46,7 @@ class PickerGame extends GameDefinition<PickerState> {
   String get title => 'Spotlight';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFFFFCA28));
+  GameVibe get vibe => const GameVibe(accent: GameAccents.amber);
 
   @override
   String? get liveRoute => '/live/picker';

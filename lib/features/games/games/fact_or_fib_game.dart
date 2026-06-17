@@ -47,7 +47,7 @@ class FactOrFibGame extends GameDefinition<FactState> {
   String get title => 'Fact or Fib';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF66BB6A));
+  GameVibe get vibe => const GameVibe(accent: GameAccents.sage);
 
   @override
   String? get liveRoute => '/live/fact-or-fib';

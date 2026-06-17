@@ -91,7 +91,7 @@ class MemoryMatchGame extends GameDefinition<MemoryState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFF5C6BC0), surface: Color(0xFF0F1020));
+      const GameVibe(accent: GameAccents.plum);
 
   @override
   String? get liveRoute => '/live/memory-match';

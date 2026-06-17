@@ -75,7 +75,7 @@ class OddOneOutGame extends GameDefinition<OddOneOutState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFFFF7043), surface: Color(0xFF1A0F0B));
+      const GameVibe(accent: GameAccents.coral);
 
   @override
   String? get liveRoute => '/live/odd-one-out';

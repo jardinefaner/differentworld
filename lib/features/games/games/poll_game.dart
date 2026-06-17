@@ -56,7 +56,7 @@ class PollGame extends GameDefinition<PollState> {
   String get title => 'Quick Poll';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF26A69A));
+  GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);
 
   @override
   String? get liveRoute => '/live/poll';

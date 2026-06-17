@@ -45,7 +45,7 @@ class CuesGame extends GameDefinition<CueState> {
   String get title => 'Signals';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: ActivityPalette.blue);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.coral);
 
   @override
   String? get liveRoute => '/live/cues';

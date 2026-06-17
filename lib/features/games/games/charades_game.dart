@@ -50,7 +50,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFFB388FF), surface: Color(0xFF15101F));
+      const GameVibe(accent: GameAccents.plum);
 
   @override
   String? get liveRoute => '/live/charades';

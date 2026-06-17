@@ -33,7 +33,7 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFF26A69A), surface: Color(0xFF06100F));
+      const GameVibe(accent: GameAccents.teal);
 
   @override
   String? get liveRoute => '/live/rhyme-time';

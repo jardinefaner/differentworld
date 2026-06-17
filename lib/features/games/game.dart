@@ -85,16 +85,34 @@ class CaptureSpec {
 /// shape per game). The [GameDefinition.buildStage] owns the hero shape +
 /// the per-game wrap beat; this carries the chrome tint the shared
 /// scaffold reads (progress accent, control-bar wash, status pill).
-class GameVibe {
-  const GameVibe({required this.accent, this.surface = const Color(0xFF000000)});
+/// The harmonized game-accent palette (Calm, on-brand). Eight accents drawn
+/// from / harmonized with the brand (teal seed + warm amber tertiary),
+/// desaturated to sit calm on the dark stage. Every [GameVibe] picks ONE from
+/// here — no more ad-hoc per-game hex — so the deck reads as one system.
+abstract final class GameAccents {
+  static const teal = Color(0xFF2A9D8F);
+  static const deepTeal = Color(0xFF1D7A6E);
+  static const amber = Color(0xFFC79A3E);
+  static const coral = Color(0xFFD8693C);
+  static const plum = Color(0xFF7C6BAE);
+  static const slate = Color(0xFF5784A8);
+  static const rose = Color(0xFFC25E7E);
+  static const sage = Color(0xFF5E9E6B);
+}
 
-  /// The game's signature color — its identity at a glance. Keep these
-  /// distinct across the deck (docs/GAMES.md flags the green / amber
-  /// collisions to resolve as games migrate).
+/// The shared calm game surface — one warm near-black field for every stage,
+/// so stages stop each inventing their own background tint.
+const Color kGameSurface = Color(0xFF10100F);
+
+class GameVibe {
+  const GameVibe({required this.accent, this.surface = kGameSurface});
+
+  /// The game's signature accent — pick ONE from [GameAccents] so the deck
+  /// stays a harmonized, on-brand set (no ad-hoc hex).
   final Color accent;
 
-  /// The stage background. Most games are a near-black field; This-or-That
-  /// uses a per-slide palette inside its stage instead.
+  /// The stage background. Defaults to the shared [kGameSurface]; override
+  /// only for a genuinely distinct field (e.g. This-or-That's per-slide split).
   final Color surface;
 }
 
