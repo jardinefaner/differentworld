@@ -29,7 +29,28 @@ open gallery/                 # review the diff before committing
 ```
 
 The renderer ([test/golden/component_gallery_test.dart]) loads every
-bundled font + `MaterialIcons` so glyphs and icons render for real.
+bundled font + `MaterialIcons` so glyphs and icons render for real. The
+game renderer also `precacheImage`s every `Image.asset` after pump, so
+the picture-card stages show real deck art (without it they snapshot as
+empty white mats — the art decodes async).
+
+## Red-teaming the renders (so you don't eyeball every plate)
+
+After a re-render, run the **`gallery-critic`** agent — it READS the
+rendered PNGs (the contact sheets + any plate) and returns a prioritised
+punch-list against the Calm brand laws: boxy/heavy layouts, w800/w900
+type shouts, white-on-light contrast, broken/sparse states, cohesion
+breaks. It's the taste-and-quality eyes on the bible.
+
+```sh
+# regenerate, then critique
+RUN_GOLDENS=1 flutter test --update-goldens test/golden/*_gallery_test.dart
+python3 tool/contact_sheet.py
+# then:  Agent gallery-critic
+```
+
+Triage its findings — some "broken" reads are golden artifacts (emoji
+renders as tofu; assets that fail to precache look blank), not app bugs.
 
 ## How to add / change / remove a component (CRUD)
 
