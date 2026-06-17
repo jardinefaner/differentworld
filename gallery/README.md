@@ -55,6 +55,27 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ---
 
+## Two layers (per docs/VERTICALS.md)
+
+The bible mirrors the architecture's two layers:
+
+- **The shared widgets** (atoms / molecules / organisms below) — the ENGINE's
+  visual vocabulary, domain-agnostic, in `lib/shared/widgets/`. Maintained by
+  the `component-curator`.
+- **The experience tiers** — the GAMES + WORLDS, the childcare *content* layer
+  (`lib/features/games/`, `lib/features/action_words/`). Their atoms render by
+  seeding a `GameDefinition` / world content, NOT as a shared widget.
+  - **`gallery/games/`** — every game's vibe + its hero stage. Renderer:
+    [test/golden/game_gallery_test.dart]. Started: the vibe palette (all game
+    accents — already surfaced the duplicate-teal collisions) + a seeded
+    Reveal-the-Picture stage. To expand: the per-game stages, the picture-card
+    tiles, the shared control bar.
+  - **`gallery/worlds/`** — TODO: world blocks (per-world accent), the reveal
+    overlay, spell cards, the gold accent, the beat presenter, and the eleven
+    primitives' UI forms (docs/PRIMITIVES.md).
+
+---
+
 ## Catalogued — 32 of ~55 visual components
 
 ### Atoms
