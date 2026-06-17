@@ -57,11 +57,29 @@ ColorScheme appColorScheme(Brightness brightness) {
   final base = ColorScheme.fromSeed(seedColor: _seed, brightness: brightness);
   final warm =
       ColorScheme.fromSeed(seedColor: _warmSeed, brightness: brightness);
-  return base.copyWith(
+  final scheme = base.copyWith(
     tertiary: warm.primary,
     onTertiary: warm.onPrimary,
     tertiaryContainer: warm.primaryContainer,
     onTertiaryContainer: warm.onPrimaryContainer,
+  );
+  if (brightness == Brightness.dark) return scheme;
+  // Warm-paper surfaces (the show_widget look). M3's `fromSeed(teal)` gives a
+  // cool grey-white; the brand is a warm cream. Override only the surface ramp
+  // + on-surface ink + hairline — the seed-derived primary/secondary/tertiary
+  // (and their M3 contrast pairings) are untouched, so accents stay correct.
+  return scheme.copyWith(
+    surface: const Color(0xFFF4F1EA),
+    surfaceContainerLowest: const Color(0xFFFCFAF5),
+    surfaceContainerLow: const Color(0xFFF8F5EE),
+    surfaceContainer: const Color(0xFFF1EDE3),
+    surfaceContainerHigh: const Color(0xFFEBE6DA),
+    surfaceContainerHighest: const Color(0xFFE5E0D2),
+    surfaceDim: const Color(0xFFE6E1D5),
+    surfaceBright: const Color(0xFFFCFAF5),
+    onSurface: const Color(0xFF26241F),
+    onSurfaceVariant: const Color(0xFF6E6A60),
+    outlineVariant: const Color(0xFFDAD4C6),
   );
 }
 

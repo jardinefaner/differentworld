@@ -127,13 +127,16 @@ class AppColors extends ThemeExtension<AppColors> {
 /// site — see [AppType.tracking] for the extra letter-spacing a hero/eyebrow
 /// should stack on top when it goes all-caps.)
 abstract final class AppType {
-  /// The display / hero voice — thin, geometric, made to be tracked + capped.
-  /// Same family as [ui]; the difference is weight, case, and spacing.
-  static const display = 'Jost';
+  /// The display / hero voice — **Fraunces**, a warm high-contrast serif
+  /// (bundled in `assets/fonts/`). The serif heroes are what make the
+  /// show_widget mockups read "calm + editorial"; the hierarchy comes from a
+  /// serif display over a grotesk UI, sentence-case, generous air.
+  static const display = 'Fraunces';
 
-  /// The functional voice (title / body / label). Same Jost family — set as
-  /// the global default so any unstyled `Text` speaks it too.
-  static const ui = 'Jost';
+  /// The functional voice (title / body / label) — **Space Grotesk**, a
+  /// humanist grotesk (bundled). Set as the global default so any unstyled
+  /// `Text` speaks it too; named display/headline styles switch to [display].
+  static const ui = 'SpaceGrotesk';
 
   /// Extra letter-spacing to STACK on a display/eyebrow style when it's
   /// uppercased at the call site — tracked caps need more air than the
@@ -146,49 +149,50 @@ abstract final class AppType {
   /// tracked. Colours are omitted so each style inherits the scheme's
   /// on-surface colour per brightness.
   static TextTheme textTheme() => const TextTheme(
+        // Fraunces serif heroes — w400 + tight tracking (the mockup voice),
+        // NOT the old thin/wide-tracked Jost treatment. Sentence-case at the
+        // call sites; the hierarchy comes from size + the serif, not from caps.
         displayLarge: TextStyle(
           fontFamily: display,
           fontSize: 57,
-          fontWeight: FontWeight.w300,
-          height: 1.08,
-          letterSpacing: 1,
+          fontWeight: FontWeight.w400,
+          height: 1.05,
+          letterSpacing: -0.5,
         ),
         displayMedium: TextStyle(
           fontFamily: display,
           fontSize: 45,
-          fontWeight: FontWeight.w300,
-          height: 1.12,
-          letterSpacing: 1,
+          fontWeight: FontWeight.w400,
+          height: 1.08,
+          letterSpacing: -0.5,
         ),
         displaySmall: TextStyle(
           fontFamily: display,
           fontSize: 36,
-          fontWeight: FontWeight.w300,
-          height: 1.18,
-          letterSpacing: 1,
+          fontWeight: FontWeight.w400,
+          height: 1.12,
+          letterSpacing: -0.25,
         ),
         headlineLarge: TextStyle(
           fontFamily: display,
           fontSize: 32,
-          fontWeight: FontWeight.w300,
-          height: 1.22,
-          letterSpacing: 0.8,
+          fontWeight: FontWeight.w400,
+          height: 1.16,
+          letterSpacing: -0.25,
         ),
         headlineMedium: TextStyle(
           fontFamily: display,
           fontSize: 28,
           fontWeight: FontWeight.w400,
-          height: 1.26,
-          letterSpacing: 0.6,
+          height: 1.2,
         ),
         // Page titles (ContentHeader) + wide empty-state titles land here —
-        // the most-seen "big" style. w400 so it stays crisp when uppercased.
+        // the most-seen "big" style. Sentence-case serif.
         headlineSmall: TextStyle(
           fontFamily: display,
           fontSize: 24,
           fontWeight: FontWeight.w400,
-          height: 1.3,
-          letterSpacing: 0.5,
+          height: 1.25,
         ),
         titleLarge: TextStyle(
           fontFamily: ui,

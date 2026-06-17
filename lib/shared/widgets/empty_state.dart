@@ -1,4 +1,3 @@
-import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/center_or_scroll.dart';
 import 'package:flutter/material.dart';
@@ -53,12 +52,10 @@ class EmptyState extends StatelessWidget {
             ),
             SizedBox(height: isWide ? 24 : 20),
             Text(
-              title.toUpperCase(),
-              semanticsLabel: title,
-              style: (isWide
-                      ? theme.textTheme.headlineSmall
-                      : theme.textTheme.titleMedium)
-                  ?.copyWith(letterSpacing: AppType.tracking),
+              title,
+              style: isWide
+                  ? theme.textTheme.headlineSmall
+                  : theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             if (message != null) ...[

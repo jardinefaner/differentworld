@@ -1,7 +1,4 @@
-import 'package:differentworld/app/design_tokens.dart';
-import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// In-content title + subtitle that lives at the top of a screen's
 /// scrollable body. Scrolls away with the rest of the content — no
@@ -23,7 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// [topGap] stays as the breathing room ABOVE the title (between
 /// the chrome edge and the first text). Set to 0 if a screen wants
 /// the title flush against the chrome boundary.
-class ContentHeader extends ConsumerWidget {
+class ContentHeader extends StatelessWidget {
   const ContentHeader({
     required this.title,
     this.subtitle,
@@ -61,12 +58,9 @@ class ContentHeader extends ConsumerWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = titleStyle ?? theme.textTheme.headlineSmall;
-    // Clean display style → sentence-case titles (the mockup voice); Calm /
-    // Boxed keep the brand's UPPERCASE tracked hero.
-    final clean = ref.watch(displayStyleProvider).value == DisplayStyle.clean;
     final baseS = subtitleStyle ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
@@ -94,17 +88,9 @@ class ContentHeader extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero treatment: tracked uppercase (the brand voice). The
-                // display string is capped; `semanticsLabel` keeps the
-                // original case so screen readers don't spell it out.
-                if (clean)
-                  Text(title, style: t)
-                else
-                  Text(
-                    title.toUpperCase(),
-                    semanticsLabel: title,
-                    style: t?.copyWith(letterSpacing: AppType.tracking),
-                  ),
+                // Sentence-case serif title — the show_widget voice. The
+                // hierarchy comes from the Fraunces display + size, not caps.
+                Text(title, style: t),
                 if (subtitle != null) ...[
                   const SizedBox(height: 4),
                   Text(subtitle!, style: s),
