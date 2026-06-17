@@ -15,15 +15,17 @@ class _Cue {
   final Color color;
 }
 
+// Full-bleed by design (room-visible signal), but drawn from the harmonized
+// game accents so Signals joins the family by colour.
 const _cues = <_Cue>[
-  _Cue('👀', 'Eyes up', ActivityPalette.blue),
-  _Cue('🤫', 'Quiet please', ActivityPalette.deepPurple),
-  _Cue('👂', 'Listen', ActivityPalette.teal),
-  _Cue('✋', 'Hands up', ActivityPalette.pink),
-  _Cue('🧹', 'Clean up', ActivityPalette.amber),
-  _Cue('🚶', 'Line up', ActivityPalette.indigo),
-  _Cue('🧊', 'Freeze', ActivityPalette.lightBlue),
-  _Cue('🌬️', 'Breathe', ActivityPalette.green),
+  _Cue('👀', 'Eyes up', GameAccents.slate),
+  _Cue('🤫', 'Quiet please', GameAccents.plum),
+  _Cue('👂', 'Listen', GameAccents.teal),
+  _Cue('✋', 'Hands up', GameAccents.rose),
+  _Cue('🧹', 'Clean up', GameAccents.amber),
+  _Cue('🚶', 'Line up', GameAccents.deepTeal),
+  _Cue('🧊', 'Freeze', GameAccents.coral),
+  _Cue('🌬️', 'Breathe', GameAccents.sage),
 ];
 
 class CueState {
@@ -102,7 +104,7 @@ class CuesGame extends GameDefinition<CueState> {
               cue.label,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: Colors.white,
+                color: AppColors.onAccent(cue.color),
                 fontWeight: FontWeight.w400,
               ),
             ),

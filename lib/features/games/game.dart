@@ -85,19 +85,21 @@ class CaptureSpec {
 /// shape per game). The [GameDefinition.buildStage] owns the hero shape +
 /// the per-game wrap beat; this carries the chrome tint the shared
 /// scaffold reads (progress accent, control-bar wash, status pill).
-/// The harmonized game-accent palette (Calm, on-brand). Eight accents drawn
-/// from / harmonized with the brand (teal seed + warm amber tertiary),
-/// desaturated to sit calm on the dark stage. Every [GameVibe] picks ONE from
-/// here — no more ad-hoc per-game hex — so the deck reads as one system.
+/// The harmonized game-accent palette (Calm, on-brand). Eight accents, all
+/// pulled to ONE muted tone (consistent saturation + value) so the deck reads
+/// as a designed set, not a rainbow — the loud warm ones (amber, coral) are
+/// brought down to match the calm cool ones; `coral` is now an earthier clay.
+/// Every [GameVibe] picks ONE from here — no ad-hoc per-game hex — so the deck
+/// is one system. (Tightened from the original brighter set, 2026-06-16.)
 abstract final class GameAccents {
-  static const teal = Color(0xFF2A9D8F);
-  static const deepTeal = Color(0xFF1D7A6E);
-  static const amber = Color(0xFFC79A3E);
-  static const coral = Color(0xFFD8693C);
-  static const plum = Color(0xFF7C6BAE);
-  static const slate = Color(0xFF5784A8);
-  static const rose = Color(0xFFC25E7E);
-  static const sage = Color(0xFF5E9E6B);
+  static const teal = Color(0xFF3E8E81);
+  static const deepTeal = Color(0xFF327C70);
+  static const amber = Color(0xFFB6924F);
+  static const coral = Color(0xFFBC6E50);
+  static const plum = Color(0xFF8076A6);
+  static const slate = Color(0xFF5E82A0);
+  static const rose = Color(0xFFB06A82);
+  static const sage = Color(0xFF67976E);
 }
 
 /// The shared calm game surface — one warm near-black field for every stage,

@@ -1,6 +1,7 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// This-or-That on the unified framework (docs/GAMES.md Wave 0b). Two
@@ -42,15 +43,6 @@ class ThisOrThatState {
 
 class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
   const ThisOrThatGame();
-
-  // Per-pair palette — each slide gets its own two-tone split.
-  static const _palette = <(Color, Color)>[
-    (ActivityPalette.red, ActivityPalette.blue),
-    (ActivityPalette.amber, ActivityPalette.teal),
-    (ActivityPalette.purple, ActivityPalette.green),
-    (ActivityPalette.indigo, ActivityPalette.yellow),
-    (ActivityPalette.pink, ActivityPalette.lightBlue),
-  ];
 
   @override
   String get id => 'this-or-that';
@@ -134,95 +126,58 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
   @override
   Widget buildStage(BuildContext context, ThisOrThatState s) {
     if (s.done) return const _WrapSlide();
-    final (colorA, colorB) = _palette[s.index % _palette.length];
     final (a, b) = s.current;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Column(
-          children: [
-            Expanded(child: _Half(text: a, color: colorA)),
-            Expanded(child: _Half(text: b, color: colorB)),
-          ],
-        ),
-        const Center(child: _OrBadge()),
-        if (s.revealed)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.75),
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-              child: const Text(
-                'Why? Turn to a partner and tell them.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _Half extends StatelessWidget {
-  const _Half({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: color,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: FittedBox(
-            child: Text(
-              text,
+    final theme = Theme.of(context);
+    return GameStage.frame(
+      context,
+      eyebrow: 'This, or that?',
+      hero: _Choice(text: a, accent: vibe.accent),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 14),
+          Text('or', style: theme.textTheme.titleMedium?.copyWith(color: Colors.white38)),
+          const SizedBox(height: 14),
+          _Choice(text: b, accent: vibe.accent),
+          if (s.revealed) ...[
+            const SizedBox(height: 22),
+            Text(
+              'Why? Turn to a partner and tell them.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.onAccent(color),
-                fontSize: 40,
-                fontWeight: FontWeight.w500,
-              ),
+              style: theme.textTheme.titleMedium?.copyWith(color: Colors.white60),
             ),
-          ),
-        ),
+          ],
+        ],
       ),
     );
   }
 }
 
-class _OrBadge extends StatelessWidget {
-  const _OrBadge();
+/// One side of the comparison — a large accent-tinted card on the dark stage
+/// (was a full-bleed colour half; now joins the family).
+class _Choice extends StatelessWidget {
+  const _Choice({required this.text, required this.accent});
+
+  final String text;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12),
-        ],
+        color: accent.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.5)),
       ),
-      alignment: Alignment.center,
-      child: const Text(
-        'OR',
-        style: TextStyle(
-          color: Colors.black87,
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
-        ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              color: AppColors.readableOnDark(accent),
+              fontWeight: FontWeight.w400,
+            ),
       ),
     );
   }
