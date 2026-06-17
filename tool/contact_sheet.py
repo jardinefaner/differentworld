@@ -93,3 +93,38 @@ for tier, cs in groups:
 out = "gallery/contact_sheet.png"
 img.save(out)
 print(f"wrote {out} — {width}x{height}, {total} components")
+
+
+# ── games sheet ─────────────────────────────────────────────────────────
+# The experience layer: one render per game (games own their dark surface).
+gfiles = sorted(glob.glob("gallery/games/*.png"))
+gfiles = [(os.path.basename(f).replace("stage_", "").replace(".png", ""), f)
+          for f in gfiles if "contact" not in f]
+if gfiles:
+    GCOLS, GCW, GCH = 4, 300, 300
+    gw = PAD * 2 + GCOLS * GCW + (GCOLS - 1) * GAP
+    grows = (len(gfiles) + GCOLS - 1) // GCOLS
+    gh = PAD + 60 + grows * (GCH + LABEL_H + GAP) + PAD
+    gimg = Image.new("RGB", (gw, gh), BG)
+    gd = ImageDraw.Draw(gimg)
+    gd.text((PAD, PAD), "The games — every stage", font=F_TITLE, fill=INK)
+    gd.text((PAD, PAD + 42), f"{len(gfiles)} surfaces · the experience layer",
+            font=F_LABEL, fill=MUTED)
+    gy = PAD + 60
+    for i, (name, path) in enumerate(gfiles):
+        col, row = i % GCOLS, i // GCOLS
+        cx = PAD + col * (GCW + GAP)
+        cy = gy + row * (GCH + LABEL_H + GAP)
+        gd.rounded_rectangle((cx, cy, cx + GCW, cy + GCH), radius=12,
+                             fill=(15, 15, 20), outline=(42, 44, 52), width=1)
+        try:
+            src = Image.open(path).convert("RGB")
+        except Exception:
+            continue
+        scale = min((GCW - 16) / src.width, (GCH - 16) / src.height)
+        nw, nh = max(1, int(src.width * scale)), max(1, int(src.height * scale))
+        src = src.resize((nw, nh), Image.LANCZOS)
+        gimg.paste(src, (cx + (GCW - nw) // 2, cy + (GCH - nh) // 2))
+        gd.text((cx + 4, cy + GCH + 6), name, font=F_LABEL, fill=INK)
+    gimg.save("gallery/games_contact_sheet.png")
+    print(f"wrote gallery/games_contact_sheet.png — {len(gfiles)} games")

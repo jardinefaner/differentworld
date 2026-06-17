@@ -65,11 +65,12 @@ The bible mirrors the architecture's two layers:
 - **The experience tiers** — the GAMES + WORLDS, the childcare *content* layer
   (`lib/features/games/`, `lib/features/action_words/`). Their atoms render by
   seeding a `GameDefinition` / world content, NOT as a shared widget.
-  - **`gallery/games/`** — every game's vibe + its hero stage. Renderer:
-    [test/golden/game_gallery_test.dart]. Started: the vibe palette (all game
-    accents — already surfaced the duplicate-teal collisions) + a seeded
-    Reveal-the-Picture stage. To expand: the per-game stages, the picture-card
-    tiles, the shared control bar.
+  - **`gallery/games/`** ✅ — the vibe palette (all game accents — surfaced the
+    duplicate-teal collisions) + **all 16 game stages**, each rendered from its
+    own `initialState` over the curated content bank (bank games) or hand-dealt
+    real deck art (the card games). Montage: `gallery/games_contact_sheet.png`.
+    Renderer: [test/golden/game_gallery_test.dart]. Minor remainder: the
+    picture-card tiles + the shared control bar as standalone atoms.
   - **`gallery/worlds/`** — TODO: world blocks (per-world accent), the reveal
     overlay, spell cards, the gold accent, the beat presenter, and the eleven
     primitives' UI forms (docs/PRIMITIVES.md).
