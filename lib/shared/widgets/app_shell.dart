@@ -838,13 +838,15 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
           ),
         // Persistent top chrome (hamburger + back + per-route
-        // actions). Hidden in kid mode. When the suggestion
-        // overlay is open, the chrome pivots to "overlay mode" —
-        // always a back-pill that closes the overlay, no per-
-        // route actions, no topOverlay. Users see a consistent
-        // back affordance whether they got to the suggestion
-        // list from Today, a subject detail, or any other route.
-        if (!inKidMode)
+        // actions). Hidden in kid mode AND in immersive surfaces
+        // (the cast cockpit/receiver, Speak, /activity games) — those
+        // own the whole screen and carry their own header/exit, so the
+        // floating pills only collided with their content (they buried
+        // the cockpit's own title). This matches the omnibox bar's gate
+        // below + the "auto-hidden in immersive" intent in the cast
+        // button. When the suggestion overlay is open, the chrome pivots
+        // to a single back-pill that closes the overlay.
+        if (!inKidMode && (!isImmersive || _searchOverlayOpen))
           ..._buildTopChrome(
             _searchOverlayOpen ? const RouteChrome(showBack: true) : chrome,
             topInset,
