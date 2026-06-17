@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
 import 'package:flutter/material.dart';
 
@@ -86,38 +87,32 @@ class RhymeTimeGame extends GameDefinition<RhymeState> {
   @override
   Widget buildStage(BuildContext context, RhymeState s) {
     final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'RHYME WITH',
-            style: TextStyle(
-              color: Colors.white54,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2,
+    return GameStage.frame(
+      context,
+      eyebrow: 'Rhyme with',
+      hero: Text(
+        s.word,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.displayMedium?.copyWith(
+          color: vibe.accent,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${s.found}',
+              style: theme.textTheme.displaySmall?.copyWith(
+                color: vibe.accent,
+                fontWeight: FontWeight.w400,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            s.word,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.displayMedium?.copyWith(
-              color: vibe.accent,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            '${s.found}',
-            style: TextStyle(
-              color: vibe.accent,
-              fontSize: 64,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const Text('found', style: TextStyle(color: Colors.white38)),
-        ],
+            const Text('found', style: TextStyle(color: Colors.white38)),
+          ],
+        ),
       ),
     );
   }

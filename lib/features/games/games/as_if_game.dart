@@ -1,5 +1,7 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/tally_controls.dart';
 import 'package:flutter/material.dart';
 
@@ -106,73 +108,40 @@ class AsIfGame extends GameDefinition<AsIfState> {
   @override
   Widget buildStage(BuildContext context, AsIfState s) {
     final theme = Theme.of(context);
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.theater_comedy, color: vibe.accent, size: 44),
-              const SizedBox(height: 12),
-              const Text(
-                'SAY IT…',
-                style: TextStyle(
-                  color: Colors.white60,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 2,
-                  fontSize: 13,
-                ),
+    return GameStage.frame(
+      context,
+      eyebrow: 'Say it…',
+      hero: GameStage.hero(context, '“${s.line}”'),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 24),
+          GameStage.eyebrow(context, 'As if'),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            decoration: BoxDecoration(
+              color: vibe.accent.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: vibe.accent.withValues(alpha: 0.55)),
+            ),
+            child: Text(
+              s.asIf,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: AppColors.readableOnDark(vibe.accent),
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(height: 12),
-              Text(
-                '“${s.line}”',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'AS IF',
-                style: TextStyle(
-                  color: Colors.white60,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 3,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: vibe.accent.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: vibe.accent.withValues(alpha: 0.6)),
-                ),
-                child: Text(
-                  s.asIf,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: vibe.accent,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              if (s.performed > 0) ...[
-                const SizedBox(height: 24),
-                Text(
-                  'Acted out ${s.performed}',
-                  style: const TextStyle(color: Colors.white38),
-                ),
-              ],
-            ],
+            ),
           ),
-        ),
+          if (s.performed > 0) ...[
+            const SizedBox(height: 24),
+            Text(
+              'Acted out ${s.performed}',
+              style: const TextStyle(color: Colors.white38),
+            ),
+          ],
+        ],
       ),
     );
   }
