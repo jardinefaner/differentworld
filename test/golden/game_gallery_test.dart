@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
+import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_stage.dart';
@@ -46,14 +47,157 @@ void main() {
     await _loadFonts();
   });
 
-  // THE GAME ATOMS — the shared vocabulary every game's stage composes from
-  // (GameStage.hero / eyebrow / option / counter). Rendered once, labelled, so
-  // the deck's interactive parts read as ONE system, not 21 hand-rolled stages.
-  _scene('games/atoms', width: 600, height: 860, (_) => const _GameAtoms());
+  // THE GAME ATOMS — one plate per atom, so each can be seen + tweaked on its
+  // own (the shared vocabulary every game's stage composes from). teal stands
+  // in for "the game's accent"; the vibe atom shows the full accent set.
+  _scene('games/atom_hero', width: 480, height: 150,
+      (c) => _gamePlate(GameStage.hero(c, 'A group of flamingos')));
+  _scene('games/atom_eyebrow', width: 420, height: 110,
+      (c) => _gamePlate(GameStage.eyebrow(c, 'True, or fib?')));
+  _scene('games/atom_option', width: 480, height: 240, (c) => _gamePlate(
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                GameStage.option(c, 'True', accent: GameAccents.teal),
+                GameStage.option(c, 'Fib', accent: GameAccents.teal, selected: true),
+                GameStage.option(c, 'Maybe', accent: GameAccents.teal, dimmed: true),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: 300,
+              child: GameStage.option(c, 'Outside', accent: GameAccents.teal, trailing: '7'),
+            ),
+          ],
+        ),
+      ));
+  _scene('games/atom_counter', width: 320, height: 170,
+      (c) => _gamePlate(GameStage.counter(c, value: '3', caption: 'found', accent: GameAccents.teal)));
+  _scene('games/atom_card_tile', width: 280, height: 300, (c) => _gamePlate(
+        SizedBox(
+          width: 150,
+          height: 190,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: CardTile(image: 'assets/card_games/everyday/04-banana.png'),
+            ),
+          ),
+        ),
+      ));
+  _scene('games/atom_vibe', width: 620, height: 150, (c) => _gamePlate(
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final col in const [
+              GameAccents.teal,
+              GameAccents.deepTeal,
+              GameAccents.amber,
+              GameAccents.coral,
+              GameAccents.plum,
+              GameAccents.slate,
+              GameAccents.rose,
+              GameAccents.sage,
+            ])
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(color: col, borderRadius: BorderRadius.circular(12)),
+              ),
+          ],
+        ),
+      ));
 
-  // THE GAME MOLECULES — the atoms composed into the four stage shapes every
-  // game is one of: a vote stage, a poll, a card board, a tally bar.
-  _scene('games/molecules', width: 600, height: 760, (_) => const _GameMolecules());
+  // THE GAME MOLECULES — one plate per molecule (the stage shapes the atoms
+  // compose into: a vote, a poll, a card board, a tally bar).
+  _scene('games/molecule_vote', width: 480, height: 320, (c) => _gamePlate(
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GameStage.eyebrow(c, 'True, or fib?'),
+            const SizedBox(height: 12),
+            GameStage.hero(c, 'A flock of crows is a “murder”', maxLines: 2),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GameStage.option(c, 'True', accent: GameAccents.teal, selected: true),
+                const SizedBox(width: 12),
+                GameStage.option(c, 'Fib', accent: GameAccents.teal),
+              ],
+            ),
+          ],
+        ),
+      ));
+  _scene('games/molecule_poll', width: 440, height: 260, (c) => _gamePlate(
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (l, n, s) in const [
+              ('Outside', '7', true),
+              ('Gym', '4', false),
+              ('Reading', '2', false),
+            ])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: SizedBox(
+                  width: 300,
+                  child: GameStage.option(c, l, accent: GameAccents.deepTeal, selected: s, trailing: n),
+                ),
+              ),
+          ],
+        ),
+      ));
+  _scene('games/molecule_card_board', width: 360, height: 200, (c) => _gamePlate(
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (col, icon) in const [
+              (Color(0xFF22413C), Icons.music_note),
+              (Color(0xFF3A3320), Icons.bolt),
+              (Color(0xFF3A2630), Icons.sports_basketball),
+            ])
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Container(
+                  width: 70,
+                  height: 90,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: col, borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: Colors.white70, size: 26),
+                ),
+              ),
+          ],
+        ),
+      ));
+  _scene('games/molecule_tally', width: 420, height: 200, (c) => _gamePlate(
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GameStage.option(c, 'Someone said it', accent: GameAccents.teal, selected: true),
+            const SizedBox(height: 9),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GameStage.option(c, 'New word', accent: GameAccents.teal),
+                const SizedBox(width: 10),
+                GameStage.option(c, 'Reset', accent: GameAccents.teal, dimmed: true),
+              ],
+            ),
+          ],
+        ),
+      ));
 
   // The vibe palette — every game's signature colour DNA (accent on its own
   // dark surface). The most "atomic" view of the games: their identity at a
@@ -230,173 +374,13 @@ void _scene(
   );
 }
 
-/// The game-atom set, labelled — the shared parts every stage is built from.
-class _GameAtoms extends StatelessWidget {
-  const _GameAtoms();
-
-  @override
-  Widget build(BuildContext context) {
-    const accent = GameAccents.teal;
-    return ColoredBox(
+/// Centres one atom or molecule on the dark game surface — one plate each.
+Widget _gamePlate(Widget child) => ColoredBox(
       color: kGameSurface,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _AtomLabel('hero — the serif prompt'),
-            GameStage.hero(context, 'A group of flamingos'),
-            const _AtomGap(),
-            const _AtomLabel('eyebrow — the instruction'),
-            GameStage.eyebrow(context, 'True, or fib?'),
-            const _AtomGap(),
-            const _AtomLabel('option — default · selected · dimmed'),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                GameStage.option(context, 'True', accent: accent),
-                GameStage.option(context, 'Fib', accent: accent, selected: true),
-                GameStage.option(context, 'Maybe', accent: accent, dimmed: true),
-              ],
-            ),
-            const _AtomGap(),
-            const _AtomLabel('option — with count (a poll row)'),
-            SizedBox(
-              width: 320,
-              child: GameStage.option(context, 'Outside', accent: accent, trailing: '7'),
-            ),
-            const _AtomGap(),
-            const _AtomLabel('counter — the score atom'),
-            GameStage.counter(context, value: '3', caption: 'found', accent: accent),
-          ],
-        ),
+      child: Center(
+        child: Padding(padding: const EdgeInsets.all(28), child: child),
       ),
     );
-  }
-}
-
-/// A muted tracked-caps caption above each atom in the atoms scene.
-class _AtomLabel extends StatelessWidget {
-  const _AtomLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Text(
-          text.toUpperCase(),
-          style: const TextStyle(
-            color: Colors.white30,
-            fontSize: 11,
-            letterSpacing: 1.4,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
-}
-
-class _AtomGap extends StatelessWidget {
-  const _AtomGap();
-  @override
-  Widget build(BuildContext context) => const SizedBox(height: 32);
-}
-
-/// The game-molecule set — atoms composed into the four stage shapes.
-class _GameMolecules extends StatelessWidget {
-  const _GameMolecules();
-
-  @override
-  Widget build(BuildContext context) {
-    const accent = GameAccents.teal;
-    return ColoredBox(
-      color: kGameSurface,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _AtomLabel('vote stage — eyebrow + hero + 2 options'),
-            Center(
-              child: Column(
-                children: [
-                  GameStage.eyebrow(context, 'True, or fib?'),
-                  const SizedBox(height: 12),
-                  GameStage.hero(
-                    context,
-                    'A flock of crows is a “murder”',
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GameStage.option(context, 'True', accent: accent, selected: true),
-                      const SizedBox(width: 12),
-                      GameStage.option(context, 'Fib', accent: accent),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const _AtomGap(),
-            const _AtomLabel('poll — hero + option rows with counts'),
-            for (final (label, n, sel) in const [
-              ('Outside', '7', true),
-              ('Gym', '4', false),
-              ('Reading', '2', false),
-            ])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 9),
-                child: GameStage.option(
-                  context,
-                  label,
-                  accent: accent,
-                  selected: sel,
-                  trailing: n,
-                ),
-              ),
-            const _AtomGap(),
-            const _AtomLabel('card board — a grid of card tiles'),
-            Row(
-              children: [
-                for (final (c, icon) in const [
-                  (Color(0xFF22413C), Icons.music_note),
-                  (Color(0xFF3A3320), Icons.bolt),
-                  (Color(0xFF3A2630), Icons.sports_basketball),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: Container(
-                      width: 70,
-                      height: 90,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: c,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(icon, color: Colors.white70, size: 26),
-                    ),
-                  ),
-              ],
-            ),
-            const _AtomGap(),
-            const _AtomLabel('tally bar — the control row'),
-            GameStage.option(context, 'Someone said it', accent: accent, selected: true),
-            const SizedBox(height: 9),
-            Row(
-              children: [
-                GameStage.option(context, 'New word', accent: accent),
-                const SizedBox(width: 10),
-                GameStage.option(context, 'Reset', accent: accent, dimmed: true),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 /// A grid of every registered game's vibe — surface tile + accent bar + title.
 class _VibePalette extends StatelessWidget {

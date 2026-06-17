@@ -86,13 +86,17 @@ The bible mirrors the architecture's two layers:
 - **The experience tiers** — the GAMES + WORLDS, the childcare *content* layer
   (`lib/features/games/`, `lib/features/action_words/`). Their atoms render by
   seeding a `GameDefinition` / world content, NOT as a shared widget.
-  - **`gallery/games/`** ✅ — now a true bottom-up set (atoms → stages):
-    - **`games/atoms`** — THE game-atom sheet, the shared vocabulary every stage
-      composes from: `GameStage.hero` (the Fraunces serif prompt), `eyebrow`,
-      `option` (default · selected-fills-accent · dimmed · poll-row-with-count),
-      and `counter` (the score). Because every stage is built from these, the
-      deck is cohesive *by construction* — not by 21 separate restyles. Source:
-      [game_stage.dart].
+  - **`gallery/games/`** ✅ — now a true bottom-up set (atoms → molecules →
+    stages), **one plate per item** so each can be seen + tweaked on its own:
+    - **6 atom plates** — `games/atom_hero` (the Fraunces serif prompt),
+      `atom_eyebrow`, `atom_option` (default · selected · dimmed · poll-row),
+      `atom_counter` (the score), `atom_card_tile` (the deck card),
+      `atom_vibe` (the 8 calm `GameAccents`). The shared vocabulary every stage
+      composes from — so the deck is cohesive *by construction*, not by 21
+      separate restyles. Source: [game_stage.dart].
+    - **4 molecule plates** — `games/molecule_vote`, `molecule_poll`,
+      `molecule_card_board`, `molecule_tally` (the stage shapes the atoms
+      compose into).
     - **`games/vibe_palette`** — every game's accent DNA (surfaced the
       duplicate-teal collisions; now the 8 calm `GameAccents`).
     - **all 15 game stages** + `grid_reveal_stage`, each rendered from its own
@@ -102,15 +106,23 @@ The bible mirrors the architecture's two layers:
       `GameStage.counter`; the full-bleed signals (Cues, This-or-That) keep
       their colour but now speak the lighter brand voice (Fraunces heroes,
       `AppColors.onAccent` contrast, no w800/w900 shouts).
-    - Montage: `gallery/games_contact_sheet.png` (**18 surfaces**).
+    - **all 15 game stages** + `grid_reveal_stage` (the organism layer), each
+      rendered from its own `initialState` over the curated content bank or
+      hand-dealt real deck art. The card stages `precacheImage` their art so
+      they show real photos, not empty mats.
+    - Montage: `gallery/games_contact_sheet.png` (**27 surfaces**).
       Renderer: [test/golden/game_gallery_test.dart].
-  - **`gallery/worlds/`** — STARTED: the **Verb** primitive (the canonical 12,
-    each with its lens — the atom the whole curriculum is built from) + the
-    gold world-accent. Renderer: [test/golden/world_gallery_test.dart]. To add
-    (a deliberate wave — these are immersive + content-coupled, and emoji render
-    as tofu in goldens): the reveal overlay, spell cards, the world book, the
-    beat presenter, and the rest of the eleven primitives' UI forms
-    (docs/PRIMITIVES.md).
+  - **`gallery/worlds/`** — one plate per atom + molecule:
+    - **3 atom plates** — `worlds/atom_verb` (gold serif token), `atom_gold`
+      (the world accent), `atom_intention` (the intention tile). Plus the
+      `worlds/verbs` reference board (the canonical 12, each with its lens) +
+      `worlds/gold_accent` (light/dark swatch).
+    - **2 molecule plates** — `worlds/molecule_cue_card` (the full-bleed
+      signal) + `worlds/molecule_intention_picker` (choose-3-verbs).
+    - Montage: `gallery/worlds_contact_sheet.png` (**7 surfaces**).
+      Renderer: [test/golden/world_gallery_test.dart]. Still to add (immersive +
+      content-coupled): the reveal overlay, spell cards, the world book, the
+      beat presenter, and the rest of the eleven primitives (docs/PRIMITIVES.md).
 
 ---
 
