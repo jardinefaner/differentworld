@@ -160,7 +160,7 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -178,14 +178,8 @@ class _Half extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color, Color.lerp(color, Colors.black, 0.28)!],
-        ),
-      ),
+    return ColoredBox(
+      color: color,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -193,11 +187,10 @@ class _Half extends StatelessWidget {
             child: Text(
               text,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.onAccent(color),
                 fontSize: 40,
-                fontWeight: FontWeight.w800,
-                shadows: [Shadow(color: Colors.black38, blurRadius: 6)],
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -227,7 +220,7 @@ class _OrBadge extends StatelessWidget {
         'OR',
         style: TextStyle(
           color: Colors.black87,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w600,
           fontSize: 16,
         ),
       ),
@@ -253,7 +246,7 @@ class _WrapSlide extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 28,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],

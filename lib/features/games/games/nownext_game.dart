@@ -219,7 +219,7 @@ class _Banner extends StatelessWidget {
             label,
             style: TextStyle(
               color: big ? accent : Colors.white54,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w500,
               letterSpacing: 3,
               fontSize: big ? 16 : 13,
             ),
@@ -241,7 +241,7 @@ class _Banner extends StatelessWidget {
                           : theme.textTheme.headlineSmall)
                       ?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w400,
                         height: 1.05,
                       ),
                 ),

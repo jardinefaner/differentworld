@@ -133,7 +133,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
             'ACT IT OUT — NO WORDS!',
             style: TextStyle(
               color: Colors.white54,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w500,
               letterSpacing: 2,
             ),
           ),
@@ -143,7 +143,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
             textAlign: TextAlign.center,
             style: theme.textTheme.displaySmall?.copyWith(
               color: vibe.accent,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w400,
             ),
           ),
           const SizedBox(height: 24),
@@ -172,7 +172,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white54,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w500,
                 letterSpacing: 1.5,
               ),
             ),
@@ -182,7 +182,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
               textAlign: TextAlign.center,
               style: theme.textTheme.displaySmall?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 12),
@@ -232,7 +232,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
             icon: const Icon(Icons.check),
             label: const Text(
               'Got it!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -252,7 +252,7 @@ class CharadesGame extends GameDefinition<CharadesState> {
             'Great round!',
             style: theme.textTheme.headlineMedium?.copyWith(
               color: Colors.white,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w400,
             ),
           ),
           const SizedBox(height: 6),

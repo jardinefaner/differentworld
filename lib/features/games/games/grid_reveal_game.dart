@@ -276,7 +276,7 @@ class _GridRevealStage extends StatelessWidget {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 32,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
@@ -315,7 +315,7 @@ class _CoverTile extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.45),
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -420,7 +420,7 @@ class _CellButton extends StatelessWidget {
                   label,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
         ),

@@ -4,6 +4,7 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/activity_runtime/math_game.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_settings.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// The Math Game on the unified framework: one question at a time, big; the
@@ -20,14 +21,14 @@ class MathQuizState {
   });
 
   factory MathQuizState.fromMap(Map<String, dynamic> m) => MathQuizState(
-        index: (m['i'] as num?)?.toInt() ?? 0,
-        revealed: m['r'] == true,
-        done: m['d'] == true,
-        questions: [
-          for (final q in (m['qs'] as List? ?? const []))
-            _questionFromMap((q as Map).cast<String, dynamic>()),
-        ],
-      );
+    index: (m['i'] as num?)?.toInt() ?? 0,
+    revealed: m['r'] == true,
+    done: m['d'] == true,
+    questions: [
+      for (final q in (m['qs'] as List? ?? const []))
+        _questionFromMap((q as Map).cast<String, dynamic>()),
+    ],
+  );
 
   final int index;
   final bool revealed;
@@ -35,29 +36,30 @@ class MathQuizState {
   final List<MathQuestion> questions;
 
   int get total => questions.length;
-  MathQuestion? get question =>
-      questions.isEmpty ? null : questions[index.clamp(0, questions.length - 1)];
+  MathQuestion? get question => questions.isEmpty
+      ? null
+      : questions[index.clamp(0, questions.length - 1)];
   bool get atEnd => index >= questions.length - 1;
 }
 
 Map<String, dynamic> _questionToMap(MathQuestion q) => {
-      'm': q.mechanic.name,
-      'p': q.prompt,
-      'a': q.answer,
-      'c': q.choices,
-      if (q.statementTrue != null) 'st': q.statementTrue,
-    };
+  'm': q.mechanic.name,
+  'p': q.prompt,
+  'a': q.answer,
+  'c': q.choices,
+  if (q.statementTrue != null) 'st': q.statementTrue,
+};
 
 MathQuestion _questionFromMap(Map<String, dynamic> m) => MathQuestion(
-      mechanic: MathMechanic.values.firstWhere(
-        (e) => e.name == m['m'],
-        orElse: () => MathMechanic.choose,
-      ),
-      prompt: (m['p'] as String?) ?? '',
-      answer: (m['a'] as num?)?.toInt() ?? 0,
-      choices: [for (final c in (m['c'] as List? ?? const [])) (c as num).toInt()],
-      statementTrue: m['st'] as bool?,
-    );
+  mechanic: MathMechanic.values.firstWhere(
+    (e) => e.name == m['m'],
+    orElse: () => MathMechanic.choose,
+  ),
+  prompt: (m['p'] as String?) ?? '',
+  answer: (m['a'] as num?)?.toInt() ?? 0,
+  choices: [for (final c in (m['c'] as List? ?? const [])) (c as num).toInt()],
+  statementTrue: m['st'] as bool?,
+);
 
 class MathQuizGame extends GameDefinition<MathQuizState> {
   const MathQuizGame();
@@ -69,47 +71,46 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
   String get title => 'Math Game';
 
   @override
-  GameVibe get vibe =>
-      const GameVibe(accent: GameAccents.slate);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
   @override
   String? get liveRoute => '/live/math-game';
 
   @override
   List<GameSetting> get settings => const [
-        IntSetting(
-          id: 'min',
-          label: 'Smallest number',
-          min: 0,
-          max: 20,
-          initial: 1,
-        ),
-        IntSetting(
-          id: 'max',
-          label: 'Biggest number',
-          min: 5,
-          max: 100,
-          initial: 12,
-        ),
-        MultiSetting(
-          id: 'ops',
-          label: 'Operations',
-          options: [
-            (value: 'add', label: '+'),
-            (value: 'subtract', label: '−'),
-            (value: 'multiply', label: '×'),
-            (value: 'divide', label: '÷'),
-          ],
-          initial: {'add'},
-        ),
-        IntSetting(
-          id: 'count',
-          label: 'How many questions',
-          min: 4,
-          max: 20,
-          initial: 8,
-        ),
-      ];
+    IntSetting(
+      id: 'min',
+      label: 'Smallest number',
+      min: 0,
+      max: 20,
+      initial: 1,
+    ),
+    IntSetting(
+      id: 'max',
+      label: 'Biggest number',
+      min: 5,
+      max: 100,
+      initial: 12,
+    ),
+    MultiSetting(
+      id: 'ops',
+      label: 'Operations',
+      options: [
+        (value: 'add', label: '+'),
+        (value: 'subtract', label: '−'),
+        (value: 'multiply', label: '×'),
+        (value: 'divide', label: '÷'),
+      ],
+      initial: {'add'},
+    ),
+    IntSetting(
+      id: 'count',
+      label: 'How many questions',
+      min: 4,
+      max: 20,
+      initial: 8,
+    ),
+  ];
 
   @override
   Map<String, dynamic> initialState(ContentSource content) =>
@@ -201,7 +202,7 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
               'Nice round!',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 6),
@@ -215,47 +216,33 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
     }
     final q = s.question;
     if (q == null) return const SizedBox.shrink();
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${s.index + 1} / ${s.total}',
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 28),
-              Text(
-                q.mechanic == MathMechanic.choose ? '${q.prompt} = ?' : q.prompt,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                s.revealed ? 'There it is!' : 'Say it out loud — then Reveal',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white38,
-                ),
-              ),
-              const SizedBox(height: 28),
-              _answerArea(q, revealed: s.revealed),
-            ],
+    return GameStage.frame(
+      context,
+      eyebrow: '${s.index + 1} / ${s.total}',
+      hero: GameStage.hero(
+        context,
+        q.mechanic == MathMechanic.choose ? '${q.prompt} = ?' : q.prompt,
+      ),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            s.revealed ? 'There it is!' : 'Say it out loud — then Reveal',
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white38),
           ),
-        ),
+          const SizedBox(height: 28),
+          _answerArea(context, q, revealed: s.revealed),
+        ],
       ),
     );
   }
 
-  Widget _answerArea(MathQuestion q, {required bool revealed}) {
+  Widget _answerArea(
+    BuildContext context,
+    MathQuestion q, {
+    required bool revealed,
+  }) {
     switch (q.mechanic) {
       case MathMechanic.choose:
       case MathMechanic.sequence:
@@ -265,10 +252,13 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
           runSpacing: 12,
           children: [
             for (final c in q.choices)
-              _Option(
-                label: '$c',
-                highlight: revealed && c == q.answer,
-                dim: revealed && c != q.answer,
+              GameStage.option(
+                context,
+                '$c',
+                accent: vibe.accent,
+                selected: revealed && c == q.answer,
+                dimmed: revealed && c != q.answer,
+                fontSize: 24,
               ),
           ],
         );
@@ -277,16 +267,22 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _Option(
-              label: 'True',
-              highlight: revealed && answer,
-              dim: revealed && !answer,
+            GameStage.option(
+              context,
+              'True',
+              accent: vibe.accent,
+              selected: revealed && answer,
+              dimmed: revealed && !answer,
+              fontSize: 22,
             ),
             const SizedBox(width: 16),
-            _Option(
-              label: 'False',
-              highlight: revealed && !answer,
-              dim: revealed && answer,
+            GameStage.option(
+              context,
+              'False',
+              accent: vibe.accent,
+              selected: revealed && !answer,
+              dimmed: revealed && answer,
+              fontSize: 22,
             ),
           ],
         );
@@ -302,12 +298,12 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
     final (intent, icon, label) = state.done
         ? (GameIntent.reset, Icons.replay, 'Play again')
         : state.revealed
-            ? (
-                GameIntent.next,
-                Icons.arrow_forward,
-                state.atEnd ? 'See the round' : 'Next',
-              )
-            : (GameIntent.reveal, Icons.visibility_outlined, 'Reveal');
+        ? (
+            GameIntent.next,
+            Icons.arrow_forward,
+            state.atEnd ? 'See the round' : 'Next',
+          )
+        : (GameIntent.reveal, Icons.visibility_outlined, 'Reveal');
     return Row(
       children: [
         Expanded(
@@ -321,41 +317,6 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// A non-interactive option — the room answers aloud; Reveal glows the correct
-/// one (never a red "wrong"; the others recede).
-class _Option extends StatelessWidget {
-  const _Option({
-    required this.label,
-    required this.highlight,
-    required this.dim,
-  });
-
-  final String label;
-  final bool highlight;
-  final bool dim;
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = highlight
-        ? Colors.greenAccent
-        : Colors.white.withValues(alpha: dim ? 0.06 : 0.14);
-    final fg = highlight
-        ? Colors.black87
-        : Colors.white.withValues(alpha: dim ? 0.4 : 1);
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      width: 116,
-      height: 76,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
-      child: Text(
-        label,
-        style: TextStyle(color: fg, fontSize: 26, fontWeight: FontWeight.w800),
-      ),
     );
   }
 }

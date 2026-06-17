@@ -142,7 +142,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
               'What a story!',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 6),
@@ -166,7 +166,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
                 'Story ${s.index + 1} / ${s.total}',
                 style: const TextStyle(
                   color: Colors.white54,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 28),
@@ -175,7 +175,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w400,
                   height: 1.25,
                 ),
               ),
@@ -204,7 +204,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
                         '✨ PLOT TWIST',
                         style: TextStyle(
                           color: Color(0xFFFFCA62),
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w500,
                           letterSpacing: 1.5,
                           fontSize: 12,
                         ),
@@ -215,7 +215,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -266,7 +266,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
             label: Text(
               state.atEnd ? 'See the round' : 'New start',
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
         ),

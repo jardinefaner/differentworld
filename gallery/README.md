@@ -65,12 +65,24 @@ The bible mirrors the architecture's two layers:
 - **The experience tiers** — the GAMES + WORLDS, the childcare *content* layer
   (`lib/features/games/`, `lib/features/action_words/`). Their atoms render by
   seeding a `GameDefinition` / world content, NOT as a shared widget.
-  - **`gallery/games/`** ✅ — the vibe palette (all game accents — surfaced the
-    duplicate-teal collisions) + **all 16 game stages**, each rendered from its
-    own `initialState` over the curated content bank (bank games) or hand-dealt
-    real deck art (the card games). Montage: `gallery/games_contact_sheet.png`.
-    Renderer: [test/golden/game_gallery_test.dart]. Minor remainder: the
-    picture-card tiles + the shared control bar as standalone atoms.
+  - **`gallery/games/`** ✅ — now a true bottom-up set (atoms → stages):
+    - **`games/atoms`** — THE game-atom sheet, the shared vocabulary every stage
+      composes from: `GameStage.hero` (the Fraunces serif prompt), `eyebrow`,
+      `option` (default · selected-fills-accent · dimmed · poll-row-with-count),
+      and `counter` (the score). Because every stage is built from these, the
+      deck is cohesive *by construction* — not by 21 separate restyles. Source:
+      [game_stage.dart].
+    - **`games/vibe_palette`** — every game's accent DNA (surfaced the
+      duplicate-teal collisions; now the 8 calm `GameAccents`).
+    - **all 15 game stages** + `grid_reveal_stage`, each rendered from its own
+      `initialState` over the curated content bank (bank games) or hand-dealt
+      real deck art (the card games). Fact-or-Fib / Math / Poll route their
+      choices through `GameStage.option`; Rhyme / Letter Words through
+      `GameStage.counter`; the full-bleed signals (Cues, This-or-That) keep
+      their colour but now speak the lighter brand voice (Fraunces heroes,
+      `AppColors.onAccent` contrast, no w800/w900 shouts).
+    - Montage: `gallery/games_contact_sheet.png` (**18 surfaces**).
+      Renderer: [test/golden/game_gallery_test.dart].
   - **`gallery/worlds/`** — STARTED: the **Verb** primitive (the canonical 12,
     each with its lens — the atom the whole curriculum is built from) + the
     gold world-accent. Renderer: [test/golden/world_gallery_test.dart]. To add
@@ -160,6 +172,8 @@ GlassSheetScope.
 [feedback in CLAUDE.md]: ../CLAUDE.md
 [docs/THEME_ADHERENCE.md]: ../docs/THEME_ADHERENCE.md
 [test/golden/component_gallery_test.dart]: ../test/golden/component_gallery_test.dart
+[test/golden/game_gallery_test.dart]: ../test/golden/game_gallery_test.dart
+[game_stage.dart]: ../lib/features/games/game_stage.dart
 [primary_action_button.dart]: ../lib/shared/widgets/primary_action_button.dart
 [secondary_action_button.dart]: ../lib/shared/widgets/secondary_action_button.dart
 [destructive_button.dart]: ../lib/shared/widgets/destructive_button.dart

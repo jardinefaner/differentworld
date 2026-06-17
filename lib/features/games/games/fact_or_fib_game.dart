@@ -1,4 +1,3 @@
-import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_stage.dart';
@@ -139,18 +138,22 @@ class FactOrFibGame extends GameDefinition<FactState> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _Verdict(
-                label: 'True',
+              GameStage.option(
+                context,
+                'True',
                 accent: vibe.accent,
-                highlight: s.revealed && isTrue,
-                dim: s.revealed && !isTrue,
+                selected: s.revealed && isTrue,
+                dimmed: s.revealed && !isTrue,
+                fontSize: 19,
               ),
               const SizedBox(width: 12),
-              _Verdict(
-                label: 'Fib',
+              GameStage.option(
+                context,
+                'Fib',
                 accent: vibe.accent,
-                highlight: s.revealed && !isTrue,
-                dim: s.revealed && isTrue,
+                selected: s.revealed && !isTrue,
+                dimmed: s.revealed && isTrue,
+                fontSize: 19,
               ),
             ],
           ),
@@ -165,47 +168,6 @@ class FactOrFibGame extends GameDefinition<FactState> {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _Verdict extends StatelessWidget {
-  const _Verdict({
-    required this.label,
-    required this.accent,
-    required this.highlight,
-    required this.dim,
-  });
-
-  final String label;
-  final Color accent;
-  final bool highlight;
-  final bool dim;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 240),
-      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-      decoration: BoxDecoration(
-        color: highlight
-            ? accent
-            : Colors.white.withValues(alpha: dim ? 0.04 : 0.07),
-        borderRadius: BorderRadius.circular(14),
-        border: highlight
-            ? null
-            : Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: highlight
-              ? AppColors.onAccent(accent)
-              : (dim ? Colors.white24 : Colors.white),
-          fontSize: 19,
-          fontWeight: FontWeight.w500,
-        ),
       ),
     );
   }
@@ -232,7 +194,7 @@ class _Recap extends StatelessWidget {
               'Fact-checked!',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(height: 6),
