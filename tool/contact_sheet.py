@@ -130,6 +130,41 @@ if gfiles:
     print(f"wrote gallery/games_contact_sheet.png — {len(gfiles)} games")
 
 
+# ── game organisms sheet ─────────────────────────────────────────────────
+# The full assembled surfaces (stage + control bar) — the complete games.
+ofiles = sorted(glob.glob("gallery/games/organism_*.png"))
+ofiles = [(os.path.basename(f).replace("organism_", "").replace(".png", ""), f)
+          for f in ofiles]
+if ofiles:
+    OCOLS, OCW, OCH = 4, 230, 420
+    ow = PAD * 2 + OCOLS * OCW + (OCOLS - 1) * GAP
+    orows = (len(ofiles) + OCOLS - 1) // OCOLS
+    oh = PAD + 60 + orows * (OCH + LABEL_H + GAP) + PAD
+    oimg = Image.new("RGB", (ow, oh), BG)
+    od = ImageDraw.Draw(oimg)
+    od.text((PAD, PAD), "The game organisms — the whole game", font=F_TITLE, fill=INK)
+    od.text((PAD, PAD + 42), f"{len(ofiles)} surfaces · stage + control bar (GameScaffold)",
+            font=F_LABEL, fill=MUTED)
+    oy = PAD + 60
+    for i, (name, path) in enumerate(ofiles):
+        col, row = i % OCOLS, i // OCOLS
+        cx = PAD + col * (OCW + GAP)
+        cy = oy + row * (OCH + LABEL_H + GAP)
+        od.rounded_rectangle((cx, cy, cx + OCW, cy + OCH), radius=12,
+                             fill=(15, 15, 20), outline=(42, 44, 52), width=1)
+        try:
+            src = Image.open(path).convert("RGB")
+        except Exception:
+            continue
+        scale = min((OCW - 12) / src.width, (OCH - 12) / src.height)
+        nw, nh = max(1, int(src.width * scale)), max(1, int(src.height * scale))
+        src = src.resize((nw, nh), Image.LANCZOS)
+        oimg.paste(src, (cx + (OCW - nw) // 2, cy + (OCH - nh) // 2))
+        od.text((cx + 4, cy + OCH + 6), name, font=F_LABEL, fill=INK)
+    oimg.save("gallery/games_organisms_contact_sheet.png")
+    print(f"wrote gallery/games_organisms_contact_sheet.png — {len(ofiles)} organisms")
+
+
 # ── worlds sheet ─────────────────────────────────────────────────────────
 # The curriculum layer: the action-words atoms + molecules (dark surface).
 wfiles = sorted(glob.glob("gallery/worlds/*.png"))

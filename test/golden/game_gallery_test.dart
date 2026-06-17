@@ -4,7 +4,9 @@ import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/cards/card_tile.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_controller.dart';
 import 'package:differentworld/features/games/game_registry.dart';
+import 'package:differentworld/features/games/game_scaffold.dart';
 import 'package:differentworld/features/games/game_stage.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
 import 'package:differentworld/features/games/games/memory_match_game.dart';
@@ -242,6 +244,19 @@ void main() {
     });
   }
 
+  // THE GAME ORGANISMS — the FULL assembled surface (stage + control bar +
+  // chrome) via GameScaffold: the complete game a teacher/kid actually sees,
+  // one tier above the bare stage. Phone-sized, so it shows the big remote.
+  for (final game in liveGames.where(
+    (g) => g.seedsFromContentBank && g.id != 'grid-reveal',
+  )) {
+    _organismScene(
+      'games/organism_${game.id}',
+      game,
+      game.initialState(LocalContentBank.seeded()),
+    );
+  }
+
   // The card games are deck-seeded (seedsFromContentBank=false) — hand them a
   // sample board of real deck art so the stage shows its true layout.
   const deck = 'assets/card_games/everyday';
@@ -362,6 +377,50 @@ void _scene(
         for (final element in find.byType(Image).evaluate()) {
           final image = element.widget as Image;
           await precacheImage(image.image, element);
+        }
+      });
+      await tester.pumpAndSettle(const Duration(seconds: 1));
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('../../gallery/$name.png'),
+      );
+    },
+    skip: !runGoldens,
+  );
+}
+
+/// Render one full game ORGANISM — GameScaffold (stage + control bar + chrome)
+/// driven by a seeded LocalGameController. Phone-sized so it shows the big
+/// remote panel: the complete game surface, one tier above the bare stage.
+void _organismScene(
+  String name,
+  GameDefinition<dynamic> def,
+  Map<String, dynamic> wire, {
+  double width = 400,
+  double height = 840,
+}) {
+  testWidgets(
+    name,
+    (tester) async {
+      await tester.binding.setSurfaceSize(Size(width, height));
+      tester.view.physicalSize = Size(width, height);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final controller = LocalGameController(initial: wire, reduce: def.reduce);
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: buildDarkTheme(),
+            debugShowCheckedModeBanner: false,
+            home: GameScaffold<dynamic>(def: def, controller: controller),
+          ),
+        ),
+      );
+      await tester.runAsync(() async {
+        for (final element in find.byType(Image).evaluate()) {
+          await precacheImage((element.widget as Image).image, element);
         }
       });
       await tester.pumpAndSettle(const Duration(seconds: 1));
