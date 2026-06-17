@@ -1,5 +1,7 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// Riddle Me This on the framework (docs/GAMES.md Wave 1b). The reveal-game
@@ -114,41 +116,20 @@ class RiddlesGame extends GameDefinition<RiddleState> {
 
   @override
   Widget buildStage(BuildContext context, RiddleState s) {
-    final theme = Theme.of(context);
     if (s.done) {
       return _Recap(count: s.items.length);
     }
     final (prompt, answer) = s.current;
-    return Center(
-      child: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  prompt,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  s.revealed ? 'There it is!' : 'Say your guess — then Reveal',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white38,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                _AnswerCard(answer: answer, revealed: s.revealed),
-              ],
-            ),
-          ),
+    return GameStage.frame(
+      context,
+      eyebrow: s.revealed ? 'There it is!' : 'Say your guess, then reveal',
+      hero: GameStage.hero(context, prompt),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 28),
+        child: _AnswerCard(
+          answer: answer,
+          revealed: s.revealed,
+          accent: vibe.accent,
         ),
       ),
     );
@@ -158,10 +139,15 @@ class RiddlesGame extends GameDefinition<RiddleState> {
 /// The answer slot — a dim "?" until Reveal, then a celebratory glow (never
 /// graded; the room already said it out loud).
 class _AnswerCard extends StatelessWidget {
-  const _AnswerCard({required this.answer, required this.revealed});
+  const _AnswerCard({
+    required this.answer,
+    required this.revealed,
+    required this.accent,
+  });
 
   final String answer;
   final bool revealed;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -172,18 +158,19 @@ class _AnswerCard extends StatelessWidget {
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: revealed
-            ? Colors.greenAccent
-            : Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
+        color: revealed ? accent : Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: revealed
+            ? null
+            : Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Text(
         revealed ? answer : '?',
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: revealed ? Colors.black87 : Colors.white24,
-          fontSize: revealed ? 30 : 40,
-          fontWeight: FontWeight.w800,
+          color: revealed ? AppColors.onAccent(accent) : Colors.white24,
+          fontSize: revealed ? 28 : 36,
+          fontWeight: revealed ? FontWeight.w500 : FontWeight.w400,
         ),
       ),
     );
