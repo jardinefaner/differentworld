@@ -327,7 +327,7 @@ class _GameControlPanel extends StatelessWidget {
                   icon: const Icon(Icons.replay),
                   label: const Text(
                     'Play again',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -352,7 +352,7 @@ class _GameControlPanel extends StatelessWidget {
                   icon: const Icon(Icons.arrow_forward, size: 28),
                   label: const Text(
                     'Next',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

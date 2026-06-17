@@ -63,7 +63,15 @@ ColorScheme appColorScheme(Brightness brightness) {
     tertiaryContainer: warm.primaryContainer,
     onTertiaryContainer: warm.onPrimaryContainer,
   );
-  if (brightness == Brightness.dark) return scheme;
+  if (brightness == Brightness.dark) {
+    // Pin the dark primary to the muted games teal (#3E8E81) so FilledButton
+    // CTAs — the game control bar's "Next"/"Play again", any dark-mode button —
+    // stop being M3's bright mint. One teal identity across light, dark, games.
+    return scheme.copyWith(
+      primary: const Color(0xFF3E8E81),
+      onPrimary: const Color(0xFF062520),
+    );
+  }
   // Warm-paper surfaces (the show_widget look). M3's `fromSeed(teal)` gives a
   // cool grey-white; the brand is a warm cream. Override only the surface ramp
   // + on-surface ink + hairline — the seed-derived primary/secondary/tertiary
