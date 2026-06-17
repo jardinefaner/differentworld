@@ -754,14 +754,19 @@ class _CockpitHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     // The CONTROLLER's code — hand it to a screen to add it.
-                    Text(
-                      peers > 0
-                          ? '$label · code $code · $peers '
-                              '${peers == 1 ? 'screen' : 'screens'}'
-                          : '$label · your code $code — add a screen',
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
+                    // Flexible + ellipsis so the longer 6-char code can't
+                    // overflow the header Row on a narrow phone.
+                    Flexible(
+                      child: Text(
+                        peers > 0
+                            ? '$label · code $code · $peers '
+                                '${peers == 1 ? 'screen' : 'screens'}'
+                            : '$label · your code $code — add a screen',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                     if (peers > 0) ...[
