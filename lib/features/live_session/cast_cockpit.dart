@@ -106,9 +106,10 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
   /// game's own "no schedule yet" stage. `.future` so the first emission has
   /// landed before we seed (the cockpit doesn't otherwise watch the schedule).
   Future<void> _castNowNext() async {
+    final cast = _cast; // capture before the await — ref may be gone after
     final blocks = await ref.read(scheduleDayProvider(todayKey()).future);
     if (!mounted) return;
-    _cast.castStage(const NowNextGame().id, nowNextSeed(blocks));
+    cast.castStage(const NowNextGame().id, nowNextSeed(blocks));
     setState(() => _showLauncher = false);
   }
 
@@ -117,9 +118,10 @@ class _CastCockpitState extends ConsumerState<CastCockpit> {
   /// and cast it on the controller's code. An empty deck shows the game's own
   /// "no cards" stage.
   Future<void> _castCard(GameDefinition<dynamic> def, CardSeed seed) async {
+    final cast = _cast; // capture before the await — ref may be gone after
     final cards = await ref.read(pictureDeckProvider.future);
     if (!mounted) return;
-    _cast.castStage(def.id, seed(cards));
+    cast.castStage(def.id, seed(cards));
     setState(() => _showLauncher = false);
   }
 
@@ -297,7 +299,8 @@ class _Launcher extends StatelessWidget {
   final VoidCallback? onNowNext;
 
   /// Cast a deck-seeded card game (Name It, Odd One Out, …) with its seed.
-  final void Function(GameDefinition<dynamic> def, CardSeed seed)? onCastCard;
+  final Future<void> Function(GameDefinition<dynamic> def, CardSeed seed)?
+      onCastCard;
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +350,10 @@ class _Launcher extends StatelessWidget {
         // seed from assets, not the content bank (docs/CARD_GAMES.md).
         if (onCastCard != null)
           for (final (def, seed) in castableCardGames)
-            _LauncherTile(def: def, onTap: () => onCastCard!(def, seed)),
+            _LauncherTile(
+              def: def,
+              onTap: () => unawaited(onCastCard!(def, seed)),
+            ),
       ],
     );
   }

@@ -60,17 +60,24 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
   void initState() {
     super.initState();
     unawaited(WakelockPlus.enable()); // don't sleep mid-class
-    final session = CastSession.cast(
-      client: ref.read(supabaseProvider),
-      spaceId: ref.read(viewerProvider).spaceId ?? '',
-      code: _code,
-    );
-    _subs.add(
-      session.peers.listen((v) {
-        if (mounted) setState(() => _peers = v);
-      }),
-    );
-    _session = session;
+    final spaceId = ref.read(viewerProvider).spaceId;
+    // Don't BROADCAST on a null-space channel (`dw-cast--<code>`, pre-sync) —
+    // same guard as the cast cockpit. The instruments (_session?.castStage)
+    // no-op until the space resolves; the board is normally opened well after
+    // first sync, so this only bites a cold pre-sync open.
+    if (spaceId != null) {
+      final session = CastSession.cast(
+        client: ref.read(supabaseProvider),
+        spaceId: spaceId,
+        code: _code,
+      );
+      _subs.add(
+        session.peers.listen((v) {
+          if (mounted) setState(() => _peers = v);
+        }),
+      );
+      _session = session;
+    }
     // Focus the first instrument's field once the frame is up (IME show is a
     // post-frame op on Android; requestFocus alone doesn't raise it).
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusActive());

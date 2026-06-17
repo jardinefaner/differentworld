@@ -50,6 +50,9 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
     unawaited(_applyFullscreen());
     final session = CastSession.receive(
       client: ref.read(supabaseProvider),
+      // A follower only — if the space is null (pre-sync) it lands on an empty
+      // `dw-cast--<code>` channel with no broadcaster (casters are space-guarded)
+      // and shows the idle "waiting" screen. No leak; resolves on first sync.
       spaceId: ref.read(viewerProvider).spaceId ?? '',
       code: widget.code,
     );

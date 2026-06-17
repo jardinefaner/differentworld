@@ -69,18 +69,27 @@ class CastSessionController extends Notifier<CastSnapshot> {
   /// session on a different code is torn down first.
   void start(String code) {
     if (_live?.code == code) return;
+    final spaceId = ref.read(viewerProvider).spaceId;
+    // Never BROADCAST on a null-space channel (`dw-cast--<code>`) — that's the
+    // one place a guessed code could collide across programs. The cockpit is
+    // already gated on a non-null controller code (which needs the space), so
+    // this only fires defensively in the pre-sync window.
+    if (spaceId == null) return;
     _teardown();
     final session = CastSession.cast(
       client: ref.read(supabaseProvider),
-      spaceId: ref.read(viewerProvider).spaceId ?? '',
+      spaceId: spaceId,
       code: code,
     );
     _live = session;
+    // Set the new snapshot BEFORE wiring listeners — a synchronous stream emit
+    // would otherwise apply `_with(...)` onto the stale empty snapshot (a
+    // null-session state carrying live status/peers).
+    state = CastSnapshot(session: session);
     _subs
       ..add(session.states.listen((m) => state = state._with(meta: m)))
       ..add(session.status.listen((s) => state = state._with(status: s)))
       ..add(session.peers.listen((p) => state = state._with(peers: p)));
-    state = CastSnapshot(session: session);
   }
 
   /// End the cast entirely (disposes the session, clears the anchor).
