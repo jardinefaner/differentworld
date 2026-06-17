@@ -258,19 +258,30 @@ void main() {
     ),
   );
 
+  // SectionCard is an aggregator that wraps ROWS (its canonical use); the rows
+  // self-align via their own gutter, so the section icon/title line up with the
+  // row leadings/titles — one left edge. (A bare child must pad itself; callers
+  // always do.)
   _plate(
     'molecules/section_card',
-    height: 240,
-    (ctx) => SectionCard(
+    height: 280,
+    (_) => const SectionCard(
       icon: Icons.forum_outlined,
       title: '2 unread messages',
       tone: SectionCardTone.featured,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: Insets.md),
-        child: Text(
-          'Devon’s mom: “Will pick up at 5 today.”',
-          style: Theme.of(ctx).textTheme.bodyMedium,
-        ),
+      child: Column(
+        children: [
+          FeatureCard(
+            leading: Icon(Icons.person_outline),
+            title: 'Devon’s mom',
+            subtitle: '“Will pick up at 5 today.”',
+          ),
+          FeatureCard(
+            leading: Icon(Icons.person_outline),
+            title: 'Ana’s dad',
+            subtitle: '“Running 10 minutes late.”',
+          ),
+        ],
       ),
     ),
   );
