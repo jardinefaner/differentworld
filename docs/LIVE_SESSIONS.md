@@ -256,9 +256,18 @@ from the game's `GameDefinition` verbatim.
   starts the session picks "present here" vs "I'll control." For a
   desktop-present/phone-control combo, the desktop hosts and shows the
   code.
-- **Auth on the channel:** Realtime RLS / channel authorization so only
-  same-program devices can join a code (codes are guessable; gate by
-  space membership on the channel's authorization hook).
+- **Auth on the channel (PARTIAL — space-scoped, 2026-06-17):** the topic is
+  now `dw-cast-<spaceId>-<CODE>` (`CastSession.topicFor`). Joining requires the
+  program's space id — an unguessable uuid only program members hold (never
+  shown in the UI) — so a guessed 6-char code alone can't join, and both
+  casters (cockpit `controller.start`, `LiveBoardScreen`) refuse to broadcast
+  on a null-space channel. This is **auth by capability**, not server-enforced.
+  TRUE Realtime RLS / channel authorization (a member-scoped token on the
+  channel's authorization hook) is still the goal, but it's blocked today by
+  the same **ES256 `auth.uid()`-null** issue that relaxed our REST write
+  policies (see CLAUDE.md). **Required before casting any kid-identifying
+  content** (the Reveal, photo-of-the-day) — until then only ephemeral,
+  non-PII coordination rides the channel (see Privacy below).
 - **Web presenter:** the projector view is a natural **web** target
   (the app is multi-platform); the phone stays native. Same channel.
 
@@ -266,7 +275,8 @@ from the game's `GameDefinition` verbatim.
 
 - No child PII flows over Realtime — game payloads are prompts + indices;
   board payloads are staff-authored idea text. No names, no photos.
-- Channel codes are short-lived (per session) and authorized by space
-  membership.
+- Channel codes are stable per controller (a 6-char space+member hash, not
+  per-session) and the topic is space-scoped, so only same-program devices can
+  join (see "Auth on the channel" above).
 - Anonymity is enforced at the payload boundary, not the UI — the sender
   id is never put on the wire.
