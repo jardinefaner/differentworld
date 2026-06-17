@@ -69,10 +69,13 @@ class _CastScreenState extends ConsumerState<CastScreen> {
       }));
 
   /// MY controller code — the channel I broadcast on when I cast, and the one a
-  /// screen signed into my account auto-follows. Null only with no member id.
+  /// screen signed into my account auto-follows. Null without a member/space.
   String? _myControllerCode() {
-    final memberId = ref.read(viewerProvider).memberId;
-    return memberId == null ? null : castCodeForController(memberId);
+    final viewer = ref.read(viewerProvider);
+    final memberId = viewer.memberId;
+    final spaceId = viewer.spaceId;
+    if (memberId == null || spaceId == null) return null;
+    return castCodeForController(memberId: memberId, spaceId: spaceId);
   }
 
   @override
@@ -188,11 +191,11 @@ class _LobbyState extends State<_Lobby> {
 
   void _follow() {
     final code = _codeCtrl.text.trim().toUpperCase();
-    // Exact 4 — a short entry would follow an empty channel.
-    if (code.length == 4) {
+    // Exact 6 — a short entry would follow an empty channel.
+    if (code.length == 6) {
       widget.onFollow(code);
     } else {
-      setState(() => _error = 'The code is exactly 4 characters.');
+      setState(() => _error = 'The code is exactly 6 characters.');
     }
   }
 
@@ -276,7 +279,7 @@ class _LobbyState extends State<_Lobby> {
                       controller: _codeCtrl,
                       textCapitalization: TextCapitalization.characters,
                       textInputAction: TextInputAction.go,
-                      maxLength: 4,
+                      maxLength: 6,
                       onChanged: (_) {
                         if (_error != null) setState(() => _error = null);
                       },
