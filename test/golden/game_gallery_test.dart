@@ -1,8 +1,13 @@
 import 'dart:convert';
 
 import 'package:differentworld/app/theme.dart';
+import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
+import 'package:differentworld/features/games/games/memory_match_game.dart';
+import 'package:differentworld/features/games/games/name_it_game.dart';
+import 'package:differentworld/features/games/games/odd_one_out_game.dart';
+import 'package:differentworld/features/games/games/whats_missing_game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,6 +66,108 @@ void main() {
       ],
       'd': false,
       'n': 16,
+    };
+    return ColoredBox(
+      color: game.vibe.surface,
+      child: game.buildStage(ctx, game.decode(wire)),
+    );
+  });
+
+  // Every bank-seeded game's hero stage — rendered from its OWN initialState
+  // over the curated content bank, so the content is real, not faked.
+  for (final game in liveGames.where(
+    (g) => g.seedsFromContentBank && g.id != 'grid-reveal',
+  )) {
+    _scene('games/stage_${game.id}', width: 440, height: 560, (ctx) {
+      final wire = game.initialState(LocalContentBank.seeded());
+      return ColoredBox(
+        color: game.vibe.surface,
+        child: game.buildStage(ctx, game.decode(wire)),
+      );
+    });
+  }
+
+  // The card games are deck-seeded (seedsFromContentBank=false) — hand them a
+  // sample board of real deck art so the stage shows its true layout.
+  const deck = 'assets/card_games/everyday';
+  _scene('games/stage_name-it', width: 440, height: 560, (ctx) {
+    const game = NameItGame();
+    final wire = <String, dynamic>{
+      'cards': [
+        {'image': '$deck/04-banana.png', 'label': 'banana'},
+        {'image': '$deck/01-violin.png', 'label': 'violin'},
+      ],
+      'i': 0,
+      'r': true,
+      'd': false,
+    };
+    return ColoredBox(
+      color: game.vibe.surface,
+      child: game.buildStage(ctx, game.decode(wire)),
+    );
+  });
+  _scene('games/stage_odd-one-out', width: 440, height: 560, (ctx) {
+    const game = OddOneOutGame();
+    final wire = <String, dynamic>{
+      'rounds': [
+        {
+          'cards': [
+            {'image': '$deck/04-banana.png', 'label': 'banana'},
+            {'image': '$deck/08-teacup.png', 'label': 'teacup'},
+            {'image': '$deck/05-candle.png', 'label': 'candle'},
+            {'image': '$deck/06-basketball.png', 'label': 'basketball'},
+          ],
+          'answer': 3,
+        },
+      ],
+      'i': 0,
+      'r': true,
+      'd': false,
+    };
+    return ColoredBox(
+      color: game.vibe.surface,
+      child: game.buildStage(ctx, game.decode(wire)),
+    );
+  });
+  _scene('games/stage_whats-missing', width: 440, height: 560, (ctx) {
+    const game = WhatsMissingGame();
+    final wire = <String, dynamic>{
+      'rounds': [
+        {
+          'cards': [
+            {'image': '$deck/04-banana.png', 'label': 'banana'},
+            {'image': '$deck/01-violin.png', 'label': 'violin'},
+            {'image': '$deck/06-basketball.png', 'label': 'basketball'},
+            {'image': '$deck/03-backpack.png', 'label': 'backpack'},
+            {'image': '$deck/05-candle.png', 'label': 'candle'},
+            {'image': '$deck/07-feather.png', 'label': 'feather'},
+          ],
+          'missing': 2,
+        },
+      ],
+      'i': 0,
+      'phase': 1,
+      'd': false,
+    };
+    return ColoredBox(
+      color: game.vibe.surface,
+      child: game.buildStage(ctx, game.decode(wire)),
+    );
+  });
+  _scene('games/stage_memory-match', width: 440, height: 560, (ctx) {
+    const game = MemoryMatchGame();
+    final wire = <String, dynamic>{
+      'cards': [
+        {'image': '$deck/04-banana.png', 'label': 'banana', 'pair': 'banana'},
+        {'image': '$deck/01-violin.png', 'label': 'violin', 'pair': 'violin'},
+        {'image': '$deck/04-banana.png', 'label': 'banana', 'pair': 'banana'},
+        {'image': '$deck/06-basketball.png', 'label': 'ball', 'pair': 'ball'},
+        {'image': '$deck/01-violin.png', 'label': 'violin', 'pair': 'violin'},
+        {'image': '$deck/06-basketball.png', 'label': 'ball', 'pair': 'ball'},
+      ],
+      'flipped': [1],
+      'matched': [0, 2],
+      'd': false,
     };
     return ColoredBox(
       color: game.vibe.surface,
