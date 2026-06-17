@@ -125,18 +125,10 @@ class CharadesGame extends GameDefinition<CharadesState> {
   @override
   Widget buildStage(BuildContext context, CharadesState s) {
     if (s.done) return _wrap(context, s);
-    final theme = Theme.of(context);
     return GameStage.frame(
       context,
       eyebrow: 'Act it out — no words',
-      hero: Text(
-        s.category,
-        textAlign: TextAlign.center,
-        style: theme.textTheme.displaySmall?.copyWith(
-          color: vibe.accent,
-          fontWeight: FontWeight.w400,
-        ),
-      ),
+      hero: GameStage.hero(context, s.category, color: vibe.accent),
       body: Padding(
         padding: const EdgeInsets.only(top: 24),
         child: GameStage.counter(

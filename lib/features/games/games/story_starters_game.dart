@@ -1,5 +1,6 @@
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
+import 'package:differentworld/features/games/game_stage.dart';
 import 'package:flutter/material.dart';
 
 /// Story Starters on the unified framework. An opener shows big; the room
@@ -154,77 +155,56 @@ class StoryStartersGame extends GameDefinition<StoryState> {
         ),
       );
     }
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Story ${s.index + 1} / ${s.total}',
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 28),
-              Text(
-                s.starter,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w400,
-                  height: 1.25,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Build it together — one line each, around the circle.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white38,
-                ),
-              ),
-              if (s.hasTwist) ...[
-                const SizedBox(height: 24),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: vibe.accent.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(18),
-                    border:
-                        Border.all(color: vibe.accent.withValues(alpha: 0.6)),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        '✨ PLOT TWIST',
-                        style: TextStyle(
-                          color: Color(0xFFFFCA62),
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 1.5,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        s.twist,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
+    return GameStage.frame(
+      context,
+      eyebrow: 'Story ${s.index + 1} / ${s.total}',
+      hero: GameStage.hero(context, s.starter),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          Text(
+            'Build it together — one line each, around the circle.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white38,
+            ),
           ),
-        ),
+          if (s.hasTwist) ...[
+            const SizedBox(height: 24),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: vibe.accent.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: vibe.accent.withValues(alpha: 0.6)),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    '✨ PLOT TWIST',
+                    style: TextStyle(
+                      color: Color(0xFFFFCA62),
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.5,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    s.twist,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
