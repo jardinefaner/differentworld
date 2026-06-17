@@ -58,7 +58,7 @@ class NameItGame extends GameDefinition<NameItState> {
   String get title => 'Name It';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF7C4DFF));
+  GameVibe get vibe => const GameVibe(accent: GameAccents.rose);
 
   @override
   String? get liveRoute => '/live/name-it';

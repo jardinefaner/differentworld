@@ -83,7 +83,7 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
   String get title => 'Reveal the Picture';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF26C6DA));
+  GameVibe get vibe => const GameVibe(accent: GameAccents.deepTeal);
 
   @override
   String? get liveRoute => '/live/grid-reveal';

@@ -54,7 +54,7 @@ class StoryStartersGame extends GameDefinition<StoryState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFFFFCA62), surface: Color(0xFF1B1430));
+      const GameVibe(accent: GameAccents.amber);
 
   @override
   String? get liveRoute => '/live/story';

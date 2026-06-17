@@ -46,7 +46,7 @@ class AsIfGame extends GameDefinition<AsIfState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFFFFD54F), surface: Color(0xFF0E0E0E));
+      const GameVibe(accent: GameAccents.coral);
 
   @override
   String? get liveRoute => '/live/as-if';

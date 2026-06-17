@@ -83,7 +83,7 @@ class WhatsMissingGame extends GameDefinition<WhatsMissingState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFFEC407A), surface: Color(0xFF1A0A12));
+      const GameVibe(accent: GameAccents.rose);
 
   @override
   String? get liveRoute => '/live/whats-missing';

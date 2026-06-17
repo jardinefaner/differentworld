@@ -70,7 +70,7 @@ class MathQuizGame extends GameDefinition<MathQuizState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFF4DD0E1), surface: Color(0xFF06121A));
+      const GameVibe(accent: GameAccents.slate);
 
   @override
   String? get liveRoute => '/live/math-game';

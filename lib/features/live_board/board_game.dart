@@ -72,7 +72,7 @@ class BoardGame extends GameDefinition<BoardState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFF2A9D8F), surface: Color(0xFF0B0F0E));
+      const GameVibe(accent: GameAccents.deepTeal);
 
   // Cast-only — seeded explicitly via castStage, never from the content bank,
   // so it stays out of the standard game launcher.

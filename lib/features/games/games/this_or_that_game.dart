@@ -59,7 +59,7 @@ class ThisOrThatGame extends GameDefinition<ThisOrThatState> {
   String get title => 'This or That';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: ActivityPalette.blue);
+  GameVibe get vibe => const GameVibe(accent: GameAccents.teal);
 
   @override
   String? get liveRoute => '/live/this-or-that';

@@ -43,7 +43,7 @@ class RiddlesGame extends GameDefinition<RiddleState> {
   String get title => 'Riddle Me This';
 
   @override
-  GameVibe get vibe => const GameVibe(accent: Color(0xFF7E57C2));
+  GameVibe get vibe => const GameVibe(accent: GameAccents.slate);
 
   @override
   String? get liveRoute => '/live/riddles';

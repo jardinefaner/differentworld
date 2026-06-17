@@ -98,7 +98,7 @@ class WorldCastGame extends GameDefinition<WorldCastState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFF6B5B95), surface: Color(0xFF09090F));
+      const GameVibe(accent: GameAccents.plum);
 
   // Seeded explicitly (castStage), never from the content bank — so it stays
   // out of the standard launcher and is offered by the world tile instead.

@@ -52,7 +52,7 @@ class LetterWordsGame extends GameDefinition<LetterWordsState> {
 
   @override
   GameVibe get vibe =>
-      const GameVibe(accent: Color(0xFFFFC857), surface: Color(0xFF121006));
+      const GameVibe(accent: GameAccents.amber);
 
   @override
   String? get liveRoute => '/live/starts-with';
