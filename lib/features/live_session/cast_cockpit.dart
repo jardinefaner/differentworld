@@ -698,7 +698,7 @@ class _CockpitHeader extends StatelessWidget {
                       : 'Casting · $casting',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w500,
                     fontSize: 16,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -714,14 +714,18 @@ class _CockpitHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
+                    // The CONTROLLER's code — hand it to a screen to add it.
                     Text(
-                      '$label · screen $code',
+                      peers > 0
+                          ? '$label · code $code · $peers '
+                              '${peers == 1 ? 'screen' : 'screens'}'
+                          : '$label · your code $code — add a screen',
                       style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 12,
                       ),
                     ),
-                    if (peers > 1) ...[
+                    if (peers > 0) ...[
                       const SizedBox(width: 8),
                       const Icon(Icons.tv, color: Colors.white38, size: 14),
                     ],

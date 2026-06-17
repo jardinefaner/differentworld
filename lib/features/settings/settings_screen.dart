@@ -579,20 +579,23 @@ class _RoomScreenTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isScreen = ref.watch(roomScreenProvider).value ?? false;
+    final isScreen = ref.watch(roomScreenFollowsProvider).value != null;
     return SwitchListTile(
       secondary: const Icon(Icons.tv_outlined),
       title: const Text('Room screen'),
       subtitle: Text(
         isScreen
-            ? 'This device is the room screen — open Cast to show it.'
-            : 'Make this TV or tablet the screen the room casts to.',
+            ? 'This device follows your cast as a room screen.'
+            : 'Make this TV or tablet a screen that follows your cast.',
       ),
       value: isScreen,
       onChanged: (v) async {
-        await ref.read(roomScreenProvider.notifier).set(isScreen: v);
-        if (v && context.mounted) {
-          unawaited(context.push('/cast?role=screen'));
+        if (v) {
+          // Setup follows MY controller code (CastScreen ?role=screen derives
+          // it + persists the follow).
+          if (context.mounted) unawaited(context.push('/cast?role=screen'));
+        } else {
+          await ref.read(roomScreenFollowsProvider.notifier).stop();
         }
       },
     );

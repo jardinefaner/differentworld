@@ -6,8 +6,6 @@ import 'package:differentworld/features/live_session/cast_code.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/live_session/cast_receiver.dart';
 import 'package:differentworld/features/live_session/cast_session_controller.dart';
-import 'package:differentworld/features/live_session/live_game_screen.dart'
-    show generateSessionCode;
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -42,36 +40,39 @@ class _CastScreenState extends ConsumerState<CastScreen> {
   void initState() {
     super.initState();
     _immersive = ref.read(castImmersiveProvider.notifier);
-    final programCode = _programCode();
-    final isScreen =
-        widget.presentAsScreen || (ref.read(roomScreenProvider).value ?? false);
+    final myCode = _myControllerCode();
+    final followed = ref.read(roomScreenFollowsProvider).value;
     final snap = ref.read(castSessionProvider);
-    if (isScreen && programCode != null) {
-      // This device is the room screen → resume the receiver on the program
-      // channel. Set once; it just comes back up — no code, no setup.
+    if (widget.presentAsScreen && myCode != null) {
+      // Setup just made this a screen → follow MY controller's code.
       _mode = _Mode.receive;
-      _code = programCode;
-      unawaited(Future.microtask(() {
-        if (mounted) _immersive.enter();
-      }));
+      _code = myCode;
+      _enterImmersiveSoon();
+    } else if (followed != null) {
+      // Already a room screen → resume following its controller's code. Set
+      // once; it just comes back up on the same controller.
+      _mode = _Mode.receive;
+      _code = followed;
+      _enterImmersiveSoon();
     } else if (snap.active && snap.code != null) {
       // Resume a live cast: the chrome pill lands on the controls, not lobby.
       _mode = _Mode.cast;
       _code = snap.code!;
-      // Provider write off the build phase (AppShell watches castImmersive).
-      unawaited(Future.microtask(() {
-        if (mounted) _immersive.enter();
-      }));
+      _enterImmersiveSoon();
     }
-    // else → lobby (the default _mode) to pick "cast" or "be the screen".
+    // else → lobby (the default _mode) to pick "cast" or "be a screen".
   }
 
-  /// The program's stable cast channel — the same code the room screen and
-  /// every phone in this space derive, so they meet with no pairing. Null only
-  /// when the viewer has no space (then the lobby falls back to a manual code).
-  String? _programCode() {
-    final spaceId = ref.read(viewerProvider).spaceId;
-    return spaceId == null ? null : castCodeForSpace(spaceId);
+  // Provider write off the build phase (AppShell watches castImmersive).
+  void _enterImmersiveSoon() => unawaited(Future.microtask(() {
+        if (mounted) _immersive.enter();
+      }));
+
+  /// MY controller code — the channel I broadcast on when I cast, and the one a
+  /// screen signed into my account auto-follows. Null only with no member id.
+  String? _myControllerCode() {
+    final memberId = ref.read(viewerProvider).memberId;
+    return memberId == null ? null : castCodeForController(memberId);
   }
 
   @override
@@ -80,19 +81,23 @@ class _CastScreenState extends ConsumerState<CastScreen> {
     super.dispose();
   }
 
-  void _presentHere() {
-    // The screen joins the PROGRAM channel (not a random code), so every phone
-    // in the space casts to it with no pairing. Persist the flag so this device
-    // auto-resumes as the screen on launch.
-    final code = _programCode() ?? generateSessionCode();
-    unawaited(ref.read(roomScreenProvider.notifier).set(isScreen: true));
+  /// Make this device a room screen that FOLLOWS [controllerCode] (persisted) +
+  /// show the receiver. The "use this device as a screen" path passes my own
+  /// controller code (same account, no typing); the manual entry passes another
+  /// controller's code (the give-your-code-to-a-screen path).
+  void _followController(String controllerCode) {
+    unawaited(
+      ref.read(roomScreenFollowsProvider.notifier).follow(controllerCode),
+    );
     setState(() {
-      _code = code;
+      _code = controllerCode;
       _mode = _Mode.receive;
     });
     _immersive.enter();
   }
 
+  /// Cast AS the controller — broadcast on [code] (my own controller code) so
+  /// every screen following it shows what I pick.
   void _control(String code) {
     setState(() {
       _code = code;
@@ -119,12 +124,12 @@ class _CastScreenState extends ConsumerState<CastScreen> {
           body: ColoredBox(
             color: const Color(0xFF0C0D14),
             child: SafeArea(
-            child: _Lobby(
-              onPresent: _presentHere,
-              onJoin: _control,
-              programCode: _programCode(),
+              child: _Lobby(
+                myControllerCode: _myControllerCode(),
+                onCast: _control,
+                onFollow: _followController,
+              ),
             ),
-          ),
           ),
         ),
         // The Receiver owns its own clean Scaffold — no chrome over the stage.
@@ -150,18 +155,21 @@ class _CastScreenState extends ConsumerState<CastScreen> {
 
 class _Lobby extends StatefulWidget {
   const _Lobby({
-    required this.onPresent,
-    required this.onJoin,
-    this.programCode,
+    required this.onCast,
+    required this.onFollow,
+    this.myControllerCode,
   });
 
-  final VoidCallback onPresent;
-  final ValueChanged<String> onJoin;
+  /// Cast AS the controller — broadcast on my own controller code so my screens
+  /// follow. The lobby's primary action.
+  final ValueChanged<String> onCast;
 
-  /// The program's stable channel — when present, the lobby leads with a
-  /// one-tap "Cast to the room screen" (no code). Null only when there's no
-  /// space (then only the manual-code path shows).
-  final String? programCode;
+  /// Make this device a screen following a controller code (my own, or one
+  /// entered for a different controller).
+  final ValueChanged<String> onFollow;
+
+  /// My controller code (null only with no member id).
+  final String? myControllerCode;
 
   @override
   State<_Lobby> createState() => _LobbyState();
@@ -178,12 +186,11 @@ class _LobbyState extends State<_Lobby> {
 
   String? _error;
 
-  void _join() {
+  void _follow() {
     final code = _codeCtrl.text.trim().toUpperCase();
-    // Exact 4 — a short entry would join an empty channel (and a loose match
-    // raises the odds of two phones landing on the same code → two authorities).
+    // Exact 4 — a short entry would follow an empty channel.
     if (code.length == 4) {
-      widget.onJoin(code);
+      widget.onFollow(code);
     } else {
       setState(() => _error = 'The code is exactly 4 characters.');
     }
@@ -201,7 +208,7 @@ class _LobbyState extends State<_Lobby> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Cast to a screen',
+                'Cast',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
@@ -209,31 +216,31 @@ class _LobbyState extends State<_Lobby> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'One device shows it big; this phone is the remote.',
+                'Your phone is the remote; your screens follow your code.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white60),
               ),
               const SizedBox(height: 28),
-              // The everyday path: one tap, no code — cast to the program's
-              // room screen on the shared channel.
-              if (widget.programCode case final code?) ...[
+              if (widget.myControllerCode case final code?) ...[
+                // Everyday path: cast AS the controller. Every screen following
+                // your code shows what you pick.
                 _BigCard(
                   icon: Icons.cast,
-                  title: 'Cast to the room screen',
-                  subtitle: 'Pick a game, world, or activity — it appears on '
-                      'the room screen instantly. No code to type.',
-                  onTap: () => widget.onJoin(code),
+                  title: 'Cast to your screens',
+                  subtitle: 'Pick a game, world, or activity — it shows on '
+                      'every screen following your code ($code).',
+                  onTap: () => widget.onCast(code),
+                ),
+                const SizedBox(height: 14),
+                _BigCard(
+                  icon: Icons.tv,
+                  title: 'Use this device as a screen',
+                  subtitle: 'Make this TV or tablet follow you — set once, it '
+                      'comes back up on its own.',
+                  onTap: () => widget.onFollow(code),
                 ),
                 const SizedBox(height: 14),
               ],
-              _BigCard(
-                icon: Icons.tv,
-                title: 'Use this device as the screen',
-                subtitle: 'Set this TV or tablet as the room screen once — it '
-                    'remembers, and comes back up on its own.',
-                onTap: widget.onPresent,
-              ),
-              const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -249,11 +256,11 @@ class _LobbyState extends State<_Lobby> {
                         SizedBox(width: 16),
                         Expanded(
                           child: Text(
-                            'Control a screen',
+                            'Be a screen for a controller',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -261,7 +268,7 @@ class _LobbyState extends State<_Lobby> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Enter the code on the screen — then cast + control from here.',
+                      "Enter a controller's code — this device then follows them.",
                       style: TextStyle(color: Colors.white60, fontSize: 13),
                     ),
                     const SizedBox(height: 14),
@@ -273,12 +280,12 @@ class _LobbyState extends State<_Lobby> {
                       onChanged: (_) {
                         if (_error != null) setState(() => _error = null);
                       },
-                      onSubmitted: (_) => _join(),
+                      onSubmitted: (_) => _follow(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 22,
                         letterSpacing: 6,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
                         hintText: 'CODE',
@@ -295,11 +302,11 @@ class _LobbyState extends State<_Lobby> {
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: _join,
+                        onPressed: _follow,
                         style: FilledButton.styleFrom(
                           minimumSize: const Size(88, 56),
                         ),
-                        child: const Text('Control'),
+                        child: const Text('Follow'),
                       ),
                     ),
                   ],

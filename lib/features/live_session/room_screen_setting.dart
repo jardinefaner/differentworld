@@ -1,26 +1,37 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Whether THIS device is the program's persistent **room screen** (the cast
-/// receiver). Set once on the TV/tablet; the app auto-resumes into receiver
-/// mode on launch so it's never set up again (docs/LIVE_SESSIONS.md — "set the
-/// screen once, then just cast"). Per-device (SharedPreferences), not synced —
-/// being the screen is a property of the physical device, not the account.
-final roomScreenProvider =
-    AsyncNotifierProvider<RoomScreenNotifier, bool>(RoomScreenNotifier.new);
+/// The controller code THIS device follows as a room screen (the cast
+/// receiver), or null if it isn't a screen. Set once on the TV/tablet; the app
+/// auto-resumes into receiver mode on the same controller on launch
+/// (docs/LIVE_SESSIONS.md — "set the screen once, then just cast"). Per-device
+/// (SharedPreferences), not synced — being a screen is a property of the
+/// physical device, not the account.
+final roomScreenFollowsProvider =
+    AsyncNotifierProvider<RoomScreenFollowsNotifier, String?>(
+  RoomScreenFollowsNotifier.new,
+);
 
-class RoomScreenNotifier extends AsyncNotifier<bool> {
-  static const _key = 'cast.roomScreen';
+class RoomScreenFollowsNotifier extends AsyncNotifier<String?> {
+  static const _key = 'cast.roomScreenFollows';
 
   @override
-  Future<bool> build() async {
+  Future<String?> build() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_key) ?? false;
+    return prefs.getString(_key);
   }
 
-  Future<void> set({required bool isScreen}) async {
+  /// Follow [controllerCode] as a room screen (persisted across launches).
+  Future<void> follow(String controllerCode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_key, isScreen);
-    state = AsyncData(isScreen);
+    await prefs.setString(_key, controllerCode);
+    state = AsyncData(controllerCode);
+  }
+
+  /// Stop being a room screen.
+  Future<void> stop() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+    state = const AsyncData(null);
   }
 }
