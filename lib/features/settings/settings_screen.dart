@@ -8,6 +8,7 @@ import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
+import 'package:differentworld/features/settings/font_choice.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
@@ -231,6 +232,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _DisplayStyleTile(),
               const _SettingsDivider(),
+              const _FontChoiceTile(),
+              const _SettingsDivider(),
               // The clock-driven cockpit (docs/COCKPIT.md) — opt-in while it
               // proves itself; the plan is for it to become the home surface.
               ListTile(
@@ -449,6 +452,117 @@ class _DisplayStyleTile extends ConsumerWidget {
           await ref.read(displayStyleProvider.notifier).set(picked);
         }
       },
+    );
+  }
+}
+
+/// Font picker — choose the display (headline) + body face from 10 each. The
+/// bundled Fraunces + Space Grotesk default is offline-safe; other picks fetch
+/// + cache via google_fonts on first use. Applies live (the theme re-skins on
+/// select), so it doubles as the experimentation surface for settling fonts.
+class _FontChoiceTile extends ConsumerWidget {
+  const _FontChoiceTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final choice = ref.watch(fontChoiceProvider).value ?? FontChoice.fallback;
+    return ListTile(
+      leading: const Icon(Icons.text_fields_outlined),
+      title: const Text('Fonts'),
+      subtitle: Text('${choice.display} · ${choice.body}'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => showGlassSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (_) => const _FontPickerSheet(),
+      ),
+    );
+  }
+}
+
+class _FontPickerSheet extends ConsumerWidget {
+  const _FontPickerSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final choice = ref.watch(fontChoiceProvider).value ?? FontChoice.fallback;
+    final theme = Theme.of(context);
+    Widget header(String text) => Padding(
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+          child: Text(
+            text.toUpperCase(),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        );
+    return SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 24),
+        children: [
+          header('Display · headlines'),
+          for (final o in kDisplayFonts)
+            _FontRow(
+              option: o,
+              big: true,
+              selected: o.family == choice.display,
+              onTap: () =>
+                  ref.read(fontChoiceProvider.notifier).setDisplay(o.family),
+            ),
+          header('Body · everything else'),
+          for (final o in kBodyFonts)
+            _FontRow(
+              option: o,
+              big: false,
+              selected: o.family == choice.body,
+              onTap: () =>
+                  ref.read(fontChoiceProvider.notifier).setBody(o.family),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FontRow extends StatelessWidget {
+  const _FontRow({
+    required this.option,
+    required this.big,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final FontOption option;
+  final bool big;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Preview each option IN its own face, so the picker reads like a type
+    // specimen rather than a list of names.
+    final preview = TextStyle(
+      fontSize: big ? 22 : 16,
+      fontWeight: FontWeight.w400,
+      color: theme.colorScheme.onSurface,
+    );
+    return ListTile(
+      dense: true,
+      onTap: onTap,
+      title: Text(option.family, style: styleIn(option, preview)),
+      subtitle: option.bundled
+          ? Text(
+              'Bundled · always offline',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          : null,
+      trailing: selected
+          ? Icon(Icons.check, color: theme.colorScheme.primary)
+          : null,
     );
   }
 }

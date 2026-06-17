@@ -110,6 +110,7 @@ dependencies:
   # Keep the screen awake during a cast presentation (the Receiver + cockpit
   # never sleep mid-session). All platforms (web uses the Screen Wake Lock API).
   wakelock_plus: ^1.2.8
+  google_fonts: ^8.1.0
 
 dev_dependencies:
   flutter_test:

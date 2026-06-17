@@ -9,6 +9,7 @@ import 'package:differentworld/features/invites/deep_link_listener.dart';
 import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/features/photos/photo_upload_queue.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
+import 'package:differentworld/features/settings/font_choice.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/text_scale_setting.dart';
 import 'package:differentworld/shared/widgets/orientation_lock.dart';
@@ -63,12 +64,18 @@ class DifferentWorldApp extends ConsumerWidget {
     final isCalm = style != DisplayStyle.boxed;
     final cleanText =
         style == DisplayStyle.clean ? AppType.cleanTextTheme() : null;
+    // The in-app font picker (Settings → Display → Fonts). Re-skins the base
+    // ramp with the chosen display + body families; the bundled Fraunces +
+    // Space Grotesk default keeps the first frame offline-safe.
+    final fontChoice = ref.watch(fontChoiceProvider).value ?? FontChoice.fallback;
+    final fontText =
+        applyFontChoice(cleanText ?? AppType.textTheme(), fontChoice);
     ThemeData calmify(ThemeData t) =>
         isCalm ? t.copyWith(cardTheme: flatCardTheme(t.colorScheme)) : t;
     return MaterialApp.router(
       title: 'Different World',
-      theme: calmify(outdoor ?? buildLightTheme(textTheme: cleanText)),
-      darkTheme: calmify(outdoor ?? buildDarkTheme(textTheme: cleanText)),
+      theme: calmify(outdoor ?? buildLightTheme(textTheme: fontText)),
+      darkTheme: calmify(outdoor ?? buildDarkTheme(textTheme: fontText)),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       // Wrap every routed page in:
