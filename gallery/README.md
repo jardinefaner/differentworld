@@ -71,9 +71,13 @@ The bible mirrors the architecture's two layers:
     real deck art (the card games). Montage: `gallery/games_contact_sheet.png`.
     Renderer: [test/golden/game_gallery_test.dart]. Minor remainder: the
     picture-card tiles + the shared control bar as standalone atoms.
-  - **`gallery/worlds/`** — TODO: world blocks (per-world accent), the reveal
-    overlay, spell cards, the gold accent, the beat presenter, and the eleven
-    primitives' UI forms (docs/PRIMITIVES.md).
+  - **`gallery/worlds/`** — STARTED: the **Verb** primitive (the canonical 12,
+    each with its lens — the atom the whole curriculum is built from) + the
+    gold world-accent. Renderer: [test/golden/world_gallery_test.dart]. To add
+    (a deliberate wave — these are immersive + content-coupled, and emoji render
+    as tofu in goldens): the reveal overlay, spell cards, the world book, the
+    beat presenter, and the rest of the eleven primitives' UI forms
+    (docs/PRIMITIVES.md).
 
 ---
 
