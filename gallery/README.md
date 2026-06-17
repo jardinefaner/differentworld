@@ -55,7 +55,7 @@ after adding or restyling a shared widget (`Agent component-curator`).
 
 ---
 
-## Catalogued — 22 of ~55 visual components
+## Catalogued — 28 of ~55 visual components
 
 ### Atoms
 
@@ -70,6 +70,10 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | GlassPill | [glass_pill.dart] | frosted chrome pill (blur captures over content) | ✅ | [light](atoms/glass_pill__light.png) · [dark](atoms/glass_pill__dark.png) |
 | HorizonMark | [horizon_mark.dart] | brand mark (teal field, gold sun, white horizon) | ✅ | [light](atoms/horizon_mark__light.png) · [dark](atoms/horizon_mark__dark.png) |
 | SearchBarPill | [search_bar_pill.dart] | search input in glass pill (leading icon, trailing close button) | ✅ | [light](atoms/search_bar_pill__light.png) · [dark](atoms/search_bar_pill__dark.png) |
+| FloatingChrome | [floating_back.dart], [floating_hamburger.dart] | back arrow pill · hamburger pill (frosted chrome navigation) | ✅ | [light](atoms/floating_chrome__light.png) · [dark](atoms/floating_chrome__dark.png) |
+| NavCountBadge | [nav_destinations.dart] | count badge overlay (nav decoration) | ✅ | [light](atoms/nav_count_badge__light.png) · [dark](atoms/nav_count_badge__dark.png) |
+| InlineEditableText | [inline_editable_text.dart] | text field converting from label (edit-in-place) | ✅ | [light](atoms/inline_editable_text__light.png) · [dark](atoms/inline_editable_text__dark.png) |
+| Skeletons | [skeleton.dart] | SkeletonBox · SkeletonLine · SkeletonListTile · SkeletonShimmer (loading placeholders) | ✅ | [light](atoms/skeletons__light.png) · [dark](atoms/skeletons__dark.png) |
 
 ### Molecules
 
@@ -88,28 +92,26 @@ after adding or restyling a shared widget (`Agent component-curator`).
 | NoAccess | [no_access.dart] | access denied state | ✅ | [light](molecules/no_access__light.png) · [dark](molecules/no_access__dark.png) |
 | LoadingSlot | [async_loading.dart] | list shimmer, card stack, spinner variants | ✅ | [light](molecules/loading_slot__light.png) · [dark](molecules/loading_slot__dark.png) |
 | GlassPanel | [glass_panel.dart] | frosted sheet surface (the floating-glass chrome) | ✅ | [light](molecules/glass_panel__light.png) · [dark](molecules/glass_panel__dark.png) |
+| FormBody | [form_body.dart] | form container with insets (padding, keyboard room) | ✅ | [light](molecules/form_body__light.png) · [dark](molecules/form_body__dark.png) |
+| OverflowActions | [overflow_actions.dart] | action buttons overflow menu (EdgeAction items) | ✅ | [light](molecules/overflow_actions__light.png) · [dark](molecules/overflow_actions__dark.png) |
 
 ---
 
 ## Not yet catalogued (the curator tracks these)
 
-`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **22 plates
-catalogued; ~33 visual components remain** (the rest are sub-widgets or
-non-visual). Two techniques cover the hard cases: the `_platePumped` helper
-(pumps fixed frames) for forever-animations (shimmer / spinner), and — confirmed
-in Wave 8 — **`BackdropFilter` blur DOES capture in goldens** (the glass frost
-renders over a backdrop), so glass catalogues with the normal `_plate`.
+`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **28 plates
+catalogued; ~27 visual components remain** (the rest are organisms or
+non-visual). The `_platePumped` helper (pumps fixed frames) covers forever-animations
+(shimmer / spinner); **`BackdropFilter` blur DOES capture in goldens** (glass frost
+renders properly).
 
 Remaining ⚠️ animated/blur flags:
-- `SkeletonShimmer` — infinite shimmer animation, needs `_platePumped` with fixed-frame iteration
 - `LiveBlockStrip` — countdown timer animation, needs frame limit
 - `AppShell` — the root shell with live providers, needs full harness
 
-**Atoms** (9 remaining) — FloatingBack, FloatingHamburger, NavCountBadge,
-InlineEditableText, SkeletonBox, SkeletonLine, SkeletonList, SkeletonCards,
-SkeletonListTile.
+**Atoms** (0 remaining — ALL CATALOGUED). ✅
 
-**Molecules** (3 remaining) — FormBody, GlassDragHandle, OverflowActions.
+**Molecules** (1 remaining) — GlassDragHandle (self-suppresses without GlassSheetScope; defers to sheet harness).
 
 **Organisms** (10 remaining, each needs `ProviderScope` + routing harness) —
 EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, MasterDetailScaffold,
@@ -117,7 +119,8 @@ FloatingActions, ResponsivePage, ResponsiveGrid, LiveBlockStrip ⚠️,
 SliverResponsiveGrid.
 
 **Non-visual / behavioural (no plate, do not catalogue)** — CenterOrScroll,
-DebugViewerToggle, DismissGuard, HoverTap, OrientationLock, RouteTitle.
+DebugViewerToggle, DismissGuard, HoverTap, OrientationLock, RouteTitle,
+GlassSheetScope.
 
 [feedback in CLAUDE.md]: ../CLAUDE.md
 [docs/THEME_ADHERENCE.md]: ../docs/THEME_ADHERENCE.md
@@ -146,3 +149,10 @@ DebugViewerToggle, DismissGuard, HoverTap, OrientationLock, RouteTitle.
 [async_loading.dart]: ../lib/shared/widgets/async_loading.dart
 [horizon_mark.dart]: ../lib/shared/widgets/horizon_mark.dart
 [search_bar_pill.dart]: ../lib/shared/widgets/search_bar_pill.dart
+[floating_back.dart]: ../lib/shared/widgets/floating_back.dart
+[floating_hamburger.dart]: ../lib/shared/widgets/floating_hamburger.dart
+[nav_destinations.dart]: ../lib/shared/widgets/nav_destinations.dart
+[inline_editable_text.dart]: ../lib/shared/widgets/inline_editable_text.dart
+[skeleton.dart]: ../lib/shared/widgets/skeleton.dart
+[form_body.dart]: ../lib/shared/widgets/form_body.dart
+[overflow_actions.dart]: ../lib/shared/widgets/overflow_actions.dart
