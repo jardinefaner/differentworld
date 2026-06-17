@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
@@ -49,6 +50,7 @@ class _CastReceiverState extends ConsumerState<CastReceiver> {
     unawaited(_applyFullscreen());
     final session = CastSession.receive(
       client: ref.read(supabaseProvider),
+      spaceId: ref.read(viewerProvider).spaceId ?? '',
       code: widget.code,
     );
     _subs

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/live_board/board_game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart'
@@ -61,6 +62,7 @@ class _LiveBoardScreenState extends ConsumerState<LiveBoardScreen> {
     unawaited(WakelockPlus.enable()); // don't sleep mid-class
     final session = CastSession.cast(
       client: ref.read(supabaseProvider),
+      spaceId: ref.read(viewerProvider).spaceId ?? '',
       code: _code,
     );
     _subs.add(

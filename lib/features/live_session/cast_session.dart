@@ -25,6 +25,7 @@ class CastSession {
   /// renders broadcasts, and never sends a thing.
   factory CastSession.receive({
     required SupabaseClient client,
+    required String spaceId,
     required String code,
   }) {
     return CastSession._(
@@ -32,7 +33,7 @@ class CastSession {
         client: client,
         role: SessionRole.control,
         code: code,
-        topic: topicFor(code),
+        topic: topicFor(spaceId, code),
         initialState: idleState,
         reduce: _noop,
       ),
@@ -44,12 +45,13 @@ class CastSession {
   ///
   /// One authority per code. If two phones open the cockpit on the SAME code
   /// they both become `present` and broadcast competing state, so the screen
-  /// flickers between them — there's no admission control yet (see
-  /// docs/LIVE_SESSIONS.md "Auth on the channel"). The 4-char code + exact
+  /// flickers between them — there's no server-enforced admission control yet
+  /// (see docs/LIVE_SESSIONS.md "Auth on the channel"). The 6-char code + exact
   /// match in the lobby make an accidental collision unlikely; a deliberate
   /// hand-off (one phone takes over) is a later feature.
   factory CastSession.cast({
     required SupabaseClient client,
+    required String spaceId,
     required String code,
   }) {
     return CastSession._(
@@ -57,16 +59,25 @@ class CastSession {
         client: client,
         role: SessionRole.present,
         code: code,
-        topic: topicFor(code),
+        topic: topicFor(spaceId, code),
         initialState: idleState,
         reduce: _metaReduce,
       ),
     );
   }
 
-  /// Cast's OWN channel namespace — kept distinct from `/live`'s
-  /// `dw-session-<CODE>` so the same code can't cross-wire the two flows.
-  static String topicFor(String code) => 'dw-cast-${code.toUpperCase()}';
+  /// Cast's OWN channel namespace, SPACE-SCOPED: a guessed code alone can't
+  /// join — you also need the program's space id, an unguessable uuid that
+  /// only program members hold (it's never shown in the UI). That possession
+  /// IS the gate until true Realtime RLS auth lands — which is blocked today by
+  /// the same ES256 `auth.uid()`-null issue that relaxed our REST write
+  /// policies (see CLAUDE.md + docs/LIVE_SESSIONS.md "Auth on the channel").
+  /// Kept distinct from `/live`'s `dw-session-<CODE>` so a code can't cross-wire
+  /// the two flows. Caster + receiver each derive this from THEIR OWN
+  /// `viewer.spaceId`, so two devices in the same program match; cross-program
+  /// (or a not-signed-in device with no space) never collide.
+  static String topicFor(String spaceId, String code) =>
+      'dw-cast-$spaceId-${code.toUpperCase()}';
 
   final LiveSession _session;
 

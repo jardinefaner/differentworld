@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/auth/auth_providers.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/live_session/cast_session.dart';
@@ -71,6 +72,7 @@ class CastSessionController extends Notifier<CastSnapshot> {
     _teardown();
     final session = CastSession.cast(
       client: ref.read(supabaseProvider),
+      spaceId: ref.read(viewerProvider).spaceId ?? '',
       code: code,
     );
     _live = session;
