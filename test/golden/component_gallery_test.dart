@@ -20,6 +20,7 @@ import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
@@ -854,6 +855,99 @@ void main() {
   // above, these need a seeded viewer, the local DB (nav badge counts), and
   // — for AppShell — a real GoRouter ancestor (GoRouterState.of). Rendered
   // full-surface (no padded Align) because they own the whole viewport.
+
+  // BentoGrid: the modular dashboard primitive (docs/GRID.md). Demo tiles
+  // labelled by their span vocabulary — Hero (4×2) + Tall (2×2) fill the top
+  // run, S/S/M fill the run below — at a desktop width so the 6-column packing
+  // shows.
+  _scenePlate(
+    'organisms/bento_grid',
+    width: 1200,
+    height: 520,
+    tree: (theme) {
+      Widget tile(String label, String span, Color bg, Color fg) => Material(
+            color: bg,
+            borderRadius: BorderRadius.circular(16),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    span,
+                    style: TextStyle(
+                      color: fg.withValues(alpha: 0.72),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+      final s = theme.colorScheme;
+      return MaterialApp(
+        theme: theme,
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const ContentHeader(
+                  title: 'Bento grid',
+                  subtitle: 'Modular tiles, sized by importance · 2 / 4 / 6 '
+                      'columns by width',
+                ),
+                BentoGrid(
+                  tiles: [
+                    BentoTile(
+                      id: 'hero',
+                      span: const BentoSpan(tablet: 4, desktop: 4, rows: 2),
+                      child: tile('Hero', 'L · 4×2', s.primaryContainer,
+                          s.onPrimaryContainer),
+                    ),
+                    BentoTile(
+                      id: 'tall',
+                      span: const BentoSpan(tablet: 4, rows: 2),
+                      child: tile('Tall', '2×2', s.secondaryContainer,
+                          s.onSecondaryContainer),
+                    ),
+                    BentoTile(
+                      id: 's1',
+                      span: const BentoSpan(phone: 1),
+                      child: tile('S', '2×1', s.surfaceContainerHighest,
+                          s.onSurface),
+                    ),
+                    BentoTile(
+                      id: 's2',
+                      span: const BentoSpan(phone: 1),
+                      child: tile('S', '2×1', s.surfaceContainerHighest,
+                          s.onSurface),
+                    ),
+                    BentoTile(
+                      id: 'm',
+                      span: const BentoSpan(tablet: 4),
+                      child: tile('M', '2×1', s.tertiaryContainer,
+                          s.onTertiaryContainer),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
 
   // SliverResponsiveGrid: the sliver flavor, composed inside a
   // CustomScrollView with a header sliver above it.

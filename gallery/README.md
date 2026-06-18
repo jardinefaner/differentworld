@@ -180,6 +180,7 @@ the full-screen chrome renders for real, both themes.
 | ResponsivePage | [responsive_page.dart] | width-clamped scroll page | ✅ | [light](organisms/responsive_page__light.png) · [dark](organisms/responsive_page__dark.png) |
 | ResponsiveGrid | [responsive_grid.dart] | adaptive columns (desktop width) | ✅ | [light](organisms/responsive_grid__light.png) · [dark](organisms/responsive_grid__dark.png) |
 | SliverResponsiveGrid | [responsive_grid.dart] | sliver flavor inside a CustomScrollView | ✅ | [light](organisms/sliver_responsive_grid__light.png) · [dark](organisms/sliver_responsive_grid__dark.png) |
+| BentoGrid | [bento_grid.dart] | modular dashboard tiles, 2/4/6-col by width (docs/GRID.md) | ✅ | [light](organisms/bento_grid__light.png) · [dark](organisms/bento_grid__dark.png) |
 | MasterDetailScaffold | [master_detail_scaffold.dart] | two-pane at ≥1200dp (list + detail) | ✅ | [light](organisms/master_detail_scaffold__light.png) · [dark](organisms/master_detail_scaffold__dark.png) |
 | EdgeScaffold | [edge_scaffold.dart] | one screen's scaffold + its floating chrome pills | ✅ | [light](organisms/edge_scaffold__light.png) · [dark](organisms/edge_scaffold__dark.png) |
 | AppShell | [app_shell.dart] | the persistent frame — chrome + live strip + omnibox bar (seeded router) | ✅ | [light](organisms/app_shell__light.png) · [dark](organisms/app_shell__dark.png) |
@@ -282,6 +283,7 @@ GlassSheetScope.
 [master_detail_scaffold.dart]: ../lib/shared/widgets/master_detail_scaffold.dart
 [app_shell.dart]: ../lib/shared/widgets/app_shell.dart
 [edge_scaffold.dart]: ../lib/shared/widgets/edge_scaffold.dart
+[bento_grid.dart]: ../lib/shared/widgets/bento_grid.dart
 [main_drawer.dart]: ../lib/shared/widgets/main_drawer.dart
 [desktop_nav_rail.dart]: ../lib/shared/widgets/desktop_nav_rail.dart
 [live_block_strip.dart]: ../lib/shared/widgets/live_block_strip.dart
