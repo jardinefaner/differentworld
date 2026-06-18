@@ -47,7 +47,6 @@ work that doesn't need a feature decision.
 | **Ava** | Staff PIN exit dialog (replaces/supplements the 5-tap gesture) | S |
 | **Lauren** | "Photo of the moment" on Family Today | S |
 | **Jordan** | Outdoor mode toggle (high-contrast, bigger glyphs) | S |
-| **Maya** | Tablet schedule grid (cohorts × time matrix) | L |
 | **Lauren** | Spanish localization (`flutter gen-l10n` + ARB extraction) | L |
 | **All** | Empty-state illustrations + wordmark system | L (needs illustrator) |
 
@@ -66,6 +65,8 @@ work that doesn't need a feature decision.
 | Item | Effort | Why |
 |---|---|---|
 | Field trip flow polish (permission slips + headcounts) | M | Schema shipped; UX end-to-end test needed |
+| Schedule time-grid drag-to-move / drag-edge resize | M | The manipulation half of Maya's planner — the read-rich time grid shipped (b05b7c8); editing is still tap→block sheet. Optimistic write via `scheduleActionsProvider.update_`. |
+| BentoGrid true 2-D masonry (vs the current 1-D Wrap) | M | Spans are tuned so each breakpoint packs clean; masonry only matters if odd widths go ragged. Defer until it bites. |
 | Multi-program switcher in drawer | M (mis-classified as S earlier) | Single-program design today; needs schema migration to support a user belonging to multiple spaces (today `members.id = auth.uid()`, so one user = one member = one space). New table `user_spaces (user_id, space_id, role, caps)` would unblock it. Defer until a real multi-program use case lands. |
 | Family-side UI polish (`FamilyTodayScreen` outlined but partial) | M | Family-login model is in; UI bare |
 | Reports / exports depth (richer PDF templates) | M | Basic works |
@@ -117,6 +118,22 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **566109f / b05b7c8** — Grid-based navigation (user-driven, awwwards
+  brief). New reusable `BentoGrid` primitive (docs/GRID.md): one modular
+  2 / 4 / 6-column grid that re-packs across phone / tablet / desktop. Two
+  toggleable consumers, each a default-off SharedPreferences switch with a
+  settings tile: the **bento dashboard home** (`bentoHomeProvider`, 566109f)
+  — Today's providers re-laid-out as modular tiles — and the **time-aligned
+  schedule grid** (`scheduleTimeGridProvider`, b05b7c8) — cohorts × time on a
+  shared axis. The schedule grid CLOSES the Maya "tablet schedule grid
+  (cohorts × time matrix)" persona item (was effort L). Grid spec in
+  docs/GRID.md (35eca4d); seeded golden plates for both (a6ace28); BentoGrid
+  in the component bible (94981b0). Drag-to-move / resize on the schedule
+  grid deferred (see "Real product features").
+- **038dbf6** — Curated game content bank ~4×. Riddles 16→79, fact-or-fib
+  16→80, charades 24→91, rhyme 16→56, as-if 12→51, line 10→35, story-twist
+  8→48; This-or-That generator pools 6→16 themes. Generated + adversarially
+  fact-checked + deduped by an 18-agent workflow.
 - **938bf14** — Roster screens routed through `VerticalLabels`.
   Group detail (empty state, primary action tooltip, content header
   title, attendance secondary), group edit (header title, name
