@@ -655,7 +655,7 @@ class _PhotoOfTheMomentPeek extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white,
+                          color: Colors.white, // raw-canvas: label over the photo
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -680,7 +680,7 @@ class _PhotoOfTheMomentPeek extends ConsumerWidget {
                   child: Text(
                     '+${urls.length - 1}',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.white,
+                      color: Colors.white, // raw-canvas: badge over the photo
                       fontWeight: FontWeight.w700,
                     ),
                   ),

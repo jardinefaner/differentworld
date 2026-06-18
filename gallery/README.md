@@ -126,7 +126,7 @@ The bible mirrors the architecture's two layers:
 
 ---
 
-## Catalogued — 32 of ~55 visual components
+## Catalogued — 39 shared widgets + 7 surfaces + 79 screens (all light + dark)
 
 ### Atoms
 
@@ -144,7 +144,7 @@ The bible mirrors the architecture's two layers:
 | FloatingChrome | [floating_back.dart], [floating_hamburger.dart] | back arrow pill · hamburger pill (frosted chrome navigation) | ✅ | [light](atoms/floating_chrome__light.png) · [dark](atoms/floating_chrome__dark.png) |
 | NavCountBadge | [nav_destinations.dart] | count badge overlay (nav decoration) | ✅ | [light](atoms/nav_count_badge__light.png) · [dark](atoms/nav_count_badge__dark.png) |
 | InlineEditableText | [inline_editable_text.dart] | text field converting from label (edit-in-place) | ✅ | [light](atoms/inline_editable_text__light.png) · [dark](atoms/inline_editable_text__dark.png) |
-| Skeletons | [skeleton.dart] | SkeletonBox · SkeletonLine · SkeletonListTile · SkeletonShimmer (loading placeholders) | ✅ | [light](atoms/skeletons__light.png) · [dark](atoms/skeletons__dark.png) |
+| Skeletons | [skeleton.dart] | SkeletonBox · SkeletonLine · SkeletonListTile · SkeletonShimmer · SkeletonList · SkeletonCards (loading placeholders + full-screen convenience variants) | ✅ | [light](atoms/skeletons__light.png) · [dark](atoms/skeletons__dark.png) |
 
 ### Molecules
 
@@ -163,40 +163,94 @@ The bible mirrors the architecture's two layers:
 | NoAccess | [no_access.dart] | access denied state | ✅ | [light](molecules/no_access__light.png) · [dark](molecules/no_access__dark.png) |
 | LoadingSlot | [async_loading.dart] | list shimmer, card stack, spinner variants | ✅ | [light](molecules/loading_slot__light.png) · [dark](molecules/loading_slot__dark.png) |
 | GlassPanel | [glass_panel.dart] | frosted sheet surface (the floating-glass chrome) | ✅ | [light](molecules/glass_panel__light.png) · [dark](molecules/glass_panel__dark.png) |
+| GlassDragHandle | [glass_panel.dart] | bottom-sheet grab-pill (self-suppresses in dialog / side panel) | ✅ | [light](molecules/glass_drag_handle__light.png) · [dark](molecules/glass_drag_handle__dark.png) |
 | FormBody | [form_body.dart] | form container with insets (padding, keyboard room) | ✅ | [light](molecules/form_body__light.png) · [dark](molecules/form_body__dark.png) |
 | OverflowActions | [overflow_actions.dart] | action buttons overflow menu (EdgeAction items) | ✅ | [light](molecules/overflow_actions__light.png) · [dark](molecules/overflow_actions__dark.png) |
 
-### Organisms (standalone — no harness)
+### Organisms
+
+The standalone four render bare; the other six go through a **seeded
+harness** (`_scenePlate` — a director `Viewer` over an in-memory DB with
+the Drift watch-streams overridden, plus a real GoRouter for AppShell) so
+the full-screen chrome renders for real, both themes.
 
 | Component | Source | Variants shown | Calm | PNGs |
 |---|---|---|---|---|
 | FloatingActions | [floating_actions.dart] | glass action pill (frosted, over content) | ✅ | [light](organisms/floating_actions__light.png) · [dark](organisms/floating_actions__dark.png) |
 | ResponsivePage | [responsive_page.dart] | width-clamped scroll page | ✅ | [light](organisms/responsive_page__light.png) · [dark](organisms/responsive_page__dark.png) |
 | ResponsiveGrid | [responsive_grid.dart] | adaptive columns (desktop width) | ✅ | [light](organisms/responsive_grid__light.png) · [dark](organisms/responsive_grid__dark.png) |
+| SliverResponsiveGrid | [responsive_grid.dart] | sliver flavor inside a CustomScrollView | ✅ | [light](organisms/sliver_responsive_grid__light.png) · [dark](organisms/sliver_responsive_grid__dark.png) |
 | MasterDetailScaffold | [master_detail_scaffold.dart] | two-pane at ≥1200dp (list + detail) | ✅ | [light](organisms/master_detail_scaffold__light.png) · [dark](organisms/master_detail_scaffold__dark.png) |
+| EdgeScaffold | [edge_scaffold.dart] | one screen's scaffold + its floating chrome pills | ✅ | [light](organisms/edge_scaffold__light.png) · [dark](organisms/edge_scaffold__dark.png) |
+| AppShell | [app_shell.dart] | the persistent frame — chrome + live strip + omnibox bar (seeded router) | ✅ | [light](organisms/app_shell__light.png) · [dark](organisms/app_shell__dark.png) |
+| MainDrawer | [main_drawer.dart] | hamburger drawer — profile + nav spine + groups | ✅ | [light](organisms/main_drawer__light.png) · [dark](organisms/main_drawer__dark.png) |
+| DesktopNavRail | [desktop_nav_rail.dart] | persistent 240dp left nav column | ✅ | [light](organisms/desktop_nav_rail__light.png) · [dark](organisms/desktop_nav_rail__dark.png) |
+| LiveBlockStrip | [live_block_strip.dart] | "LIVE · {block}" strip, breathing dot (fixed-pump) | ✅ | [light](organisms/live_block_strip__light.png) · [dark](organisms/live_block_strip__dark.png) |
+
+### Surfaces
+
+The composed presentations a user actually interacts with — not single
+widgets but the chrome the app assembles from them, over a dimmed scrim.
+The three responsive forms `showGlassSheet` produces share ONE form body;
+the `GlassDragHandle` shows in the bottom sheet and self-suppresses in the
+dialog / side panel (proof the `GlassSheetScope` mechanism works).
+
+| Surface | Source | Variants shown | Calm | PNGs |
+|---|---|---|---|---|
+| Bottom sheet | [glass_panel.dart] · `showGlassSheet` < 840dp | glass sheet + drag handle + form | ✅ | [light](surfaces/bottom_sheet__light.png) · [dark](surfaces/bottom_sheet__dark.png) |
+| Dialog | [glass_panel.dart] · `showGlassSheet` 840–1200dp | centered glass dialog (handle self-suppresses) | ✅ | [light](surfaces/dialog__light.png) · [dark](surfaces/dialog__dark.png) |
+| Side panel | [glass_panel.dart] · `showGlassSheet` ≥ 1200dp | right-docked third column + close strip | ✅ | [light](surfaces/side_panel__light.png) · [dark](surfaces/side_panel__dark.png) |
+| Confirm destructive | [destructive_button.dart] | error-tinted delete confirm | ✅ | [light](surfaces/confirm_destructive__light.png) · [dark](surfaces/confirm_destructive__dark.png) |
+| Snackbar | M3 inverse-surface | success + error toast with action | ✅ | [light](surfaces/snackbar__light.png) · [dark](surfaces/snackbar__dark.png) |
+| Omnibox composer | [bottom_omnibox_bar.dart] | search · capture · slash modes | ✅ | [light](surfaces/omnibox_bar__light.png) · [dark](surfaces/omnibox_bar__dark.png) |
+| Omnibox overlay | [glass_panel.dart] · `GlassPanelShape.overlay` | full-bleed suggestion panel (recent + suggested) | ✅ | [light](surfaces/omnibox_overlay__light.png) · [dark](surfaces/omnibox_overlay__dark.png) |
+
+### Screens
+
+Beyond the component bible, **every reachable screen** is rendered too —
+inside the real `AppShell` (chrome + omnibox bar) so each plate looks like
+the running app, light + dark, in `gallery/screens/`. Montage:
+`gallery/screens_contact_sheet.png`.
+
+- **79 of the app's 142 screens catalogued** — the param-free
+  destinations (Today, Schedule, Captures, Tasks, Insights, Settings,
+  Vehicles, Observations, Family, Missions, Cockpit, Surveys, Toolkit,
+  Staff, Supplies, Reviews, …). Each renders its real empty / default
+  state — a legitimate gallery render.
+- Renderer: [screens_gallery_test.dart](../test/golden/screens_gallery_test.dart).
+  A director `Viewer` over an empty in-memory DB seeds every screen; the
+  Drift watch-stream timer is drained on unmount. Six screens with an
+  ongoing timer (clock / realtime poll / autosave / animation) keep their
+  committed plate but skip the local golden test (`_leakyTimer`).
+- **Remaining: the 62 param / detail screens** (SubjectDetail,
+  GroupDetail, VehicleDetail, MemberDetail, MessageThread, survey pages,
+  kid screens, the poster-layout views) — each needs a seeded entity + a
+  route param, which is the next wave. Five of those (the card games) are
+  already shown in the games tier.
 
 ---
 
 ## Not yet catalogued (the curator tracks these)
 
-`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **32 plates
-catalogued** — all atoms + molecules (bar GlassDragHandle) + the 4 standalone
-organisms. The remainder are harness-organisms or non-visual. The `_platePumped` helper (pumps fixed frames) covers forever-animations
-(shimmer / spinner); **`BackdropFilter` blur DOES capture in goldens** (glass frost
-renders properly).
-
-Remaining ⚠️ animated/blur flags:
-- `LiveBlockStrip` — countdown timer animation, needs frame limit
-- `AppShell` — the root shell with live providers, needs full harness
+`lib/shared/widgets/` is ~50 files / **~55 public visual widget classes**. **39 plates
+catalogued** — all atoms + ALL molecules + ALL organisms. Every cataloguable
+shared widget now has a light + dark plate; the only widgets without one are
+the non-visual / behavioural classes below.
+The `_platePumped` / `_scenePlate` helpers (fixed-frame pump) cover forever-
+animations (shimmer / spinner / the live-strip's breathing dot);
+**`BackdropFilter` blur DOES capture in goldens** (glass frost renders properly).
 
 **Atoms** (0 remaining — ALL CATALOGUED). ✅
 
-**Molecules** (1 remaining) — GlassDragHandle (self-suppresses without GlassSheetScope; defers to sheet harness).
+**Molecules** (0 remaining — ALL CATALOGUED). ✅ GlassDragHandle renders on a seeded `GlassSheetScope(bottomSheet)` so its grab-pill shows.
 
-**Organisms** (6 remaining — need a `ProviderScope` + routing harness) —
-EdgeScaffold, AppShell ⚠️, MainDrawer, DesktopNavRail, LiveBlockStrip ⚠️,
-SliverResponsiveGrid. (FloatingActions, ResponsivePage, ResponsiveGrid,
-MasterDetailScaffold render standalone — now catalogued above.)
+**Organisms** (0 remaining — ALL CATALOGUED). ✅ The six that need a
+`ProviderScope` + routing world (EdgeScaffold, AppShell, MainDrawer,
+DesktopNavRail, LiveBlockStrip, SliverResponsiveGrid) now render through the
+`_scenePlate` seeded harness — a director `Viewer` over an in-memory DB with
+the Drift watch-streams overridden (so no pending Timer at teardown), plus a
+real GoRouter for AppShell. AppShell injects a live block so the strip shows
+without starting the 30s tick provider.
 
 **Non-visual / behavioural (no plate, do not catalogue)** — CenterOrScroll,
 DebugViewerToggle, DismissGuard, HoverTap, OrientationLock, RouteTitle,
@@ -226,6 +280,12 @@ GlassSheetScope.
 [responsive_page.dart]: ../lib/shared/widgets/responsive_page.dart
 [responsive_grid.dart]: ../lib/shared/widgets/responsive_grid.dart
 [master_detail_scaffold.dart]: ../lib/shared/widgets/master_detail_scaffold.dart
+[app_shell.dart]: ../lib/shared/widgets/app_shell.dart
+[edge_scaffold.dart]: ../lib/shared/widgets/edge_scaffold.dart
+[main_drawer.dart]: ../lib/shared/widgets/main_drawer.dart
+[desktop_nav_rail.dart]: ../lib/shared/widgets/desktop_nav_rail.dart
+[live_block_strip.dart]: ../lib/shared/widgets/live_block_strip.dart
+[bottom_omnibox_bar.dart]: ../lib/features/omnibox/bottom_omnibox_bar.dart
 [accent_card_tile.dart]: ../lib/shared/widgets/accent_card_tile.dart
 [capability_locked_tile.dart]: ../lib/shared/widgets/capability_locked_tile.dart
 [collapsible_section.dart]: ../lib/shared/widgets/collapsible_section.dart

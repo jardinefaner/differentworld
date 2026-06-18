@@ -5,7 +5,7 @@ import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-TIERS = ["atoms", "molecules", "organisms"]
+TIERS = ["atoms", "molecules", "organisms", "surfaces"]
 CELL_W, CELL_H, LABEL_H = 300, 220, 30
 GAP, PAD, HEADER_H = 16, 28, 52
 COLS = 4
@@ -198,3 +198,40 @@ if wfiles:
         wd.text((cx + 4, cy + WCH + 6), name, font=F_LABEL, fill=INK)
     wimg.save("gallery/worlds_contact_sheet.png")
     print(f"wrote gallery/worlds_contact_sheet.png — {len(wfiles)} worlds")
+
+
+# ── screens sheet ────────────────────────────────────────────────────────
+# Every reachable screen, light render, inside the real shell. Tall cells
+# (phone aspect). Light theme so the labels read on the warm paper.
+sfiles = sorted(glob.glob("gallery/screens/*__light.png"))
+sfiles = [(os.path.basename(f).replace("__light.png", ""), f) for f in sfiles]
+if sfiles:
+    SCOLS, SCW, SCH = 5, 240, 470
+    sw = PAD * 2 + SCOLS * SCW + (SCOLS - 1) * GAP
+    srows = (len(sfiles) + SCOLS - 1) // SCOLS
+    sh = PAD + 60 + srows * (SCH + LABEL_H + GAP) + PAD
+    simg = Image.new("RGB", (sw, sh), BG)
+    sd = ImageDraw.Draw(simg)
+    sd.text((PAD, PAD), "The screens — every surface in the app",
+            font=F_TITLE, fill=INK)
+    sd.text((PAD, PAD + 42),
+            f"{len(sfiles)} screens · light render · open gallery/screens/ for light+dark",
+            font=F_LABEL, fill=MUTED)
+    sy = PAD + 60
+    for i, (name, path) in enumerate(sfiles):
+        col, row = i % SCOLS, i // SCOLS
+        cx = PAD + col * (SCW + GAP)
+        cy = sy + row * (SCH + LABEL_H + GAP)
+        sd.rounded_rectangle((cx, cy, cx + SCW, cy + SCH), radius=12,
+                             fill=CELL_BG, outline=(220, 228, 226), width=1)
+        try:
+            src = Image.open(path).convert("RGB")
+        except Exception:
+            continue
+        scale = min((SCW - 12) / src.width, (SCH - 12) / src.height)
+        nw, nh = max(1, int(src.width * scale)), max(1, int(src.height * scale))
+        src = src.resize((nw, nh), Image.LANCZOS)
+        simg.paste(src, (cx + (SCW - nw) // 2, cy + (SCH - nh) // 2))
+        sd.text((cx + 4, cy + SCH + 6), name, font=F_LABEL, fill=INK)
+    simg.save("gallery/screens_contact_sheet.png")
+    print(f"wrote gallery/screens_contact_sheet.png — {len(sfiles)} screens")

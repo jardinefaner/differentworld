@@ -40,6 +40,10 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
   BoardItemKind _selectedKind = BoardItemKind.idea;
 
   void _open(BoardRole role, String code, _Mode mode) {
+    // Guard a fast double-tap: a second _open would create a second
+    // BoardSession + subscriptions and leak the first (its channel never
+    // unsubscribed).
+    if (_session != null) return;
     final s = BoardSession.open(
       client: ref.read(supabaseProvider),
       role: role,
@@ -60,10 +64,14 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
       unawaited(sub.cancel());
     }
     _subs.clear();
-    await _session?.dispose();
+    // Null the session BEFORE the await so a dispose() racing in the async gap
+    // (route popped mid-leave) can't dispose the same session twice (which
+    // would unsubscribe its Realtime channel twice).
+    final s = _session;
+    _session = null;
+    await s?.dispose();
     if (!mounted) return;
     setState(() {
-      _session = null;
       _mode = _Mode.lobby;
       _items = const [];
       _peers = 0;
@@ -92,18 +100,26 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
   @override
   Widget build(BuildContext context) {
     return EdgeScaffold(
-      body: ColoredBox(
-        color: const Color(0xFF0E1117),
-        child: SafeArea(
-          child: switch (_mode) {
-            _Mode.lobby => _lobby(context),
-            _Mode.present => _documentView(context, big: true),
-            _Mode.contribute => _documentView(context, big: false),
-          },
-        ),
-      ),
+      body: switch (_mode) {
+        // The lobby is a normal navigable screen — themed surface so the
+        // floating chrome reads against it in light + dark.
+        _Mode.lobby => SafeArea(child: _lobby(context)),
+        // Present / contribute are the live-document stage — a dark
+        // presentation surface by design (like a game stage).
+        _Mode.present => _darkStage(_documentView(context, big: true)),
+        _Mode.contribute => _darkStage(_documentView(context, big: false)),
+      },
     );
   }
+
+  /// The dark presentation stage for the live document (present + contribute) —
+  /// a raw projection canvas, so its hardcoded dark colour is allowed (see the
+  /// raw-canvas allowlist in docs/THEME_ADHERENCE.md); it is NOT a themed
+  /// surface. The lobby (above) IS themed.
+  Widget _darkStage(Widget child) => ColoredBox(
+        color: const Color(0xFF0E1117), // raw-canvas: presentation stage
+        child: SafeArea(child: child),
+      );
 
   // ── Lobby ────────────────────────────────────────────────────────────────
   Widget _lobby(BuildContext context) {
@@ -127,15 +143,17 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                 'Brainstorm Board',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'A living document the room builds together.\nEveryone adds — no names, just ideas.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white60, height: 1.4),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 8),
               // Item type legend
@@ -153,10 +171,9 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                       label: Text(k.label),
                       visualDensity: VisualDensity.compact,
                       side: BorderSide.none,
-                      backgroundColor: Colors.white.withValues(alpha: 0.07),
-                      labelStyle: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      labelStyle: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                 ],
@@ -166,7 +183,7 @@ class _BoardScreenState extends ConsumerState<BoardScreen> {
                 icon: Icons.laptop_mac,
                 title: 'Start the document',
                 subtitle: 'The big screen shows the full doc + a join code.',
-                accent: Colors.cyanAccent,
+                accent: theme.colorScheme.primary,
                 onTap: () => _open(
                   BoardRole.present,
                   generateSessionCode(),
@@ -721,8 +738,9 @@ class _LobbyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Material(
-      color: Colors.white.withValues(alpha: 0.06),
+      color: theme.colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -739,18 +757,15 @@ class _LobbyCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontSize: 13,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -777,21 +792,20 @@ class _JoinCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Join to contribute',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 10),
@@ -803,19 +817,16 @@ class _JoinCard extends StatelessWidget {
                   textCapitalization: TextCapitalization.characters,
                   textInputAction: TextInputAction.go,
                   onSubmitted: (_) => _submit(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     letterSpacing: 6,
-                    fontWeight: FontWeight.w800,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'CODE',
                     hintStyle: TextStyle(
-                      color: Colors.white24,
+                      color: theme.colorScheme.onSurfaceVariant,
                       letterSpacing: 6,
                     ),
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
               ),

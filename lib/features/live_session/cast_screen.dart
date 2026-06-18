@@ -125,7 +125,7 @@ class _CastScreenState extends ConsumerState<CastScreen> {
       child: switch (_mode) {
         _Mode.lobby => EdgeScaffold(
           body: ColoredBox(
-            color: const Color(0xFF0C0D14),
+            color: Theme.of(context).colorScheme.surface,
             child: SafeArea(
               child: _Lobby(
                 myControllerCode: _myControllerCode(),
@@ -142,7 +142,10 @@ class _CastScreenState extends ConsumerState<CastScreen> {
           onExit: _toLobby,
         ),
         _Mode.cast => Scaffold(
-          backgroundColor: const Color(0xFF0C0D14),
+          // The cast cockpit is a projection stage (the TV), not a themed
+          // surface — hardcoded dark per docs/THEME_ADHERENCE.md.
+          backgroundColor:
+              const Color(0xFF0C0D14), // raw-canvas: cast cockpit (TV) stage
           body: SafeArea(
             child: CastCockpit(
               key: ValueKey('cast-$_code'),
@@ -202,6 +205,7 @@ class _LobbyState extends State<_Lobby> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -213,15 +217,15 @@ class _LobbyState extends State<_Lobby> {
               Text(
                 'Cast',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                ),
+                style: theme.textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Your phone is the remote; your screens follow your code.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white60),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 28),
               if (widget.myControllerCode case final code?) ...[
@@ -235,85 +239,26 @@ class _LobbyState extends State<_Lobby> {
                   onTap: () => widget.onCast(code),
                 ),
                 const SizedBox(height: 14),
-                _BigCard(
-                  icon: Icons.tv,
-                  title: 'Use this device as a screen',
-                  subtitle: 'Make this TV or tablet follow you — set once, it '
-                      'comes back up on its own.',
-                  onTap: () => widget.onFollow(code),
-                ),
-                const SizedBox(height: 14),
               ],
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.smartphone, color: Colors.tealAccent, size: 32),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            'Be a screen for a controller',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      "Enter a controller's code — this device then follows them.",
-                      style: TextStyle(color: Colors.white60, fontSize: 13),
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _codeCtrl,
-                      textCapitalization: TextCapitalization.characters,
-                      textInputAction: TextInputAction.go,
-                      maxLength: 6,
-                      onChanged: (_) {
-                        if (_error != null) setState(() => _error = null);
-                      },
-                      onSubmitted: (_) => _follow(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        letterSpacing: 6,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'CODE',
-                        hintStyle: const TextStyle(
-                          color: Colors.white24,
-                          letterSpacing: 6,
-                        ),
-                        border: const OutlineInputBorder(),
-                        counterText: '',
-                        errorText: _error,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _follow,
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(88, 56),
-                        ),
-                        child: const Text('Follow'),
-                      ),
-                    ),
-                  ],
-                ),
+              // One "Be a screen" path: follow your own code by default, or
+              // enter a different controller's. (Merges the old "use this
+              // device as a screen" + "be a screen for a controller" cards,
+              // which both just called onFollow.)
+              _BeAScreenCard(
+                // Stable key: the sibling _BigCard is conditional, so without
+                // a key the TextField's element would shift + drop its IME
+                // (the Column-keys gotcha).
+                key: const ValueKey('cast-be-a-screen'),
+                myControllerCode: widget.myControllerCode,
+                codeCtrl: _codeCtrl,
+                error: _error,
+                onFollowMine: widget.myControllerCode == null
+                    ? null
+                    : () => widget.onFollow(widget.myControllerCode!),
+                onFollowEntered: _follow,
+                onClearError: () {
+                  if (_error != null) setState(() => _error = null);
+                },
               ),
             ],
           ),
@@ -338,8 +283,10 @@ class _BigCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Material(
-      color: Colors.white.withValues(alpha: 0.06),
+      color: scheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -348,7 +295,7 @@ class _BigCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           child: Row(
             children: [
-              Icon(icon, color: Colors.tealAccent, size: 32),
+              Icon(icon, color: scheme.primary, size: 32),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -356,18 +303,15 @@ class _BigCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 13,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -376,6 +320,124 @@ class _BigCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The merged "Be a screen" card — follow your own controller code (a one-tap
+/// button when you have one) OR enter a different controller's code. Replaces
+/// the two near-identical follower cards that both just called onFollow.
+class _BeAScreenCard extends StatelessWidget {
+  const _BeAScreenCard({
+    required this.codeCtrl,
+    required this.error,
+    required this.onFollowEntered,
+    required this.onClearError,
+    this.myControllerCode,
+    this.onFollowMine,
+    super.key,
+  });
+
+  final String? myControllerCode;
+  final TextEditingController codeCtrl;
+  final String? error;
+  final VoidCallback? onFollowMine;
+  final VoidCallback onFollowEntered;
+  final VoidCallback onClearError;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.tv, color: scheme.primary, size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Be a screen',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Make this TV or tablet follow a controller — your own screens, or '
+            "someone else's code.",
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          if (onFollowMine != null) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: onFollowMine,
+                icon: const Icon(Icons.devices_outlined),
+                label: Text('Follow my screens ($myControllerCode)'),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: Divider(color: scheme.outlineVariant)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'or another code',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                Expanded(child: Divider(color: scheme.outlineVariant)),
+              ],
+            ),
+          ],
+          const SizedBox(height: 14),
+          TextField(
+            controller: codeCtrl,
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.go,
+            maxLength: 6,
+            onChanged: (_) => onClearError(),
+            onSubmitted: (_) => onFollowEntered(),
+            style: theme.textTheme.headlineSmall?.copyWith(letterSpacing: 6),
+            decoration: InputDecoration(
+              hintText: 'CODE',
+              hintStyle: TextStyle(
+                color: scheme.onSurfaceVariant,
+                letterSpacing: 6,
+              ),
+              border: const OutlineInputBorder(),
+              counterText: '',
+              errorText: error,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onFollowEntered,
+              style: FilledButton.styleFrom(minimumSize: const Size(88, 56)),
+              child: const Text('Follow'),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -614,6 +614,29 @@ dark/light + "white-on-light pill" defects. Read color from
   Guard** agent runs in the Review Council for the judgment the regex
   can't. A genuinely-new raw canvas gets added to the allowlist in the
   same change.
+  - **The allowlist is FILE-scoped, not folder-scoped.** Whole-folder
+    entries (`^lib/features/live_session/`, etc.) used to exempt themed
+    surfaces that happened to share a folder with a raw stage — that's
+    how the board/cast LOBBIES hardcoded colors without the guard
+    noticing (the lobby is themed; the cockpit/doc-view is the raw
+    stage). List the specific raw FILES, not the folder.
+  - **A MIXED file** (a themed lobby + a raw stage in one file) marks
+    its raw LINES with a trailing `// raw-canvas` comment — the guard
+    drops those lines (like `.withValues(`), so the themed parts stay
+    checked instead of allowlisting the whole file. Reference:
+    `board_screen.dart` `_darkStage`, `cast_screen.dart` cockpit bg,
+    `family_today` over-photo labels.
+  - **The guard is diff-scoped — it structurally CANNOT see legacy
+    debt** (the ~750 grandfathered literals in untouched files). The
+    full-codebase audit is **`tool/score_screens.py`** → it scores every
+    gallery screen 0–100 from source (allowlist-gated hardcode count) +
+    the rendered light/dark plates (theme_delta, contrast), and writes
+    `gallery/screen_scores.md`. Run it after every golden regen. A
+    near-zero light/dark delta on a NON-allowlisted, NON-content-driven
+    screen is the "hardcoded, doesn't follow theme" smell. Content
+    stages (board's `_present`, the game stages, world-present) are not
+    bugs — classify them onto the allowlist, don't theme them (that
+    breaks the "color the whole screen" design).
 
 ### Composition primitives — reach for these before you build
 
