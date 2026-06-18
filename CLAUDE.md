@@ -649,6 +649,7 @@ so a screen built from them inherits the app's vocabulary for free.
 | Need | Reach for | Lives in |
 |---|---|---|
 | The chrome around any screen | `EdgeScaffold` | `lib/shared/widgets/edge_scaffold.dart` |
+| A responsive dashboard of modular tiles (overview/home/matrix) | `BentoGrid` (+ `BentoSpan` / `BentoTile`) — [docs/GRID.md](docs/GRID.md) | `lib/shared/widgets/bento_grid.dart` |
 | Page title + subtitle inside the scrollable body | `ContentHeader` | `lib/shared/widgets/content_header.dart` |
 | Top-right action(s) in the glass pill | `actions:` slot on `EdgeScaffold` + `PrimaryActionButton` / `SecondaryActionButton` | `lib/shared/widgets/` |
 | Loading state | `LoadingSlot` (`.list` / `.cards` / `.spinner`) | `lib/shared/widgets/async_loading.dart` |
