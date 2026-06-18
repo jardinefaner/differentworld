@@ -127,7 +127,9 @@ import 'package:differentworld/features/surveys/survey_table_screen.dart';
 import 'package:differentworld/features/surveys/survey_take_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
+import 'package:differentworld/features/today/bento_home_setting.dart';
 import 'package:differentworld/features/today/child_day_screen.dart';
+import 'package:differentworld/features/today/today_bento_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/toolkit/print_toolkit_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_screen.dart';
@@ -1885,13 +1887,20 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
       _handleVehicleLink(next);
     });
 
-    // Slice 4 (docs/COCKPIT.md): the home surface is Today by default, or the
-    // clock-driven cockpit when the director has opted in. Today is never lost
-    // — it's reachable at /today (the cockpit's curiosity bar links there).
+    // Slice 4 (docs/COCKPIT.md): the home surface is Today by default, the
+    // clock-driven cockpit when the director opts in, or the bento dashboard
+    // when THAT's opted in. Today is never lost — it's reachable at /today.
+    // Precedence: cockpit > bento > Today (cockpit is the established
+    // promotion path; bento is the grid-navigation experiment).
     final cockpitAsHome = ref.watch(cockpitAsHomeProvider).value ?? false;
-    return cockpitAsHome
-        ? const NowCockpitScreen(key: ValueKey('cockpit-home'))
-        : const TodayScreen(key: ValueKey('today-home'));
+    final bentoHome = ref.watch(bentoHomeProvider).value ?? false;
+    if (cockpitAsHome) {
+      return const NowCockpitScreen(key: ValueKey('cockpit-home'));
+    }
+    if (bentoHome) {
+      return const TodayBentoScreen(key: ValueKey('bento-home'));
+    }
+    return const TodayScreen(key: ValueKey('today-home'));
   }
 }
 

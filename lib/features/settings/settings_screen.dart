@@ -12,6 +12,7 @@ import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
+import 'package:differentworld/features/today/bento_home_setting.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -250,6 +251,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const _SettingsDivider(),
               const _CockpitHomeTile(),
+              const _SettingsDivider(),
+              const _BentoHomeTile(),
             ],
           ),
 
@@ -405,6 +408,34 @@ class _CockpitHomeTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(cockpitAsHomeProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Toggles the bento dashboard into the home slot (the grid-navigation
+/// experiment). Off by default; the classic Today scroll is the same data
+/// re-laid-out, so flipping back loses nothing. Ignored while "Cockpit as
+/// home" is on (cockpit wins).
+class _BentoHomeTile extends ConsumerWidget {
+  const _BentoHomeTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(bentoHomeProvider).value ?? false;
+    final cockpit = ref.watch(cockpitAsHomeProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.dashboard_outlined),
+      title: const Text('Bento dashboard home'),
+      subtitle: Text(
+        cockpit
+            ? 'Turn off “Cockpit as home” to use the bento dashboard'
+            : 'A grid of tiles instead of the Today scroll — same data, '
+                  'tap any tile to drill in',
+      ),
+      value: on && !cockpit,
+      onChanged: cockpit
+          ? null
+          : (v) => unawaited(ref.read(bentoHomeProvider.notifier).set(value: v)),
     );
   }
 }
