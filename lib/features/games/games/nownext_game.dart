@@ -132,14 +132,14 @@ class NowNextGame extends GameDefinition<NowNextState> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _Banner(
-                  label: 'NOW',
+                  label: 'Now',
                   block: now,
                   accent: vibe.accent,
                   big: true,
                 ),
                 const SizedBox(height: 16),
                 if (next != null)
-                  _Banner(label: 'NEXT', block: next, accent: Colors.white24)
+                  _Banner(label: 'Up next', block: next, accent: Colors.white24)
                 else
                   Text(
                     'Last one of the day 🎉',
@@ -222,7 +222,7 @@ class _Banner extends StatelessWidget {
             style: TextStyle(
               color: big ? accent : Colors.white54,
               fontWeight: FontWeight.w500,
-              letterSpacing: 3,
+              letterSpacing: 0.5,
               fontSize: big ? 16 : 13,
             ),
           ),
@@ -252,12 +252,16 @@ class _Banner extends StatelessWidget {
           ),
           if ((block?.time ?? '').isNotEmpty) ...[
             SizedBox(height: big ? 12 : 8),
-            Text(
-              block!.time,
-              style: TextStyle(
-                color: Colors.white70,
-                fontWeight: FontWeight.w700,
-                fontSize: big ? 22 : 16,
+            Padding(
+              // Line up under the title — clear the icon (size) + its 14 gap.
+              padding: EdgeInsets.only(left: big ? 54 : 40),
+              child: Text(
+                block!.time,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                  fontSize: big ? 22 : 16,
+                ),
               ),
             ),
           ],
