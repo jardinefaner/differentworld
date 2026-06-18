@@ -65,7 +65,6 @@ work that doesn't need a feature decision.
 | Item | Effort | Why |
 |---|---|---|
 | Field trip flow polish (permission slips + headcounts) | M | Schema shipped; UX end-to-end test needed |
-| Schedule time-grid drag-to-move / drag-edge resize | M | The manipulation half of Maya's planner — the read-rich time grid shipped (b05b7c8); editing is still tap→block sheet. Optimistic write via `scheduleActionsProvider.update_`. |
 | BentoGrid true 2-D masonry (vs the current 1-D Wrap) | M | Spans are tuned so each breakpoint packs clean; masonry only matters if odd widths go ragged. Defer until it bites. |
 | Multi-program switcher in drawer | M (mis-classified as S earlier) | Single-program design today; needs schema migration to support a user belonging to multiple spaces (today `members.id = auth.uid()`, so one user = one member = one space). New table `user_spaces (user_id, space_id, role, caps)` would unblock it. Defer until a real multi-program use case lands. |
 | Family-side UI polish (`FamilyTodayScreen` outlined but partial) | M | Family-login model is in; UI bare |
@@ -118,6 +117,13 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **bf34acd** — Schedule time-grid drag-to-move + drag-edge-resize.
+  `_DraggableBlock` (ConsumerStatefulWidget) owns each block's Positioned:
+  drag the body to move (start shifts, duration preserved), drag the 16px
+  right edge to resize (end shifts); both snap to 5 min and commit
+  optimistically via `scheduleActionsProvider.update_` (same write as the
+  editor). Non-editors tap-only. Closes the manipulation half of Maya's
+  planner.
 - **566109f / b05b7c8** — Grid-based navigation (user-driven, awwwards
   brief). New reusable `BentoGrid` primitive (docs/GRID.md): one modular
   2 / 4 / 6-column grid that re-packs across phone / tablet / desktop. Two
