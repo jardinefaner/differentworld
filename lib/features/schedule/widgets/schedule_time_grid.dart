@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -20,9 +21,10 @@ import 'package:intl/intl.dart';
 /// "who's outside at 4:00" is a single horizontal read. Opt-in via
 /// `scheduleTimeGridProvider`; phones keep the per-cohort tabs.
 ///
-/// Read-rich, edit-on-tap: every block carries its live signals (now, field
-/// trip, break, shared-room conflict, curriculum link) and taps straight into
-/// the full block editor — no richness lost vs the agenda rows.
+/// Read-rich, edit-on-tap, reschedule-on-drag: every block carries its live
+/// signals (now, field trip, break, shared-room conflict, curriculum link),
+/// taps into the full block editor, and — for editors — drags to move / resizes
+/// from its right edge. No richness lost vs the agenda rows.
 class ScheduleTimeGrid extends ConsumerWidget {
   const ScheduleTimeGrid({
     required this.groups,
@@ -368,12 +370,14 @@ class _CohortRow extends StatelessWidget {
       timeW,
     );
     final isNow = now != null && !start.isAfter(now!) && end.isAfter(now!);
-    return Positioned(
+    return _DraggableBlock(
       key: ValueKey('tg-blk-${b.id}'),
-      left: left.clamp(0.0, timeW),
-      width: width,
-      top: 4,
-      bottom: 4,
+      block: b,
+      baseLeft: left.clamp(0.0, timeW),
+      baseWidth: width,
+      pxPerMin: pxPerMin,
+      winStart: winStart,
+      timeW: timeW,
       child: _GridBlockCell(
         block: b,
         title: _titleFor(b),
@@ -416,6 +420,213 @@ class _CohortRow extends StatelessWidget {
   }
 
   static String _t(DateTime d) => DateFormat.jm().format(d);
+}
+
+/// Wraps a positioned grid block in drag gestures — drag the BODY to move it
+/// (start shifts, duration preserved); drag the RIGHT EDGE to resize (end
+/// shifts). Both snap to 5 minutes and commit optimistically via
+/// `scheduleActionsProvider.update_` (the same write the editor uses, so other
+/// devices + the column view stay in lockstep). Non-editors get a plain
+/// positioned block — tap-only. Owns the [Positioned] so left/width can be
+/// driven from drag state; re-syncs to the laid-out base after a sync
+/// round-trip, never mid-drag.
+///
+/// Tap vs. drag: a clean tap opens the editor; once the finger passes the
+/// touch slop the gesture becomes a move. On a very narrow block a jittery tap
+/// can nudge instead of navigate — but the 5-min snap makes a sub-2.5-min
+/// nudge a no-op (snaps back), so the worst case is a re-tap, never lost data.
+class _DraggableBlock extends ConsumerStatefulWidget {
+  const _DraggableBlock({
+    required this.block,
+    required this.baseLeft,
+    required this.baseWidth,
+    required this.pxPerMin,
+    required this.winStart,
+    required this.timeW,
+    required this.child,
+    super.key,
+  });
+
+  final ScheduleBlock block;
+  final double baseLeft;
+  final double baseWidth;
+  final double pxPerMin;
+  final DateTime winStart;
+  final double timeW;
+  final Widget child;
+
+  @override
+  ConsumerState<_DraggableBlock> createState() => _DraggableBlockState();
+}
+
+class _DraggableBlockState extends ConsumerState<_DraggableBlock> {
+  late double _left = widget.baseLeft;
+  late double _width = widget.baseWidth;
+  bool _dragging = false;
+
+  @override
+  void didUpdateWidget(covariant _DraggableBlock old) {
+    super.didUpdateWidget(old);
+    // Re-sync to the (possibly re-laid-out) base when the optimistic write
+    // round-trips or the window recomputes — but never mid-drag, or the block
+    // would jump out from under the finger.
+    if (!_dragging &&
+        (old.baseLeft != widget.baseLeft ||
+            old.baseWidth != widget.baseWidth)) {
+      _left = widget.baseLeft;
+      _width = widget.baseWidth;
+    }
+  }
+
+  double get _snapPx => 5 * widget.pxPerMin; // 5-minute snap
+  // tryParse, not parse — a partially-denormalized row mid-sync can carry a
+  // malformed startAt/endAt; a throw here escapes the gesture callback.
+  DateTime? get _baseStart =>
+      DateTime.tryParse(widget.block.startAt)?.toLocal();
+  DateTime? get _baseEnd => DateTime.tryParse(widget.block.endAt)?.toLocal();
+
+  double _snap(double px) => (px / _snapPx).round() * _snapPx;
+
+  /// `max(lo, hi)` — keeps `.clamp(lo, hi)` legal when a block is so close to
+  /// the right edge that the computed upper bound would dip below the lower.
+  double _hiAtLeast(double lo, double hi) => hi < lo ? lo : hi;
+
+  void _commit(DateTime start, DateTime end) {
+    unawaited(HapticFeedback.selectionClick());
+    unawaited(
+      ref
+          .read(scheduleActionsProvider)
+          .update_(id: widget.block.id, startAt: start, endAt: end),
+    );
+  }
+
+  void _dragStart(DragStartDetails _) {
+    unawaited(HapticFeedback.selectionClick());
+    setState(() => _dragging = true);
+  }
+
+  // Arena loss / cancel — snap back to the laid-out base and clear the flag.
+  // Without this, a cancelled drag leaves `_dragging` true forever, so
+  // didUpdateWidget never re-syncs and the block freezes out of position.
+  void _dragCancel() {
+    if (!_dragging) return;
+    setState(() {
+      _dragging = false;
+      _left = widget.baseLeft;
+      _width = widget.baseWidth;
+    });
+  }
+
+  void _moveUpdate(DragUpdateDetails d) {
+    setState(() {
+      _left = (_left + d.delta.dx).clamp(
+        0.0,
+        _hiAtLeast(0, widget.timeW - _width),
+      );
+    });
+  }
+
+  void _moveEnd(DragEndDetails _) {
+    final base0 = _baseStart;
+    final base1 = _baseEnd;
+    if (base0 == null || base1 == null) {
+      setState(() => _dragging = false);
+      return;
+    }
+    final left = _snap(_left).clamp(0.0, _hiAtLeast(0, widget.timeW - _width));
+    final mins = (left / widget.pxPerMin).round();
+    final newStart = widget.winStart.add(Duration(minutes: mins));
+    final newEnd = newStart.add(base1.difference(base0));
+    setState(() {
+      _left = left;
+      _dragging = false;
+    });
+    _commit(newStart, newEnd);
+  }
+
+  void _resizeUpdate(DragUpdateDetails d) {
+    final lo = 15 * widget.pxPerMin;
+    final hi = _hiAtLeast(lo, widget.timeW - _left);
+    setState(() => _width = (_width + d.delta.dx).clamp(lo, hi));
+  }
+
+  void _resizeEnd(DragEndDetails _) {
+    final base0 = _baseStart;
+    if (base0 == null) {
+      setState(() => _dragging = false);
+      return;
+    }
+    final lo = 15 * widget.pxPerMin;
+    final hi = _hiAtLeast(lo, widget.timeW - _left);
+    final width = _snap(_width).clamp(lo, hi);
+    final mins = (width / widget.pxPerMin).round();
+    final newEnd = base0.add(Duration(minutes: mins));
+    setState(() {
+      _width = width;
+      _dragging = false;
+    });
+    _commit(base0, newEnd);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Narrow the watch to the permission bits — a viewer photo/name change
+    // shouldn't rebuild every block in the grid.
+    final canEdit = ref.watch(
+      viewerProvider.select((v) => v.canManageSchedule || v.canManageSpace),
+    );
+    if (!canEdit) {
+      return Positioned(
+        left: _left,
+        width: _width,
+        top: 4,
+        bottom: 4,
+        child: widget.child,
+      );
+    }
+    return Positioned(
+      left: _left,
+      width: _width,
+      top: 4,
+      bottom: 4,
+      child: GestureDetector(
+        onHorizontalDragStart: _dragStart,
+        onHorizontalDragUpdate: _moveUpdate,
+        onHorizontalDragEnd: _moveEnd,
+        onHorizontalDragCancel: _dragCancel,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: AnimatedScale(
+                scale: _dragging ? 1.03 : 1.0,
+                duration: const Duration(milliseconds: 120),
+                child: widget.child,
+              ),
+            ),
+            // Right-edge resize handle — opaque so it wins the gesture arena
+            // in its strip (a drag here resizes instead of moving).
+            Positioned(
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: 16,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeLeftRight,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onHorizontalDragStart: _dragStart,
+                  onHorizontalDragUpdate: _resizeUpdate,
+                  onHorizontalDragEnd: _resizeEnd,
+                  onHorizontalDragCancel: _dragCancel,
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// One positioned block in the time grid — themed by its state (now / field /
