@@ -8,6 +8,8 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/features/schedule/schedule_view_setting.dart';
+import 'package:differentworld/features/schedule/widgets/schedule_time_grid.dart';
 import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/semantics/noun_scope.dart';
@@ -171,6 +173,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     // cap doesn't tap into a sheet they can't save from.
     final viewer = ref.watch(viewerProvider);
     final canEditSchedule = viewer.canManageSchedule || viewer.canManageSpace;
+    // Opt-in time-aligned grid (docs/GRID.md) — replaces the column matrix at
+    // matrix widths when the director turns it on. Default off; phones keep
+    // tabs regardless.
+    final timeGridOn = ref.watch(scheduleTimeGridProvider).value ?? false;
     return NounRegistryScope(
       registry: _registry,
       child: EdgeScaffold(
@@ -274,7 +280,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                       // so blocks / conflicts / cover-lead match exactly.
                       const minTotalWidth = 720.0;
                       const minColumnWidth = 300.0;
-                      final showMatrix = gs.length > 1 &&
+                      // The opt-in time-aligned grid wins at matrix widths —
+                      // one shared time axis across all cohorts.
+                      if (timeGridOn && constraints.maxWidth >= minTotalWidth) {
+                        return ScheduleTimeGrid(groups: gs, date: dateIso);
+                      }
+                      final showMatrix =
+                          gs.length > 1 &&
                           constraints.maxWidth >= minTotalWidth &&
                           constraints.maxWidth / gs.length >= minColumnWidth;
                       if (showMatrix) {
@@ -508,7 +520,9 @@ class _CohortColumn extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        Expanded(child: _CohortDay(group: group, date: date)),
+        Expanded(
+          child: _CohortDay(group: group, date: date),
+        ),
       ],
     );
   }
@@ -621,7 +635,8 @@ class _CohortDay extends ConsumerWidget {
                   final bStart = DateTime.tryParse(b.startAt)?.toLocal();
                   final bEnd = DateTime.tryParse(b.endAt)?.toLocal();
                   final nowTs = DateTime.now();
-                  final isNow = _isToday &&
+                  final isNow =
+                      _isToday &&
                       bStart != null &&
                       bEnd != null &&
                       !bStart.isAfter(nowTs) &&
@@ -836,8 +851,9 @@ class _BlockTile extends ConsumerWidget {
         block.status == BlockStatus.skipped ||
         block.status == BlockStatus.cancelled;
     final accent = isNow ? scheme.primary : (isField ? scheme.tertiary : null);
-    final bgTint =
-        isNow ? scheme.primaryContainer.withValues(alpha: 0.35) : null;
+    final bgTint = isNow
+        ? scheme.primaryContainer.withValues(alpha: 0.35)
+        : null;
     final titleColor = isBreak ? scheme.onSurfaceVariant : scheme.onSurface;
     final iconColor = isField
         ? scheme.tertiary

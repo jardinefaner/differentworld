@@ -7,6 +7,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/schedule/schedule_view_setting.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
@@ -59,24 +60,20 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               ListTile(
                 leading: PersonAvatar(
-                  name: viewer.displayName.isEmpty
-                      ? '?'
-                      : viewer.displayName,
+                  name: viewer.displayName.isEmpty ? '?' : viewer.displayName,
                   photoUrl: member?.avatarUrl,
                   onTap: member == null
                       ? null
                       : () => PhotoSourceSheet.show(
-                            context,
-                            entity: PhotoEntity.member,
-                            entityId: member.id,
-                            hasExisting: member.avatarUrl != null,
-                            displayName: viewer.displayName,
-                          ),
+                          context,
+                          entity: PhotoEntity.member,
+                          entityId: member.id,
+                          hasExisting: member.avatarUrl != null,
+                          displayName: viewer.displayName,
+                        ),
                 ),
                 title: Text(
-                  viewer.displayName.isEmpty
-                      ? '—'
-                      : viewer.displayName,
+                  viewer.displayName.isEmpty ? '—' : viewer.displayName,
                 ),
                 subtitle: Text(
                   viewer is GuardianViewer
@@ -253,6 +250,8 @@ class SettingsScreen extends ConsumerWidget {
               const _CockpitHomeTile(),
               const _SettingsDivider(),
               const _BentoHomeTile(),
+              const _SettingsDivider(),
+              const _ScheduleGridTile(),
             ],
           ),
 
@@ -380,8 +379,8 @@ class _SettingsDivider extends StatelessWidget {
       thickness: 1,
       indent: 56,
       color: Theme.of(context).colorScheme.outlineVariant.withValues(
-            alpha: 0.4,
-          ),
+        alpha: 0.4,
+      ),
     );
   }
 }
@@ -435,7 +434,30 @@ class _BentoHomeTile extends ConsumerWidget {
       value: on && !cockpit,
       onChanged: cockpit
           ? null
-          : (v) => unawaited(ref.read(bentoHomeProvider.notifier).set(value: v)),
+          : (v) =>
+                unawaited(ref.read(bentoHomeProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Toggles the time-aligned schedule grid (cohorts × time) as the wide-screen
+/// schedule view (docs/GRID.md). Off by default; only takes effect at matrix
+/// widths (≥ 720dp), and phones keep the per-cohort tabs.
+class _ScheduleGridTile extends ConsumerWidget {
+  const _ScheduleGridTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(scheduleTimeGridProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.view_timeline_outlined),
+      title: const Text('Time-aligned schedule grid'),
+      subtitle: const Text(
+        'Wide screens: cohorts × time on one shared axis instead of columns',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(scheduleTimeGridProvider.notifier).set(value: v)),
     );
   }
 }
@@ -522,14 +544,14 @@ class _FontPickerSheet extends ConsumerWidget {
     final choice = ref.watch(fontChoiceProvider).value ?? FontChoice.fallback;
     final theme = Theme.of(context);
     Widget header(String text) => Padding(
-          padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
-          child: Text(
-            text.toUpperCase(),
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        );
+      padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+      child: Text(
+        text.toUpperCase(),
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
     return SafeArea(
       child: ListView(
         shrinkWrap: true,
