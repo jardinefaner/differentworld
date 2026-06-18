@@ -40,6 +40,7 @@ import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
+import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/incidents/incident_form_screen.dart';
 import 'package:differentworld/features/incidents/incidents_screen.dart';
@@ -79,6 +80,7 @@ import 'package:differentworld/features/spells/spells_screen.dart';
 import 'package:differentworld/features/staff/runbook_screen.dart';
 import 'package:differentworld/features/staff/staff_ladder_screen.dart';
 import 'package:differentworld/features/story/room_story_screen.dart';
+import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/supplies/supplies_list_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
@@ -284,6 +286,19 @@ void main() {
   // renders.
   _scheduleGridPlate('screens/schedule_time_grid', const Size(1280, 820));
 
+  // Two param'd detail screens the param-free harness can't reach — seeded
+  // with a cohort + roster so they render populated.
+  _rosterPlate(
+    'screens/group_detail',
+    const GroupDetailScreen(groupId: 'g1'),
+    const Size(440, 900),
+  );
+  _rosterPlate(
+    'screens/subject_detail',
+    const SubjectDetailScreen(subjectId: 's1'),
+    const Size(440, 900),
+  );
+
   _bareScreenPlate('screens/create_space', const CreateSpaceScreen());
   _bareScreenPlate('screens/join_or_create', const JoinOrCreateScreen());
   _bareScreenPlate('screens/join_unavailable', const JoinUnavailableScreen());
@@ -479,6 +494,102 @@ void _bentoPlate(String name, Size size) {
       await tester.pumpWidget(const SizedBox.shrink());
       // Drain the per-cohort Drift watch timers (groupDayState × 3) — a couple
       // of 1s advances clears them before flutter_test's !timersPending check.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      while (tester.takeException() != null) {
+        // drained
+      }
+      await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
+    }, skip: !runGoldens);
+  }
+}
+
+/// Seeds a cohort + roster (space + director + group g1 + three subjects),
+/// then renders a param'd detail screen (group / subject) populated. Throwaway
+/// DB; never touches the shared `_db`.
+void _rosterPlate(String name, Widget screen, Size size) {
+  for (final mode in const ['light', 'dark']) {
+    testWidgets('$name - $mode', (tester) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await db.createMigrator().createAll();
+      const now = '2026-06-17T08:00:00Z';
+      await db.into(db.spaces).insert(SpacesCompanion.insert(
+            id: 'sp1',
+            name: 'Sunny Days Program',
+            settings: '{}',
+            capabilities: '{}',
+            createdAt: now,
+            updatedAt: now,
+          ));
+      await db.into(db.members).insert(MembersCompanion.insert(
+            id: 'm1',
+            displayName: 'Maya Okonkwo',
+            role: 'director',
+            capabilities: '{}',
+            createdAt: now,
+            updatedAt: now,
+            spaceId: const Value('sp1'),
+          ));
+      await db.into(db.groups).insert(GroupsCompanion.insert(
+            id: 'g1',
+            spaceId: 'sp1',
+            name: 'Sparrows',
+            capabilities: '{}',
+            createdAt: now,
+            updatedAt: now,
+            ageRange: const Value('Ages 4–5'),
+          ));
+      for (final (id, first, last) in const [
+        ('s1', 'Owen', 'Reyes'),
+        ('s2', 'Ava', 'Chen'),
+        ('s3', 'Liam', 'Okafor'),
+      ]) {
+        await db.into(db.subjects).insert(SubjectsCompanion.insert(
+              id: id,
+              spaceId: 'sp1',
+              firstName: first,
+              lastName: last,
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              groupId: const Value('g1'),
+            ));
+      }
+      final m = await (db.select(db.members)..where((t) => t.id.equals('m1')))
+          .getSingle();
+      final s = await (db.select(db.spaces)..where((t) => t.id.equals('sp1')))
+          .getSingle();
+      final viewer = Viewer(member: m, space: s);
+
+      await tester.binding.setSurfaceSize(size);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => db),
+          viewerProvider.overrideWithValue(viewer),
+          liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
+          omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
+          momentsForBlockProvider('blk-demo')
+              .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+          capturesProvider(CaptureFilter.open).overrideWith(
+              (_) => Stream<List<Capture>>.value(const <Capture>[])),
+          tasksProvider(TaskFilter.open)
+              .overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+        ],
+        child: _app(mode, _shellRouter(screen)),
+      ));
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('../../gallery/${name}__$mode.png'),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
       for (var i = 0; i < 4; i++) {
         await tester.pump(const Duration(seconds: 1));
       }
