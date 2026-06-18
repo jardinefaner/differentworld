@@ -66,7 +66,9 @@ import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/day_templates_screen.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
+import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
+import 'package:differentworld/features/schedule/schedule_view_setting.dart';
 import 'package:differentworld/features/schedule/weekly_template_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
 import 'package:differentworld/features/settings/roles_screen.dart';
@@ -82,6 +84,8 @@ import 'package:differentworld/features/surveys/survey_list_screen.dart';
 import 'package:differentworld/features/tasks/task_screen.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/features/tasks/tasks_screen.dart';
+import 'package:differentworld/features/today/context_lead.dart';
+import 'package:differentworld/features/today/today_bento_screen.dart';
 import 'package:differentworld/features/today/today_screen.dart';
 import 'package:differentworld/features/toolkit/print_toolkit_screen.dart';
 import 'package:differentworld/features/toolkit/toolkit_screen.dart';
@@ -267,6 +271,19 @@ void main() {
   _screenPlate('screens/world_book', const WorldBookScreen());
   _screenPlate('screens/yearly_review', const YearlyReviewScreen());
 
+  // The bento dashboard needs DATA to be worth seeing (an empty bento is just
+  // "No rooms yet"), so it gets a dedicated SEEDED plate — its own DB with
+  // three cohorts + a fake now/next lead — at phone and desktop widths.
+  _bentoPlate('screens/today_bento', const Size(440, 900));
+  // Wide enough that the content area past the nav rail clears 1100dp → the
+  // true 6-column desktop packing (hero + rooms share the tall top run).
+  _bentoPlate('screens/today_bento_wide', const Size(1500, 950));
+
+  // The time-aligned schedule grid — seeded with two cohorts' afternoon, the
+  // toggle forced on, at a matrix width so the grid (not the column matrix)
+  // renders.
+  _scheduleGridPlate('screens/schedule_time_grid', const Size(1280, 820));
+
   _bareScreenPlate('screens/create_space', const CreateSpaceScreen());
   _bareScreenPlate('screens/join_or_create', const JoinOrCreateScreen());
   _bareScreenPlate('screens/join_unavailable', const JoinUnavailableScreen());
@@ -366,6 +383,229 @@ void _bareScreenPlate(String name, Widget screen,
     testWidgets('$name - $mode', (tester) async {
       await _pumpAndShoot(tester, '${name}__$mode',
           _app(mode, _bareRouter(screen)), Size(width, height));
+    }, skip: !runGoldens);
+  }
+}
+
+/// The bento dashboard, SEEDED so it renders populated. A throwaway in-memory
+/// DB (space + director + three cohorts) plus a fake [ContextLead] for the
+/// now/next hero; captures/tasks left empty (their "All clear" state). Used
+/// for the `today_bento` plates only — never touches the shared `_db`.
+void _bentoPlate(String name, Size size) {
+  for (final mode in const ['light', 'dark']) {
+    testWidgets('$name - $mode', (tester) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await db.createMigrator().createAll();
+      const now = '2026-06-17T08:00:00Z';
+      await db.into(db.spaces).insert(SpacesCompanion.insert(
+            id: 'sp1',
+            name: 'Sunny Days Program',
+            settings: '{}',
+            capabilities: '{}',
+            createdAt: now,
+            updatedAt: now,
+          ));
+      await db.into(db.members).insert(MembersCompanion.insert(
+            id: 'm1',
+            displayName: 'Maya Okonkwo',
+            role: 'director',
+            capabilities: '{}',
+            createdAt: now,
+            updatedAt: now,
+            spaceId: const Value('sp1'),
+          ));
+      const cohorts = [
+        ('g1', 'Sparrows', 'Ages 4–5'),
+        ('g2', 'Robins', 'Ages 6–7'),
+        ('g3', 'Owls', 'Ages 8–9'),
+      ];
+      for (final (id, cname, age) in cohorts) {
+        await db.into(db.groups).insert(GroupsCompanion.insert(
+              id: id,
+              spaceId: 'sp1',
+              name: cname,
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              ageRange: Value(age),
+            ));
+      }
+      final m = await (db.select(db.members)..where((t) => t.id.equals('m1')))
+          .getSingle();
+      final s = await (db.select(db.spaces)..where((t) => t.id.equals('sp1')))
+          .getSingle();
+      final viewer = Viewer(member: m, space: s);
+      const lead = ContextLead(
+        eyebrow: 'Now',
+        title: 'Outdoor free play',
+        line: 'Then snack at 10:30 · Sunny Room',
+        icon: Icons.play_circle_outline,
+        tone: ContextTone.go,
+        primary: ContextMove(
+          icon: Icons.camera_alt_outlined,
+          label: 'Capture a moment',
+          route: '/captures/new',
+        ),
+      );
+
+      await tester.binding.setSurfaceSize(size);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => db),
+          viewerProvider.overrideWithValue(viewer),
+          liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
+          omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
+          contextLeadProvider.overrideWith((ref) => lead),
+          momentsForBlockProvider('blk-demo')
+              .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+          capturesProvider(CaptureFilter.open).overrideWith(
+              (_) => Stream<List<Capture>>.value(const <Capture>[])),
+          tasksProvider(TaskFilter.open)
+              .overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+        ],
+        child: _app(mode, _shellRouter(const TodayBentoScreen())),
+      ));
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('../../gallery/${name}__$mode.png'),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      // Drain the per-cohort Drift watch timers (groupDayState × 3) — a couple
+      // of 1s advances clears them before flutter_test's !timersPending check.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      while (tester.takeException() != null) {
+        // drained
+      }
+      await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
+    }, skip: !runGoldens);
+  }
+}
+
+/// Forces the schedule time-grid toggle on for the seeded plate.
+class _ScheduleGridOn extends ScheduleTimeGridNotifier {
+  @override
+  Future<bool> build() async => true;
+}
+
+/// The time-aligned schedule grid, SEEDED: a throwaway DB with two cohorts and
+/// an afternoon of blocks on TODAY (so the screen's default date matches), the
+/// toggle forced on, rendered at a matrix width. Never touches the shared
+/// `_db`.
+void _scheduleGridPlate(String name, Size size) {
+  for (final mode in const ['light', 'dark']) {
+    testWidgets('$name - $mode', (tester) async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      await db.createMigrator().createAll();
+      const stamp = '2026-06-17T08:00:00Z';
+      await db.into(db.spaces).insert(SpacesCompanion.insert(
+            id: 'sp1',
+            name: 'Sunny Days Program',
+            settings: '{}',
+            capabilities: '{}',
+            createdAt: stamp,
+            updatedAt: stamp,
+          ));
+      await db.into(db.members).insert(MembersCompanion.insert(
+            id: 'm1',
+            displayName: 'Maya Okonkwo',
+            role: 'director',
+            capabilities: '{}',
+            createdAt: stamp,
+            updatedAt: stamp,
+            spaceId: const Value('sp1'),
+          ));
+      for (final (id, cname, age) in const [
+        ('g1', 'Sparrows', 'Ages 4–5'),
+        ('g2', 'Robins', 'Ages 6–7'),
+      ]) {
+        await db.into(db.groups).insert(GroupsCompanion.insert(
+              id: id,
+              spaceId: 'sp1',
+              name: cname,
+              capabilities: '{}',
+              createdAt: stamp,
+              updatedAt: stamp,
+              ageRange: Value(age),
+            ));
+      }
+      final n = DateTime.now();
+      final day = DateTime(n.year, n.month, n.day);
+      final date = isoDateLocal(day);
+      String iso(int h, int m) =>
+          DateTime(day.year, day.month, day.day, h, m).toIso8601String();
+      Future<void> blk(String id, String gid, int sh, int sm, int eh, int em,
+              String title, String kind) =>
+          db.into(db.scheduleBlocks).insert(ScheduleBlocksCompanion.insert(
+                id: id,
+                spaceId: 'sp1',
+                groupId: gid,
+                date: date,
+                startAt: iso(sh, sm),
+                endAt: iso(eh, em),
+                kind: kind,
+                createdAt: stamp,
+                updatedAt: stamp,
+                title: Value(title),
+                status: const Value('planned'),
+              ));
+      await blk('b1', 'g1', 15, 0, 15, 30, 'Snack', 'break');
+      await blk('b2', 'g1', 15, 30, 16, 30, 'Outdoor play', 'on_site');
+      await blk('b3', 'g1', 16, 30, 17, 30, 'Art studio', 'on_site');
+      await blk('b4', 'g2', 15, 0, 16, 0, 'Homework help', 'on_site');
+      await blk('b5', 'g2', 16, 0, 16, 30, 'Snack', 'break');
+      await blk('b6', 'g2', 16, 30, 17, 30, 'STEM lab', 'on_site');
+
+      final m = await (db.select(db.members)..where((t) => t.id.equals('m1')))
+          .getSingle();
+      final s = await (db.select(db.spaces)..where((t) => t.id.equals('sp1')))
+          .getSingle();
+      final viewer = Viewer(member: m, space: s);
+
+      await tester.binding.setSurfaceSize(size);
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWith((ref) => db),
+          viewerProvider.overrideWithValue(viewer),
+          liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
+          omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
+          scheduleTimeGridProvider.overrideWith(_ScheduleGridOn.new),
+          momentsForBlockProvider('blk-demo')
+              .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+          capturesProvider(CaptureFilter.open).overrideWith(
+              (_) => Stream<List<Capture>>.value(const <Capture>[])),
+          tasksProvider(TaskFilter.open)
+              .overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+        ],
+        child: _app(mode, _shellRouter(const ScheduleScreen())),
+      ));
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('../../gallery/${name}__$mode.png'),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      while (tester.takeException() != null) {
+        // drained
+      }
+      await db.close().timeout(const Duration(seconds: 5), onTimeout: () {});
     }, skip: !runGoldens);
   }
 }
