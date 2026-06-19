@@ -756,6 +756,31 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Recap
+**Path**: `lib/features/recap/`
+**Purpose**: Staff compose and send each family a daily recap — the room's shared day plus that child's own moments (hero name, question answer) — in one tap at the end of the session.
+**Personas served**: All staff (Jordan, Coach Sam, Brianna — compose side; Maya — director oversight), Lauren, Devon (family receive side via Family Today).
+**Discovery surfaces**:
+- Routes: `/recap` (`RecapComposerScreen`; optional `?group=` query param selects the starting cohort). Gated at the discovery layer by `recapEnabledProvider`.
+- Omnibox: yes — `page.recap` "Today's recap" (subtitle "Send each family their child's day"; keywords: recap, parent recap, daily recap, send home, send to families, what we did today, share with parents, digest, newsletter). **Toggle-gated** (`recapEnabledProvider`) + guardian-gated off (`viewer is! GuardianViewer`).
+- Slash: none (mirrors the Daily pattern — a static slash list can't honor the toggle).
+- Drawer: no — reached via the Brain Breaks deck's "Today's recap" card (slotted in when the toggle is on) or the omnibox.
+- Settings: yes — "Daily parent recap" switch in Preferences (`_RecapTile`, off by default).
+**Capabilities**: None beyond staff-only. `recapEnabledProvider` (SharedPreferences toggle) is the gate; all signed-in staff can compose once the director enables it.
+**Data**: Writes [entries](SCHEMA.md#entries) `kind='recap'` — one row **per child** (`subject_id` set, `group_id` set); `details` JSON = `{date, activities[], question?, moment?, child:{name, hero?, answer?}}`. Each child's row is scrubbed of every other enrolled child's name at compose time (`recapDetailsForChild` + `scrubOtherNames`). `EntryActions.recordRecap` upserts by (subject, kind=recap, date) so re-sends overwrite rather than duplicate. Family-side read rides the existing `familyEntriesForSubjectProvider` (`kind=recap`) — no new family-lens plumbing.
+**Surfaces**:
+- *Recap composer screen* — `lib/features/recap/recap_composer_screen.dart`. `/recap`; staff see the room's shared day (activity chips + today's question pulled from `recapDraftProvider`) + an optional "a moment" free-text field + a per-child preview (hero name + their answer, or "Today's room day"). "Send to N families" FilledButton writes one scrubbed entry per child. Loading / empty / error states.
+- *Recap model* — `lib/features/recap/recap_model.dart`. `RecapChildInput` (per-child compose payload), `recapDetailsForChild` (pure builder — scrubs other names, returns the stored `details` map), `RecapView` (parser for family-side render — tolerant of missing keys).
+- *Recap providers* — `lib/features/recap/recap_providers.dart`. `RecapDraft` + `RecapKey` typedef; `recapDraftProvider` (FutureProvider.autoDispose.family keyed on `(groupId, date)` — assembles activities from the schedule, today's question from the Daily, and each child's hero + question answer).
+- *Recap setting* — `lib/features/recap/recap_setting.dart`. `recapEnabledProvider` (`AsyncNotifierProvider<bool>`, default `false`, persisted in SharedPreferences key `settings.recap_enabled`).
+- *Brain Breaks deck card* — `lib/features/activity_runtime/brain_breaks_screen.dart`. "Today's recap" card (tagline "Send each family the day"; icon `Icons.send_outlined`; color `ActivityPalette.cyan`; route `/recap`). Slotted in when `recapOn` is true.
+- *Family Today peek* — `_TodaysRecapPeek` in `lib/features/family/family_today_screen.dart`. Reads `familyEntriesForSubjectProvider` filtered to `kind=recap`; renders the room's activity chips + the day's question + the child's own moments (hero, answer) on the guardian's Family Today screen. Renders nothing until staff send today's recap — no empty state shown to family.
+**Depends on**: Entries (`EntryActions.recordRecap`, `EntryKind.recap`), Schedule (`scheduleDayForGroupProvider` — activities), Daily (`todaysDailyProvider` — today's question), Heroes (`heroForSubjectProvider` data pulled inline in `recapDraftProvider` via `entriesDao.watchForSubject(kind: hero)`), Subjects (`subjectsInGroupProvider` — per-child roster), Action Words (`scrubOtherNames` imported from `summer_book.dart`).
+**Consumed by**: Family (`_TodaysRecapPeek` on Family Today reads entries of `kind='recap'`).
+**Last verified**: 2026-06-19
+
+---
+
 ## Review
 **Path**: `lib/features/review/`
 **Purpose**: Guided reflection — weekly (one-question-per-page walk) and yearly (annual re-grounding).
