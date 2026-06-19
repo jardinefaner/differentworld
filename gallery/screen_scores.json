@@ -1006,6 +1006,20 @@
     "deductions": []
   },
   {
+    "name": "role_game",
+    "cls": "RoleGameScreen",
+    "file": "lib/features/heroes/role_game_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8651106953620911,
+    "dead": 0.85,
+    "solid": 0,
+    "states": 1,
+    "low_contrast_evidence": 15,
+    "deductions": []
+  },
+  {
     "name": "roles",
     "cls": "RolesScreen",
     "file": "lib/features/settings/roles_screen.dart",

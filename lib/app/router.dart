@@ -85,6 +85,7 @@ import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/heroes/hero_creator_screen.dart';
 import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
 import 'package:differentworld/features/heroes/role_deck_screen.dart';
+import 'package:differentworld/features/heroes/role_game_screen.dart';
 import 'package:differentworld/features/incidents/incident_form_screen.dart';
 import 'package:differentworld/features/incidents/incidents_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
@@ -1152,6 +1153,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/deck',
             builder: (_, _) => const RoleDeckScreen(),
+          ),
+          // The role battle — a host-present card game with the roles
+          // (docs/VISION.md 2026-06-19). Opt-in with Heroes.
+          GoRoute(
+            path: '/deck/play',
+            builder: (_, _) => const RoleGameScreen(),
           ),
           // Routines — the kid-legible read of the day (docs/VISION.md
           // 2026-06-19). Surfaced only when routinesEnabledProvider is on.

@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-98 screens scored · worst-first · `tool/score_screens.py`
+99 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **99.4** · minor work: 1 · ship-confident: 97
+Average: **99.4** · minor work: 1 · ship-confident: 98
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -75,6 +75,7 @@ Average: **99.4** · minor work: 1 · ship-confident: 97
 | 100 | ship-confident | `reflection_session` | — |
 | 100 | ship-confident | `role_cards` | — |
 | 100 | ship-confident | `role_deck` | — |
+| 100 | ship-confident | `role_game` | — |
 | 100 | ship-confident | `roles` | — |
 | 100 | ship-confident | `routines` | — |
 | 100 | ship-confident | `schedule` | — |

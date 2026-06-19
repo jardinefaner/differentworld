@@ -23,6 +23,13 @@ class RoleDeckScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
     return EdgeScaffold(
+      actions: [
+        IconButton(
+          tooltip: 'Play a battle',
+          icon: const Icon(Icons.casino_outlined),
+          onPressed: () => context.push('/deck/play'),
+        ),
+      ],
       body: SafeArea(
         child: subjectsAsync.when(
           loading: () => const LoadingSlot(),
