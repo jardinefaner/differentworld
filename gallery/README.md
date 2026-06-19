@@ -185,6 +185,7 @@ the full-screen chrome renders for real, both themes.
 | EdgeScaffold | [edge_scaffold.dart] | one screen's scaffold + its floating chrome pills | ✅ | [light](organisms/edge_scaffold__light.png) · [dark](organisms/edge_scaffold__dark.png) |
 | AppShell | [app_shell.dart] | the persistent frame — chrome + live strip + omnibox bar (seeded router) | ✅ | [light](organisms/app_shell__light.png) · [dark](organisms/app_shell__dark.png) |
 | MainDrawer | [main_drawer.dart] | hamburger drawer — profile + nav spine + groups | ✅ | [light](organisms/main_drawer__light.png) · [dark](organisms/main_drawer__dark.png) |
+| GuardianDrawer | [guardian_drawer.dart] | the family-side hamburger — Today + each child + Messages + Display | ✅ | [light](organisms/guardian_drawer__light.png) · [dark](organisms/guardian_drawer__dark.png) |
 | DesktopNavRail | [desktop_nav_rail.dart] | persistent 240dp left nav column | ✅ | [light](organisms/desktop_nav_rail__light.png) · [dark](organisms/desktop_nav_rail__dark.png) |
 | LiveBlockStrip | [live_block_strip.dart] | "LIVE · {block}" strip, breathing dot (fixed-pump) | ✅ | [light](organisms/live_block_strip__light.png) · [dark](organisms/live_block_strip__dark.png) |
 
@@ -285,6 +286,7 @@ GlassSheetScope.
 [edge_scaffold.dart]: ../lib/shared/widgets/edge_scaffold.dart
 [bento_grid.dart]: ../lib/shared/widgets/bento_grid.dart
 [main_drawer.dart]: ../lib/shared/widgets/main_drawer.dart
+[guardian_drawer.dart]: ../lib/features/family/guardian_drawer.dart
 [desktop_nav_rail.dart]: ../lib/shared/widgets/desktop_nav_rail.dart
 [live_block_strip.dart]: ../lib/shared/widgets/live_block_strip.dart
 [bottom_omnibox_bar.dart]: ../lib/features/omnibox/bottom_omnibox_bar.dart

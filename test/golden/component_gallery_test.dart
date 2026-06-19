@@ -11,6 +11,8 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/family/family_providers.dart';
+import 'package:differentworld/features/family/guardian_drawer.dart';
 import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
@@ -115,6 +117,8 @@ Future<void> _noopStr(String _) async {}
 /// (Observations, Program, Vehicles) renders.
 late final AppDatabase _organismDb;
 late final Viewer _seededViewer;
+late final GuardianViewer _guardianViewer;
+late final List<Subject> _guardianKids;
 
 /// A block "live right now" so the LiveBlockStrip + AppShell plates show
 /// the strip instead of its zero-height collapsed (nothing-live) state.
@@ -190,6 +194,44 @@ void main() {
           ..where((t) => t.id.equals('sp1')))
         .getSingle();
     _seededViewer = Viewer(member: m, space: s);
+
+    // A guardian + their two children, for the GuardianDrawer plate.
+    await _organismDb.into(_organismDb.guardians).insert(
+          GuardiansCompanion.insert(
+            id: 'gd1',
+            spaceId: 'sp1',
+            name: 'Lauren Reyes',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+    for (final (id, first, last) in const [
+      ('s1', 'Sofia', 'Reyes'),
+      ('s2', 'Mateo', 'Reyes'),
+    ]) {
+      await _organismDb.into(_organismDb.subjects).insert(
+            SubjectsCompanion.insert(
+              id: id,
+              spaceId: 'sp1',
+              firstName: first,
+              lastName: last,
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+    }
+    final gd = await (_organismDb.select(_organismDb.guardians)
+          ..where((t) => t.id.equals('gd1')))
+        .getSingle();
+    _guardianKids = await (_organismDb.select(_organismDb.subjects)
+          ..where((t) => t.spaceId.equals('sp1')))
+        .get();
+    _guardianViewer = GuardianViewer(
+      guardian: gd,
+      childSubjectIds: const ['s1', 's2'],
+      space: s,
+    );
   });
 
   tearDownAll(() async {
@@ -1095,6 +1137,47 @@ void main() {
               ),
             ],
           ),
+        ),
+      ),
+    ),
+  );
+
+  // GuardianDrawer: the family-side hamburger — guardian destinations only
+  // (Today / each child / Messages / Display). Rendered under a minimal
+  // GoRouter because the drawer reads the current location for its "Today"
+  // highlight.
+  _scenePlate(
+    'organisms/guardian_drawer',
+    width: 360,
+    height: 720,
+    tree: (theme) => ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWith((ref) => _organismDb),
+        viewerProvider.overrideWithValue(_guardianViewer),
+        familyChildrenProvider.overrideWith((ref) => _guardianKids),
+      ],
+      child: MaterialApp.router(
+        theme: theme,
+        debugShowCheckedModeBanner: false,
+        routerConfig: GoRouter(
+          initialLocation: '/',
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (_, _) => Scaffold(
+                body: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _glassBackdrop(),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: GuardianDrawer(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
