@@ -47,6 +47,14 @@ const List<HeroPick> heroAnimals = <HeroPick>[
   HeroPick('dolphin', 'Dolphin', '🐬'),
   HeroPick('dragon', 'Dragon', '🐲'),
   HeroPick('tiger', 'Tiger', '🐯'),
+  HeroPick('whale', 'Whale', '🐳'),
+  HeroPick('ant', 'Ant', '🐜'),
+  HeroPick('octopus', 'Octopus', '🐙'),
+  HeroPick('bee', 'Bee', '🐝'),
+  HeroPick('penguin', 'Penguin', '🐧'),
+  HeroPick('elephant', 'Elephant', '🐘'),
+  HeroPick('frog', 'Frog', '🐸'),
+  HeroPick('horse', 'Horse', '🐴'),
 ];
 
 /// The skin (look) of the animal.

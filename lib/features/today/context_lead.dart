@@ -246,15 +246,24 @@ ContextLead? computeContextLead({
       return ContextLead(
         eyebrow: 'RIGHT NOW',
         title: 'Program time',
-        line: 'Nothing scheduled right now.',
+        line: 'Nothing scheduled — want something to do?',
         icon: Icons.bolt_outlined,
         tone: ContextTone.calm,
+        // Downtime / transition is exactly when a teacher asks "what now?" —
+        // so the lead move is an ACTIVITY, one tap away (docs/VISION.md
+        // 2026-06-19: "if there's downtime and you want an activity, it's
+        // here"). Capture / Schedule / Insights drop to the secondary moves.
         primary: const ContextMove(
-          icon: Icons.bolt_outlined,
-          label: 'Capture a moment',
-          route: '/captures/new',
+          icon: Icons.auto_awesome_outlined,
+          label: 'Pick an activity',
+          route: '/breaks',
         ),
         more: [
+          const ContextMove(
+            icon: Icons.bolt_outlined,
+            label: 'Capture a moment',
+            route: '/captures/new',
+          ),
           const ContextMove(
             icon: Icons.event_note_outlined,
             label: 'Schedule',

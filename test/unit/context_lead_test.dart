@@ -138,15 +138,21 @@ void main() {
       expect(lead.primary.route, '/pickup');
     });
 
-    test('program time with no live block is the no-schedule fallback', () {
+    test('downtime (no live block) leads with an activity', () {
       final lead = computeContextLead(
         isLogger: true,
         phase: DayPhase.program,
         kidsLabel: 'kids',
       );
-      expect(lead!.primary.route, '/captures/new');
-      // Non-director: schedule only (one chip).
-      expect(lead.more.single.route, '/schedule');
+      // A teacher's "what now?" in a gap → an activity is the lead move
+      // ("if you want an activity, it's here"); capture + schedule drop to
+      // the secondary moves.
+      expect(lead!.primary.route, '/breaks');
+      expect(lead.primary.label, 'Pick an activity');
+      expect(
+        lead.more.map((m) => m.route),
+        containsAll(<String>['/captures/new', '/schedule']),
+      );
     });
 
     test('program-gap gives a director Insights as a second chip', () {
