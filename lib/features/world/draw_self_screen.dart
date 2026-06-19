@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
+import 'package:differentworld/shared/widgets/drawing_pad.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
 
@@ -17,6 +16,11 @@ import 'package:image_picker/image_picker.dart' show XFile;
 /// chrome) and pins the locked route so a stray system-back / browser-back
 /// can't drift the kid into staff screens. The only ways out are the visible
 /// **Cancel** and **Done** controls — both staff-and-kid legible.
+///
+/// The drawing surface + tools + rasterise are the shared [DrawingController] /
+/// [DrawingSurface] / [DrawingTools] (lib/shared/widgets/drawing_pad.dart), so
+/// this screen and the Heroes pad draw with one engine. What's LOCAL here is the
+/// kid-mode lockdown + the kid-legible top/done chrome.
 ///
 /// On Done the canvas is rasterised (RepaintBoundary → PNG) and saved as the
 /// world-self avatar via `CharacterSheetActions.setDrawnAvatar` — which routes
@@ -49,17 +53,15 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
   // caches for the same reason.
   late final KidMode _kidMode;
   late final KidModeLockedRoute _lockedRoute;
-  final GlobalKey _canvasKey = GlobalKey();
-  final List<_Stroke> _strokes = <_Stroke>[];
-  _Stroke? _active;
-  Color _color = _palette.first;
-  double _width = _widths[1];
+  final DrawingController _controller = DrawingController();
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // The kid-legible chrome (undo/clear/done enablement) reflects the drawing.
+    _controller.addListener(_onChange);
     // Cache the notifiers now (a plain read in initState is safe). The .enter()
     // WRITE still defers to a microtask: a sync write during the parent route's
     // build trips Riverpod's "modified during build" assertion (AppShell
@@ -82,6 +84,10 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     );
   }
 
+  void _onChange() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
@@ -95,6 +101,9 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controller
+      ..removeListener(_onChange)
+      ..dispose();
     // Idempotent belt-and-suspenders — the exit paths already clear these
     // before popping (see _leaveKidMode); this covers an OS-forced teardown.
     _kidMode.exit();
@@ -111,45 +120,8 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     ref.read(kidModeLockedRouteProvider.notifier).pin(null);
   }
 
-  void _startStroke(Offset p) {
-    setState(() {
-      _active = _Stroke(color: _color, width: _width, points: <Offset>[p]);
-    });
-  }
-
-  void _extendStroke(Offset p) {
-    final active = _active;
-    if (active == null) return;
-    setState(() => active.points.add(p));
-  }
-
-  void _endStroke() {
-    final active = _active;
-    if (active == null) return;
-    setState(() {
-      _strokes.add(active);
-      _active = null;
-    });
-  }
-
-  void _undo() {
-    if (_strokes.isEmpty) return;
-    _strokes.removeLast();
-    setState(() {});
-  }
-
-  void _clear() {
-    if (_strokes.isEmpty && _active == null) return;
-    setState(() {
-      _strokes.clear();
-      _active = null;
-    });
-  }
-
-  bool get _hasDrawing => _strokes.isNotEmpty;
-
   Future<void> _save() async {
-    if (_saving || !_hasDrawing) return;
+    if (_saving || !_controller.hasDrawing) return;
     setState(() => _saving = true);
     // Capture cross-pop-safe handles BEFORE any await — popping deactivates
     // this element's context (interaction invariant #3).
@@ -159,7 +131,7 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     final pixelRatio = MediaQuery.devicePixelRatioOf(context);
 
     try {
-      final png = await _rasterize(pixelRatio);
+      final png = await _controller.rasterize(pixelRatio);
       if (png == null) {
         throw StateError('Could not capture the drawing.');
       }
@@ -202,28 +174,13 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     }
   }
 
-  Future<Uint8List?> _rasterize(double pixelRatio) async {
-    final boundary =
-        _canvasKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-    if (boundary == null) return null;
-    // Cap the raster scale — uploadAndPersist re-encodes to ≤1024px JPEG
-    // anyway, and a huge pixelRatio on a big tablet is wasted work.
-    final scale = pixelRatio.clamp(1.0, 3.0);
-    final image = await boundary.toImage(pixelRatio: scale);
-    try {
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      return data?.buffer.asUint8List();
-    } finally {
-      image.dispose();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final name = widget.displayName?.trim();
     final title = (name != null && name.isNotEmpty)
         ? 'Draw yourself, $name!'
         : 'Draw yourself!';
+    final hasDrawing = _controller.hasDrawing;
     // Intentionally a RAW Scaffold, not EdgeScaffold — this is a full-bleed
     // kid surface. Kid mode strips AppShell's omnibox + chrome, and this
     // screen draws its own top bar + tools. Switching to EdgeScaffold would
@@ -245,7 +202,6 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
             children: [
               _TopBar(
                 title: title,
-                canEdit: _hasDrawing && !_saving,
                 onCancel: _saving
                     ? null
                     : () {
@@ -254,8 +210,8 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
                         // system back is the thing we block, not the controls.
                         Navigator.of(context).pop();
                       },
-                onUndo: _strokes.isNotEmpty && !_saving ? _undo : null,
-                onClear: _hasDrawing && !_saving ? _clear : null,
+                onUndo: _controller.canUndo && !_saving ? _controller.undo : null,
+                onClear: hasDrawing && !_saving ? _controller.clear : null,
               ),
               Expanded(
                 child: Center(
@@ -263,29 +219,14 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
                     padding: const EdgeInsets.all(16),
                     child: AspectRatio(
                       aspectRatio: 1,
-                      child: _Canvas(
-                        canvasKey: _canvasKey,
-                        strokes: _strokes,
-                        active: _active,
-                        onStart: _startStroke,
-                        onUpdate: _extendStroke,
-                        onEnd: _endStroke,
-                      ),
+                      child: DrawingSurface(controller: _controller),
                     ),
                   ),
                 ),
               ),
-              _Tools(
-                palette: _palette,
-                widths: _widths,
-                color: _color,
-                width: _width,
-                enabled: !_saving,
-                onColor: (c) => setState(() => _color = c),
-                onWidth: (w) => setState(() => _width = w),
-              ),
+              DrawingTools(controller: _controller, enabled: !_saving),
               _DoneBar(
-                enabled: _hasDrawing && !_saving,
+                enabled: hasDrawing && !_saving,
                 saving: _saving,
                 onDone: () => unawaited(_save()),
               ),
@@ -297,121 +238,17 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
   }
 }
 
-// ── the canvas ──────────────────────────────────────────────────────────────
-
-class _Canvas extends StatelessWidget {
-  const _Canvas({
-    required this.canvasKey,
-    required this.strokes,
-    required this.active,
-    required this.onStart,
-    required this.onUpdate,
-    required this.onEnd,
-  });
-
-  final GlobalKey canvasKey;
-  final List<_Stroke> strokes;
-  final _Stroke? active;
-  final ValueChanged<Offset> onStart;
-  final ValueChanged<Offset> onUpdate;
-  final VoidCallback onEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    // RepaintBoundary serves double duty: it isolates the canvas' repaints
-    // from the rest of the screen AND is what we rasterise on Done.
-    return RepaintBoundary(
-      key: canvasKey,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: GestureDetector(
-          onPanStart: (d) => onStart(d.localPosition),
-          onPanUpdate: (d) => onUpdate(d.localPosition),
-          onPanEnd: (_) => onEnd(),
-          child: CustomPaint(
-            painter: _DrawingPainter(strokes: strokes, active: active),
-            // A finite size so the paint area fills the square; AspectRatio
-            // already bounds it.
-            child: const SizedBox.expand(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DrawingPainter extends CustomPainter {
-  _DrawingPainter({required this.strokes, required this.active});
-
-  final List<_Stroke> strokes;
-  final _Stroke? active;
-
-  // Warm paper. MUST be opaque: uploadAndPersist re-encodes to JPEG, which has
-  // no alpha — a transparent background would otherwise composite to black.
-  static const Color _paper = Color(0xFFFFFDF7);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = _paper);
-    for (final stroke in strokes) {
-      _paintStroke(canvas, stroke);
-    }
-    final a = active;
-    if (a != null) _paintStroke(canvas, a);
-  }
-
-  void _paintStroke(Canvas canvas, _Stroke stroke) {
-    final paint = Paint()
-      ..color = stroke.color
-      ..strokeWidth = stroke.width
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-    final points = stroke.points;
-    if (points.isEmpty) return;
-    if (points.length == 1) {
-      // A tap = a dot. Draw a filled circle so it isn't invisible.
-      canvas.drawCircle(
-        points.first,
-        stroke.width / 2,
-        Paint()..color = stroke.color,
-      );
-      return;
-    }
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (var i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(_DrawingPainter old) =>
-      old.strokes != strokes ||
-      old.active != active ||
-      old.active?.points.length != active?.points.length;
-}
-
-class _Stroke {
-  _Stroke({required this.color, required this.width, required this.points});
-  final Color color;
-  final double width;
-  final List<Offset> points;
-}
-
-// ── chrome ───────────────────────────────────────────────────────────────────
+// ── chrome (kid-legible; the drawing engine lives in drawing_pad.dart) ────────
 
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.title,
-    required this.canEdit,
     required this.onCancel,
     required this.onUndo,
     required this.onClear,
   });
 
   final String title;
-  final bool canEdit;
   final VoidCallback? onCancel;
   final VoidCallback? onUndo;
   final VoidCallback? onClear;
@@ -457,118 +294,6 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _Tools extends StatelessWidget {
-  const _Tools({
-    required this.palette,
-    required this.widths,
-    required this.color,
-    required this.width,
-    required this.enabled,
-    required this.onColor,
-    required this.onWidth,
-  });
-
-  final List<Color> palette;
-  final List<double> widths;
-  final Color color;
-  final double width;
-  final bool enabled;
-  final ValueChanged<Color> onColor;
-  final ValueChanged<double> onWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Column(
-        children: [
-          // Colors.
-          SizedBox(
-            height: 52,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              itemCount: palette.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (_, i) {
-                final c = palette[i];
-                final selected = c == color;
-                // The last swatch is paper-coloured — it erases against the
-                // paper. Name it so VoiceOver doesn't read "Color 10".
-                final isErase = i == palette.length - 1;
-                return Semantics(
-                  label: isErase ? 'Erase' : 'Color ${i + 1}',
-                  selected: selected,
-                  button: true,
-                  // 48 dp hit target (rubric E1); 44 dp visible circle inside.
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: enabled ? () => onColor(c) : null,
-                    child: SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Center(
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: c,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: selected ? Colors.white : Colors.white24,
-                              width: selected ? 4 : 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Brush thickness.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (final w in widths) ...[
-                Semantics(
-                  label: 'Brush size ${widths.indexOf(w) + 1}',
-                  selected: w == width,
-                  button: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: enabled ? () => onWidth(w) : null,
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: w == width ? Colors.white24 : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Container(
-                        width: w + 6,
-                        height: w + 6,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DoneBar extends StatelessWidget {
   const _DoneBar({
     required this.enabled,
@@ -605,19 +330,3 @@ class _DoneBar extends StatelessWidget {
     );
   }
 }
-
-// Fat, bold, kid-legible. White last (an "eraser" against the warm paper).
-const List<Color> _palette = <Color>[
-  Color(0xFF1A1A1A), // near-black
-  Color(0xFFE53935), // red
-  Color(0xFFFB8C00), // orange
-  Color(0xFFFDD835), // yellow
-  Color(0xFF43A047), // green
-  Color(0xFF1E88E5), // blue
-  Color(0xFF8E24AA), // purple
-  Color(0xFF6D4C41), // brown
-  Color(0xFFEC407A), // pink
-  Color(0xFFFFFDF7), // paper (erase)
-];
-
-const List<double> _widths = <double>[6, 12, 22];

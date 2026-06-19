@@ -7,6 +7,8 @@ import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
+import 'package:differentworld/shared/widgets/drawing_pad.dart'
+    show showDrawingPad;
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -117,6 +119,24 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
     } finally {
       if (mounted) setState(() => _picking = false);
     }
+  }
+
+  /// Draw the hero on the device — host-present, no paper needed. The pad
+  /// returns a PNG XFile (the same shape the photo pickers return), so it joins
+  /// the existing upload path with no special-casing.
+  Future<void> _drawHero() async {
+    final drawn = await showDrawingPad(
+      context,
+      title: 'Draw your hero',
+      doneLabel: "That's it!",
+    );
+    if (drawn == null || !mounted) return;
+    final bytes = await drawn.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _drawingPhoto = drawn;
+      _drawingBytes = bytes;
+    });
   }
 
   Future<void> _save() async {
@@ -385,34 +405,50 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
         ],
       );
     }
-    return Row(
+    // Draw on the device is the host-present hero; snap / choose a photo of
+    // paper stay as alternatives below it.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (isMobileCapturePlatform) ...[
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _picking
-                  ? null
-                  : () => unawaited(_pickDrawing(ImageSource.camera)),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
+        OutlinedButton.icon(
+          onPressed: _picking ? null : () => unawaited(_drawHero()),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+          ),
+          icon: const Icon(Icons.brush_outlined),
+          label: const Text('Draw it here'),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            if (isMobileCapturePlatform) ...[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _picking
+                      ? null
+                      : () => unawaited(_pickDrawing(ImageSource.camera)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  icon: const Icon(Icons.photo_camera_outlined),
+                  label: const Text('Snap it'),
+                ),
               ),
-              icon: const Icon(Icons.photo_camera_outlined),
-              label: const Text('Snap it'),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _picking
+                    ? null
+                    : () => unawaited(_pickDrawing(ImageSource.gallery)),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                ),
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Choose'),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-        ],
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _picking
-                ? null
-                : () => unawaited(_pickDrawing(ImageSource.gallery)),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
-            ),
-            icon: const Icon(Icons.photo_library_outlined),
-            label: const Text('Choose'),
-          ),
+          ],
         ),
       ],
     );
