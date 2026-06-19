@@ -5,6 +5,8 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/heroes/hero_catalog.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/recap/recap_model.dart'
+    show RecapChildInput, recapDetailsForChild;
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rxdart/rxdart.dart';
@@ -137,6 +139,12 @@ class EntryKind {
   /// → the room answered together. ACCUMULATIVE — one row per answer, the
   /// transcript that becomes the record ("document the now").
   static const String dailyResponse = 'daily_response';
+
+  /// The **daily parent recap** — the room's shared day + this child's own
+  /// moments, sent home to their family. One row PER CHILD (subject_id set), so
+  /// it rides the existing per-subject family path; each copy is scrubbed of
+  /// other children's names before it's stored. See lib/features/recap/.
+  static const String recap = 'recap';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -544,6 +552,73 @@ class EntryActions {
       }
     }
     return entryId;
+  }
+
+  /// Send the **daily parent recap** for a room (docs/VISION.md 2026-06-19):
+  /// one entry PER CHILD, each carrying the room's shared day + that child's own
+  /// moments, scrubbed of every other child's name. UPSERTS by (subject, recap,
+  /// date) so re-sending the same day updates in place instead of duplicating.
+  Future<void> recordRecap({
+    required String groupId,
+    required String date,
+    required List<String> activities,
+    required List<RecapChildInput> children,
+    String? question,
+    String? momentNote,
+  }) async {
+    if (children.isEmpty) return;
+    final db = await _ref.read(appDatabaseProvider.future);
+    // The full roster name pool — each child's copy scrubs everyone else's.
+    final pool = <String>{for (final c in children) ...c.ownNames};
+    for (final child in children) {
+      final others = pool.difference(child.ownNames);
+      final details = jsonEncode(
+        recapDetailsForChild(
+          date: date,
+          activities: activities,
+          question: question,
+          momentNote: momentNote,
+          child: child,
+          otherNames: others,
+        ),
+      );
+      // Upsert by (subject, recap, date): find this child's recap row for today.
+      final existing = await db.entriesDao
+          .watchForSubject(
+            subjectId: child.subjectId,
+            kind: EntryKind.recap,
+            limit: 30,
+          )
+          .first;
+      Entry? match;
+      for (final e in existing) {
+        if (_recapDateOf(e) == date) {
+          match = e;
+          break;
+        }
+      }
+      if (match != null) {
+        await db.entriesDao.updateDetails(id: match.id, detailsJson: details);
+      } else {
+        await _create(
+          kind: EntryKind.recap,
+          subjectId: child.subjectId,
+          groupId: groupId,
+          detailsJson: details,
+        );
+      }
+    }
+  }
+
+  /// The `date` stored in a recap entry's details (empty if unparseable).
+  String _recapDateOf(Entry e) {
+    try {
+      final d = jsonDecode(e.details);
+      if (d is Map && d['date'] is String) return d['date'] as String;
+    } on Object {
+      // A malformed row just won't match — never throws into the upsert.
+    }
+    return '';
   }
 
   Future<String> _create({

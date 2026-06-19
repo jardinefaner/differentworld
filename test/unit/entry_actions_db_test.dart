@@ -14,6 +14,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/heroes/hero_catalog.dart';
+import 'package:differentworld/features/recap/recap_model.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -340,5 +341,54 @@ void main() {
         .first;
     expect(atts, hasLength(1));
     expect(atts.single.id, 'DR1');
+  });
+
+  test('recordRecap writes one recap entry per child; re-send upserts', () async {
+    final actions = container.read(entryActionsProvider);
+    Future<List<Entry>> recapsFor(String subjectId) => db.entriesDao
+        .watchForSubject(
+          subjectId: subjectId,
+          kind: EntryKind.recap,
+          limit: 10,
+        )
+        .first;
+
+    await actions.recordRecap(
+      groupId: 'g1',
+      date: '2026-06-19',
+      activities: const ['PE', 'Potions'],
+      question: 'What is happiness?',
+      momentNote: 'We brewed potions',
+      children: const [
+        RecapChildInput(
+          subjectId: 's1',
+          firstName: 'Maya',
+          ownNames: {'Maya'},
+          answer: 'When we share',
+        ),
+        RecapChildInput(subjectId: 's2', firstName: 'Ari', ownNames: {'Ari'}),
+      ],
+    );
+
+    // One recap row per child, each subject-scoped (rides the family path).
+    expect(await recapsFor('s1'), hasLength(1));
+    expect(await recapsFor('s2'), hasLength(1));
+    final maya = (await recapsFor('s1')).single;
+    expect(maya.subjectId, 's1');
+    expect(maya.kind, EntryKind.recap);
+    expect(maya.details, contains('When we share'));
+
+    // Re-sending the SAME day updates in place — no duplicate.
+    await actions.recordRecap(
+      groupId: 'g1',
+      date: '2026-06-19',
+      activities: const ['PE', 'Potions', 'Letters'],
+      children: const [
+        RecapChildInput(subjectId: 's1', firstName: 'Maya', ownNames: {'Maya'}),
+      ],
+    );
+    final after = await recapsFor('s1');
+    expect(after, hasLength(1), reason: 'same-day re-send upserts');
+    expect(after.single.details, contains('Letters'));
   });
 }
