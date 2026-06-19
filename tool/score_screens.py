@@ -76,6 +76,30 @@ def build_registry():
         f = cls_file.get(cls)
         if f:
             reg[name] = (f, cls)
+    # Plates rendered by bespoke SEEDED helpers (_bentoPlate / _scheduleGridPlate
+    # / _rosterPlate) don't pass a `const Screen(` the regex can bind to — so
+    # without this the audit SILENTLY skips them and the average excludes them.
+    # Map each to the source worth scoring (the new widget, not the host screen
+    # for the schedule grid).
+    extra = {
+        "today_bento": (
+            "lib/features/today/today_bento_screen.dart", "TodayBentoScreen"),
+        "today_bento_wide": (
+            "lib/features/today/today_bento_screen.dart", "TodayBentoScreen"),
+        # The grid is a WIDGET rendered inside ScheduleScreen (which owns the
+        # EdgeScaffold + header), so score the host for structure — the grid's
+        # own theme-cleanliness is covered by the diff-scoped guard.
+        "schedule_time_grid": (
+            "lib/features/schedule/schedule_screen.dart", "ScheduleScreen"),
+        "group_detail": (
+            "lib/features/groups/group_detail_screen.dart", "GroupDetailScreen"),
+        "subject_detail": (
+            "lib/features/subjects/subject_detail_screen.dart",
+            "SubjectDetailScreen"),
+    }
+    for name, (f, cls) in extra.items():
+        if name not in reg and os.path.exists(f):
+            reg[name] = (f, cls)
     return reg
 
 

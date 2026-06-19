@@ -537,6 +537,20 @@
     "deductions": []
   },
   {
+    "name": "group_detail",
+    "cls": "GroupDetailScreen",
+    "file": "lib/features/groups/group_detail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8523581624031067,
+    "dead": 0.75,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 47,
+    "deductions": []
+  },
+  {
     "name": "group_discussion",
     "cls": "GroupDiscussionScreen",
     "file": "lib/features/activity_runtime/discussions_screen.dart",
@@ -943,6 +957,20 @@
     "deductions": []
   },
   {
+    "name": "schedule_time_grid",
+    "cls": "ScheduleScreen",
+    "file": "lib/features/schedule/schedule_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8311945796012878,
+    "dead": 0.61,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 94,
+    "deductions": []
+  },
+  {
     "name": "send",
     "cls": "SendScreen",
     "file": "lib/features/action_words/send_screen.dart",
@@ -996,6 +1024,20 @@
     "solid": 0,
     "states": 0,
     "low_contrast_evidence": 102,
+    "deductions": []
+  },
+  {
+    "name": "subject_detail",
+    "cls": "SubjectDetailScreen",
+    "file": "lib/features/subjects/subject_detail_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8039215207099915,
+    "dead": 0.36,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 123,
     "deductions": []
   },
   {
@@ -1094,6 +1136,34 @@
     "solid": 0,
     "states": 3,
     "low_contrast_evidence": 16,
+    "deductions": []
+  },
+  {
+    "name": "today_bento",
+    "cls": "TodayBentoScreen",
+    "file": "lib/features/today/today_bento_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7352794408798218,
+    "dead": 0.42,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 122,
+    "deductions": []
+  },
+  {
+    "name": "today_bento_wide",
+    "cls": "TodayBentoScreen",
+    "file": "lib/features/today/today_bento_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.8005025386810303,
+    "dead": 0.6,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 97,
     "deductions": []
   },
   {

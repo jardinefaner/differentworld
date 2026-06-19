@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-79 screens scored · worst-first · `tool/score_screens.py`
+84 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **98.3** · minor work: 7 · ship-confident: 72
+Average: **98.4** · minor work: 7 · ship-confident: 77
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -39,6 +39,7 @@ Average: **98.3** · minor work: 7 · ship-confident: 72
 | 100 | ship-confident | `day_run` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `family_messages` | — |
 | 100 | ship-confident | `family_today` | — |
+| 100 | ship-confident | `group_detail` | — |
 | 100 | ship-confident | `group_discussion` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `incident_form` | — |
 | 100 | ship-confident | `incidents` | — |
@@ -68,10 +69,12 @@ Average: **98.3** · minor work: 7 · ship-confident: 72
 | 100 | ship-confident | `role_cards` | — |
 | 100 | ship-confident | `roles` | — |
 | 100 | ship-confident | `schedule` | — |
+| 100 | ship-confident | `schedule_time_grid` | — |
 | 100 | ship-confident | `send` | — |
 | 100 | ship-confident | `settings` | — |
 | 100 | ship-confident | `speak` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `spells` | — |
+| 100 | ship-confident | `subject_detail` | — |
 | 100 | ship-confident | `supplies_list` | — |
 | 100 | ship-confident | `survey_index` | — |
 | 100 | ship-confident | `task` | — |
@@ -79,6 +82,8 @@ Average: **98.3** · minor work: 7 · ship-confident: 72
 | 100 | ship-confident | `team` | — |
 | 100 | ship-confident | `this_week` | — |
 | 100 | ship-confident | `time_capsule` | — |
+| 100 | ship-confident | `today_bento` | — |
+| 100 | ship-confident | `today_bento_wide` | — |
 | 100 | ship-confident | `vehicle_edit` | — |
 | 100 | ship-confident | `vehicles_list` | — |
 | 100 | ship-confident | `wall` | — |
