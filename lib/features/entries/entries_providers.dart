@@ -128,6 +128,15 @@ class EntryKind {
   /// drawing). One evolving row per child (upserted by `recordHero`); the
   /// creative twin of `didIt` (imaginative act → a keepsake artifact).
   static const String hero = 'hero';
+
+  /// A **daily response** (docs/VISION.md 2026-06-19) — a child's answer to a
+  /// Question / Quote / Mission of the Day, captured as a drawing or a
+  /// sentence. `details` = `{prompt_kind, prompt_text}`; `body` = the written
+  /// response; an optional drawing rides as an attachment. subjectId set → it
+  /// flows into that child's Book ("their learning with intentionality"); null
+  /// → the room answered together. ACCUMULATIVE — one row per answer, the
+  /// transcript that becomes the record ("document the now").
+  static const String dailyResponse = 'daily_response';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -480,6 +489,48 @@ class EntryActions {
         detailsJson: draft.toDetailsJson(),
       );
     }
+    if (photoUrls.isNotEmpty) {
+      final attachments = _ref.read(attachmentActionsProvider);
+      for (var i = 0; i < photoUrls.length; i++) {
+        await attachments.add(
+          id: i < photoIds.length ? photoIds[i] : null,
+          entityKind: 'entry',
+          entityId: entryId,
+          url: photoUrls[i],
+          sortOrder: i,
+        );
+      }
+    }
+    return entryId;
+  }
+
+  /// Record a child's **daily response** (docs/VISION.md 2026-06-19) — their
+  /// answer to a Question / Quote / Mission of the Day, a drawing or a
+  /// sentence. Accumulative: one row per answer (subjectId → their Book; null
+  /// → the room answered together). A drawing, when provided, rides as an
+  /// attachment via the offline-safe pinned-id path.
+  Future<String> recordDailyResponse({
+    required String promptKind,
+    required String promptText,
+    String? subjectId,
+    String? groupId,
+    String? responseText,
+    List<String> photoUrls = const [],
+    List<String> photoIds = const [],
+    String? id,
+  }) async {
+    final trimmed = responseText?.trim();
+    final entryId = await _create(
+      kind: EntryKind.dailyResponse,
+      subjectId: subjectId,
+      groupId: groupId,
+      body: (trimmed == null || trimmed.isEmpty) ? null : trimmed,
+      detailsJson: jsonEncode(<String, dynamic>{
+        'prompt_kind': promptKind,
+        'prompt_text': promptText,
+      }),
+      id: id,
+    );
     if (photoUrls.isNotEmpty) {
       final attachments = _ref.read(attachmentActionsProvider);
       for (var i = 0; i < photoUrls.length; i++) {

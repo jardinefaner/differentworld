@@ -70,6 +70,17 @@ abstract class ContentKind {
   /// proof persists. Kid-first, but the genre is universal (meetings,
   /// gatherings — anywhere people share proximity).
   static const doIt = 'do_it';
+
+  /// A **Question of the Day** — an open, answerable-many-ways prompt
+  /// (docs/VISION.md 2026-06-19), payload `{text}`. Followed by a captured
+  /// response (a drawing / sentence) that flows into the child's Book — "their
+  /// learning with intentionality." No right answer; perspective + growth.
+  static const question = 'question';
+
+  /// A **Quote of the Day** — a short, kid-legible line to sit with, payload
+  /// `{text, author?}`. Like the question, it's answered with an
+  /// interpretation (what does it mean to you?).
+  static const quote = 'quote';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -158,6 +169,8 @@ final List<ContentItem> curatedSeeds = <ContentItem>[
   ..._rhymeWordSeed,
   ..._charadesSeed,
   ..._doItSeed,
+  ..._questionSeed,
+  ..._quoteSeed,
 ];
 
 // ── Curated seeds ──────────────────────────────────────────────────────
@@ -1303,4 +1316,71 @@ final List<ContentItem> _doItSeed = <ContentItem>[
     'help',
     '✅',
   ),
+];
+
+// ── Question of the Day ───────────────────────────────────────────────────
+// Open, answerable-many-ways prompts (docs/VISION.md 2026-06-19). Each is
+// followed by a captured response (a drawing / sentence) into the child's
+// Book. Kid-safe (4–12), no right answer — perspective + growth, "what will
+// you invent…".
+ContentItem _questionOf(String text) => ContentItem(
+  kind: ContentKind.question,
+  fingerprint: text.toLowerCase(),
+  payload: {'text': text},
+);
+
+final List<ContentItem> _questionSeed = <ContentItem>[
+  _questionOf('What would you invent if you could invent anything?'),
+  _questionOf(
+    'If you could talk to one animal, which one — and what would you ask?',
+  ),
+  _questionOf('What is something you are really good at?'),
+  _questionOf('What made you laugh today?'),
+  _questionOf('If you could have any superpower, what would it be and why?'),
+  _questionOf('What does being a good friend look like?'),
+  _questionOf('What is something new you want to learn?'),
+  _questionOf('If you could build a whole world, what would be in it?'),
+  _questionOf('What is the bravest thing you have ever done?'),
+  _questionOf('What kind of person do you want to be when you grow up?'),
+  _questionOf('What is something kind someone did for you?'),
+  _questionOf('If today had a colour, what colour would it be?'),
+  _questionOf('What is a problem you wish you could fix?'),
+  _questionOf('What is your favourite place, and what makes it special?'),
+  _questionOf('If you could give the whole world one gift, what would it be?'),
+  _questionOf('What is something that makes you feel calm?'),
+  _questionOf('What would you do with a whole day to yourself?'),
+  _questionOf('Who is someone you look up to, and why?'),
+  _questionOf('What is something you changed your mind about?'),
+  _questionOf('If you could be any animal for a day, what would you be?'),
+];
+
+// ── Quote of the Day ──────────────────────────────────────────────────────
+// Short, kid-legible lines to sit with, answered with an interpretation.
+ContentItem _quoteOf(String text, [String? author]) => ContentItem(
+  kind: ContentKind.quote,
+  fingerprint: text.toLowerCase(),
+  payload: {'text': text, 'author': ?author},
+);
+
+final List<ContentItem> _quoteSeed = <ContentItem>[
+  _quoteOf('The future belongs to the curious.'),
+  _quoteOf('You are braver than you believe, and stronger than you seem.'),
+  _quoteOf('Mistakes are proof that you are trying.'),
+  _quoteOf('Kindness is a language everyone understands.'),
+  _quoteOf('A little progress each day adds up to big things.'),
+  _quoteOf('Be the friend you would like to have.'),
+  _quoteOf('Every expert was once a beginner.'),
+  _quoteOf('The best way to learn is to ask questions.'),
+  _quoteOf('You don’t have to be perfect to be amazing.'),
+  _quoteOf('Big things have small beginnings.'),
+  _quoteOf('Helping one person might change the whole world for them.'),
+  _quoteOf('Courage is trying, even when it’s hard.'),
+  _quoteOf('Your imagination is a place you can always go.'),
+  _quoteOf('Today is a chance to try something new.'),
+  _quoteOf('Listening is a kind of magic.'),
+  _quoteOf('Slow and steady can still win.'),
+  _quoteOf('There is no wrong way to be yourself.'),
+  _quoteOf('Wonder is the start of every great idea.'),
+  _quoteOf('Small kindnesses make big differences.'),
+  _quoteOf('What you practice, you become.'),
 ];
