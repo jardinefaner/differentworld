@@ -847,6 +847,27 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Spellbook
+**Path**: `lib/features/spellbook/`
+**Purpose**: "A World of Magic" — a magic-framed home the room opens each day that GATHERS what already exists into one place: today's ritual (the Daily), this week's project (the live world arc), and the unfolding story (the journey). RPG-as-utility, the spellbook as container (docs/VISION.md 2026-06-19). Builds nothing new under the hood — it composes.
+**Personas served**: Ava (opens the spellbook), All staff (host the day from one place).
+**Discovery surfaces**:
+- Routes: `/spellbook`. Always resolves; surfaces below are gated.
+- Omnibox: `page.spellbook` ("Spellbook" — keywords spellbook / magic / world of magic / today / this week / story). **Toggle-gated** (`spellbookEnabledProvider`) + guardian-gated off.
+- Slash: none (a static slash list can't honor the toggle).
+- Drawer: no — reached via the Brain Breaks deck's "Spellbook" card (when on) or the omnibox.
+- Settings: yes — "Spellbook home" switch in Preferences (`_SpellbookTile`, off by default).
+**Capabilities**: None — open to all signed-in staff once the director switches it on.
+**Data**: None directly — an aggregator. Reads `todaysDailyProvider` (the Daily), `currentWorldProvider` + `currentWorldArcProvider` (this week's world + project). Navigates to `/daily` + `/this-week`.
+**Surfaces**:
+- *Spellbook screen* — `lib/features/spellbook/spellbook_screen.dart`. `/spellbook`; a warm cover (the week's world name/emoji/tagline) over three gathered FeatureCards — Today's spell → `/daily`, This week's quest → `/this-week`, Your story so far → the journey.
+- *Toggle* — `lib/features/spellbook/spellbook_setting.dart`. `spellbookEnabledProvider`, default off.
+**Depends on**: Daily (`todaysDailyProvider`), Action Words (`currentWorldProvider` + `currentWorldArcProvider` — the live world/project engine), and the `/daily` + `/this-week` routes.
+**Consumed by**: ActivityRuntime (Brain Breaks deck injects the "Spellbook" card), Omnibox (`page.spellbook`), Settings (`_SpellbookTile`).
+**Last verified**: 2026-06-19
+
+---
+
 ## Spells
 **Path**: `lib/features/spells/`
 **Purpose**: Five fullscreen timer commands — each a word in another language (the word rotates by day so the class meets it in Spanish, then French, then Swahili across the term); a countdown ticks down while a breathing animation plays, then haptic-rings "Time!". The brief's one loud moment — hold up the phone or put it on a projector.
