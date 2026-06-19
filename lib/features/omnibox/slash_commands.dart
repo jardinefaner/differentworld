@@ -315,6 +315,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/letters')),
   ),
   SlashCommand(
+    name: 'penny',
+    label: '/penny',
+    hint: 'Penny for a Thought — share a thought, count the pennies',
+    icon: Icons.toll_outlined,
+    aliases: const ['pennies', 'count', 'counting', 'thought', 'tally'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/penny')),
+  ),
+  SlashCommand(
     name: 'factorfib',
     label: '/factorfib',
     hint: 'Fact or Fib — the room votes true/false, you reveal',

@@ -164,6 +164,13 @@ class BrainBreaksScreen extends ConsumerWidget {
       route: '/activity/letters',
     ),
     const _BreakCard(
+      title: 'Penny for a Thought',
+      tagline: 'Share a thought, count a penny',
+      icon: Icons.toll_outlined,
+      color: ActivityPalette.amber,
+      route: '/activity/penny',
+    ),
+    const _BreakCard(
       title: 'Charades',
       tagline: 'Act it out — phone + screen',
       icon: Icons.theater_comedy_outlined,

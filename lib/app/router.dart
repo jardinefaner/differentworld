@@ -35,6 +35,7 @@ import 'package:differentworld/features/activity_runtime/fill_blank_screen.dart'
 import 'package:differentworld/features/activity_runtime/letters_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
+import 'package:differentworld/features/activity_runtime/penny_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
@@ -1616,6 +1617,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/activity/letters',
             builder: (_, state) =>
                 LettersScreen(groupId: state.uri.queryParameters['group']),
+          ),
+          // Penny for a Thought — share a thought, drop a penny, count the pile
+          // (counting math, docs/VISION.md 2026-06-19).
+          GoRoute(
+            path: '/activity/penny',
+            builder: (_, _) => const PennyScreen(),
           ),
           // Fact or Fib — host-run; the room votes true/false, you Reveal.
           GoRoute(
