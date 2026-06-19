@@ -15,6 +15,7 @@ import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
+import 'package:differentworld/shared/widgets/bento_module.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -161,76 +162,6 @@ class _BentoBody extends ConsumerWidget {
   }
 }
 
-/// A themed bento tile — flat Material, rounded, tappable, with a foreground
-/// colour every child text inherits via [DefaultTextStyle]. No hardcoded
-/// colours: callers pass [background] / [foreground] from the ColorScheme or a
-/// content-driven accent run through [AppColors].
-class _BentoModule extends StatelessWidget {
-  const _BentoModule({
-    required this.background,
-    required this.foreground,
-    required this.onTap,
-    required this.child,
-    this.semanticLabel,
-  });
-
-  final Color background;
-  final Color foreground;
-  final VoidCallback onTap;
-  final Widget child;
-  final String? semanticLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: semanticLabel,
-      child: Material(
-        color: background,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () {
-            unawaited(HapticFeedback.selectionClick());
-            onTap();
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: DefaultTextStyle.merge(
-              style: TextStyle(color: foreground),
-              child: IconTheme.merge(
-                data: IconThemeData(color: foreground),
-                child: child,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// A small rounded chip holding the module's leading icon.
-class _ModuleIcon extends StatelessWidget {
-  const _ModuleIcon({required this.icon, required this.tint});
-
-  final IconData icon;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: tint,
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Icon(icon, size: 18),
-    );
-  }
-}
-
 /// The hero: "what matters right now" + the move it calls for, from
 /// [contextLeadProvider] (the same source the classic Today's _RightNowCard
 /// uses). Calm fallback when nothing's pending.
@@ -244,7 +175,7 @@ class _NowNextModule extends ConsumerWidget {
     final lead = ref.watch(contextLeadProvider);
 
     if (lead == null) {
-      return _BentoModule(
+      return BentoModule(
         background: scheme.surfaceContainerHigh,
         foreground: scheme.onSurface,
         onTap: () => context.push('/schedule'),
@@ -254,7 +185,7 @@ class _NowNextModule extends ConsumerWidget {
           children: [
             Row(
               children: [
-                _ModuleIcon(
+                BentoModuleIcon(
                   icon: Icons.wb_sunny_outlined,
                   tint: scheme.surfaceContainerHighest,
                 ),
@@ -313,7 +244,7 @@ class _NowNextModule extends ConsumerWidget {
       ),
     };
 
-    return _BentoModule(
+    return BentoModule(
       background: bg,
       foreground: fg,
       onTap: () => context.push(lead.primary.route),
@@ -323,7 +254,7 @@ class _NowNextModule extends ConsumerWidget {
         children: [
           Row(
             children: [
-              _ModuleIcon(icon: lead.icon, tint: accent),
+              BentoModuleIcon(icon: lead.icon, tint: accent),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -431,7 +362,7 @@ class _CountModule extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return _BentoModule(
+    return BentoModule(
       background: scheme.surfaceContainerHighest,
       foreground: scheme.onSurface,
       onTap: () => context.push(route),
@@ -441,7 +372,7 @@ class _CountModule extends StatelessWidget {
         children: [
           Row(
             children: [
-              _ModuleIcon(icon: icon, tint: scheme.surfaceContainerLow),
+              BentoModuleIcon(icon: icon, tint: scheme.surfaceContainerLow),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -533,7 +464,7 @@ class _RoomsModule extends ConsumerWidget {
     // by tapping through.
     final visible = groups.length > 4 ? groups.sublist(0, 4) : groups;
 
-    return _BentoModule(
+    return BentoModule(
       background: scheme.surfaceContainerHigh,
       foreground: scheme.onSurface,
       onTap: () => context.push('/groups/${groups.first.id}'),
@@ -543,7 +474,7 @@ class _RoomsModule extends ConsumerWidget {
         children: [
           Row(
             children: [
-              _ModuleIcon(
+              BentoModuleIcon(
                 icon: Icons.meeting_room_outlined,
                 tint: scheme.surfaceContainerHighest,
               ),
@@ -669,7 +600,7 @@ class _WorldModule extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fg = AppColors.onAccent(world.color);
-    return _BentoModule(
+    return BentoModule(
       background: world.color,
       foreground: fg,
       onTap: () => context.push('/this-week'),
@@ -725,7 +656,7 @@ class _ActivitiesModule extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return _BentoModule(
+    return BentoModule(
       background: scheme.tertiaryContainer,
       foreground: scheme.onTertiaryContainer,
       onTap: () => context.push('/thinking'),
@@ -735,7 +666,7 @@ class _ActivitiesModule extends StatelessWidget {
         children: [
           Row(
             children: [
-              _ModuleIcon(icon: Icons.apps_outlined, tint: scheme.tertiary),
+              BentoModuleIcon(icon: Icons.apps_outlined, tint: scheme.tertiary),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

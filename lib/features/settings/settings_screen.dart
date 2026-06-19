@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/program_hub_bento_setting.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
@@ -260,6 +261,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _SpellbookBentoTile(),
               const _SettingsDivider(),
+              const _ProgramHubBentoTile(),
+              const _SettingsDivider(),
               const _ScheduleGridTile(),
               const _SettingsDivider(),
               const _HeroesTile(),
@@ -479,6 +482,29 @@ class _SpellbookBentoTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(spellbookBentoProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Lays the program hub (`/program`) out as a bento grid (docs/GRID.md) — same
+/// season / today / journey / children content, spreads on a tablet. Off by
+/// default; reversible.
+class _ProgramHubBentoTile extends ConsumerWidget {
+  const _ProgramHubBentoTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(programHubBentoProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.grid_view_outlined),
+      title: const Text('Program hub as bento'),
+      subtitle: const Text(
+        'Lay the program hub out as a grid of tiles — same content, spreads '
+        'on a tablet',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(programHubBentoProvider.notifier).set(value: v)),
     );
   }
 }
