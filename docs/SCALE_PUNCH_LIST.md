@@ -256,6 +256,26 @@ hotspot guards. Pure-code, no dashboard:
   stream per child). Single-child screens keep the family (one stream —
   correct). Rule going forward: resolve per-child data from ONE space-wide
   stream + a map, not a per-row watch.
+  - *The rebuild tradeoff (intentional).* A Perf-Guard pass read the
+    space-wide-map approach as a "rebuild storm" (one entry change → the
+    whole roster section rebuilds, since the shared map emits a new
+    instance). It is NOT a regression: Drift's `.watch()` invalidates at the
+    **table** level, so the N per-child watches ALSO re-emitted (and rebuilt
+    all N rows) on *any* `entries` write — the change only collapsed N
+    queries to 1, leaving the rebuild count unchanged. The suggested fix
+    (value-equality on `Moment` / `ActionWordsCollection`) wouldn't help on
+    its own — the providers emit `List<…>`, and `List ==` is reference
+    equality. To actually drop value-identical re-emits you'd add
+    `.distinct(listEquals)` on the stream **plus** per-row
+    `provider.select((m) => m[id])`; deferred as fragile for a sub-ms leaf
+    rebuild on an infrequent DB write.
+- **Lazy roster rendering — PARTIAL.** `heroes_hub` now uses
+  `ListView.builder` (was `ListView(children: […])`), so a large roster
+  builds only the visible HeroCards. Still eager: `role_deck`'s `Wrap`
+  (every CollectibleRoleCard at once) and `program_hub`'s `_ChildrenArcs`
+  `Column`. Both want a lazy `SliverGrid` / `SliverList`, deferred only
+  because the fixed-height collectible cards self-size in the `Wrap` today
+  and a grid conversion risks a visual regression without a golden re-check.
 - **Hot-path JSON decode — mostly DONE.** `momentsFrom` (which
   `jsonDecode`s each entry's `details`) ran inside `build()` on the live
   Story screens, so every incidental rebuild re-decoded the whole list —
