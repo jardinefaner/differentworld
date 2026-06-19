@@ -18,6 +18,7 @@ class RoleCardPrint {
     required this.animalLabel,
     required this.powers,
     this.childName,
+    this.portrait,
   });
 
   final String title;
@@ -25,6 +26,10 @@ class RoleCardPrint {
   final String animalLabel;
   final List<String> powers;
   final String? childName;
+
+  /// The child's drawing as a print image when it's been fetched (an online
+  /// print); null → the draw-here box (offline, or no drawing yet).
+  final pw.ImageProvider? portrait;
 }
 
 String _ascii(String s) =>
@@ -75,14 +80,17 @@ pw.Widget _card(RoleCardPrint c, pw.Font font, pw.Font bold) {
               borderRadius: pw.BorderRadius.circular(6),
             ),
             alignment: pw.Alignment.center,
-            child: pw.Text(
-              animal.isEmpty ? 'Draw your role' : 'Draw your $animal',
-              style: pw.TextStyle(
-                font: font,
-                fontSize: 9,
-                color: PdfColors.grey500,
-              ),
-            ),
+            padding: const pw.EdgeInsets.all(4),
+            child: c.portrait != null
+                ? pw.Image(c.portrait!)
+                : pw.Text(
+                    animal.isEmpty ? 'Draw your role' : 'Draw your $animal',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 9,
+                      color: PdfColors.grey500,
+                    ),
+                  ),
           ),
         ),
         pw.SizedBox(height: 8),

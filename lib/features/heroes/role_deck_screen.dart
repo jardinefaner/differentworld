@@ -4,6 +4,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/heroes/heroes_providers.dart';
 import 'package:differentworld/features/heroes/role_deck_pdf.dart';
 import 'package:differentworld/features/heroes/widgets/collectible_role_card.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/person_photo_url.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -14,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 /// `/deck` — the **role deck** (docs/VISION.md 2026-06-19): every child's role
@@ -103,16 +106,38 @@ Future<void> _printDeck(BuildContext context, WidgetRef ref) async {
   final subjects =
       ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
   final nameById = {for (final s in subjects) s.id: s.firstName};
-  final prints = [
-    for (final c in cards)
+  final prints = <RoleCardPrint>[];
+  for (final c in cards) {
+    // The child's own drawing, dropped into the card when we can fetch it
+    // (an online print). Offline / no drawing → the draw-here box; the print
+    // still works (per-card, so one failed fetch doesn't sink the sheet).
+    pw.ImageProvider? portrait;
+    try {
+      final atts = await ref.read(
+        attachmentsForEntityProvider((kind: 'entry', id: c.entryId)).future,
+      );
+      final path = atts.urls.lastOrNull;
+      if (path != null) {
+        final signed =
+            await ref.read(signedPersonPhotoUrlProvider(path).future);
+        if (signed != null && signed.isNotEmpty) {
+          portrait = await networkImage(signed);
+        }
+      }
+    } on Object catch (e) {
+      if (kDebugMode) debugPrint('[deck] portrait fetch failed: $e');
+    }
+    prints.add(
       RoleCardPrint(
         title: c.data.title,
         species: c.data.speciesLabel,
         animalLabel: c.data.animal?.label ?? '',
         powers: [for (final p in c.data.powers) p.label],
         childName: nameById[c.subjectId],
+        portrait: portrait,
       ),
-  ];
+    );
+  }
   try {
     final pdf = await buildRoleDeckPdf(cards: prints);
     await Printing.layoutPdf(onLayout: (_) => pdf, name: 'Role deck');
