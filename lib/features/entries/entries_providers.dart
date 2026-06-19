@@ -31,6 +31,13 @@ class EntryKind {
   /// "have they left").
   static const String departure = 'departure';
 
+  /// A field-trip headcount roll-call for one leg (departure / at destination
+  /// / return) — payload {leg, present (kid ids), expected, present_count,
+  /// override_reason?, override_holder?}. Append-only: each confirm is a new
+  /// entry; the latest per leg is the current count. Rides the existing
+  /// `entries` sync — no migration (docs/ROADMAP field-trip headcounts).
+  static const String tripHeadcount = 'trip_headcount';
+
   /// A day's Action Words (docs/ACTION_WORDS.md). One row per (subject,
   /// date). `details` = {verb_picks:[3], done:[…], note, word_of_day,
   /// world_name?}. The revealed world is DERIVED from verb_picks via
@@ -343,6 +350,37 @@ class EntryActions {
     );
   }
 
+  /// Record a field-trip headcount for one [leg] — append-only (each confirm
+  /// is a fresh entry; readers take the latest per leg). [presentIds] are the
+  /// kids accounted for; [expected] is the full roster size. An override
+  /// (leaving with someone unaccounted) carries a required [overrideReason]
+  /// plus who has them ([overrideHolder]) for the safety trail.
+  Future<void> recordTripHeadcount({
+    required String tripBlockId,
+    required String leg,
+    required List<String> presentIds,
+    required int expected,
+    String? groupId,
+    String? overrideReason,
+    String? overrideHolder,
+  }) async {
+    await _create(
+      kind: EntryKind.tripHeadcount,
+      scheduleBlockId: tripBlockId,
+      groupId: groupId,
+      detailsJson: jsonEncode(<String, dynamic>{
+        'leg': leg,
+        'present': presentIds,
+        'expected': expected,
+        'present_count': presentIds.length,
+        if (overrideReason != null && overrideReason.isNotEmpty)
+          'override_reason': overrideReason,
+        if (overrideHolder != null && overrideHolder.isNotEmpty)
+          'override_holder': overrideHolder,
+      }),
+    );
+  }
+
   Future<String> _create({
     required String kind,
     String? subjectId,
@@ -610,19 +648,18 @@ List<({String id, String text})> addedWorldRulesFrom(
 /// world id; each value carries the rule's entry id (for delete) + its text.
 // autoDispose family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final addedWorldRulesProvider =
-    StreamProvider.autoDispose.family<List<({String id, String text})>, String>(
-        (ref, worldId) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  final spaceId = ref.watch(viewerProvider).spaceId;
-  if (spaceId == null) {
-    yield const <({String id, String text})>[];
-    return;
-  }
-  yield* db.entriesDao
-      .watchInSpace(spaceId: spaceId, kind: EntryKind.worldRule)
-      .map((entries) => addedWorldRulesFrom(entries, worldId));
-});
+final addedWorldRulesProvider = StreamProvider.autoDispose
+    .family<List<({String id, String text})>, String>((ref, worldId) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      final spaceId = ref.watch(viewerProvider).spaceId;
+      if (spaceId == null) {
+        yield const <({String id, String text})>[];
+        return;
+      }
+      yield* db.entriesDao
+          .watchInSpace(spaceId: spaceId, kind: EntryKind.worldRule)
+          .map((entries) => addedWorldRulesFrom(entries, worldId));
+    });
 
 /// The activities the teacher kept from the forge (space-level), newest first.
 // autoDispose stream providers don't have a stable public-typed name.

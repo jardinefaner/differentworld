@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/schedule/widgets/trip_headcount_section.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -76,9 +77,9 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
           notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
         );
       } else {
-        await (db.update(db.tripLogistics)
-              ..where((t) => t.id.equals(_existing!.id)))
-            .write(
+        await (db.update(
+          db.tripLogistics,
+        )..where((t) => t.id.equals(_existing!.id))).write(
           TripLogisticsCompanion(
             destination: Value(_destination.text.trim()),
             destinationAddress: Value(
@@ -168,6 +169,14 @@ class _TripDetailScreenState extends ConsumerState<TripDetailScreen> {
                   ),
                   if (row != null) ...[
                     const SizedBox(height: 24),
+                    // Safety first: the headcount roll-call leads the
+                    // post-setup sections.
+                    TripHeadcountSection(
+                      blockId: widget.blockId,
+                      groupId: null,
+                      destination: row.destination,
+                    ),
+                    const SizedBox(height: 24),
                     _SlipsSection(tripLogisticsId: row.id),
                     const SizedBox(height: 16),
                     _VehiclesSection(tripLogisticsId: row.id),
@@ -192,8 +201,8 @@ class _SlipsSection extends ConsumerWidget {
     final dbAsync = ref.watch(appDatabaseProvider);
     if (dbAsync.value == null) return const SizedBox.shrink();
     final db = dbAsync.value!;
-    final subjects = ref.watch(subjectsInSpaceProvider).value ??
-        const <Subject>[];
+    final subjects =
+        ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
     return StreamBuilder<List<PermissionSlip>>(
       stream: db.tripsDao.watchSlipsForTrip(tripLogisticsId),
       builder: (context, snap) {
@@ -230,8 +239,7 @@ class _SlipsSection extends ConsumerWidget {
                 onTap: () async {
                   if (signedIds.contains(subj.id)) return;
                   final viewer = ref.read(viewerProvider);
-                  final spaceId =
-                      viewer.requireSpaceId(action: 'record slip');
+                  final spaceId = viewer.requireSpaceId(action: 'record slip');
                   await db.tripsDao.recordSlip(
                     spaceId: spaceId,
                     tripLogisticsId: tripLogisticsId,
