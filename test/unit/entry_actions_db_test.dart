@@ -13,6 +13,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/heroes/hero_catalog.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -215,4 +216,83 @@ void main() {
       expect(atts, isEmpty, reason: 'attribution rows carry no proof photo');
     },
   );
+
+  // Heroes — the make-believe alter-ego (docs/VISION.md 2026-06-19). One
+  // evolving row per child: recordHero UPSERTS, so re-saving must not duplicate.
+  const luna = HeroDraft(
+    animal: HeroPick('fox', 'Fox', '🦊'),
+    skin: HeroPick('midnight', 'Midnight', '🌙'),
+    powers: [HeroPick('invisible', 'Turns invisible', '🫥')],
+    name: 'Luna',
+    from: 'the Willow Woods',
+  );
+
+  test('recordHero creates one hero row carrying the draft', () async {
+    final actions = container.read(entryActionsProvider);
+    final id = await actions.recordHero(subjectId: 's1', draft: luna);
+
+    final rows = await (db.select(
+      db.entries,
+    )..where((e) => e.kind.equals(EntryKind.hero))).get();
+    expect(rows, hasLength(1));
+    expect(rows.single.id, id);
+    expect(rows.single.subjectId, 's1');
+    expect(rows.single.details, contains('"name":"Luna"'));
+    expect(rows.single.details, contains('"from":"the Willow Woods"'));
+    expect(rows.single.details, contains('"fox"'));
+  });
+
+  test(
+    'recordHero upserts — re-saving evolves the same row, no duplicate',
+    () async {
+      final actions = container.read(entryActionsProvider);
+      final first = await actions.recordHero(subjectId: 's1', draft: luna);
+      const rex = HeroDraft(
+        animal: HeroPick('wolf', 'Wolf', '🐺'),
+        skin: HeroPick('storm', 'Storm', '⛈️'),
+        powers: [
+          HeroPick('speed', 'Super speed', '💨'),
+          HeroPick('fly', 'Can fly', '🪽'),
+        ],
+        name: 'Rex',
+        from: 'the Tall Mountains',
+      );
+      final second = await actions.recordHero(subjectId: 's1', draft: rex);
+
+      expect(
+        second,
+        first,
+        reason: 'same row id — upsert, not a second insert',
+      );
+      final rows = await (db.select(
+        db.entries,
+      )..where((e) => e.kind.equals(EntryKind.hero))).get();
+      expect(rows, hasLength(1), reason: 'one evolving hero per child');
+      expect(rows.single.details, contains('"name":"Rex"'));
+      expect(rows.single.details, isNot(contains('Luna')));
+    },
+  );
+
+  test('recordHero drawing attaches with the pinned uploadOnly id', () async {
+    final actions = container.read(entryActionsProvider);
+    final id = await actions.recordHero(
+      subjectId: 's1',
+      draft: luna,
+      photoUrls: ['sp1/attachment/HERO1/x.jpg'],
+      photoIds: ['HERO1'],
+    );
+
+    final atts = await db.attachmentsDao
+        .watchFor(entityKind: 'entry', entityId: id)
+        .first;
+    expect(atts, hasLength(1));
+    expect(
+      atts.single.id,
+      'HERO1',
+      reason:
+          'attachment id must be the pinned id so an offline upload patches '
+          'this row',
+    );
+    expect(atts.single.url, 'sp1/attachment/HERO1/x.jpg');
+  });
 }
