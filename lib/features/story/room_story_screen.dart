@@ -1,6 +1,5 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
-import 'package:differentworld/features/story/moment.dart';
 import 'package:differentworld/features/story/story_providers.dart';
 import 'package:differentworld/features/story/widgets/story_timeline.dart';
 import 'package:differentworld/features/story/widgets/wrap_sheet.dart';
@@ -20,7 +19,7 @@ class RoomStoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final momentsAsync = ref.watch(spaceMomentsProvider);
+    final momentsAsync = ref.watch(roomMomentsProvider);
     final subjectsById = <String, Subject>{
       for (final s
           in ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[])
@@ -42,8 +41,7 @@ class RoomStoryScreen extends ConsumerWidget {
           title: 'Could not load the room story',
           onRetry: () => ref.invalidate(spaceMomentsProvider),
         ),
-        data: (entries) {
-          final moments = momentsFrom(entries);
+        data: (moments) {
           if (moments.isEmpty) {
             return const EmptyState(
               icon: Icons.auto_stories_outlined,

@@ -37,6 +37,14 @@ final spaceMomentsProvider = StreamProvider<List<Entry>>((ref) async* {
   );
 });
 
+/// The room's Story beats — [spaceMomentsProvider] (visibility-scoped entries)
+/// mapped through `momentsFrom` ONCE per data change and memoized, so the
+/// room-story screen doesn't re-`jsonDecode` ≤300 entries inside `build()` on
+/// every rebuild. Room-level twin of [momentsForSubjectProvider].
+final roomMomentsProvider = Provider<AsyncValue<List<Moment>>>((ref) {
+  return ref.watch(spaceMomentsProvider).whenData(momentsFrom);
+});
+
 /// A child's Story beats — `momentsFrom` (which `jsonDecode`s every entry's
 /// `details`) applied ONCE per data change and memoized here, instead of
 /// re-decoding every entry inside each screen's `build()` (the "no
