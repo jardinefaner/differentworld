@@ -134,6 +134,7 @@ import 'package:differentworld/features/staff/runbook_screen.dart';
 import 'package:differentworld/features/staff/staff_ladder_screen.dart';
 import 'package:differentworld/features/story/kid_story_screen.dart';
 import 'package:differentworld/features/story/room_story_screen.dart';
+import 'package:differentworld/features/story/story_showcase_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
@@ -1361,6 +1362,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => RouteTitle(
               title: 'Story',
               child: KidStoryScreen(
+                subjectId: state.pathParameters['subjectId']!,
+              ),
+            ),
+          ),
+          // Play the story — the showcase presentation of the timeline
+          // (docs/VISION.md 2026-06-19, "the drawing becomes a film").
+          GoRoute(
+            path: '/story/:subjectId/play',
+            builder: (_, state) => RouteTitle(
+              title: 'Play the story',
+              child: StoryShowcaseScreen(
                 subjectId: state.pathParameters['subjectId']!,
               ),
             ),
