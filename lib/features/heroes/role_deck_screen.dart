@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/heroes/heroes_providers.dart';
+import 'package:differentworld/features/heroes/role_deck_pdf.dart';
 import 'package:differentworld/features/heroes/widgets/collectible_role_card.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -7,9 +10,11 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:printing/printing.dart';
 
 /// `/deck` — the **role deck** (docs/VISION.md 2026-06-19): every child's role
 /// (their Hero) as a collectible card, the program's deck in one place. The
@@ -24,6 +29,11 @@ class RoleDeckScreen extends ConsumerWidget {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
     return EdgeScaffold(
       actions: [
+        IconButton(
+          tooltip: 'Print the deck',
+          icon: const Icon(Icons.print_outlined),
+          onPressed: () => unawaited(_printDeck(context, ref)),
+        ),
         IconButton(
           tooltip: 'Play a battle',
           icon: const Icon(Icons.casino_outlined),
@@ -73,6 +83,44 @@ class RoleDeckScreen extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+/// Build the room's role cards into a print-and-color PDF and open the system
+/// print / share sheet. Offline-first (Helvetica); reads the deck once.
+Future<void> _printDeck(BuildContext context, WidgetRef ref) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final cards = ref.read(heroesInSpaceProvider).value ?? const <DeckCard>[];
+  if (cards.isEmpty) {
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('No cards to print yet — make a few first.'),
+      ),
+    );
+    return;
+  }
+  final subjects =
+      ref.read(subjectsInSpaceProvider).value ?? const <Subject>[];
+  final nameById = {for (final s in subjects) s.id: s.firstName};
+  final prints = [
+    for (final c in cards)
+      RoleCardPrint(
+        title: c.data.title,
+        species: c.data.speciesLabel,
+        animalLabel: c.data.animal?.label ?? '',
+        powers: [for (final p in c.data.powers) p.label],
+        childName: nameById[c.subjectId],
+      ),
+  ];
+  try {
+    final pdf = await buildRoleDeckPdf(cards: prints);
+    await Printing.layoutPdf(onLayout: (_) => pdf, name: 'Role deck');
+  } on Object catch (e) {
+    if (kDebugMode) debugPrint('[deck] print failed: $e');
+    if (!context.mounted) return;
+    messenger.showSnackBar(
+      const SnackBar(content: Text("Couldn't print — try again.")),
     );
   }
 }
