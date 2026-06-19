@@ -1528,4 +1528,83 @@ final List<ContentItem> _fillBlankSeed = <ContentItem>[
       'colour',
     ],
   ),
+  _fillBlankOf(
+    'When I woke up, my {0} had turned into a {1}! So I {2} to school.',
+    [
+      'body part',
+      'animal',
+      'action word ending in -ed',
+    ],
+  ),
+  _fillBlankOf(
+    'The dragon sneezed and out came {0} {1}. Everyone yelled "{2}"!',
+    [
+      'a number',
+      'animal (more than one)',
+      'silly word',
+    ],
+  ),
+  _fillBlankOf('My pet {0} loves to eat {1} and sleep inside a {2}.', [
+    'animal',
+    'food',
+    'thing',
+  ]),
+  _fillBlankOf('The bravest {0} in the land could {1} faster than a {2}.', [
+    'animal',
+    'action word',
+    'animal',
+  ]),
+  _fillBlankOf(
+    'The wizard waved his {0} and turned the {1} into a giant {2}!',
+    [
+      'thing',
+      'thing in the room',
+      'food',
+    ],
+  ),
+  _fillBlankOf(
+    'Our class hamster was found {0} on top of the {1}, wearing a {2}.',
+    [
+      'action word ending in -ing',
+      'piece of furniture',
+      'piece of clothing',
+    ],
+  ),
+  _fillBlankOf(
+    'I planted a magic seed and it grew into a {0} tree covered in {1}.',
+    [
+      'silly adjective',
+      'thing (more than one)',
+    ],
+  ),
+  _fillBlankOf(
+    'The astronaut landed on planet {0} and met a {1} who only said "{2}".',
+    [
+      'silly name',
+      'animal',
+      'silly word',
+    ],
+  ),
+  _fillBlankOf(
+    'My superhero name is Captain {0}, and I fight crime with my {1}.',
+    [
+      'silly word',
+      'thing',
+    ],
+  ),
+  _fillBlankOf(
+    'At the silliest party ever, everyone wore {0} and danced with a {1}.',
+    [
+      'clothing (more than one)',
+      'animal',
+    ],
+  ),
+  _fillBlankOf(
+    'The recipe said: add two cups of {0}, one {1}, and stir until it {2}.',
+    [
+      'silly ingredient',
+      'thing',
+      'action word',
+    ],
+  ),
 ];
