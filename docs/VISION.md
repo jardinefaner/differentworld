@@ -1069,6 +1069,44 @@ once it has a home.
   evidence per verb — a photo (build/make), a count (find/help), a name/answer
   (ask)? when does it surface for adults — same deck, meeting-tagged, or a
   parallel "gathering" pack?)
+- **2026-06-19** — **Heroes — kids build a make-believe self, one piece at a
+  time.** In the user's words: *"they'll draw something, and they'll name it…
+  [Name] of [From]… an [animal] and their [super powers]… and their animal
+  skins."* A kid-mode creative activity where each child assembles an
+  **alter-ego**: pick an **animal** + a **skin** (variant look) → give it
+  **super powers** → earn a title in the **"[Name] of [From]"** form (Luna of
+  the Willow Woods) → **draw it and name the drawing** ("Sky-jumper"). The
+  output is a **Hero card** — a keepsake, not a quiz. This is the *creative*
+  twin of "Do It": where Do It is a real action that leaves evidence, Heroes is
+  an *imaginative* act that leaves an artifact — and both **accumulate** (a
+  child's hero can grow over the term, feeding the Book #1 + the showcase /
+  growth-arc #16). Echoes the existing Draw-Yourself + character-sheet world,
+  generalized from "draw *you*" to "invent *who you could be*". (Threads: #1 the
+  Book, #4 host-present/kid-mode no-typing, #16 showcase. **Open forks:** are
+  the four pieces one stitched "build-a-hero" flow or four à-la-carte
+  activities (likely both — a flow that also stands alone per piece)? does the
+  Hero persist as one evolving card per child, or a new one each session? is the
+  animal/skin/power catalog program-fixed, director-authored, or kid-freeform
+  (type-your-own)? where does it live for family — a sent-home Hero card?)
+- **2026-06-19** — **Routines — the room's rhythm, made kid-legible (and
+  playful).** In the user's words: *"routines… what do we do at 9? sing a song,
+  practice for the summer showcase, PE, brain breaks… 'My brain is breaking…',
+  the workout for your experience/brain?"* The schedule already exists
+  staff-side; this is the **child-facing** read of it — a glanceable "**what do
+  we do now / at 9?**" rhythm the room internalizes, with **named, recurring,
+  warmly-voiced blocks** (sing a song, showcase practice, PE = "the workout for
+  your body", **brain breaks = "the workout for your brain"** — the pun *"my
+  brain is breaking"* is the kid-facing voice, not a bug). The dream: a routine
+  isn't a grid to a 6-year-old — it's a **rhythm they can predict and belong
+  to.** Reframes Brain Breaks from "a deck of fillers" into **"the
+  brain/experience workout"** — exercise for the mind, named as such. (Threads:
+  #4 host-present, the Schedule + day-templates feature it re-skins, #3 the
+  screen points back at what the room does together. **Open forks:** is this a
+  new kid-mode surface or a kid view layered on the existing schedule? do the
+  playful sublabels ("the workout for your brain") live on each activity
+  template, or a routine-only voice layer? does "what do we do at 9?" answer
+  from the live schedule, a named routine template, or both? is the showcase a
+  first-class recurring routine block that compiles practice → the summer show?)
 
 ---
 
