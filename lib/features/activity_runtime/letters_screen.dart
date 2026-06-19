@@ -79,7 +79,7 @@ class _LettersScreenState extends ConsumerState<LettersScreen> {
           children: [
             const ContentHeader(
               title: 'Letters',
-              subtitle: 'Write to each other — to a friend, from you',
+              subtitle: 'To a friend, from you',
             ),
             if (groups.length > 1)
               Padding(

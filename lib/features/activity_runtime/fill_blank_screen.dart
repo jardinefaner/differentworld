@@ -105,7 +105,7 @@ class _FillBlankScreenState extends ConsumerState<FillBlankScreen> {
         children: [
           const ContentHeader(
             title: 'Fill in the blank',
-            subtitle: 'The room shouts a word — you type it',
+            subtitle: 'Silly words make a silly story',
           ),
           if (_revealed) _reveal(theme, template) else _fill(theme, blanks),
         ],
