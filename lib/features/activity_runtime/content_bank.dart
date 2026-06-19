@@ -1316,6 +1316,45 @@ final List<ContentItem> _doItSeed = <ContentItem>[
     'help',
     '✅',
   ),
+  // Potions + the garden (docs/VISION.md 2026-06-19) — the magic theme made
+  // real + sensory. Tactile, in-proximity, take-turns, practice.
+  _doItOf(
+    'Mix a potion: petals, a leaf, and a little water. What does it smell like?',
+    'make',
+    '🧪',
+  ),
+  _doItOf(
+    'Smell three different plants. Which is your favourite?',
+    'find',
+    '🌿',
+  ),
+  _doItOf('Water a plant gently and watch the soil drink it up.', 'help', '🪴'),
+  _doItOf(
+    'Take turns being the gardener — pass the watering can to a friend.',
+    'help',
+    '🌱',
+  ),
+  _doItOf(
+    'Make a "garden soup" in a cup with grass, petals, and water.',
+    'make',
+    '🥣',
+  ),
+  _doItOf(
+    'Find the softest leaf you can and feel it with your eyes shut.',
+    'find',
+    '🍃',
+  ),
+  _doItOf('Plant a seed and pat the soil down with your hands.', 'make', '🌰'),
+  _doItOf(
+    'Stand still in the garden — what three sounds can you hear?',
+    'find',
+    '👂',
+  ),
+  _doItOf(
+    'Brew a "happy potion" in your mind — what colour and smell would it be?',
+    'make',
+    '✨',
+  ),
 ];
 
 // ── Question of the Day ───────────────────────────────────────────────────
@@ -1352,6 +1391,15 @@ final List<ContentItem> _questionSeed = <ContentItem>[
   _questionOf('Who is someone you look up to, and why?'),
   _questionOf('What is something you changed your mind about?'),
   _questionOf('If you could be any animal for a day, what would you be?'),
+  // Reflective / presence questions (docs/VISION.md 2026-06-19) — "what is
+  // happiness? is it here?" The deep end of the arc; answered by drawing OR
+  // dialogue.
+  _questionOf('What is happiness? Is it here, right now?'),
+  _questionOf('What is one small thing that made today good?'),
+  _questionOf('When do you feel most like yourself?'),
+  _questionOf('What does it feel like to be kind to someone?'),
+  _questionOf('If happiness were a place, what would it look like?'),
+  _questionOf('What are you grateful for today?'),
 ];
 
 // ── Quote of the Day ──────────────────────────────────────────────────────

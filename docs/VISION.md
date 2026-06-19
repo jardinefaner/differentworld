@@ -1207,6 +1207,40 @@ once it has a home.
   Question/Quote/Mission ritual (the spine) vs the "what to do instead" calm list
   vs the magic re-skin of worlds vs the TV-homework loop? Is "A World of Magic" a
   new content pack or a re-theme of the live worlds engine?
+- **2026-06-19** — **Potions + the garden: hands in the real world; happiness is
+  here.** In the user's words: *"potions, we're creating our own potions, we'll
+  go to the garden and smell the plants and water them… we'll take turns… we'll
+  be gardeners… we'll practice… and every day, what we learn from today is
+  shared with parents… community… drawing, and dialogue… what is happiness? it
+  is here? the story arc."* The magic theme made REAL and SENSORY:
+  - **Potions + gardening as the flagship Do-It.** Making potions (mixing
+    petals, water, scents), tending a garden (smell the plants, water them, take
+    turns, *be* gardeners, *practice* daily). Tactile, in-proximity, role-play,
+    repeated — the perfect marriage of "Do It" (real action, on paper/in the
+    world, leaves evidence) and "A World of Magic" (the spellbook frame). Potions
+    ARE the spells; the garden IS the world. (Plugs into the live Do-It bank +
+    the Daily's mission + the Spellbook.)
+  - **Drawing AND dialogue** — the two response modes, named again. Every prompt
+    answered by *making* (a drawing) OR *talking* (dialogue). Reinforces the
+    Daily-response contract (a sound / sentence / drawing) and the discussion
+    activities.
+  - **"What is happiness? Is it here?"** — the deepest Question of the Day, tied
+    to the story arc. Presence: happiness is *here*, now, in the smelling and
+    watering and taking-turns — not a destination. A reflective prompt that
+    belongs in the Daily's question bank, and the kind of question the whole arc
+    keeps circling.
+  - **Daily share to parents → community.** *"every day, what we learn from
+    today is shared with parents… community."* The accumulating record
+    (#documenting-the-now) doesn't just sit in the Book — a **daily digest of
+    what the room learned/did/made goes home to parents**, and the sum of those
+    is the community's shared memory. This is the missing FAMILY-FACING half of
+    the Daily: today's question + responses + mission + potions → a parent recap.
+    (The real new feature here; the rest is content. Reuses the Daily entries +
+    the family lens.) **Open forks:** is the daily parent recap auto-composed
+    from the day's `daily_response` + `did_it` entries, or staff-curated? push
+    (a notification / message) or pull (a family-side "Today" card)? per-child or
+    whole-room? Is "community" a future shared/public layer (cf. "teaching in
+    public") or just every parent seeing their child's day?
 
 ---
 
