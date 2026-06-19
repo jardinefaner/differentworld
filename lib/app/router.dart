@@ -51,6 +51,7 @@ import 'package:differentworld/features/entries/observations_screen.dart';
 import 'package:differentworld/features/exports/progress_report_screen.dart';
 import 'package:differentworld/features/exports/send_export_screen.dart';
 import 'package:differentworld/features/family/family_messages_screen.dart';
+import 'package:differentworld/features/family/family_share_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/game_registry.dart';
@@ -559,6 +560,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => MessageThreadScreen(
                   subjectId: state.pathParameters['subjectId']!,
                   guardianId: state.pathParameters['guardianId']!,
+                ),
+              ),
+              // Share from home — the family-side half of the homework loop
+              // (docs/VISION.md 2026-06-19). The parent sends what their child
+              // brought; it lands in the child's message thread for staff.
+              GoRoute(
+                path: 'share-home',
+                builder: (_, _) => const RouteTitle(
+                  title: 'Share from home',
+                  child: FamilyShareScreen(),
                 ),
               ),
               // Weekly review — same data as /insights but presented as a

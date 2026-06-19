@@ -156,6 +156,11 @@ class GuardianDrawer extends ConsumerWidget {
                       onTap: () => closeThen(() => context.push('/messages')),
                     ),
                     ListTile(
+                      leading: const Icon(Icons.live_tv_outlined),
+                      title: const Text('Share from home'),
+                      onTap: () => closeThen(() => context.push('/share-home')),
+                    ),
+                    ListTile(
                       leading: const Icon(Icons.tune),
                       title: const Text('Display & text size'),
                       onTap: () {
