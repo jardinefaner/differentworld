@@ -45,6 +45,7 @@ import 'package:differentworld/features/auth/login_screen.dart';
 import 'package:differentworld/features/calm/calm_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
+import 'package:differentworld/features/child_world/child_world_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
@@ -790,6 +791,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => RouteTitle(
                   title: 'Today',
                   child: ChildDayScreen(
+                    subjectId: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+              // The child's own WORLD (docs/VISION.md 2026-06-19) — their weekly
+              // intention, their project, today's answer + hero, and their
+              // growth, a bento that's all THEIRS.
+              GoRoute(
+                path: 'subjects/:id/world',
+                builder: (_, state) => RouteTitle(
+                  title: 'World',
+                  child: ChildWorldScreen(
                     subjectId: state.pathParameters['id']!,
                   ),
                 ),

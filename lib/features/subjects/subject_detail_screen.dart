@@ -140,6 +140,15 @@ class SubjectDetailScreen extends ConsumerWidget {
               onPressed: () =>
                   unawaited(context.push('/subjects/$subjectId/me')),
             ),
+          // Their WORLD — this week's intention, their own project, today's
+          // answer + hero, and their growth, a bento all THEIRS.
+          if (subjectAsync.value != null)
+            EdgeAction(
+              icon: Icons.public_outlined,
+              label: 'Their world',
+              onPressed: () =>
+                  unawaited(context.push('/subjects/$subjectId/world')),
+            ),
           // Wave 101: hide-don't-disable. Both Progress report and Edit
           // require a group id to build the route, so gate visibility on
           // `groupId != null && isNotEmpty` rather than rendering an inert
