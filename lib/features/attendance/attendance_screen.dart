@@ -9,6 +9,8 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/attendance/widgets/attendance_row.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/groups/room_skin_background.dart';
+import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -128,6 +130,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     final viewer = ref.watch(viewerProvider);
     final labels = ref.watch(verticalLabelsProvider);
     final groupAsync = ref.watch(_groupDetailProvider(widget.groupId));
+    final group = groupAsync.value;
+    final roomSkin = group == null ? null : roomSkinForGroup(group);
     final subjectsAsync = ref.watch(subjectsInGroupProvider(widget.groupId));
     final recordsAsync = ref.watch(
       attendanceForDayProvider(
@@ -143,6 +147,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     }
 
     return EdgeScaffold(
+      background: roomSkin == null
+          ? null
+          : RoomSkinBackground(skin: roomSkin, decal: true),
       actions: [
         if (subjectsAsync.value?.isNotEmpty ?? false)
           PrimaryActionButton(

@@ -8,7 +8,9 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skin_picker.dart';
+import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -56,12 +58,17 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
 
     final group = groupAsync.value;
     final groupId = widget.groupId;
+    // The room's own theme, decaled subtly behind the Calm content.
+    final roomSkin = group == null ? null : roomSkinForGroup(group);
     // Wave 108: dynamic tab title — the classroom name.
     return RouteTitle(
       title: group?.name.trim().isNotEmpty == true
           ? group!.name
           : labels.group,
       child: EdgeScaffold(
+      background: roomSkin == null
+          ? null
+          : RoomSkinBackground(skin: roomSkin, decal: true),
       actions: [
         // Primary verb: add a subject (director-only). For everyone
         // else, take-attendance is the most frequent so it takes the
