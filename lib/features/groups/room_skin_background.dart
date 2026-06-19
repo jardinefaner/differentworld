@@ -14,12 +14,23 @@ import 'package:flutter/material.dart';
 /// deliberate follow-up, not v1. `skin: null` renders nothing (the safe
 /// fallback for an unset / unknown room_skin).
 class RoomSkinBackground extends StatelessWidget {
-  const RoomSkinBackground({required this.skin, this.child, super.key});
+  const RoomSkinBackground({
+    required this.skin,
+    this.child,
+    this.decal = false,
+    super.key,
+  });
 
   final RoomSkin? skin;
 
   /// Optional content painted OVER the ambience (e.g. a room name in glass).
   final Widget? child;
+
+  /// Light **decal** mode — paints NO dark gradient, only a subtle
+  /// accent-tinted edge motif over a transparent background, so it reads as a
+  /// gentle theme nod behind warm-paper Calm content. `false` (default) → the
+  /// full immersive deep-field ambience (white/glass content floats over it).
+  final bool decal;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +38,7 @@ class RoomSkinBackground extends StatelessWidget {
     if (s == null) return child ?? const SizedBox.shrink();
     return RepaintBoundary(
       child: CustomPaint(
-        painter: _RoomSkinPainter(s),
+        painter: _RoomSkinPainter(s, decal: decal),
         child: child ?? const SizedBox.expand(),
       ),
     );
@@ -35,13 +46,20 @@ class RoomSkinBackground extends StatelessWidget {
 }
 
 class _RoomSkinPainter extends CustomPainter {
-  const _RoomSkinPainter(this.skin);
+  const _RoomSkinPainter(this.skin, {this.decal = false});
 
   final RoomSkin skin;
+  final bool decal;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
+    // Decal mode: no gradient (the warm-paper screen shows through), just the
+    // subtle accent-tinted edge motif. Unknown id → nothing (safe).
+    if (decal) {
+      _decalSignatures[skin.id]?.call(canvas, size, skin);
+      return;
+    }
     final rect = Offset.zero & size;
     // 1. The deep-field gradient (the ambience).
     canvas.drawRect(
@@ -58,7 +76,8 @@ class _RoomSkinPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_RoomSkinPainter old) => old.skin.id != skin.id;
+  bool shouldRepaint(_RoomSkinPainter old) =>
+      old.skin.id != skin.id || old.decal != decal;
 }
 
 /// id → signature painter. Adding a skin's look is one entry here (+ a row in
@@ -235,6 +254,155 @@ final Map<String, void Function(Canvas, Size, RoomSkin)> _signatures = {
         Offset(r.nextDouble() * s.width, r.nextDouble() * s.height),
         0.7 + r.nextDouble() * 1.2,
         snow,
+      );
+    }
+  },
+};
+
+/// id → a SUBTLE decal motif for [RoomSkinBackground]'s light mode: the room's
+/// signature element, accent-tinted + low-alpha + edge-confined, over a
+/// TRANSPARENT background so warm-paper Calm content reads through. The Calm
+/// counterpart to `_signatures` (the full immersive deep field).
+final Map<String, void Function(Canvas, Size, RoomSkin)> _decalSignatures = {
+  // A top-corner constellation + a small soft planet.
+  'space': (canvas, s, skin) {
+    final r = Random(11);
+    final star = Paint();
+    final n = _areaCount(s, 7000, 8, 24);
+    for (var i = 0; i < n; i++) {
+      star.color = skin.color.withValues(alpha: 0.16 + r.nextDouble() * 0.22);
+      canvas.drawCircle(
+        Offset(
+          s.width * (0.5 + r.nextDouble() * 0.5),
+          s.height * r.nextDouble() * 0.32,
+        ),
+        0.5 + r.nextDouble() * 1.1,
+        star,
+      );
+    }
+    final pc = Offset(s.width * 0.9, s.height * 0.1);
+    final pr = s.shortestSide * 0.06;
+    canvas
+      ..drawCircle(
+        pc,
+        pr * 1.7,
+        Paint()
+          ..color = skin.color.withValues(alpha: 0.07)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+      )
+      ..drawCircle(pc, pr, Paint()..color = skin.color.withValues(alpha: 0.16));
+  },
+  // Faint caustic shafts from the top + a few bubble outlines low.
+  'underwater': (canvas, s, skin) {
+    final shaft = Paint()..color = skin.color.withValues(alpha: 0.05);
+    for (var i = 0; i < 3; i++) {
+      final x = s.width * (0.2 + i * 0.3);
+      canvas.drawPath(
+        Path()
+          ..moveTo(x, 0)
+          ..lineTo(x + s.width * 0.08, 0)
+          ..lineTo(x - s.width * 0.04, s.height * 0.45)
+          ..lineTo(x - s.width * 0.13, s.height * 0.45)
+          ..close(),
+        shaft,
+      );
+    }
+    final r = Random(23);
+    final bubble = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    for (var i = 0; i < 9; i++) {
+      bubble.color = skin.color.withValues(alpha: 0.12 + r.nextDouble() * 0.12);
+      canvas.drawCircle(
+        Offset(
+          s.width * r.nextDouble(),
+          s.height * (0.6 + r.nextDouble() * 0.4),
+        ),
+        1.5 + r.nextDouble() * 3,
+        bubble,
+      );
+    }
+  },
+  // A low, faint skyline band.
+  'urban': (canvas, s, skin) {
+    final r = Random(31);
+    final b = Paint()..color = skin.color.withValues(alpha: 0.10);
+    var x = 0.0;
+    while (x < s.width) {
+      final w = s.width * (0.06 + r.nextDouble() * 0.08);
+      final h = s.height * (0.05 + r.nextDouble() * 0.10);
+      canvas.drawRect(Rect.fromLTWH(x, s.height - h, w, h), b);
+      x += w + s.width * 0.02;
+    }
+  },
+  // A soft sun in the top corner.
+  'safari': (canvas, s, skin) {
+    final sun = Offset(s.width * 0.87, s.height * 0.12);
+    final rad = s.shortestSide * 0.08;
+    canvas
+      ..drawCircle(
+        sun,
+        rad * 1.9,
+        Paint()
+          ..color = skin.color.withValues(alpha: 0.08)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
+      )
+      ..drawCircle(sun, rad, Paint()..color = skin.color.withValues(alpha: 0.2));
+  },
+  // A couple of soft clouds near the top.
+  'travel': (canvas, s, skin) {
+    final r = Random(41);
+    final cloud = Paint()..color = skin.color.withValues(alpha: 0.07);
+    for (var i = 0; i < 3; i++) {
+      final cx = s.width * (0.3 + r.nextDouble() * 0.6);
+      final cy = s.height * (0.06 + r.nextDouble() * 0.16);
+      final base = s.shortestSide * 0.07;
+      for (var j = 0; j < 4; j++) {
+        canvas.drawCircle(
+          Offset(
+            cx + (j - 1.5) * base * 0.7,
+            cy + (r.nextDouble() - 0.5) * base * 0.3,
+          ),
+          base * (0.7 + r.nextDouble() * 0.4),
+          cloud,
+        );
+      }
+    }
+  },
+  // A low, faint tree-line.
+  'forest': (canvas, s, skin) {
+    final r = Random(53);
+    final tree = Paint()..color = skin.color.withValues(alpha: 0.12);
+    var x = 0.0;
+    while (x < s.width) {
+      final w = s.width * (0.05 + r.nextDouble() * 0.05);
+      final h = s.height * (0.07 + r.nextDouble() * 0.11);
+      canvas.drawPath(
+        Path()
+          ..moveTo(x + w / 2, s.height - h)
+          ..lineTo(x, s.height)
+          ..lineTo(x + w, s.height)
+          ..close(),
+        tree,
+      );
+      x += w * 0.85;
+    }
+  },
+  // A faint aurora ribbon near the top.
+  'arctic': (canvas, s, skin) {
+    for (var i = 0; i < 2; i++) {
+      final y = s.height * (0.08 + i * 0.06);
+      final path = Path()..moveTo(0, y);
+      for (var x = 0.0; x <= s.width; x += s.width / 6) {
+        path.lineTo(x, y + sin(x / s.width * pi * 2 + i) * s.height * 0.03);
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = skin.color.withValues(alpha: 0.12 - i * 0.04)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6 + i * 3
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
       );
     }
   },

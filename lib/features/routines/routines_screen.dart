@@ -1,5 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/groups/room_skin_background.dart';
+import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/routines/routine_voice.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -67,7 +69,12 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
     final activities =
         ref.watch(activitiesProvider).value ?? const <Activity>[];
 
+    final skin = roomSkinForGroup(selected);
     return EdgeScaffold(
+      // The room's theme, decaled subtly behind the Calm content.
+      background: skin == null
+          ? null
+          : RoomSkinBackground(skin: skin, decal: true),
       // Header + chip selector are PINNED; the day scrolls (or its loading /
       // error / empty state fills) inside the Expanded — so those states get a
       // bounded viewport instead of being nested in an outer ListView, which

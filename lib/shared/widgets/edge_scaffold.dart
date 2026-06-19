@@ -36,10 +36,17 @@ class EdgeScaffold extends ConsumerStatefulWidget {
     this.bottomSheet,
     this.resizeToAvoidBottomInset,
     this.includeSearchAction = false,
+    this.background,
     super.key,
   });
 
   final Widget body;
+
+  /// Optional decorative layer painted BEHIND the body (a `Stack` fill,
+  /// pointer-transparent) — e.g. a room's themed `RoomSkinBackground` decal.
+  /// Kept generic (a `Widget`) so this shared scaffold stays feature-agnostic;
+  /// the screen builds the themed background and passes it here. Null = none.
+  final Widget? background;
 
   /// Screen-specific actions for the top-right pill. Published to
   /// [routeChromeProvider] in initState; AppShell renders them.
@@ -225,10 +232,23 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
         // chrome (the old "appbar background color" complaint) and block
         // content from scrolling under the glass. Full-bleed bodies that
         // opt out of SafeArea (the camera) are unaffected.
-        body: _ChromeInsetBody(
-          reserve: inKidMode ? 0 : ShellMetrics.topChromeHeight,
-          child: widget.body,
-        ),
+        body: widget.background == null
+            ? _ChromeInsetBody(
+                reserve: inKidMode ? 0 : ShellMetrics.topChromeHeight,
+                child: widget.body,
+              )
+            : Stack(
+                fit: StackFit.expand,
+                children: [
+                  Positioned.fill(
+                    child: IgnorePointer(child: widget.background),
+                  ),
+                  _ChromeInsetBody(
+                    reserve: inKidMode ? 0 : ShellMetrics.topChromeHeight,
+                    child: widget.body,
+                  ),
+                ],
+              ),
         floatingActionButton: widget.floatingActionButton,
         bottomSheet: widget.bottomSheet,
       ),

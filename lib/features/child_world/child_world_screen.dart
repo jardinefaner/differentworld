@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/child_world/child_world_model.dart';
 import 'package:differentworld/features/child_world/child_world_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/groups/room_skin_background.dart';
+import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/heroes/heroes_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
@@ -35,7 +39,21 @@ class ChildWorldScreen extends ConsumerWidget {
     final name = subject?.firstName ?? 'This child';
     final key = (subjectId: subjectId, week: week);
 
+    // Decal the hub with the child's room theme — subtle, over the Calm base.
+    final groups = ref.watch(groupsProvider).value ?? const <Group>[];
+    Group? group;
+    for (final g in groups) {
+      if (g.id == subject?.groupId) {
+        group = g;
+        break;
+      }
+    }
+    final skin = group == null ? null : roomSkinForGroup(group);
+
     return EdgeScaffold(
+      background: skin == null
+          ? null
+          : RoomSkinBackground(skin: skin, decal: true),
       body: SafeArea(
         bottom: false,
         child: ListView(
