@@ -265,6 +265,29 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Daily
+**Path**: `lib/features/daily/`
+**Purpose**: The daily ritual — the day's Question, Quote, and Mission, host-presented in sequence, each answered with a captured response (a sentence or a drawing) that becomes part of the record (docs/VISION.md 2026-06-19; "document the now… the things they'll write in their books"). Visible growth, not grades.
+**Personas served**: Ava (answers the prompts), All staff (host the daily, scribe responses).
+**Discovery surfaces**:
+- Routes: `/daily` (`?group=` scopes the record). Always resolves; surfaces below are gated.
+- Omnibox: `page.daily` ("The Daily" — keywords daily / today / question of the day / quote of the day / mission of the day / qotd). **Toggle-gated** (`dailyEnabledProvider`) + guardian-gated off.
+- Slash: none (a static slash list can't honor the toggle).
+- Drawer: no — reached via the Brain Breaks deck's "Today" card (when the toggle is on) or the omnibox.
+- Settings: yes — "The Daily" switch in Preferences (`_DailyTile`, off by default).
+**Capabilities**: None — open to all signed-in staff once the director switches it on.
+**Data**: [entries](SCHEMA.md#entries) (`kind='daily_response'` — one accumulative row per answer; `details` = `{prompt_kind, prompt_text}`; `body` = the written response; subjectId → the child's Book, null → the room; via `EntryActions.recordDailyResponse`), [attachments](SCHEMA.md#attachments) (the optional drawing, offline-safe pinned id). Also writes `kind='did_it'` when the Mission is done (reuses `recordDidIt`). Reads the content bank (`ContentKind.question` / `quote` seeds + `doIt` for the mission) via `todaysDailyProvider`.
+**Surfaces**:
+- *Daily screen* — `lib/features/daily/daily_screen.dart`. `/daily`; presents the day's Question + Quote + Mission. Question/Quote open a response sheet (a sentence and/or a snapped drawing → `recordDailyResponse`); Mission gets "We did it!" → `recordDidIt`. Camera gated `isMobileCapturePlatform`.
+- *Providers* — `lib/features/daily/daily_providers.dart`. `todaysDailyProvider` picks the day's three DETERMINISTICALLY (`dailyIndexFor(date)` — same for the whole room, rotates across days, no randomness). Mission reuses the Do It bank.
+- *Toggle* — `lib/features/daily/daily_setting.dart`. `dailyEnabledProvider`, default off.
+- *Content* — `ContentKind.question` + `ContentKind.quote` seeds in `content_bank.dart` (20 each, curated, kid-safe).
+**Depends on**: ActivityRuntime / content bank (question/quote/doIt seeds + `bankedContentProvider`), Entries (`recordDailyResponse` + `recordDidIt`), Photos (drawing via `uploadOnly`).
+**Consumed by**: ActivityRuntime (Brain Breaks deck injects the "Today" card), Omnibox (`page.daily`), Settings (`_DailyTile`).
+**Last verified**: 2026-06-19
+
+---
+
 ## Entries
 **Path**: `lib/features/entries/`
 **Purpose**: Unified daily log — observations, meals, naps, diapers, incidents, work samples — all rows in one table with a `kind` discriminator.
