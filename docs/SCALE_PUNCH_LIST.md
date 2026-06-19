@@ -288,11 +288,27 @@ hotspot guards. Pure-code, no dashboard:
   PDF/book builders (`summer_book`, `book_screen` — one-shot at export, not
   a rebuild path). The deeper option (denormalize title/emoji/date onto
   columns to kill the decode entirely) still wants a profiler trace.
-- **Oversized single-purpose files** (soft caps: 400 screen / 300
-  provider / 200 widget): `entries_providers.dart` (~1060),
-  `character_sheet_screen.dart` (~1200), `family_today_screen.dart`
-  (~1120). Split `EntryActions` per kind; extract the inline widgets to
-  their own files. Maintainability, not runtime.
+- **Oversized single-purpose files — 2 of 3 split** (soft caps: 400
+  screen / 300 provider / 200 widget). Maintainability, not runtime.
+  - **`entries_providers.dart` 1056 → 746 — DONE.** Read providers +
+    `EntryKind` moved to `entries_read_providers.dart`; the write file
+    `import`s + **re-exports** it, so every consumer is unchanged. Clean
+    read/write seam. (`EntryActions` is still ~720 in one cohesive class;
+    splitting it further needs `part`/extension and isn't worth it.)
+  - **`family_today_screen.dart` 1117 → 701 — DONE.** The two trailing
+    clusters extracted to `widgets/received_reports_card.dart` (261) +
+    `widgets/todays_recap_peek.dart` (166), each exposing one public root
+    widget (the inner rows/cards stay private). Pixel-identical.
+  - **`character_sheet_screen.dart` (~1200) — TODO.** Harder: its 19
+    section widgets share file-private layout helpers (`_Section`,
+    `_Chip`), so a clean split first promotes those to a public
+    `widgets/` component, THEN moves the sections that depend on them —
+    a deliberate extraction, not a mechanical move. No re-export seam
+    (these are private widgets, not exported symbols).
+  - **Convention:** no hand-authored `part` files exist in this repo, so
+    splits use either a re-export (for public symbols) or public-widget
+    extraction to a `widgets/` subfolder (for private widgets) — never a
+    new `part` convention.
 
 **Prerequisites.** None for the indexes or the N+1 (both done); the rest
 want a profiler trace or a refactor session.
