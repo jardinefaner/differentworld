@@ -30,6 +30,11 @@ class RoleDeckScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
+    // ONE stream for all heroes, then look each child's up — instead of a
+    // heroForSubjectProvider watch PER child (N live streams; at a 100-child
+    // program that's 100 subscriptions). This scales flat.
+    final heroes = ref.watch(heroesInSpaceProvider).value ?? const <DeckCard>[];
+    final heroBySubject = {for (final c in heroes) c.subjectId: c};
     return EdgeScaffold(
       actions: [
         IconButton(
@@ -76,7 +81,13 @@ class RoleDeckScreen extends ConsumerWidget {
                       runSpacing: 12,
                       children: [
                         for (final s in subjects)
-                          SizedBox(width: width, child: _DeckCard(subject: s)),
+                          SizedBox(
+                            width: width,
+                            child: _DeckCard(
+                              subject: s,
+                              hero: heroBySubject[s.id],
+                            ),
+                          ),
                       ],
                     );
                   },
@@ -151,18 +162,21 @@ Future<void> _printDeck(BuildContext context, WidgetRef ref) async {
 }
 
 /// One slot in the deck — the child's collectible card, or an invite to make it.
-class _DeckCard extends ConsumerWidget {
-  const _DeckCard({required this.subject});
+/// The hero is passed IN (resolved once from heroesInSpaceProvider), not watched
+/// per card, so the deck is one stream, not N.
+class _DeckCard extends StatelessWidget {
+  const _DeckCard({required this.subject, required this.hero});
 
   final Subject subject;
+  final DeckCard? hero;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final hero = ref.watch(heroForSubjectProvider(subject.id)).value;
+  Widget build(BuildContext context) {
     final first = subject.firstName;
     void edit() => context.push('/subjects/${subject.id}/hero', extra: first);
 
-    if (hero == null) {
+    final h = hero;
+    if (h == null) {
       return GestureDetector(
         onTap: edit,
         child: DottedSlot(label: first),
@@ -171,8 +185,8 @@ class _DeckCard extends ConsumerWidget {
     return GestureDetector(
       onTap: edit,
       child: CollectibleRoleCard(
-        data: hero.data,
-        entryId: hero.entryId,
+        data: h.data,
+        entryId: h.entryId,
         childName: first,
       ),
     );

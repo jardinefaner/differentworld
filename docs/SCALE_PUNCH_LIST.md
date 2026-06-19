@@ -113,7 +113,14 @@ on the capability framework — this is enforcement, not a new model.**
 **Why.** `attendance_records`, `entries`, and `vehicle_logs` grow
 linearly. At 50 kids × 5 obs/week × 40 weeks = 10k observations per
 year per program. Cold launch downloads everything in `by_space`.
-Fine today; not fine at year 3.
+Fine today; not fine at year 3. **The 2026-06 features made `entries`
+the dominant grower:** the daily parent recap writes ONE row per child
+per send (≈ N_kids/day), and `daily_response` + `mood` are similar
+per-child-per-day kinds — so a 100-child program now generates 100k+
+`entries` rows/year, all in `by_space`. This is the single
+highest-leverage scale lever, and it's blocked only on the
+dashboard-side `by_space_recent` stream + the SDK `parameters:` arg
+below.
 
 **Status (May 2026).** Client side built; dashboard YAML pending.
 
@@ -218,6 +225,34 @@ row counts (a few hundred records to scan), but at ~10k entries +
 
 **Prerequisites.** Profiler showing this on the critical path.
 
+### 2026-06-19 audit — code-side scale follow-ups
+
+From the scaling audit after the 2026-06 feature wave (recap / per-child
+world / role deck / story showcase), run through the sync + performance +
+hotspot guards. Pure-code, no dashboard:
+
+- **Per-child N+1 watches.** A roster screen that watches
+  `heroForSubjectProvider` (or any family provider) PER child opens N live
+  streams — at a 100-child program, 100 subscriptions. **`role_deck_screen`
+  fixed** (one `heroesInSpaceProvider` stream + a `subjectId → card` map).
+  `heroes_hub_screen` still does it; same fix applies. Rule going forward:
+  resolve per-child data from ONE space-wide stream + a map, not a
+  per-row watch.
+- **Hot-path JSON decode.** The Story timeline / showcase / family recap
+  peek `jsonDecode(entry.details)` per entry on every rebuild
+  (`momentsFrom`, `_TodaysRecapPeek`). Bounded today (limit 50–300,
+  newest-first) but O(N) per open. Memoize the decoded view in a provider,
+  or denormalize the hot fields (title / emoji / date) onto columns.
+  Prereq: a profiler trace putting it on the critical path.
+- **Oversized single-purpose files** (soft caps: 400 screen / 300
+  provider / 200 widget): `entries_providers.dart` (~1060),
+  `character_sheet_screen.dart` (~1200), `family_today_screen.dart`
+  (~1120). Split `EntryActions` per kind; extract the inline widgets to
+  their own files. Maintainability, not runtime.
+
+**Prerequisites.** None for the N+1 (done where it mattered most); the
+rest want a profiler trace or a refactor session.
+
 ### Search backend
 
 Omnibox scoring runs in-memory over the visible-entities list. Fine
@@ -241,3 +276,11 @@ US-region project hurts. Federate when geography demands it.
 
 - **2026-05-18** — Doc created during the scaling audit. Items
   inventoried; dismiss / snooze shipped.
+- **2026-06-19** — Re-audit after the 2026-06 feature wave (sync /
+  performance / hotspot guards). Fixed the role-deck per-child N+1 (one
+  `heroesInSpaceProvider` stream, not N). Confirmed the recap upsert is
+  safe (newest-first ordering keeps today's row in range) and the
+  showcase/story loads are bounded (limit 50/300). Recorded the recap's
+  per-child-per-day growth against the time-windowed-sync item, plus the
+  remaining code-side follow-ups (heroes-hub N+1, hot-path JSON decode,
+  oversized files).
