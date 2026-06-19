@@ -6,6 +6,7 @@ import 'package:differentworld/features/activity_runtime/content_bank_providers.
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -493,9 +494,10 @@ class _PhotoBlock extends StatelessWidget {
     }
     return Row(
       children: [
-        // Camera capture is mobile/desktop only — image_picker can't open a
-        // live camera on web, so we offer only the file picker there.
-        if (!kIsWeb) ...[
+        // Camera capture is Android/iOS only — image_picker has no live-camera
+        // implementation on web OR desktop, so off-mobile we offer only the
+        // file picker (matches BrainBreaksScreen's Photo Studio gating).
+        if (isMobileCapturePlatform) ...[
           Expanded(
             child: OutlinedButton.icon(
               onPressed: picking ? null : onCamera,

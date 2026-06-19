@@ -4,6 +4,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/heroes/hero_catalog.dart';
 import 'package:differentworld/features/heroes/widgets/hero_card.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -386,7 +387,7 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
     }
     return Row(
       children: [
-        if (!kIsWeb) ...[
+        if (isMobileCapturePlatform) ...[
           Expanded(
             child: OutlinedButton.icon(
               onPressed: _picking
