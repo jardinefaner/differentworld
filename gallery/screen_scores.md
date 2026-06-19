@@ -1,13 +1,16 @@
 # Screen quality scoreboard
 
-84 screens scored · worst-first · `tool/score_screens.py`
+95 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **98.4** · minor work: 7 · ship-confident: 77
+Average: **98.2** · minor work: 10 · ship-confident: 85
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
 | 80 | minor work | `login` | -20 rendered root is a raw Scaffold, not EdgeScaffold |
+| 88 | minor work | `daily` | -12 2 of loading/empty/error states missing |
 | 88 | minor work | `day_templates` | -12 2 of loading/empty/error states missing |
+| 88 | minor work | `do_it` | -12 2 of loading/empty/error states missing |
+| 88 | minor work | `fill_blank` | -12 2 of loading/empty/error states missing |
 | 88 | minor work | `group_edit` | -12 2 of loading/empty/error states missing |
 | 88 | minor work | `join_unavailable` ⟨raw canvas⟩ | -12 2 of loading/empty/error states missing |
 | 88 | minor work | `tools` | -12 2 of loading/empty/error states missing |
@@ -31,6 +34,7 @@ Average: **98.4** · minor work: 7 · ship-confident: 77
 | 100 | ship-confident | `board` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `brain_breaks` | — |
 | 100 | ship-confident | `breathe` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `calm` | — |
 | 100 | ship-confident | `capture` | — |
 | 100 | ship-confident | `capture_inbox` | — |
 | 100 | ship-confident | `cast` | — |
@@ -41,6 +45,8 @@ Average: **98.4** · minor work: 7 · ship-confident: 77
 | 100 | ship-confident | `family_today` | — |
 | 100 | ship-confident | `group_detail` | — |
 | 100 | ship-confident | `group_discussion` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `hero_creator` | — |
+| 100 | ship-confident | `heroes_hub` | — |
 | 100 | ship-confident | `incident_form` | — |
 | 100 | ship-confident | `incidents` | — |
 | 100 | ship-confident | `insights` | — |
@@ -48,6 +54,7 @@ Average: **98.4** · minor work: 7 · ship-confident: 77
 | 100 | ship-confident | `join_or_create` | — |
 | 100 | ship-confident | `journey_tour` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `launch` | — |
+| 100 | ship-confident | `letters` | — |
 | 100 | ship-confident | `live_board` | — |
 | 100 | ship-confident | `locations_list` | — |
 | 100 | ship-confident | `mission_board` | — |
@@ -57,10 +64,12 @@ Average: **98.4** · minor work: 7 · ship-confident: 77
 | 100 | ship-confident | `observation_form` | — |
 | 100 | ship-confident | `observations_index` | — |
 | 100 | ship-confident | `pattern_maker` | — |
+| 100 | ship-confident | `penny` | — |
 | 100 | ship-confident | `photo_curriculum` | — |
 | 100 | ship-confident | `photography_runner` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `pickup_board` | — |
 | 100 | ship-confident | `poster` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `potions` | — |
 | 100 | ship-confident | `present_hub` | — |
 | 100 | ship-confident | `print_toolkit` | — |
 | 100 | ship-confident | `program_hub` | — |
@@ -68,11 +77,13 @@ Average: **98.4** · minor work: 7 · ship-confident: 77
 | 100 | ship-confident | `reflection_session` | — |
 | 100 | ship-confident | `role_cards` | — |
 | 100 | ship-confident | `roles` | — |
+| 100 | ship-confident | `routines` | — |
 | 100 | ship-confident | `schedule` | — |
 | 100 | ship-confident | `schedule_time_grid` | — |
 | 100 | ship-confident | `send` | — |
 | 100 | ship-confident | `settings` | — |
 | 100 | ship-confident | `speak` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `spellbook` | — |
 | 100 | ship-confident | `spells` | — |
 | 100 | ship-confident | `subject_detail` | — |
 | 100 | ship-confident | `supplies_list` | — |

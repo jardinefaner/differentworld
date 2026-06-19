@@ -8,7 +8,6 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
-import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -243,7 +242,9 @@ class _PairRow extends StatelessWidget {
 }
 
 /// Shown when the cohort can't be paired (fewer than two children) — the
-/// activity still works, the kids just pick a friend themselves.
+/// activity still works, the kids just pick a friend themselves. A plain
+/// (non-scrolling) note: it's a ListView child, so it must NOT use EmptyState,
+/// which wraps itself in a CenterOrScroll viewport (unbounded inside a list).
 class _NoPairsNote extends StatelessWidget {
   const _NoPairsNote({required this.hasGroups});
 
@@ -251,14 +252,37 @@ class _NoPairsNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EmptyState(
-      icon: Icons.mail_outline,
-      title: 'Write to a friend',
-      message: hasGroups
-          ? 'Add more children to this room to pair everyone up — or just '
-                'pick a friend and write them a note.'
-          : 'Pick a friend and write them a note — put “To:” and “From:” at '
-                'the top.',
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      child: Column(
+        children: [
+          Icon(
+            Icons.mail_outline,
+            size: 48,
+            color: scheme.primary.withValues(alpha: 0.7),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Write to a friend',
+            style: theme.textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            hasGroups
+                ? 'Add more children to this room to pair everyone up — or '
+                      'just pick a friend and write them a note.'
+                : 'Pick a friend and write them a note — put “To:” and “From:” '
+                      'at the top.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

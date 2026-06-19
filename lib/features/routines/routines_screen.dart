@@ -68,17 +68,24 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
         ref.watch(activitiesProvider).value ?? const <Activity>[];
 
     return EdgeScaffold(
+      // Header + chip selector are PINNED; the day scrolls (or its loading /
+      // error / empty state fills) inside the Expanded — so those states get a
+      // bounded viewport instead of being nested in an outer ListView, which
+      // is what crashed LoadingSlot's skeleton.
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const ContentHeader(
-              title: 'What do we do now?',
-              subtitle: 'Today’s rhythm',
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: ContentHeader(
+                title: 'What do we do now?',
+                subtitle: 'Today’s rhythm',
+              ),
             ),
             if (groups.length > 1)
               Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Wrap(
                   spacing: 8,
                   children: [
@@ -91,19 +98,21 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
                   ],
                 ),
               ),
-            blocksAsync.when(
-              loading: () => const LoadingSlot(),
-              error: (e, _) => ErrorState(
-                title: 'Could not load the day',
-                detail: '$e',
-                onRetry: () => ref.invalidate(
-                  scheduleDayForGroupProvider((
-                    groupId: selected.id,
-                    date: date,
-                  )),
+            Expanded(
+              child: blocksAsync.when(
+                loading: () => const LoadingSlot(),
+                error: (e, _) => ErrorState(
+                  title: 'Could not load the day',
+                  detail: '$e',
+                  onRetry: () => ref.invalidate(
+                    scheduleDayForGroupProvider((
+                      groupId: selected.id,
+                      date: date,
+                    )),
+                  ),
                 ),
+                data: (blocks) => _timeline(blocks, activities),
               ),
-              data: (blocks) => _timeline(blocks, activities),
             ),
           ],
         ),
@@ -113,15 +122,43 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
 
   Widget _timeline(List<ScheduleBlock> blocks, List<Activity> activities) {
     if (blocks.isEmpty) {
-      return const EmptyState(
-        icon: Icons.event_available_outlined,
-        title: 'Nothing planned yet today',
-        message: 'When staff plan the day, it appears here for the room.',
+      final theme = Theme.of(context);
+      final scheme = theme.colorScheme;
+      // Centered in the bounded Expanded — EmptyState would over-fill here.
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.event_available_outlined,
+                size: 48,
+                color: scheme.primary.withValues(alpha: 0.7),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Nothing planned yet today',
+                style: theme.textTheme.titleMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'When staff plan the day, it appears here for the room.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       );
     }
     final sorted = [...blocks]..sort((a, b) => a.startAt.compareTo(b.startAt));
     final now = DateTime.now();
-    return Column(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
       children: [
         for (final block in sorted)
           _RoutineRow(

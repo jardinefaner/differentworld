@@ -96,6 +96,16 @@ def build_registry():
         "subject_detail": (
             "lib/features/subjects/subject_detail_screen.dart",
             "SubjectDetailScreen"),
+        # The 2026-06 activity wave's per-cohort / per-child screens (rendered by
+        # _rosterPlate, which the plate regex above can't bind to).
+        "heroes_hub": (
+            "lib/features/heroes/heroes_hub_screen.dart", "HeroesHubScreen"),
+        "hero_creator": (
+            "lib/features/heroes/hero_creator_screen.dart", "HeroCreatorScreen"),
+        "routines": (
+            "lib/features/routines/routines_screen.dart", "RoutinesScreen"),
+        "letters": (
+            "lib/features/activity_runtime/letters_screen.dart", "LettersScreen"),
     }
     for name, (f, cls) in extra.items():
         if name not in reg and os.path.exists(f):

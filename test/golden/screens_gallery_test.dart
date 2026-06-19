@@ -23,17 +23,24 @@ import 'package:differentworld/features/activity_forge/activity_lens_screen.dart
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
+import 'package:differentworld/features/activity_runtime/do_it_screen.dart';
+import 'package:differentworld/features/activity_runtime/fill_blank_screen.dart';
+import 'package:differentworld/features/activity_runtime/letters_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
+import 'package:differentworld/features/activity_runtime/penny_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
+import 'package:differentworld/features/activity_runtime/potions_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
+import 'package:differentworld/features/calm/calm_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
+import 'package:differentworld/features/daily/daily_screen.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/observation_form_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
@@ -42,6 +49,8 @@ import 'package:differentworld/features/family/family_today_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/heroes/hero_creator_screen.dart';
+import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
 import 'package:differentworld/features/incidents/incident_form_screen.dart';
 import 'package:differentworld/features/incidents/incidents_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
@@ -62,6 +71,7 @@ import 'package:differentworld/features/poster/poster_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/routines/routines_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/day_templates_screen.dart';
@@ -76,6 +86,7 @@ import 'package:differentworld/features/settings/roles_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/speak/speak_screen.dart';
+import 'package:differentworld/features/spellbook/spellbook_screen.dart';
 import 'package:differentworld/features/spells/spells_screen.dart';
 import 'package:differentworld/features/staff/runbook_screen.dart';
 import 'package:differentworld/features/staff/staff_ladder_screen.dart';
@@ -134,11 +145,12 @@ const Set<String> _leakyTimer = {
   'screens/observation_form',
 };
 
-
 Future<void> _loadFonts() async {
-  final manifest = json.decode(
-    await rootBundle.loadString('FontManifest.json'),
-  ) as List<dynamic>;
+  final manifest =
+      json.decode(
+            await rootBundle.loadString('FontManifest.json'),
+          )
+          as List<dynamic>;
   for (final entry in manifest) {
     final family = (entry as Map<String, dynamic>)['family'] as String;
     final loader = FontLoader(family);
@@ -150,14 +162,14 @@ Future<void> _loadFonts() async {
 }
 
 LiveBlock _demoLiveBlock() => LiveBlock(
-      blockId: 'blk-demo',
-      groupId: 'g1',
-      title: 'Outdoor free play',
-      kind: 'on_site',
-      isOutdoor: true,
-      startAt: DateTime.now().subtract(const Duration(minutes: 12)),
-      endAt: DateTime.now().add(const Duration(minutes: 23)),
-    );
+  blockId: 'blk-demo',
+  groupId: 'g1',
+  title: 'Outdoor free play',
+  kind: 'on_site',
+  isOutdoor: true,
+  startAt: DateTime.now().subtract(const Duration(minutes: 12)),
+  endAt: DateTime.now().add(const Duration(minutes: 23)),
+);
 
 void main() {
   setUpAll(() async {
@@ -166,7 +178,9 @@ void main() {
     _db = AppDatabase.forTesting(NativeDatabase.memory());
     await _db.createMigrator().createAll();
     const now = '2026-06-17T08:00:00Z';
-    await _db.into(_db.spaces).insert(
+    await _db
+        .into(_db.spaces)
+        .insert(
           SpacesCompanion.insert(
             id: 'sp1',
             name: 'Sunny Days Program',
@@ -176,7 +190,9 @@ void main() {
             updatedAt: now,
           ),
         );
-    await _db.into(_db.members).insert(
+    await _db
+        .into(_db.members)
+        .insert(
           MembersCompanion.insert(
             id: 'm1',
             displayName: 'Maya Okonkwo',
@@ -187,10 +203,12 @@ void main() {
             spaceId: const Value('sp1'),
           ),
         );
-    final m = await (_db.select(_db.members)..where((t) => t.id.equals('m1')))
-        .getSingle();
-    final s = await (_db.select(_db.spaces)..where((t) => t.id.equals('sp1')))
-        .getSingle();
+    final m = await (_db.select(
+      _db.members,
+    )..where((t) => t.id.equals('m1'))).getSingle();
+    final s = await (_db.select(
+      _db.spaces,
+    )..where((t) => t.id.equals('sp1'))).getSingle();
     _viewer = Viewer(member: m, space: s);
   });
 
@@ -273,6 +291,34 @@ void main() {
   _screenPlate('screens/world_book', const WorldBookScreen());
   _screenPlate('screens/yearly_review', const YearlyReviewScreen());
 
+  // The 2026-06 activity wave + Calm-pass surfaces — so every new component is
+  // measured + golden-locked at the Calm bar. Content screens read
+  // bankedContentProvider (curatedSeeds fallback) or are pure; the cohort /
+  // per-child ones use _rosterPlate (seeded g1 + s1) so they render populated.
+  _screenPlate('screens/calm', const CalmScreen());
+  _screenPlate('screens/daily', const DailyScreen());
+  _screenPlate('screens/do_it', const DoItScreen());
+  _screenPlate('screens/fill_blank', const FillBlankScreen());
+  _screenPlate('screens/penny', const PennyScreen());
+  _screenPlate('screens/potions', const PotionsScreen());
+  _screenPlate('screens/spellbook', const SpellbookScreen());
+  _rosterPlate(
+    'screens/heroes_hub',
+    const HeroesHubScreen(),
+    const Size(440, 900),
+  );
+  _rosterPlate(
+    'screens/hero_creator',
+    const HeroCreatorScreen(subjectId: 's1'),
+    const Size(440, 900),
+  );
+  _rosterPlate(
+    'screens/routines',
+    const RoutinesScreen(),
+    const Size(440, 900),
+  );
+  _rosterPlate('screens/letters', const LettersScreen(), const Size(440, 900));
+
   // The bento dashboard needs DATA to be worth seeing (an empty bento is just
   // "No rooms yet"), so it gets a dedicated SEEDED plate — its own DB with
   // three cohorts + a fake now/next lead — at phone and desktop widths.
@@ -327,12 +373,15 @@ Future<void> _pumpAndShoot(
         viewerProvider.overrideWithValue(_viewer),
         liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
         omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
-        momentsForBlockProvider('blk-demo')
-            .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
-        capturesProvider(CaptureFilter.open)
-            .overrideWith((_) => Stream<List<Capture>>.value(const <Capture>[])),
-        tasksProvider(TaskFilter.open)
-            .overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+        momentsForBlockProvider(
+          'blk-demo',
+        ).overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+        capturesProvider(
+          CaptureFilter.open,
+        ).overrideWith((_) => Stream<List<Capture>>.value(const <Capture>[])),
+        tasksProvider(
+          TaskFilter.open,
+        ).overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
       ],
       child: appChild,
     ),
@@ -359,45 +408,61 @@ Future<void> _pumpAndShoot(
 }
 
 Widget _app(String mode, GoRouter router) => MaterialApp.router(
-      theme: mode == 'dark' ? buildDarkTheme() : buildLightTheme(),
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-    );
+  theme: mode == 'dark' ? buildDarkTheme() : buildLightTheme(),
+  debugShowCheckedModeBanner: false,
+  routerConfig: router,
+);
 
 GoRouter _shellRouter(Widget screen) => GoRouter(
-      initialLocation: '/screen',
-      routes: [
-        ShellRoute(
-          builder: (context, state, child) => AppShell(child: child),
-          routes: [GoRoute(path: '/screen', builder: (_, _) => screen)],
-        ),
-      ],
-    );
+  initialLocation: '/screen',
+  routes: [
+    ShellRoute(
+      builder: (context, state, child) => AppShell(child: child),
+      routes: [GoRoute(path: '/screen', builder: (_, _) => screen)],
+    ),
+  ],
+);
 
 GoRouter _bareRouter(Widget screen) => GoRouter(
-      initialLocation: '/screen',
-      routes: [GoRoute(path: '/screen', builder: (_, _) => screen)],
-    );
+  initialLocation: '/screen',
+  routes: [GoRoute(path: '/screen', builder: (_, _) => screen)],
+);
 
 /// Render a screen inside the real AppShell, light + dark.
-void _screenPlate(String name, Widget screen,
-    {double width = 440, double height = 900}) {
+void _screenPlate(
+  String name,
+  Widget screen, {
+  double width = 440,
+  double height = 900,
+}) {
   final skip = !runGoldens || _leakyTimer.contains(name);
   for (final mode in const ['light', 'dark']) {
     testWidgets('$name - $mode', (tester) async {
-      await _pumpAndShoot(tester, '${name}__$mode',
-          _app(mode, _shellRouter(screen)), Size(width, height));
+      await _pumpAndShoot(
+        tester,
+        '${name}__$mode',
+        _app(mode, _shellRouter(screen)),
+        Size(width, height),
+      );
     }, skip: skip);
   }
 }
 
 /// Render a pre-auth / standalone screen WITHOUT the shell.
-void _bareScreenPlate(String name, Widget screen,
-    {double width = 440, double height = 900}) {
+void _bareScreenPlate(
+  String name,
+  Widget screen, {
+  double width = 440,
+  double height = 900,
+}) {
   for (final mode in const ['light', 'dark']) {
     testWidgets('$name - $mode', (tester) async {
-      await _pumpAndShoot(tester, '${name}__$mode',
-          _app(mode, _bareRouter(screen)), Size(width, height));
+      await _pumpAndShoot(
+        tester,
+        '${name}__$mode',
+        _app(mode, _bareRouter(screen)),
+        Size(width, height),
+      );
     }, skip: !runGoldens);
   }
 }
@@ -412,43 +477,57 @@ void _bentoPlate(String name, Size size) {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.createMigrator().createAll();
       const now = '2026-06-17T08:00:00Z';
-      await db.into(db.spaces).insert(SpacesCompanion.insert(
-            id: 'sp1',
-            name: 'Sunny Days Program',
-            settings: '{}',
-            capabilities: '{}',
-            createdAt: now,
-            updatedAt: now,
-          ));
-      await db.into(db.members).insert(MembersCompanion.insert(
-            id: 'm1',
-            displayName: 'Maya Okonkwo',
-            role: 'director',
-            capabilities: '{}',
-            createdAt: now,
-            updatedAt: now,
-            spaceId: const Value('sp1'),
-          ));
+      await db
+          .into(db.spaces)
+          .insert(
+            SpacesCompanion.insert(
+              id: 'sp1',
+              name: 'Sunny Days Program',
+              settings: '{}',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await db
+          .into(db.members)
+          .insert(
+            MembersCompanion.insert(
+              id: 'm1',
+              displayName: 'Maya Okonkwo',
+              role: 'director',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              spaceId: const Value('sp1'),
+            ),
+          );
       const cohorts = [
         ('g1', 'Sparrows', 'Ages 4–5'),
         ('g2', 'Robins', 'Ages 6–7'),
         ('g3', 'Owls', 'Ages 8–9'),
       ];
       for (final (id, cname, age) in cohorts) {
-        await db.into(db.groups).insert(GroupsCompanion.insert(
-              id: id,
-              spaceId: 'sp1',
-              name: cname,
-              capabilities: '{}',
-              createdAt: now,
-              updatedAt: now,
-              ageRange: Value(age),
-            ));
+        await db
+            .into(db.groups)
+            .insert(
+              GroupsCompanion.insert(
+                id: id,
+                spaceId: 'sp1',
+                name: cname,
+                capabilities: '{}',
+                createdAt: now,
+                updatedAt: now,
+                ageRange: Value(age),
+              ),
+            );
       }
-      final m = await (db.select(db.members)..where((t) => t.id.equals('m1')))
-          .getSingle();
-      final s = await (db.select(db.spaces)..where((t) => t.id.equals('sp1')))
-          .getSingle();
+      final m = await (db.select(
+        db.members,
+      )..where((t) => t.id.equals('m1'))).getSingle();
+      final s = await (db.select(
+        db.spaces,
+      )..where((t) => t.id.equals('sp1'))).getSingle();
       final viewer = Viewer(member: m, space: s);
       const lead = ContextLead(
         eyebrow: 'Now',
@@ -468,22 +547,27 @@ void _bentoPlate(String name, Size size) {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWith((ref) => db),
-          viewerProvider.overrideWithValue(viewer),
-          liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
-          omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
-          contextLeadProvider.overrideWith((ref) => lead),
-          momentsForBlockProvider('blk-demo')
-              .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
-          capturesProvider(CaptureFilter.open).overrideWith(
-              (_) => Stream<List<Capture>>.value(const <Capture>[])),
-          tasksProvider(TaskFilter.open)
-              .overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
-        ],
-        child: _app(mode, _shellRouter(const TodayBentoScreen())),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appDatabaseProvider.overrideWith((ref) => db),
+            viewerProvider.overrideWithValue(viewer),
+            liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
+            omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
+            contextLeadProvider.overrideWith((ref) => lead),
+            momentsForBlockProvider(
+              'blk-demo',
+            ).overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+            capturesProvider(CaptureFilter.open).overrideWith(
+              (_) => Stream<List<Capture>>.value(const <Capture>[]),
+            ),
+            tasksProvider(
+              TaskFilter.open,
+            ).overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+          ],
+          child: _app(mode, _shellRouter(const TodayBentoScreen())),
+        ),
+      );
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -514,52 +598,70 @@ void _rosterPlate(String name, Widget screen, Size size) {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.createMigrator().createAll();
       const now = '2026-06-17T08:00:00Z';
-      await db.into(db.spaces).insert(SpacesCompanion.insert(
-            id: 'sp1',
-            name: 'Sunny Days Program',
-            settings: '{}',
-            capabilities: '{}',
-            createdAt: now,
-            updatedAt: now,
-          ));
-      await db.into(db.members).insert(MembersCompanion.insert(
-            id: 'm1',
-            displayName: 'Maya Okonkwo',
-            role: 'director',
-            capabilities: '{}',
-            createdAt: now,
-            updatedAt: now,
-            spaceId: const Value('sp1'),
-          ));
-      await db.into(db.groups).insert(GroupsCompanion.insert(
-            id: 'g1',
-            spaceId: 'sp1',
-            name: 'Sparrows',
-            capabilities: '{}',
-            createdAt: now,
-            updatedAt: now,
-            ageRange: const Value('Ages 4–5'),
-          ));
+      await db
+          .into(db.spaces)
+          .insert(
+            SpacesCompanion.insert(
+              id: 'sp1',
+              name: 'Sunny Days Program',
+              settings: '{}',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await db
+          .into(db.members)
+          .insert(
+            MembersCompanion.insert(
+              id: 'm1',
+              displayName: 'Maya Okonkwo',
+              role: 'director',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              spaceId: const Value('sp1'),
+            ),
+          );
+      await db
+          .into(db.groups)
+          .insert(
+            GroupsCompanion.insert(
+              id: 'g1',
+              spaceId: 'sp1',
+              name: 'Sparrows',
+              capabilities: '{}',
+              createdAt: now,
+              updatedAt: now,
+              ageRange: const Value('Ages 4–5'),
+            ),
+          );
       for (final (id, first, last) in const [
         ('s1', 'Owen', 'Reyes'),
         ('s2', 'Ava', 'Chen'),
         ('s3', 'Liam', 'Okafor'),
       ]) {
-        await db.into(db.subjects).insert(SubjectsCompanion.insert(
-              id: id,
-              spaceId: 'sp1',
-              firstName: first,
-              lastName: last,
-              capabilities: '{}',
-              createdAt: now,
-              updatedAt: now,
-              groupId: const Value('g1'),
-            ));
+        await db
+            .into(db.subjects)
+            .insert(
+              SubjectsCompanion.insert(
+                id: id,
+                spaceId: 'sp1',
+                firstName: first,
+                lastName: last,
+                capabilities: '{}',
+                createdAt: now,
+                updatedAt: now,
+                groupId: const Value('g1'),
+              ),
+            );
       }
-      final m = await (db.select(db.members)..where((t) => t.id.equals('m1')))
-          .getSingle();
-      final s = await (db.select(db.spaces)..where((t) => t.id.equals('sp1')))
-          .getSingle();
+      final m = await (db.select(
+        db.members,
+      )..where((t) => t.id.equals('m1'))).getSingle();
+      final s = await (db.select(
+        db.spaces,
+      )..where((t) => t.id.equals('sp1'))).getSingle();
       final viewer = Viewer(member: m, space: s);
 
       await tester.binding.setSurfaceSize(size);
@@ -567,21 +669,26 @@ void _rosterPlate(String name, Widget screen, Size size) {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWith((ref) => db),
-          viewerProvider.overrideWithValue(viewer),
-          liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
-          omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
-          momentsForBlockProvider('blk-demo')
-              .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
-          capturesProvider(CaptureFilter.open).overrideWith(
-              (_) => Stream<List<Capture>>.value(const <Capture>[])),
-          tasksProvider(TaskFilter.open)
-              .overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
-        ],
-        child: _app(mode, _shellRouter(screen)),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appDatabaseProvider.overrideWith((ref) => db),
+            viewerProvider.overrideWithValue(viewer),
+            liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
+            omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
+            momentsForBlockProvider(
+              'blk-demo',
+            ).overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+            capturesProvider(CaptureFilter.open).overrideWith(
+              (_) => Stream<List<Capture>>.value(const <Capture>[]),
+            ),
+            tasksProvider(
+              TaskFilter.open,
+            ).overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+          ],
+          child: _app(mode, _shellRouter(screen)),
+        ),
+      );
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -617,57 +724,80 @@ void _scheduleGridPlate(String name, Size size) {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       await db.createMigrator().createAll();
       const stamp = '2026-06-17T08:00:00Z';
-      await db.into(db.spaces).insert(SpacesCompanion.insert(
-            id: 'sp1',
-            name: 'Sunny Days Program',
-            settings: '{}',
-            capabilities: '{}',
-            createdAt: stamp,
-            updatedAt: stamp,
-          ));
-      await db.into(db.members).insert(MembersCompanion.insert(
-            id: 'm1',
-            displayName: 'Maya Okonkwo',
-            role: 'director',
-            capabilities: '{}',
-            createdAt: stamp,
-            updatedAt: stamp,
-            spaceId: const Value('sp1'),
-          ));
+      await db
+          .into(db.spaces)
+          .insert(
+            SpacesCompanion.insert(
+              id: 'sp1',
+              name: 'Sunny Days Program',
+              settings: '{}',
+              capabilities: '{}',
+              createdAt: stamp,
+              updatedAt: stamp,
+            ),
+          );
+      await db
+          .into(db.members)
+          .insert(
+            MembersCompanion.insert(
+              id: 'm1',
+              displayName: 'Maya Okonkwo',
+              role: 'director',
+              capabilities: '{}',
+              createdAt: stamp,
+              updatedAt: stamp,
+              spaceId: const Value('sp1'),
+            ),
+          );
       for (final (id, cname, age) in const [
         ('g1', 'Sparrows', 'Ages 4–5'),
         ('g2', 'Robins', 'Ages 6–7'),
       ]) {
-        await db.into(db.groups).insert(GroupsCompanion.insert(
-              id: id,
-              spaceId: 'sp1',
-              name: cname,
-              capabilities: '{}',
-              createdAt: stamp,
-              updatedAt: stamp,
-              ageRange: Value(age),
-            ));
+        await db
+            .into(db.groups)
+            .insert(
+              GroupsCompanion.insert(
+                id: id,
+                spaceId: 'sp1',
+                name: cname,
+                capabilities: '{}',
+                createdAt: stamp,
+                updatedAt: stamp,
+                ageRange: Value(age),
+              ),
+            );
       }
       final n = DateTime.now();
       final day = DateTime(n.year, n.month, n.day);
       final date = isoDateLocal(day);
       String iso(int h, int m) =>
           DateTime(day.year, day.month, day.day, h, m).toIso8601String();
-      Future<void> blk(String id, String gid, int sh, int sm, int eh, int em,
-              String title, String kind) =>
-          db.into(db.scheduleBlocks).insert(ScheduleBlocksCompanion.insert(
-                id: id,
-                spaceId: 'sp1',
-                groupId: gid,
-                date: date,
-                startAt: iso(sh, sm),
-                endAt: iso(eh, em),
-                kind: kind,
-                createdAt: stamp,
-                updatedAt: stamp,
-                title: Value(title),
-                status: const Value('planned'),
-              ));
+      Future<void> blk(
+        String id,
+        String gid,
+        int sh,
+        int sm,
+        int eh,
+        int em,
+        String title,
+        String kind,
+      ) => db
+          .into(db.scheduleBlocks)
+          .insert(
+            ScheduleBlocksCompanion.insert(
+              id: id,
+              spaceId: 'sp1',
+              groupId: gid,
+              date: date,
+              startAt: iso(sh, sm),
+              endAt: iso(eh, em),
+              kind: kind,
+              createdAt: stamp,
+              updatedAt: stamp,
+              title: Value(title),
+              status: const Value('planned'),
+            ),
+          );
       await blk('b1', 'g1', 15, 0, 15, 30, 'Snack', 'break');
       await blk('b2', 'g1', 15, 30, 16, 30, 'Outdoor play', 'on_site');
       await blk('b3', 'g1', 16, 30, 17, 30, 'Art studio', 'on_site');
@@ -675,10 +805,12 @@ void _scheduleGridPlate(String name, Size size) {
       await blk('b5', 'g2', 16, 0, 16, 30, 'Snack', 'break');
       await blk('b6', 'g2', 16, 30, 17, 30, 'STEM lab', 'on_site');
 
-      final m = await (db.select(db.members)..where((t) => t.id.equals('m1')))
-          .getSingle();
-      final s = await (db.select(db.spaces)..where((t) => t.id.equals('sp1')))
-          .getSingle();
+      final m = await (db.select(
+        db.members,
+      )..where((t) => t.id.equals('m1'))).getSingle();
+      final s = await (db.select(
+        db.spaces,
+      )..where((t) => t.id.equals('sp1'))).getSingle();
       final viewer = Viewer(member: m, space: s);
 
       await tester.binding.setSurfaceSize(size);
@@ -686,22 +818,27 @@ void _scheduleGridPlate(String name, Size size) {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWith((ref) => db),
-          viewerProvider.overrideWithValue(viewer),
-          liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
-          omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
-          scheduleTimeGridProvider.overrideWith(_ScheduleGridOn.new),
-          momentsForBlockProvider('blk-demo')
-              .overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
-          capturesProvider(CaptureFilter.open).overrideWith(
-              (_) => Stream<List<Capture>>.value(const <Capture>[])),
-          tasksProvider(TaskFilter.open)
-              .overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
-        ],
-        child: _app(mode, _shellRouter(const ScheduleScreen())),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appDatabaseProvider.overrideWith((ref) => db),
+            viewerProvider.overrideWithValue(viewer),
+            liveBlockProvider.overrideWith((ref) => _demoLiveBlock()),
+            omniboxCatalogProvider.overrideWithValue(const <OmniboxEntry>[]),
+            scheduleTimeGridProvider.overrideWith(_ScheduleGridOn.new),
+            momentsForBlockProvider(
+              'blk-demo',
+            ).overrideWith((_) => Stream<List<Entry>>.value(const <Entry>[])),
+            capturesProvider(CaptureFilter.open).overrideWith(
+              (_) => Stream<List<Capture>>.value(const <Capture>[]),
+            ),
+            tasksProvider(
+              TaskFilter.open,
+            ).overrideWith((_) => Stream<List<Task>>.value(const <Task>[])),
+          ],
+          child: _app(mode, _shellRouter(const ScheduleScreen())),
+        ),
+      );
       for (var i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
