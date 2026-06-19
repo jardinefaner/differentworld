@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/heroes/hero_catalog.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/shared/viewer_x.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,6 +122,12 @@ class EntryKind {
   /// subjectId set → a kid's doing (→ their Book); null → the room did it
   /// together.
   static const String didIt = 'did_it';
+
+  /// A child's make-believe **Hero** (docs/VISION.md 2026-06-19) — an
+  /// alter-ego card (animal · skin · powers · `[Name] of [From]` · a named
+  /// drawing). One evolving row per child (upserted by `recordHero`); the
+  /// creative twin of `didIt` (imaginative act → a keepsake artifact).
+  static const String hero = 'hero';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -426,6 +433,53 @@ class EntryActions {
       }),
       id: id,
     );
+    if (photoUrls.isNotEmpty) {
+      final attachments = _ref.read(attachmentActionsProvider);
+      for (var i = 0; i < photoUrls.length; i++) {
+        await attachments.add(
+          id: i < photoIds.length ? photoIds[i] : null,
+          entityKind: 'entry',
+          entityId: entryId,
+          url: photoUrls[i],
+          sortOrder: i,
+        );
+      }
+    }
+    return entryId;
+  }
+
+  /// Upsert a child's **Hero** (docs/VISION.md 2026-06-19). One evolving row
+  /// per child: if a hero entry already exists, its `details` are rewritten in
+  /// place (the hero "grows"); else a new one is created. A new drawing photo,
+  /// when provided, is attached to the hero entry via the same offline-safe
+  /// path as every other attachment (the `photoIds[i]` MUST equal the id passed
+  /// to `uploadOnly` so a deferred offline upload patches the right row).
+  Future<String> recordHero({
+    required String subjectId,
+    required HeroDraft draft,
+    String? groupId,
+    List<String> photoUrls = const [],
+    List<String> photoIds = const [],
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final existing = await db.entriesDao
+        .watchForSubject(subjectId: subjectId, kind: EntryKind.hero, limit: 1)
+        .first;
+    final String entryId;
+    if (existing.isNotEmpty) {
+      entryId = existing.first.id;
+      await db.entriesDao.updateDetails(
+        id: entryId,
+        detailsJson: draft.toDetailsJson(),
+      );
+    } else {
+      entryId = await _create(
+        kind: EntryKind.hero,
+        subjectId: subjectId,
+        groupId: groupId,
+        detailsJson: draft.toDetailsJson(),
+      );
+    }
     if (photoUrls.isNotEmpty) {
       final attachments = _ref.read(attachmentActionsProvider);
       for (var i = 0; i < photoUrls.length; i++) {
