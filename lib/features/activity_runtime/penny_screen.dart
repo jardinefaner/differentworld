@@ -78,7 +78,7 @@ class _PennyScreenState extends ConsumerState<PennyScreen> {
           children: [
             const ContentHeader(
               title: 'Penny for a thought',
-              subtitle: 'Share a thought — drop a penny — count them',
+              subtitle: 'Share a thought, count a penny',
             ),
             if (question != null && question.isNotEmpty)
               Container(
