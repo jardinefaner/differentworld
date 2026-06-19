@@ -68,6 +68,7 @@ import 'package:differentworld/features/onboarding/create_space_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
 import 'package:differentworld/features/poster/poster_screen.dart';
+import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
@@ -318,6 +319,11 @@ void main() {
     const Size(440, 900),
   );
   _rosterPlate('screens/letters', const LettersScreen(), const Size(440, 900));
+  _rosterPlate(
+    'screens/recap_composer',
+    const RecapComposerScreen(),
+    const Size(440, 1000),
+  );
 
   // The bento dashboard needs DATA to be worth seeing (an empty bento is just
   // "No rooms yet"), so it gets a dedicated SEEDED plate — its own DB with

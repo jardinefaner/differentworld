@@ -20,6 +20,7 @@ import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
+import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
@@ -61,6 +62,8 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final calmOn = ref.watch(calmEnabledProvider).value ?? false;
   // The Spellbook (magic-framed daily/weekly home) is opt-in too.
   final spellbookOn = ref.watch(spellbookEnabledProvider).value ?? false;
+  // The daily parent recap composer is opt-in too (staff-only).
+  final recapOn = ref.watch(recapEnabledProvider).value ?? false;
   final locations = ref.watch(locationsProvider).value ?? const <Location>[];
   final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
   final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
@@ -622,6 +625,28 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'reflection',
         ],
         onSelect: (ctx, _) => ctx.push('/daily'),
+      ),
+    // The daily parent recap composer (docs/VISION.md 2026-06-19). Opt-in,
+    // staff-only — the surface that sends each family their child's day.
+    if (viewer is! GuardianViewer && recapOn)
+      OmniboxEntry(
+        id: 'page.recap',
+        label: 'Today’s recap',
+        subtitle: 'Send each family their child’s day',
+        category: OmniboxCategory.page,
+        icon: Icons.send_outlined,
+        keywords: const [
+          'recap',
+          'parent recap',
+          'daily recap',
+          'send home',
+          'send to families',
+          'what we did today',
+          'share with parents',
+          'digest',
+          'newsletter',
+        ],
+        onSelect: (ctx, _) => ctx.push('/recap'),
       ),
     // What to do instead — the room's calm reference (docs/VISION.md
     // 2026-06-19). Opt-in; crisis-retrieval keywords so it's 1 tap when needed.

@@ -936,6 +936,20 @@
     "deductions": []
   },
   {
+    "name": "recap_composer",
+    "cls": "RecapComposerScreen",
+    "file": "lib/features/recap/recap_composer_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.853101372718811,
+    "dead": 0.59,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 132,
+    "deductions": []
+  },
+  {
     "name": "reflection_session",
     "cls": "ReflectionSessionScreen",
     "file": "lib/features/reflections/reflection_session_screen.dart",

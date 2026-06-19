@@ -5,6 +5,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
+import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/shared/platform.dart';
@@ -207,6 +208,7 @@ class BrainBreaksScreen extends ConsumerWidget {
     final dailyOn = ref.watch(dailyEnabledProvider).value ?? false;
     final calmOn = ref.watch(calmEnabledProvider).value ?? false;
     final spellbookOn = ref.watch(spellbookEnabledProvider).value ?? false;
+    final recapOn = ref.watch(recapEnabledProvider).value ?? false;
     final cards = <_BreakCard>[..._cards];
     // Opt-in cards slot in right after Do It — the room-facing surfaces lead.
     if (spellbookOn) {
@@ -242,6 +244,18 @@ class BrainBreaksScreen extends ConsumerWidget {
           icon: Icons.wb_sunny_outlined,
           color: ActivityPalette.amber,
           route: '/daily',
+        ),
+      );
+    }
+    if (recapOn) {
+      cards.insert(
+        1,
+        const _BreakCard(
+          title: 'Today’s recap',
+          tagline: 'Send each family the day',
+          icon: Icons.send_outlined,
+          color: ActivityPalette.cyan,
+          route: '/recap',
         ),
       );
     }

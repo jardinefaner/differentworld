@@ -10,6 +10,7 @@ import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/schedule/schedule_view_setting.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
@@ -267,6 +268,8 @@ class SettingsScreen extends ConsumerWidget {
               const _CalmTile(),
               const _SettingsDivider(),
               const _SpellbookTile(),
+              const _SettingsDivider(),
+              const _RecapTile(),
             ],
           ),
 
@@ -584,6 +587,29 @@ class _SpellbookTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(spellbookEnabledProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Switches on the **daily parent recap** (docs/VISION.md 2026-06-19) — staff
+/// send each family their child's day. Off by default; when on, a "Today's
+/// recap" card appears in the Brain Breaks deck and the omnibox.
+class _RecapTile extends ConsumerWidget {
+  const _RecapTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(recapEnabledProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.send_outlined),
+      title: const Text('Daily parent recap'),
+      subtitle: const Text(
+        'Send each family their child’s day — the room’s activities plus '
+        'their own moments',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(recapEnabledProvider.notifier).set(value: v)),
     );
   }
 }

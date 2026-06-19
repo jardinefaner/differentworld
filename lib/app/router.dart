@@ -104,6 +104,7 @@ import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
 import 'package:differentworld/features/poster/poster_screen.dart';
+import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
@@ -1144,6 +1145,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/daily',
             builder: (_, state) =>
                 DailyScreen(groupId: state.uri.queryParameters['group']),
+          ),
+          // The daily parent recap composer (docs/VISION.md 2026-06-19) —
+          // staff assemble + send each family their child's day. Surfaced only
+          // when recapEnabledProvider is on.
+          GoRoute(
+            path: '/recap',
+            builder: (_, state) => RecapComposerScreen(
+              groupId: state.uri.queryParameters['group'],
+            ),
           ),
           // What to do instead — the room's calm reference (docs/VISION.md
           // 2026-06-19). Surfaced only when calmEnabledProvider is on.

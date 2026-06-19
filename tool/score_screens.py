@@ -106,6 +106,9 @@ def build_registry():
             "lib/features/routines/routines_screen.dart", "RoutinesScreen"),
         "letters": (
             "lib/features/activity_runtime/letters_screen.dart", "LettersScreen"),
+        "recap_composer": (
+            "lib/features/recap/recap_composer_screen.dart",
+            "RecapComposerScreen"),
     }
     for name, (f, cls) in extra.items():
         if name not in reg and os.path.exists(f):
