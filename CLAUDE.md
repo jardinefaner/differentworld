@@ -192,6 +192,14 @@ the AppDatabase root, violating the DAO pattern below.
    of truth — the dashboard is the runtime).
 4. **PowerSync local schema** (`lib/core/db/power_sync_schema.dart`):
    add `Table('<name>', [Column.text('col'), …])`. Don't declare `id`.
+   **If the table will GROW (entries, attendance, logs) and the DAO
+   watches it with `WHERE <owner> … ORDER BY <ts> DESC`, add `indexes:`**
+   — one `Index('<t>_<owner>', [IndexedColumn('<owner>'),
+   IndexedColumn.descending('<ts>')])` per query shape. With none, every
+   stream emission full-scans + sorts the whole table locally (the cost
+   that bit `entries` / `attendance_records`). Indexes are
+   non-destructive — they build on the next launch over existing rows, no
+   re-sync / wipe. See the entries/attendance blocks for the pattern.
 5. **Drift Table class** (`lib/core/db/app_database.dart`): add
    `class <Name>s extends Table { … }`, add to
    `@DriftDatabase(tables: […], daos: […])`. **Mutators do NOT go here
