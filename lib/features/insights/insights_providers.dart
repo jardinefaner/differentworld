@@ -9,6 +9,10 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/viewer_x.dart';
+// `hide Column`: material's Column widget would clash with drift's Column.
+// We import drift here only for the comparison/boolean expression extensions
+// (`isBiggerOrEqualValue`, `&`) the windowed attendance query uses.
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -141,6 +145,10 @@ final insightsProvider = Provider<AsyncValue<List<Insight>>>((ref) {
   final certsAsync = ref.watch(certsInSpaceProvider);
   final vehiclesAsync = ref.watch(vehiclesProvider);
   final observationsAsync = ref.watch(observationsInSpaceProvider);
+  // One windowed stream for ALL kids' recent attendance (was N per-subject
+  // streams). Not in the loading gate — if it's still warming, the late-streak
+  // insight simply doesn't fire yet; the rest of the board still renders.
+  final attendanceAsync = ref.watch(recentAttendanceBySubjectProvider);
   final dismissedAsync = ref.watch(_dismissedInsightIdsProvider);
 
   if (subjectsAsync.isLoading ||
@@ -154,13 +162,15 @@ final insightsProvider = Provider<AsyncValue<List<Insight>>>((ref) {
   final certs = certsAsync.value ?? const <MemberCertification>[];
   final vehicles = vehiclesAsync.value ?? const <Vehicle>[];
   final observations = observationsAsync.value ?? const <Entry>[];
+  final attendanceBySubject =
+      attendanceAsync.value ?? const <String, List<AttendanceRecord>>{};
   final dismissed = dismissedAsync.value ?? const <String>{};
 
   final insights = <Insight>[
     ..._certInsights(certs),
     ..._vehicleInsights(ref, vehicles),
     ..._quietKidInsights(subjects, observations),
-    ..._attendanceInsights(ref, subjects),
+    ..._attendanceInsights(attendanceBySubject, subjects),
     ..._surveyInsights(ref, spaceId, subjects),
   ].where((i) => !dismissed.contains(i.id)).toList()
     ..sort((a, b) {
@@ -391,15 +401,53 @@ List<Insight> _quietKidInsights(
   return out;
 }
 
-/// Surface when a kid has been late ≥ 2 days in the last 7 calendar
-/// days. Reads each subject's attendance history stream — fan-out
-/// looks heavy but every row is already on device.
-List<Insight> _attendanceInsights(Ref ref, List<Subject> subjects) {
+/// How far back the windowed attendance query reaches — the late-streak
+/// insight only looks at the last 7 days; the extra slack covers timezone
+/// boundaries without ever loading the full attendance history.
+const _attendanceWindowDays = 10;
+
+/// All attendance in the space over the last [_attendanceWindowDays] days,
+/// grouped by subject. ONE windowed query feeds the late-streak insight —
+/// replacing a per-subject history stream PER child (N live Drift watches at
+/// N kids; the fan-out that didn't scale). Windowed in SQL so it never pulls
+/// years of attendance into memory.
+final recentAttendanceBySubjectProvider =
+    StreamProvider<Map<String, List<AttendanceRecord>>>((ref) async* {
+  final spaceId = ref.watch(viewerProvider).spaceId;
+  if (spaceId == null) {
+    yield const <String, List<AttendanceRecord>>{};
+    return;
+  }
+  final db = await ref.watch(appDatabaseProvider.future);
+  // `date` is 'YYYY-MM-DD' text — ISO keys compare lexically = chronologically.
+  final cutoffKey = _today()
+      .subtract(const Duration(days: _attendanceWindowDays))
+      .toIso8601String()
+      .substring(0, 10);
+  yield* (db.select(db.attendanceRecords)
+        ..where((a) =>
+            a.spaceId.equals(spaceId) &
+            a.date.isBiggerOrEqualValue(cutoffKey)))
+      .watch()
+      .map((rows) {
+    final bySubject = <String, List<AttendanceRecord>>{};
+    for (final r in rows) {
+      (bySubject[r.subjectId] ??= <AttendanceRecord>[]).add(r);
+    }
+    return bySubject;
+  });
+});
+
+/// Surface when a kid has been late ≥ 2 days in the last 7 calendar days,
+/// reading the pre-grouped windowed map above — no per-subject fan-out.
+List<Insight> _attendanceInsights(
+  Map<String, List<AttendanceRecord>> attendanceBySubject,
+  List<Subject> subjects,
+) {
   final out = <Insight>[];
   final cutoff = _today().subtract(const Duration(days: 7));
   for (final s in subjects) {
-    final historyAsync = ref.watch(attendanceHistoryForSubjectProvider(s.id));
-    final history = historyAsync.value ?? const <AttendanceRecord>[];
+    final history = attendanceBySubject[s.id] ?? const <AttendanceRecord>[];
     var lateCount = 0;
     for (final r in history) {
       final date = DateTime.tryParse(r.date);

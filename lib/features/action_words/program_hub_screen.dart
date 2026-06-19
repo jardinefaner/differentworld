@@ -429,6 +429,10 @@ class _ChildrenArcs extends ConsumerWidget {
     final subjects =
         ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
     if (subjects.isEmpty) return const SizedBox.shrink();
+    // ONE space-wide collections stream, looked up per child — not an
+    // actionWordsCollectionProvider family watch per row (N Drift watches).
+    final collections = ref.watch(actionWordsCollectionsBySubjectProvider).value ??
+        const <String, ActionWordsCollection>{};
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,22 +445,23 @@ class _ChildrenArcs extends ConsumerWidget {
         for (final s in subjects)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: _ChildArcRow(subject: s),
+            child: _ChildArcRow(subject: s, collection: collections[s.id]),
           ),
       ],
     );
   }
 }
 
-class _ChildArcRow extends ConsumerWidget {
-  const _ChildArcRow({required this.subject});
+class _ChildArcRow extends StatelessWidget {
+  const _ChildArcRow({required this.subject, required this.collection});
   final Subject subject;
 
+  /// Resolved once from the space-wide map — not watched per row.
+  final ActionWordsCollection? collection;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
-    final collection =
-        ref.watch(actionWordsCollectionProvider(subject.id)).value;
     final worlds = collection?.collectedWorlds ?? 0;
     final title = collection?.emergingTitle;
     final subtitle = title ??

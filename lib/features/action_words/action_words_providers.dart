@@ -207,6 +207,30 @@ final _spaceActionWordsProvider = StreamProvider<List<Entry>>((ref) async* {
       .watchInSpace(spaceId: spaceId, kind: EntryKind.actionWords);
 });
 
+/// Every child's Action Words collection in one shot — the single space-wide
+/// stream above, grouped by subject — instead of an
+/// `actionWordsCollectionProvider` family PER child (N live Drift watches at N
+/// kids). Roster surfaces that show a row per child (the program hub) read
+/// THIS and look each child up; a single child's own screen still uses the
+/// family. `fromEntries` only counts, so grouping order is irrelevant.
+final actionWordsCollectionsBySubjectProvider =
+    Provider<AsyncValue<Map<String, ActionWordsCollection>>>((ref) {
+  return ref.watch(_spaceActionWordsProvider).whenData((entries) {
+    final bySubject = <String, List<Entry>>{};
+    for (final e in entries) {
+      // Class-wide days carry no subject — they belong to no child's
+      // collection (the per-subject family filters them out too).
+      final sid = e.subjectId;
+      if (sid == null) continue;
+      (bySubject[sid] ??= <Entry>[]).add(e);
+    }
+    return {
+      for (final group in bySubject.entries)
+        group.key: ActionWordsCollection.fromEntries(group.value),
+    };
+  });
+});
+
 /// A world the class INVENTED — a fresh combo (no named world) that a kid
 /// named. The growth that stays unhidden (docs/ACTION_WORDS.md).
 class InventedWorld {
