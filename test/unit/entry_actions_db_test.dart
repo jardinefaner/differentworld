@@ -26,7 +26,9 @@ void main() {
   setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await db.createMigrator().createAll();
-    await db.into(db.spaces).insert(
+    await db
+        .into(db.spaces)
+        .insert(
           SpacesCompanion.insert(
             id: 'sp1',
             name: 'Test Program',
@@ -36,7 +38,9 @@ void main() {
             updatedAt: now,
           ),
         );
-    await db.into(db.members).insert(
+    await db
+        .into(db.members)
+        .insert(
           MembersCompanion.insert(
             id: 'm1',
             displayName: 'Tess',
@@ -47,10 +51,12 @@ void main() {
             spaceId: const Value('sp1'),
           ),
         );
-    final member =
-        await (db.select(db.members)..where((t) => t.id.equals('m1'))).getSingle();
-    final space =
-        await (db.select(db.spaces)..where((t) => t.id.equals('sp1'))).getSingle();
+    final member = await (db.select(
+      db.members,
+    )..where((t) => t.id.equals('m1'))).getSingle();
+    final space = await (db.select(
+      db.spaces,
+    )..where((t) => t.id.equals('sp1'))).getSingle();
     container = ProviderContainer(
       overrides: [
         appDatabaseProvider.overrideWith((ref) => db),
@@ -64,54 +70,149 @@ void main() {
     await db.close();
   });
 
-  test('createWorkSample writes a work_sample entry + pins the attachment id',
-      () async {
-    final actions = container.read(entryActionsProvider);
-    final entryId = await actions.createWorkSample(
-      subjectId: 's1',
-      groupId: 'g1',
-      caption: 'Friday writing',
-      photoUrls: ['sp1/attachment/ATT1/x.jpg'],
-      photoIds: ['ATT1'],
-      worldId: 'me',
-      day: 5,
-    );
+  test(
+    'createWorkSample writes a work_sample entry + pins the attachment id',
+    () async {
+      final actions = container.read(entryActionsProvider);
+      final entryId = await actions.createWorkSample(
+        subjectId: 's1',
+        groupId: 'g1',
+        caption: 'Friday writing',
+        photoUrls: ['sp1/attachment/ATT1/x.jpg'],
+        photoIds: ['ATT1'],
+        worldId: 'me',
+        day: 5,
+      );
 
-    final entries = await db.entriesDao
-        .watchForSubject(subjectId: 's1', kind: EntryKind.workSample)
-        .first;
-    expect(entries, hasLength(1));
-    expect(entries.first.id, entryId);
-    expect(entries.first.kind, EntryKind.workSample);
+      final entries = await db.entriesDao
+          .watchForSubject(subjectId: 's1', kind: EntryKind.workSample)
+          .first;
+      expect(entries, hasLength(1));
+      expect(entries.first.id, entryId);
+      expect(entries.first.kind, EntryKind.workSample);
 
-    // THE FOOTGUN: the attachment must carry the pinned id 'ATT1', so a
-    // deferred offline upload's updateUrl('ATT1') patches THIS row.
-    final atts = await db.attachmentsDao
-        .watchFor(entityKind: 'entry', entityId: entryId)
-        .first;
-    expect(atts, hasLength(1));
-    expect(atts.first.id, 'ATT1', reason: 'attachment id must be the pinned id');
-    expect(atts.first.url, 'sp1/attachment/ATT1/x.jpg');
-  });
+      // THE FOOTGUN: the attachment must carry the pinned id 'ATT1', so a
+      // deferred offline upload's updateUrl('ATT1') patches THIS row.
+      final atts = await db.attachmentsDao
+          .watchFor(entityKind: 'entry', entityId: entryId)
+          .first;
+      expect(atts, hasLength(1));
+      expect(
+        atts.first.id,
+        'ATT1',
+        reason: 'attachment id must be the pinned id',
+      );
+      expect(atts.first.url, 'sp1/attachment/ATT1/x.jpg');
+    },
+  );
 
-  test('setWorkSampleInBook flips in_book, preserving world/day tags',
-      () async {
-    final actions = container.read(entryActionsProvider);
-    final id = await actions.createWorkSample(
-      subjectId: 's1',
-      groupId: 'g1',
-      worldId: 'me',
-      day: 5,
-    );
-    final entry =
-        await (db.select(db.entries)..where((e) => e.id.equals(id))).getSingle();
+  test(
+    'setWorkSampleInBook flips in_book, preserving world/day tags',
+    () async {
+      final actions = container.read(entryActionsProvider);
+      final id = await actions.createWorkSample(
+        subjectId: 's1',
+        groupId: 'g1',
+        worldId: 'me',
+        day: 5,
+      );
+      final entry = await (db.select(
+        db.entries,
+      )..where((e) => e.id.equals(id))).getSingle();
 
-    await actions.setWorkSampleInBook(entry, inBook: true);
+      await actions.setWorkSampleInBook(entry, inBook: true);
 
-    final after =
-        await (db.select(db.entries)..where((e) => e.id.equals(id))).getSingle();
-    expect(after.details, contains('"in_book":true'));
-    expect(after.details, contains('"world_id":"me"'));
-    expect(after.details, contains('"day":5'));
-  });
+      final after = await (db.select(
+        db.entries,
+      )..where((e) => e.id.equals(id))).getSingle();
+      expect(after.details, contains('"in_book":true'));
+      expect(after.details, contains('"world_id":"me"'));
+      expect(after.details, contains('"day":5'));
+    },
+  );
+
+  // "Do It" — the accumulative genre (docs/VISION.md 2026-06-18). The whole
+  // point vs the ephemeral games is that doing leaves a durable record, so
+  // pin the persistence contract executable.
+  test(
+    'recordDidIt writes a did_it room record (group-scoped, no subject)',
+    () async {
+      final actions = container.read(entryActionsProvider);
+      final id = await actions.recordDidIt(
+        instruction: 'Build the tallest tower with what is on the table',
+        verb: 'build',
+        groupId: 'g1',
+      );
+
+      final rows = await (db.select(
+        db.entries,
+      )..where((e) => e.kind.equals(EntryKind.didIt))).get();
+      expect(rows, hasLength(1));
+      final row = rows.single;
+      expect(row.id, id);
+      expect(row.groupId, 'g1');
+      expect(
+        row.subjectId,
+        isNull,
+        reason: 'the room record carries no subject',
+      );
+      expect(row.details, contains('"instruction":'));
+      expect(row.details, contains('"verb":"build"'));
+      // `count` is omitted when null (the `'count': ?count` null-aware element) —
+      // a stray "count":null would be a regression of that encoding.
+      expect(row.details, isNot(contains('"count"')));
+    },
+  );
+
+  test(
+    'recordDidIt proof photo rides the room record + pins the attachment id',
+    () async {
+      final actions = container.read(entryActionsProvider);
+      final id = await actions.recordDidIt(
+        instruction: 'Find something blue and show a friend',
+        verb: 'find',
+        groupId: 'g1',
+        photoUrls: ['sp1/attachment/PROOF1/x.jpg'],
+        photoIds: ['PROOF1'],
+      );
+
+      // Same offline footgun as createWorkSample: the attachment id MUST equal
+      // the uploadOnly entityId so a deferred offline upload patches THIS row.
+      final atts = await db.attachmentsDao
+          .watchFor(entityKind: 'entry', entityId: id)
+          .first;
+      expect(atts, hasLength(1));
+      expect(
+        atts.single.id,
+        'PROOF1',
+        reason: 'attachment id must be the pinned uploadOnly entityId',
+      );
+      expect(atts.single.url, 'sp1/attachment/PROOF1/x.jpg');
+    },
+  );
+
+  test(
+    'recordDidIt per-child tag writes a subject row with no proof photo',
+    () async {
+      final actions = container.read(entryActionsProvider);
+      final id = await actions.recordDidIt(
+        instruction: 'Help someone clean up',
+        verb: 'help',
+        groupId: 'g1',
+        subjectId: 's1',
+      );
+
+      final row = await (db.select(
+        db.entries,
+      )..where((e) => e.id.equals(id))).getSingle();
+      expect(row.subjectId, 's1');
+      expect(row.kind, EntryKind.didIt);
+      // Tagged-child entries are photo-less attributions — the proof rides only
+      // the room record (one entry can carry it; see the footgun above).
+      final atts = await db.attachmentsDao
+          .watchFor(entityKind: 'entry', entityId: id)
+          .first;
+      expect(atts, isEmpty, reason: 'attribution rows carry no proof photo');
+    },
+  );
 }
