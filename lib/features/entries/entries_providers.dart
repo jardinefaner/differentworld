@@ -145,6 +145,18 @@ class EntryKind {
   /// it rides the existing per-subject family path; each copy is scrubbed of
   /// other children's names before it's stored. See lib/features/recap/.
   static const String recap = 'recap';
+
+  /// A child's own **weekly intention** (docs/VISION.md 2026-06-19 — the
+  /// dailies/weeklies/projects arc, made personal). One row per (subject, week);
+  /// `details` = {week: int, text}. The "I want to be brave" the child sets at
+  /// week start — theirs alone, the spine of the per-child weekly hub.
+  static const String weeklyIntention = 'weekly_intention';
+
+  /// A child's own **project** for the week (docs/VISION.md 2026-06-19). One
+  /// row per (subject, week); `details` = {week: int, title, steps: [..],
+  /// done: int}. Each child's is THEIRS — distinct title + steps, their own
+  /// progress — even when the room shares a theme. See lib/features/child_world/.
+  static const String project = 'project';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -823,6 +835,112 @@ class EntryActions {
       );
     }
   }
+
+  /// Upsert the single (subject, week) row of [kind], applying [mutate] to its
+  /// details map. The read-modify-write that setWeekLog hand-rolls — shared by
+  /// the per-child weekly intention + project (docs/VISION.md 2026-06-19).
+  Future<void> _upsertSubjectWeek({
+    required String subjectId,
+    required int week,
+    required String kind,
+    required Map<String, dynamic> Function(Map<String, dynamic>) mutate,
+    String? groupId,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final rows = await db.entriesDao
+        .watchForSubject(subjectId: subjectId, kind: kind)
+        .first;
+    Entry? existing;
+    var details = <String, dynamic>{'week': week};
+    for (final e in rows) {
+      Map<String, dynamic> d;
+      try {
+        final decoded = jsonDecode(e.details);
+        d = decoded is Map<String, dynamic> ? decoded : const {};
+      } on FormatException {
+        d = const {};
+      }
+      if ((d['week'] as num?)?.toInt() == week) {
+        existing = e;
+        details = Map<String, dynamic>.of(d);
+        break;
+      }
+    }
+    details['week'] = week;
+    details = mutate(details);
+    if (existing != null) {
+      await db.entriesDao.updateDetails(
+        id: existing.id,
+        detailsJson: jsonEncode(details),
+      );
+    } else {
+      await _create(
+        kind: kind,
+        subjectId: subjectId,
+        groupId: groupId,
+        detailsJson: jsonEncode(details),
+      );
+    }
+  }
+
+  /// Set a child's **weekly intention** — theirs alone, one row per
+  /// (subject, week), upserted so editing it doesn't add a row.
+  Future<void> setWeeklyIntention({
+    required String subjectId,
+    required int week,
+    required String text,
+    String? groupId,
+  }) => _upsertSubjectWeek(
+    subjectId: subjectId,
+    week: week,
+    groupId: groupId,
+    kind: EntryKind.weeklyIntention,
+    mutate: (d) => d..['text'] = text.trim(),
+  );
+
+  /// Create or replace a child's **project** for the week — title + steps. Keeps
+  /// `done` when only the title changes; re-clamps it when the step list
+  /// changes. One row per (subject, week).
+  Future<void> setProject({
+    required String subjectId,
+    required int week,
+    required String title,
+    required List<String> steps,
+    String? groupId,
+  }) => _upsertSubjectWeek(
+    subjectId: subjectId,
+    week: week,
+    groupId: groupId,
+    kind: EntryKind.project,
+    mutate: (d) {
+      final trimmed = [for (final s in steps) s.trim()]
+        ..removeWhere((s) => s.isEmpty);
+      d['title'] = title.trim();
+      d['steps'] = trimmed;
+      final prevDone = (d['done'] as num?)?.toInt() ?? 0;
+      d['done'] = prevDone.clamp(0, trimmed.length);
+      return d;
+    },
+  );
+
+  /// Update a child's project progress — how many steps are done (clamped to
+  /// the step count).
+  Future<void> setProjectProgress({
+    required String subjectId,
+    required int week,
+    required int done,
+    String? groupId,
+  }) => _upsertSubjectWeek(
+    subjectId: subjectId,
+    week: week,
+    groupId: groupId,
+    kind: EntryKind.project,
+    mutate: (d) {
+      final total = (d['steps'] as List?)?.length ?? 0;
+      d['done'] = done.clamp(0, total);
+      return d;
+    },
+  );
 
   /// Bury a time capsule — sealed (hidden) until [sealedUntil].
   Future<String> createTimeCapsule({

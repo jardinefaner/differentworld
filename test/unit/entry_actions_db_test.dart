@@ -9,9 +9,12 @@
 // a non-existent row and the photo is silently lost (CLAUDE.md "Offline
 // attachment uploads"). This test makes that contract executable.
 
+import 'dart:convert';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/child_world/child_world_model.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/heroes/hero_catalog.dart';
 import 'package:differentworld/features/recap/recap_model.dart';
@@ -390,5 +393,73 @@ void main() {
     final after = await recapsFor('s1');
     expect(after, hasLength(1), reason: 'same-day re-send upserts');
     expect(after.single.details, contains('Letters'));
+  });
+
+  test('setWeeklyIntention upserts one row per (subject, week)', () async {
+    final actions = container.read(entryActionsProvider);
+    Future<List<Entry>> intentions() => db.entriesDao
+        .watchForSubject(subjectId: 's1', kind: EntryKind.weeklyIntention)
+        .first;
+
+    await actions.setWeeklyIntention(
+      subjectId: 's1',
+      week: 3,
+      text: 'I want to be brave',
+    );
+    expect(await intentions(), hasLength(1));
+    expect((await intentions()).single.details, contains('brave'));
+
+    // Editing the same week updates in place — no duplicate.
+    await actions.setWeeklyIntention(
+      subjectId: 's1',
+      week: 3,
+      text: 'I want to listen',
+    );
+    expect(await intentions(), hasLength(1));
+    expect((await intentions()).single.details, contains('listen'));
+
+    // A new week is a new row.
+    await actions.setWeeklyIntention(
+      subjectId: 's1',
+      week: 4,
+      text: 'next week',
+    );
+    expect(await intentions(), hasLength(2));
+  });
+
+  test('setProject + setProjectProgress upsert; progress clamps', () async {
+    final actions = container.read(entryActionsProvider);
+    Future<ProjectView> project() async {
+      final rows = await db.entriesDao
+          .watchForSubject(subjectId: 's1', kind: EntryKind.project)
+          .first;
+      expect(rows, hasLength(1), reason: 'one project row per (subject, week)');
+      return ProjectView.fromJson(
+        jsonDecode(rows.single.details) as Map<String, dynamic>,
+      );
+    }
+
+    await actions.setProject(
+      subjectId: 's1',
+      week: 3,
+      title: 'Coral reef',
+      steps: const ['sketch', 'paint', 'name'],
+    );
+    final p1 = await project();
+    expect(p1.total, 3);
+    expect(p1.done, 0);
+    expect(p1.nextStep, 'sketch');
+
+    // Advance progress on the SAME row.
+    await actions.setProjectProgress(subjectId: 's1', week: 3, done: 2);
+    final p2 = await project();
+    expect(p2.done, 2);
+    expect(p2.nextStep, 'name');
+
+    // Over-advancing clamps to the step count.
+    await actions.setProjectProgress(subjectId: 's1', week: 3, done: 99);
+    final p3 = await project();
+    expect(p3.done, 3);
+    expect(p3.isComplete, isTrue);
   });
 }
