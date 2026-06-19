@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/shared/platform.dart';
@@ -173,8 +174,21 @@ class BrainBreaksScreen extends ConsumerWidget {
     // "leaves something behind" genres lead the deck) only when switched on.
     final heroesOn = ref.watch(heroesEnabledProvider).value ?? false;
     final routinesOn = ref.watch(routinesEnabledProvider).value ?? false;
+    final dailyOn = ref.watch(dailyEnabledProvider).value ?? false;
     final cards = <_BreakCard>[..._cards];
     // Opt-in cards slot in right after Do It — the room-facing surfaces lead.
+    if (dailyOn) {
+      cards.insert(
+        1,
+        const _BreakCard(
+          title: 'Today',
+          tagline: 'Question · quote · mission',
+          icon: Icons.wb_sunny_outlined,
+          color: ActivityPalette.amber,
+          route: '/daily',
+        ),
+      );
+    }
     if (routinesOn) {
       cards.insert(
         1,

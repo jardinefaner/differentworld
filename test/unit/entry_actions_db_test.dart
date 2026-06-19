@@ -295,4 +295,50 @@ void main() {
     );
     expect(atts.single.url, 'sp1/attachment/HERO1/x.jpg');
   });
+
+  // The Daily ritual (docs/VISION.md 2026-06-19) — a captured answer to a
+  // prompt. Accumulative ("document the now"); the prompt is denormalized into
+  // details so the record is self-contained.
+  test(
+    'recordDailyResponse writes a daily_response with the prompt + answer',
+    () async {
+      final actions = container.read(entryActionsProvider);
+      final id = await actions.recordDailyResponse(
+        promptKind: 'question',
+        promptText: 'What would you invent?',
+        subjectId: 's1',
+        responseText: 'a robot that does homework',
+      );
+
+      final row = await (db.select(
+        db.entries,
+      )..where((e) => e.id.equals(id))).getSingle();
+      expect(row.kind, EntryKind.dailyResponse);
+      expect(
+        row.subjectId,
+        's1',
+        reason: 'a child answer flows into their Book',
+      );
+      expect(row.body, 'a robot that does homework');
+      expect(row.details, contains('"prompt_kind":"question"'));
+      expect(row.details, contains('What would you invent?'));
+    },
+  );
+
+  test('recordDailyResponse drawing attaches with the pinned id', () async {
+    final actions = container.read(entryActionsProvider);
+    final id = await actions.recordDailyResponse(
+      promptKind: 'quote',
+      promptText: 'The future belongs to the curious.',
+      groupId: 'g1',
+      photoUrls: ['sp1/attachment/DR1/x.jpg'],
+      photoIds: ['DR1'],
+    );
+
+    final atts = await db.attachmentsDao
+        .watchFor(entityKind: 'entry', entityId: id)
+        .first;
+    expect(atts, hasLength(1));
+    expect(atts.single.id, 'DR1');
+  });
 }

@@ -13,6 +13,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
@@ -52,6 +53,8 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final heroesOn = ref.watch(heroesEnabledProvider).value ?? false;
   // Routines (kid-legible day) is opt-in too.
   final routinesOn = ref.watch(routinesEnabledProvider).value ?? false;
+  // The Daily (Question/Quote/Mission of the Day) is opt-in too.
+  final dailyOn = ref.watch(dailyEnabledProvider).value ?? false;
   final locations = ref.watch(locationsProvider).value ?? const <Location>[];
   final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
   final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
@@ -592,6 +595,27 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'today',
         ],
         onSelect: (ctx, _) => ctx.push('/routines'),
+      ),
+    // The Daily — Question / Quote / Mission of the Day (docs/VISION.md
+    // 2026-06-19). Opt-in: present only when the toggle is on.
+    if (viewer is! GuardianViewer && dailyOn)
+      OmniboxEntry(
+        id: 'page.daily',
+        label: 'The Daily',
+        subtitle: 'Question · quote · mission of the day',
+        category: OmniboxCategory.page,
+        icon: Icons.wb_sunny_outlined,
+        keywords: const [
+          'daily',
+          'today',
+          'question of the day',
+          'quote of the day',
+          'mission of the day',
+          'qotd',
+          'prompt',
+          'reflection',
+        ],
+        onSelect: (ctx, _) => ctx.push('/daily'),
       ),
     OmniboxEntry(
       id: 'page.wall',

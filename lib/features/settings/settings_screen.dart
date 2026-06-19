@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
@@ -258,6 +259,8 @@ class SettingsScreen extends ConsumerWidget {
               const _HeroesTile(),
               const _SettingsDivider(),
               const _RoutinesTile(),
+              const _SettingsDivider(),
+              const _DailyTile(),
             ],
           ),
 
@@ -508,6 +511,28 @@ class _RoutinesTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(routinesEnabledProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Switches on the **Daily** ritual (docs/VISION.md 2026-06-19) — Question /
+/// Quote / Mission of the Day, each answered with a response. Off by default;
+/// when on, a "Today" card appears in the Brain Breaks deck and the omnibox.
+class _DailyTile extends ConsumerWidget {
+  const _DailyTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(dailyEnabledProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.wb_sunny_outlined),
+      title: const Text('The Daily'),
+      subtitle: const Text(
+        'A question, a quote, and a mission each day — answered in their own way',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(dailyEnabledProvider.notifier).set(value: v)),
     );
   }
 }
