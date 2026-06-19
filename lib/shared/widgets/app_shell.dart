@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/family/family_providers.dart';
+import 'package:differentworld/features/family/guardian_drawer.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/live_session/cast_chrome_button.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
@@ -491,6 +493,9 @@ class _AppShellState extends ConsumerState<AppShell> {
     final topInset = MediaQuery.paddingOf(context).top;
 
     final viewer = ref.watch(viewerProvider);
+    // Keep the guardian's children list warm for the whole session so the
+    // GuardianDrawer (rebuilt on each open) doesn't re-fetch + flash empty.
+    if (viewer is GuardianViewer) ref.watch(familyChildrenProvider);
     final showDrawer = viewer.isSignedIn && !inKidMode;
     // Wave 121: at desktop widths the hamburger drawer is replaced
     // by a persistent left-side nav rail. The rail only renders for
@@ -666,7 +671,15 @@ class _AppShellState extends ConsumerState<AppShell> {
           // hamburger drawer. Drawer slot stays wired below desktop so
           // phone / tablet keep their existing swipe-from-edge gesture
           // + hamburger pill.
-          drawer: (showDrawer && !showDesktopRail) ? const MainDrawer() : null,
+          // Guardians get their own drawer (Today / each child / Messages /
+          // Display) — the staff MainDrawer is full of capability-gated
+          // destinations a parent can't use. Both reachable via the same
+          // hamburger + swipe gesture.
+          drawer: (showDrawer && !showDesktopRail)
+              ? (viewer is GuardianViewer
+                    ? const GuardianDrawer()
+                    : const MainDrawer())
+              : null,
           // `resizeToAvoidBottomInset: true` is load-bearing — it shrinks
           // the body so the keyboard occupies its own space below the
           // body. The omnibox bar lives at the bottom of that body, so
