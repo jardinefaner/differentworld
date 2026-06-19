@@ -24,6 +24,7 @@ import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
+import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart'
     show startNewObservation;
@@ -58,6 +59,8 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final dailyOn = ref.watch(dailyEnabledProvider).value ?? false;
   // What to do instead (the calm reference) is opt-in too.
   final calmOn = ref.watch(calmEnabledProvider).value ?? false;
+  // The Spellbook (magic-framed daily/weekly home) is opt-in too.
+  final spellbookOn = ref.watch(spellbookEnabledProvider).value ?? false;
   final locations = ref.watch(locationsProvider).value ?? const <Location>[];
   final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
   final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
@@ -644,6 +647,27 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'big feelings',
         ],
         onSelect: (ctx, _) => ctx.push('/calm'),
+      ),
+    // The Spellbook — the magic-framed home gathering today + this week + the
+    // story (docs/VISION.md 2026-06-19). Opt-in.
+    if (viewer is! GuardianViewer && spellbookOn)
+      OmniboxEntry(
+        id: 'page.spellbook',
+        label: 'Spellbook',
+        subtitle: 'Open the day’s magic',
+        category: OmniboxCategory.page,
+        icon: Icons.auto_stories_outlined,
+        keywords: const [
+          'spellbook',
+          'spell book',
+          'magic',
+          'world of magic',
+          'today',
+          'this week',
+          'home',
+          'story',
+        ],
+        onSelect: (ctx, _) => ctx.push('/spellbook'),
       ),
     OmniboxEntry(
       id: 'page.wall',

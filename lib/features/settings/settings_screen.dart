@@ -17,6 +17,7 @@ import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
+import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/features/today/bento_home_setting.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -264,6 +265,8 @@ class SettingsScreen extends ConsumerWidget {
               const _DailyTile(),
               const _SettingsDivider(),
               const _CalmTile(),
+              const _SettingsDivider(),
+              const _SpellbookTile(),
             ],
           ),
 
@@ -558,6 +561,29 @@ class _CalmTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(calmEnabledProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Switches on the **Spellbook** home (docs/VISION.md 2026-06-19) — a
+/// magic-framed surface that gathers the Daily + this week's project + the
+/// story. Off by default; when on, a card appears in the Brain Breaks deck and
+/// the omnibox.
+class _SpellbookTile extends ConsumerWidget {
+  const _SpellbookTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(spellbookEnabledProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.auto_stories_outlined),
+      title: const Text('Spellbook home'),
+      subtitle: const Text(
+        'A world of magic — today, this week’s project, and the story in one place',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(spellbookEnabledProvider.notifier).set(value: v)),
     );
   }
 }

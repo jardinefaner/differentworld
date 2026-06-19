@@ -6,6 +6,7 @@ import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
+import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -177,8 +178,21 @@ class BrainBreaksScreen extends ConsumerWidget {
     final routinesOn = ref.watch(routinesEnabledProvider).value ?? false;
     final dailyOn = ref.watch(dailyEnabledProvider).value ?? false;
     final calmOn = ref.watch(calmEnabledProvider).value ?? false;
+    final spellbookOn = ref.watch(spellbookEnabledProvider).value ?? false;
     final cards = <_BreakCard>[..._cards];
     // Opt-in cards slot in right after Do It — the room-facing surfaces lead.
+    if (spellbookOn) {
+      cards.insert(
+        1,
+        const _BreakCard(
+          title: 'Spellbook',
+          tagline: 'Open the day’s magic',
+          icon: Icons.auto_stories_outlined,
+          color: ActivityPalette.deepPurple,
+          route: '/spellbook',
+        ),
+      );
+    }
     if (calmOn) {
       cards.insert(
         1,

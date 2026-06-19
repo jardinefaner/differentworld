@@ -119,6 +119,7 @@ import 'package:differentworld/features/settings/roles_screen.dart';
 import 'package:differentworld/features/settings/settings_screen.dart';
 import 'package:differentworld/features/settings/team_screen.dart';
 import 'package:differentworld/features/speak/speak_screen.dart';
+import 'package:differentworld/features/spellbook/spellbook_screen.dart';
 import 'package:differentworld/features/spells/spells_screen.dart';
 import 'package:differentworld/features/staff/runbook_screen.dart';
 import 'package:differentworld/features/staff/staff_ladder_screen.dart';
@@ -1131,6 +1132,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           // What to do instead — the room's calm reference (docs/VISION.md
           // 2026-06-19). Surfaced only when calmEnabledProvider is on.
           GoRoute(path: '/calm', builder: (_, _) => const CalmScreen()),
+          // The Spellbook — a magic-framed home gathering today + this week +
+          // the story (docs/VISION.md 2026-06-19). Only when the toggle is on.
+          GoRoute(
+            path: '/spellbook',
+            builder: (_, _) => const SpellbookScreen(),
+          ),
           // This Week — the live curriculum hub (the world the room is in
           // now + cast / worksheets / activities). docs/WORLD.md.
           GoRoute(
