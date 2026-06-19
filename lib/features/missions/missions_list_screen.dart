@@ -7,6 +7,7 @@ import 'package:differentworld/features/missions/mission_templates.dart';
 import 'package:differentworld/features/missions/missions_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -84,21 +85,19 @@ class MissionsListScreen extends ConsumerWidget {
                   : null,
             );
           }
-          return ResponsivePage.builder(
-            itemCount: missions.length + 1,
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: 'Missions',
-                    subtitle: 'Real jobs kids can take on',
-                    bottomGap: 8,
-                  ),
-                );
-              }
-              return _MissionTile(mission: missions[i - 1]);
-            },
+          return ResponsivePage(
+            children: [
+              const ContentHeader(
+                title: 'Missions',
+                subtitle: 'Real jobs kids can take on',
+              ),
+              const SizedBox(height: 4),
+              CatalogGrid(
+                children: [
+                  for (final m in missions) _MissionCard(mission: m),
+                ],
+              ),
+            ],
           );
         },
       ),
@@ -125,40 +124,29 @@ String missionAgeLabel(Mission m) {
   return 'Up to $hi';
 }
 
-class _MissionTile extends StatelessWidget {
-  const _MissionTile({required this.mission});
+class _MissionCard extends StatelessWidget {
+  const _MissionCard({required this.mission});
 
   final Mission mission;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final builds = mission.builds;
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-        child: Text(
-          mission.icon ?? '🎯',
-          style: const TextStyle(fontSize: 22),
-        ),
-      ),
-      title: Text(mission.name),
-      subtitle: mission.tagline == null || mission.tagline!.isEmpty
-          ? Text(missionAgeLabel(mission))
-          : Text('${mission.tagline} · ${missionAgeLabel(mission)}'),
-      trailing: builds == null || builds.isEmpty
-          ? const Icon(Icons.chevron_right)
-          : Chip(
-              label: Text(builds),
-              visualDensity: VisualDensity.compact,
-              side: BorderSide.none,
-              backgroundColor: theme.colorScheme.secondaryContainer,
-              labelStyle: TextStyle(
-                color: theme.colorScheme.onSecondaryContainer,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
+    final tagline = mission.tagline;
+    return CatalogCard(
+      leading: CatalogIcon.emoji(mission.icon ?? '🎯'),
+      title: mission.name,
+      subtitle: (tagline == null || tagline.isEmpty) ? null : tagline,
+      chips: [
+        CatalogChip(missionAgeLabel(mission)),
+        if (builds != null && builds.isNotEmpty)
+          CatalogChip(
+            builds,
+            background: scheme.secondaryContainer,
+            foreground: scheme.onSecondaryContainer,
+          ),
+      ],
       onTap: () => _openDetail(context, mission),
     );
   }

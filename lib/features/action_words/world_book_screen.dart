@@ -4,6 +4,7 @@ import 'package:differentworld/features/action_words/action_words_providers.dart
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -38,7 +39,8 @@ class WorldBookScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.menu_book_outlined,
               title: 'No invented worlds yet',
-              message: 'When a child’s three words make a brand-new combo, '
+              message:
+                  'When a child’s three words make a brand-new combo, '
                   'name it on the reveal — it lives here as one of your '
                   'class’s own worlds.',
             );
@@ -58,8 +60,11 @@ class WorldBookScreen extends ConsumerWidget {
                 style: theme.textTheme.labelMedium?.copyWith(color: gold),
               ),
               const SizedBox(height: 12),
-              for (final w in invented)
-                _InventedTile(world: w, gold: gold),
+              CatalogGrid(
+                children: [
+                  for (final w in invented) _InventedCard(world: w, gold: gold),
+                ],
+              ),
             ],
           );
         },
@@ -68,63 +73,29 @@ class WorldBookScreen extends ConsumerWidget {
   }
 }
 
-class _InventedTile extends StatelessWidget {
-  const _InventedTile({required this.world, required this.gold});
+class _InventedCard extends StatelessWidget {
+  const _InventedCard({required this.world, required this.gold});
 
   final InventedWorld world;
   final Color gold;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            const Text('🌟', style: TextStyle(fontSize: 34)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    world.name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      for (final v in verbsByIds(world.verbs.toList()))
-                        Text(
-                          '${v.emoji} ${v.label}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: gold.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                world.count == 1 ? '1 day' : '${world.count} days',
-                style: theme.textTheme.labelSmall?.copyWith(color: gold),
-              ),
-            ),
-          ],
+    final verbs = verbsByIds(world.verbs.toList());
+    final verbLine = [
+      for (final v in verbs) '${v.emoji} ${v.label}',
+    ].join('  ');
+    return CatalogCard(
+      leading: const CatalogIcon.emoji('🌟'),
+      title: world.name,
+      subtitle: verbLine,
+      chips: [
+        CatalogChip(
+          world.count == 1 ? '1 day' : '${world.count} days',
+          background: gold.withValues(alpha: 0.16),
+          foreground: gold,
         ),
-      ),
+      ],
     );
   }
 }

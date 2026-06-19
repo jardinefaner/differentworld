@@ -3,6 +3,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -63,23 +64,21 @@ class ActivitiesListScreen extends ConsumerWidget {
                   : null,
             );
           }
-          return ResponsivePage.builder(
-            itemCount: activities.length + 1,
-            itemBuilder: (_, i) {
-              if (i == 0) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: ContentHeader(
-                    title: 'Activities',
-                    subtitle:
-                        'What kids do during scheduled blocks. Reusable; '
-                        'teachers add their own.',
-                    bottomGap: 8,
-                  ),
-                );
-              }
-              return _ActivityTile(activity: activities[i - 1]);
-            },
+          return ResponsivePage(
+            children: [
+              const ContentHeader(
+                title: 'Activities',
+                subtitle:
+                    'What kids do during scheduled blocks. Reusable; '
+                    'teachers add their own.',
+              ),
+              const SizedBox(height: 4),
+              CatalogGrid(
+                children: [
+                  for (final a in activities) _ActivityCard(activity: a),
+                ],
+              ),
+            ],
           );
         },
       ),
@@ -87,15 +86,13 @@ class ActivitiesListScreen extends ConsumerWidget {
   }
 }
 
-class _ActivityTile extends ConsumerWidget {
-  const _ActivityTile({required this.activity});
+class _ActivityCard extends ConsumerWidget {
+  const _ActivityCard({required this.activity});
 
   final Activity activity;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final isOutdoor = activity.isOutdoor == 1;
 
     // Resolve the default location's name (live) so the chip stays
@@ -127,29 +124,13 @@ class _ActivityTile extends ConsumerWidget {
         const _MetaChip(icon: Icons.park_outlined, label: 'outdoor'),
     ];
 
-    return ListTile(
-      isThreeLine: chips.isNotEmpty,
-      leading: CircleAvatar(
-        backgroundColor: scheme.primaryContainer,
-        child: Icon(
-          isOutdoor ? Icons.park_outlined : Icons.local_activity_outlined,
-          color: scheme.onPrimaryContainer,
-        ),
+    return CatalogCard(
+      leading: CatalogIcon.icon(
+        isOutdoor ? Icons.park_outlined : Icons.local_activity_outlined,
       ),
-      title: Text(activity.name),
-      subtitle: chips.isEmpty
-          ? (activity.description == null
-                ? const Text('—')
-                : Text(
-                    activity.description!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ))
-          : Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Wrap(spacing: 4, runSpacing: 4, children: chips),
-            ),
-      trailing: const Icon(Icons.chevron_right),
+      title: activity.name,
+      subtitle: activity.description,
+      chips: chips,
       onTap: () => context.push('/activities/${activity.id}'),
     );
   }

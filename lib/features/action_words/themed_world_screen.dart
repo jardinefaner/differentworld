@@ -6,6 +6,7 @@ import 'package:differentworld/features/action_words/themed_worlds.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -51,8 +52,13 @@ class ThemedWorldScreen extends ConsumerWidget {
               title: 'Different Worlds',
               subtitle: '10 weeks · 10 worlds · 1 Different World',
             ),
-            for (final w in worlds)
-              _WorldCard(world: w, onTap: () => _showWorld(context, w)),
+            const SizedBox(height: 4),
+            CatalogGrid(
+              children: [
+                for (final w in worlds)
+                  _WorldCard(world: w, onTap: () => _showWorld(context, w)),
+              ],
+            ),
           ],
         ),
       ),
@@ -75,60 +81,18 @@ class _WorldCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: world.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Column(
-                  children: [
-                    Text(world.emoji, style: const TextStyle(fontSize: 38)),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Week ${world.week}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: world.color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        world.name,
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        world.tagline,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-          ),
+    return CatalogCard(
+      leading: CatalogIcon.emoji(world.emoji),
+      title: world.name,
+      subtitle: world.tagline,
+      chips: [
+        CatalogChip(
+          'Week ${world.week}',
+          background: world.color.withValues(alpha: 0.16),
+          foreground: world.color,
         ),
-      ),
+      ],
+      onTap: onTap,
     );
   }
 }
@@ -163,8 +127,9 @@ class _WorldSheet extends StatelessWidget {
               Center(
                 child: Text(
                   world.name,
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
@@ -183,8 +148,9 @@ class _WorldSheet extends StatelessWidget {
                 child: Text(
                   '“${world.question}”',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -237,8 +203,10 @@ class _WorldSheet extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('•  ',
-                            style: TextStyle(color: accent, height: 1.4)),
+                        Text(
+                          '•  ',
+                          style: TextStyle(color: accent, height: 1.4),
+                        ),
                         Expanded(
                           child: Text(a, style: theme.textTheme.bodyMedium),
                         ),
@@ -306,10 +274,9 @@ class _Label extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: Theme.of(context)
-            .textTheme
-            .labelLarge
-            ?.copyWith(color: accent, letterSpacing: 0.4),
+        style: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(color: accent, letterSpacing: 0.4),
       ),
     );
   }
@@ -338,8 +305,9 @@ class _VideoRow extends StatelessWidget {
               children: [
                 Text(
                   '${video.title}  ·  ${video.minutes} min',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text(
                   '→ ${video.after}',
