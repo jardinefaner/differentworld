@@ -194,6 +194,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           '/',
           '/messages',
           '/children',
+          '/share-home',
         ];
         final allowed = familyAllowed.any(
           (prefix) => loc == prefix || loc.startsWith('$prefix/'),

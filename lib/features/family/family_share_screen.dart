@@ -53,6 +53,8 @@ class _FamilyShareScreenState extends ConsumerState<FamilyShareScreen> {
           );
       if (!mounted) return;
       _text.clear();
+      // Programmatic clear doesn't fire the field's onChanged, so rebuild to
+      // re-disable the Send button (its gate reads `_text.text`).
       setState(() {});
       messenger
         ..hideCurrentSnackBar()
