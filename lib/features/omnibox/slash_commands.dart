@@ -323,6 +323,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/penny')),
   ),
   SlashCommand(
+    name: 'potions',
+    label: '/potions',
+    hint: 'Potions — gather, stir, and name a potion-of-the-moment',
+    icon: Icons.science_outlined,
+    aliases: const ['potion', 'magic', 'garden', 'mix', 'brew', 'spell'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/potions')),
+  ),
+  SlashCommand(
     name: 'factorfib',
     label: '/factorfib',
     hint: 'Fact or Fib — the room votes true/false, you reveal',

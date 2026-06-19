@@ -37,6 +37,7 @@ import 'package:differentworld/features/activity_runtime/math_runner_screen.dart
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/penny_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
+import 'package:differentworld/features/activity_runtime/potions_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
@@ -1623,6 +1624,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/penny',
             builder: (_, _) => const PennyScreen(),
+          ),
+          // Potions — a potion-of-the-moment recipe the room makes for real
+          // (garden + counting + magic, docs/VISION.md 2026-06-19).
+          GoRoute(
+            path: '/activity/potions',
+            builder: (_, _) => const PotionsScreen(),
           ),
           // Fact or Fib — host-run; the room votes true/false, you Reveal.
           GoRoute(

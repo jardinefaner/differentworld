@@ -171,6 +171,13 @@ class BrainBreaksScreen extends ConsumerWidget {
       route: '/activity/penny',
     ),
     const _BreakCard(
+      title: 'Potions',
+      tagline: 'Gather, stir, name your potion',
+      icon: Icons.science_outlined,
+      color: ActivityPalette.green,
+      route: '/activity/potions',
+    ),
+    const _BreakCard(
       title: 'Charades',
       tagline: 'Act it out — phone + screen',
       icon: Icons.theater_comedy_outlined,
