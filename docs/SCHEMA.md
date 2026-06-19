@@ -57,8 +57,8 @@ of the SQL.
 - `capabilities` (jsonb — carries `action_verbs` (list of verb ids for the activity matcher), `senses`, `curriculum_key` (`worldId:index` — present on curriculum-imported rows; idempotency marker), `curriculum_world` (world id of the source curriculum world))
 **RLS gist**: relaxed; reads open to all members.
 **Sync rule**: `by_space`.
-**Consumers**: [Schedule](FEATURES.md#schedule) (blocks reference activities; `activity_edit_screen.dart` in the schedule folder owns the edit UI), [Action Words](FEATURES.md#action-words) (writes via `CurriculumImporter.importActivities` — seeds ~75 curriculum activities tagged with `action_verbs` + `curriculum_key` in `capabilities` JSONB; also reads via the activity matcher screen `activity_match_screen.dart`).
-**Last verified**: 2026-06-07
+**Consumers**: [Schedule](FEATURES.md#schedule) (blocks reference activities; `activity_edit_screen.dart` in the schedule folder owns the edit UI), [Action Words](FEATURES.md#action-words) (writes via `CurriculumImporter.importActivities` — seeds ~75 curriculum activities tagged with `action_verbs` + `curriculum_key` in `capabilities` JSONB; also reads via the activity matcher screen `activity_match_screen.dart`), [Routines](FEATURES.md#routines) (READ-ONLY — reads `activitiesProvider` to resolve a block's activity name for the kid-legible timeline).
+**Last verified**: 2026-06-19
 
 ---
 
