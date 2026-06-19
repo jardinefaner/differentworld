@@ -81,6 +81,13 @@ abstract class ContentKind {
   /// `{text, author?}`. Like the question, it's answered with an
   /// interpretation (what does it mean to you?).
   static const quote = 'quote';
+
+  /// A **Fill-in-the-blank** (ad libs) template (docs/VISION.md 2026-06-19) —
+  /// payload `{template, blanks}`. `template` carries `{0}`, `{1}`… numbered
+  /// placeholders; `blanks` is the per-slot prompt ("an action word"). The
+  /// room shouts a word for each blank, the host types it, then the silly
+  /// result is REVEALED and read aloud.
+  static const fillBlank = 'fill_blank';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -171,6 +178,7 @@ final List<ContentItem> curatedSeeds = <ContentItem>[
   ..._doItSeed,
   ..._questionSeed,
   ..._quoteSeed,
+  ..._fillBlankSeed,
 ];
 
 // ── Curated seeds ──────────────────────────────────────────────────────
@@ -1431,4 +1439,93 @@ final List<ContentItem> _quoteSeed = <ContentItem>[
   _quoteOf('Wonder is the start of every great idea.'),
   _quoteOf('Small kindnesses make big differences.'),
   _quoteOf('What you practice, you become.'),
+];
+
+// ── Fill in the blank (ad libs) ───────────────────────────────────────────
+// Mad-libs templates (docs/VISION.md 2026-06-19). `{0}`, `{1}`… placeholders;
+// the `blanks` list is the per-slot prompt. The room shouts a word, the host
+// types it, the silly result is revealed + read aloud. Kid-safe (4–12); the
+// blank count MUST equal the highest placeholder index + 1 (pinned by a test).
+ContentItem _fillBlankOf(String template, List<String> blanks) => ContentItem(
+  kind: ContentKind.fillBlank,
+  fingerprint: template.toLowerCase(),
+  payload: {'template': template, 'blanks': blanks},
+);
+
+final List<ContentItem> _fillBlankSeed = <ContentItem>[
+  _fillBlankOf('The {0} {1} {2} all the way to the {3} and ate a {4}!', [
+    'silly colour',
+    'animal',
+    'action word ending in -ed',
+    'place',
+    'food',
+  ]),
+  _fillBlankOf(
+    'I found a {0} {1} under my bed. It said "{2}!" and ran to the {3}.',
+    [
+      'size word',
+      'animal',
+      'silly word',
+      'place',
+    ],
+  ),
+  _fillBlankOf(
+    'My favourite snack is {0} mixed with {1} and a sprinkle of {2}.',
+    [
+      'food',
+      'food',
+      'something tiny',
+    ],
+  ),
+  _fillBlankOf(
+    'If I were a superhero, my power would be {0} and my sidekick a {1} named {2}.',
+    [
+      'a power ending in -ing',
+      'animal',
+      'a name',
+    ],
+  ),
+  _fillBlankOf('On the moon I would {0} with a {1} and never {2} again.', [
+    'action word',
+    'animal',
+    'action word',
+  ]),
+  _fillBlankOf(
+    'The teacher walked in wearing a {0} hat and {1} shoes, holding a giant {2}.',
+    [
+      'silly adjective',
+      'colour',
+      'thing',
+    ],
+  ),
+  _fillBlankOf(
+    'Once upon a time, a {0} dragon loved to {1} {2} for breakfast.',
+    [
+      'adjective',
+      'action word',
+      'food (more than one)',
+    ],
+  ),
+  _fillBlankOf(
+    'I opened the box and out jumped a {0} {1} that smelled like {2}!',
+    [
+      'adjective',
+      'animal',
+      'a smell',
+    ],
+  ),
+  _fillBlankOf('In my magic garden, the {0} grow {1} and the bees say "{2}".', [
+    'plant (more than one)',
+    'colour',
+    'silly word',
+  ]),
+  _fillBlankOf(
+    'We mixed a potion of {0}, {1}, and one drop of {2}. It turned {3}!',
+    [
+      'something squishy',
+      'something from the garden',
+      'a liquid',
+      'colour',
+    ],
+  ),
 ];

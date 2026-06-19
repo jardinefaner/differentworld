@@ -299,6 +299,14 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/do-it')),
   ),
   SlashCommand(
+    name: 'fillblank',
+    label: '/fillblank',
+    hint: 'Fill in the blank — ad libs, read aloud at the reveal',
+    icon: Icons.edit_note_outlined,
+    aliases: const ['adlibs', 'madlibs', 'blank', 'fill', 'fillintheblank'],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/fill-blank')),
+  ),
+  SlashCommand(
     name: 'factorfib',
     label: '/factorfib',
     hint: 'Fact or Fib — the room votes true/false, you reveal',

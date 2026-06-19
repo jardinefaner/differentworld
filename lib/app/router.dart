@@ -31,6 +31,7 @@ import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dar
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
 import 'package:differentworld/features/activity_runtime/do_it_screen.dart';
+import 'package:differentworld/features/activity_runtime/fill_blank_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
@@ -1601,6 +1602,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/activity/do-it',
             builder: (_, state) =>
                 DoItScreen(groupId: state.uri.queryParameters['group']),
+          ),
+          // Fill in the blank (ad libs) — host-typed, read aloud at the
+          // reveal (docs/VISION.md 2026-06-19).
+          GoRoute(
+            path: '/activity/fill-blank',
+            builder: (_, _) => const FillBlankScreen(),
           ),
           // Fact or Fib — host-run; the room votes true/false, you Reveal.
           GoRoute(

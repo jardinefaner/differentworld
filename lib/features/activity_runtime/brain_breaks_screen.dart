@@ -150,6 +150,13 @@ class BrainBreaksScreen extends ConsumerWidget {
       route: '/activity/rhyme-time',
     ),
     const _BreakCard(
+      title: 'Fill in the Blank',
+      tagline: 'Silly words → read it aloud',
+      icon: Icons.edit_note_outlined,
+      color: ActivityPalette.amber,
+      route: '/activity/fill-blank',
+    ),
+    const _BreakCard(
       title: 'Charades',
       tagline: 'Act it out — phone + screen',
       icon: Icons.theater_comedy_outlined,
