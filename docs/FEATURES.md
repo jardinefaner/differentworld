@@ -376,6 +376,31 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Heroes
+**Path**: `lib/features/heroes/`
+**Purpose**: Kids build a make-believe alter-ego — an animal with a skin, super powers, a "[Name] of [From]" title, and a drawing they name — that becomes a keepsake Hero card and grows over time (docs/VISION.md 2026-06-19; the creative twin of "Do It").
+**Personas served**: Ava (the child who builds it), All staff (launch it with the room / scribe the name).
+**Discovery surfaces**:
+- Routes: `/heroes` (hub — roster of every child's Hero card / "make one" prompt), `/subjects/:id/hero` (the per-child creator; `extra` = display name). Both routes always resolve; only the surfaces below are gated.
+- Omnibox: `page.heroes` ("Heroes" — keywords hero / alter ego / super power / pretend / draw). **Toggle-gated** — present only when `heroesEnabledProvider` is on, and guardian-gated off.
+- Slash: none (a static slash list can't honor the toggle).
+- Drawer: no — reached via the Brain Breaks deck's "Heroes" card (slotted in after Do It when the toggle is on) or the omnibox.
+- Settings: yes — "Heroes activity" switch in Preferences (`_HeroesTile`, off by default).
+**Capabilities**: None — open to all signed-in staff once the director switches the activity on.
+**Data**: [entries](SCHEMA.md#entries) (`kind='hero'` — one upserted row per child; `details` = denormalized `{animal, skin, powers[], name, from, drawing_name?}` snapshot via `EntryActions.recordHero`), [attachments](SCHEMA.md#attachments) (the optional drawing photo, offline-safe pinned-id upload). Catalog (animals/skins/powers/origins) is bundled Dart in `hero_catalog.dart`, not a synced table.
+**Surfaces**:
+- *Heroes hub* — `lib/features/heroes/heroes_hub_screen.dart`. `/heroes` lists every visible child (`subjectsInSpaceProvider`); each shows their Hero card (tap to evolve) or a "make one" prompt. Loading / empty / error states.
+- *Hero creator* — `lib/features/heroes/hero_creator_screen.dart`. Teacher-paced build form with a live `HeroCard` preview: animal grid, skin + origin ChoiceChips, powers FilterChips (max 3), a name TextField, and an optional snap+name drawing (proven photo path, camera hidden on web). `DismissGuard`; saves via `recordHero`.
+- *Hero card* — `lib/features/heroes/widgets/hero_card.dart`. The reusable keepsake render (animal+skin, title, power chips, drawing via `PersonPhotoNetwork` → `PhotoViewer`). Used by the hub + the creator preview.
+- *Catalog + models* — `lib/features/heroes/hero_catalog.dart`. `HeroPick` + curated pick-lists + `HeroDraft` (→ details JSON) + `HeroCardData` (tolerant parse).
+- *Read provider* — `lib/features/heroes/heroes_providers.dart`. `heroForSubjectProvider` (Drift-watched, offline-first).
+- *Toggle* — `lib/features/heroes/heroes_setting.dart`. `heroesEnabledProvider`, default off.
+**Depends on**: Entries (`recordHero`), Subjects (roster), Photos (drawing via `uploadOnly` + `PersonPhotoNetwork`).
+**Consumed by**: ActivityRuntime (Brain Breaks deck injects the Heroes card), Omnibox (`page.heroes`), Settings (`_HeroesTile`).
+**Last verified**: 2026-06-19
+
+---
+
 ## Incidents
 **Path**: `lib/features/incidents/`
 **Purpose**: Structured, first-class incident logging — a bump, conflict, illness, or medical event captured as a typed, child-scoped, family-notification-tracked compliance record, distinct from a free-text observation (docs/WORKFLOWS.md gap #3).
