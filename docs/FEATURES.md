@@ -727,6 +727,28 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Routines
+**Path**: `lib/features/routines/`
+**Purpose**: The kid-legible read of the day — "what do we do now? / at 9?" — re-skinning the room's existing staff schedule with friendly icons and warm sublabels (PE → "the workout for your body", brain breaks → "the workout for your brain") and a "now" highlight, so the rhythm is something a child can predict and belong to (docs/VISION.md 2026-06-19).
+**Personas served**: Ava (the child reading the day), All staff (present it to the room).
+**Discovery surfaces**:
+- Routes: `/routines` (`?group=` selects a cohort; defaults to the first, chip selector switches). Always resolves; surfaces below are gated.
+- Omnibox: `page.routines` ("Routines" — keywords what do we do now / our day / rhythm / routine). **Toggle-gated** (`routinesEnabledProvider`) + guardian-gated off.
+- Slash: none (a static slash list can't honor the toggle).
+- Drawer: no — reached via the Brain Breaks deck's "Our day" card (slotted in when the toggle is on) or the omnibox.
+- Settings: yes — "Routines (kid view)" switch in Preferences (`_RoutinesTile`, off by default).
+**Capabilities**: None — open to all signed-in staff once the director switches it on.
+**Data**: [schedule_blocks](SCHEMA.md#schedule_blocks) (READ-ONLY, live, via `scheduleDayForGroupProvider`), [activities](SCHEMA.md#activities) (read, to resolve a block's name). Writes nothing; adds no table or column — the kid voice is a render-time layer.
+**Surfaces**:
+- *Routines screen* — `lib/features/routines/routines_screen.dart`. `/routines`; reads today's blocks for the selected cohort and renders a glanceable timeline (time + icon + activity + sublabel) with the current block highlighted ("now" pill) and finished blocks dimmed. Cohort chip selector; loading / empty / error states.
+- *Voice layer* — `lib/features/routines/routine_voice.dart`. `RoutineVoice.sublabelFor` / `.iconFor` — a pure first-match keyword map from a block's name to a warm kid sublabel + icon. Whole-word match for short tokens; unknown blocks degrade.
+- *Toggle* — `lib/features/routines/routines_setting.dart`. `routinesEnabledProvider`, default off.
+**Depends on**: Schedule (reads `scheduleDayForGroupProvider` + `activitiesProvider`), Groups (cohort list + selector).
+**Consumed by**: ActivityRuntime (Brain Breaks deck injects the "Our day" card), Omnibox (`page.routines`), Settings (`_RoutinesTile`).
+**Last verified**: 2026-06-19
+
+---
+
 ## Schedule
 **Path**: `lib/features/schedule/`
 **Purpose**: Per-cohort, per-day block planning — activities, locations, leads, and one-tap "X is out, Y is covering" substitution.
