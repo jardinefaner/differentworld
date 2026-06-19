@@ -24,6 +24,10 @@ class HeroesHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
+    // ONE stream for all heroes, looked up per child — not a
+    // heroForSubjectProvider watch per row (N live streams at N children).
+    final heroes = ref.watch(heroesInSpaceProvider).value ?? const <DeckCard>[];
+    final heroBySubject = {for (final c in heroes) c.subjectId: c};
     return EdgeScaffold(
       actions: [
         IconButton(
@@ -56,7 +60,8 @@ class HeroesHubScreen extends ConsumerWidget {
                   title: 'Heroes',
                   subtitle: 'Each child’s make-believe self',
                 ),
-                for (final s in subjects) _HeroRow(subject: s),
+                for (final s in subjects)
+                  _HeroRow(subject: s, hero: heroBySubject[s.id]),
               ],
             );
           },
@@ -67,21 +72,23 @@ class HeroesHubScreen extends ConsumerWidget {
 }
 
 /// One child's slot in the hub — their Hero card (tap to evolve) or a prompt to
-/// make one. A tiny per-subject watch on `heroForSubjectProvider`.
-class _HeroRow extends ConsumerWidget {
-  const _HeroRow({required this.subject});
+/// make one. The hero is passed IN (from one heroesInSpaceProvider stream), not
+/// watched per row.
+class _HeroRow extends StatelessWidget {
+  const _HeroRow({required this.subject, required this.hero});
 
   final Subject subject;
+  final DeckCard? hero;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hero = ref.watch(heroForSubjectProvider(subject.id)).value;
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
     final first = subject.firstName;
     void edit() => context.push('/subjects/${subject.id}/hero', extra: first);
 
-    if (hero == null) {
+    final h = hero;
+    if (h == null) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: FeatureCard(
@@ -121,7 +128,7 @@ class _HeroRow extends ConsumerWidget {
           ),
           GestureDetector(
             onTap: edit,
-            child: HeroCard(data: hero.data, entryId: hero.entryId),
+            child: HeroCard(data: h.data, entryId: h.entryId),
           ),
         ],
       ),
