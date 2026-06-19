@@ -157,6 +157,13 @@ class BrainBreaksScreen extends ConsumerWidget {
       route: '/activity/fill-blank',
     ),
     const _BreakCard(
+      title: 'Letters',
+      tagline: 'Write to a friend',
+      icon: Icons.mail_outline,
+      color: ActivityPalette.pink,
+      route: '/activity/letters',
+    ),
+    const _BreakCard(
       title: 'Charades',
       tagline: 'Act it out — phone + screen',
       icon: Icons.theater_comedy_outlined,

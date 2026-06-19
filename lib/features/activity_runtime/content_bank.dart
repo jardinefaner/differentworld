@@ -88,6 +88,11 @@ abstract class ContentKind {
   /// room shouts a word for each blank, the host types it, then the silly
   /// result is REVEALED and read aloud.
   static const fillBlank = 'fill_blank';
+
+  /// A **Write-to-a-friend** prompt (docs/VISION.md 2026-06-19) — payload
+  /// `{text}`. The room writes notes to each other (on paper, "To:" / "From:"
+  /// at the top); the app pairs everyone so each child writes one and gets one.
+  static const writePrompt = 'write_prompt';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -179,6 +184,7 @@ final List<ContentItem> curatedSeeds = <ContentItem>[
   ..._questionSeed,
   ..._quoteSeed,
   ..._fillBlankSeed,
+  ..._writePromptSeed,
 ];
 
 // ── Curated seeds ──────────────────────────────────────────────────────
@@ -1607,4 +1613,29 @@ final List<ContentItem> _fillBlankSeed = <ContentItem>[
       'action word',
     ],
   ),
+];
+
+// ── Write to a friend ─────────────────────────────────────────────────────
+// Letter prompts (docs/VISION.md 2026-06-19) — the room writes notes to each
+// other on paper, paired so everyone writes one and gets one. Kid-safe (4–12),
+// kind by construction.
+ContentItem _writePromptOf(String text) => ContentItem(
+  kind: ContentKind.writePrompt,
+  fingerprint: text.toLowerCase(),
+  payload: {'text': text},
+);
+
+final List<ContentItem> _writePromptSeed = <ContentItem>[
+  _writePromptOf('Tell them one thing that makes them a good friend.'),
+  _writePromptOf('Write about a fun time you had together.'),
+  _writePromptOf('Ask them a question you really want to know.'),
+  _writePromptOf('Tell them something you think they are great at.'),
+  _writePromptOf('Draw them a tiny picture and say why you chose it.'),
+  _writePromptOf('Wish them something good for tomorrow.'),
+  _writePromptOf('Say thank you for something they did.'),
+  _writePromptOf('Share your favourite thing about today.'),
+  _writePromptOf('Write three words that remind you of them.'),
+  _writePromptOf('Tell them about something you are excited for.'),
+  _writePromptOf('Draw your two favourite animals having an adventure.'),
+  _writePromptOf('Tell them a tiny joke to make them smile.'),
 ];

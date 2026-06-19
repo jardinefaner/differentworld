@@ -32,6 +32,7 @@ import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
 import 'package:differentworld/features/activity_runtime/do_it_screen.dart';
 import 'package:differentworld/features/activity_runtime/fill_blank_screen.dart';
+import 'package:differentworld/features/activity_runtime/letters_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
@@ -1608,6 +1609,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/fill-blank',
             builder: (_, _) => const FillBlankScreen(),
+          ),
+          // Letters — the room writes to each other; the app pairs everyone so
+          // each writes one + gets one (docs/VISION.md 2026-06-19).
+          GoRoute(
+            path: '/activity/letters',
+            builder: (_, state) =>
+                LettersScreen(groupId: state.uri.queryParameters['group']),
           ),
           // Fact or Fib — host-run; the room votes true/false, you Reveal.
           GoRoute(
