@@ -4,6 +4,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/story/moment.dart';
+import 'package:differentworld/features/story/story_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -96,20 +97,20 @@ class _StoryShowcaseScreenState extends ConsumerState<StoryShowcaseScreen> {
   Widget build(BuildContext context) {
     final subject = ref.watch(subjectByIdProvider(widget.subjectId)).value;
     final firstName = subject?.firstName ?? 'This child';
-    final entriesAsync = ref.watch(
-      entriesForSubjectProvider((subjectId: widget.subjectId, kind: null)),
+    final momentsAsync = ref.watch(
+      momentsForSubjectProvider(widget.subjectId),
     );
 
     return EdgeScaffold(
-      body: entriesAsync.when(
+      body: momentsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => const EmptyState(
           icon: Icons.movie_outlined,
           title: 'Could not play the story',
           message: 'Try again in a moment.',
         ),
-        data: (entries) {
-          final moments = _showable(momentsFrom(entries));
+        data: (allMoments) {
+          final moments = _showable(allMoments);
           _count = moments.length;
           if (moments.isEmpty) {
             return EmptyState(

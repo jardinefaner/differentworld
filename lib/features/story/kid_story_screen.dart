@@ -1,6 +1,6 @@
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
-import 'package:differentworld/features/story/moment.dart';
+import 'package:differentworld/features/story/story_providers.dart';
 import 'package:differentworld/features/story/widgets/story_timeline.dart';
 import 'package:differentworld/features/story/widgets/wrap_sheet.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -26,9 +26,7 @@ class KidStoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subject = ref.watch(subjectByIdProvider(subjectId)).value;
     final firstName = subject?.firstName ?? 'This child';
-    final entriesAsync = ref.watch(
-      entriesForSubjectProvider((subjectId: subjectId, kind: null)),
-    );
+    final momentsAsync = ref.watch(momentsForSubjectProvider(subjectId));
 
     return EdgeScaffold(
       actions: [
@@ -58,7 +56,7 @@ class KidStoryScreen extends ConsumerWidget {
         ),
         const SyncStatusIndicator(),
       ],
-      body: entriesAsync.when(
+      body: momentsAsync.when(
         loading: () => const LoadingSlot(),
         error: (_, _) => ErrorState(
           title: 'Could not load the story',
@@ -66,8 +64,7 @@ class KidStoryScreen extends ConsumerWidget {
             entriesForSubjectProvider((subjectId: subjectId, kind: null)),
           ),
         ),
-        data: (entries) {
-          final moments = momentsFrom(entries);
+        data: (moments) {
           if (moments.isEmpty) {
             return EmptyState(
               icon: Icons.auto_stories_outlined,
