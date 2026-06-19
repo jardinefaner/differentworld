@@ -64,7 +64,7 @@ work that doesn't need a feature decision.
 
 | Item | Effort | Why |
 |---|---|---|
-| Field trip flow polish (permission slips + headcounts) | M | Schema shipped; UX end-to-end test needed |
+| Field trip — assign specific kids to a trip (the v2 wizard) | M | Slips (shipped) + headcounts (0f3edce) are both done; the remaining gap is per-trip kid assignment. The headcount roster is `subjectsInSpaceProvider` today (whole space) — a real trip subset wants the "assign kids" step. |
 | BentoGrid true 2-D masonry (vs the current 1-D Wrap) | M | Spans are tuned so each breakpoint packs clean; masonry only matters if odd widths go ragged. Defer until it bites. |
 | Multi-program switcher in drawer | M (mis-classified as S earlier) | Single-program design today; needs schema migration to support a user belonging to multiple spaces (today `members.id = auth.uid()`, so one user = one member = one space). New table `user_spaces (user_id, space_id, role, caps)` would unblock it. Defer until a real multi-program use case lands. |
 | Family-side UI polish (`FamilyTodayScreen` outlined but partial) | M | Family-login model is in; UI bare |
@@ -117,6 +117,14 @@ the inheritance file for future Claude sessions.
 
 (Move done items here with their commit hash. Most-recent first.)
 
+- **0f3edce** — Field-trip headcount roll-call. A safety spine on trip detail
+  (departure → at destination → return), each a roll-call sheet: tap each kid
+  aboard, a live count, anyone unaccounted blocks the confirm behind a
+  reason-required override (who has them + why) for the safety trail.
+  Entries-backed (`EntryKind.tripHeadcount`, append-only) — no migration. Plus
+  the param'd detail-screen golden plates (ef4fd58) so the gallery now covers
+  every reachable screen. Closes the headcount half of "field trip flow
+  polish".
 - **bf34acd** — Schedule time-grid drag-to-move + drag-edge-resize.
   `_DraggableBlock` (ConsumerStatefulWidget) owns each block's Positioned:
   drag the body to move (start shifts, duration preserved), drag the 16px
