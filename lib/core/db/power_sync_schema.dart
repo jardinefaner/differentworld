@@ -92,6 +92,21 @@ const appSchema = Schema([
     // Wave 105: last-write attribution. Nullable on the server side
     // (existing rows have no value); the local schema mirrors that.
     Column.text('last_updated_by'),
+  ], indexes: [
+    // Attendance grows ~1 row per child per day; these keep the history strip,
+    // the per-group day grid, and the late-streak insight off a full scan.
+    Index('attendance_subject', [
+      IndexedColumn('subject_id'),
+      IndexedColumn.descending('date'),
+    ]), // history strip + subject/date upsert lookups
+    Index('attendance_space_date', [
+      IndexedColumn('space_id'),
+      IndexedColumn.descending('date'),
+    ]), // recentAttendanceBySubjectProvider — windowed late-streak insight
+    Index('attendance_group_date', [
+      IndexedColumn('group_id'),
+      IndexedColumn('date'),
+    ]), // the per-group, per-day attendance screen
   ]),
   Table('invites', [
     Column.text('space_id'),
@@ -127,6 +142,34 @@ const appSchema = Schema([
     Column.text('recorded_by'),
     Column.text('recorded_at'),
     Column.text('updated_at'),
+  ], indexes: [
+    // `entries` grows unbounded with history, and EVERY watch filters by one
+    // owner column and orders newest-first. Without these, each stream
+    // emission full-scans + sorts the whole table locally. `recorded_at`
+    // descending makes `ORDER BY recorded_at DESC LIMIT n` a direct index
+    // prefix (no separate sort). One index per query shape in entries_dao.
+    Index('entries_space', [
+      IndexedColumn('space_id'),
+      IndexedColumn.descending('recorded_at'),
+    ]), // watchAllInSpace — the room Story (all kinds, newest first)
+    Index('entries_space_kind', [
+      IndexedColumn('space_id'),
+      IndexedColumn('kind'),
+      IndexedColumn.descending('recorded_at'),
+    ]), // watchInSpace(kind) — observation feed, action-words substrate
+    Index('entries_subject', [
+      IndexedColumn('subject_id'),
+      IndexedColumn.descending('recorded_at'),
+    ]), // watchForSubject — a child's Story / per-child timelines
+    Index('entries_group_kind', [
+      IndexedColumn('group_id'),
+      IndexedColumn('kind'),
+      IndexedColumn.descending('recorded_at'),
+    ]), // watchForGroup(kind) — a classroom's observations
+    Index('entries_block', [
+      IndexedColumn('schedule_block_id'),
+      IndexedColumn.descending('recorded_at'),
+    ]), // watchForBlock — live-block capture context
   ]),
   Table('vehicles', [
     Column.text('space_id'),

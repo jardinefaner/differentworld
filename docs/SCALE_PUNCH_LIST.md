@@ -231,13 +231,31 @@ From the scaling audit after the 2026-06 feature wave (recap / per-child
 world / role deck / story showcase), run through the sync + performance +
 hotspot guards. Pure-code, no dashboard:
 
-- **Per-child N+1 watches.** A roster screen that watches
-  `heroForSubjectProvider` (or any family provider) PER child opens N live
-  streams — at a 100-child program, 100 subscriptions. **`role_deck_screen`
-  fixed** (one `heroesInSpaceProvider` stream + a `subjectId → card` map).
-  `heroes_hub_screen` still does it; same fix applies. Rule going forward:
-  resolve per-child data from ONE space-wide stream + a map, not a
-  per-row watch.
+- **Local SQLite indexes — DONE.** The single biggest *landable* win (the
+  bigger lever, time-windowed sync, is externally blocked). The PowerSync
+  local schema declared **zero** indexes, so every `watchInSpace` /
+  `watchForSubject` / windowed-attendance query **full-scanned + sorted**
+  its table on every stream emission — and `entries` / `attendance_records`
+  grow unbounded with history. Added 5 indexes on `entries` (one per
+  query shape: space, space+kind, subject, group+kind, block — each with
+  `recorded_at DESC` as the trailing column so the `ORDER BY … LIMIT` is a
+  direct index prefix) and 3 on `attendance_records` (subject+date,
+  space+date, group+date). PowerSync builds these locally on the next
+  launch over existing rows — **no re-sync, no local wipe** (non-destructive
+  schema change). Mechanism: PowerSync creates expression indexes on the
+  `ps_data__*` storage matching the view's `json_extract` columns, so
+  SQLite's planner uses them for the Drift-issued queries.
+- **Per-child N+1 watches — DONE.** A roster screen that watched a family
+  provider PER child opened N live streams — at a 100-child program, 100
+  subscriptions. Fixed everywhere it mattered: `role_deck_screen` +
+  `heroes_hub_screen` (one `heroesInSpaceProvider` stream + a
+  `subjectId → card` map), the Action Words program hub (new
+  `actionWordsCollectionsBySubjectProvider` off the existing space stream),
+  and the Insights late-streak rule (new windowed
+  `recentAttendanceBySubjectProvider` replacing a per-subject attendance
+  stream per child). Single-child screens keep the family (one stream —
+  correct). Rule going forward: resolve per-child data from ONE space-wide
+  stream + a map, not a per-row watch.
 - **Hot-path JSON decode.** The Story timeline / showcase / family recap
   peek `jsonDecode(entry.details)` per entry on every rebuild
   (`momentsFrom`, `_TodaysRecapPeek`). Bounded today (limit 50–300,
@@ -250,8 +268,8 @@ hotspot guards. Pure-code, no dashboard:
   (~1120). Split `EntryActions` per kind; extract the inline widgets to
   their own files. Maintainability, not runtime.
 
-**Prerequisites.** None for the N+1 (done where it mattered most); the
-rest want a profiler trace or a refactor session.
+**Prerequisites.** None for the indexes or the N+1 (both done); the rest
+want a profiler trace or a refactor session.
 
 ### Search backend
 
@@ -284,3 +302,10 @@ US-region project hurts. Federate when geography demands it.
   per-child-per-day growth against the time-windowed-sync item, plus the
   remaining code-side follow-ups (heroes-hub N+1, hot-path JSON decode,
   oversized files).
+- **2026-06-19 (cont.)** — Landed the code-side scale wins. **Added the
+  first local SQLite indexes** (5 on `entries`, 3 on `attendance_records`)
+  — every hot watch was full-scanning an unbounded table; non-destructive,
+  builds on next launch. **Closed the per-child N+1 everywhere** (heroes
+  hub, role deck, Action Words hub, Insights late-streak). Remaining:
+  hot-path JSON-decode memoization (wants a profiler trace) and the
+  oversized-file splits (maintainability).
