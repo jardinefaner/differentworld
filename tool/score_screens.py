@@ -112,6 +112,8 @@ def build_registry():
         "child_world": (
             "lib/features/child_world/child_world_screen.dart",
             "ChildWorldScreen"),
+        "role_deck": (
+            "lib/features/heroes/role_deck_screen.dart", "RoleDeckScreen"),
     }
     for name, (f, cls) in extra.items():
         if name not in reg and os.path.exists(f):

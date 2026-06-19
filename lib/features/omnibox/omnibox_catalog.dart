@@ -584,6 +584,26 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/heroes'),
       ),
+    // The role deck — every child's role as a collectible card. Opt-in with
+    // Heroes (docs/VISION.md 2026-06-19).
+    if (viewer is! GuardianViewer && heroesOn)
+      OmniboxEntry(
+        id: 'page.deck',
+        label: 'The deck',
+        subtitle: 'Every child’s role, collected',
+        category: OmniboxCategory.page,
+        icon: Icons.style_outlined,
+        keywords: const [
+          'deck',
+          'cards',
+          'collectible',
+          'collection',
+          'role cards',
+          'trading cards',
+          'play',
+        ],
+        onSelect: (ctx, _) => ctx.push('/deck'),
+      ),
     // Routines — the kid-legible "what do we do now?" day (docs/VISION.md
     // 2026-06-19). Opt-in: present only when the toggle is on.
     if (viewer is! GuardianViewer && routinesOn)

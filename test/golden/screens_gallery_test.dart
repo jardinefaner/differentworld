@@ -52,6 +52,7 @@ import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
 import 'package:differentworld/features/heroes/hero_creator_screen.dart';
 import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
+import 'package:differentworld/features/heroes/role_deck_screen.dart';
 import 'package:differentworld/features/incidents/incident_form_screen.dart';
 import 'package:differentworld/features/incidents/incidents_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
@@ -329,6 +330,11 @@ void main() {
     'screens/child_world',
     const ChildWorldScreen(subjectId: 's1'),
     const Size(440, 1000),
+  );
+  _rosterPlate(
+    'screens/role_deck',
+    const RoleDeckScreen(),
+    const Size(440, 900),
   );
 
   // The bento dashboard needs DATA to be worth seeing (an empty bento is just

@@ -25,6 +25,13 @@ class HeroesHubScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
     return EdgeScaffold(
+      actions: [
+        IconButton(
+          tooltip: 'The deck',
+          icon: const Icon(Icons.style_outlined),
+          onPressed: () => context.push('/deck'),
+        ),
+      ],
       body: SafeArea(
         child: subjectsAsync.when(
           loading: () => const LoadingSlot(),

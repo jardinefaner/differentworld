@@ -992,6 +992,20 @@
     "deductions": []
   },
   {
+    "name": "role_deck",
+    "cls": "RoleDeckScreen",
+    "file": "lib/features/heroes/role_deck_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.797393798828125,
+    "dead": 0.65,
+    "solid": 0,
+    "states": 3,
+    "low_contrast_evidence": 95,
+    "deductions": []
+  },
+  {
     "name": "roles",
     "cls": "RolesScreen",
     "file": "lib/features/settings/roles_screen.dart",

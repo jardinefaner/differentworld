@@ -1,0 +1,142 @@
+import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/heroes/heroes_providers.dart';
+import 'package:differentworld/features/heroes/widgets/collectible_role_card.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+/// `/deck` — the **role deck** (docs/VISION.md 2026-06-19): every child's role
+/// (their Hero) as a collectible card, the program's deck in one place. The
+/// keepsake-deck model — one card per child, collected over the term. Tap a card
+/// to evolve it; empty slots invite the next card. Gated on `heroesEnabledProvider`
+/// at the discovery layer.
+class RoleDeckScreen extends ConsumerWidget {
+  const RoleDeckScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subjectsAsync = ref.watch(subjectsInSpaceProvider);
+    return EdgeScaffold(
+      body: SafeArea(
+        child: subjectsAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (e, _) => ErrorState(
+            title: 'Could not load the deck',
+            detail: '$e',
+            onRetry: () => ref.invalidate(subjectsInSpaceProvider),
+          ),
+          data: (subjects) {
+            if (subjects.isEmpty) {
+              return const EmptyState(
+                icon: Icons.style_outlined,
+                title: 'No cards yet',
+                message:
+                    'Add children to your program, then each builds their role '
+                    '— their cards collect into the deck here.',
+              );
+            }
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+              children: [
+                const ContentHeader(
+                  title: 'The deck',
+                  subtitle: 'Every child’s role, collected',
+                ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = (constraints.maxWidth - 12) / 2;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final s in subjects)
+                          SizedBox(width: width, child: _DeckCard(subject: s)),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// One slot in the deck — the child's collectible card, or an invite to make it.
+class _DeckCard extends ConsumerWidget {
+  const _DeckCard({required this.subject});
+
+  final Subject subject;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hero = ref.watch(heroForSubjectProvider(subject.id)).value;
+    final first = subject.firstName;
+    void edit() => context.push('/subjects/${subject.id}/hero', extra: first);
+
+    if (hero == null) {
+      return GestureDetector(
+        onTap: edit,
+        child: DottedSlot(label: first),
+      );
+    }
+    return GestureDetector(
+      onTap: edit,
+      child: CollectibleRoleCard(
+        data: hero.data,
+        entryId: hero.entryId,
+        childName: first,
+      ),
+    );
+  }
+}
+
+/// An empty deck slot — a dashed placeholder inviting the child's first card.
+class DottedSlot extends StatelessWidget {
+  const DottedSlot({required this.label, super.key});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      height: 232,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.add, color: scheme.onSurfaceVariant),
+          const SizedBox(height: 8),
+          Text(
+            '$label’s card',
+            style: theme.textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'tap to make',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
