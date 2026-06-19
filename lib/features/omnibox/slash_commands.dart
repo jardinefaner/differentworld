@@ -282,6 +282,23 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/breathe')),
   ),
   SlashCommand(
+    name: 'do-it',
+    label: '/do-it',
+    hint: 'Do It — a real thing to actually go do, with the room',
+    icon: Icons.directions_run_outlined,
+    aliases: const [
+      'doit',
+      'do',
+      'real',
+      'action',
+      'challenge',
+      'try this',
+      'build',
+      'move',
+    ],
+    exec: (ctx, _, _) => unawaited(ctx.push('/activity/do-it')),
+  ),
+  SlashCommand(
     name: 'factorfib',
     label: '/factorfib',
     hint: 'Fact or Fib — the room votes true/false, you reveal',
@@ -318,7 +335,13 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
     label: '/discuss',
     hint: 'Group Discussion — talk by topic + age',
     icon: Icons.forum_outlined,
-    aliases: const ['discussion', 'talk', 'circle', 'grouptalk', 'conversation'],
+    aliases: const [
+      'discussion',
+      'talk',
+      'circle',
+      'grouptalk',
+      'conversation',
+    ],
     exec: (ctx, _, _) => unawaited(ctx.push('/activity/discussions')),
   ),
   SlashCommand(

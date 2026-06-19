@@ -511,6 +511,36 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       ],
       onSelect: (ctx, _) => ctx.push('/thinking'),
     ),
+    // "Do It" — one real-world action at a time, done with the room, that
+    // leaves a persistent record (docs/VISION.md 2026-06-18). Staff-launched
+    // in the room; broad off-screen keywords so it surfaces by intent.
+    if (viewer is! GuardianViewer)
+      OmniboxEntry(
+        id: 'page.do-it',
+        label: 'Do It',
+        subtitle: 'A real thing to actually go do',
+        category: OmniboxCategory.page,
+        icon: Icons.directions_run_outlined,
+        keywords: const [
+          'do it',
+          'do',
+          'real',
+          'real world',
+          'action',
+          'challenge',
+          'go do',
+          'try this',
+          'build',
+          'find',
+          'move',
+          'make',
+          'help',
+          'get up',
+          'off screen',
+          'hands on',
+        ],
+        onSelect: (ctx, _) => ctx.push('/activity/do-it'),
+      ),
     OmniboxEntry(
       id: 'page.wall',
       label: 'The Wall',

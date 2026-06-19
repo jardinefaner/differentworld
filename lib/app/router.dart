@@ -30,6 +30,7 @@ import 'package:differentworld/features/activity_forge/activity_lens_screen.dart
 import 'package:differentworld/features/activity_runtime/brain_breaks_screen.dart';
 import 'package:differentworld/features/activity_runtime/breathe_screen.dart';
 import 'package:differentworld/features/activity_runtime/discussions_screen.dart';
+import 'package:differentworld/features/activity_runtime/do_it_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
@@ -1349,8 +1350,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               // ?role=screen → open straight into room-screen (receiver) mode
               // on the program channel (the "make this the screen" setup +
               // launch auto-resume use it).
-              presentAsScreen:
-                  state.uri.queryParameters['role'] == 'screen',
+              presentAsScreen: state.uri.queryParameters['role'] == 'screen',
             ),
           ),
           // The Live Board — the phone as a classroom instrument
@@ -1536,6 +1536,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/breathe',
             builder: (_, _) => const BreatheScreen(),
+          ),
+          // Do It — a real-world action to actually perform; "We did it!"
+          // leaves an accumulating record (docs/VISION.md 2026-06-18). Unlike
+          // the ephemeral games, doing it persists into the Book.
+          GoRoute(
+            path: '/activity/do-it',
+            builder: (_, state) =>
+                DoItScreen(groupId: state.uri.queryParameters['group']),
           ),
           // Fact or Fib — host-run; the room votes true/false, you Reveal.
           GoRoute(

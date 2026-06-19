@@ -26,6 +26,15 @@ class BrainBreaksScreen extends StatelessWidget {
   // platform (e.g. `TargetPlatformVariant`) BEFORE pumping this screen
   // — see brain_breaks_platform_test.dart.
   static final _cards = <_BreakCard>[
+    // "Do It" leads — the one card that sends the room OFF the screen to do
+    // a real thing, and keeps a record of it (docs/VISION.md 2026-06-18).
+    const _BreakCard(
+      title: 'Do It',
+      tagline: 'A real thing to go do',
+      icon: Icons.directions_run_outlined,
+      color: ActivityPalette.green,
+      route: '/activity/do-it',
+    ),
     const _BreakCard(
       title: 'Quick Picks',
       tagline: 'This or that?',
