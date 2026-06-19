@@ -60,7 +60,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('NOW'), findsOneWidget);
+    expect(find.text('Now'), findsOneWidget);
     expect(find.text('Snack'), findsOneWidget);
     expect(find.text('Outside'), findsOneWidget); // the NEXT banner
     expect(find.text('Art'), findsNothing);

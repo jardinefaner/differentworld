@@ -62,7 +62,8 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Spin'));
     await tester.pumpAndSettle();
 
-    expect(find.text("You're up!"), findsOneWidget); // landed
+    // GameStage.eyebrow renders tracked-caps (the immersive game-stage style).
+    expect(find.text("YOU'RE UP!"), findsOneWidget); // landed
     expect(find.widgetWithText(FilledButton, 'Spin again'), findsOneWidget);
   });
 }

@@ -26,8 +26,8 @@ void main() {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
-    // ContentHeader titles render tracked-uppercase (the brand voice).
-    expect(find.text('ROLE CARDS'), findsOneWidget);
+    // ContentHeader titles render as-is — sentence case (the Calm brand).
+    expect(find.text('Role Cards'), findsOneWidget);
     expect(find.text('Ant'), findsOneWidget);
     expect(find.text('Bee'), findsOneWidget);
     expect(find.text('Dolphin'), findsOneWidget);

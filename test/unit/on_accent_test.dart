@@ -19,12 +19,13 @@ double _contrast(Color a, Color b) {
 
 void main() {
   // The light fills that FAILED with hardcoded white — these must get dark.
+  // (tealDeep #1D7A6E is genuinely dark — white-on-it is correct and clears AA,
+  // so it lives only in the full `palette` below, not here.)
   const lightFills = <String, Color>{
     'amber': ActivityPalette.amber,
     'yellow': ActivityPalette.yellow,
     'blue': ActivityPalette.blue,
     'teal': ActivityPalette.teal,
-    'tealDeep': ActivityPalette.tealDeep,
     'green': ActivityPalette.green,
     'cyan': ActivityPalette.cyan,
   };

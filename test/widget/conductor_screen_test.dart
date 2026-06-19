@@ -65,8 +65,8 @@ void main() {
       _subject('s2', 'Marcus', 'B'),
     ]);
 
-    // ContentHeader uppercases its title.
-    expect(find.text('CONDUCTOR'), findsOneWidget);
+    // ContentHeader renders its title as-is (sentence case, the Calm brand).
+    expect(find.text('Conductor'), findsOneWidget);
     // The week's two anchor moves (FeatureCard titles — rendered as-is).
     expect(find.text('The week’s plan'), findsOneWidget);
     expect(find.text('Send home'), findsOneWidget);
@@ -79,7 +79,7 @@ void main() {
 
   testWidgets('empty roster shows the empty state', (tester) async {
     await _pump(tester, const []);
-    // EmptyState uppercases its title (the semantics label keeps the original).
-    expect(find.text('NO CHILDREN YET'), findsOneWidget);
+    // EmptyState renders its title as-is (sentence case, the Calm brand).
+    expect(find.text('No children yet'), findsOneWidget);
   });
 }
