@@ -348,6 +348,20 @@
     "deductions": []
   },
   {
+    "name": "child_world",
+    "cls": "ChildWorldScreen",
+    "file": "lib/features/child_world/child_world_screen.dart",
+    "score": 100,
+    "band": "ship-confident",
+    "is_raw": false,
+    "delta": 0.7737142443656921,
+    "dead": 0.64,
+    "solid": 0,
+    "states": 0,
+    "low_contrast_evidence": 81,
+    "deductions": []
+  },
+  {
     "name": "conductor",
     "cls": "ConductorScreen",
     "file": "lib/features/cockpit/conductor_screen.dart",

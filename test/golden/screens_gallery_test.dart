@@ -37,6 +37,7 @@ import 'package:differentworld/features/calm/calm_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/child_world/child_world_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
@@ -322,6 +323,11 @@ void main() {
   _rosterPlate(
     'screens/recap_composer',
     const RecapComposerScreen(),
+    const Size(440, 1000),
+  );
+  _rosterPlate(
+    'screens/child_world',
+    const ChildWorldScreen(subjectId: 's1'),
     const Size(440, 1000),
   );
 

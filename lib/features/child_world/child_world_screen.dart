@@ -95,6 +95,10 @@ class _Tile extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        // The bento cell is min-height / unbounded-max (it grows to fit), so
+        // the tile shrink-wraps its content — no Expanded/Spacer (flex children
+        // can't size against an unbounded height).
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             eyebrow,
@@ -103,7 +107,7 @@ class _Tile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Expanded(child: child),
+          child,
         ],
       ),
     );
@@ -214,7 +218,7 @@ class _ProjectTile extends ConsumerWidget {
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 10),
                 Text(
                   '${project.doneClamped} of ${project.total} steps',
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -259,7 +263,7 @@ class _DayTile extends ConsumerWidget {
               ),
             ),
           if (hero != null) ...[
-            const Spacer(),
+            const SizedBox(height: 10),
             Row(
               children: [
                 const Icon(
@@ -317,7 +321,7 @@ class _GrowthTile extends ConsumerWidget {
                 color: scheme.onSurfaceVariant,
               ),
             ),
-          const Spacer(),
+          const SizedBox(height: 10),
           Text(
             days == 1 ? '1 day in their world' : '$days days in their world',
             style: theme.textTheme.labelMedium?.copyWith(

@@ -1,8 +1,8 @@
 # Screen quality scoreboard
 
-96 screens scored · worst-first · `tool/score_screens.py`
+97 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **99.4** · minor work: 1 · ship-confident: 95
+Average: **99.4** · minor work: 1 · ship-confident: 96
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
@@ -28,6 +28,7 @@ Average: **99.4** · minor work: 1 · ship-confident: 95
 | 100 | ship-confident | `capture` | — |
 | 100 | ship-confident | `capture_inbox` | — |
 | 100 | ship-confident | `cast` | — |
+| 100 | ship-confident | `child_world` | — |
 | 100 | ship-confident | `conductor` | — |
 | 100 | ship-confident | `create_space` | — |
 | 100 | ship-confident | `daily` | — |

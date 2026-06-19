@@ -109,6 +109,9 @@ def build_registry():
         "recap_composer": (
             "lib/features/recap/recap_composer_screen.dart",
             "RecapComposerScreen"),
+        "child_world": (
+            "lib/features/child_world/child_world_screen.dart",
+            "ChildWorldScreen"),
     }
     for name, (f, cls) in extra.items():
         if name not in reg and os.path.exists(f):
