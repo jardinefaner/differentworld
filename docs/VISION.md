@@ -1107,6 +1107,106 @@ once it has a home.
   template, or a routine-only voice layer? does "what do we do at 9?" answer
   from the live schedule, a named routine template, or both? is the showcase a
   first-class recurring routine block that compiles practice → the summer show?)
+- **2026-06-19** — **The big download: a world of magic, no phones, visible
+  growth, document the now.** A flood of the soul of the thing, in the user's
+  words. It coheres into one philosophy with many limbs — capture all of it:
+
+  - **No phones, all proximity — the game-show model.** *"a parent is the only
+    one who has the phone, the child never uses it… a game show — hosts,
+    players, audience. no social media, all in proximity."* The device belongs
+    to the adult (staff host / parent at home); the child never touches a
+    screen. Interaction is a **game show**: staff = host, kids = players, the
+    room = audience. This is the deepest design constraint and the answer to
+    why every kid surface is host-presented / paper-based, not a kid holding a
+    phone. (Crystallizes dream #4 "host-present, no kid typing" into a worldview.)
+
+  - **"Who are you to me?" — the relational core.** AJ's revelation: *"who are
+    you to me?"* The one thing worth knowing. Identity is **relational**, in
+    proximity — not a profile, a relationship. The social question the whole
+    app orbits.
+
+  - **Future self + imaginative identity.** *"what if you're a whale. or an
+    octopus… every day we think of things — what do we wanna be when we grow
+    up? what kind of person do i want to be? my future me."* A daily reflective
+    identity prompt — who am I, who am I becoming. Direct extension of **Heroes**
+    (the animal alter-ego) toward "my future me."
+
+  - **The container: "A World of Magic" / "A Summer of Magic" — a spellbook.**
+    *"a summer of magic, or a world of magic… where we only do one thing a week,
+    a weekly project… we get dailies, and we get weeklies, and showcase… all
+    that RPG as utility and for good."* The cadence is **dailies → weeklies →
+    showcase**, wrapped in a magic theme (a spellbook). **RPG-as-utility**: the
+    game shell serves real growth, "for good." This is a content pack + cadence
+    on the EXISTING worlds / journey / week-engine / Book system, not a new
+    engine — reskin "world" as "magic," add the daily/weekly/showcase rhythm.
+
+  - **The daily ritual: Question / Quote / Mission of the Day → a response.**
+    *"question of the day, quote of the day, mission of the day — the content in
+    sequence with story arc… a question of the day always followed by drawing or
+    interpretation — a sound, a sentence, a drawing… these are going to be the
+    things they'll write in their books — their learning with intentionality."*
+    The SPINE. Each day: a Question, a Quote, a Mission — sequenced along a story
+    arc — and every prompt is **answered with a response** (a sound, a sentence,
+    a drawing, an interpretation). The responses ARE what fills the child's Book.
+    *"what will you invent…"* is one such question. (Partly exists — wall
+    "Question of the Day," Action Words word-of-day — this unifies them into one
+    sequenced, response-capturing daily.)
+
+  - **Document the now — the transcript is the record.** *"we'll be someone, and
+    if that's so… document the now, there ain't no other way. one day, the
+    transcript is my quotes."* Growth isn't graded, it's **documented**. The
+    accumulating record of quotes / responses / moments over time IS the
+    portfolio (the Book #1, the showcase #16). *"i don't want ABCD grades, i
+    want visible growth."* — the explicit rejection of letter grades for a
+    visible, accumulating arc.
+
+  - **Offline-first, on paper — doing is the data.** *"must be offline first —
+    like writing the numbers 1-10 on paper, and writing math answers, or trivia
+    answers."* The doing happens on **paper**, captured (photographed) — not
+    typed into a kid device. Reaffirms the "Do It" / work-sample / snap-the-paper
+    model as the default for every answer surface.
+
+  - **"What to do instead" — the calm agreements list.** *"there are no phones,
+    and there's now 'what to do instead?' — what to do in every scenario, when
+    we're mad, when we're bored, when we're anxious… collective memory, rules,
+    agreement, common ground… not noise, just a list."* A calm, shared reference
+    of agreements + what-to-do-instead per feeling (mad / bored / anxious). The
+    room's **common ground**, co-held. Extends the **Toolkit** (cool-down et al.)
+    from staff crisis-cards toward a kid-legible, collective "what we do instead."
+
+  - **Homework, both sides.** Parent homework: *"review the routine."* Kid
+    homework: *"bring in something that they see on TV to bring to class — parents
+    approval, and sent."* A parent-mediated loop (the parent holds the phone):
+    the kid brings something from the world (TV), the parent approves + sends it
+    in, it surfaces to the room. Family-side + class-side.
+
+  - **Activities named:** *"draw outside — clipboard, paper, pencil… really know
+    what's seeing and looking means"* (observational outdoor drawing — seeing vs
+    looking); *"before we close our eyes, why are we closing them — we're
+    imagining… we're catching up"* (a framed close-your-eyes imagine/reset break);
+    *"a list of a bunch more brain breaks that people are on trend — YouTube,
+    TikTok"* (more deck content, trend-aware but offline-adapted).
+
+  - **Public development — teaching in public.** *"staff has professional
+    development, people have personal development, but there's also a
+    p---development which [is] accountability and transparency — teaching in
+    public — your own curriculum, your own way of thinking."* A third
+    development axis beyond professional + personal: **public** — building your
+    own curriculum / thinking in the open, with accountability + transparency.
+    (A future surface; ties to "document the now.")
+
+  **The through-line:** no phones for kids → everything host-presented in
+  proximity → a magic-themed cadence of dailies/weeklies/showcase → every prompt
+  answered on paper, captured → the accumulating record (quotes, responses,
+  moments) IS visible growth, not grades → identity ("who are you to me?", "my
+  future me") is the recurring question. Most of the machinery exists (Book,
+  worlds/journey, Action Words, Toolkit, Heroes, Reflections, showcase, Do It);
+  this download is the **soul that unifies them** + a handful of new limbs (the
+  sequenced daily ritual, the "what to do instead" list, the TV-homework loop,
+  draw-outside, public development). **Open forks:** which limb first — the daily
+  Question/Quote/Mission ritual (the spine) vs the "what to do instead" calm list
+  vs the magic re-skin of worlds vs the TV-homework loop? Is "A World of Magic" a
+  new content pack or a re-theme of the live worlds engine?
 
 ---
 
