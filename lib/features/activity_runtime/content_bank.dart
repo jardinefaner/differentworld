@@ -60,6 +60,16 @@ abstract class ContentKind {
   /// asset path or a Storage URL; the word lives in `label` as DATA so games
   /// can hide / show / match it. One kind, read by every card game.
   static const picture = 'picture';
+
+  /// A **"Do It"** — a real-world action you get up and PERFORM, not answer in
+  /// your head (build · find · move · make · ask · help) — payload
+  /// `{text, verb, emoji}`. THE anti-ephemeral genre (docs/VISION.md
+  /// 2026-06-18): where the games above are played-and-gone, doing a Do-It
+  /// writes an accumulating `EntryKind.didIt` with evidence (a photo / count /
+  /// note) into the child's Book. The screen prompts; the room does it; the
+  /// proof persists. Kid-first, but the genre is universal (meetings,
+  /// gatherings — anywhere people share proximity).
+  static const doIt = 'do_it';
 }
 
 /// Source-agnostic content access. Activities depend on THIS, not on where
@@ -147,6 +157,7 @@ final List<ContentItem> curatedSeeds = <ContentItem>[
   ..._storyTwistSeed,
   ..._rhymeWordSeed,
   ..._charadesSeed,
+  ..._doItSeed,
 ];
 
 // ── Curated seeds ──────────────────────────────────────────────────────
@@ -366,7 +377,10 @@ final List<ContentItem> _riddleSeed = <ContentItem>[
     'What can hold a lot of water but is full of holes on top?',
     'A watering can',
   ),
-  _riddleOf('What has bristles and helps keep your teeth clean?', 'A toothbrush'),
+  _riddleOf(
+    'What has bristles and helps keep your teeth clean?',
+    'A toothbrush',
+  ),
   _riddleOf('What animal keeps the best time?', 'A watchdog'),
   _riddleOf('What has a trunk but is not a tree or a car?', 'An elephant'),
   _riddleOf('What can hop and has long ears and a fluffy tail?', 'A rabbit'),
@@ -381,7 +395,10 @@ final List<ContentItem> _riddleSeed = <ContentItem>[
   ),
   _riddleOf('What spins a web to catch its dinner?', 'A spider'),
   _riddleOf('What barks and wags its tail when it is happy?', 'A dog'),
-  _riddleOf('What has a long neck and eats leaves from tall trees?', 'A giraffe'),
+  _riddleOf(
+    'What has a long neck and eats leaves from tall trees?',
+    'A giraffe',
+  ),
   _riddleOf("What says 'moo' and gives us milk?", 'A cow'),
   _riddleOf('What slow green animal has a hard shell to hide in?', 'A turtle'),
   _riddleOf(
@@ -411,16 +428,25 @@ final List<ContentItem> _riddleSeed = <ContentItem>[
     'What has petals and a stem and smells sweet in the garden?',
     'A flower',
   ),
-  _riddleOf("What is yellow, curved, and a monkey's favorite snack?", 'A banana'),
+  _riddleOf(
+    "What is yellow, curved, and a monkey's favorite snack?",
+    'A banana',
+  ),
   _riddleOf('What is round and red and keeps the doctor away?', 'An apple'),
   _riddleOf('What is white and cold and you eat it on a hot day?', 'Ice cream'),
   _riddleOf(
     'What is round, flat, and has cheese on top before it is baked?',
     'A pizza',
   ),
-  _riddleOf('What is orange and crunchy and a rabbit loves to eat?', 'A carrot'),
+  _riddleOf(
+    'What is orange and crunchy and a rabbit loves to eat?',
+    'A carrot',
+  ),
   _riddleOf('What is sweet, sticky, and made by busy bees?', 'Honey'),
-  _riddleOf('What is brown and sweet and melts in your warm hand?', 'Chocolate'),
+  _riddleOf(
+    'What is brown and sweet and melts in your warm hand?',
+    'Chocolate',
+  ),
   _riddleOf(
     'What is soft, white, and you rest your sleepy head on it?',
     'A pillow',
@@ -439,7 +465,10 @@ final List<ContentItem> _riddleSeed = <ContentItem>[
     'Your nose',
   ),
   _riddleOf('What can hear a whisper but cannot talk?', 'Your ear'),
-  _riddleOf('What grows on your head and you brush every morning?', 'Your hair'),
+  _riddleOf(
+    'What grows on your head and you brush every morning?',
+    'Your hair',
+  ),
   _riddleOf('What thumps inside your chest all day and night?', 'Your heart'),
   _riddleOf('What gets shorter the more you use it to write?', 'A pencil'),
   _riddleOf(
@@ -454,13 +483,19 @@ final List<ContentItem> _riddleSeed = <ContentItem>[
     'What has lines and numbers and helps you draw a straight edge?',
     'A ruler',
   ),
-  _riddleOf('What is sticky on one side and holds your papers together?', 'Tape'),
+  _riddleOf(
+    'What is sticky on one side and holds your papers together?',
+    'Tape',
+  ),
   _riddleOf('What has many colors and shows up after the rain?', 'A rainbow'),
   _riddleOf(
     'What is loud, booms in the sky, and follows a flash of light?',
     'Thunder',
   ),
-  _riddleOf('What is white and fluffy and floats high up in the sky?', 'A cloud'),
+  _riddleOf(
+    'What is white and fluffy and floats high up in the sky?',
+    'A cloud',
+  ),
   _riddleOf(
     'What you cannot see, but it moves the leaves and flies a kite?',
     'The wind',
@@ -474,9 +509,15 @@ final List<ContentItem> _riddleSeed = <ContentItem>[
     'The letter M',
   ),
   _riddleOf('What shape has three sides and three corners?', 'A triangle'),
-  _riddleOf('What shape is perfectly round with no corners at all?', 'A circle'),
+  _riddleOf(
+    'What shape is perfectly round with no corners at all?',
+    'A circle',
+  ),
   _riddleOf('What letter is a question all by itself?', 'The letter Y'),
-  _riddleOf('What starts with the letter T, is full of T, and ends in T?', 'A teapot'),
+  _riddleOf(
+    'What starts with the letter T, is full of T, and ends in T?',
+    'A teapot',
+  ),
   _riddleOf(
     'What is always coming tomorrow but never actually arrives today?',
     'Tomorrow',
@@ -591,7 +632,8 @@ final List<ContentItem> _factOrFibSeed = <ContentItem>[
   _factOf(
     'Mercury is the hottest planet because it is closest to the sun.',
     isTrue: false,
-    note: 'Fib — Venus is hottest; its thick air traps the heat like a blanket.',
+    note:
+        'Fib — Venus is hottest; its thick air traps the heat like a blanket.',
   ),
   _factOf(
     'A cloud can weigh as much as a hundred elephants.',
@@ -606,7 +648,8 @@ final List<ContentItem> _factOrFibSeed = <ContentItem>[
   _factOf(
     'Sound travels faster than light.',
     isTrue: false,
-    note: 'Fib — light is way faster, which is why you see lightning before thunder.',
+    note:
+        'Fib — light is way faster, which is why you see lightning before thunder.',
   ),
   _factOf(
     'Polar bears have black skin under their white fur.',
@@ -1145,4 +1188,119 @@ final List<ContentItem> _charadesSeed = <ContentItem>[
   _charadesOf('A washing machine spinning', 'Thing'),
   _charadesOf('A popping piece of popcorn', 'Thing'),
   _charadesOf('An airplane flying', 'Thing'),
+];
+
+ContentItem _doItOf(String text, String verb, String emoji) => ContentItem(
+  kind: ContentKind.doIt,
+  fingerprint: text.toLowerCase(),
+  payload: {'text': text, 'verb': verb, 'emoji': emoji},
+);
+
+// "Do It" — real-world actions you get up and PERFORM (not answer in your
+// head). The anti-ephemeral genre: doing one leaves accumulating evidence
+// (docs/VISION.md 2026-06-18). Kid-safe (4–12), no-typing, no right/wrong;
+// `verb` is the action type (build · find · move · make · ask · help).
+final List<ContentItem> _doItSeed = <ContentItem>[
+  // build
+  _doItOf(
+    'Build the tallest tower you can — then knock it down gently.',
+    'build',
+    '🗼',
+  ),
+  _doItOf(
+    'Stack these cups into a pyramid, then take it apart.',
+    'build',
+    '🥤',
+  ),
+  _doItOf('Build a fort big enough to sit inside.', 'build', '🏕️'),
+  _doItOf('Make a bridge two blocks can roll across.', 'build', '🌉'),
+  _doItOf('Build something that keeps a ball from rolling away.', 'build', '⚽'),
+  _doItOf('Build a tower using only one hand.', 'build', '🤚'),
+  // find
+  _doItOf('Find 3 things in the room that are the same color.', 'find', '🟦'),
+  _doItOf('Find something softer than your shoe.', 'find', '🧦'),
+  _doItOf(
+    'Find something that starts with the same sound as your name.',
+    'find',
+    '🔤',
+  ),
+  _doItOf('Find the smallest thing you can hold in one hand.', 'find', '🔎'),
+  _doItOf(
+    'Find something round, something flat, and something bumpy.',
+    'find',
+    '⭕',
+  ),
+  _doItOf('Find two things that are exactly the same.', 'find', '👀'),
+  _doItOf(
+    'Find something that would float and something that would sink.',
+    'find',
+    '💧',
+  ),
+  // move
+  _doItOf('Move like the slowest animal you can think of.', 'move', '🐢'),
+  _doItOf('Make the biggest shape you can with your whole body.', 'move', '🦋'),
+  _doItOf('Walk heel-to-toe across the room without wobbling.', 'move', '🚶'),
+  _doItOf('Balance on one foot while you count to ten.', 'move', '🦩'),
+  _doItOf('Tiptoe across the room so quietly no one hears you.', 'move', '🤫'),
+  _doItOf("Copy your partner's moves like a mirror.", 'move', '🪞'),
+  _doItOf(
+    'Move across the room without your feet touching the floor twice in '
+        'the same spot.',
+    'move',
+    '🦘',
+  ),
+  // make
+  _doItOf('Teach the person next to you a secret handshake.', 'make', '🤝'),
+  _doItOf('Trace your hand and turn it into an animal.', 'make', '🖐️'),
+  _doItOf('Make up a sound for happy and a sound for sleepy.', 'make', '🔊'),
+  _doItOf('Make a pattern: red, blue, red, blue…', 'make', '🔴'),
+  _doItOf(
+    'Make a face that shows exactly how you feel right now.',
+    'make',
+    '😊',
+  ),
+  _doItOf('Invent a brand-new dance move and give it a name.', 'make', '💃'),
+  _doItOf(
+    'Build a story together — each person adds one sentence.',
+    'make',
+    '📖',
+  ),
+  // ask
+  _doItOf("Ask a friend: what's something you're really good at?", 'ask', '💬'),
+  _doItOf('Ask someone what made them smile today.', 'ask', '😄'),
+  _doItOf(
+    "Find out your partner's favorite color and tell the room.",
+    'ask',
+    '🎨',
+  ),
+  _doItOf(
+    'Ask someone to teach you one thing they know how to do.',
+    'ask',
+    '🧠',
+  ),
+  _doItOf(
+    'Ask a grown-up what they wanted to be when they were little.',
+    'ask',
+    '👤',
+  ),
+  _doItOf(
+    'Ask three people the same question and see if the answers match.',
+    'ask',
+    '❓',
+  ),
+  // help
+  _doItOf('Help put every marker back with its own color.', 'help', '🧹'),
+  _doItOf('Help stack the chairs neatly in one corner.', 'help', '🪑'),
+  _doItOf('Help a friend find something they lost.', 'help', '🔦'),
+  _doItOf(
+    'Carry something to the other side of the room — together.',
+    'help',
+    '📦',
+  ),
+  _doItOf('Help make the reading corner tidy and cozy.', 'help', '📚'),
+  _doItOf(
+    'Show someone where something goes, then put it away together.',
+    'help',
+    '✅',
+  ),
 ];

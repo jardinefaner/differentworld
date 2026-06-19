@@ -110,6 +110,17 @@ class EntryKind {
   /// subjectId set → a child's reflection (→ their Book); subjectId null →
   /// a staffer's own practice (scheduleBlockId tags the block it followed).
   static const String reflection = 'reflection';
+
+  /// A **"Do It"** completion (docs/VISION.md 2026-06-18) — the room or a kid
+  /// actually PERFORMED a real-world action from the `ContentKind.doIt` bank,
+  /// and it left proof. `details` = {instruction, verb, count?}; `body` = an
+  /// optional note; the photo evidence rides as an `attachment` on the entry
+  /// (the same contract as observations / work samples). This is the
+  /// ACCUMULATIVE counterpart to the ephemeral games — *doing IS the data
+  /// entry*, and it stacks into the child's Book + the room's track record.
+  /// subjectId set → a kid's doing (→ their Book); null → the room did it
+  /// together.
+  static const String didIt = 'did_it';
 }
 
 typedef GroupEntriesKey = ({String groupId, String kind});
@@ -379,6 +390,55 @@ class EntryActions {
           'override_holder': overrideHolder,
       }),
     );
+  }
+
+  /// Record a **"Do It"** completion — the accumulative proof that a real-world
+  /// action happened (docs/VISION.md 2026-06-18). [instruction] + [verb] come
+  /// from the `ContentKind.doIt` bank; [note] is an optional what-happened;
+  /// [count] fits the find/help verbs (how many). Photo evidence rides as
+  /// attachments — same offline-safe contract as [createObservation]:
+  /// [photoIds] must be the SAME ids the caller uploaded under via
+  /// `uploadOnly(entityKind:'attachment', entityId:)`, or a deferred offline
+  /// upload patches a non-existent row and the photo is silently lost.
+  /// subjectId set → a kid's doing (→ their Book); null + groupId → the room's.
+  Future<String> recordDidIt({
+    required String instruction,
+    required String verb,
+    String? subjectId,
+    String? groupId,
+    String? scheduleBlockId,
+    String? note,
+    int? count,
+    List<String> photoUrls = const [],
+    List<String> photoIds = const [],
+    String? id,
+  }) async {
+    final entryId = await _create(
+      kind: EntryKind.didIt,
+      subjectId: subjectId,
+      groupId: groupId,
+      scheduleBlockId: scheduleBlockId,
+      body: note,
+      detailsJson: jsonEncode(<String, dynamic>{
+        'instruction': instruction,
+        'verb': verb,
+        'count': ?count,
+      }),
+      id: id,
+    );
+    if (photoUrls.isNotEmpty) {
+      final attachments = _ref.read(attachmentActionsProvider);
+      for (var i = 0; i < photoUrls.length; i++) {
+        await attachments.add(
+          id: i < photoIds.length ? photoIds[i] : null,
+          entityKind: 'entry',
+          entityId: entryId,
+          url: photoUrls[i],
+          sortOrder: i,
+        );
+      }
+    }
+    return entryId;
   }
 
   Future<String> _create({

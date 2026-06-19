@@ -1035,6 +1035,40 @@ once it has a home.
     mode from 2026-06-14 argues for generous + overridable); how an
     off-schedule day (field trip, rain) bends the clock; whether Layer 2 is
     literally a pull-down gesture on mobile.
+- **2026-06-18** — **"Do It" — accumulative real-world actions, the
+  anti-ephemeral content genre.** In the user's words: *"i want this to be
+  instructions of things people could do in real life… kid first as proof,
+  eventually for everyone — in meetings, in gatherings, in proximity… games
+  are ephemeral data; do it is accumulative."* The sharpest restatement of
+  dream #3 (the screen is a launchpad back into the room) and the 2026-06-08
+  acceptance contract (*"the room does the teaching; the app does the
+  remembering"*): the content that matters isn't trivia you answer in your head
+  (riddles / fact-or-fib — **ephemeral**, played and gone) but **a real action
+  you get up and DO** (build · find · move · make · ask · help) that leaves
+  **persistent, accumulating evidence.** The genre split IS the thesis:
+  - **Games = EPHEMERAL.** You play This-or-That, it's session data, it's gone
+    — no record that it happened.
+  - **Do It = ACCUMULATIVE.** You DO the thing, it produces proof (a photo, a
+    count, a note) that PERSISTS and stacks into the child's Book (#1) + a track
+    record (#16) over the season. **Doing IS the data entry** (echoes "the
+    reveal IS the data entry", 2026-06-15; "writing their answers on paper,
+    cumulative", 2026-06-13).
+
+  **Scope: kid-first as the proof case** (afterschool, ages 4–12), but the
+  genre is **universal** — real-life doable instructions for **meetings,
+  gatherings, anywhere people share proximity** (staff standups, family
+  events). This is "proximity-based utility" turned into content. The build: a
+  `ContentKind.doIt` bank (the prompts — tagged by verb/world, of-the-day or
+  live-presented through the same engine as the games) + an `EntryKind.didIt`
+  persistence, so doing one writes an accumulating entry with evidence — the
+  part that makes it *stick* instead of *vanish*. (Threads: #1 the Book, #3
+  launchpad, #4 host-present/no-typing, #16 missions/real-evidence, the
+  2026-06-14 stopwatch+reflection *"accumulated = growth visible"*, the
+  content-bank engine #7. **Open forks:** does a room-wide Do-It accrue
+  per-child or per-room (likely both, scoped like observations)? what counts as
+  evidence per verb — a photo (build/make), a count (find/help), a name/answer
+  (ask)? when does it surface for adults — same deck, meeting-tagged, or a
+  parallel "gathering" pack?)
 
 ---
 
