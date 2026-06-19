@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// `/breaks` — the Brain Breaks deck. The home for the activity e-cards:
@@ -17,7 +19,7 @@ import 'package:go_router/go_router.dart';
 ///
 /// Deliberately light: a deck of cards + a shuffle. The activities are
 /// brain breaks, not lessons — no heavy archiving here.
-class BrainBreaksScreen extends StatelessWidget {
+class BrainBreaksScreen extends ConsumerWidget {
   const BrainBreaksScreen({super.key});
 
   // `final` (not const): the deck composition is platform-dependent —
@@ -152,13 +154,13 @@ class BrainBreaksScreen extends StatelessWidget {
     ),
   ];
 
-  void _surprise(BuildContext context) {
-    final pick = _cards[Random().nextInt(_cards.length)];
+  void _surprise(BuildContext context, List<_BreakCard> cards) {
+    final pick = cards[Random().nextInt(cards.length)];
     unawaited(context.push(pick.route));
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Cells must GROW with the user's text scale — a fixed childAspectRatio
     // is the fixed-height-around-text trap (a11y-basics; caught by the
     // overflow gauntlet): at the 1.5x floor / 2.0x ceiling the wrapped
@@ -166,13 +168,29 @@ class BrainBreaksScreen extends StatelessWidget {
     // and the tile's antialias clip was silently cutting them off.
     final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final tileExtent = 140 + 64 * scale;
+    // Heroes is opt-in — slot its card in right after Do It (the two
+    // "leaves something behind" genres lead the deck) only when switched on.
+    final heroesOn = ref.watch(heroesEnabledProvider).value ?? false;
+    final cards = <_BreakCard>[..._cards];
+    if (heroesOn) {
+      cards.insert(
+        1,
+        const _BreakCard(
+          title: 'Heroes',
+          tagline: 'Build a make-believe self',
+          icon: Icons.auto_awesome_outlined,
+          color: ActivityPalette.indigo,
+          route: '/heroes',
+        ),
+      );
+    }
     return EdgeScaffold(
       showBack: false,
       actions: [
         PrimaryActionButton(
           tooltip: 'Surprise us',
           icon: Icons.casino_outlined,
-          onPressed: () => _surprise(context),
+          onPressed: () => _surprise(context, cards),
         ),
       ],
       body: SafeArea(
@@ -198,7 +216,7 @@ class BrainBreaksScreen extends StatelessWidget {
                   mainAxisExtent: tileExtent,
                 ),
                 children: [
-                  for (final card in _cards)
+                  for (final card in cards)
                     AccentCardTile(
                       color: card.color,
                       icon: card.icon,

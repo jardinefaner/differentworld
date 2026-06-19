@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
@@ -252,6 +253,8 @@ class SettingsScreen extends ConsumerWidget {
               const _BentoHomeTile(),
               const _SettingsDivider(),
               const _ScheduleGridTile(),
+              const _SettingsDivider(),
+              const _HeroesTile(),
             ],
           ),
 
@@ -458,6 +461,28 @@ class _ScheduleGridTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(scheduleTimeGridProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Switches on the **Heroes** activity (docs/VISION.md 2026-06-19) — a
+/// kid-facing make-believe alter-ego creator. Off by default; when on, a
+/// Heroes card appears in the Brain Breaks deck and the omnibox.
+class _HeroesTile extends ConsumerWidget {
+  const _HeroesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(heroesEnabledProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.auto_awesome_outlined),
+      title: const Text('Heroes activity'),
+      subtitle: const Text(
+        'Kids build a make-believe self — animal, powers, a name, a drawing',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(heroesEnabledProvider.notifier).set(value: v)),
     );
   }
 }

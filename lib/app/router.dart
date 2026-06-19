@@ -74,6 +74,8 @@ import 'package:differentworld/features/games/games/whats_missing_screen.dart';
 import 'package:differentworld/features/games/present_hub_screen.dart';
 import 'package:differentworld/features/groups/group_detail_screen.dart';
 import 'package:differentworld/features/groups/group_edit_screen.dart';
+import 'package:differentworld/features/heroes/hero_creator_screen.dart';
+import 'package:differentworld/features/heroes/heroes_hub_screen.dart';
 import 'package:differentworld/features/incidents/incident_form_screen.dart';
 import 'package:differentworld/features/incidents/incidents_screen.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
@@ -751,6 +753,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   displayName: state.extra as String?,
                 ),
               ),
+              // Heroes — the per-child make-believe alter-ego creator
+              // (docs/VISION.md 2026-06-19). Reached from the Heroes hub.
+              GoRoute(
+                path: 'subjects/:id/hero',
+                builder: (_, state) => HeroCreatorScreen(
+                  subjectId: state.pathParameters['id']!,
+                  displayName: state.extra as String?,
+                ),
+              ),
               // The per-child daily bundle — avatar, today's words, mood, the
               // room's day, photo capture, and the moments gallery, one page.
               GoRoute(
@@ -1092,6 +1103,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/breaks',
             builder: (_, _) => const BrainBreaksScreen(),
+          ),
+          // Heroes hub — the room-level roster bridge into the per-child
+          // creator (docs/VISION.md 2026-06-19). Surfaced only when the
+          // heroesEnabledProvider toggle is on; the route always resolves.
+          GoRoute(
+            path: '/heroes',
+            builder: (_, _) => const HeroesHubScreen(),
           ),
           // This Week — the live curriculum hub (the world the room is in
           // now + cast / worksheets / activities). docs/WORLD.md.

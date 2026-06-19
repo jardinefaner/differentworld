@@ -15,6 +15,7 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
+import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
@@ -46,6 +47,8 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final subjects =
       ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[];
   final activities = ref.watch(activitiesProvider).value ?? const <Activity>[];
+  // Heroes is an opt-in activity — only surface it in search when switched on.
+  final heroesOn = ref.watch(heroesEnabledProvider).value ?? false;
   final locations = ref.watch(locationsProvider).value ?? const <Location>[];
   final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
   final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
@@ -540,6 +543,31 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'hands on',
         ],
         onSelect: (ctx, _) => ctx.push('/activity/do-it'),
+      ),
+    // Heroes — the make-believe alter-ego creator (docs/VISION.md 2026-06-19).
+    // Opt-in: only present when the toggle is on. Staff-launched (per-child
+    // creator lives behind the hub).
+    if (viewer is! GuardianViewer && heroesOn)
+      OmniboxEntry(
+        id: 'page.heroes',
+        label: 'Heroes',
+        subtitle: 'Build a make-believe self',
+        category: OmniboxCategory.page,
+        icon: Icons.auto_awesome_outlined,
+        keywords: const [
+          'hero',
+          'heroes',
+          'alter ego',
+          'character',
+          'animal',
+          'super power',
+          'powers',
+          'make believe',
+          'pretend',
+          'draw',
+          'avatar',
+        ],
+        onSelect: (ctx, _) => ctx.push('/heroes'),
       ),
     OmniboxEntry(
       id: 'page.wall',
