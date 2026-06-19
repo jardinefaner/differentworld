@@ -697,6 +697,44 @@ Navigation:
   on Android, the swipe back on iOS, browser back on web must all do
   the same thing.
 
+### Instruction & microcopy — make it obvious first
+
+**The golden rule: the best instruction is the one the user never needs to
+read.** Before writing a hint, a subtitle, or a footer, ask *can this be made
+obvious instead of explained?* If you're stacking instructions on a screen,
+that's a signal the design is asking the user to carry too much — fix the
+design, don't add words. (Pairs with the `copy-tone` skill, which governs HOW
+the words read once they're justified.)
+
+When instruction genuinely IS needed, reach for the lightest touch that works,
+in this order:
+
+1. **Self-evident** — familiar pattern, clear label, sensible default. A
+   "Brew another" button needs no caption.
+2. **Inline microcopy** — a tiny hint right next to the thing (helper text under
+   a field, a one-line note beside a button), never on a separate surface.
+3. **Progressive disclosure** — show the basics; hide the advanced behind a
+   tertiary affordance (the Do-It "Snap the proof or tag who led it" is this —
+   the quick tap is primary, the rich path is opt-in).
+4. **Just-in-time** — reveal the tip at the moment of need, then let it go.
+5. **Empty states that teach** — an empty list is the right place to say "tap
+   to add the first thought" (the Penny screen does this); never a blank.
+6. **Onboarding / coach marks** — sparingly, short, SKIPPABLE; most people
+   click through.
+7. **A real help center** — last resort, for the deep stuff that doesn't belong
+   in the UI.
+
+Unifying principles: **just-in-time beats all-at-once** (reveal at the moment of
+need, not upfront) · **chunk it** (small pieces near their context, never a wall
+of text) · **people scan, they don't read** (design for scan-and-click) · **let
+them dismiss and skip** (forced tutorials annoy more than they help).
+
+**This app is unusually well-suited to "make it obvious"** — it's host-present
+and calm: a staffer drives, the room watches, nobody's hunting a manual. A
+subtitle that re-explains an obvious card, or a footer the host already knows
+("make it for real"), is a candidate to cut, not keep. When a screen needs a
+paragraph to make sense, the screen is wrong.
+
 ### Privacy & security
 
 Children's data is sensitive PII. Assume regulators (state licensing,

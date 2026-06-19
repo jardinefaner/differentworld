@@ -41,7 +41,7 @@ class _PotionsScreenState extends State<PotionsScreen> {
           children: [
             const ContentHeader(
               title: 'Potions',
-              subtitle: 'A potion of the moment — make it for real',
+              subtitle: 'A potion of the moment',
             ),
             // The recipe to gather + stir (the counting lives here).
             Container(
