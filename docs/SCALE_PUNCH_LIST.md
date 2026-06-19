@@ -329,8 +329,9 @@ US-region project hurts. Federate when geography demands it.
   remaining code-side follow-ups (heroes-hub N+1, hot-path JSON decode,
   oversized files).
 - **2026-06-19 (cont.)** — Landed the code-side scale wins. **Added the
-  first local SQLite indexes** (5 on `entries`, 3 on `attendance_records`)
-  — every hot watch was full-scanning an unbounded table; non-destructive,
+  first local SQLite indexes** (5 on `entries`, 3 on `attendance_records`,
+  3 on `messages`) — every hot watch was full-scanning an unbounded table;
+  non-destructive,
   builds on next launch. **Closed the per-child N+1 everywhere** (heroes
   hub, role deck, Action Words hub, Insights late-streak). Remaining:
   hot-path JSON-decode memoization (wants a profiler trace) and the

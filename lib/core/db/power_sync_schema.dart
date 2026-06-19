@@ -299,6 +299,22 @@ const appSchema = Schema([
     // Per-guardian read-state for co-parent / multi-guardian threads.
     Column.text('read_by_guardian_ids'),
     Column.text('created_at'),
+  ], indexes: [
+    // Threads grow unbounded and every messages watch filters + orders by
+    // created_at; without these each open / new message full-scans the table.
+    Index('messages_thread', [
+      IndexedColumn('subject_id'),
+      IndexedColumn('guardian_id'),
+      IndexedColumn('created_at'),
+    ]), // watchThread — the staff↔guardian conversation (chronological)
+    Index('messages_guardian', [
+      IndexedColumn('guardian_id'),
+      IndexedColumn('created_at'),
+    ]), // watchAllForGuardian — a family's inbox
+    Index('messages_space', [
+      IndexedColumn('space_id'),
+      IndexedColumn('created_at'),
+    ]), // watchInSpace — the staff-side message surface
   ]),
   Table('exports', [
     Column.text('space_id'),
