@@ -18,6 +18,7 @@ import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
 import 'package:differentworld/features/settings/outdoor_mode_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
+import 'package:differentworld/features/spellbook/spellbook_bento_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/features/today/bento_home_setting.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
@@ -257,6 +258,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _BentoHomeTile(),
               const _SettingsDivider(),
+              const _SpellbookBentoTile(),
+              const _SettingsDivider(),
               const _ScheduleGridTile(),
               const _SettingsDivider(),
               const _HeroesTile(),
@@ -454,6 +457,28 @@ class _BentoHomeTile extends ConsumerWidget {
           ? null
           : (v) =>
                 unawaited(ref.read(bentoHomeProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Lays the Spellbook out as a bento grid (docs/GRID.md candidate) — same
+/// content, spreads on a tablet. Off by default; reversible.
+class _SpellbookBentoTile extends ConsumerWidget {
+  const _SpellbookBentoTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(spellbookBentoProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.grid_view_outlined),
+      title: const Text('Spellbook as bento'),
+      subtitle: const Text(
+        'Lay the Spellbook out as a grid of tiles — same content, spreads on '
+        'a tablet',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(spellbookBentoProvider.notifier).set(value: v)),
     );
   }
 }
