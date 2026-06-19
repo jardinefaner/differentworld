@@ -861,7 +861,7 @@ surface — preferences + roster + fleet, not primary workflows.
 **Capabilities**: None — open to all signed-in staff once the director switches it on.
 **Data**: None directly — an aggregator. Reads `todaysDailyProvider` (the Daily), `currentWorldProvider` + `currentWorldArcProvider` (this week's world + project). Navigates to `/daily` + `/this-week`.
 **Surfaces**:
-- *Spellbook screen* — `lib/features/spellbook/spellbook_screen.dart`. `/spellbook`; a warm cover (the week's world name/emoji/tagline) over three gathered FeatureCards — Today's spell → `/daily`, This week's quest → `/this-week`, Your story so far → the journey.
+- *Spellbook screen* — `lib/features/spellbook/spellbook_screen.dart`. `/spellbook`; a warm cover (the week's world name/emoji/tagline) over three gathered FeatureCards — Today's spell → `/daily`, This week's quest → `/this-week`, Your story so far → `/this-week` (currently routes to the same hub; a dedicated journey view is deferred).
 - *Toggle* — `lib/features/spellbook/spellbook_setting.dart`. `spellbookEnabledProvider`, default off.
 **Depends on**: Daily (`todaysDailyProvider`), Action Words (`currentWorldProvider` + `currentWorldArcProvider` — the live world/project engine), and the `/daily` + `/this-week` routes.
 **Consumed by**: ActivityRuntime (Brain Breaks deck injects the "Spellbook" card), Omnibox (`page.spellbook`), Settings (`_SpellbookTile`).
