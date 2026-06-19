@@ -44,6 +44,11 @@ class DrawSelfScreen extends ConsumerStatefulWidget {
 
 class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     with WidgetsBindingObserver {
+  // Cached in initState — a plain read there is safe, but `ref` in dispose is
+  // not (Riverpod: "save the provider state in a field"). The KidModeLock mixin
+  // caches for the same reason.
+  late final KidMode _kidMode;
+  late final KidModeLockedRoute _lockedRoute;
   final GlobalKey _canvasKey = GlobalKey();
   final List<_Stroke> _strokes = <_Stroke>[];
   _Stroke? _active;
@@ -55,19 +60,19 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Lock into kid mode for the life of this screen. Deferred through a
-    // microtask (not a sync write): initState runs during the parent route's
-    // build phase and AppShell watches kidModeProvider — a sync write trips
-    // Riverpod's "modified during build" assertion. try/catch so a briefly
-    // unhealthy wire can't bubble to the top-level error handler.
+    // Cache the notifiers now (a plain read in initState is safe). The .enter()
+    // WRITE still defers to a microtask: a sync write during the parent route's
+    // build trips Riverpod's "modified during build" assertion (AppShell
+    // watches kidModeProvider). try/catch so a briefly unhealthy wire can't
+    // bubble to the top-level error handler.
+    _kidMode = ref.read(kidModeProvider.notifier);
+    _lockedRoute = ref.read(kidModeLockedRouteProvider.notifier);
     unawaited(
       Future.microtask(() {
         if (!mounted) return;
         try {
-          ref.read(kidModeProvider.notifier).enter();
-          ref
-              .read(kidModeLockedRouteProvider.notifier)
-              .pin('/subjects/${widget.subjectId}/draw');
+          _kidMode.enter();
+          _lockedRoute.pin('/subjects/${widget.subjectId}/draw');
         } on Object catch (e, st) {
           if (kDebugMode) {
             debugPrint('[draw-self] initState microtask failed: $e\n$st');
@@ -83,7 +88,7 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     // Re-engage kid mode if the OS resurrected the Activity without rebuilding
     // (so a backgrounded-then-resumed draw screen can't expose staff chrome).
     if (state == AppLifecycleState.resumed && mounted) {
-      ref.read(kidModeProvider.notifier).enter();
+      _kidMode.enter();
     }
   }
 
@@ -92,8 +97,8 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     WidgetsBinding.instance.removeObserver(this);
     // Idempotent belt-and-suspenders — the exit paths already clear these
     // before popping (see _leaveKidMode); this covers an OS-forced teardown.
-    ref.read(kidModeProvider.notifier).exit();
-    ref.read(kidModeLockedRouteProvider.notifier).pin(null);
+    _kidMode.exit();
+    _lockedRoute.pin(null);
     super.dispose();
   }
 
