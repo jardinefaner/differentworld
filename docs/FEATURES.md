@@ -198,6 +198,28 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Calm
+**Path**: `lib/features/calm/`
+**Purpose**: "What to do instead" — the room's calm, co-held reference of what to do for big feelings (mad / worried / sad / bored / wiggly) + the agreements that are common ground (docs/VISION.md 2026-06-19; "not noise, just a list"). Read-only, offline, in-proximity.
+**Personas served**: Ava (the child reaching for a calmer choice), All staff (host it / point to it in the moment).
+**Discovery surfaces**:
+- Routes: `/calm`. Always resolves; surfaces below are gated.
+- Omnibox: `page.calm` ("What to do instead" — crisis-retrieval keywords: calm / mad / angry / bored / worried / anxious / sad / feelings / agreements). **Toggle-gated** (`calmEnabledProvider`) + guardian-gated off.
+- Slash: none (a static slash list can't honor the toggle).
+- Drawer: no — reached via the Brain Breaks deck's "What to do instead" card (when the toggle is on) or the omnibox.
+- Settings: yes — "What to do instead" switch in Preferences (`_CalmTile`, off by default).
+**Capabilities**: None — open to all signed-in staff once the director switches it on.
+**Data**: None — pure bundled Dart (`calm_catalog.dart`). No synced table, no writes, no entry kind. A reference, not a record.
+**Surfaces**:
+- *Calm screen* — `lib/features/calm/calm_screen.dart`. `/calm`; a feeling selector → its calm actions; the agreements underneath. No persistence (a plain `StatefulWidget` — just a selected index).
+- *Catalog* — `lib/features/calm/calm_catalog.dart`. `CalmFeeling` + the feelings/actions + `roomAgreements`.
+- *Toggle* — `lib/features/calm/calm_setting.dart`. `calmEnabledProvider`, default off.
+**Depends on**: None (self-contained content + the shared scaffold widgets).
+**Consumed by**: ActivityRuntime (Brain Breaks deck injects the card), Omnibox (`page.calm`), Settings (`_CalmTile`).
+**Last verified**: 2026-06-19
+
+---
+
 ## Captures
 **Path**: `lib/features/captures/`
 **Purpose**: One-tap "I noticed…" inbox. Quick thoughts triaged later into observations, tasks, or discarded.
