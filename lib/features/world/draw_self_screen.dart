@@ -60,19 +60,21 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     // build phase and AppShell watches kidModeProvider — a sync write trips
     // Riverpod's "modified during build" assertion. try/catch so a briefly
     // unhealthy wire can't bubble to the top-level error handler.
-    unawaited(Future.microtask(() {
-      if (!mounted) return;
-      try {
-        ref.read(kidModeProvider.notifier).enter();
-        ref
-            .read(kidModeLockedRouteProvider.notifier)
-            .pin('/subjects/${widget.subjectId}/draw');
-      } on Object catch (e, st) {
-        if (kDebugMode) {
-          debugPrint('[draw-self] initState microtask failed: $e\n$st');
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        try {
+          ref.read(kidModeProvider.notifier).enter();
+          ref
+              .read(kidModeLockedRouteProvider.notifier)
+              .pin('/subjects/${widget.subjectId}/draw');
+        } on Object catch (e, st) {
+          if (kDebugMode) {
+            debugPrint('[draw-self] initState microtask failed: $e\n$st');
+          }
         }
-      }
-    }));
+      }),
+    );
   }
 
   @override
@@ -223,56 +225,67 @@ class _DrawSelfScreenState extends ConsumerState<DrawSelfScreen>
     // inject chrome insets that fight the lockdown (and flash the floating
     // pills during the mount microtask gap). See CLAUDE.md "kid mode" +
     // docs/SCREEN_RUBRIC.md full-bleed exception.
-    return Scaffold(
-      backgroundColor: const Color(0xFF2B2A33),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _TopBar(
-              title: title,
-              canEdit: _hasDrawing && !_saving,
-              onCancel: _saving
-                  ? null
-                  : () {
-                      _leaveKidMode(); // clear the pin before popping (Wave 143)
-                      unawaited(Navigator.of(context).maybePop());
-                    },
-              onUndo: _strokes.isNotEmpty && !_saving ? _undo : null,
-              onClear: _hasDrawing && !_saving ? _clear : null,
-            ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: _Canvas(
-                      canvasKey: _canvasKey,
-                      strokes: _strokes,
-                      active: _active,
-                      onStart: _startStroke,
-                      onUpdate: _extendStroke,
-                      onEnd: _endStroke,
+    return PopScope(
+      // System-back is BLOCKED so a kid can't drift into staff screens. The
+      // visible Cancel / Done controls leave via imperative pop (which
+      // bypasses this). Two layers, per the survey_take rule: PopScope catches
+      // the Flutter system-back; the kidModeLockedRoute pin catches go_router
+      // nav. This screen had only the pin — the back-block was the gap.
+      canPop: false,
+      onPopInvokedWithResult: (_, _) {},
+      child: Scaffold(
+        backgroundColor: const Color(0xFF2B2A33),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _TopBar(
+                title: title,
+                canEdit: _hasDrawing && !_saving,
+                onCancel: _saving
+                    ? null
+                    : () {
+                        _leaveKidMode(); // clear the pin before popping (Wave 143)
+                        // Imperative pop — bypasses PopScope(canPop:false); the
+                        // system back is the thing we block, not the controls.
+                        Navigator.of(context).pop();
+                      },
+                onUndo: _strokes.isNotEmpty && !_saving ? _undo : null,
+                onClear: _hasDrawing && !_saving ? _clear : null,
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _Canvas(
+                        canvasKey: _canvasKey,
+                        strokes: _strokes,
+                        active: _active,
+                        onStart: _startStroke,
+                        onUpdate: _extendStroke,
+                        onEnd: _endStroke,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            _Tools(
-              palette: _palette,
-              widths: _widths,
-              color: _color,
-              width: _width,
-              enabled: !_saving,
-              onColor: (c) => setState(() => _color = c),
-              onWidth: (w) => setState(() => _width = w),
-            ),
-            _DoneBar(
-              enabled: _hasDrawing && !_saving,
-              saving: _saving,
-              onDone: () => unawaited(_save()),
-            ),
-          ],
+              _Tools(
+                palette: _palette,
+                widths: _widths,
+                color: _color,
+                width: _width,
+                enabled: !_saving,
+                onColor: (c) => setState(() => _color = c),
+                onWidth: (w) => setState(() => _width = w),
+              ),
+              _DoneBar(
+                enabled: _hasDrawing && !_saving,
+                saving: _saving,
+                onDone: () => unawaited(_save()),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -527,9 +540,7 @@ class _Tools extends StatelessWidget {
                       height: 48,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: w == width
-                            ? Colors.white24
-                            : Colors.transparent,
+                        color: w == width ? Colors.white24 : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Container(

@@ -48,6 +48,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Exit MUST go through `KidMode.exit` (via a staff gesture / PIN);
 /// route-pop alone doesn't unlock — that's the entire point of the
 /// lockdown.
+///
+/// **Entering kid mode is NOT enough to lock the kid in.** It needs TWO
+/// layers, and forgetting the second is how a kid escapes to staff data:
+///   1. `kidModeLockedRouteProvider.pin(route)` — catches go_router-level
+///      navigation (the redirect bounces away-nav back to the pinned route).
+///   2. A `PopScope(canPop: false, …)` in the screen — catches the Flutter
+///      system-back, which pops BEFORE the redirect can fire. Leave via the
+///      visible controls using imperative `Navigator.pop()` (it bypasses the
+///      PopScope). The shared `KidModeLock` mixin bundles both; survey-take +
+///      draw-self do it by hand. `draw_self_screen` shipped with only the pin
+///      (the back-block was missing) — don't repeat it.
 class KidMode extends Notifier<bool> {
   static const _kPrefsKey = 'kid_mode.locked';
 
@@ -175,6 +186,5 @@ class KidModeLockedRoute extends Notifier<String?> {
   void pin(String? route) => state = route;
 }
 
-final NotifierProvider<KidModeLockedRoute, String?>
-    kidModeLockedRouteProvider =
+final NotifierProvider<KidModeLockedRoute, String?> kidModeLockedRouteProvider =
     NotifierProvider<KidModeLockedRoute, String?>(KidModeLockedRoute.new);
