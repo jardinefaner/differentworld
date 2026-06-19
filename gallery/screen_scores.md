@@ -2,25 +2,15 @@
 
 95 screens scored · worst-first · `tool/score_screens.py`
 
-Average: **98.2** · minor work: 10 · ship-confident: 85
+Average: **99.4** · minor work: 1 · ship-confident: 94
 
 | Score | Band | Screen | Why (top deductions) |
 |---|---|---|---|
 | 80 | minor work | `login` | -20 rendered root is a raw Scaffold, not EdgeScaffold |
-| 88 | minor work | `daily` | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `day_templates` | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `do_it` | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `fill_blank` | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `group_edit` | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `join_unavailable` ⟨raw canvas⟩ | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `tools` | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `vehicle_scan` ⟨raw canvas⟩ | -12 2 of loading/empty/error states missing |
-| 88 | minor work | `yearly_review` | -12 2 of loading/empty/error states missing |
 | 94 | ship-confident | `runbook` | -6 1 of loading/empty/error states missing |
 | 94 | ship-confident | `staff_ladder` | -6 1 of loading/empty/error states missing |
 | 94 | ship-confident | `themed_world` | -6 1 of loading/empty/error states missing |
 | 94 | ship-confident | `thinking` | -6 1 of loading/empty/error states missing |
-| 94 | ship-confident | `toolkit` | -6 1 of loading/empty/error states missing |
 | 94 | ship-confident | `verb_jobs` | -6 1 of loading/empty/error states missing |
 | 96 | ship-confident | `room_story` | -4 no ContentHeader / SafeArea top-clearance signal |
 | 96 | ship-confident | `today` | -4 no ContentHeader / SafeArea top-clearance signal |
@@ -40,11 +30,16 @@ Average: **98.2** · minor work: 10 · ship-confident: 85
 | 100 | ship-confident | `cast` | — |
 | 100 | ship-confident | `conductor` | — |
 | 100 | ship-confident | `create_space` | — |
+| 100 | ship-confident | `daily` | — |
 | 100 | ship-confident | `day_run` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `day_templates` | — |
+| 100 | ship-confident | `do_it` | — |
 | 100 | ship-confident | `family_messages` | — |
 | 100 | ship-confident | `family_today` | — |
+| 100 | ship-confident | `fill_blank` | — |
 | 100 | ship-confident | `group_detail` | — |
 | 100 | ship-confident | `group_discussion` ⟨raw canvas⟩ | — |
+| 100 | ship-confident | `group_edit` | — |
 | 100 | ship-confident | `hero_creator` | — |
 | 100 | ship-confident | `heroes_hub` | — |
 | 100 | ship-confident | `incident_form` | — |
@@ -52,6 +47,7 @@ Average: **98.2** · minor work: 10 · ship-confident: 85
 | 100 | ship-confident | `insights` | — |
 | 100 | ship-confident | `invite_create` | — |
 | 100 | ship-confident | `join_or_create` | — |
+| 100 | ship-confident | `join_unavailable` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `journey_tour` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `launch` | — |
 | 100 | ship-confident | `letters` | — |
@@ -95,9 +91,13 @@ Average: **98.2** · minor work: 10 · ship-confident: 85
 | 100 | ship-confident | `time_capsule` | — |
 | 100 | ship-confident | `today_bento` | — |
 | 100 | ship-confident | `today_bento_wide` | — |
+| 100 | ship-confident | `toolkit` | — |
+| 100 | ship-confident | `tools` | — |
 | 100 | ship-confident | `vehicle_edit` | — |
+| 100 | ship-confident | `vehicle_scan` ⟨raw canvas⟩ | — |
 | 100 | ship-confident | `vehicles_list` | — |
 | 100 | ship-confident | `wall` | — |
 | 100 | ship-confident | `weekly_review` | — |
 | 100 | ship-confident | `weekly_template` | — |
 | 100 | ship-confident | `world_book` | — |
+| 100 | ship-confident | `yearly_review` | — |

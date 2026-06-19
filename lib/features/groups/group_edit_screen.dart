@@ -12,6 +12,8 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -205,13 +207,23 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
         ],
         body: groupAsync.when(
           loading: () => const LoadingSlot(),
-          error: (_, _) => Center(
-            child: Text('Could not load ${labels.group.toLowerCase()}.'),
+          error: (_, _) => ErrorState(
+            title: 'Could not load ${labels.group.toLowerCase()}',
+            onRetry: () =>
+                ref.invalidate(_groupByIdProvider(widget.groupId!)),
           ),
           data: (group) {
             if (widget.isEdit && group == null) {
-              return Center(
-                child: Text('${labels.group} not found.'),
+              return EmptyState(
+                icon: Icons.search_off_outlined,
+                title: '${labels.group} not found',
+                message:
+                    'It may have been removed. Go back and pick another '
+                    '${labels.group.toLowerCase()}.',
+                action: OutlinedButton(
+                  onPressed: () => context.go('/'),
+                  child: const Text('Back to home'),
+                ),
               );
             }
             final groupLower = labels.group.toLowerCase();

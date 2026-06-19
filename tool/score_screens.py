@@ -146,6 +146,20 @@ def source_metrics(path):
         re.search(r"ref\.watch", src)
         and re.search(r"ListView|SliverList|GridView|\.when\(", src)
     )
+    # Does the screen actually CONSUME async data — an AsyncValue `.when(` or a
+    # Future/StreamBuilder? Only those have a genuine loading + error path to
+    # design. A synchronous present screen (reads a local content bank with a
+    # `?? floor` fallback, no `.when`) needs only its empty state; the offline
+    # floor guarantees something to show, so there's nothing to load or fail.
+    # Scan CODE only (strip `//` comments) so a prose mention of "a FutureBuilder"
+    # in a comment doesn't count as real async use, and require the constructor
+    # paren so only an actual call matches.
+    code_only = re.sub(r"//.*", "", src)
+    consumes_async = bool(
+        re.search(r"\.when\(", code_only)
+        or "FutureBuilder(" in code_only
+        or "StreamBuilder(" in code_only
+    )
     # icon-only IconButtons without a tooltip on the same call (rough).
     icon_btns = src.count("IconButton(")
     tooltips = src.count("tooltip:")
@@ -156,6 +170,7 @@ def source_metrics(path):
         "edge": "EdgeScaffold(" in src,
         "header": "ContentHeader(" in src or "SafeArea(" in src,
         "states": states,
+        "consumes_async": consumes_async,
         "data": data_strong or states >= 1,
         "icon_unlabeled": max(0, icon_btns - tooltips),
     }
@@ -267,8 +282,12 @@ def score(src, px):
         ded.append((-4, "no ContentHeader / SafeArea top-clearance signal"))
     # Tier 3 — four states. Only flag PARTIAL handling (1-2 of the three present
     # = an incomplete data screen); 0 present is treated as n/a (static / form /
-    # immersive) so static settings-style screens aren't false-dinged.
-    if 1 <= src["states"] <= 2:
+    # immersive) so static settings-style screens aren't false-dinged. AND only
+    # when the screen actually CONSUMES async data (`.when` / Future/StreamBuilder)
+    # — a synchronous present screen that reads a local bank with a `?? floor`
+    # legitimately needs only its empty state (the state-rubric analog of the
+    # theme allowlist: no loading/error path exists to design).
+    if src["consumes_async"] and 1 <= src["states"] <= 2:
         miss = 3 - src["states"]
         d = 6 * miss
         pts -= d
