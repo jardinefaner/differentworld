@@ -256,12 +256,18 @@ hotspot guards. Pure-code, no dashboard:
   stream per child). Single-child screens keep the family (one stream —
   correct). Rule going forward: resolve per-child data from ONE space-wide
   stream + a map, not a per-row watch.
-- **Hot-path JSON decode.** The Story timeline / showcase / family recap
-  peek `jsonDecode(entry.details)` per entry on every rebuild
-  (`momentsFrom`, `_TodaysRecapPeek`). Bounded today (limit 50–300,
-  newest-first) but O(N) per open. Memoize the decoded view in a provider,
-  or denormalize the hot fields (title / emoji / date) onto columns.
-  Prereq: a profiler trace putting it on the critical path.
+- **Hot-path JSON decode — mostly DONE.** `momentsFrom` (which
+  `jsonDecode`s each entry's `details`) ran inside `build()` on the live
+  Story screens, so every incidental rebuild re-decoded the whole list —
+  the "no computation in build()" rule. Hoisted into memoizing providers
+  (`momentsForSubjectProvider` for the per-child timeline + showcase,
+  `roomMomentsProvider` for the room story); the decode now runs once per
+  data change. **Residuals, lower-cost, left as-is:** the character-sheet
+  `_Milestones` strip (a bounded observation subset, `.take(4)`, inside a
+  StatelessWidget on the file already slated for a split) and the
+  PDF/book builders (`summer_book`, `book_screen` — one-shot at export, not
+  a rebuild path). The deeper option (denormalize title/emoji/date onto
+  columns to kill the decode entirely) still wants a profiler trace.
 - **Oversized single-purpose files** (soft caps: 400 screen / 300
   provider / 200 widget): `entries_providers.dart` (~1060),
   `character_sheet_screen.dart` (~1200), `family_today_screen.dart`
@@ -309,3 +315,9 @@ US-region project hurts. Federate when geography demands it.
   hub, role deck, Action Words hub, Insights late-streak). Remaining:
   hot-path JSON-decode memoization (wants a profiler trace) and the
   oversized-file splits (maintainability).
+- **2026-06-19 (cont. 2)** — Hoisted the `momentsFrom` decode out of
+  `build()` on all three live Story screens into memoizing providers
+  (`momentsForSubjectProvider`, `roomMomentsProvider`). Hot-path JSON
+  decode now mostly closed; residuals are one bounded subset + the
+  one-shot PDF builders. Remaining scale item: oversized-file splits
+  (maintainability, not runtime).
