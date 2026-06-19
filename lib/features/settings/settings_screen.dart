@@ -8,6 +8,7 @@ import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
+import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/schedule/schedule_view_setting.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
@@ -255,6 +256,8 @@ class SettingsScreen extends ConsumerWidget {
               const _ScheduleGridTile(),
               const _SettingsDivider(),
               const _HeroesTile(),
+              const _SettingsDivider(),
+              const _RoutinesTile(),
             ],
           ),
 
@@ -483,6 +486,28 @@ class _HeroesTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(heroesEnabledProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Switches on the **Routines** view (docs/VISION.md 2026-06-19) — the
+/// kid-legible read of the day. Off by default; when on, an "Our day" card
+/// appears in the Brain Breaks deck and the omnibox.
+class _RoutinesTile extends ConsumerWidget {
+  const _RoutinesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(routinesEnabledProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.schedule_outlined),
+      title: const Text('Routines (kid view)'),
+      subtitle: const Text(
+        'A kid-legible "what do we do now?" read of the room’s day',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(routinesEnabledProvider.notifier).set(value: v)),
     );
   }
 }

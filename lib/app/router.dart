@@ -100,6 +100,7 @@ import 'package:differentworld/features/poster/poster_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
 import 'package:differentworld/features/review/weekly_review_screen.dart';
 import 'package:differentworld/features/review/yearly_review_screen.dart';
+import 'package:differentworld/features/routines/routines_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
@@ -1110,6 +1111,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/heroes',
             builder: (_, _) => const HeroesHubScreen(),
+          ),
+          // Routines — the kid-legible read of the day (docs/VISION.md
+          // 2026-06-19). Surfaced only when routinesEnabledProvider is on.
+          GoRoute(
+            path: '/routines',
+            builder: (_, state) =>
+                RoutinesScreen(groupId: state.uri.queryParameters['group']),
           ),
           // This Week — the live curriculum hub (the world the room is in
           // now + cast / worksheets / activities). docs/WORLD.md.

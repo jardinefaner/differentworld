@@ -18,6 +18,7 @@ import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
+import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
@@ -49,6 +50,8 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final activities = ref.watch(activitiesProvider).value ?? const <Activity>[];
   // Heroes is an opt-in activity — only surface it in search when switched on.
   final heroesOn = ref.watch(heroesEnabledProvider).value ?? false;
+  // Routines (kid-legible day) is opt-in too.
+  final routinesOn = ref.watch(routinesEnabledProvider).value ?? false;
   final locations = ref.watch(locationsProvider).value ?? const <Location>[];
   final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
   final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
@@ -568,6 +571,27 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'avatar',
         ],
         onSelect: (ctx, _) => ctx.push('/heroes'),
+      ),
+    // Routines — the kid-legible "what do we do now?" day (docs/VISION.md
+    // 2026-06-19). Opt-in: present only when the toggle is on.
+    if (viewer is! GuardianViewer && routinesOn)
+      OmniboxEntry(
+        id: 'page.routines',
+        label: 'Routines',
+        subtitle: 'What do we do now?',
+        category: OmniboxCategory.page,
+        icon: Icons.schedule_outlined,
+        keywords: const [
+          'routine',
+          'routines',
+          'what do we do now',
+          'what do we do at',
+          'our day',
+          'rhythm',
+          'schedule for kids',
+          'today',
+        ],
+        onSelect: (ctx, _) => ctx.push('/routines'),
       ),
     OmniboxEntry(
       id: 'page.wall',
