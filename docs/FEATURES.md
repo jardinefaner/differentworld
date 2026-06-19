@@ -268,6 +268,29 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## ChildWorld
+**Path**: `lib/features/child_world/`
+**Purpose**: Each child's personal weekly hub — their intention for the week, their own project (title + steps + progress), today's daily answer + hero, and their growth arc title + days — making the dailies/weeklies/projects arc personal per child.
+**Personas served**: Maya, Jordan, Coach Sam, Pat (all staff who author or view a child's progress; the hub is reached from the child detail screen, so the same staff who manage the roster).
+**Discovery surfaces**:
+- Routes: `/subjects/:id/world` — nested inside the subjects shell, the same depth as `/subjects/:id/day` and `/subjects/:id/me`. Registered in `lib/app/router.dart` at `path: 'subjects/:id/world'` rendering `ChildWorldScreen(subjectId: id)`.
+- Omnibox: no — per-child screen; no catalog entry. Reached from the child detail screen only.
+- Slash: none — same rationale as `/subjects/:id/day`; per-child contextual, not a top-level command.
+- Drawer: no — per-child screen, not a top-level destination. Absence is BY DESIGN (same pattern as `/subjects/:id/day`, `/subjects/:id/me`, `/growth/:subjectId`).
+- Settings: no — no opt-in toggle; available to all staff who can view the child detail screen.
+**Capabilities**: None beyond staff roster access — same gate as the child detail screen.
+**Data**: [entries](SCHEMA.md#entries) — writes `kind='weekly_intention'` (one UPSERTED row per (subject, week); `details` = `{week, text}`) and `kind='project'` (one UPSERTED row per (subject, week); `details` = `{week, title, steps[], done}`), via `EntryActions.setWeeklyIntention` / `setProject` / `setProjectProgress` (all go through `_upsertSubjectWeek`). Reads those kinds plus the existing `kind='daily_response'` (today's answer via `todaysAnswerProvider`) and `kind='hero'` (via `heroForSubjectProvider` from Heroes feature) per subject.
+**Surfaces**:
+- *ChildWorldScreen* — `lib/features/child_world/child_world_screen.dart`. `/subjects/:id/world`; a `BentoGrid` of four tiles: `_IntentionTile` (wide — set/edit the child's weekly intention; taps to `_IntentionSheet` glass sheet), `_ProjectTile` (hero — start or advance the child's project; taps to `_ProjectSheet` glass sheet for create/edit or `_ProjectChecklistSheet` for step-by-step tick-off), `_DayTile` (shows today's daily answer + hero name; read-only reflecting data from Daily + Heroes), `_GrowthTile` (shows emerging title + days in the world from `actionWordsCollectionProvider`; read-only reflecting Action Words data). All four tiles are offline-first (Drift-watched via `weeklyIntentionProvider`, `childProjectProvider`, `todaysAnswerProvider`, `heroForSubjectProvider`, `actionWordsCollectionProvider`).
+- *ProjectView model* — `lib/features/child_world/child_world_model.dart`. Pure view model parsed from a `project` entry's details JSON; carries `title`, `steps[]`, `done`, and helpers (`progress`, `nextStep`, `isComplete`).
+- *Providers* — `lib/features/child_world/child_world_providers.dart`. `weeklyIntentionProvider(SubjectWeekKey)`, `childProjectProvider(SubjectWeekKey)`, `todaysAnswerProvider(subjectId)` — all `StreamProvider.autoDispose.family`, Drift-watched, offline-first.
+- *"Their world" EdgeAction* — `lib/features/subjects/subject_detail_screen.dart`, line ~148. An `IconButton`-style action in the child detail screen's top chrome, label "Their world", pushes `/subjects/$subjectId/world`.
+**Depends on**: Entries (`EntryActions.setWeeklyIntention` / `setProject` / `setProjectProgress`; reads `kind='daily_response'` via `todaysAnswerProvider`), Heroes (`heroForSubjectProvider` for the day tile), Action Words (`actionWordsCollectionProvider` for the growth tile; `currentCurriculumWeekProvider` for the week key), Subjects (`subjectByIdProvider` for the child's first name).
+**Consumed by**: Subjects (subject_detail_screen.dart hosts the "Their world" EdgeAction that pushes to this route).
+**Last verified**: 2026-06-19
+
+---
+
 ## Cockpit
 **Path**: `lib/features/cockpit/`
 **Purpose**: The clock-driven home — `/now` shows ONE beat at a time (getting ready → good morning → now → field trip → reveal → pickup → send), chosen by the time of day and what's live; you never navigate. The finished shape of "context is the navigation" (docs/VISION.md 2026-06-15; build map in docs/COCKPIT.md).

@@ -85,6 +85,23 @@ bites.)
 - **Bento home** — `lib/features/today/today_bento_screen.dart`, opt-in via
   `bentoHomeProvider` (Settings → Preferences). Same Today providers, re-laid
   out. Precedence at the home slot: cockpit > bento > Today scroll.
+- **Per-child world** — `lib/features/child_world/child_world_screen.dart`
+  (`/subjects/:id/world`). Each child's own weekly hub — intention / project /
+  day / growth as four bento tiles. The first non-home bento surface, and the
+  template the candidates below should follow.
+  - **Gotcha (cost a render crash):** a bento cell is min-height /
+    **unbounded-max** (it grows ragged to fit, never clips), so a tile body
+    must SHRINK-WRAP — NO `Expanded` / `Spacer` inside a tile. A flex child
+    against an unbounded height throws "RenderFlex children have non-zero flex
+    but incoming height constraints are unbounded." Use `mainAxisSize.min` +
+    fixed `SizedBox` gaps; the cell's `minHeight` is the tile's floor.
 - **Schedule matrix** *(planned)* — cohorts × time on the same grid; the
   wide-screen lens over `schedule_blocks`, degrading to the per-cohort tabs on
   phone (the deferred "Maya tablet-first schedule").
+- **Spellbook** *(candidate)* — `lib/features/spellbook/spellbook_screen.dart`
+  already gathers today + this week's project + the story; it's the
+  program-level sibling of the per-child world hub and the most natural next
+  bento (three modular tiles over the same providers).
+- **Toolkit** *(candidate)* — `lib/features/toolkit/toolkit_screen.dart` is a
+  flat ~10-card grid; bento would weight the tools by importance instead of a
+  uniform list.
