@@ -38,6 +38,7 @@ import 'package:differentworld/features/activity_runtime/role_cards_screen.dart'
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
 import 'package:differentworld/features/auth/login_screen.dart';
+import 'package:differentworld/features/calm/calm_screen.dart';
 import 'package:differentworld/features/captures/capture_inbox_screen.dart';
 import 'package:differentworld/features/captures/capture_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
@@ -1127,6 +1128,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) =>
                 DailyScreen(groupId: state.uri.queryParameters['group']),
           ),
+          // What to do instead — the room's calm reference (docs/VISION.md
+          // 2026-06-19). Surfaced only when calmEnabledProvider is on.
+          GoRoute(path: '/calm', builder: (_, _) => const CalmScreen()),
           // This Week — the live curriculum hub (the world the room is in
           // now + cast / worksheets / activities). docs/WORLD.md.
           GoRoute(

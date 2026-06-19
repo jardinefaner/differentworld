@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
@@ -175,8 +176,21 @@ class BrainBreaksScreen extends ConsumerWidget {
     final heroesOn = ref.watch(heroesEnabledProvider).value ?? false;
     final routinesOn = ref.watch(routinesEnabledProvider).value ?? false;
     final dailyOn = ref.watch(dailyEnabledProvider).value ?? false;
+    final calmOn = ref.watch(calmEnabledProvider).value ?? false;
     final cards = <_BreakCard>[..._cards];
     // Opt-in cards slot in right after Do It — the room-facing surfaces lead.
+    if (calmOn) {
+      cards.insert(
+        1,
+        const _BreakCard(
+          title: 'What to do instead',
+          tagline: 'Calm ideas for big feelings',
+          icon: Icons.self_improvement_outlined,
+          color: ActivityPalette.teal,
+          route: '/calm',
+        ),
+      );
+    }
     if (dailyOn) {
       cards.insert(
         1,

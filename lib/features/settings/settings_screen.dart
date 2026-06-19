@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
@@ -261,6 +262,8 @@ class SettingsScreen extends ConsumerWidget {
               const _RoutinesTile(),
               const _SettingsDivider(),
               const _DailyTile(),
+              const _SettingsDivider(),
+              const _CalmTile(),
             ],
           ),
 
@@ -533,6 +536,28 @@ class _DailyTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(dailyEnabledProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Switches on **What to do instead** (docs/VISION.md 2026-06-19) — the room's
+/// calm reference. Off by default; when on, a card appears in the Brain Breaks
+/// deck and the omnibox.
+class _CalmTile extends ConsumerWidget {
+  const _CalmTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(calmEnabledProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.self_improvement_outlined),
+      title: const Text('What to do instead'),
+      subtitle: const Text(
+        'A calm, shared list of what to do for big feelings + agreements',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(calmEnabledProvider.notifier).set(value: v)),
     );
   }
 }

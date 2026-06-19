@@ -13,6 +13,7 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
@@ -55,6 +56,8 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   final routinesOn = ref.watch(routinesEnabledProvider).value ?? false;
   // The Daily (Question/Quote/Mission of the Day) is opt-in too.
   final dailyOn = ref.watch(dailyEnabledProvider).value ?? false;
+  // What to do instead (the calm reference) is opt-in too.
+  final calmOn = ref.watch(calmEnabledProvider).value ?? false;
   final locations = ref.watch(locationsProvider).value ?? const <Location>[];
   final vehicles = ref.watch(vehiclesProvider).value ?? const <Vehicle>[];
   final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
@@ -616,6 +619,31 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
           'reflection',
         ],
         onSelect: (ctx, _) => ctx.push('/daily'),
+      ),
+    // What to do instead — the room's calm reference (docs/VISION.md
+    // 2026-06-19). Opt-in; crisis-retrieval keywords so it's 1 tap when needed.
+    if (viewer is! GuardianViewer && calmOn)
+      OmniboxEntry(
+        id: 'page.calm',
+        label: 'What to do instead',
+        subtitle: 'Calm ideas for big feelings',
+        category: OmniboxCategory.page,
+        icon: Icons.self_improvement_outlined,
+        keywords: const [
+          'calm',
+          'what to do instead',
+          'mad',
+          'angry',
+          'bored',
+          'worried',
+          'anxious',
+          'sad',
+          'feelings',
+          'agreements',
+          'cool down',
+          'big feelings',
+        ],
+        onSelect: (ctx, _) => ctx.push('/calm'),
       ),
     OmniboxEntry(
       id: 'page.wall',
