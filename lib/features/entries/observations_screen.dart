@@ -163,39 +163,50 @@ class _ObservationRow extends ConsumerWidget {
       attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
     );
     final photos = attachmentsAsync.value?.urls ?? const <String>[];
-    return ListTile(
-      leading: PersonAvatar(
-        name: fullName,
-        photoUrl: subject?.photoUrl,
-      ),
-      title: Text(fullName),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            entry.body ?? '',
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+    // Calm card: a narrative observation reads warmer on a tile than as a flat
+    // row. Vertical list (recency preserved) — just on-brand cards.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+          leading: PersonAvatar(
+            name: fullName,
+            photoUrl: subject?.photoUrl,
           ),
-          const SizedBox(height: 2),
-          Text(
-            whenLabel,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          title: Text(fullName),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                entry.body ?? '',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                whenLabel,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      trailing: photos.isEmpty
-          ? null
-          : _PhotoThumb(
-              photos: photos,
-              onTap: () => PhotoViewer.open(context, urls: photos),
-            ),
-      isThreeLine: true,
-      onTap: () => context.push(
-        '/observations/${entry.id}/edit',
-        extra: entry,
+          trailing: photos.isEmpty
+              ? null
+              : _PhotoThumb(
+                  photos: photos,
+                  onTap: () => PhotoViewer.open(context, urls: photos),
+                ),
+          isThreeLine: true,
+          onTap: () => context.push(
+            '/observations/${entry.id}/edit',
+            extra: entry,
+          ),
+        ),
       ),
     );
   }
