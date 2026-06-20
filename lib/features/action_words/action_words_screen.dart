@@ -13,6 +13,7 @@ import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -54,6 +55,16 @@ class ActionWordsScreen extends ConsumerWidget {
               label: 'Reveal all',
               iconColor: WorldBadge.goldFor(Theme.of(context)),
               onPressed: () => unawaited(revealAllPicksToday(context, ref)),
+            ),
+          // Cast the room's picks to the wall — the calm projection (one slide
+          // per child: their world + three verbs), the same present engine
+          // every other deck rides. Distinct from "Reveal all" (the dramatic
+          // tap-to-advance ceremony); this is the steady recap.
+          if (revealItems.isNotEmpty)
+            EdgeAction(
+              icon: Icons.cast,
+              label: 'Cast to room',
+              onPressed: () => unawaited(castTodaysWordsToRoom(context, ref)),
             ),
           EdgeAction(
             icon: Icons.menu_book_outlined,
@@ -552,4 +563,47 @@ class _PickMoodRow extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Cast the room's picks to the wall — a calm slide deck (lead card + one
+/// slide per child: their world emoji/name + the three verbs they chose),
+/// presented through the same generic present engine every deck rides
+/// (docs/VISION.md 2026-06-20 — anything can become slides). The in-room
+/// projection, NOT a sent-home artifact: every name shown belongs to a child
+/// present in the room (same as the reveal ceremony), so no other-name scrub
+/// is needed. Reads the space-wide [todaysRevealItemsProvider]; a gentle nudge
+/// instead of an empty deck when nobody's picked yet.
+Future<void> castTodaysWordsToRoom(BuildContext context, WidgetRef ref) {
+  final items = ref.read(todaysRevealItemsProvider);
+  if (items.isEmpty) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text('No words to cast yet — pick today’s words first.'),
+      ),
+    );
+    return Future<void>.value();
+  }
+  final slides = <PresentSlide>[
+    PresentSlide(
+      eyebrow: 'TODAY IN OUR ROOM',
+      title: 'Today’s words',
+      emoji: '🌍',
+      subtitle: items.length == 1
+          ? '1 explorer chose their words'
+          : '${items.length} explorers chose their words',
+    ),
+  ];
+  for (final it in items) {
+    final world = it.day.world?.world;
+    final verbs = verbsByIds(it.day.verbPicks);
+    slides.add(
+      PresentSlide(
+        eyebrow: '${it.subject.firstName.toUpperCase()} IS',
+        title: world?.name ?? it.day.worldName ?? 'A brand-new world',
+        emoji: world?.emoji ?? '✨',
+        subtitle: verbs.map((v) => v.label).join('  ·  '),
+      ),
+    );
+  }
+  return presentSlides(context, title: 'Today’s words', slides: slides);
 }
