@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/photos/person_photo_url.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -67,6 +68,20 @@ class _PhotoViewerState extends State<PhotoViewer> {
     super.dispose();
   }
 
+  /// Cast the moment to the room — the photos as full-screen slides. No
+  /// caption (just the photo), so no free-text narrative travels with it.
+  void _castToRoom() {
+    unawaited(
+      presentSlides(
+        context,
+        title: 'Moment',
+        slides: [
+          for (final url in widget.urls) PresentSlide(title: '', imagePath: url),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -92,6 +107,13 @@ class _PhotoViewerState extends State<PhotoViewer> {
                   style: const TextStyle(color: Colors.white),
                 )
               : null,
+          actions: [
+            IconButton(
+              tooltip: 'Cast to room',
+              icon: const Icon(Icons.cast),
+              onPressed: _castToRoom,
+            ),
+          ],
         ),
         body: PageView.builder(
           controller: _page,

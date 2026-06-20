@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/live_session/cast_immersive.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ class PresentSlide {
     this.emoji,
     this.icon,
     this.accent,
+    this.imagePath,
   });
 
   final String title;
@@ -32,6 +34,11 @@ class PresentSlide {
   /// Optional content colour; the projection deepens it over near-black so the
   /// slide carries the moment's hue while staying TV-dark.
   final Color? accent;
+
+  /// Optional photo — a Storage path or legacy URL. When set, it's the hero of
+  /// the slide (the moment itself on the room screen), shown above any caption.
+  /// Rendered via a signed URL, so it never rides PowerSync.
+  final String? imagePath;
 }
 
 /// Arguments for the generic `/present-deck` route — a titled deck of slides.
@@ -175,6 +182,75 @@ class _PresentFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // A photo moment: the image is the hero; any caption sits beneath it.
+    if (slide.imagePath != null) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: PersonPhotoNetwork(
+                    urlOrPath: slide.imagePath,
+                    fit: BoxFit.contain,
+                    placeholderBuilder: (_) => const Center(
+                      child: CircularProgressIndicator(color: Colors.white70),
+                    ),
+                    errorBuilder: (_) => const Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white54,
+                        size: 56,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (slide.eyebrow != null ||
+                slide.title.isNotEmpty ||
+                slide.subtitle != null) ...[
+              const SizedBox(height: 16),
+              if (slide.eyebrow != null) ...[
+                Text(
+                  slide.eyebrow!,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: Colors.white70,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (slide.title.isNotEmpty)
+                Text(
+                  slide.title,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    height: 1.05,
+                  ),
+                ),
+              if (slide.subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  slide.subtitle!,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white60,
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ),
+      );
+    }
+
     final glyph = slide.emoji != null
         ? Text(slide.emoji!, style: const TextStyle(fontSize: 58))
         : slide.icon != null
