@@ -529,10 +529,39 @@ Conventions:
 
 ### Floating-glass chrome — one visual language
 
-Every chrome surface in the app — top action pills, bottom omnibox
-bar, suggestion overlay, drawer, modal bottom sheets — uses the
-same translucent BackdropFilter blur over a slightly tinted
-surface. **The single source of truth is
+**THE UI NORTH STAR (2026-06-20, user-named — "the cleanest version I've
+seen… I want this to be the UI north star"):** the floating chrome — the
+top hamburger/back/actions/cast **pills** and the bottom **omnibox bar** —
+has **NO colour fill behind it**: transparent fill, blur kept ("clear
+glass", not frosted-and-tinted), hairline border only. And the screen's
+**content background fills edge-to-edge UNDER the chrome**, so the chrome
+floats over continuous content and there is **NEVER a dark band** at the
+top or bottom. Two stacked strips (a tinted bar + a content bg that stops
+short of it) is the anti-pattern this kills. Enforcement:
+- Chrome pills: `GlassPill` defaults `tintOpacity: 0.0`. The omnibox bar's
+  `containerColor` is `Colors.transparent` in every mode (search / capture
+  / slash) — mode reads from the **border + leading icon + hint**, never a
+  fill. Don't reintroduce a tinted chrome fill.
+- A screen with a **distinct full-bleed background** (cockpit beats, themed
+  rooms) MUST paint it **edge-to-edge** via `EdgeScaffold(background: …)`
+  (a `Positioned.fill` UNDER the chrome) — not just in the body — or the
+  dark Scaffold surface shows as a top band. See
+  `now_cockpit_screen._beatBg`.
+- If that screen's **bottom region is non-interactive** (no save button),
+  opt into `fillUnderOmniboxProvider`
+  (`lib/shared/widgets/omnibox_inset.dart`) so the bg runs under the
+  transparent bottom bar too — set on mount (cached notifier +
+  microtask-deferred, mounted-guarded `enter()`), clear on `dispose()`.
+  Routes WITH bottom buttons keep the 76dp omnibox reservation — don't opt
+  in (the reservation is what stops a save button hiding under the bar).
+- Most screens sit on the app `surface` already, so the transparent chrome
+  shows that same surface with no band — nothing to do. Only distinct-bg
+  screens need the two steps above.
+
+Beyond the pills + bar, the other chrome surfaces (suggestion overlay,
+drawer, modal sheets) still use the shared translucent BackdropFilter blur
+over a tinted surface — those are dense and need the tint for legibility.
+**The single source of truth is
 `lib/shared/widgets/glass_panel.dart`.** Don't write a new solid
 Material wrapper for chrome; reach for `GlassPanel` (with the
 shape variant that matches the surface) or the existing widgets
