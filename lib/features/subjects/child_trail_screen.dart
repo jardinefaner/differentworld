@@ -20,17 +20,13 @@ import 'package:intl/intl.dart';
 /// made things — so no other-child free-text is in view (the family-scrub class,
 /// CLAUDE.md). Staff-facing for now.
 ///
-/// The most-recent [_kCap] pieces render with thumbnails (each tile lazily mints
-/// its own signed URL — the work_gallery pattern); the filmstrip + total count
-/// reflect ALL of them, so the sense of accumulation is honest even past the cap.
+/// The day sections are LAZY (a `SliverGrid` per day), so each [_TrailPiece]
+/// thumbnail mints its signed URL only as it scrolls into view — no eager
+/// burst when a long-tenured child's trail opens. No piece cap is needed.
 class ChildTrailScreen extends ConsumerWidget {
   const ChildTrailScreen({required this.subjectId, super.key});
 
   final String subjectId;
-
-  /// Cap on the thumbnailed tiles so a long-tenured child doesn't mint hundreds
-  /// of signed URLs at once. The counts above are uncapped.
-  static const _kCap = 48;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,37 +68,49 @@ class ChildTrailScreen extends ConsumerWidget {
               (byDay[key] ??= <Entry>[]).add(e);
             }
 
-            var shown = 0;
-            final daySections = <Widget>[];
-            for (final entry in byDay.entries) {
-              if (shown >= _kCap) break;
-              final dayItems = entry.value.take(_kCap - shown).toList();
-              shown += dayItems.length;
-              daySections.add(
-                _DaySection(dayKey: entry.key, items: dayItems),
-              );
-            }
-
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-              children: [
-                ContentHeader(
-                  title: name != null ? '$name’s trail' : 'The trail',
-                  subtitle: _summary(byDay.length, samples.length),
+            return CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ContentHeader(
+                          title: name != null ? '$name’s trail' : 'The trail',
+                          subtitle: _summary(byDay.length, samples.length),
+                        ),
+                        _Filmstrip(samples: samples),
+                      ],
+                    ),
+                  ),
                 ),
-                _Filmstrip(samples: samples),
-                const SizedBox(height: 8),
-                ...daySections,
-                if (samples.length > _kCap)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      'Showing the most recent $_kCap of ${samples.length}.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                // One label + lazy grid per day. The SliverGrid builds only the
+                // on-screen tiles, so each piece mints its signed URL as it
+                // scrolls into view — no eager burst, no piece cap.
+                for (final day in byDay.entries) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    sliver: SliverToBoxAdapter(child: _DayLabel(dayKey: day.key)),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 116,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                          ),
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => _TrailPiece(entry: day.value[i]),
+                        childCount: day.value.length,
                       ),
                     ),
                   ),
+                ],
+                // Clear the floating omnibox bar.
+                const SliverToBoxAdapter(child: SizedBox(height: 96)),
               ],
             );
           },
@@ -193,13 +201,12 @@ class _Filmstrip extends StatelessWidget {
   }
 }
 
-/// One day's pieces — a relative-day label + a wrap of thumbnails (photo /
-/// drawing) and note chips (note-only captures show the child's own words).
-class _DaySection extends StatelessWidget {
-  const _DaySection({required this.dayKey, required this.items});
+/// A day's relative-day heading (Today / Yesterday / a full date), above that
+/// day's lazy grid of pieces.
+class _DayLabel extends StatelessWidget {
+  const _DayLabel({required this.dayKey});
 
   final String dayKey;
-  final List<Entry> items;
 
   String get _label {
     if (dayKey == '—') return 'Earlier';
@@ -212,21 +219,7 @@ class _DaySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(_label, style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [for (final e in items) _TrailPiece(entry: e)],
-          ),
-        ],
-      ),
-    );
+    return Text(_label, style: Theme.of(context).textTheme.titleSmall);
   }
 }
 
@@ -252,8 +245,6 @@ class _TrailPiece extends ConsumerWidget {
       // not staff free-text about others).
       final note = (entry.body ?? '').trim();
       return Container(
-        width: 104,
-        height: 104,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: theme.colorScheme.secondaryContainer,
@@ -283,15 +274,15 @@ class _TrailPiece extends ConsumerWidget {
       );
     }
 
-    return SizedBox(
-      width: 104,
-      height: 104,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Material(
-          color: theme.colorScheme.surfaceContainerHigh,
-          child: InkWell(
-            onTap: () => PhotoViewer.open(context, urls: urls),
+    // Fills the grid cell. Stack(expand) so the photo covers the cell and the
+    // InkWell overlay catches the tap (the work_gallery pattern).
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ColoredBox(
+            color: theme.colorScheme.surfaceContainerHigh,
             child: PersonPhotoNetwork(
               urlOrPath: urls.first,
               errorBuilder: (_) => const Center(
@@ -299,7 +290,15 @@ class _TrailPiece extends ConsumerWidget {
               ),
             ),
           ),
-        ),
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => PhotoViewer.open(context, urls: urls),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
