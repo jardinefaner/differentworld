@@ -113,7 +113,9 @@ class _PhotoSourceSheetState extends ConsumerState<PhotoSourceSheet> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     try {
-      await ref.read(photoServiceProvider).clear(
+      await ref
+          .read(photoServiceProvider)
+          .clear(
             entity: widget.entity,
             entityId: widget.entityId,
           );
@@ -168,38 +170,102 @@ class _PhotoSourceSheetState extends ConsumerState<PhotoSourceSheet> {
           // flaky getUserMedia, and on desktop image_picker has no
           // camera at all (tapping it just errored). Web + desktop get
           // the file-picker path instead (docs/PLATFORM_RUBRIC.md, P1).
-          if (isMobileCapturePlatform)
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take a photo'),
-              enabled: !_busy,
-              onTap: () => _pick(ImageSource.camera),
+          // Calm card chooser — two big tappable cards read warmer + are an
+          // easier target than stacked ListTile rows. Off mobile only the
+          // file option shows (no in-app camera), so it fills the row.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                if (isMobileCapturePlatform) ...[
+                  Expanded(
+                    child: _SourceCard(
+                      icon: Icons.photo_camera_outlined,
+                      label: 'Take a photo',
+                      enabled: !_busy,
+                      onTap: () => _pick(ImageSource.camera),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: _SourceCard(
+                    icon: Icons.photo_library_outlined,
+                    // Copy varies by platform — "library" reads as mobile,
+                    // "file" as web/desktop. Both route ImageSource.gallery.
+                    label: isMobileCapturePlatform
+                        ? 'Choose from library'
+                        : 'Choose a file…',
+                    enabled: !_busy,
+                    onTap: () => _pick(ImageSource.gallery),
+                  ),
+                ),
+              ],
             ),
-          ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            // Copy varies by platform — "library" reads as mobile, "file"
-            // reads as web/desktop. The handler routes through
-            // ImageSource.gallery either way (a file picker off-mobile).
-            title: Text(
-              isMobileCapturePlatform ? 'Choose from library' : 'Choose a file…',
-            ),
-            enabled: !_busy,
-            onTap: () => _pick(ImageSource.gallery),
           ),
-          if (widget.hasExisting)
-            ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: theme.colorScheme.error,
+          if (widget.hasExisting) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: TextButton.icon(
+                  onPressed: _busy ? null : _remove,
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                  ),
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Remove current photo'),
+                ),
               ),
-              title: Text(
-                'Remove current photo',
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-              enabled: !_busy,
-              onTap: _remove,
             ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// A big tappable source card for [PhotoSourceSheet] — icon + label on a flat
+/// themed surface. Warmer + an easier target than a stacked ListTile row.
+class _SourceCard extends StatelessWidget {
+  const _SourceCard({
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 30, color: scheme.onSurfaceVariant),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleSmall,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
