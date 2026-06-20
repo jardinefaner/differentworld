@@ -12,8 +12,10 @@ import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/today/child_day_bento_setting.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -57,6 +59,7 @@ class _ChildDayScreenState extends ConsumerState<ChildDayScreen> {
         ),
       );
     }
+    final bento = ref.watch(childDayBentoProvider).value ?? false;
     return EdgeScaffold(
       actions: [
         IconButton(
@@ -66,26 +69,83 @@ class _ChildDayScreenState extends ConsumerState<ChildDayScreen> {
               unawaited(context.push('/growth/${widget.subjectId}')),
         ),
       ],
-      body: ResponsivePage(
-        children: [
-          _Header(subject: subject),
-          const SizedBox(height: 20),
-          _TodaysWords(subjectId: subject.id, groupId: subject.groupId),
-          const SizedBox(height: 20),
-          const _TodaysMissions(),
-          _MoodRow(subjectId: subject.id, groupId: subject.groupId),
-          const SizedBox(height: 20),
-          const _RoomToday(),
-          const SizedBox(height: 20),
-          _AddPhoto(
-            subject: subject,
-            uploading: _uploading,
-            onTap: () => unawaited(_addPhoto(subject)),
-          ),
-          const SizedBox(height: 16),
-          _Gallery(subjectId: subject.id),
-        ],
-      ),
+      body: bento ? _bentoBody(subject) : _flatBody(subject),
+    );
+  }
+
+  /// The classic stacked layout — the default.
+  Widget _flatBody(Subject subject) {
+    return ResponsivePage(
+      children: [
+        _Header(subject: subject),
+        const SizedBox(height: 20),
+        _TodaysWords(subjectId: subject.id, groupId: subject.groupId),
+        const SizedBox(height: 20),
+        const _TodaysMissions(),
+        _MoodRow(subjectId: subject.id, groupId: subject.groupId),
+        const SizedBox(height: 20),
+        const _RoomToday(),
+        const SizedBox(height: 20),
+        _AddPhoto(
+          subject: subject,
+          uploading: _uploading,
+          onTap: () => unawaited(_addPhoto(subject)),
+        ),
+        const SizedBox(height: 16),
+        _Gallery(subjectId: subject.id),
+      ],
+    );
+  }
+
+  /// The opt-in **bento** — identity / words / mood as tiles (the words + mood
+  /// taps stay LIVE inside their own tile, not a single-tap navigation), then
+  /// missions / room / photo / gallery full-width below (each collapses when
+  /// its journey isn't active, so no empty tiles). Same providers as
+  /// [_flatBody]; pure re-layout, reversible from Settings.
+  Widget _bentoBody(Subject subject) {
+    return ResponsivePage(
+      children: [
+        BentoGrid(
+          tiles: [
+            BentoTile(
+              id: 'identity',
+              span: const BentoSpan.wide(),
+              child: _DayTile(child: _Header(subject: subject)),
+            ),
+            BentoTile(
+              id: 'words',
+              span: const BentoSpan(),
+              child: _DayTile(
+                child: _TodaysWords(
+                  subjectId: subject.id,
+                  groupId: subject.groupId,
+                ),
+              ),
+            ),
+            BentoTile(
+              id: 'mood',
+              span: const BentoSpan(),
+              child: _DayTile(
+                child: _MoodRow(
+                  subjectId: subject.id,
+                  groupId: subject.groupId,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        const _TodaysMissions(),
+        const _RoomToday(),
+        const SizedBox(height: 20),
+        _AddPhoto(
+          subject: subject,
+          uploading: _uploading,
+          onTap: () => unawaited(_addPhoto(subject)),
+        ),
+        const SizedBox(height: 16),
+        _Gallery(subjectId: subject.id),
+      ],
     );
   }
 
@@ -114,13 +174,17 @@ class _ChildDayScreenState extends ConsumerState<ChildDayScreen> {
       // Pre-generate the attachment id so an offline `pending:` upload's queue
       // patches THIS row (the CLAUDE.md attachment-id gotcha).
       final attId = const Uuid().v4();
-      final url = await ref.read(photoServiceProvider).uploadOnly(
+      final url = await ref
+          .read(photoServiceProvider)
+          .uploadOnly(
             entityKind: 'attachment',
             entityId: attId,
             picked: picked,
           );
       if (!mounted) return;
-      await ref.read(attachmentActionsProvider).add(
+      await ref
+          .read(attachmentActionsProvider)
+          .add(
             id: attId,
             entityKind: 'subject',
             entityId: subject.id,
@@ -139,25 +203,25 @@ class _ChildDayScreenState extends ConsumerState<ChildDayScreen> {
   }
 
   Future<ImageSource?> _pickSource() => showGlassSheet<ImageSource>(
-        context: context,
-        builder: (sheetCtx) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('Take a photo'),
-                onTap: () => Navigator.of(sheetCtx).pop(ImageSource.camera),
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Choose from library'),
-                onTap: () => Navigator.of(sheetCtx).pop(ImageSource.gallery),
-              ),
-            ],
+    context: context,
+    builder: (sheetCtx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: const Text('Take a photo'),
+            onTap: () => Navigator.of(sheetCtx).pop(ImageSource.camera),
           ),
-        ),
-      );
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: const Text('Choose from library'),
+            onTap: () => Navigator.of(sheetCtx).pop(ImageSource.gallery),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// The drawn-self avatar + name + emerging title + day-of-program.
@@ -169,9 +233,10 @@ class _Header extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
-    final sheet =
-        ref.watch(characterSheetForSubjectProvider(subject.id)).value;
-    final title = ref.watch(actionWordsCollectionProvider(subject.id)).value
+    final sheet = ref.watch(characterSheetForSubjectProvider(subject.id)).value;
+    final title = ref
+        .watch(actionWordsCollectionProvider(subject.id))
+        .value
         ?.emergingTitle;
     final day = ref.watch(currentProgramDayProvider);
     return Column(
@@ -179,10 +244,12 @@ class _Header extends ConsumerWidget {
         GestureDetector(
           onTap: () {
             unawaited(HapticFeedback.selectionClick());
-            unawaited(context.push(
-              '/subjects/${subject.id}/draw',
-              extra: subject.firstName,
-            ));
+            unawaited(
+              context.push(
+                '/subjects/${subject.id}/draw',
+                extra: subject.firstName,
+              ),
+            );
           },
           child: PersonAvatar(
             name: fullName,
@@ -257,7 +324,9 @@ class _TodaysWords extends ConsumerWidget {
                   verb: v,
                   done: day!.done.contains(v.id),
                   onTap: () => unawaited(
-                    ref.read(actionWordsActionsProvider).toggleDone(
+                    ref
+                        .read(actionWordsActionsProvider)
+                        .toggleDone(
                           subjectId: subjectId,
                           date: date,
                           verbId: v.id,
@@ -273,7 +342,11 @@ class _TodaysWords extends ConsumerWidget {
 }
 
 class _VerbChip extends StatelessWidget {
-  const _VerbChip({required this.verb, required this.done, required this.onTap});
+  const _VerbChip({
+    required this.verb,
+    required this.done,
+    required this.onTap,
+  });
   final Verb verb;
   final bool done;
   final VoidCallback onTap;
@@ -356,8 +429,11 @@ class _TodaysMissions extends ConsumerWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.bolt_outlined,
-                    size: 16, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.bolt_outlined,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(m, style: theme.textTheme.bodyMedium),
@@ -378,17 +454,20 @@ Future<void> _showMissionsSheet(BuildContext context, WorldArc arc) {
     builder: (sheetCtx) {
       final theme = Theme.of(sheetCtx);
       Widget bullet(String text) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.bolt_outlined,
-                    size: 16, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
-              ],
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.bolt_outlined,
+              size: 16,
+              color: theme.colorScheme.primary,
             ),
-          );
+            const SizedBox(width: 8),
+            Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+          ],
+        ),
+      );
       return SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -398,8 +477,9 @@ Future<void> _showMissionsSheet(BuildContext context, WorldArc arc) {
             children: [
               Text(
                 'Missions',
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 16),
               const _Label(text: 'Daily · pick 1-2 each day'),
@@ -434,10 +514,13 @@ class _MoodRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final moodEntries = ref
-            .watch(entriesForSubjectProvider(
-              (subjectId: subjectId, kind: EntryKind.mood),
-            ))
+    final moodEntries =
+        ref
+            .watch(
+              entriesForSubjectProvider(
+                (subjectId: subjectId, kind: EntryKind.mood),
+              ),
+            )
             .value ??
         const <Entry>[];
     final today = todayKey();
@@ -465,7 +548,9 @@ class _MoodRow extends ConsumerWidget {
                     onTap: () {
                       unawaited(HapticFeedback.selectionClick());
                       unawaited(
-                        ref.read(entryActionsProvider).recordMood(
+                        ref
+                            .read(entryActionsProvider)
+                            .recordMood(
                               subjectId: subjectId,
                               value: m.value,
                               groupId: groupId,
@@ -619,10 +704,13 @@ class _Gallery extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final attachments = ref
-            .watch(attachmentsForEntityProvider(
-              (kind: 'subject', id: subjectId),
-            ))
+    final attachments =
+        ref
+            .watch(
+              attachmentsForEntityProvider(
+                (kind: 'subject', id: subjectId),
+              ),
+            )
             .value ??
         const <Attachment>[];
     if (attachments.isEmpty) {
@@ -727,6 +815,24 @@ class _GalleryTile extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// A plain bento tile surface for the daily-hub bento — holds an INTERACTIVE
+/// section (words / mood) whose own tap targets stay live, so it's NOT a
+/// single-tap `BentoModule`. Flat themed surface; the child shrink-wraps.
+class _DayTile extends StatelessWidget {
+  const _DayTile({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: const EdgeInsets.all(14), child: child),
     );
   }
 }

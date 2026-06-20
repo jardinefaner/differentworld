@@ -22,6 +22,7 @@ import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/features/spellbook/spellbook_bento_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/features/today/bento_home_setting.dart';
+import 'package:differentworld/features/today/child_day_bento_setting.dart';
 import 'package:differentworld/shared/widgets/capability_locked_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -262,6 +263,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SpellbookBentoTile(),
               const _SettingsDivider(),
               const _ProgramHubBentoTile(),
+              const _SettingsDivider(),
+              const _ChildDayBentoTile(),
               const _SettingsDivider(),
               const _ScheduleGridTile(),
               const _SettingsDivider(),
@@ -505,6 +508,29 @@ class _ProgramHubBentoTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(programHubBentoProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Lays a child's daily hub (`/subjects/:id/day`) out as a bento grid — the
+/// identity / words / mood as tiles (taps stay live), missions / room / gallery
+/// below. Off by default; reversible.
+class _ChildDayBentoTile extends ConsumerWidget {
+  const _ChildDayBentoTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(childDayBentoProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.grid_view_outlined),
+      title: const Text('Child day as bento'),
+      subtitle: const Text(
+        "Lay a child's daily page out as a grid of tiles — same content, "
+        'spreads on a tablet',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(childDayBentoProvider.notifier).set(value: v)),
     );
   }
 }
