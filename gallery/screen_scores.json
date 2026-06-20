@@ -551,10 +551,10 @@
     "band": "ship-confident",
     "is_raw": false,
     "delta": 0.8630583882331848,
-    "dead": 0.71,
+    "dead": 0.72,
     "solid": 0,
     "states": 3,
-    "low_contrast_evidence": 51,
+    "low_contrast_evidence": 59,
     "deductions": []
   },
   {

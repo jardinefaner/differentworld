@@ -3,6 +3,7 @@ import 'package:differentworld/features/heroes/heroes_providers.dart';
 import 'package:differentworld/features/heroes/widgets/hero_card.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -53,23 +54,25 @@ class HeroesHubScreen extends ConsumerWidget {
                     'Add children to your program, then each can build a hero.',
               );
             }
-            // Lazily build rows so a large roster renders only what's on
-            // screen (the header is index 0), instead of every HeroCard at
-            // once. _HeroRow takes its hero as a value from the one
-            // heroesInSpaceProvider map, so no per-row stream is opened.
-            return ListView.builder(
+            // A responsive grid of hero cells — 1 column on phone, 2–3 at
+            // tablet / desktop width. _HeroRow takes its hero as a value from
+            // the one heroesInSpaceProvider map (no per-row stream).
+            return ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-              itemCount: subjects.length + 1,
-              itemBuilder: (context, i) {
-                if (i == 0) {
-                  return const ContentHeader(
-                    title: 'Heroes',
-                    subtitle: 'Each child’s make-believe self',
-                  );
-                }
-                final s = subjects[i - 1];
-                return _HeroRow(subject: s, hero: heroBySubject[s.id]);
-              },
+              children: [
+                const ContentHeader(
+                  title: 'Heroes',
+                  subtitle: 'Each child’s make-believe self',
+                ),
+                const SizedBox(height: 4),
+                CatalogGrid(
+                  minTileWidth: 240,
+                  children: [
+                    for (final s in subjects)
+                      _HeroRow(subject: s, hero: heroBySubject[s.id]),
+                  ],
+                ),
+              ],
             );
           },
         ),
@@ -96,49 +99,43 @@ class _HeroRow extends StatelessWidget {
 
     final h = hero;
     if (h == null) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: FeatureCard(
-          leading: PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
-          title: first,
-          subtitle: 'No hero yet — tap to make one',
-          trailing: const Icon(Icons.add),
-          onTap: edit,
-        ),
+      return FeatureCard(
+        leading: PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
+        title: first,
+        subtitle: 'No hero yet — tap to make one',
+        trailing: const Icon(Icons.add),
+        onTap: edit,
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    first,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  first,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: edit,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Edit'),
-                ),
-              ],
-            ),
+              ),
+              TextButton.icon(
+                onPressed: edit,
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit'),
+              ),
+            ],
           ),
-          GestureDetector(
-            onTap: edit,
-            child: HeroCard(data: h.data, entryId: h.entryId),
-          ),
-        ],
-      ),
+        ),
+        GestureDetector(
+          onTap: edit,
+          child: HeroCard(data: h.data, entryId: h.entryId),
+        ),
+      ],
     );
   }
 }
