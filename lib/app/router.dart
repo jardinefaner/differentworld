@@ -1123,16 +1123,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: LoginScreen(),
             ),
           ),
-          // The omnibox search screen — pushed when the user taps the
-          // bottom composer. Lives inside the ShellRoute so the persistent
-          // omnibox bar + chrome stay mounted across the push. See Wave 17.
+          // The omnibox search page — pushed when the user taps the
+          // bottom bar (or hits Cmd/Ctrl-K). Lives inside the ShellRoute
+          // so the chrome stack + drawer stay mounted across the push.
           //
-          // **NoTransitionPage is load-bearing.** A standard MaterialPage
-          // slide-in transition rotates focus scope mid-flight, which
-          // dismisses the keyboard the user just raised by tapping the
-          // bar. With no transition, focus stays put and the keyboard
-          // stays up — tap-to-search opens the route AND the keyboard
-          // in one step. (Wave 20.)
+          // **NoTransitionPage is kept (Wave-back-to-route 2026-06-20).**
+          // The page owns its own autofocused field, so the keyboard
+          // raises on mount regardless of the transition. But a slide-in
+          // transition would animate the field in WHILE its autofocus
+          // fires, which reads as a jittery "field flies in then the
+          // keyboard pops" — no transition makes tap → page → keyboard
+          // feel like one instant step. (The OLD reason — a transition
+          // rotating focus AWAY from the shell-bar field and dismissing
+          // the IME — no longer applies now that the field is on the
+          // page, but no-transition is still the right feel.)
           GoRoute(
             path: '/search',
             pageBuilder: (_, _) => const NoTransitionPage<void>(

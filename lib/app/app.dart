@@ -6,7 +6,6 @@ import 'package:differentworld/app/theme.dart';
 import 'package:differentworld/core/env/env.dart';
 import 'package:differentworld/core/sync/power_sync_provider.dart';
 import 'package:differentworld/features/invites/deep_link_listener.dart';
-import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/features/photos/photo_upload_queue.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
@@ -78,14 +77,14 @@ class DifferentWorldApp extends ConsumerWidget {
       darkTheme: calmify(outdoor ?? buildDarkTheme(textTheme: fontText)),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
-      // Wrap every routed page in:
-      //   1. AppTextScaleApplier — applies the user's in-app text-size
-      //      override (Settings → Display) on top of the OS dynamic-
-      //      type setting. Layered above OmniboxShortcuts so the
-      //      shortcut chrome itself respects the user's font preference.
-      //   2. OmniboxShortcuts — Cmd+K (mac) / Ctrl+K (everything else)
-      //      summons the command palette from any screen.
-      // All wrappers are shallow — no rebuilds on route changes.
+      // Wrap every routed page in AppTextScaleApplier — applies the user's
+      // in-app text-size override (Settings → Display) on top of the OS
+      // dynamic-type setting. Shallow — no rebuilds on route changes.
+      //
+      // Cmd/Ctrl-K (summon search) is bound in AppShell now, alongside the
+      // omnibox it opens — the single search surface is the `/search` route
+      // (DRY: the old app-wide `OmniboxShortcuts` → `showOmnibox` dialog was
+      // a second search UI; folded into the route).
       //
       // Wave 127: SelectionArea was here in Wave 111 but lived
       // OUTSIDE the routed Navigator/Overlay, causing
@@ -94,9 +93,7 @@ class DifferentWorldApp extends ConsumerWidget {
       // Navigator), where the Overlay ancestor exists.
       builder: (context, child) => OrientationLock(
         child: AppTextScaleApplier(
-          child: OmniboxShortcuts(
-            child: child ?? const SizedBox.shrink(),
-          ),
+          child: child ?? const SizedBox.shrink(),
         ),
       ),
     );

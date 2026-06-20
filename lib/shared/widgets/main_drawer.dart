@@ -5,7 +5,6 @@ import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/identity/archetypes.dart';
-import 'package:differentworld/features/omnibox/omnibox_overlay.dart';
 import 'package:differentworld/features/today/role_tools.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -205,8 +204,13 @@ class MainDrawer extends ConsumerWidget {
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () {
+                      // Capture the router BEFORE popping the drawer — this
+                      // tile's context deactivates the instant the drawer
+                      // route pops, so a push through it would no-op (the
+                      // "post-pop dispatch needs a stable context" invariant).
+                      final router = GoRouter.of(context);
                       Navigator.of(context).pop(); // close drawer first
-                      unawaited(showOmnibox(context));
+                      unawaited(router.push('/search'));
                     },
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),

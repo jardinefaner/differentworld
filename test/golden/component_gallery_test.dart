@@ -16,7 +16,6 @@ import 'package:differentworld/features/family/guardian_drawer.dart';
 import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
-import 'package:differentworld/features/omnibox/omnibox_mode.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
@@ -1753,82 +1752,35 @@ class _SnackbarShape extends StatelessWidget {
   }
 }
 
-/// The omnibox composer (`BottomOmniboxBar`) in all three modes — search,
-/// capture (primary tint + bolt), slash (tertiary tint + terminal).
-class _OmniboxBarSurface extends StatefulWidget {
+/// The bottom omnibox bar (`BottomOmniboxBar`) — a presentational
+/// transparent-glass tap-target that pushes the `/search` page. (It used
+/// to be the editable composer with search / capture / slash modes; the
+/// field + modes now live ON the search page, so the bar is a single
+/// state.)
+class _OmniboxBarSurface extends StatelessWidget {
   const _OmniboxBarSurface();
-
-  @override
-  State<_OmniboxBarSurface> createState() => _OmniboxBarSurfaceState();
-}
-
-class _OmniboxBarSurfaceState extends State<_OmniboxBarSurface> {
-  final _search = TextEditingController();
-  final _capture = TextEditingController(text: 'Owen napped well today');
-  final _slash = TextEditingController(text: '/attendance sunny room');
-  final _f1 = FocusNode();
-  final _f2 = FocusNode();
-  final _f3 = FocusNode();
-
-  @override
-  void dispose() {
-    _search.dispose();
-    _capture.dispose();
-    _slash.dispose();
-    _f1.dispose();
-    _f2.dispose();
-    _f3.dispose();
-    super.dispose();
-  }
-
-  Widget _bar(
-    String label,
-    TextEditingController c,
-    FocusNode f,
-    OmniboxMode mode,
-  ) =>
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 2),
-            child: Text(label, style: Theme.of(context).textTheme.labelSmall),
-          ),
-          SizedBox(
-            height: 76,
-            child: BottomOmniboxBar(
-              controller: c,
-              focusNode: f,
-              mode: mode,
-              onChanged: (_) {},
-              onSubmit: (_) {},
-              onClear: () {},
-              onMicTap: () {},
-              onCollapse: () {},
-            ),
-          ),
-        ],
-      );
 
   @override
   Widget build(BuildContext context) => Stack(
         fit: StackFit.expand,
         children: [
           _themedBackdrop(context),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _bar('search', _search, _f1, OmniboxMode.search),
-                _bar('capture', _capture, _f2, OmniboxMode.capture),
-                _bar('slash', _slash, _f3, OmniboxMode.slash),
+                SizedBox(
+                  height: 76,
+                  child: BottomOmniboxBar(onTap: _noop),
+                ),
               ],
             ),
           ),
         ],
       );
+
+  static void _noop() {}
 }
 
 /// The omnibox suggestion overlay — the full-bleed frosted
@@ -1907,39 +1859,17 @@ class _OmniboxOverlaySurface extends StatelessWidget {
   }
 }
 
-/// The composer bar shown under the overlay (search mode).
-class _OverlayComposer extends StatefulWidget {
+/// The bottom omnibox bar shown under the suggestion overlay surface.
+class _OverlayComposer extends StatelessWidget {
   const _OverlayComposer();
 
   @override
-  State<_OverlayComposer> createState() => _OverlayComposerState();
-}
-
-class _OverlayComposerState extends State<_OverlayComposer> {
-  final _c = TextEditingController(text: 'sunny');
-  final _f = FocusNode();
-
-  @override
-  void dispose() {
-    _c.dispose();
-    _f.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
+  Widget build(BuildContext context) => const SizedBox(
         height: 76,
-        child: BottomOmniboxBar(
-          controller: _c,
-          focusNode: _f,
-          mode: OmniboxMode.search,
-          onChanged: (_) {},
-          onSubmit: (_) {},
-          onClear: () {},
-          onMicTap: () {},
-          onCollapse: () {},
-        ),
+        child: BottomOmniboxBar(onTap: _noop),
       );
+
+  static void _noop() {}
 }
 
 /// A small captioned wrapper for atom plates (the glyph + its label below).

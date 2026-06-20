@@ -11,13 +11,18 @@ import 'package:flutter_test/flutter_test.dart';
 ///     is the same predictable go-home fallback.
 /// Both stemmed from deciding off the unreliable `matchedLocation`; the
 /// shell now feeds the real shell-navigator `canPop()` into this table.
+///
+/// **Wave-back-to-route (2026-06-20)**: the omnibox search surface is a
+/// real `/search` route now, so there is no overlay for back to "close" —
+/// the `closeOverlay` action + `overlayOpen` input were removed. A back
+/// gesture on `/search` is an ordinary `systemPop` (the route is on the
+/// shell navigator's stack, so `shellCanPop` is true).
 void main() {
   group('decideShellBack', () {
     test('a real drill-in pops normally', () {
       expect(
         decideShellBack(
           shellCanPop: true,
-          overlayOpen: false,
           inKidMode: false,
           atHomeRoot: false,
         ),
@@ -29,7 +34,6 @@ void main() {
       expect(
         decideShellBack(
           shellCanPop: true,
-          overlayOpen: false,
           inKidMode: false,
           atHomeRoot: true,
         ),
@@ -37,24 +41,16 @@ void main() {
       );
     });
 
-    test('the overlay always wins — even when the stack could pop', () {
+    test('the /search route pops like any other pushed route', () {
+      // /search is now a real route on the shell navigator's stack, so
+      // back on it is an ordinary pop — no special overlay-close branch.
       expect(
         decideShellBack(
           shellCanPop: true,
-          overlayOpen: true,
           inKidMode: false,
           atHomeRoot: false,
         ),
-        ShellBackAction.closeOverlay,
-      );
-      expect(
-        decideShellBack(
-          shellCanPop: false,
-          overlayOpen: true,
-          inKidMode: true,
-          atHomeRoot: true,
-        ),
-        ShellBackAction.closeOverlay,
+        ShellBackAction.systemPop,
       );
     });
 
@@ -62,7 +58,6 @@ void main() {
       expect(
         decideShellBack(
           shellCanPop: false,
-          overlayOpen: false,
           inKidMode: true,
           atHomeRoot: false,
         ),
@@ -76,7 +71,6 @@ void main() {
         expect(
           decideShellBack(
             shellCanPop: false,
-            overlayOpen: false,
             inKidMode: false,
             atHomeRoot: false,
           ),
@@ -89,7 +83,6 @@ void main() {
       expect(
         decideShellBack(
           shellCanPop: false,
-          overlayOpen: false,
           inKidMode: false,
           atHomeRoot: true,
         ),
@@ -99,17 +92,13 @@ void main() {
   });
 
   group('shellShouldAllowSystemPop', () {
-    test('true only when the shell can pop and no overlay is open', () {
+    test('true exactly when the shell can pop', () {
       expect(
-        shellShouldAllowSystemPop(shellCanPop: true, overlayOpen: false),
+        shellShouldAllowSystemPop(shellCanPop: true),
         isTrue,
       );
       expect(
-        shellShouldAllowSystemPop(shellCanPop: true, overlayOpen: true),
-        isFalse,
-      );
-      expect(
-        shellShouldAllowSystemPop(shellCanPop: false, overlayOpen: false),
+        shellShouldAllowSystemPop(shellCanPop: false),
         isFalse,
       );
     });
@@ -119,15 +108,14 @@ void main() {
       () {
         for (final inKidMode in [true, false]) {
           for (final atHomeRoot in [true, false]) {
-            // overlayOpen=false, shellCanPop=true → allow == true
+            // shellCanPop=true → allow == true
             expect(
-              shellShouldAllowSystemPop(shellCanPop: true, overlayOpen: false),
+              shellShouldAllowSystemPop(shellCanPop: true),
               isTrue,
             );
             expect(
               decideShellBack(
                 shellCanPop: true,
-                overlayOpen: false,
                 inKidMode: inKidMode,
                 atHomeRoot: atHomeRoot,
               ),

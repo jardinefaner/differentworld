@@ -14,55 +14,199 @@ import 'package:differentworld/features/omnibox/omnibox_history.dart';
 import 'package:differentworld/features/omnibox/omnibox_mode.dart';
 import 'package:differentworld/features/omnibox/omnibox_state.dart';
 import 'package:differentworld/features/omnibox/slash_commands.dart';
+import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
-import 'package:differentworld/shared/widgets/shell_metrics.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemChannels;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// The omnibox suggestion list, promoted to a real go_router route
-/// (`/search`) in Wave 17.
+/// The omnibox search surface — the app's "go anywhere" page at
+/// `/search`.
 ///
-/// Architecture before: inline `_OmniboxResultsPanel` overlay inside
-/// `AppShell`'s Stack — special-cased show/hide, scrim, PopScope
-/// intercept, double padding logic, the works. ~600 lines of shell
-/// state managing one transient surface.
+/// **History.** Wave 17 made this a `/search` route. Wave 25 replaced
+/// that with an in-shell OVERLAY because pushing the route rotated the
+/// FocusScope and tore down the Android soft keyboard ("keyboard appears
+/// then disappears") — the editable field lived in the shell BAR, so the
+/// push moved focus away from it. The overlay then caused its own
+/// problems: a left-swipe fell through the shell's PopScope to the
+/// app-exit confirm, and the frosted glass over the page was hard to read.
 ///
-/// Architecture now: this screen is a normal `EdgeScaffold`. The
-/// shell's layout law (Wave 16) handles top + bottom insets. The
-/// chrome `[☰] [←]` renders automatically via the route chrome
-/// stack — back button means "leave search" without any custom
-/// intercept. The omnibox BAR continues to live in `AppShell` so it
-/// persists across the route push (composer stays put across page
-/// transitions — the LLM-shell pattern).
+/// **Wave-back-to-route (2026-06-20).** Back to a real route — but with
+/// the key change that makes it work this time: the input FIELD now lives
+/// **on this page**, autofocused, instead of in the shell bar. With the
+/// field on the page there is no cross-route focus handoff: the page's
+/// `autofocus: true` requests the IME fresh on mount, so the keyboard
+/// comes up and stays up. The bottom bar is now just a tap-target that
+/// pushes here.
 ///
-/// The bar's [TextEditingController] (still in `AppShell`) mirrors
-/// every keystroke into [omniboxQueryProvider]; this screen reads
-/// it and re-renders. Selecting a result pops `/search` first, then
-/// fires the entry's `onSelect` so the destination route lands on a
-/// clean shell, not on top of the search route.
-class OmniboxSearchScreen extends ConsumerWidget {
-  const OmniboxSearchScreen({this.onClose, super.key});
-
-  /// **Wave 25 (2026-05-22)**: when non-null, the screen is being
-  /// used as an IN-SHELL OVERLAY mounted inside AppShell's Stack —
-  /// NOT pushed as a go_router route. The screen renders without its
-  /// `EdgeScaffold` chrome and uses this callback to dismiss instead
-  /// of `context.pop()`.
-  ///
-  /// This is the structural fix for the "keyboard appears then
-  /// disappears" bug. Pushing `/search` as a route triggered a
-  /// FocusScope rotation that closed the soft keyboard on Android.
-  /// Rendering inline avoids the rotation entirely — the bar's
-  /// TextField keeps primary focus, IME stays up.
-  ///
-  /// Null = route mode (legacy path, kept for direct linking + the
-  /// drawer's "Search anything" tile).
-  final VoidCallback? onClose;
+/// The page is a SOLID [EdgeScaffold] (the app `surface`), not glass —
+/// the search results are easy to read. It owns its own
+/// [TextEditingController] + [FocusNode] and mirrors every keystroke into
+/// [omniboxQueryProvider] so the existing result-building reacts exactly
+/// as before. Selecting a result pops `/search` first (capturing a
+/// long-lived root-navigator context so the post-pop dispatch survives the
+/// page tear-down), then fires the entry's `onSelect`.
+class OmniboxSearchScreen extends ConsumerStatefulWidget {
+  const OmniboxSearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OmniboxSearchScreen> createState() =>
+      _OmniboxSearchScreenState();
+}
+
+class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
+  /// The page's own composer field. Seeded from [omniboxQueryProvider]
+  /// on mount (usually empty) and mirrored back into it on every change
+  /// so the result-building below reacts. Autofocused — the IME raises
+  /// on mount with no cross-route focus handoff.
+  final _ctrl = TextEditingController();
+  final _focus = FocusNode();
+
+  /// Subscription to the Deepgram voice controller's updates. Non-null
+  /// only while a session is live; torn down on stop / dispose.
+  StreamSubscription<VoiceUpdate>? _voiceSub;
+
+  /// Mic-button UI state — the "stop" affordance shows while a dictation
+  /// session is active.
+  bool _voiceActive = false;
+
+  /// What the composer's text was BEFORE the user started dictating. We
+  /// restore this prefix and append the transcript so a partial existing
+  /// query isn't blown away by the voice session.
+  String _voicePrefix = '';
+
+  /// Cached voice controller so `dispose()` can cancel without touching
+  /// `ref` (which is unsafe once the element is deactivated).
+  DeepgramVoiceController? _voice;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed the field from whatever's in the query provider (usually
+    // empty). Reading is safe synchronously; writing back is deferred
+    // below to dodge the "modified provider while building" assertion.
+    final seed = ref.read(omniboxQueryProvider);
+    if (seed.isNotEmpty) {
+      _ctrl
+        ..text = seed
+        ..selection = TextSelection.collapsed(offset: seed.length);
+    }
+    _ctrl.addListener(_onCtrlChanged);
+    // AppShell watches omniboxQueryProvider; a synchronous write from
+    // initState (which runs DURING the parent's build phase) trips the
+    // "modified a provider while the widget tree was building" assertion.
+    // Defer to a microtask — fires after this build phase but before the
+    // next frame. Guard on `mounted` because a fast back can dispose us
+    // before the microtask runs. (Only writes when the seed is non-empty;
+    // an empty seed needs no clear since the provider is already empty.)
+    if (seed.isNotEmpty) {
+      unawaited(Future.microtask(() {
+        if (!mounted) return;
+        ref.read(omniboxQueryProvider.notifier).set(seed);
+      }));
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_voiceSub?.cancel());
+    _voiceSub = null;
+    unawaited(_voice?.cancel());
+    _voice = null;
+    _ctrl.removeListener(_onCtrlChanged);
+    _ctrl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  /// Mirror every field change into the query provider so the result
+  /// sections re-render. The field owns the text; this provider is the
+  /// canonical value the section builders read.
+  void _onCtrlChanged() {
+    if (kDebugMode) {
+      debugPrint('[omnibox] queryChanged len=${_ctrl.text.length}');
+    }
+    ref.read(omniboxQueryProvider.notifier).set(_ctrl.text);
+  }
+
+  void _clearField() {
+    _ctrl.clear();
+    // The listener fires on clear() and mirrors the empty string into the
+    // provider, so no explicit notifier.clear() is needed here. Keep the
+    // field focused so the user can keep typing — and force the IME back
+    // up: tapping the clear button briefly moves pointer focus off the
+    // field, and `requestFocus()` ALONE is a no-op for the Android
+    // keyboard when the framework treats focus as already-held (CLAUDE.md
+    // interaction invariant #4), so the explicit show is load-bearing.
+    _focus.requestFocus();
+    unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
+  }
+
+  /// Toggle the Deepgram voice session. Tap once → start recording +
+  /// streaming; tap again → stop and keep the transcript. Errors surface
+  /// via SnackBar. Moved here from AppShell — the mic now lives on the
+  /// search page next to its field.
+  void _toggleVoice() {
+    // The explicit type tells the analyzer the promoted result of `??`
+    // is non-nullable — without it Dart's flow analysis loses the
+    // promotion through the field assignment two lines down.
+    // ignore: omit_local_variable_types
+    final DeepgramVoiceController voice =
+        _voice ?? ref.read(deepgramVoiceProvider);
+    _voice = voice;
+    if (_voiceActive) {
+      unawaited(voice.stop());
+      return;
+    }
+    _voicePrefix = _ctrl.text;
+    setState(() => _voiceActive = true);
+    _focus.requestFocus();
+    // Force the IME up even if Flutter thinks focus never moved.
+    // `requestFocus()` alone is a no-op for the keyboard on Android if
+    // the framework treats focus as already-held. The user started
+    // dictation — they may also want to type alongside, so the keyboard
+    // belongs on screen.
+    unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
+    _voiceSub = voice.updates.listen(_onVoiceUpdate);
+    unawaited(voice.start());
+  }
+
+  void _onVoiceUpdate(VoiceUpdate update) {
+    if (!mounted) return;
+    if (update.state == VoiceState.error) {
+      _voiceActive = false;
+      unawaited(_voiceSub?.cancel());
+      _voiceSub = null;
+      final msg = update.errorMessage ?? 'Voice dictation failed.';
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+      setState(() {});
+      return;
+    }
+    final transcript = update.transcript.trim();
+    final glue = (_voicePrefix.isEmpty || transcript.isEmpty) ? '' : ' ';
+    final combined = '$_voicePrefix$glue$transcript';
+    // Writing to the controller fires _onCtrlChanged, which mirrors the
+    // live transcript into the query provider — so the sections update as
+    // the user dictates.
+    _ctrl
+      ..text = combined
+      ..selection = TextSelection.collapsed(offset: combined.length);
+
+    if (update.state == VoiceState.idle) {
+      _voiceActive = false;
+      unawaited(_voiceSub?.cancel());
+      _voiceSub = null;
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final query = ref.watch(omniboxQueryProvider);
@@ -112,25 +256,19 @@ class OmniboxSearchScreen extends ConsumerWidget {
 
     final activeNodes = q.isEmpty ? idleNodes : nodes;
 
-    // Stable dispatch context — the OmniboxSearchScreen's own
-    // BuildContext deactivates the instant we close (route pop or
-    // overlay setState false), so any post-frame attempt to use it
-    // short-circuits via `mounted == false` and the entry's action
-    // never fires. The root navigator's context lives for the
-    // lifetime of the app, so we grab it BEFORE closing and use it
-    // post-close.
+    // Stable dispatch context — this screen's own BuildContext
+    // deactivates the instant we pop `/search`, so any post-frame
+    // attempt to use it short-circuits via `mounted == false` and the
+    // entry's action never fires. The root navigator's context lives for
+    // the lifetime of the app, so we grab it BEFORE popping and use it
+    // post-close. (CLAUDE.md interaction invariant: post-pop dispatch
+    // needs a stable context.)
     final dispatchCtx = Navigator.of(context, rootNavigator: true).context;
 
-    // Close the panel — overlay onClose if provided, else route pop.
-    // Both flavors return the user to the previous surface and the
-    // dispatchCtx outlives both.
+    // Leave `/search` and return the user to the previous surface. The
+    // dispatchCtx outlives this pop.
     void close() {
-      final cb = onClose;
-      if (cb != null) {
-        cb();
-      } else {
-        context.pop();
-      }
+      if (context.canPop()) context.pop();
     }
 
     void selectEntry(OmniboxEntry entry) {
@@ -147,7 +285,12 @@ class OmniboxSearchScreen extends ConsumerWidget {
     Future<void> saveAsCapture() async {
       final body = query.trim();
       if (body.isEmpty) return;
-      final messenger = ScaffoldMessenger.maybeOf(context);
+      // Read the messenger from the LONG-LIVED root-navigator context,
+      // NOT this page's context: we pop `/search` immediately below, which
+      // deactivates the page context, so a messenger captured from it
+      // would be dead by the time `runReported` shows the success/error
+      // snackbar (it'd silently no-op). `dispatchCtx` outlives the pop.
+      final messenger = ScaffoldMessenger.maybeOf(dispatchCtx);
       final actions = ref.read(captureActionsProvider);
       ref.read(omniboxQueryProvider.notifier).clear();
       close();
@@ -169,109 +312,282 @@ class OmniboxSearchScreen extends ConsumerWidget {
       });
     }
 
-    final body = Center(
-      child: ConstrainedBox(
-        // Same max width the bar uses — keeps the line lengths
-        // readable on tablet / desktop.
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (isCapture) _CaptureHeroCard(text: query, onSave: saveAsCapture),
-            if (recentCaptures.isNotEmpty)
-              _RecentCapturesStrip(
-                captures: recentCaptures,
-                onOpenInbox: () {
-                  ref.read(omniboxQueryProvider.notifier).clear();
-                  close();
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!dispatchCtx.mounted) return;
-                    unawaited(dispatchCtx.push('/captures'));
-                  });
-                },
-              ),
-            if (isSlash)
-              Expanded(
-                child: _SlashCommandList(
-                  matches: slashMatches,
-                  parsedArgs: parsedSlash?.args,
-                  onPick: runSlash,
+    // What hitting return does — mirrors the old shell composer logic so
+    // the field's submit feels identical: capture saves, slash runs the
+    // command, search opens the top-ranked result. Never a dead key.
+    void onSubmit(String text) {
+      if (isCapture) {
+        unawaited(saveAsCapture());
+        return;
+      }
+      if (isSlash) {
+        if (slashMatches.isEmpty) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text('No slash commands match that prefix.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        runSlash(slashMatches.first);
+        return;
+      }
+      if (q.isEmpty) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(
+            content: Text('Type something first, or tap a suggestion.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+      // The first node in the (score-sorted, category-grouped) active list
+      // is the best match. Skip headers to find it.
+      final firstEntry = activeNodes.whereType<_Entry>().firstOrNull;
+      if (firstEntry == null) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text('No match for "$text". Try fewer words.'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+      selectEntry(firstEntry.entry);
+    }
+
+    final hasText = _ctrl.text.isNotEmpty;
+    final searchField = _SearchFieldRow(
+      controller: _ctrl,
+      focusNode: _focus,
+      mode: mode,
+      hasText: hasText,
+      voiceActive: _voiceActive,
+      onSubmit: onSubmit,
+      onClear: _clearField,
+      onMicTap: _toggleVoice,
+    );
+
+    // SOLID page (the app `surface` via EdgeScaffold) — no glass / blur.
+    // The search results are easy to read against the surface. The field
+    // row is PINNED at the top of the body; the results scroll below it.
+    // EdgeScaffold publishes the top-chrome band into MediaQuery.padding
+    // .top, so the SafeArea here clears the floating back pill with no
+    // per-screen topChromeHeight math.
+    final body = SafeArea(
+      bottom: false,
+      child: Center(
+        child: ConstrainedBox(
+          // Same max width the bar uses — keeps line lengths readable on
+          // tablet / desktop.
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              searchField,
+              if (isCapture)
+                _CaptureHeroCard(text: query, onSave: saveAsCapture),
+              if (recentCaptures.isNotEmpty)
+                _RecentCapturesStrip(
+                  captures: recentCaptures,
+                  onOpenInbox: () {
+                    ref.read(omniboxQueryProvider.notifier).clear();
+                    close();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!dispatchCtx.mounted) return;
+                      unawaited(dispatchCtx.push('/captures'));
+                    });
+                  },
                 ),
-              )
-            else if (activeNodes.isEmpty && !isCapture)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: Center(
-                    child: Text(
-                      q.isEmpty
-                          ? 'Type anything you want to do.'
-                          : 'No matches for "$query".',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
+              if (isSlash)
+                Expanded(
+                  child: _SlashCommandList(
+                    matches: slashMatches,
+                    parsedArgs: parsedSlash?.args,
+                    onPick: runSlash,
+                  ),
+                )
+              else if (activeNodes.isEmpty && !isCapture)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Center(
+                      child: Text(
+                        q.isEmpty
+                            ? 'Type anything you want to do.'
+                            : 'No matches for "$query".',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    itemCount: activeNodes.length,
+                    itemBuilder: (_, i) {
+                      final n = activeNodes[i];
+                      if (n is _SectionHeader) {
+                        return _SectionHeaderWidget(label: n.label);
+                      }
+                      if (n is _Entry) {
+                        return _EntryTile(
+                          entry: n.entry,
+                          isPinned: pinnedIds.contains(n.entry.id),
+                          onTap: () => selectEntry(n.entry),
+                          onTogglePin: () => ref
+                              .read(pinnedOmniboxIdsProvider.notifier)
+                              .toggle(n.entry.id),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
                 ),
-              )
-            else
-              Expanded(
-                child: ListView.builder(
-                  // In overlay-mode the suggestion list extends
-                  // edge-to-edge behind the floating chrome (the
-                  // BackdropFilter wrapping us in AppShell takes
-                  // care of the visual). Reserve the chrome height
-                  // + status bar inset HERE so the first row is
-                  // clear of the pills while the scrolling surface
-                  // itself still fills behind them. Route-mode
-                  // (onClose == null) has EdgeScaffold handling
-                  // chrome reservation differently — fall back to
-                  // the original symmetric padding.
-                  // Chrome clearance is handled once, for the whole
-                  // overlay body, by the top inset on the wrapper below
-                  // (overlay mode) / by EdgeScaffold (route mode) — so
-                  // the recent-captures strip + capture hero ABOVE this
-                  // list clear the chrome too, not just the rows. The
-                  // list itself just needs its own breathing room.
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  itemCount: activeNodes.length,
-                  itemBuilder: (_, i) {
-                    final n = activeNodes[i];
-                    if (n is _SectionHeader) {
-                      return _SectionHeaderWidget(label: n.label);
-                    }
-                    if (n is _Entry) {
-                      return _EntryTile(
-                        entry: n.entry,
-                        isPinned: pinnedIds.contains(n.entry.id),
-                        onTap: () => selectEntry(n.entry),
-                        onTogglePin: () => ref
-                            .read(pinnedOmniboxIdsProvider.notifier)
-                            .toggle(n.entry.id),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
 
-    // Route-mode wraps in EdgeScaffold for the layout law + chrome.
-    // Overlay-mode floats inside AppShell's Stack with the glass already
-    // full-bleed behind the chrome — so inset the whole CONTENT below the
-    // chrome here. This is the regression fix: previously only the inner
-    // suggestion list reserved the chrome height, so the recent-captures
-    // strip / capture hero above it rendered behind the floating pills on
-    // first open. Inset once, at the body, and everything clears.
-    if (onClose == null) return EdgeScaffold(body: body);
+    return EdgeScaffold(body: body);
+  }
+}
+
+/// The pinned search-field row at the top of the `/search` page —
+/// leading mode glyph, the autofocused field, a clear (X) when non-empty,
+/// and the voice mic. Mode (search / capture / slash) drives the leading
+/// icon + hint, mirroring the old bottom-bar morphing so the surface
+/// reads the same.
+class _SearchFieldRow extends StatelessWidget {
+  const _SearchFieldRow({
+    required this.controller,
+    required this.focusNode,
+    required this.mode,
+    required this.hasText,
+    required this.voiceActive,
+    required this.onSubmit,
+    required this.onClear,
+    required this.onMicTap,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final OmniboxMode mode;
+  final bool hasText;
+  final bool voiceActive;
+  final ValueChanged<String> onSubmit;
+  final VoidCallback onClear;
+  final VoidCallback onMicTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isCapture = mode == OmniboxMode.capture;
+    final isSlash = mode == OmniboxMode.slash;
+
+    // Three-way visual: search (default), capture (bolt + primary),
+    // slash (terminal + tertiary). Each mode gets a distinct hint so the
+    // user always knows what return will do.
+    final IconData leadingIcon;
+    final Color leadingTint;
+    final String hint;
+    final Color borderColor;
+    if (isCapture) {
+      leadingIcon = Icons.bolt;
+      leadingTint = scheme.primary;
+      hint = 'Save a quick note — press return';
+      borderColor = scheme.primary;
+    } else if (isSlash) {
+      leadingIcon = Icons.terminal;
+      leadingTint = scheme.tertiary;
+      hint = 'Slash command — type /today, /log, /attendance…';
+      borderColor = scheme.tertiary;
+    } else {
+      leadingIcon = Icons.search;
+      leadingTint = scheme.onSurfaceVariant;
+      hint = 'Search anything — pages, actions, kids…';
+      borderColor = scheme.outlineVariant;
+    }
+
     return Padding(
-      padding: EdgeInsets.only(
-        top: MediaQuery.paddingOf(context).top + ShellMetrics.topChromeHeight,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: borderColor, width: 1.5),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 160),
+                  child: Icon(
+                    leadingIcon,
+                    key: ValueKey(leadingIcon),
+                    color: leadingTint,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                // The whole point: the page's field raises the IME on
+                // mount with no cross-route focus handoff. autofocus
+                // requests the keyboard fresh (no manual TextInput.show).
+                autofocus: true,
+                onSubmitted: onSubmit,
+                autocorrect: false,
+                textInputAction: isCapture
+                    ? TextInputAction.done
+                    : TextInputAction.search,
+                textCapitalization: isCapture
+                    ? TextCapitalization.sentences
+                    : TextCapitalization.none,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isCollapsed: true,
+                  contentPadding: EdgeInsets.zero,
+                  hintText: hint,
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                style: theme.textTheme.bodyLarge,
+              ),
+            ),
+            if (hasText && !voiceActive)
+              IconButton(
+                tooltip: 'Clear',
+                icon: Icon(Icons.close, color: scheme.onSurfaceVariant),
+                onPressed: onClear,
+              ),
+            // Voice mic — toggles a live Deepgram dictation session. While
+            // listening, the icon flips to a filled "stop" + tinted error
+            // colour so the user knows the mic is open. Tap again to commit.
+            IconButton(
+              tooltip: voiceActive ? 'Stop dictation' : 'Dictate by voice',
+              icon: Icon(
+                voiceActive ? Icons.stop_circle : Icons.mic,
+                color: voiceActive ? scheme.error : null,
+              ),
+              onPressed: onMicTap,
+            ),
+          ],
+        ),
       ),
-      child: body,
     );
   }
 }

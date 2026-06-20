@@ -1,266 +1,106 @@
-// Canonical interaction-flow test for the omnibox bar.
+// Canonical interaction-flow test for the omnibox.
 //
-// This test exists to catch the class of bug we hit on 2026-05-22:
-// the bar's focus was being stolen by the `/search` route push,
-// closing the soft keyboard, and forcing the user to tap-then-type
-// for every single character. The CLAUDE.md "Interaction invariants"
-// section is the source of truth for what input surfaces must hold;
-// the assertions below mirror those rules.
+// **Wave-back-to-route (2026-06-20).** The omnibox search surface moved
+// from an in-shell overlay (whose editable field lived in the bottom BAR)
+// to a real `/search` route whose OWN autofocused field raises the
+// keyboard. The bottom bar is now a presentational TAP-TARGET that pushes
+// `/search`. So the old assertions about the bar holding focus / surviving
+// a route push no longer apply to the BAR — they apply to the search
+// PAGE's field, which autofocuses on mount.
 //
-// Scope today:
-// * **Unit-level** assertions for the focus-restore timing logic
-//   (`shouldRestoreFocusAfterPush`) — fast, deterministic, runs in
-//   any CI.
-// * **Widget-level** assertions for the [BottomOmniboxBar] widget
-//   in isolation — verifies tap → focus, type → onChanged fires,
-//   mode-aware affordances render.
+// This test exists to keep the CLAUDE.md "Interaction invariants" honest:
+// * The bar is a button — tapping it fires its `onTap` (which, in the
+//   real shell, pushes `/search`).
+// * The bar carries a search affordance (icon + placeholder hint) so a
+//   fresh user reads it as "tap to search".
+// * Tapping the bar does NOT itself put a TextField in focus (there is no
+//   TextField on the bar any more) — the keyboard comes up on the pushed
+//   page, asserted by its own autofocus.
 //
-// What's NOT yet here (deliberately): a full AppShell + go_router
-// integration test that exercises the actual route push and asserts
-// focus is retained across it. That requires bootstrapping ~6
-// providers (viewer, omniboxCatalog, groups, subjects, activities,
-// vehicles, members) plus a router. A TODO marker is below; this
-// file is the right home when that lands.
-//
-// When you add a new input surface (TextField-bearing screen),
-// either extend this file with assertions for it or create a
-// sibling `<surface>_interaction_test.dart` mirroring the shape.
+// The page's field autofocus is exercised by the full-shell integration
+// test sketched at the bottom of this file; until that lands, the live
+// on-device smoke test is the regression gate for "tap bar → page →
+// keyboard up and stays up".
 
 import 'package:differentworld/features/omnibox/bottom_omnibox_bar.dart';
-import 'package:differentworld/features/omnibox/omnibox_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Pure decision: should the focus listener re-grant focus to the
-/// bar because the route push just stole it? Extracted from
-/// AppShell._onFocusChanged so we can unit-test the timing logic
-/// without bootstrapping the full app.
-///
-/// Returns true when focus loss happened within the 500ms window
-/// after a recent `/search` push (the FocusScope rotation steals
-/// focus ~70-300ms after push in practice). Returns false otherwise
-/// — including when no push has happened yet and when the loss is
-/// clearly the user tapping outside (>500ms after push).
-///
-/// Keep in sync with the inline logic in `AppShell._onFocusChanged`.
-@visibleForTesting
-bool shouldRestoreFocusAfterPush({
-  required DateTime? lastPushAt,
-  required DateTime now,
-  Duration window = const Duration(milliseconds: 500),
-}) {
-  if (lastPushAt == null) return false;
-  return now.difference(lastPushAt) <= window;
-}
-
 void main() {
-  group('Focus-restore timing decision', () {
-    // The unit tests for the pure decision function. These would
-    // have caught the bug if we'd written them BEFORE the fix —
-    // the bug was the post-frame callback firing too early (focus
-    // hadn't been lost yet), which is a different decision point
-    // than the focus-loss-event-driven path that fixed it.
-
-    final now = DateTime(2026, 5, 22, 15, 35, 52, 641);
-
-    test('no push yet → do not restore', () {
-      expect(
-        shouldRestoreFocusAfterPush(lastPushAt: null, now: now),
-        isFalse,
-      );
-    });
-
-    test('focus lost 50ms after push → restore', () {
-      final push = now.subtract(const Duration(milliseconds: 50));
-      expect(
-        shouldRestoreFocusAfterPush(lastPushAt: push, now: now),
-        isTrue,
-      );
-    });
-
-    test('focus lost 288ms after push (typical case) → restore', () {
-      // 288ms is the actual observed latency from the live logcat
-      // capture on 2026-05-22, between the push and the FocusScope
-      // rotation event on a Pixel 6.
-      final push = now.subtract(const Duration(milliseconds: 288));
-      expect(
-        shouldRestoreFocusAfterPush(lastPushAt: push, now: now),
-        isTrue,
-      );
-    });
-
-    test('focus lost exactly at the 500ms boundary → restore', () {
-      final push = now.subtract(const Duration(milliseconds: 500));
-      expect(
-        shouldRestoreFocusAfterPush(lastPushAt: push, now: now),
-        isTrue,
-      );
-    });
-
-    test('focus lost 501ms after push → do NOT restore (user action)',
-        () {
-      final push = now.subtract(const Duration(milliseconds: 501));
-      expect(
-        shouldRestoreFocusAfterPush(lastPushAt: push, now: now),
-        isFalse,
-      );
-    });
-
-    test('focus lost 2s after push → do NOT restore', () {
-      final push = now.subtract(const Duration(seconds: 2));
-      expect(
-        shouldRestoreFocusAfterPush(lastPushAt: push, now: now),
-        isFalse,
-      );
-    });
-  });
-
   group('BottomOmniboxBar widget — isolated', () {
-    // These widget tests exercise the bar in isolation with mock
-    // callbacks. They don't push routes; the route-retention
-    // assertion below is the integration-shaped TODO.
-
-    Widget mount({
-      required TextEditingController controller,
-      required FocusNode focusNode,
-      OmniboxMode mode = OmniboxMode.search,
-      bool voiceActive = false,
-      VoidCallback? onMicTap,
-      ValueChanged<String>? onChanged,
-      ValueChanged<String>? onSubmit,
-      VoidCallback? onClear,
-      VoidCallback? onCollapse,
-    }) {
+    Widget mount({required VoidCallback onTap}) {
       return MaterialApp(
         home: Scaffold(
           body: Center(
-            child: BottomOmniboxBar(
-              controller: controller,
-              focusNode: focusNode,
-              mode: mode,
-              voiceActive: voiceActive,
-              onChanged: onChanged ?? (_) {},
-              onSubmit: onSubmit ?? (_) {},
-              onClear: onClear ?? () {},
-              onMicTap: onMicTap ?? () {},
-              onCollapse: onCollapse ?? () {},
-            ),
+            child: BottomOmniboxBar(onTap: onTap),
           ),
         ),
       );
     }
 
-    testWidgets('tap on the field gives it focus', (tester) async {
-      final controller = TextEditingController();
-      final focus = FocusNode();
-      addTearDown(controller.dispose);
-      addTearDown(focus.dispose);
+    testWidgets('tapping the bar fires onTap (it is a button, not a field)',
+        (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(mount(onTap: () => taps++));
 
-      await tester.pumpWidget(
-        mount(controller: controller, focusNode: focus),
-      );
-      expect(focus.hasFocus, isFalse);
-
-      await tester.tap(find.byType(TextField));
+      // The whole pill is one tap target — tap the search glyph.
+      await tester.tap(find.byIcon(Icons.search));
       await tester.pump();
 
       expect(
-        focus.hasFocus,
-        isTrue,
-        reason: 'Tapping the bar must give the field focus '
-            'within one pump — this is the "snappy tap" rule.',
+        taps,
+        equals(1),
+        reason: 'The bar is a tap-target that pushes /search; its '
+            'onTap must fire on tap. (CLAUDE.md interaction rule: '
+            'a tap must dispatch, never a silent no-op.)',
       );
     });
 
-    testWidgets('typing fires onChanged with the entered text',
+    testWidgets('the bar has NO editable field (input lives on the page)',
         (tester) async {
-      final controller = TextEditingController();
-      final focus = FocusNode();
-      addTearDown(controller.dispose);
-      addTearDown(focus.dispose);
-      String? captured;
+      await tester.pumpWidget(mount(onTap: () {}));
 
-      await tester.pumpWidget(
-        mount(
-          controller: controller,
-          focusNode: focus,
-          onChanged: (v) => captured = v,
-        ),
+      expect(
+        find.byType(TextField),
+        findsNothing,
+        reason: 'The editable composer field moved onto the /search '
+            'page (autofocused). The bar must not host a TextField — '
+            'that is what made the cross-route focus handoff tear down '
+            'the IME in the old design.',
       );
-      await tester.enterText(find.byType(TextField), 'a');
-      await tester.pump();
-
-      expect(captured, equals('a'));
-      expect(controller.text, equals('a'));
     });
 
-    // The bar uses a SOLID icon-weight vocabulary for its glyphs
-    // (bolt / terminal / mic / close) — not the outlined/navigation
-    // variants other surfaces use. These assertions must track the
-    // constants in bottom_omnibox_bar.dart; update both together.
-    testWidgets('capture mode renders the lightning-bolt leading icon',
+    testWidgets('the bar shows a search affordance (icon + placeholder hint)',
         (tester) async {
-      final controller = TextEditingController();
-      final focus = FocusNode();
-      addTearDown(controller.dispose);
-      addTearDown(focus.dispose);
+      await tester.pumpWidget(mount(onTap: () {}));
 
-      await tester.pumpWidget(
-        mount(
-          controller: controller,
-          focusNode: focus,
-          mode: OmniboxMode.capture,
-        ),
+      expect(find.byIcon(Icons.search), findsOneWidget);
+      expect(
+        find.textContaining('Search anything'),
+        findsOneWidget,
+        reason: 'A fresh user must read the pill as a search box even '
+            'though it is a button — the placeholder hint carries that.',
       );
-
-      expect(find.byIcon(Icons.bolt), findsOneWidget);
     });
 
-    testWidgets('slash mode renders the terminal leading icon',
+    testWidgets('the bar exposes a Semantics button for screen readers',
         (tester) async {
-      final controller = TextEditingController();
-      final focus = FocusNode();
-      addTearDown(controller.dispose);
-      addTearDown(focus.dispose);
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(mount(onTap: () {}));
 
-      await tester.pumpWidget(
-        mount(
-          controller: controller,
-          focusNode: focus,
-          mode: OmniboxMode.slash,
-        ),
+      // The pill renders ONE merged button node (InkWell + the explicit
+      // Semantics). Match by RegExp because the node's label merges the
+      // "Search" label with the placeholder hint text — both are read to
+      // the user, which is fine; what matters is a tappable button
+      // labelled with "Search". (a11y invariant.)
+      expect(
+        find.bySemanticsLabel(RegExp('Search')),
+        findsOneWidget,
+        reason: 'The tap-target must announce itself as a button to '
+            'VoiceOver / TalkBack.',
       );
-
-      expect(find.byIcon(Icons.terminal), findsOneWidget);
+      handle.dispose();
     });
-
-    testWidgets('mic button calls onMicTap', (tester) async {
-      final controller = TextEditingController();
-      final focus = FocusNode();
-      addTearDown(controller.dispose);
-      addTearDown(focus.dispose);
-      var taps = 0;
-
-      await tester.pumpWidget(
-        mount(
-          controller: controller,
-          focusNode: focus,
-          onMicTap: () => taps++,
-        ),
-      );
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump();
-
-      expect(taps, equals(1));
-    });
-
-    // NOTE: a "back arrow when focused" test belongs at the
-    // AppShell level, not here — BottomOmniboxBar reads
-    // `focusNode.hasFocus` at build time but doesn't subscribe to
-    // focus changes itself. Its parent (AppShell) rebuilds it in
-    // production. Asserting that behavior in isolation gives a
-    // false negative.
   });
 
   // TODO(integration): A full-shell test that:
@@ -269,14 +109,17 @@ void main() {
   //   2. Overrides viewerProvider, omniboxCatalogProvider, groupsProvider,
   //      subjectsInSpaceProvider, activitiesProvider, locationsProvider,
   //      vehiclesProvider, membersInSpaceProvider with minimal fakes
-  //   3. `tester.tap(find.byType(TextField))` → assert focus on bar
-  //   4. `tester.enterText(..., 'a')` → triggers _onQueryChanged
-  //   5. `tester.pumpAndSettle()` to let the route push complete
-  //   6. Assert: `tester.binding.focusManager.primaryFocus` is STILL
-  //      the bar's FocusNode (NOT a focus traversable inside /search)
+  //   3. `tester.tap(find.byType(BottomOmniboxBar))` → asserts `/search`
+  //      pushed
+  //   4. After `pumpAndSettle()`, asserts the search page's TextField
+  //      holds primary focus (autofocus raised the IME) — the
+  //      Wave-back-to-route guarantee that the keyboard comes up AND stays
+  //      up because the field is on the page (no cross-route handoff).
+  //   5. `tester.enterText(..., 'a')` → the result sections rebuild.
+  //   6. Tapping a suggestion pops `/search` and dispatches the entry's
+  //      action via the captured root-navigator context.
   //
-  // This is the test that would have caught today's bug in CI. It's
-  // bigger than the others (provider wiring is invasive) and is left
-  // as a follow-up — until then, the live-logcat smoke test on a real
-  // device is the regression gate.
+  // It's bigger than the others (provider wiring is invasive) and is left
+  // as a follow-up — until then, the live on-device smoke test is the
+  // regression gate.
 }
