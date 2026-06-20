@@ -274,6 +274,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _ScheduleDeckTile(),
               const _SettingsDivider(),
+              const _ScheduleDeckFollowTile(),
+              const _SettingsDivider(),
               const _HeroesTile(),
               const _SettingsDivider(),
               const _RoutinesTile(),
@@ -606,6 +608,28 @@ class _ScheduleDeckTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(scheduleDeckProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Whether the schedule deck follows the clock — auto-advancing to the live
+/// block at each boundary so "what's needed now" stays in front. On by default.
+class _ScheduleDeckFollowTile extends ConsumerWidget {
+  const _ScheduleDeckFollowTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(scheduleDeckFollowsNowProvider).value ?? true;
+    return SwitchListTile(
+      secondary: const Icon(Icons.update_outlined),
+      title: const Text('Deck follows the clock'),
+      subtitle: const Text(
+        'Auto-advance to the live block as the day moves — never mid-swipe',
+      ),
+      value: on,
+      onChanged: (v) => unawaited(
+        ref.read(scheduleDeckFollowsNowProvider.notifier).set(value: v),
+      ),
     );
   }
 }

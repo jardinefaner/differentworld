@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
+import 'package:differentworld/features/schedule/schedule_deck_setting.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -128,14 +131,33 @@ class ScheduleSlide extends ConsumerWidget {
         ? Icons.event_busy_outlined
         : Icons.local_activity_outlined;
 
-    // Primary verb: a field trip is always actionable (trip tools); an
-    // on-site block surfaces "take attendance" only while it's live.
+    // The block's OWN tool: the primary launches exactly what this block needs
+    // right now. A field trip opens trip tools; a curriculum session or an
+    // activity launches its runner (the /arc teleprompter); a plain live block
+    // opens attendance. A "Prep" pill opens the block's details (supplies,
+    // lead, the linked session) — primary launches, a tool opens prep.
+    final session = block.curriculumSessionSlug == null
+        ? null
+        : findSessionBySlug(block.curriculumSessionSlug!);
+    final isDone = phase == SlidePhase.done;
     SlideAction? primary;
     if (isField) {
       primary = SlideAction(
-        label: 'Trip details',
+        label: 'Trip tools',
         icon: Icons.fact_check_outlined,
         onPressed: () => context.push('/trips/${block.id}'),
+      );
+    } else if (session != null && !isDone) {
+      primary = SlideAction(
+        label: 'Start the session',
+        icon: Icons.play_circle_outline,
+        onPressed: () => context.push('/arc', extra: session.title),
+      );
+    } else if (activity != null && !isDone) {
+      primary = SlideAction(
+        label: 'Start the activity',
+        icon: Icons.play_circle_outline,
+        onPressed: () => context.push('/arc', extra: activity!.name),
       );
     } else if (phase == SlidePhase.now && !isBreak && !isClosed) {
       primary = SlideAction(
@@ -145,7 +167,25 @@ class ScheduleSlide extends ConsumerWidget {
       );
     }
 
+    // The block's other tools, as pills. Attendance becomes a pill when it
+    // isn't the primary (a live activity / session / trip).
+    final attendanceIsPrimary = primary?.label == 'Take attendance';
     final actions = <SlideAction>[
+      if (canEdit && onEdit != null)
+        SlideAction(
+          label: 'Prep',
+          icon: Icons.checklist_outlined,
+          onPressed: onEdit!,
+        ),
+      if (!attendanceIsPrimary &&
+          phase == SlidePhase.now &&
+          !isBreak &&
+          !isClosed)
+        SlideAction(
+          label: 'Attendance',
+          icon: Icons.how_to_reg_outlined,
+          onPressed: () => context.push('/groups/$groupId/attendance'),
+        ),
       if (canObserve &&
           !isClosed &&
           (phase == SlidePhase.now || phase == SlidePhase.done))
@@ -172,14 +212,6 @@ class ScheduleSlide extends ConsumerWidget {
           )
         : null;
 
-    final tertiary = (canEdit && onEdit != null)
-        ? SlideAction(
-            label: 'Edit block',
-            icon: Icons.edit_outlined,
-            onPressed: onEdit!,
-          )
-        : null;
-
     return _SlideFrame(
       background: bg,
       accentEdge: accentEdge,
@@ -195,7 +227,6 @@ class ScheduleSlide extends ConsumerWidget {
         body: body,
         primary: primary,
         actions: actions,
-        tertiary: tertiary,
         onCast: onCast,
       ),
     );
@@ -269,6 +300,10 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
   int _index = 0;
   int _lastCount = -1;
 
+  /// The live block id last seen, so follow-now jumps only when it CHANGES
+  /// (a boundary crossing), never every 30s tick or mid-swipe.
+  String? _lastLiveBlockId;
+
   @override
   void dispose() {
     _controller?.dispose();
@@ -286,6 +321,11 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
     final viewer = ref.watch(viewerProvider);
     final canEdit = viewer.canManageSchedule || viewer.canManageSpace;
     final canObserve = viewer.canObserve;
+    // Watching the live block gives the deck a 30s heartbeat (the provider
+    // re-evaluates on a timer), so it can advance at block boundaries with no
+    // data change; follow-now uses its id to detect a crossing.
+    final live = ref.watch(liveBlockForGroupProvider(widget.group.id));
+    final followsNow = ref.watch(scheduleDeckFollowsNowProvider).value ?? true;
 
     return blocksAsync.when(
       loading: () => const LoadingSlot(),
@@ -332,6 +372,32 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
           _controller = PageController(initialPage: initial);
           _index = initial;
           _lastCount = blocks.length;
+        }
+
+        // Follow the clock: when the live block CHANGES (a boundary crossing),
+        // auto-advance to it. Only on the change — never every tick — so a
+        // staffer peeking ahead/back isn't yanked. `_lastLiveBlockId` updates
+        // even when follow-now is off, so toggling it on later doesn't jump on
+        // a stale crossing.
+        final liveId = live?.blockId;
+        if (liveId != _lastLiveBlockId) {
+          _lastLiveBlockId = liveId;
+          if (followsNow && liveId != null) {
+            final liveIdx = blocks.indexWhere((b) => b.id == liveId);
+            if (liveIdx >= 0) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                unawaited(
+                  _controller?.animateToPage(
+                        liveIdx,
+                        duration: const Duration(milliseconds: 360),
+                        curve: Curves.easeOutCubic,
+                      ) ??
+                      Future<void>.value(),
+                );
+              });
+            }
+          }
         }
 
         return Column(

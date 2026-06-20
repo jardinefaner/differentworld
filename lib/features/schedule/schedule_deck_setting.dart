@@ -33,3 +33,30 @@ class ScheduleDeckNotifier extends AsyncNotifier<bool> {
     state = AsyncData(value);
   }
 }
+
+/// Whether the deck **follows the clock** — auto-advancing to the live block as
+/// the day crosses block boundaries, so "what's needed currently" is always the
+/// slide in front. **Defaults to ON.** When off, the deck opens on the live
+/// block but stays where you swipe it. Only auto-jumps at a boundary (when the
+/// live block actually changes), never mid-swipe, so it can't yank a slide out
+/// from under you while you peek ahead.
+final scheduleDeckFollowsNowProvider =
+    AsyncNotifierProvider<ScheduleDeckFollowsNowNotifier, bool>(
+      ScheduleDeckFollowsNowNotifier.new,
+    );
+
+class ScheduleDeckFollowsNowNotifier extends AsyncNotifier<bool> {
+  static const _kKey = 'settings.schedule_deck_follow';
+
+  @override
+  Future<bool> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kKey) ?? true;
+  }
+
+  Future<void> set({required bool value}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kKey, value);
+    state = AsyncData(value);
+  }
+}

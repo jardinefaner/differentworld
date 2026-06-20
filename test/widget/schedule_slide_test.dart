@@ -30,6 +30,7 @@ Future<void> _pump(
   WidgetTester tester, {
   required ScheduleBlock block,
   required SlidePhase phase,
+  Activity? activity,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -41,12 +42,13 @@ Future<void> _pump(
             height: 600,
             child: ScheduleSlide(
               block: block,
-              activity: null,
+              activity: activity,
               location: null,
               phase: phase,
               groupId: 'g1',
               canEdit: true,
               canObserve: true,
+              onEdit: () {},
             ),
           ),
         ),
@@ -55,6 +57,16 @@ Future<void> _pump(
   );
   await tester.pump();
 }
+
+Activity _activity(String name) => Activity(
+  id: 'a1',
+  spaceId: 's1',
+  name: name,
+  isOutdoor: 0,
+  capabilities: '{}',
+  createdAt: '2026-06-19T00:00:00.000Z',
+  updatedAt: '2026-06-19T00:00:00.000Z',
+);
 
 void main() {
   group('ScheduleSlide phase → actions', () {
@@ -100,10 +112,30 @@ void main() {
       );
 
       expect(find.textContaining('NEXT'), findsOneWidget);
-      expect(find.text('Trip details'), findsOneWidget);
+      expect(find.text('Trip tools'), findsOneWidget);
       // Not live yet → no attendance verb, no cast.
       expect(find.text('Take attendance'), findsNothing);
       expect(find.text('Cast to room'), findsNothing);
+    });
+
+    testWidgets('a live activity block launches its tool, attendance demotes '
+        'to a pill', (tester) async {
+      await _pump(
+        tester,
+        block: _block(kind: BlockKind.onSite, title: 'Math games'),
+        phase: SlidePhase.now,
+        activity: _activity('Math games'),
+      );
+
+      // The primary launches the block's own tool (the /arc runner)…
+      expect(find.text('Start the activity'), findsOneWidget);
+      // …and attendance is still available, now as a tool pill.
+      expect(find.text('Attendance'), findsOneWidget);
+      // The generic "Take attendance" primary is gone (the activity won it).
+      expect(find.text('Take attendance'), findsNothing);
+      // Prep + cast are present on a live block.
+      expect(find.text('Prep'), findsOneWidget);
+      expect(find.text('Cast to room'), findsOneWidget);
     });
   });
 }
