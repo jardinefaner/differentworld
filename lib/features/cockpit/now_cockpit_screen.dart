@@ -6,6 +6,7 @@ import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/omnibox_inset.dart';
 import 'package:differentworld/shared/widgets/slide_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,30 @@ class NowCockpitScreen extends ConsumerStatefulWidget {
 
 class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
   bool _curiosityOpen = false;
+  late final FillUnderOmnibox _fillUnder;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cache the notifier (don't touch ref in dispose). The cockpit's beat fills
+    // edge-to-edge, so let it run UNDER the bottom bar too — kills the dark
+    // strip behind the (transparent) omnibox bar. Deferred past this build
+    // phase (AppShell watches the provider) + mounted-guarded against a same-
+    // frame pop.
+    _fillUnder = ref.read(fillUnderOmniboxProvider.notifier);
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        _fillUnder.enter();
+      }),
+    );
+  }
+
+  @override
+  void dispose() {
+    _fillUnder.exit();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
