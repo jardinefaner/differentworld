@@ -210,7 +210,9 @@ class _BeatBody extends StatelessWidget {
       ContextTone.go => (s.primaryContainer, s.onPrimaryContainer),
       ContextTone.trip => (s.tertiaryContainer, s.onTertiaryContainer),
       ContextTone.pickup => (s.secondaryContainer, s.onSecondaryContainer),
-      ContextTone.calm => (s.surfaceContainerHighest, s.onSurface),
+      // Calm/resting uses the base `surface` — the ONE cohesive app background,
+      // same as every other screen (active beats keep their moment colour).
+      ContextTone.calm => (s.surface, s.onSurface),
     };
 
 /// The active beat's background colour — mirrors what each card paints, so the
@@ -221,14 +223,14 @@ Color _beatBg(ColorScheme scheme, CockpitBeat beat, ContextLead? lead) =>
     switch (beat) {
       CockpitBeat.goodMorning => scheme.primaryContainer,
       CockpitBeat.reveal => scheme.primary,
-      CockpitBeat.send || CockpitBeat.closed => scheme.surfaceContainerHighest,
+      CockpitBeat.send || CockpitBeat.closed => scheme.surface,
       CockpitBeat.gettingReady ||
       CockpitBeat.now ||
       CockpitBeat.fieldTrip ||
       CockpitBeat.pickup =>
         lead != null
             ? _toneColors(scheme, lead.tone).$1
-            : scheme.surfaceContainerHighest,
+            : scheme.surface,
     };
 
 /// Full-bleed beat frame: the [bg] colour fills the surface (the emotional
@@ -347,7 +349,7 @@ class _AfterPickupCard extends StatelessWidget {
     final isSend = beat == CockpitBeat.send;
     return _beatFrame(
       context,
-      bg: scheme.surfaceContainerHighest,
+      bg: scheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
