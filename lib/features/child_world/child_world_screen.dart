@@ -101,6 +101,11 @@ class ChildWorldScreen extends ConsumerWidget {
                     span: const BentoSpan.wide(),
                     child: _PracticeRoleTile(subject: practice),
                   ),
+                BentoTile(
+                  id: 'trail',
+                  span: const BentoSpan.wide(),
+                  child: _TrailTile(subjectId: subjectId, childName: name),
+                ),
               ],
             ),
           ],
@@ -126,6 +131,37 @@ class _PracticeRoleTile extends StatelessWidget {
           'Pick a role — each tool captures to ${subject.subjectName}’s work',
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/activity/roles', extra: subject),
+    );
+  }
+}
+
+/// The cumulative-work trail entry — a glanceable count + the door to the full
+/// time-lapse view (`/subjects/:id/trail`).
+class _TrailTile extends ConsumerWidget {
+  const _TrailTile({required this.subjectId, required this.childName});
+
+  final String subjectId;
+  final String childName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref
+            .watch(
+              entriesForSubjectProvider(
+                (subjectId: subjectId, kind: EntryKind.workSample),
+              ),
+            )
+            .value
+            ?.length ??
+        0;
+    return FeatureCard(
+      leading: const Text('🎞️', style: TextStyle(fontSize: 28)),
+      title: 'Their trail',
+      subtitle: count == 0
+          ? 'Everything $childName makes shows up here'
+          : '$count pieces — watch it grow',
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push('/subjects/$subjectId/trail'),
     );
   }
 }

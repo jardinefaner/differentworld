@@ -139,6 +139,7 @@ import 'package:differentworld/features/staff/staff_ladder_screen.dart';
 import 'package:differentworld/features/story/kid_story_screen.dart';
 import 'package:differentworld/features/story/room_story_screen.dart';
 import 'package:differentworld/features/story/story_showcase_screen.dart';
+import 'package:differentworld/features/subjects/child_trail_screen.dart';
 import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
@@ -810,6 +811,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => RouteTitle(
                   title: 'World',
                   child: ChildWorldScreen(
+                    subjectId: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+              // The cumulative WORK trail — everything they've made, by day,
+              // with the day-bar filmstrip (the "time-lapse").
+              GoRoute(
+                path: 'subjects/:id/trail',
+                builder: (_, state) => RouteTitle(
+                  title: 'Trail',
+                  child: ChildTrailScreen(
                     subjectId: state.pathParameters['id']!,
                   ),
                 ),
