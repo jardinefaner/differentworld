@@ -99,6 +99,7 @@ import 'package:differentworld/features/live_session/board_screen.dart';
 import 'package:differentworld/features/live_session/cast_screen.dart';
 import 'package:differentworld/features/live_session/live_game_screen.dart';
 import 'package:differentworld/features/live_session/live_session.dart';
+import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/messages/message_thread_screen.dart';
 import 'package:differentworld/features/missions/mission_board_screen.dart';
 import 'package:differentworld/features/missions/mission_do_screen.dart';
@@ -1220,6 +1221,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => BlockPresentScreen(
               groupId: state.pathParameters['groupId']!,
             ),
+          ),
+          // The GENERIC present surface (docs/VISION.md 2026-06-20: "everything
+          // could be turned into slides"). Any feature builds a List<PresentSlide>
+          // and throws it here via presentSlides(); the deck rides go_router
+          // `extra`. Immersive via castImmersiveProvider.
+          GoRoute(
+            path: '/present-deck',
+            builder: (_, state) {
+              final args = state.extra;
+              return args is PresentDeckArgs
+                  ? SlidePresentScreen(title: args.title, slides: args.slides)
+                  : const SlidePresentScreen(
+                      title: '',
+                      slides: <PresentSlide>[],
+                    );
+            },
           ),
           // "Play today" — the whole day on rails, one immersive run of show
           // assembled from this week's world (docs/VISION.md "day, on rails").

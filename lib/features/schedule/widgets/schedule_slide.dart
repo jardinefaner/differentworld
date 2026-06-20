@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -335,6 +336,25 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
 
         return Column(
           children: [
+            // Cast the WHOLE day as a deck to the room — the generic present
+            // engine, fed the day's blocks as slides.
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                child: TextButton.icon(
+                  onPressed: () => unawaited(
+                    presentSlides(
+                      context,
+                      title: widget.group.name,
+                      slides: _daySlides(blocks, phases, activities, locations),
+                    ),
+                  ),
+                  icon: const Icon(Icons.cast, size: 18),
+                  label: const Text('Present the day'),
+                ),
+              ),
+            ),
             _DeckRail(
               phases: phases,
               index: _index.clamp(0, blocks.length - 1),
@@ -444,6 +464,55 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
       ),
     );
   }
+}
+
+/// The day's blocks as a deck of [PresentSlide]s for the generic present
+/// engine — eyebrow (phase · time range), title, location, kind icon.
+List<PresentSlide> _daySlides(
+  List<ScheduleBlock> blocks,
+  List<SlidePhase> phases,
+  List<Activity> activities,
+  List<Location> locations,
+) {
+  final out = <PresentSlide>[];
+  for (var i = 0; i < blocks.length; i++) {
+    final b = blocks[i];
+    final activity = b.activityId == null
+        ? null
+        : activities.where((a) => a.id == b.activityId).firstOrNull;
+    final loc = b.locationOverrideId == null
+        ? null
+        : locations.where((l) => l.id == b.locationOverrideId).firstOrNull;
+    final blockTitle = b.title?.trim() ?? '';
+    final title = blockTitle.isNotEmpty
+        ? blockTitle
+        : (activity?.name ??
+              (b.kind == BlockKind.breakBlock ? 'Break' : 'Activity'));
+    final start = DateTime.tryParse(b.startAt)?.toLocal();
+    final end = DateTime.tryParse(b.endAt)?.toLocal();
+    final timeRange = (start == null || end == null)
+        ? ''
+        : '${timeOfDay(start)} – ${timeOfDay(end)}';
+    final phaseLabel = switch (phases[i]) {
+      SlidePhase.now => 'NOW',
+      SlidePhase.next => 'NEXT',
+      SlidePhase.done => 'DONE',
+      SlidePhase.later => 'LATER',
+    };
+    out.add(
+      PresentSlide(
+        eyebrow: timeRange.isEmpty ? phaseLabel : '$phaseLabel · $timeRange',
+        title: title,
+        subtitle: loc?.name,
+        icon: b.kind == BlockKind.fieldTrip
+            ? Icons.directions_bus_outlined
+            : b.kind == BlockKind.breakBlock
+            ? Icons.local_cafe_outlined
+            : Icons.local_activity_outlined,
+      ),
+    );
+  }
+  return out;
 }
 
 /// The day's run-of-show as a thin rail of segments — one per block, coloured

@@ -411,6 +411,26 @@ once it has a home.
   true one-slide-at-a-time cockpit — or the bento tile is the block and the deck
   is the scroll? The cockpit fork ⑤ (Today vs. one-beat) is exactly this
   question.)
+- **2026-06-20** — **Anything can become slides — present/cast is a PRIMARY
+  use, not a schedule feature.** In the user's words: *"everything could be
+  turned into slides though… like it's one of the things people would use it
+  for, the cast/present."* This answers fork (a) of the 2026-06-19 slide dream:
+  the slide is NOT just the schedule block — it's ANY content. A child's day, a
+  single moment, the words of the day, a week's project, a child's growth arc, a
+  discussion question — each is a deck of slides someone would put on the room's
+  screen. The cast/present is a top-of-funnel reason people open the app:
+  *"let's put it on the big screen."* So the slide work shouldn't stay welded to
+  the schedule — it wants a **reusable present engine**: a generic `PresentSlide`
+  content shape + one immersive, swipeable, castable surface that ANY feature
+  fills with a `List<PresentSlide>` and throws to the room, the same way
+  `showCastToRoom` is offered everywhere. The schedule deck (shipped) is the
+  first consumer; the cohort's day, a child's day, a moment, a project all become
+  one-line `presentSlides(context, title, slides)` calls. The lift: extract the
+  block-present projection (`block_present_screen`) into a content-agnostic
+  `SlidePresentScreen(slides)`, then sprout "Cast" affordances across the app so
+  presenting is never more than a tap from whatever you're looking at. (Threads:
+  the just-shipped `SlideBlock` + `block_present_screen`, `showCastToRoom`, #14
+  present big / control small, #18 the classroom remote for *everything*.)
 - **2026-06-13** — **The day is a fixed ROUTINE: morning intro, then play +
   write on paper, cumulative.** In the user's words: *"i want the class to be
   routine, all the worlds intro in the morning, and rest are play time and
