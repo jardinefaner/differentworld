@@ -11,12 +11,14 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/heroes/heroes_providers.dart';
+import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,6 +56,9 @@ class ChildWorldScreen extends ConsumerWidget {
       background: skin == null
           ? null
           : RoomSkinBackground(skin: skin, decal: true),
+      actions: [
+        _CastWeekButton(subjectKey: key, childName: name),
+      ],
       body: SafeArea(
         bottom: false,
         child: ListView(
@@ -88,6 +93,74 @@ class ChildWorldScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// Cast a child's WEEK to the room (docs/VISION.md 2026-06-20) — their world,
+/// intention, project, and today's answer as a deck of slides via the generic
+/// present engine. The opening slide always shows; the rest appear as the child
+/// fills them in.
+class _CastWeekButton extends ConsumerWidget {
+  const _CastWeekButton({required this.subjectKey, required this.childName});
+
+  final SubjectWeekKey subjectKey;
+  final String childName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final world = ref.watch(currentWorldProvider);
+    final intention = ref.watch(weeklyIntentionProvider(subjectKey)).value;
+    final project = ref.watch(childProjectProvider(subjectKey)).value;
+    final answer = ref.watch(todaysAnswerProvider(subjectKey.subjectId)).value;
+    final accent = world?.color;
+
+    return PrimaryActionButton(
+      tooltip: 'Cast to the room',
+      icon: Icons.cast,
+      onPressed: () {
+        final slides = <PresentSlide>[
+          PresentSlide(
+            eyebrow: 'THIS WEEK',
+            title: '$childName’s world',
+            subtitle: world?.name,
+            emoji: world?.emoji,
+            accent: accent,
+          ),
+          if (intention != null)
+            PresentSlide(
+              eyebrow: 'THE INTENTION',
+              title: intention,
+              icon: Icons.flag_outlined,
+              accent: accent,
+            ),
+          if (project != null)
+            PresentSlide(
+              eyebrow: 'THE PROJECT',
+              title: project.title,
+              subtitle: _projectSubtitle(project),
+              icon: Icons.handyman_outlined,
+              accent: accent,
+            ),
+          if (answer != null)
+            PresentSlide(
+              eyebrow: 'TODAY ${childName.toUpperCase()} SAID',
+              title: answer,
+              icon: Icons.chat_bubble_outline,
+              accent: accent,
+            ),
+        ];
+        unawaited(
+          presentSlides(context, title: '$childName’s world', slides: slides),
+        );
+      },
+    );
+  }
+
+  String _projectSubtitle(ProjectView p) {
+    final total = p.steps.length;
+    final base = total == 0 ? 'A project' : '${p.done} of $total steps';
+    if (total > 0 && p.done < total) return '$base · next: ${p.steps[p.done]}';
+    return base;
   }
 }
 
