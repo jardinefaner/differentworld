@@ -13,6 +13,7 @@ import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
+import 'package:differentworld/features/schedule/schedule_deck_setting.dart';
 import 'package:differentworld/features/schedule/schedule_view_setting.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
@@ -270,6 +271,8 @@ class SettingsScreen extends ConsumerWidget {
               const _ChildDayBentoTile(),
               const _SettingsDivider(),
               const _ScheduleGridTile(),
+              const _SettingsDivider(),
+              const _ScheduleDeckTile(),
               const _SettingsDivider(),
               const _HeroesTile(),
               const _SettingsDivider(),
@@ -580,6 +583,29 @@ class _ScheduleGridTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(scheduleTimeGridProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Toggles the schedule **deck** (docs/VISION.md 2026-06-19) — one cohort's
+/// day as swipeable castable slides instead of the agenda list. Off by
+/// default; the "I'm running the day, one block at a time" present mode.
+class _ScheduleDeckTile extends ConsumerWidget {
+  const _ScheduleDeckTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(scheduleDeckProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.view_carousel_outlined),
+      title: const Text('Schedule as a deck'),
+      subtitle: const Text(
+        'Swipe the day one block at a time — each a slide you can cast to '
+        'the room',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(scheduleDeckProvider.notifier).set(value: v)),
     );
   }
 }

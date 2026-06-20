@@ -7,8 +7,10 @@ import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
+import 'package:differentworld/features/schedule/schedule_deck_setting.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/schedule/schedule_view_setting.dart';
+import 'package:differentworld/features/schedule/widgets/schedule_slide.dart';
 import 'package:differentworld/features/schedule/widgets/schedule_time_grid.dart';
 import 'package:differentworld/features/schedule/widgets/substitute_lead_sheet.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -177,6 +179,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
     // matrix widths when the director turns it on. Default off; phones keep
     // tabs regardless.
     final timeGridOn = ref.watch(scheduleTimeGridProvider).value ?? false;
+    // Opt-in deck (docs/VISION.md 2026-06-19): one cohort's day as swipeable
+    // castable slides instead of the agenda list. Phone / single-cohort
+    // present mode; orthogonal to the wide-screen time-grid above.
+    final deckOn = ref.watch(scheduleDeckProvider).value ?? false;
     return NounRegistryScope(
       registry: _registry,
       child: EdgeScaffold(
@@ -321,7 +327,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen>
                               controller: tabs,
                               children: [
                                 for (final g in gs)
-                                  _CohortDay(group: g, date: dateIso),
+                                  // Deck mode swaps the agenda list for one
+                                  // cohort's day as swipeable castable slides.
+                                  if (deckOn)
+                                    ScheduleDeck(group: g, date: dateIso)
+                                  else
+                                    _CohortDay(group: g, date: dateIso),
                               ],
                             ),
                           ),
