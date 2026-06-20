@@ -543,20 +543,18 @@ short of it) is the anti-pattern this kills. Enforcement:
   / slash) — mode reads from the **border + leading icon + hint**, never a
   fill. Don't reintroduce a tinted chrome fill.
 - A screen with a **distinct full-bleed background** (cockpit beats, themed
-  rooms) MUST paint it **edge-to-edge** via `EdgeScaffold(background: …)`
-  (a `Positioned.fill` UNDER the chrome) — not just in the body — or the
-  dark Scaffold surface shows as a top band. See
-  `now_cockpit_screen._beatBg`.
-- If that screen's **bottom region is non-interactive** (no save button),
-  opt into `fillUnderOmniboxProvider`
-  (`lib/shared/widgets/omnibox_inset.dart`) so the bg runs under the
-  transparent bottom bar too — set on mount (cached notifier +
-  microtask-deferred, mounted-guarded `enter()`), clear on `dispose()`.
-  Routes WITH bottom buttons keep the 76dp omnibox reservation — don't opt
-  in (the reservation is what stops a save button hiding under the bar).
+  rooms) MUST paint it via **`EdgeScaffold(background: …)`** — NOT in the
+  body. That one hook handles BOTH bands automatically: it fills under the
+  top chrome, AND `EdgeScaffold` **bleeds** it the omnibox-bar height past
+  the bottom edge (`Stack(clipBehavior: Clip.none)` + a negative `bottom`),
+  so the bg also runs under the transparent bottom bar — with ZERO change to
+  the body's content spacing (the body keeps its 76dp reservation, so save
+  buttons never hide under the bar). No per-screen opt-in. Painting the bg
+  in the body instead → dark Scaffold strip top + bottom (the bug). See
+  `now_cockpit_screen._beatBg` (the bg) + `edge_scaffold.dart` (the bleed).
 - Most screens sit on the app `surface` already, so the transparent chrome
-  shows that same surface with no band — nothing to do. Only distinct-bg
-  screens need the two steps above.
+  shows that same surface with no band — nothing to do. Only a screen with a
+  DISTINCT bg needs `EdgeScaffold(background:)`; the bleed does the rest.
 
 Beyond the pills + bar, the other chrome surfaces (suggestion overlay,
 drawer, modal sheets) still use the shared translucent BackdropFilter blur

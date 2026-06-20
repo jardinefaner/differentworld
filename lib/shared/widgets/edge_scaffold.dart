@@ -239,8 +239,21 @@ class _EdgeScaffoldState extends ConsumerState<EdgeScaffold> {
               )
             : Stack(
                 fit: StackFit.expand,
+                // Let the background BLEED below the body bounds so it fills the
+                // bottom omnibox-bar reservation too (AppShell clips the route
+                // content to viewport-76; without this the dark Scaffold surface
+                // shows as a strip behind the transparent bar — the UI north
+                // star). clipBehavior.none + a negative bottom paints the bg the
+                // omnibox height past the bottom edge. Body layout is unchanged,
+                // so no screen's content spacing shifts. Harmless in kid mode
+                // (bar hidden → reservation already 0).
+                clipBehavior: Clip.none,
                 children: [
-                  Positioned.fill(
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: inKidMode ? 0 : -ShellMetrics.bottomOmniboxHeight,
                     child: IgnorePointer(child: widget.background),
                   ),
                   _ChromeInsetBody(

@@ -28,7 +28,6 @@ import 'package:differentworld/shared/widgets/floating_back.dart';
 import 'package:differentworld/shared/widgets/floating_hamburger.dart';
 import 'package:differentworld/shared/widgets/live_block_strip.dart';
 import 'package:differentworld/shared/widgets/main_drawer.dart';
-import 'package:differentworld/shared/widgets/omnibox_inset.dart';
 import 'package:differentworld/shared/widgets/route_chrome.dart';
 import 'package:differentworld/shared/widgets/shell_back_action.dart';
 import 'package:differentworld/shared/widgets/shell_metrics.dart';
@@ -551,11 +550,6 @@ class _AppShellState extends ConsumerState<AppShell> {
         location.startsWith('/activity/') ||
         ref.watch(speakImmersiveProvider) ||
         ref.watch(castImmersiveProvider);
-    // A route can opt to fill UNDER the bottom bar (drop the content
-    // reservation) so its own background reaches the true bottom instead of
-    // leaving the Scaffold surface as a strip behind the transparent bar. The
-    // bar still renders; only routes with a non-interactive bottom opt in.
-    final fillUnderOmnibox = ref.watch(fillUnderOmniboxProvider);
 
     // PopScope.canPop=true → the system pops the shell navigator normally
     // (drill-ins reached via `push`); false → we intercept below and decide
@@ -705,7 +699,6 @@ class _AppShellState extends ConsumerState<AppShell> {
                         mode: mode,
                         showDrawer: false, // hamburger pill hidden at desktop
                         isImmersive: isImmersive,
-                        fillUnderOmnibox: fillUnderOmnibox,
                         context: context,
                       ),
                     ),
@@ -720,7 +713,6 @@ class _AppShellState extends ConsumerState<AppShell> {
                   mode: mode,
                   showDrawer: showDrawer,
                   isImmersive: isImmersive,
-                  fillUnderOmnibox: fillUnderOmnibox,
                   context: context,
                 ),
         ),
@@ -742,7 +734,6 @@ class _AppShellState extends ConsumerState<AppShell> {
     required OmniboxMode mode,
     required bool showDrawer,
     required bool isImmersive,
-    required bool fillUnderOmnibox,
     required BuildContext context,
   }) {
     return Stack(
@@ -776,11 +767,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             // No omnibox bar for guardians, in kid mode, or on immersive
             // activity routes → no bottom reservation; route content can
             // fill all the way to the gesture inset.
-            bottom:
-                (inKidMode ||
-                    viewer is GuardianViewer ||
-                    isImmersive ||
-                    fillUnderOmnibox)
+            bottom: (inKidMode || viewer is GuardianViewer || isImmersive)
                 ? 0
                 : ShellMetrics.bottomOmniboxHeight,
           ),
