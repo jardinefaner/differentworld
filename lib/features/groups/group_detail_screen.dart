@@ -68,7 +68,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
       child: EdgeScaffold(
       background: roomSkin == null
           ? null
-          : RoomSkinBackground(skin: roomSkin, decal: true),
+          : RoomSkinBackground(skin: roomSkin, decal: true, animate: true),
       actions: [
         // Primary verb: add a subject (director-only). For everyone
         // else, take-attendance is the most frequent so it takes the

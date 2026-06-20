@@ -74,7 +74,7 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
       // The room's theme, decaled subtly behind the Calm content.
       background: skin == null
           ? null
-          : RoomSkinBackground(skin: skin, decal: true),
+          : RoomSkinBackground(skin: skin, decal: true, animate: true),
       // Header + chip selector are PINNED; the day scrolls (or its loading /
       // error / empty state fills) inside the Expanded — so those states get a
       // bounded viewport instead of being nested in an outer ListView, which

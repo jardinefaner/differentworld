@@ -55,7 +55,7 @@ class ChildWorldScreen extends ConsumerWidget {
     return EdgeScaffold(
       background: skin == null
           ? null
-          : RoomSkinBackground(skin: skin, decal: true),
+          : RoomSkinBackground(skin: skin, decal: true, animate: true),
       actions: [
         _CastWeekButton(subjectKey: key, childName: name),
       ],

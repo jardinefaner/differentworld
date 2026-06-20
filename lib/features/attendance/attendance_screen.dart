@@ -149,7 +149,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     return EdgeScaffold(
       background: roomSkin == null
           ? null
-          : RoomSkinBackground(skin: roomSkin, decal: true),
+          : RoomSkinBackground(skin: roomSkin, decal: true, animate: true),
       actions: [
         if (subjectsAsync.value?.isNotEmpty ?? false)
           PrimaryActionButton(
