@@ -121,6 +121,7 @@ import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/schedule/trip_detail_screen.dart';
 import 'package:differentworld/features/schedule/weekly_template_screen.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/member_detail_screen.dart';
 import 'package:differentworld/features/settings/program_settings_screen.dart';
@@ -2037,7 +2038,9 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
     // Precedence: cockpit > bento > Today (cockpit is the established
     // promotion path; bento is the grid-navigation experiment).
     final cockpitAsHome = ref.watch(cockpitAsHomeProvider).value ?? false;
-    final bentoHome = ref.watch(bentoHomeProvider).value ?? false;
+    final bentoHome =
+        (ref.watch(bentoEverywhereProvider).value ?? false) ||
+        (ref.watch(bentoHomeProvider).value ?? false);
     if (cockpitAsHome) {
       return const NowCockpitScreen(key: ValueKey('cockpit-home'));
     }

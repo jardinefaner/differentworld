@@ -10,6 +10,7 @@ import 'package:differentworld/features/action_words/program_hub_bento_setting.d
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
@@ -66,7 +67,10 @@ class ProgramHubScreen extends ConsumerWidget {
             )
           : position == null
           ? _NotStarted(isDirector: ref.watch(viewerProvider).isDirector)
-          : (ref.watch(programHubBentoProvider).value ?? false)
+          : bentoEnabled(
+              ref,
+              perScreen: ref.watch(programHubBentoProvider).value,
+            )
           ? _ActiveBento(position: position)
           : _Active(position: position),
     );

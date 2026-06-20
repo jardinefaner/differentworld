@@ -14,6 +14,7 @@ import 'package:differentworld/features/photos/widgets/photo_source_sheet.dart';
 import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
 import 'package:differentworld/features/schedule/schedule_view_setting.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/settings/cockpit_home_setting.dart';
 import 'package:differentworld/features/settings/display_style_setting.dart';
 import 'package:differentworld/features/settings/font_choice.dart';
@@ -258,6 +259,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _CockpitHomeTile(),
               const _SettingsDivider(),
+              const _BentoEverywhereTile(),
+              const _SettingsDivider(),
               const _BentoHomeTile(),
               const _SettingsDivider(),
               const _SpellbookBentoTile(),
@@ -442,6 +445,30 @@ class _CockpitHomeTile extends ConsumerWidget {
 /// experiment). Off by default; the classic Today scroll is the same data
 /// re-laid-out, so flipping back loses nothing. Ignored while "Cockpit as
 /// home" is on (cockpit wins).
+/// The MASTER bento switch — opts the WHOLE app into the Calm tile layout in
+/// one tap (every screen with a bento variant honours it via `bentoEnabled`).
+/// The user's "bento everywhere" call; the per-screen switches below still work
+/// for granular control. Off by default; reversible.
+class _BentoEverywhereTile extends ConsumerWidget {
+  const _BentoEverywhereTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(bentoEverywhereProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.dashboard_customize_outlined),
+      title: const Text('Bento everywhere'),
+      subtitle: const Text(
+        'Lay the whole app out as Calm tiles — one switch for every screen '
+        'that has a bento layout. Reversible.',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(bentoEverywhereProvider.notifier).set(value: v)),
+    );
+  }
+}
+
 class _BentoHomeTile extends ConsumerWidget {
   const _BentoHomeTile();
 

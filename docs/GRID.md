@@ -80,11 +80,48 @@ bites.)
 - **chrome clearance:** the bento body uses `SafeArea` so `EdgeScaffold`'s
   published top-chrome band insets it automatically — no per-screen math.
 
+## The global toggle — "Bento everywhere"
+
+Every bento screen is **opt-in + reversible** (the "ship new layouts as
+toggles" rule). On top of each screen's own per-screen toggle there's ONE
+master switch — `bentoEverywhereProvider`
+(`lib/features/settings/bento_everywhere_setting.dart`, Settings → Preferences
+→ "Bento everywhere") — that opts the WHOLE app in at once. The user's call:
+*because it's reversible, the bento language can spread to every screen safely.*
+
+**Every new bento screen wires through `bentoEnabled`**, never the per-screen
+provider alone:
+
+```dart
+final bento = bentoEnabled(
+  ref,
+  perScreen: ref.watch(myScreenBentoProvider).value,
+);
+return bento ? _bentoBody(...) : _flatBody(...);
+```
+
+`bentoEnabled` returns `global || perScreen` — the master switch turns the
+screen's bento on AND its own toggle still works for granular control. (The
+home slot is routing-gated, so the router ORs the two inline.) This is how
+"bento for ALL screens" stays one tap, not N: add a variant, gate it via
+`bentoEnabled`, done. Screens that are grid anti-patterns (feeds / forms /
+TOC-detail) get the calm CARD treatment under the same switch, not a forced grid.
+
 ## Consumers
 
 - **Bento home** — `lib/features/today/today_bento_screen.dart`, opt-in via
-  `bentoHomeProvider` (Settings → Preferences). Same Today providers, re-laid
+  `bentoHomeProvider` OR the global switch. Same Today providers, re-laid
   out. Precedence at the home slot: cockpit > bento > Today scroll.
+- **Program hub** — `lib/features/action_words/program_hub_screen.dart`
+  (`programHubBentoProvider`). The season as tiles — world hero / today / cast
+  / focus / journey + the children as a responsive card grid.
+- **Child day** — `lib/features/today/child_day_screen.dart`
+  (`childDayBentoProvider`). INTERACTIVE tiles — words + mood keep their live
+  tap targets (plain `_DayTile` surfaces, not single-tap `BentoModule`s); the
+  gallery stays full-width below.
+- **Library card grids** — `CatalogCard` / `CatalogGrid`
+  (`lib/shared/widgets/catalog_card.dart`) is the always-on (no toggle) browse
+  shape: missions / activities / world book / themed worlds / heroes hub.
 - **Per-child world** — `lib/features/child_world/child_world_screen.dart`
   (`/subjects/:id/world`). Each child's own weekly hub — intention / project /
   day / growth as four bento tiles. The first non-home bento surface, and the

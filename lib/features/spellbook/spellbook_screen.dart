@@ -2,6 +2,7 @@ import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/world_arc.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/daily/daily_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_bento_setting.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -26,7 +27,10 @@ class SpellbookScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bento = ref.watch(spellbookBentoProvider).value ?? false;
+    final bento = bentoEnabled(
+      ref,
+      perScreen: ref.watch(spellbookBentoProvider).value,
+    );
     final trio = ref.watch(todaysDailyProvider);
     final world = ref.watch(currentWorldProvider);
     final arc = ref.watch(currentWorldArcProvider);

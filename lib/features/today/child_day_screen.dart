@@ -11,6 +11,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/child_day_bento_setting.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
@@ -59,7 +60,10 @@ class _ChildDayScreenState extends ConsumerState<ChildDayScreen> {
         ),
       );
     }
-    final bento = ref.watch(childDayBentoProvider).value ?? false;
+    final bento = bentoEnabled(
+      ref,
+      perScreen: ref.watch(childDayBentoProvider).value,
+    );
     return EdgeScaffold(
       actions: [
         IconButton(
