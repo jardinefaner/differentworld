@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/roles.dart';
+import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/activity/roles` — the animal & nature ROLE CARDS deck
 /// (docs/ROLES_SMART_PRACTICE.md). Browse the catalog; tap a card to flip to
@@ -192,22 +194,108 @@ class _RoleCardFace extends StatelessWidget {
                 strong: true,
               ),
             const SizedBox(height: 18),
-            _SectionLabel(label: "I'll leave behind", color: muted),
+            _SectionLabel(label: 'Make these — the proof', color: muted),
             const SizedBox(height: 8),
+            // Each artifact is a TOOL: tap it to capture the proof (the role's
+            // own words say HOW to practice; this routes the verb to the
+            // capture flow). docs/VISION.md 2026-06-20 — every role gets the
+            // tools to practise it.
             for (final artifact in role.artifacts)
-              _Line(
-                icon: Icons.auto_awesome_outlined,
-                iconColor: muted,
-                text: artifact,
-                strong: false,
+              _ArtifactTool(artifact: artifact),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => unawaited(
+                presentSlides(
+                  context,
+                  title: role.name,
+                  slides: [
+                    PresentSlide(
+                      eyebrow: 'TODAY WE ARE',
+                      title: '${role.article} ${role.name}',
+                      emoji: role.emoji,
+                      subtitle: 'we build ${role.builds}',
+                    ),
+                    for (final habit in role.habits)
+                      PresentSlide(
+                        eyebrow: 'A ${role.name.toUpperCase()} HABIT',
+                        title: 'I $habit',
+                        icon: Icons.bolt,
+                      ),
+                  ],
+                ),
               ),
-            const SizedBox(height: 18),
-            Text(
-              'Pick this role and practice the 3 habits today.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              icon: const Icon(Icons.cast),
+              label: const Text('Cast this role to the room'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One artifact as a tappable TOOL — the verb in the artifact text picks the
+/// icon + label (draw / snap / record / note); tapping opens the capture flow
+/// so the child makes the proof. (Capture is the universal "real action, leaves
+/// evidence" tool; a prefilled capture + per-role logging is the next slice.)
+class _ArtifactTool extends StatelessWidget {
+  const _ArtifactTool({required this.artifact});
+
+  final String artifact;
+
+  /// (icon, action verb) from the artifact's own wording.
+  (IconData, String) get _tool {
+    final a = artifact.toLowerCase();
+    if (a.contains('draw')) return (Icons.brush_outlined, 'Draw');
+    if (a.contains('photo') || a.contains('picture')) {
+      return (Icons.photo_camera_outlined, 'Snap');
+    }
+    if (a.contains('record') ||
+        a.contains('dance') ||
+        a.contains('sound') ||
+        a.contains('song')) {
+      return (Icons.mic_none_outlined, 'Record');
+    }
+    if (a.contains('list') || a.contains('count')) {
+      return (Icons.checklist_outlined, 'Note');
+    }
+    return (Icons.add_a_photo_outlined, 'Make');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final (icon, verb) = _tool;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          // The capture flow — the kid makes/snaps the proof. Pushes over the
+          // sheet; closing returns here.
+          onTap: () => context.push('/captures/new'),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: scheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(artifact, style: theme.textTheme.bodyLarge),
+                ),
+                Text(
+                  '$verb ›',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
