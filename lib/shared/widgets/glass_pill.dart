@@ -12,7 +12,7 @@ class GlassPill extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
     this.radius = 24,
-    this.tintOpacity = 0.55,
+    this.tintOpacity = 0.0,
     super.key,
   });
 
@@ -20,8 +20,9 @@ class GlassPill extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double radius;
 
-  /// 0..1. Higher = more solid, lower = more transparent. Default tuned
-  /// for either theme.
+  /// 0..1. Higher = more solid, lower = more transparent. Defaults to 0 — the
+  /// chrome pills carry NO colour fill behind them (the page shows through the
+  /// blur); pass a higher value only for a pill that genuinely needs a tint.
   final double tintOpacity;
 
   @override

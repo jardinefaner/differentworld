@@ -80,14 +80,16 @@ class BottomOmniboxBar extends StatelessWidget {
     IconData leadingIcon;
     String hint;
     if (isCapture) {
-      containerColor = scheme.primaryContainer.withValues(alpha: 0.45);
+      // Transparent fill — the page shows through the blur; the mode now reads
+      // from the coloured border + the leading icon + the hint, not a tint.
+      containerColor = Colors.transparent;
       // Solid bolt — matches the icon-weight vocabulary of the rest
       // of the bar (close, arrow_back) and the chrome pills.
       leadingIcon = Icons.bolt;
       leadingTint = scheme.primary;
       hint = 'Save a quick note — press return';
     } else if (isSlash) {
-      containerColor = scheme.tertiaryContainer.withValues(alpha: 0.55);
+      containerColor = Colors.transparent;
       // Terminal (solid, command-line semantic) — chevron_right was
       // the lone outlined/navigation-style outlier among the bar's
       // otherwise-solid icon vocabulary. Terminal also reads "slash
@@ -96,13 +98,10 @@ class BottomOmniboxBar extends StatelessWidget {
       leadingTint = scheme.tertiary;
       hint = 'Slash command — type /today, /log, /attendance…';
     } else {
-      // Translucent so the backdrop blur shows through (Wave 51 made
-      // the bar floating-glass). The 0.55 alpha matches GlassPill's
-      // default tintOpacity used by the top chrome — keeps the
-      // brightness of the bar and the FloatingActions pill visually
-      // consistent against the same page body.
-      containerColor =
-          scheme.surfaceContainerHighest.withValues(alpha: 0.55);
+      // Transparent fill — no colour behind the bar; the page shows through
+      // the blur. Matches the top chrome's GlassPill (now tint-free too), so
+      // the bar and the action pill read consistently against the page body.
+      containerColor = Colors.transparent;
       leadingIcon = Icons.search;
       // `onSurfaceVariant` (not `onSurface`) by design — the
       // unfocused bar glyph is a de-emphasized placeholder, NOT a
