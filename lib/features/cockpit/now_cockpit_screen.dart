@@ -39,7 +39,12 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
     // The reveal only makes sense (and only has a non-dead-end destination)
     // when a curriculum world is running — gate the launch on it.
     final hasWorld = ref.watch(currentWorldProvider) != null;
+    // Fill the active beat's colour edge-to-edge (behind the now-transparent
+    // chrome), so the top band shows the beat's tone instead of the dark
+    // Scaffold surface.
+    final beatBg = _beatBg(Theme.of(context).colorScheme, beat, lead);
     return EdgeScaffold(
+      background: ColoredBox(color: beatBg),
       body: SafeArea(
         child: Column(
           children: [
@@ -206,6 +211,24 @@ class _BeatBody extends StatelessWidget {
       ContextTone.trip => (s.tertiaryContainer, s.onTertiaryContainer),
       ContextTone.pickup => (s.secondaryContainer, s.onSecondaryContainer),
       ContextTone.calm => (s.surfaceContainerHighest, s.onSurface),
+    };
+
+/// The active beat's background colour — mirrors what each card paints, so the
+/// cockpit can fill it edge-to-edge behind the (transparent) chrome instead of
+/// leaving the dark Scaffold surface showing in the top band. Keep in lockstep
+/// with the per-card `bg:` values + the `_BeatBody` switch.
+Color _beatBg(ColorScheme scheme, CockpitBeat beat, ContextLead? lead) =>
+    switch (beat) {
+      CockpitBeat.goodMorning => scheme.primaryContainer,
+      CockpitBeat.reveal => scheme.primary,
+      CockpitBeat.send || CockpitBeat.closed => scheme.surfaceContainerHighest,
+      CockpitBeat.gettingReady ||
+      CockpitBeat.now ||
+      CockpitBeat.fieldTrip ||
+      CockpitBeat.pickup =>
+        lead != null
+            ? _toneColors(scheme, lead.tone).$1
+            : scheme.surfaceContainerHighest,
     };
 
 /// Full-bleed beat frame: the [bg] colour fills the surface (the emotional
