@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
+import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/slide_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -255,87 +259,54 @@ class _LeadCard extends StatelessWidget {
     // a curriculum world is actually running, or /play-today is a dead end.
     final showReveal =
         hasWorld && (beat == CockpitBeat.now || beat == CockpitBeat.pickup);
+    // The live beat IS a slide (docs/VISION.md 2026-06-19): info + actions in
+    // one block. Render-identical to the hand-rolled card it replaces; the
+    // shape is now the shared SlideBlock primitive every other beat reuses.
     return _beatFrame(
       context,
       bg: bg,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(lead.icon, size: 40, color: fg),
-          const Spacer(),
-          Text(
-            lead.eyebrow,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: fg,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w600,
+      child: SlideBlock(
+        foreground: fg,
+        accentBackground: fg,
+        accentForeground: bg,
+        icon: lead.icon,
+        eyebrow: lead.eyebrow,
+        title: lead.title,
+        body: Text(lead.line),
+        primary: SlideAction(
+          label: lead.primary.label,
+          icon: lead.primary.icon,
+          onPressed: () => context.push(lead.primary.route),
+        ),
+        actions: [
+          for (final move in lead.more)
+            SlideAction(
+              label: move.label,
+              icon: move.icon,
+              onPressed: () => context.push(move.route),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            lead.title,
-            style: theme.textTheme.displaySmall?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w600,
-              height: 1.05,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            lead.line,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: fg.withValues(alpha: 0.9),
-            ),
-          ),
-          const Spacer(),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.push(lead.primary.route),
-              style: FilledButton.styleFrom(
-                backgroundColor: fg,
-                foregroundColor: bg,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                textStyle: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              icon: Icon(lead.primary.icon),
-              label: Text(lead.primary.label),
-            ),
-          ),
-          if (lead.more.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final move in lead.more)
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(move.route),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: fg,
-                      side: BorderSide(color: fg.withValues(alpha: 0.4)),
-                    ),
-                    icon: Icon(move.icon, size: 18),
-                    label: Text(move.label),
-                  ),
-              ],
-            ),
-          ],
-          if (showReveal) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => context.push('/play-today'),
-                style: TextButton.styleFrom(foregroundColor: fg),
-                icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-                label: const Text('Start the reveal'),
-              ),
-            ),
-          ],
         ],
+        // The slide coordinates the room: cast the live world to the TV while
+        // the phone stays the remote (docs/VISION.md 2026-06-19, dream #14/#18).
+        // Only when a world is running — otherwise there's nothing to present.
+        onCast: hasWorld
+            ? () => unawaited(
+                showCastToRoom(
+                  context,
+                  mirrorRoute: '/journey',
+                  mirrorSubtitle:
+                      'Open the room’s world here, then mirror it to the TV — '
+                      'run the room from your phone.',
+                ),
+              )
+            : null,
+        tertiary: showReveal
+            ? SlideAction(
+                label: 'Start the reveal',
+                icon: Icons.auto_awesome_outlined,
+                onPressed: () => context.push('/play-today'),
+              )
+            : null,
       ),
     );
   }
@@ -358,7 +329,9 @@ class _AfterPickupCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            isSend ? Icons.mark_email_unread_outlined : Icons.nightlight_outlined,
+            isSend
+                ? Icons.mark_email_unread_outlined
+                : Icons.nightlight_outlined,
             size: 40,
             color: scheme.onSurfaceVariant,
           ),
@@ -398,8 +371,9 @@ class _AfterPickupCard extends StatelessWidget {
                 onPressed: () => context.push('/action-words/send'),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  textStyle: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  textStyle: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 icon: const Icon(Icons.send_outlined),
                 label: const Text('Send home'),
@@ -472,8 +446,9 @@ class _MorningCard extends ConsumerWidget {
                 backgroundColor: fg,
                 foregroundColor: bg,
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                textStyle: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                textStyle: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               icon: const Icon(Icons.auto_awesome_outlined),
               label: const Text("Pick today's verbs"),
@@ -567,8 +542,9 @@ class _RevealCard extends ConsumerWidget {
                 backgroundColor: fg,
                 foregroundColor: bg,
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                textStyle: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                textStyle: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               icon: const Icon(Icons.play_circle_outline),
               label: const Text('Start the reveal'),
