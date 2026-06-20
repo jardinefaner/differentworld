@@ -380,6 +380,37 @@ not "games" — and (2) give existing content (the schedule, the photo feed) a
 A dated log so nothing spoken is lost. Promote each into a theme above
 once it has a home.
 
+- **2026-06-19** — **The app IS a slide deck that coordinates the room — each
+  block self-contained: all its info AND its actions, together.** In the user's
+  words: *"this app basically creates slides that coordinate the room, all the
+  necessary info and actions are within this block."* This is the organizing
+  metaphor the whole app has been circling — it names what the cockpit, the
+  cast/present spine, the schedule blocks, and the just-shipped bento tiles all
+  are: a **deck of slides**, shown one beat at a time, each a self-contained
+  **block** that carries everything the moment needs — the info to read AND the
+  actions to take — so the host runs the room from one block, never hunting
+  across screens. It crystallizes #14 (present big / control small), #18 (the
+  classroom remote — present/control for *everything*), #13 (the day as a fixed
+  routine of blocks), and the one-visual-language (#10) into a single shape:
+  **the day is a run-of-show; each beat is a slide; the slide holds its own
+  info + actions.** The bento work IS this realization — a bento tile is a
+  self-contained block, and the global "Bento everywhere" switch makes the whole
+  app read as blocks; the cockpit's "ONE beat at a time" is the deck advanced
+  one slide at a time. The lift from here: make the unit **explicit** — a
+  `Block` / `Slide` primitive that any moment (a schedule block, a game, an
+  activity, a morning intro, a pickup) renders into: a tile that shows its info
+  and exposes its actions inline, castable to the room (present) while the phone
+  advances the deck (control). (Threads: #14 `LiveSession` present/control, #18
+  the present/control reducer + the classroom remote, #13 the day-run engine /
+  run-of-show, the cockpit `cockpitBeatProvider`, the bento tile + `BentoModule`,
+  `schedule_blocks` + the live-block capture context, docs/LIVE_SESSIONS.md +
+  docs/COCKPIT.md. **Open forks:** (a) is the "slide" the SCHEDULE BLOCK — the
+  day's timed run-of-show — or ANY moment (a game, an intro, a pickup)? Likely
+  both: the schedule is the default deck, any activity can be cast as a slide.
+  (b) Does "all actions within the block" mean the block is the ONLY surface — a
+  true one-slide-at-a-time cockpit — or the bento tile is the block and the deck
+  is the scroll? The cockpit fork ⑤ (Today vs. one-beat) is exactly this
+  question.)
 - **2026-06-13** — **The day is a fixed ROUTINE: morning intro, then play +
   write on paper, cumulative.** In the user's words: *"i want the class to be
   routine, all the worlds intro in the morning, and rest are play time and
