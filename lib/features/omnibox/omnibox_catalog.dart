@@ -1521,6 +1521,31 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         onSelect: (ctx, _) => ctx.push('/schedule'),
       ),
     );
+    // Cast the room's live block to the TV (docs/VISION.md 2026-06-20 —
+    // present/cast is a primary use). Points at the auto-advancing per-block
+    // projection; ungated (a read-only projection any staffer can run).
+    entries.add(
+      OmniboxEntry(
+        id: 'classroom:${g.id}:cast',
+        label: 'Cast ${g.name} to the room',
+        subtitle: "Put the room's live block on the screen",
+        category: OmniboxCategory.action,
+        icon: Icons.cast,
+        keywords: const [
+          'cast',
+          'present',
+          'screen',
+          'tv',
+          'projector',
+          'project',
+          'room',
+          'show',
+          'big screen',
+        ],
+        groupId: 'classroom:${g.id}',
+        onSelect: (ctx, _) => ctx.push('/present-room/${g.id}'),
+      ),
+    );
     // Pat persona — one-tap "X is out today, Y is covering." Opens the
     // substitute-lead sheet directly without first navigating into the
     // schedule editor (the persona-audit recommendation, 2026-05-22).
