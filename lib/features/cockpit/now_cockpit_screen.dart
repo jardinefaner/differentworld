@@ -405,84 +405,38 @@ class _MorningCard extends ConsumerWidget {
     return _beatFrame(
       context,
       bg: bg,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.wb_sunny_outlined, size: 40, color: fg),
-          const Spacer(),
-          Text(
-            'GOOD MORNING',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: fg,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            world != null ? 'Day ${position!.day}' : 'A new day',
-            style: theme.textTheme.displaySmall?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w600,
-              height: 1.05,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            world != null
-                ? '${world.emoji}  ${world.name} · week ${position!.week}'
-                : "Check the room in, then pick today's words.",
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: fg.withValues(alpha: 0.9),
-            ),
-          ),
-          const Spacer(),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.push('/action-words'),
-              style: FilledButton.styleFrom(
-                backgroundColor: fg,
-                foregroundColor: bg,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                textStyle: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              icon: const Icon(Icons.auto_awesome_outlined),
-              label: const Text("Pick today's verbs"),
-            ),
-          ),
-          if (lead != null) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
+      child: SlideBlock(
+        foreground: fg,
+        accentBackground: fg,
+        accentForeground: bg,
+        icon: Icons.wb_sunny_outlined,
+        eyebrow: 'GOOD MORNING',
+        title: world != null ? 'Day ${position!.day}' : 'A new day',
+        body: Text(
+          world != null
+              ? '${world.emoji}  ${world.name} · week ${position!.week}'
+              : "Check the room in, then pick today's words.",
+        ),
+        primary: SlideAction(
+          label: "Pick today's verbs",
+          icon: Icons.auto_awesome_outlined,
+          onPressed: () => context.push('/action-words'),
+        ),
+        actions: lead == null
+            ? const []
+            : [
+                SlideAction(
+                  label: lead.primary.label,
+                  icon: lead.primary.icon,
                   onPressed: () => context.push(lead.primary.route),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: fg,
-                    side: BorderSide(color: fg.withValues(alpha: 0.4)),
-                  ),
-                  icon: Icon(lead.primary.icon, size: 18),
-                  label: Text(lead.primary.label),
                 ),
                 for (final move in lead.more)
-                  OutlinedButton.icon(
+                  SlideAction(
+                    label: move.label,
+                    icon: move.icon,
                     onPressed: () => context.push(move.route),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: fg,
-                      side: BorderSide(color: fg.withValues(alpha: 0.4)),
-                    ),
-                    icon: Icon(move.icon, size: 18),
-                    label: Text(move.label),
                   ),
               ],
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -503,68 +457,28 @@ class _RevealCard extends ConsumerWidget {
     return _beatFrame(
       context,
       bg: bg,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.auto_awesome_outlined, size: 40, color: fg),
-          const Spacer(),
-          Text(
-            'THE CLOSING',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: fg,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Reveal the day',
-            style: theme.textTheme.displaySmall?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w600,
-              height: 1.05,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Gather the room — each child becomes who they were today.',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: fg.withValues(alpha: 0.9),
-            ),
-          ),
-          const Spacer(),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.push('/play-today'),
-              style: FilledButton.styleFrom(
-                backgroundColor: fg,
-                foregroundColor: bg,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                textStyle: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              icon: const Icon(Icons.play_circle_outline),
-              label: const Text('Start the reveal'),
-            ),
-          ),
-          // Never cage: the reveal auto-appears near pickup, but a teacher
-          // still mid-activity can stay in program — the reveal stays one tap
-          // away on the now lead ("Start the reveal").
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () =>
-                  ref.read(revealDismissedProvider.notifier).dismiss(),
-              style: TextButton.styleFrom(foregroundColor: fg),
-              icon: const Icon(Icons.keyboard_return, size: 18),
-              label: const Text('Not yet — stay in program'),
-            ),
-          ),
-        ],
+      child: SlideBlock(
+        foreground: fg,
+        accentBackground: fg,
+        accentForeground: bg,
+        icon: Icons.auto_awesome_outlined,
+        eyebrow: 'THE CLOSING',
+        title: 'Reveal the day',
+        body: const Text(
+          'Gather the room — each child becomes who they were today.',
+        ),
+        primary: SlideAction(
+          label: 'Start the reveal',
+          icon: Icons.play_circle_outline,
+          onPressed: () => context.push('/play-today'),
+        ),
+        // Never cage: the reveal auto-appears near pickup, but a teacher
+        // mid-activity can stay in program — one tap back.
+        tertiary: SlideAction(
+          label: 'Not yet — stay in program',
+          icon: Icons.keyboard_return,
+          onPressed: () => ref.read(revealDismissedProvider.notifier).dismiss(),
+        ),
       ),
     );
   }
