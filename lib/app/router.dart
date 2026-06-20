@@ -38,6 +38,7 @@ import 'package:differentworld/features/activity_runtime/pattern_maker_screen.da
 import 'package:differentworld/features/activity_runtime/penny_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/potions_screen.dart';
+import 'package:differentworld/features/activity_runtime/role_capture.dart';
 import 'package:differentworld/features/activity_runtime/role_cards_screen.dart';
 import 'package:differentworld/features/attendance/attendance_screen.dart';
 import 'package:differentworld/features/attendance/morning_checklist_screen.dart';
@@ -1664,7 +1665,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           // 3 habits + 3 artifacts + a trait.
           GoRoute(
             path: '/activity/roles',
-            builder: (_, _) => const RoleCardsScreen(),
+            // `extra` carries the child when opened via "Practice a role" from
+            // their world, so each artifact tool captures straight to them;
+            // null when browsing the catalog.
+            builder: (_, state) =>
+                RoleCardsScreen(subject: state.extra as RoleSubject?),
           ),
           // Riddles — host-run, answer-first; the room guesses, you Reveal.
           GoRoute(

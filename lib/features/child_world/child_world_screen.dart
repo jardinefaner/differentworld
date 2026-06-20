@@ -4,6 +4,7 @@ import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/activity_runtime/role_capture.dart';
 import 'package:differentworld/features/child_world/child_world_model.dart';
 import 'package:differentworld/features/child_world/child_world_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
@@ -17,11 +18,13 @@ import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/subjects/:id/world` — a child's own **world** (docs/VISION.md 2026-06-19:
 /// the dailies / weeklies / projects arc, made personal). A bento of four
@@ -51,6 +54,11 @@ class ChildWorldScreen extends ConsumerWidget {
       }
     }
     final skin = group == null ? null : roomSkinForGroup(group);
+    // Practising a role captures to a `work_sample`, which needs the child's
+    // group — so the entry only appears once we know the room.
+    final practice = group == null
+        ? null
+        : (subjectId: subjectId, groupId: group.id, subjectName: name);
 
     return EdgeScaffold(
       background: skin == null
@@ -87,11 +95,37 @@ class ChildWorldScreen extends ConsumerWidget {
                   span: const BentoSpan(phone: 1),
                   child: _GrowthTile(subjectId: subjectId),
                 ),
+                if (practice != null)
+                  BentoTile(
+                    id: 'practice',
+                    span: const BentoSpan.wide(),
+                    child: _PracticeRoleTile(subject: practice),
+                  ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Entry into role practice FOR this child — opens the role deck carrying the
+/// child, so each artifact tool on a card captures straight to their work.
+class _PracticeRoleTile extends StatelessWidget {
+  const _PracticeRoleTile({required this.subject});
+
+  final RoleSubject subject;
+
+  @override
+  Widget build(BuildContext context) {
+    return FeatureCard(
+      leading: const Text('🦊', style: TextStyle(fontSize: 28)),
+      title: 'Practice a role',
+      subtitle:
+          'Pick a role — each tool captures to ${subject.subjectName}’s work',
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push('/activity/roles', extra: subject),
     );
   }
 }
