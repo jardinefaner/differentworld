@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/live_session/cast_immersive.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
@@ -65,9 +67,19 @@ class _BlockPresentScreenState extends ConsumerState<BlockPresentScreen> {
     final groups = ref.watch(groupsProvider).value ?? const <Group>[];
     final group = groups.where((g) => g.id == widget.groupId).firstOrNull;
     final roomName = group?.name ?? 'The room';
+    // Warm the projection to this week's curriculum world (its emoji + a deep
+    // tint of its colour over near-black) when one is running; otherwise stay
+    // plain dark. Raw canvas, so the content-driven world colour is allowed.
+    final world = ref.watch(currentWorldProvider);
+    final bg = world == null
+        ? Colors.black
+        : Color.alphaBlend(
+            world.color.withValues(alpha: 0.30),
+            const Color(0xFF0B0B0D),
+          );
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: bg,
       body: Stack(
         children: [
           Positioned.fill(
@@ -75,7 +87,11 @@ class _BlockPresentScreenState extends ConsumerState<BlockPresentScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(36),
                 child: live != null
-                    ? _LiveProjection(live: live, roomName: roomName)
+                    ? _LiveProjection(
+                        live: live,
+                        roomName: roomName,
+                        world: world,
+                      )
                     : _BetweenProjection(
                         groupId: widget.groupId,
                         roomName: roomName,
@@ -105,10 +121,15 @@ class _BlockPresentScreenState extends ConsumerState<BlockPresentScreen> {
 /// The live block, big and calm — pulse + LIVE eyebrow, the activity icon,
 /// the title, the room, and the clock.
 class _LiveProjection extends StatelessWidget {
-  const _LiveProjection({required this.live, required this.roomName});
+  const _LiveProjection({
+    required this.live,
+    required this.roomName,
+    required this.world,
+  });
 
   final LiveBlock live;
   final String roomName;
+  final CurriculumWorld? world;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +142,12 @@ class _LiveProjection extends StatelessWidget {
         : live.kind == BlockKind.breakBlock
         ? Icons.local_cafe_outlined
         : Icons.local_activity_outlined;
+    // Lead with the world's glyph when one is running; else the activity icon.
+    final glyph = world != null
+        ? Text(world!.emoji, style: const TextStyle(fontSize: 58))
+        : Icon(icon, size: 60, color: Colors.white70);
+    // Weave the room and (when present) the world into one quiet line.
+    final subtitle = world != null ? '$roomName · ${world!.name}' : roomName;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,7 +172,7 @@ class _LiveProjection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 60, color: Colors.white70),
+            glyph,
             const SizedBox(height: 22),
             Text(
               live.title,
@@ -157,7 +184,7 @@ class _LiveProjection extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              roomName,
+              subtitle,
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: Colors.white60,
               ),
