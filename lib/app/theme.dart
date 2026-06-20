@@ -67,9 +67,28 @@ ColorScheme appColorScheme(Brightness brightness) {
     // Pin the dark primary to the muted games teal (#3E8E81) so FilledButton
     // CTAs — the game control bar's "Next"/"Play again", any dark-mode button —
     // stop being M3's bright mint. One teal identity across light, dark, games.
+    //
+    // Warm-dark surfaces (parallels the light warm-cream override below). M3's
+    // `fromSeed(teal)` dark gives a COOL near-BLACK surface — which read as a
+    // "black background" cutting the content behind the transparent chrome (the
+    // UI north star). The brand is warm, so dark is a warm charcoal: `surface`
+    // (the screen bg) clearly sits above black, and the containers lift off it
+    // so cards/sheets stay distinct. One continuous warm surface on every
+    // screen — no black band.
     return scheme.copyWith(
       primary: const Color(0xFF3E8E81),
       onPrimary: const Color(0xFF062520),
+      surface: const Color(0xFF2D2820),
+      surfaceDim: const Color(0xFF272219),
+      surfaceBright: const Color(0xFF524B3E),
+      surfaceContainerLowest: const Color(0xFF221E18),
+      surfaceContainerLow: const Color(0xFF332E25),
+      surfaceContainer: const Color(0xFF383229),
+      surfaceContainerHigh: const Color(0xFF423B30),
+      surfaceContainerHighest: const Color(0xFF4B4438),
+      onSurface: const Color(0xFFEFE9DD),
+      onSurfaceVariant: const Color(0xFFB7AF9E),
+      outlineVariant: const Color(0xFF514A3C),
     );
   }
   // Warm-paper surfaces (the show_widget look). M3's `fromSeed(teal)` gives a

@@ -380,6 +380,28 @@ not "games" — and (2) give existing content (the schedule, the photo feed) a
 A dated log so nothing spoken is lost. Promote each into a theme above
 once it has a home.
 
+- **2026-06-20** — **Every ROLE comes with the tools to PRACTICE it — the role
+  deck isn't just collectible, it's a curriculum.** In the user's words: *"for
+  all the roles in role cards, the app provides the tools to make them practice
+  that role."* The role cards (the collectible role deck, theme #8 / tasks
+  #21–23) gave kids an identity to *hold*; this turns each into something to
+  *live*. A child who draws "the Explorer" / "the Builder" / "the Storyteller"
+  should find, on that role, the tools + activities that let them DO it — an
+  Explorer gets a looking-closely / mapping prompt, a Builder a make-something
+  task, a Storyteller a tell-it prompt — so the role becomes a practiced skill,
+  not just a card. It marries the role deck (#8) to real missions (#16, "jobs
+  you actually do") and the activity runtimes: each role maps to a bundle of
+  the eleven primitives (a Verb to enact, a Three to pick, a Wall to add to)
+  pitched at that role. **Open forks before coding:** is the practice tool
+  staff-curated per role, or a fixed bundle shipped with each role in the deck?
+  Does a child pick their role then the app surfaces its tools (pull), or does
+  the cockpit/Daily push "today, practise your Explorer" (push)? Is "practice"
+  one activity or a small progression (a role has levels you grow through —
+  novice → master Explorer)? Structurally: a `role → activities[]` mapping
+  (likely in the role-deck catalog), surfaced on the role card's detail + as a
+  Daily/mission source; reuses the activity_runtime runners + the missions
+  engine, no new primitive. (Threads: #8 role decks beyond animals, #16 real
+  missions, the activity_runtime catalog, `role_cards` + the role-deck data.)
 - **2026-06-19** — **The app IS a slide deck that coordinates the room — each
   block self-contained: all its info AND its actions, together.** In the user's
   words: *"this app basically creates slides that coordinate the room, all the

@@ -529,15 +529,26 @@ Conventions:
 
 ### Floating-glass chrome — one visual language
 
-**THE UI NORTH STAR (2026-06-20, user-named — "the cleanest version I've
-seen… I want this to be the UI north star"):** the floating chrome — the
-top hamburger/back/actions/cast **pills** and the bottom **omnibox bar** —
-has **NO colour fill behind it**: transparent fill, blur kept ("clear
-glass", not frosted-and-tinted), hairline border only. And the screen's
-**content background fills edge-to-edge UNDER the chrome**, so the chrome
-floats over continuous content and there is **NEVER a dark band** at the
-top or bottom. Two stacked strips (a tinted bar + a content bg that stops
-short of it) is the anti-pattern this kills. Enforcement:
+**THE UI NORTH STAR — a PERMANENT law (2026-06-20, user: "I won't say this
+anymore… chrome bar and omnibox must ALWAYS have transparent background so we
+can see body content edge to edge, for all screens — but each screen still
+knows to stay clear of those at init and at end").** Three parts, every screen,
+no exceptions:
+1. The floating chrome — the top hamburger/back/actions/cast **pills** and the
+   bottom **omnibox bar** — ALWAYS has **NO colour fill**: transparent fill,
+   blur kept ("clear glass", not frosted-and-tinted), hairline border only.
+2. The screen's **background fills edge-to-edge UNDER the chrome** (top AND
+   bottom), so the chrome floats over continuous body content — **NEVER a dark
+   band**. A tinted bar, or a bg that stops short of the chrome, is the
+   anti-pattern this kills.
+3. Yet the screen's **content stays CLEAR of the chrome at init (top) and end
+   (bottom)** — the title/first row clears the top pills, the last
+   row/save-button clears the bottom bar — so nothing interactive hides behind
+   the glass. Background under, content clear. (This is why the EdgeScaffold
+   bleeds the BACKGROUND under the bar while the BODY keeps its reservation —
+   part 2 and part 3 at once.)
+
+Enforcement:
 - Chrome pills: `GlassPill` defaults `tintOpacity: 0.0`. The omnibox bar's
   `containerColor` is `Colors.transparent` in every mode (search / capture
   / slash) — mode reads from the **border + leading icon + hint**, never a

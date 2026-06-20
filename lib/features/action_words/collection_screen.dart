@@ -1,3 +1,4 @@
+import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
@@ -178,10 +179,12 @@ class _WorldCell extends StatelessWidget {
                       ),
                       child: Text(
                         '×$count',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          // Readable on the content-driven gold badge (adapts
+                          // to luminance) instead of a hardcoded black.
+                          color: AppColors.onAccent(gold),
                         ),
                       ),
                     ),
