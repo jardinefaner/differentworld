@@ -115,6 +115,7 @@ import 'package:differentworld/features/routines/routines_screen.dart';
 import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
+import 'package:differentworld/features/schedule/block_present_screen.dart';
 import 'package:differentworld/features/schedule/day_template_editor_screen.dart';
 import 'package:differentworld/features/schedule/day_templates_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
@@ -1209,6 +1210,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/present-world/:id',
             builder: (_, state) => WorldPresentScreen(
               worldId: state.pathParameters['id']!,
+            ),
+          ),
+          // Project a cohort's LIVE schedule block to the room — the slide cast
+          // to the TV (docs/VISION.md 2026-06-19). Auto-advances as the day's
+          // live block changes. Immersive via castImmersiveProvider.
+          GoRoute(
+            path: '/present-room/:groupId',
+            builder: (_, state) => BlockPresentScreen(
+              groupId: state.pathParameters['groupId']!,
             ),
           ),
           // "Play today" — the whole day on rails, one immersive run of show

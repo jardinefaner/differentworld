@@ -155,18 +155,18 @@ class ScheduleSlide extends ConsumerWidget {
         ),
     ];
 
-    // Cast the live moment — the room follows the day from the staffer's
-    // phone. Points at the room's world present surface (the same target the
-    // cockpit's live beat casts to); a dedicated per-block present surface is
-    // a later slice.
+    // Cast the live moment — project THIS block to the room. The present
+    // surface follows the day on its own (it watches the live block), so the
+    // TV advances at block boundaries with nobody touching the phone.
     final onCast = (phase == SlidePhase.now && !isClosed)
         ? () => unawaited(
             showCastToRoom(
               context,
-              mirrorRoute: '/journey',
+              mirrorRoute: '/present-room/$groupId',
+              mirrorLabel: 'Show this block on the screen',
               mirrorSubtitle:
-                  "Open the room's world here, then mirror it to the TV — "
-                  'the room follows the day from your phone.',
+                  "Put the live block on the room's TV — it follows the day "
+                  'on its own.',
             ),
           )
         : null;
@@ -335,7 +335,18 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
 
         return Column(
           children: [
-            _DeckRail(phases: phases, index: _index.clamp(0, blocks.length - 1)),
+            _DeckRail(
+              phases: phases,
+              index: _index.clamp(0, blocks.length - 1),
+              onTap: (i) => unawaited(
+                _controller?.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 280),
+                      curve: Curves.easeOutCubic,
+                    ) ??
+                    Future<void>.value(),
+              ),
+            ),
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -436,12 +447,18 @@ class _ScheduleDeckState extends ConsumerState<ScheduleDeck> {
 }
 
 /// The day's run-of-show as a thin rail of segments — one per block, coloured
-/// by phase, the current page raised. The "where am I in the day" affordance.
+/// by phase, the current page raised. The "where am I in the day" affordance;
+/// tap a segment to jump there (swipe is the primary gesture).
 class _DeckRail extends StatelessWidget {
-  const _DeckRail({required this.phases, required this.index});
+  const _DeckRail({
+    required this.phases,
+    required this.index,
+    required this.onTap,
+  });
 
   final List<SlidePhase> phases;
   final int index;
+  final ValueChanged<int> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -453,26 +470,42 @@ class _DeckRail extends StatelessWidget {
       SlidePhase.later => scheme.outlineVariant,
     };
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           for (var i = 0; i < phases.length; i++) ...[
             if (i > 0) const SizedBox(width: 4),
             Expanded(
               child: Semantics(
-                label: i == index ? 'Current block ${i + 1}' : null,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  height: i == index ? 7 : 4,
-                  decoration: BoxDecoration(
-                    color: colorFor(phases[i]),
-                    borderRadius: BorderRadius.circular(4),
-                    border: i == index
-                        ? Border.all(
-                            color: scheme.onSurface.withValues(alpha: 0.25),
-                            width: 0.5,
-                          )
-                        : null,
+                button: true,
+                label: i == index
+                    ? 'Current block ${i + 1} of ${phases.length}'
+                    : 'Jump to block ${i + 1} of ${phases.length}',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTap(i),
+                  // A 24dp-tall hit area around the thin bar so the rail is
+                  // tappable, not just a sliver.
+                  child: SizedBox(
+                    height: 24,
+                    child: Center(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        height: i == index ? 7 : 4,
+                        decoration: BoxDecoration(
+                          color: colorFor(phases[i]),
+                          borderRadius: BorderRadius.circular(4),
+                          border: i == index
+                              ? Border.all(
+                                  color: scheme.onSurface.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  width: 0.5,
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
