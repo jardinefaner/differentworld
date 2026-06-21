@@ -81,6 +81,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return EdgeScaffold(
       backFallbackRoute: '/tasks',
       body: FormBody(
@@ -90,37 +91,50 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
             title: 'New task',
             subtitle: 'What needs doing?',
           ),
+          // PRIMARY: the one thing this screen is for. Give it the size
+          // and weight to lead — taller field, larger text — so the eye
+          // lands here first and the secondary controls below recede.
           TextField(
             controller: _ctrl,
             focusNode: _focus,
             autofocus: true,
-            minLines: 3,
-            maxLines: 8,
+            minLines: 4,
+            maxLines: 10,
+            style: theme.textTheme.titleMedium,
             textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              hintText: 'Describe the task',
+              hintText: 'Describe the task…',
               border: OutlineInputBorder(),
             ),
           ),
+          const SizedBox(height: 20),
+          // A divider quiets everything below it: the one optional detail
+          // (a due date) is demoted to a single muted chip, not a peer of
+          // the title field. No functionality removed — just re-weighted.
+          const Divider(height: 1),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              TextButton.icon(
-                onPressed: _pickDate,
-                icon: const Icon(Icons.calendar_today_outlined),
-                label: Text(
-                  _due == null ? 'No due date' : 'Due ${dateKey(_due!)}',
-                ),
-              ),
-              if (_due != null)
-                IconButton(
-                  tooltip: 'Clear',
-                  icon: const Icon(Icons.close),
-                  onPressed: () => setState(() => _due = null),
-                ),
-            ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _due == null
+                ? OutlinedButton.icon(
+                    onPressed: _pickDate,
+                    icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                    label: const Text('Add a due date'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.onSurfaceVariant,
+                      side: BorderSide(color: theme.colorScheme.outlineVariant),
+                    ),
+                  )
+                // Once a date is chosen it reads as a removable chip — the
+                // detail is now set, so show it as a settled value, not a CTA.
+                : InputChip(
+                    avatar: const Icon(Icons.event_outlined, size: 18),
+                    label: Text('Due ${dateKey(_due!)}'),
+                    onPressed: _pickDate,
+                    onDeleted: () => setState(() => _due = null),
+                  ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Row(
             children: [
               TextButton(
@@ -129,6 +143,9 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                     : () {
                         if (context.canPop()) context.pop();
                       },
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.onSurfaceVariant,
+                ),
                 child: const Text('Cancel'),
               ),
               const Spacer(),
@@ -146,7 +163,7 @@ class _TaskScreenState extends ConsumerState<TaskScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.check),
-                label: Text(_saving ? 'Saving…' : 'Save'),
+                label: Text(_saving ? 'Saving…' : 'Save task'),
               ),
             ],
           ),
