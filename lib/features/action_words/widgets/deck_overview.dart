@@ -170,9 +170,11 @@ class _BeatTile extends StatelessWidget {
       theme.colorScheme.surface,
     );
     final onFill = AppColors.onAccent(fill);
-    // The eyebrow uses the accent, contrast-corrected to be legible as text on
-    // the (light) blended fill.
-    final eyebrowColor = AppColors.onAccent(tint);
+    // The eyebrow is the quiet label — the SAME contrast-correct ink as the
+    // headline (chosen for the blended FILL it actually sits on, NOT the raw
+    // accent: onAccent(tint) went white-on-light for a dark world colour),
+    // just muted so it reads as secondary under the headline.
+    final eyebrowColor = onFill.withValues(alpha: 0.72);
 
     final glyph = beat.emoji.isNotEmpty
         ? beat.emoji
