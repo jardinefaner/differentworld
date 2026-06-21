@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
+import 'package:differentworld/features/action_words/activity_match.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/activity_runtime/roles.dart';
@@ -22,6 +23,19 @@ T? _byId<T>(List<T> xs, String id, String Function(T) idOf) {
     if (idOf(x) == id) return x;
   }
   return null;
+}
+
+/// Whole-year age from an ISO `dob`, or null if unparseable / absent.
+int? _ageFromDob(String? dob) {
+  if (dob == null || dob.isEmpty) return null;
+  final d = DateTime.tryParse(dob);
+  if (d == null) return null;
+  final now = DateTime.now();
+  var age = now.year - d.year;
+  if (now.month < d.month || (now.month == d.month && now.day < d.day)) {
+    age--;
+  }
+  return age < 0 || age > 130 ? null : age;
 }
 
 /// The ONE detail peek for every kind of named thing — a glass sheet showing
@@ -75,11 +89,17 @@ class _EntityPeekBody extends ConsumerWidget {
         final subjectRoute = (s == null || s.groupId == null)
             ? null
             : '/groups/${s.groupId}/students/${s.id}';
+        final age = _ageFromDob(s?.dob);
         return _PeekScaffold(
           entity: entity,
           title: name,
           avatar: PersonAvatar(name: name, radius: 26),
-          facts: [if (group != null) 'In ${group.name}'],
+          facts: [
+            if (group != null) 'In ${group.name}',
+            if (age != null) '$age years old',
+            if (s?.allergies != null && s!.allergies!.trim().isNotEmpty)
+              'Allergies: ${s.allergies!.trim()}',
+          ],
           openLabel: subjectRoute == null ? null : 'Open full profile',
           onOpen: subjectRoute == null ? null : () => onOpen(subjectRoute),
         );
@@ -106,10 +126,17 @@ class _EntityPeekBody extends ConsumerWidget {
           entity.id,
           (x) => x.id,
         );
+        final groupCount =
+            (ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[])
+                .where((s) => s.groupId == entity.id)
+                .length;
         return _PeekScaffold(
           entity: entity,
           title: g?.name ?? entity.label,
-          facts: const [],
+          facts: [
+            if (groupCount > 0)
+              '$groupCount ${groupCount == 1 ? 'child' : 'children'}',
+          ],
           openLabel: 'Open cohort',
           onOpen: () => onOpen('/groups/${entity.id}'),
         );
@@ -120,12 +147,23 @@ class _EntityPeekBody extends ConsumerWidget {
           entity.id,
           (x) => x.id,
         );
+        final aLoc = a?.defaultLocationId == null
+            ? null
+            : _byId(ref.watch(locationsProvider).value ?? const <Location>[],
+                a!.defaultLocationId!, (x) => x.id);
+        final aVerbs = a == null
+            ? const <String>[]
+            : verbsByIds(activityVerbs(a)).map((v) => v.label).toList();
         return _PeekScaffold(
           entity: entity,
           title: a?.name ?? entity.label,
           facts: [
             if (a?.description != null && a!.description!.trim().isNotEmpty)
               a.description!.trim(),
+            if (aLoc != null) 'At ${aLoc.name}',
+            if (a?.defaultDurationMinutes != null)
+              '${a!.defaultDurationMinutes} min',
+            if (aVerbs.isNotEmpty) 'Practises ${aVerbs.join(' · ')}',
           ],
           openLabel: 'Open activity',
           onOpen: () => onOpen('/activities/${entity.id}'),
@@ -185,18 +223,32 @@ class _EntityPeekBody extends ConsumerWidget {
           entity: entity,
           title: w?.name ?? entity.label,
           emoji: w?.emoji,
-          facts: const [],
+          facts: [
+            if (w != null) 'Week ${w.week} of the journey',
+            if (w != null && w.tagline.trim().isNotEmpty) w.tagline.trim(),
+            if (w != null && w.question.trim().isNotEmpty)
+              '“${w.question.trim()}”',
+          ],
           openLabel: 'Open world',
           onOpen: () => onOpen('/present-world/${entity.id}'),
         );
 
       case EntityKind.verb:
         final v = _byId(kVerbs, entity.id, (x) => x.id);
+        final practisedBy = v == null
+            ? 0
+            : (ref.watch(activitiesProvider).value ?? const <Activity>[])
+                .where((a) => activityVerbs(a).contains(v.id))
+                .length;
         return _PeekScaffold(
           entity: entity,
           title: v?.label ?? entity.label,
           emoji: v?.emoji,
-          facts: const ['An action word kids pick to live for the day.'],
+          facts: [
+            'An action word kids pick to live for the day.',
+            if (practisedBy > 0)
+              '$practisedBy ${practisedBy == 1 ? 'activity practises' : 'activities practise'} it',
+          ],
         );
     }
   }
