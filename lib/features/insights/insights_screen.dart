@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/insights/insights_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -25,6 +27,10 @@ class InsightsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final insightsAsync = ref.watch(insightsProvider);
     final insightCount = insightsAsync.value?.length ?? 0;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the three severity buckets re-lay as
+    // bento tiles over the SAME providers; off keeps the existing layout.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       actions: [
         if (insightCount >= 2)
@@ -64,6 +70,15 @@ class InsightsScreen extends ConsumerWidget {
           final info = insights
               .where((i) => i.severity == InsightSeverity.info)
               .toList();
+
+          if (bento) {
+            return _InsightsBento(
+              urgent: urgent,
+              suggestion: suggestion,
+              info: info,
+            );
+          }
+
           // Wave 114: at desktop widths the three severity buckets
           // sit side-by-side as a 3-column dashboard (Urgent left,
           // FYI right). On phone they stack vertically as before.
@@ -137,6 +152,71 @@ class InsightsScreen extends ConsumerWidget {
   }
 }
 
+/// The bento variant of the Insights data section — the SAME three severity
+/// buckets ([_SeverityGroup]s over the same provider data), re-laid as
+/// importance-weighted tiles instead of the 3-column dashboard. Only the
+/// layout changes; the cards, snooze, and actions are untouched.
+///
+/// Empty buckets emit NO tile (vs. the desktop dashboard's "All clear."
+/// filler) — a missing tile reads cleaner in a packed grid than an empty box.
+class _InsightsBento extends StatelessWidget {
+  const _InsightsBento({
+    required this.urgent,
+    required this.suggestion,
+    required this.info,
+  });
+
+  final List<Insight> urgent;
+  final List<Insight> suggestion;
+  final List<Insight> info;
+
+  @override
+  Widget build(BuildContext context) {
+    // Tune spans so the Wrap (1-D, left-to-right) packs into clean runs.
+    // Urgent is the hero ("what matters most"): full-width on phone, 4-of-6
+    // on desktop, two rows tall. Suggestions pairs beside it (2-of-6 ×2) to
+    // complete the top desktop run; FYI banners full-width below.
+    final tiles = <BentoTile>[
+      if (urgent.isNotEmpty)
+        BentoTile(
+          id: 'urgent',
+          span: const BentoSpan.hero(),
+          child: _SeverityGroup(label: 'URGENT', insights: urgent),
+        ),
+      if (suggestion.isNotEmpty)
+        BentoTile(
+          id: 'suggestion',
+          // Pairs beside the hero on desktop (2-of-6 ×2) to fill the top run;
+          // a full-width band on phone/tablet. phone/desktop spans are the
+          // defaults (2), so only tablet + rows are stated.
+          span: const BentoSpan(tablet: 4, rows: 2),
+          child: _SeverityGroup(label: 'SUGGESTIONS', insights: suggestion),
+        ),
+      if (info.isNotEmpty)
+        BentoTile(
+          id: 'info',
+          span: const BentoSpan.wide(),
+          child: _SeverityGroup(label: 'FYI', insights: info),
+        ),
+    ];
+
+    return ResponsivePage(
+      bottomPadding: 32,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: ContentHeader(
+            title: 'Insights',
+            subtitle: 'Questions the system is surfacing from your data',
+          ),
+        ),
+        const SizedBox(height: 12),
+        BentoGrid(tiles: tiles),
+      ],
+    );
+  }
+}
+
 class _SeverityGroup extends StatelessWidget {
   const _SeverityGroup({required this.label, required this.insights});
 
@@ -147,6 +227,11 @@ class _SeverityGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Column(
+      // Shrink-wrap vertically: a bento cell is min-height / unbounded-max
+      // (docs/GRID.md), so a default mainAxisSize.max Column would try to
+      // expand into unbounded height and throw. .min is also correct in the
+      // non-bento paths (ListView child + IntrinsicHeight both honour it).
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(

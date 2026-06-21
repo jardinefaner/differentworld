@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// `/present` — the classroom remote hub (docs/VISION.md #18). One place to
@@ -12,7 +15,11 @@ import 'package:go_router/go_router.dart';
 /// non-game presentables (Now & Next, Poll, Spotlight, Signals) + a bridge to
 /// the brain-break games. Each card opens the single-device runner, which
 /// carries a cast action to go two-device live.
-class PresentHubScreen extends StatelessWidget {
+///
+/// Two layouts over the SAME deck list: the responsive accent-card grid
+/// (default) and a BENTO grid (opt-in via the global "Bento everywhere"
+/// switch) that weights the remote action over the equal-weight presentables.
+class PresentHubScreen extends ConsumerWidget {
   const PresentHubScreen({super.key});
 
   static const _cards = <_PresentCard>[
@@ -98,7 +105,11 @@ class PresentHubScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // `perScreen: null` — only the global "Bento everywhere" switch gates this
+    // screen (no per-screen toggle of its own).
+    final bento = bentoEnabled(ref, perScreen: null);
+
     return EdgeScaffold(
       showBack: false,
       body: SafeArea(
@@ -114,32 +125,70 @@ class PresentHubScreen extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              child: GridView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 220,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  // Cell grows with text scale so the title/tagline never clip
-                  // (the fixed-childAspectRatio trap; see brain_breaks).
-                  mainAxisExtent: 140 + 64 * _textScale(context),
-                ),
-                children: [
-                  for (final card in _cards)
-                    AccentCardTile(
-                      color: card.color,
-                      icon: card.icon,
-                      title: card.title,
-                      tagline: card.tagline,
-                      onTap: () => unawaited(context.push(card.route)),
-                    ),
-                ],
-              ),
+              child: bento ? _bentoGrid(context) : _accentGrid(context),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// The default layout — the responsive accent-card grid.
+  Widget _accentGrid(BuildContext context) {
+    return GridView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        // Cell grows with text scale so the title/tagline never clip
+        // (the fixed-childAspectRatio trap; see brain_breaks).
+        mainAxisExtent: 140 + 64 * _textScale(context),
+      ),
+      children: [
+        for (final card in _cards)
+          AccentCardTile(
+            color: card.color,
+            icon: card.icon,
+            title: card.title,
+            tagline: card.tagline,
+            onTap: () => unawaited(context.push(card.route)),
+          ),
+      ],
+    );
+  }
+
+  /// The bento variant — SAME deck list, re-laid as weighted tiles. The remote
+  /// ("Cast to a screen") leads as a full-width banner; the rest are uniform
+  /// 2×1 presentables that pack into clean runs beneath it — a hub of
+  /// equal-weight destinations reads as a uniform grid (docs/GRID.md), and a
+  /// full-width lead avoids the gap a 2-row hero would leave at desktop where
+  /// `Wrap` won't back-fill. Each tile bounds the [AccentCardTile] in a
+  /// text-scale-aware height because the tile body uses a `Spacer` (an
+  /// unbounded bento cell would otherwise throw; see docs/GRID.md).
+  Widget _bentoGrid(BuildContext context) {
+    final tileHeight = 140 + 64 * _textScale(context);
+    return BentoGrid(
+      tiles: [
+        for (var i = 0; i < _cards.length; i++)
+          BentoTile(
+            id: 'present-${_cards[i].route}',
+            // The remote leads as a full-width banner; every presentable is an
+            // equal-weight 2×1 below it.
+            span: i == 0 ? const BentoSpan.wide() : const BentoSpan(),
+            child: SizedBox(
+              height: tileHeight,
+              child: AccentCardTile(
+                color: _cards[i].color,
+                icon: _cards[i].icon,
+                title: _cards[i].title,
+                tagline: _cards[i].tagline,
+                onTap: () => unawaited(context.push(_cards[i].route)),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
