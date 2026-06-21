@@ -7,9 +7,11 @@ import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/routines/routines_setting.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/spellbook/spellbook_setting.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/accent_card_tile.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -201,6 +203,11 @@ class BrainBreaksScreen extends ConsumerWidget {
     // and the tile's antialias clip was silently cutting them off.
     final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
     final tileExtent = 140 + 64 * scale;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the SAME deck of cards re-lays as
+    // uniform bento tiles (2-up on a phone); off keeps the existing
+    // fixed-extent GridView.
+    final bento = bentoEnabled(ref, perScreen: null);
     // Heroes is opt-in — slot its card in right after Do It (the two
     // "leaves something behind" genres lead the deck) only when switched on.
     final heroesOn = ref.watch(heroesEnabledProvider).value ?? false;
@@ -305,30 +312,77 @@ class BrainBreaksScreen extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              child: GridView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 220,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  mainAxisExtent: tileExtent,
-                ),
-                children: [
-                  for (final card in cards)
-                    AccentCardTile(
-                      color: card.color,
-                      icon: card.icon,
-                      title: card.title,
-                      tagline: card.tagline,
-                      onTap: () => unawaited(context.push(card.route)),
-                    ),
-                ],
-              ),
+              child: bento
+                  ? _bentoGrid(context, cards, tileExtent)
+                  : _accentGrid(context, cards, tileExtent),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// The default layout — the responsive accent-card grid (cells grow with the
+  /// text scale via [tileExtent]).
+  Widget _accentGrid(
+    BuildContext context,
+    List<_BreakCard> cards,
+    double tileExtent,
+  ) {
+    return GridView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: tileExtent,
+      ),
+      children: [
+        for (final card in cards)
+          AccentCardTile(
+            color: card.color,
+            icon: card.icon,
+            title: card.title,
+            tagline: card.tagline,
+            onTap: () => unawaited(context.push(card.route)),
+          ),
+      ],
+    );
+  }
+
+  /// The bento variant — the SAME deck list, re-laid as uniform tiles. Every
+  /// card is `BentoSpan(phone: 1)` so they pack 2-up on a phone (the grid
+  /// read), 4-up on tablet, 3-up on desktop — a deck of equal-weight short
+  /// cards reads as a uniform grid (docs/GRID.md). Each tile bounds the
+  /// [AccentCardTile] in the SAME text-scale-aware [tileExtent] the flat grid
+  /// uses, because the tile body has a `Spacer` (an unbounded bento cell would
+  /// otherwise throw; see docs/GRID.md).
+  Widget _bentoGrid(
+    BuildContext context,
+    List<_BreakCard> cards,
+    double tileExtent,
+  ) {
+    return BentoGrid(
+      tiles: [
+        for (final card in cards)
+          BentoTile(
+            id: 'break-${card.route}',
+            // phone 1-of-2 (2-up), tablet 1-of-4 (4-up), desktop default
+            // 2-of-6 (3-up) — equal-weight short cards in a uniform grid.
+            span: const BentoSpan(phone: 1, tablet: 1),
+            child: SizedBox(
+              height: tileExtent,
+              child: AccentCardTile(
+                color: card.color,
+                icon: card.icon,
+                title: card.title,
+                tagline: card.tagline,
+                onTap: () => unawaited(context.push(card.route)),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

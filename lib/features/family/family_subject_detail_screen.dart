@@ -9,9 +9,11 @@ import 'package:differentworld/features/incidents/widgets/family_incident_card.d
 import 'package:differentworld/features/messages/messages_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -19,6 +21,7 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/hover_tap.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
+import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,31 +94,43 @@ class _FamilyDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the same sections (over the same
+    // family-scoped providers — privacy unchanged) re-lay as bento tiles; off
+    // keeps the existing single-column feed. Re-layout only: every sub-widget,
+    // provider, and tap is identical between the two paths.
+    final bento = bentoEnabled(ref, perScreen: null);
+    return bento ? _bentoBody(context) : _flatBody(context);
+  }
+
+  Widget _header(BuildContext context) {
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
     final age = _ageLabel(subject.dob);
+    // Wave 64 reranking: the parent's first question is "is my kid OK
+    // today?" — the answer leads. The ContentHeader shows the name + age +
+    // a small trailing avatar so identity is confirmed without pushing the
+    // day's status below the fold.
+    return ContentHeader(
+      title: fullName,
+      subtitle: age,
+      trailing: PersonAvatar(
+        name: fullName,
+        photoUrl: subject.photoUrl,
+        radius: 22,
+      ),
+    );
+  }
 
+  /// The default layout — the single-column feed, ranked loudest-first.
+  Widget _flatBody(BuildContext context) {
+    final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final horiz = constraints.maxWidth > 840 ? 48.0 : 16.0;
         return ListView(
           padding: EdgeInsets.fromLTRB(horiz, 0, horiz, 96),
           children: [
-            // Wave 64 reranking: the parent's first question is
-            // "is my kid OK today?" — the answer leads. The big
-            // avatar that used to dominate the top is gone; the
-            // ContentHeader still shows the name + age + a small
-            // trailing avatar so identity is confirmed without
-            // pushing the day's status below the fold.
-            ContentHeader(
-              title: fullName,
-              subtitle: age,
-              trailing: PersonAvatar(
-                name: fullName,
-                photoUrl: subject.photoUrl,
-                radius: 22,
-              ),
-            ),
+            _header(context),
 
             // -- Today (loudest) -----------------------------------------
             _SectionLabel(label: 'Today', theme: theme),
@@ -137,6 +152,66 @@ class _FamilyDetailBody extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+
+  /// The bento variant — the SAME sections, re-weighted. The two SHORT status
+  /// cards (today's check-in + messages) pair **2-up** via a [BentoGrid]
+  /// (`phone: 1` → side-by-side on phone, half-width on tablet/desktop) so the
+  /// answer to "is my kid OK today?" reads at a glance. The narrative +
+  /// photo-hero feeds (today's notes, incidents, this week) are full-width —
+  /// rendered as plain children rather than wide tiles so their observation
+  /// text never truncates into a half-width column AND the self-suppressing
+  /// incidents section contributes nothing (no forced min-height "empty band")
+  /// when there's nothing to show.
+  ///
+  /// Each section keeps its label via [_BentoSection], a `mainAxisSize.min`
+  /// column (no `Expanded` / `Spacer`; docs/GRID.md). Ordering matches the flat
+  /// feed's priority: status pair → today's notes → incidents → this week.
+  Widget _bentoBody(BuildContext context) {
+    return ResponsivePage(
+      children: [
+        _header(context),
+        const SizedBox(height: 8),
+        // The grid IS the phone-density win: the two glanceable status cards
+        // tile 2-up. Both default `tablet`/`desktop` to 2, so they stay a
+        // clean half-and-half pair at every width.
+        BentoGrid(
+          tiles: [
+            BentoTile(
+              id: 'today',
+              span: const BentoSpan(phone: 1),
+              child: _BentoSection(
+                label: 'Today',
+                child: _TodayCard(subject: subject),
+              ),
+            ),
+            BentoTile(
+              id: 'messages',
+              span: const BentoSpan(phone: 1),
+              child: _BentoSection(
+                label: 'Messages',
+                child: _MessagesCard(subjectId: subject.id),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Narrative feeds stay full-width (text-heavy / photo heroes).
+        _BentoSection(
+          label: 'Today’s notes',
+          child: _TodayObservations(subjectId: subject.id),
+        ),
+        // Self-suppressing safety record — renders nothing when there are no
+        // incidents, so no empty band appears (the reason it's a plain child,
+        // not a wide tile with a forced cell min-height).
+        _FamilyIncidents(subjectId: subject.id),
+        const SizedBox(height: 16),
+        _BentoSection(
+          label: 'This week',
+          child: _RecentObservations(subjectId: subject.id),
+        ),
+      ],
     );
   }
 
@@ -172,6 +247,31 @@ class _SectionLabel extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
+    );
+  }
+}
+
+/// A bento-cell-safe wrapper: a [_SectionLabel] over its content in a
+/// shrink-wrapping column. `mainAxisSize.min` is required because a bento cell
+/// is min-height / unbounded-max (docs/GRID.md) — a default `.max` column with
+/// no flex children wouldn't throw, but `.min` keeps the tile floor exactly the
+/// content height and matches the established bento pattern. No `Expanded` /
+/// `Spacer` here for the same reason.
+class _BentoSection extends StatelessWidget {
+  const _BentoSection({required this.label, required this.child});
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionLabel(label: label, theme: theme),
+        child,
+      ],
     );
   }
 }
@@ -329,6 +429,7 @@ class _FamilyIncidents extends ConsumerWidget {
     // of silently hiding.
     if (async.hasError) {
       return Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
@@ -348,6 +449,7 @@ class _FamilyIncidents extends ConsumerWidget {
     final incidents = async.value ?? const <Incident>[];
     if (incidents.isEmpty) return const SizedBox.shrink();
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),

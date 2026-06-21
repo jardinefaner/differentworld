@@ -6,8 +6,10 @@ import 'package:differentworld/features/heroes/role_deck_pdf.dart';
 import 'package:differentworld/features/heroes/widgets/collectible_role_card.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/person_photo_url.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -35,6 +37,11 @@ class RoleDeckScreen extends ConsumerWidget {
     // program that's 100 subscriptions). This scales flat.
     final heroes = ref.watch(heroesInSpaceProvider).value ?? const <DeckCard>[];
     final heroBySubject = {for (final c in heroes) c.subjectId: c};
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the SAME deck of collectible cards +
+    // dotted slots re-lays as a uniform bento grid (2-up on a phone) over the
+    // same providers; off keeps the existing 2-up Wrap.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       actions: [
         IconButton(
@@ -73,30 +80,76 @@ class RoleDeckScreen extends ConsumerWidget {
                   title: 'The deck',
                   subtitle: 'Every child’s role, collected',
                 ),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final width = (constraints.maxWidth - 12) / 2;
-                    return Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        for (final s in subjects)
-                          SizedBox(
-                            width: width,
-                            child: _DeckCard(
-                              subject: s,
-                              hero: heroBySubject[s.id],
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
+                if (bento)
+                  _DeckBento(subjects: subjects, heroBySubject: heroBySubject)
+                else
+                  _DeckWrap(subjects: subjects, heroBySubject: heroBySubject),
               ],
             );
           },
         ),
       ),
+    );
+  }
+}
+
+/// The default layout — every child's slot in a 2-up [Wrap]. Collectible cards
+/// and dotted slots flow at half-width, raggedly sized to their content.
+class _DeckWrap extends StatelessWidget {
+  const _DeckWrap({required this.subjects, required this.heroBySubject});
+
+  final List<Subject> subjects;
+  final Map<String, DeckCard> heroBySubject;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final s in subjects)
+              SizedBox(
+                width: width,
+                child: _DeckCard(subject: s, hero: heroBySubject[s.id]),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// The bento variant — the SAME slots ([_DeckCard]: a collectible card or a
+/// dotted invite), re-laid as uniform bento tiles instead of the half-width
+/// `Wrap`. Each is `BentoSpan(phone: 1)` so they pack 2-up on a phone (the
+/// same density as the `Wrap`, now the grid read), 4-up on tablet, 3-up on
+/// desktop — a deck of equal-weight cards reads as a uniform grid
+/// (docs/GRID.md). No fixed height: a [_DeckCard] shrink-wraps (no
+/// `Spacer`/`Expanded`), so the cell's min-height floor lets a card grow
+/// raggedly to fit — the same as the `Wrap`. Stable per-subject tile ids key
+/// the tiles so a card that vanishes can't poison a neighbour's Element.
+class _DeckBento extends StatelessWidget {
+  const _DeckBento({required this.subjects, required this.heroBySubject});
+
+  final List<Subject> subjects;
+  final Map<String, DeckCard> heroBySubject;
+
+  @override
+  Widget build(BuildContext context) {
+    return BentoGrid(
+      tiles: [
+        for (final s in subjects)
+          BentoTile(
+            id: 'deck-${s.id}',
+            // phone 1-of-2 (2-up), tablet 1-of-4 (4-up), desktop default
+            // 2-of-6 (3-up) — equal-weight cards in a uniform grid.
+            span: const BentoSpan(phone: 1, tablet: 1),
+            child: _DeckCard(subject: s, hero: heroBySubject[s.id]),
+          ),
+      ],
     );
   }
 }
