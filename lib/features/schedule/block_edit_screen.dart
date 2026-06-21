@@ -5,7 +5,6 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
-import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
@@ -521,7 +520,11 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
               ],
               onChanged: (v) async {
                 if (v == _kSentinelNew) {
-                  final newId = await openLocationEditSheet(context);
+                  // "+ New location" → the location edit PAGE; it pops the new
+                  // id back so we can auto-select it (CLAUDE.md "No modal").
+                  final newId = await context.push<String?>(
+                    '/settings/locations/new',
+                  );
                   if (!mounted || newId == null) return;
                   setState(() => _locationOverrideId = newId);
                   return;

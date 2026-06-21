@@ -60,7 +60,13 @@ class LocationActions {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.locationsDao.delete_(id);
   }
+
+  /// Re-insert a previously-deleted location — the undo path for
+  /// `deleteWithUndo` on the location edit screen.
+  Future<void> restore(Location row) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.locationsDao.restore(row);
+  }
 }
 
-final locationActionsProvider =
-    Provider<LocationActions>(LocationActions.new);
+final locationActionsProvider = Provider<LocationActions>(LocationActions.new);

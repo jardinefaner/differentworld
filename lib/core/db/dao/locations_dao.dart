@@ -21,8 +21,9 @@ class LocationsDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<Location?> watchById(String id) {
-    return (select(locations)..where((l) => l.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      locations,
+    )..where((l) => l.id.equals(id))).watchSingleOrNull();
   }
 
   Future<String> create({
@@ -62,8 +63,9 @@ class LocationsDao extends DatabaseAccessor<AppDatabase>
         name: name == null ? const Value.absent() : Value(name),
         notes: notes == null ? const Value.absent() : Value(notes),
         capacity: capacity == null ? const Value.absent() : Value(capacity),
-        isOutdoor:
-            isOutdoor == null ? const Value.absent() : Value(isOutdoor ? 1 : 0),
+        isOutdoor: isOutdoor == null
+            ? const Value.absent()
+            : Value(isOutdoor ? 1 : 0),
         updatedAt: Value(now),
       ),
     );
@@ -71,5 +73,12 @@ class LocationsDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> delete_(String id) async {
     await (delete(locations)..where((l) => l.id.equals(id))).go();
+  }
+
+  /// Re-insert a deleted location verbatim — the undo path for
+  /// `deleteWithUndo`. The row keeps its stable client UUID, so insert-or-
+  /// replace re-creates the exact row and PowerSync re-syncs it everywhere.
+  Future<void> restore(Location row) async {
+    await into(locations).insertOnConflictUpdate(row);
   }
 }

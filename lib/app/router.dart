@@ -122,6 +122,7 @@ import 'package:differentworld/features/schedule/block_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_present_screen.dart';
 import 'package:differentworld/features/schedule/day_template_editor_screen.dart';
 import 'package:differentworld/features/schedule/day_templates_screen.dart';
+import 'package:differentworld/features/schedule/location_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/schedule/trip_detail_screen.dart';
@@ -876,6 +877,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                   title: 'Locations',
                   child: LocationsListScreen(),
                 ),
+                routes: [
+                  // Create / edit a location as a PAGE, not a sheet (CLAUDE.md
+                  // "No modal is a task"). Save pops the new id back so the
+                  // inline "+ New location" pickers can auto-select it.
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'New location',
+                      child: LocationEditScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':id/edit',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Edit location',
+                      child: LocationEditScreen(
+                        locationId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'supplies',

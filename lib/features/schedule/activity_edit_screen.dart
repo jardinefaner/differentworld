@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
-import 'package:differentworld/features/schedule/locations_list_screen.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/supplies/activity_supplies_providers.dart';
 import 'package:differentworld/features/supplies/supplies_providers.dart';
@@ -19,6 +18,7 @@ import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// `/activities/new` and `/activities/:id`. Authors / edits one
 /// activity. Bottom-sticky save (matches the vehicle edit pattern).
@@ -480,7 +480,11 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                         ],
                         onChanged: (v) async {
                           if (v == '__new__') {
-                            final newId = await openLocationEditSheet(context);
+                            // "+ New location" → the edit PAGE; it pops the new
+                            // id back so we can auto-select it.
+                            final newId = await context.push<String?>(
+                              '/settings/locations/new',
+                            );
                             if (!mounted || newId == null) return;
                             setState(() => _locationId = newId);
                             return;
