@@ -21,7 +21,6 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
-import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/overflow_actions.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
 import 'package:flutter/material.dart';
@@ -167,6 +166,21 @@ class _WorldsBanner extends StatelessWidget {
   }
 }
 
+/// Which child's inline verb-picker is open — one at a time. Replaces the
+/// per-kid bottom sheet (CLAUDE.md "No modal is a task"): tap a row and the
+/// pick + mood + their-world reveal unfold in place.
+class _ExpandedPick extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  /// Open this row, or close it if it's already the open one (one at a time).
+  void toggle(String id) => state = state == id ? null : id;
+}
+
+final _expandedPickProvider = NotifierProvider<_ExpandedPick, String?>(
+  _ExpandedPick.new,
+);
+
 class _KidRow extends ConsumerWidget {
   const _KidRow({required this.subject});
 
@@ -191,73 +205,106 @@ class _KidRow extends ConsumerWidget {
           )
         : null;
     final fullName = '${subject.firstName} ${subject.lastName}'.trim();
+    final expanded = ref.watch(_expandedPickProvider) == subject.id;
 
     return Card(
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
-      child: ListTile(
-        onTap: () => _openPick(context, ref, subject, picks),
-        // Long-press → the child's world collection over time.
-        onLongPress: () => context.push('/action-words/${subject.id}'),
-        leading: _Leading(match: match),
-        title: Text(
-          fullName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: hasPicks
-            ? Text(
-                verbsByIds(picks).map((v) => v.emoji).join('  '),
-                style: const TextStyle(fontSize: 18),
-              )
-            : Text(
-                'Tap to pick today’s 3 words',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Hand the device to the child to pick their own three words.
-            IconButton(
-              tooltip: 'Let ${subject.firstName} pick',
-              icon: const Icon(Icons.front_hand_outlined),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              onPressed: () =>
-                  unawaited(context.push('/action-words/pick/${subject.id}')),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            // Tap unfolds the pick in place — no modal (CLAUDE.md "No modal
+            // is a task"). One row open at a time.
+            onTap: () =>
+                ref.read(_expandedPickProvider.notifier).toggle(subject.id),
+            // Long-press → the child's world collection over time.
+            onLongPress: () => context.push('/action-words/${subject.id}'),
+            leading: _Leading(match: match),
+            title: Text(
+              fullName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            if (hasPicks) ...[
-              _Dots(done: day!.doneCount, total: kPicksPerDay),
-              // Role-4: hand the device to the child to DO their verb-jobs.
-              IconButton(
-                tooltip: 'Hand ${subject.firstName} their jobs',
-                icon: const Icon(Icons.assignment_turned_in_outlined),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                onPressed: () =>
-                    unawaited(context.push('/action-words/job/${subject.id}')),
-              ),
-              IconButton(
-                tooltip: 'Reveal ${subject.firstName}’s world',
-                icon: const Icon(Icons.auto_awesome),
-                color: WorldBadge.goldFor(theme),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                onPressed: () => RevealOverlay.show(
-                  context,
-                  subject: subject,
-                  day: day,
+            subtitle: hasPicks
+                ? Text(
+                    verbsByIds(picks).map((v) => v.emoji).join('  '),
+                    style: const TextStyle(fontSize: 18),
+                  )
+                : Text(
+                    'Tap to pick today’s 3 words',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Hand the device to the child to pick their own three words.
+                IconButton(
+                  tooltip: 'Let ${subject.firstName} pick',
+                  icon: const Icon(Icons.front_hand_outlined),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                  onPressed: () => unawaited(
+                    context.push('/action-words/pick/${subject.id}'),
+                  ),
                 ),
-              ),
-            ] else
-              const Icon(Icons.chevron_right),
-          ],
-        ),
+                if (hasPicks) ...[
+                  _Dots(done: day!.doneCount, total: kPicksPerDay),
+                  // Role-4: hand the device to the child to DO their verb-jobs.
+                  IconButton(
+                    tooltip: 'Hand ${subject.firstName} their jobs',
+                    icon: const Icon(Icons.assignment_turned_in_outlined),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    onPressed: () => unawaited(
+                      context.push('/action-words/job/${subject.id}'),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Reveal ${subject.firstName}’s world',
+                    icon: const Icon(Icons.auto_awesome),
+                    color: WorldBadge.goldFor(theme),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    onPressed: () => RevealOverlay.show(
+                      context,
+                      subject: subject,
+                      day: day,
+                    ),
+                  ),
+                ] else
+                  Icon(expanded ? Icons.expand_less : Icons.chevron_right),
+              ],
+            ),
+          ),
+          // The pick unfolds here when this row is the open one.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? _InlinePicker(
+                    key: ValueKey('inline-pick-${subject.id}'),
+                    subject: subject,
+                    initial: picks,
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
       ),
     );
   }
@@ -316,30 +363,25 @@ class _Dots extends StatelessWidget {
   }
 }
 
-Future<void> _openPick(
-  BuildContext context,
-  WidgetRef ref,
-  Subject subject,
-  List<String> initial,
-) {
-  return showGlassSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    builder: (_) => _PickSheet(subject: subject, initial: initial),
-  );
-}
-
-class _PickSheet extends ConsumerStatefulWidget {
-  const _PickSheet({required this.subject, required this.initial});
+class _InlinePicker extends ConsumerStatefulWidget {
+  const _InlinePicker({
+    required this.subject,
+    required this.initial,
+    super.key,
+  });
 
   final Subject subject;
   final List<String> initial;
 
   @override
-  ConsumerState<_PickSheet> createState() => _PickSheetState();
+  ConsumerState<_InlinePicker> createState() => _InlinePickerState();
 }
 
-class _PickSheetState extends ConsumerState<_PickSheet> {
+class _InlinePickerState extends ConsumerState<_InlinePicker> {
+  // Mount-time init from the day's saved picks. Collapsing unmounts
+  // _InlinePicker, so the State is created fresh on every expand — this
+  // re-reads the current picks each open, and a remote sync landing mid-pick
+  // won't clobber the in-progress local selection.
   late final Set<String> _selected = widget.initial.toSet();
   bool _saving = false;
 
@@ -349,13 +391,15 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
         _selected.add(id);
       }
     });
+    // Auto-save the moment the third word lands — the pick IS the commit, no
+    // Save button. Stays open to show their world; collapses on the next tap.
+    if (_selected.length == kPicksPerDay) unawaited(_save());
   }
 
   Future<void> _save() async {
     if (_saving || _selected.length != kPicksPerDay) return;
-    setState(() => _saving = true);
-    final nav = Navigator.of(context);
     unawaited(HapticFeedback.selectionClick());
+    setState(() => _saving = true);
     await ref
         .read(actionWordsActionsProvider)
         .setPicks(
@@ -364,144 +408,130 @@ class _PickSheetState extends ConsumerState<_PickSheet> {
           date: todayKey(),
           verbIds: _selected.toList(),
         );
-    if (!mounted) return;
-    nav.pop();
+    if (mounted) setState(() => _saving = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fullName = '${widget.subject.firstName} ${widget.subject.lastName}'
-        .trim();
     final ready = _selected.length == kPicksPerDay;
     final match = ready
         ? resolveWorld(_selected, ref.watch(classWorldBookProvider))
         : null;
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            8,
-            20,
-            20 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          Row(
             children: [
-              const GlassDragHandle(bottomMargin: 16),
-              Text(fullName, style: theme.textTheme.titleLarge),
+              if (_saving)
+                const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               Text(
                 ready
-                    ? 'Their world today'
+                    ? 'Saved · their world today'
                     : 'Tap 3 words (${_selected.length}/$kPicksPerDay)',
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 12),
-              // Mood Weather, inline — the morning check collapses into the
-              // same gesture as the verb pick (no separate per-kid nav).
-              _PickMoodRow(
-                subjectId: widget.subject.id,
-                groupId: widget.subject.groupId,
-              ),
-              const SizedBox(height: 12),
-              VerbGrid(selected: _selected, onToggle: _toggle),
-              if (match != null) ...[
-                const SizedBox(height: 20),
-                WorldBadge(match: match, showVerbs: false, emojiSize: 56),
-                const SizedBox(height: 14),
-                // THE LENS — how this kid will do today's shared activity.
-                Text(
-                  'Their way today',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Center(child: VerbLensStrip(verbIds: _selected.toList())),
-                // YOUR RULE THIS WEEK — of the world's three rules, the one
-                // their verbs claim (docs/WORLD.md).
-                if (ref.watch(currentWorldProvider) case final cw?)
-                  if (ruleForVerbs(cw.id, _selected) case final rule?) ...[
-                    const SizedBox(height: 14),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'THEIR RULE THIS WEEK',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSecondaryContainer
-                                  .withValues(alpha: 0.7),
-                              letterSpacing: 1,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            rule.text,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSecondaryContainer,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                const SizedBox(height: 8),
-                Center(
-                  child: TextButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      unawaited(
-                        context.push(
-                          '/action-words/activities?verbs='
-                          '${_selected.join(',')}',
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.local_activity_outlined, size: 18),
-                    label: const Text('See matching activities'),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: ready && !_saving ? _save : null,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.check),
-                    label: const Text('Save'),
-                  ),
-                ],
+              const Spacer(),
+              // The visible collapse control — tapping the row header also
+              // closes it, but once picks are saved the header fills with
+              // action icons, so this keeps "close" discoverable.
+              IconButton(
+                tooltip: 'Close',
+                icon: const Icon(Icons.expand_less),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => ref
+                    .read(_expandedPickProvider.notifier)
+                    .toggle(widget.subject.id),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 10),
+          // Mood Weather, inline — the morning check rides the same gesture
+          // as the verb pick (no separate per-kid nav).
+          _PickMoodRow(
+            subjectId: widget.subject.id,
+            groupId: widget.subject.groupId,
+          ),
+          const SizedBox(height: 12),
+          VerbGrid(selected: _selected, onToggle: _toggle),
+          if (match != null) ...[
+            const SizedBox(height: 18),
+            WorldBadge(match: match, showVerbs: false, emojiSize: 52),
+            const SizedBox(height: 14),
+            // THE LENS — how this kid will do today's shared activity.
+            Text(
+              'Their way today',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(child: VerbLensStrip(verbIds: _selected.toList())),
+            // YOUR RULE THIS WEEK — of the world's three rules, the one their
+            // verbs claim (docs/WORLD.md).
+            if (ref.watch(currentWorldProvider) case final cw?)
+              if (ruleForVerbs(cw.id, _selected) case final rule?) ...[
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'THEIR RULE THIS WEEK',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer
+                              .withValues(alpha: 0.7),
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        rule.text,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            const SizedBox(height: 4),
+            Center(
+              child: TextButton.icon(
+                onPressed: () => unawaited(
+                  context.push(
+                    '/action-words/activities?verbs=${_selected.join(',')}',
+                  ),
+                ),
+                icon: const Icon(Icons.local_activity_outlined, size: 18),
+                label: const Text('See matching activities'),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
