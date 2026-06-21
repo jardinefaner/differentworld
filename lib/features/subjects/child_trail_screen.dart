@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/subjects/weekly_wrap.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -36,6 +40,23 @@ class ChildTrailScreen extends ConsumerWidget {
     );
 
     return EdgeScaffold(
+      actions: [
+        // Cast the week — auto-compile this child's last 7 days of made-things
+        // into a deck and throw it on the room (the growth-showcase, slice 1).
+        if (samplesAsync.value?.isNotEmpty ?? false)
+          PrimaryActionButton(
+            tooltip: 'Cast the week',
+            icon: Icons.cast,
+            onPressed: () => unawaited(
+              castWeeklyWrap(
+                context,
+                ref,
+                subjectId: subjectId,
+                childName: name ?? 'This child',
+              ),
+            ),
+          ),
+      ],
       body: SafeArea(
         bottom: false,
         child: samplesAsync.when(
