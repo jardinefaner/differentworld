@@ -5,8 +5,10 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/missions/mission_progress.dart';
 import 'package:differentworld/features/missions/mission_templates.dart';
 import 'package:differentworld/features/missions/missions_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
@@ -32,6 +34,10 @@ class MissionsListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final missionsAsync = ref.watch(missionsProvider);
     final canEdit = ref.watch(viewerProvider).canManageSpace;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the SAME mission cards re-lay as bento
+    // tiles (2-up on a phone) instead of the CatalogGrid; off is unchanged.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       actions: [
@@ -92,11 +98,27 @@ class MissionsListScreen extends ConsumerWidget {
                 subtitle: 'Real jobs kids can take on',
               ),
               const SizedBox(height: 4),
-              CatalogGrid(
-                children: [
-                  for (final m in missions) _MissionCard(mission: m),
-                ],
-              ),
+              if (bento)
+                BentoGrid(
+                  tiles: [
+                    for (final m in missions)
+                      BentoTile(
+                        id: 'mission-${m.id}',
+                        // phone 1-of-2 (2-up), tablet 1-of-4 (4-up), desktop
+                        // default 2-of-6 (3-up). `_MissionCard`/`CatalogCard`
+                        // shrink-wraps (mainAxisSize.min), so it's safe in the
+                        // unbounded bento cell — no SizedBox bound needed.
+                        span: const BentoSpan(phone: 1, tablet: 1),
+                        child: _MissionCard(mission: m),
+                      ),
+                  ],
+                )
+              else
+                CatalogGrid(
+                  children: [
+                    for (final m in missions) _MissionCard(mission: m),
+                  ],
+                ),
             ],
           );
         },

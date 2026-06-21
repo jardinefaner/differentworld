@@ -6,8 +6,10 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/activity_runtime/roles.dart';
 import 'package:differentworld/features/missions/do_board_providers.dart';
 import 'package:differentworld/features/missions/missions_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -88,6 +90,11 @@ class _MissionBoardScreenState extends ConsumerState<MissionBoardScreen> {
     final missionsAsync = ref.watch(missionsProvider);
     final doneIds = ref.watch(_doneMissionIdsTodayProvider);
     final roles = ref.watch(activeRolesTodayProvider).value ?? const <ActiveRole>[];
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the board re-lays the SAME items as
+    // bento tiles (2-up on a phone) over the same providers; off keeps the
+    // existing fixed-aspect GridView.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       actions: [
@@ -158,6 +165,13 @@ class _MissionBoardScreenState extends ConsumerState<MissionBoardScreen> {
               ),
               if (items.isEmpty)
                 _TasksZero(doneCount: doneCount)
+              else if (bento)
+                _BoardBento(
+                  items: items,
+                  completing: _completing,
+                  onTap: _tap,
+                  onShrunk: _finish,
+                )
               else
                 _Board(
                   items: items,
@@ -236,6 +250,60 @@ class _Board extends StatelessWidget {
     );
   }
 }
+
+/// The bento variant of the board — the SAME `_BoardButton`s (icon + short
+/// label, tap-to-shrink), re-laid as uniform bento tiles instead of the
+/// fixed-aspect GridView. Each is `BentoSpan(phone: 1)` so they pack 2-up on
+/// a phone (the grid read), 3-up on tablet/desktop. A board of equal-weight
+/// big-buttons reads as a uniform grid (docs/GRID.md). Each tile bounds the
+/// button in a text-scale-aware height because `_BoardButton`'s Column
+/// centres its content (`mainAxisAlignment.center`) — an unbounded bento cell
+/// would otherwise throw (see docs/GRID.md). Keys stay on the buttons so a
+/// shrunk tile vanishing can't poison a neighbour's Element.
+class _BoardBento extends StatelessWidget {
+  const _BoardBento({
+    required this.items,
+    required this.completing,
+    required this.onTap,
+    required this.onShrunk,
+  });
+
+  final List<_BoardItem> items;
+  final Set<String> completing;
+  final ValueChanged<_BoardItem> onTap;
+  final ValueChanged<_BoardItem> onShrunk;
+
+  @override
+  Widget build(BuildContext context) {
+    final tileHeight = 132 + 56 * _textScale(context);
+    return BentoGrid(
+      tiles: [
+        for (final item in items)
+          BentoTile(
+            id: 'board-${item.key}',
+            // phone 1-of-2 (2-up), tablet 1-of-4 (4-up), desktop default
+            // 2-of-6 (3-up) — equal-weight big-buttons in a uniform grid.
+            span: const BentoSpan(phone: 1, tablet: 1),
+            child: SizedBox(
+              height: tileHeight,
+              child: _BoardButton(
+                key: ValueKey(item.key),
+                item: item,
+                shrinking: completing.contains(item.key),
+                onTap: () => onTap(item),
+                onShrunk: () => onShrunk(item),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Title-text-relative scale (1.0 = OS default) so bento board cells grow
+/// with the user's text-size setting instead of clipping at a fixed height.
+double _textScale(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(14) / 14;
 
 class _BoardButton extends StatelessWidget {
   const _BoardButton({

@@ -1,8 +1,10 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/heroes/heroes_providers.dart';
 import 'package:differentworld/features/heroes/widgets/hero_card.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -29,6 +31,11 @@ class HeroesHubScreen extends ConsumerWidget {
     // heroForSubjectProvider watch per row (N live streams at N children).
     final heroes = ref.watch(heroesInSpaceProvider).value ?? const <DeckCard>[];
     final heroBySubject = {for (final c in heroes) c.subjectId: c};
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the same per-child cells re-lay as a
+    // 2-up bento grid over the SAME subjects + heroesInSpaceProvider map; off
+    // keeps the existing CatalogGrid. Same _HeroRow cell, same taps.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       actions: [
         IconButton(
@@ -65,13 +72,36 @@ class HeroesHubScreen extends ConsumerWidget {
                   subtitle: 'Each child’s make-believe self',
                 ),
                 const SizedBox(height: 4),
-                CatalogGrid(
-                  minTileWidth: 240,
-                  children: [
-                    for (final s in subjects)
-                      _HeroRow(subject: s, hero: heroBySubject[s.id]),
-                  ],
-                ),
+                if (bento)
+                  // Each child is a uniform tile that packs 2-up on a phone
+                  // (phone: 1 of 2 columns), 2–3-up at width — the same
+                  // equal-weight-hub read as the present hub. _HeroRow
+                  // shrink-wraps (FeatureCard or a name-row + HeroCard, no
+                  // Expanded/Spacer), so it's safe in a min-height bento cell.
+                  BentoGrid(
+                    tiles: [
+                      for (final s in subjects)
+                        BentoTile(
+                          id: 'hero-${s.id}',
+                          // phone: 1 of 2 → 2-up on a phone; tablet/desktop keep
+                          // the default 2-of-N (so 2-up at tablet, 3-up at
+                          // desktop), matching the present hub's uniform read.
+                          span: const BentoSpan(phone: 1),
+                          child: _HeroRow(
+                            subject: s,
+                            hero: heroBySubject[s.id],
+                          ),
+                        ),
+                    ],
+                  )
+                else
+                  CatalogGrid(
+                    minTileWidth: 240,
+                    children: [
+                      for (final s in subjects)
+                        _HeroRow(subject: s, hero: heroBySubject[s.id]),
+                    ],
+                  ),
               ],
             );
           },

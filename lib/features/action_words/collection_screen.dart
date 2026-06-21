@@ -4,8 +4,10 @@ import 'package:differentworld/features/action_words/action_words_providers.dart
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/world_badge.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -29,6 +31,11 @@ class CollectionScreen extends ConsumerWidget {
     final subject = ref.watch(subjectByIdProvider(subjectId)).value;
     final firstName = subject?.firstName ?? 'This child';
     final collection = ref.watch(actionWordsCollectionProvider(subjectId)).value;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the worlds + most-practiced sections
+    // re-lay as bento tiles over the SAME collection data; off keeps the
+    // existing stacked layout. Empty + loading states are unchanged.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
@@ -53,22 +60,110 @@ class CollectionScreen extends ConsumerWidget {
                       _TitleBanner(title: collection.emergingTitle!, gold: gold),
                       const SizedBox(height: 16),
                     ],
-                    Text(
-                      '${collection.collectedWorlds} of ${kNamedWorlds.length} '
-                      'worlds',
-                      style: theme.textTheme.labelLarge?.copyWith(color: gold),
-                    ),
-                    const SizedBox(height: 8),
-                    _WorldsGrid(counts: collection.worldCounts, gold: gold),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Most practiced',
-                      style: theme.textTheme.labelLarge?.copyWith(color: gold),
-                    ),
-                    const SizedBox(height: 8),
-                    _VerbBars(totals: collection.verbTotals, gold: gold),
+                    if (bento)
+                      _CollectionBento(collection: collection, gold: gold)
+                    else ...[
+                      Text(
+                        '${collection.collectedWorlds} of '
+                        '${kNamedWorlds.length} worlds',
+                        style: theme.textTheme.labelLarge?.copyWith(color: gold),
+                      ),
+                      const SizedBox(height: 8),
+                      _WorldsGrid(counts: collection.worldCounts, gold: gold),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Most practiced',
+                        style: theme.textTheme.labelLarge?.copyWith(color: gold),
+                      ),
+                      const SizedBox(height: 8),
+                      _VerbBars(totals: collection.verbTotals, gold: gold),
+                    ],
                   ],
                 ),
+    );
+  }
+}
+
+/// The bento variant of the collection's two sections — the SAME worlds grid
+/// and most-practiced bars ([_WorldsGrid] / [_VerbBars] over the same
+/// collection data), re-laid as labelled tiles. On a phone they stack
+/// full-width (each section needs the width: the worlds grid is 4-up
+/// internally, the verb bars are full-width rows). On tablet/desktop they pair
+/// side-by-side as a two-tile dashboard. The title banner above stays in the
+/// page flow (it's a centered headline, not a tile).
+class _CollectionBento extends StatelessWidget {
+  const _CollectionBento({required this.collection, required this.gold});
+
+  final ActionWordsCollection collection;
+  final Color gold;
+
+  @override
+  Widget build(BuildContext context) {
+    return BentoGrid(
+      tiles: [
+        BentoTile(
+          id: 'worlds',
+          // Pairs beside "Most practiced" on desktop (3-of-6) and tablet
+          // (2-of-4); full-width on phone where the internal 4-up world cells
+          // need the room. Two rows tall — the world grid is the taller block.
+          span: const BentoSpan(desktop: 3, rows: 2),
+          child: _SectionTile(
+            label: '${collection.collectedWorlds} of ${kNamedWorlds.length} '
+                'worlds',
+            gold: gold,
+            child: _WorldsGrid(counts: collection.worldCounts, gold: gold),
+          ),
+        ),
+        BentoTile(
+          id: 'practiced',
+          span: const BentoSpan(desktop: 3, rows: 2),
+          child: _SectionTile(
+            label: 'Most practiced',
+            gold: gold,
+            child: _VerbBars(totals: collection.verbTotals, gold: gold),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One labelled section tile for the bento collection — the gold section label
+/// over the section's content. Shrink-wraps (mainAxisSize.min, no flex child)
+/// so it's safe in a min-height / unbounded-max bento cell (docs/GRID.md).
+class _SectionTile extends StatelessWidget {
+  const _SectionTile({
+    required this.label,
+    required this.gold,
+    required this.child,
+  });
+
+  final String label;
+  final Color gold;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(color: gold),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
     );
   }
 }

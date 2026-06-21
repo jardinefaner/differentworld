@@ -6,6 +6,7 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 // the per-subject reads route through `family_providers.dart` because
 // the local Drift mirror is empty for guardians (see file header there).
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/family/widgets/received_reports_card.dart';
 import 'package:differentworld/features/family/widgets/todays_recap_peek.dart';
@@ -15,9 +16,11 @@ import 'package:differentworld/features/family/widgets/todays_recap_peek.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -138,15 +141,29 @@ class _FamilyTodayList extends ConsumerWidget {
       }
     }
 
+    final header = ContentHeader(
+      title: space?.name ?? 'Today',
+      subtitle: _subtitle(guardianName: guardianName, flagged: flagged),
+      subtitleColor: flagged.isEmpty
+          ? null
+          : Theme.of(context).colorScheme.error,
+    );
+
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). The family feed is text/photo-heavy (each child
+    // card carries a photo-of-the-moment hero + recap), so the bento variant
+    // keeps every tile FULL-WIDTH on phone (the calm card treatment, NOT a
+    // forced 2-up — that would truncate the narrative + photos) and only goes
+    // 2-up on tablet/desktop where there's room. Same providers, same per-
+    // child privacy scoping; only the packing changes.
+    final bento = bentoEnabled(ref, perScreen: null);
+    if (bento) {
+      return _bentoBody(context, ref, header: header, flagged: flagged);
+    }
+
     return ResponsivePage(
       children: [
-        ContentHeader(
-          title: space?.name ?? 'Today',
-          subtitle: _subtitle(guardianName: guardianName, flagged: flagged),
-          subtitleColor: flagged.isEmpty
-              ? null
-              : Theme.of(context).colorScheme.error,
-        ),
+        header,
         // Marcus-persona "30-second check" summary — one sentence
         // that closes the loop without parsing each card. Reads
         // either "All accounted for · Pickup in 3h" (calm) or
@@ -166,6 +183,59 @@ class _FamilyTodayList extends ConsumerWidget {
           _ChildCard(child: child),
           const SizedBox(height: 12),
         ],
+      ],
+    );
+  }
+
+  /// The bento variant — the SAME summary / reports / per-child cards, re-laid
+  /// as bento tiles over the same providers. Everything is full-width on phone
+  /// (the cards are narrative + photo-heavy, so a 2-up would truncate); the
+  /// per-child cards go 2-up on tablet/desktop where the width is there.
+  ///
+  /// The reports tile is emitted ONLY when the guardian actually has reports —
+  /// a bento cell reserves its `minHeight`, so wrapping the self-hiding
+  /// [ReceivedReportsCard] unconditionally would leave a blank box on a quiet
+  /// day. We watch the same provider the card reads to decide.
+  Widget _bentoBody(
+    BuildContext context,
+    WidgetRef ref, {
+    required Widget header,
+    required List<Subject> flagged,
+  }) {
+    final hasReports =
+        (ref.watch(myReceivedExportsProvider).value ?? const []).isNotEmpty;
+    final tiles = <BentoTile>[
+      BentoTile(
+        id: 'summary',
+        span: const BentoSpan.wide(),
+        child: _SummarySentence(children: children, flagged: flagged),
+      ),
+      if (hasReports)
+        BentoTile(
+          id: 'reports',
+          span: const BentoSpan.wide(),
+          child: ReceivedReportsCard(
+            subjectsById: {for (final c in children) c.id: c},
+          ),
+        ),
+      for (final child in children)
+        BentoTile(
+          // Stable per-child key so a card vanishing (a child unlinked
+          // mid-session) can't poison a neighbour's Element in the Wrap.
+          id: 'child-${child.id}',
+          // Full-width on phone (default 2-of-2) — the card's photo hero +
+          // recap need the room. Tablet default 2-of-4 (2-up); desktop
+          // 3-of-6 (2-up).
+          span: const BentoSpan(desktop: 3),
+          child: _ChildCard(child: child),
+        ),
+    ];
+
+    return ResponsivePage(
+      children: [
+        header,
+        const SizedBox(height: 12),
+        BentoGrid(tiles: tiles),
       ],
     );
   }

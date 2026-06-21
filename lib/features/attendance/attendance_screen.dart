@@ -11,6 +11,7 @@ import 'package:differentworld/features/attendance/widgets/attendance_row.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -20,6 +21,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -129,6 +131,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
     final labels = ref.watch(verticalLabelsProvider);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the roster re-lays as a 2-up grid of
+    // compact check-in cells over the SAME subjects/records/actions; off keeps
+    // the existing one-row-per-child list. The RoomSkinBackground, scrubber,
+    // summary bar, and "Mark all present" action are unchanged either way.
+    final bento = bentoEnabled(ref, perScreen: null);
     final groupAsync = ref.watch(_groupDetailProvider(widget.groupId));
     final group = groupAsync.value;
     final roomSkin = group == null ? null : roomSkinForGroup(group);
@@ -222,6 +230,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                             date: _isoDate,
                             subjects: subjects,
                             records: records,
+                            bento: bento,
                           ),
                         );
                       },
@@ -398,12 +407,37 @@ class _AttendanceList extends ConsumerWidget {
     required this.date,
     required this.subjects,
     required this.records,
+    required this.bento,
   });
 
   final String groupId;
   final String date;
   final List<Subject> subjects;
   final List<AttendanceRecord> records;
+  final bool bento;
+
+  /// Optimistic set/clear for one subject — shared by the list rows and the
+  /// bento cells so both layouts drive the exact same providers.
+  Future<void> _apply(
+    WidgetRef ref,
+    String subjectId,
+    AttendanceStatus? next,
+  ) async {
+    if (next == null) {
+      await ref
+          .read(attendanceActionsProvider)
+          .clearStatus(subjectId: subjectId, date: date);
+    } else {
+      await ref
+          .read(attendanceActionsProvider)
+          .setStatus(
+            groupId: groupId,
+            subjectId: subjectId,
+            date: date,
+            status: next,
+          );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -418,6 +452,34 @@ class _AttendanceList extends ConsumerWidget {
       recordBySubject[r.subjectId] = r;
     }
 
+    if (bento) {
+      // 2-up on a phone, more at width. The full AttendanceRow (avatar + name +
+      // five 48dp status buttons in one Row) can't fit a ~180dp cell — so the
+      // cell re-lays the SAME data vertically: avatar + name on top, the status
+      // icons wrapping below. Same `_apply` callback, same statuses, same taps.
+      // maxCrossAxisExtent 180 → 2 columns on a 380dp phone.
+      return GridView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 180,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          // Grows with text scale so a large accessibility floor doesn't clip
+          // the wrapped status icons (the fixed-aspect-ratio trap).
+          mainAxisExtent: 152 + 56 * _textScale(context),
+        ),
+        itemCount: subjects.length,
+        itemBuilder: (_, i) {
+          final subject = subjects[i];
+          return _AttendanceCell(
+            subject: subject,
+            status: bySubject[subject.id],
+            onChangeStatus: (next) => _apply(ref, subject.id, next),
+          );
+        },
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(
         0,
@@ -430,25 +492,8 @@ class _AttendanceList extends ConsumerWidget {
       itemBuilder: (_, i) {
         final subject = subjects[i];
         final scheme = Theme.of(context).colorScheme;
-        Future<void> apply(AttendanceStatus? next) async {
-          if (next == null) {
-            await ref
-                .read(attendanceActionsProvider)
-                .clearStatus(
-                  subjectId: subject.id,
-                  date: date,
-                );
-          } else {
-            await ref
-                .read(attendanceActionsProvider)
-                .setStatus(
-                  groupId: groupId,
-                  subjectId: subject.id,
-                  date: date,
-                  status: next,
-                );
-          }
-        }
+        Future<void> apply(AttendanceStatus? next) =>
+            _apply(ref, subject.id, next);
 
         // Swipe accelerator: → marks Present, ← marks Absent. Both
         // return `false` from confirmDismiss so the row doesn't
@@ -532,6 +577,144 @@ class _AttendanceList extends ConsumerWidget {
     );
   }
 }
+
+/// A compact check-in cell for the bento (2-up) roster. Re-lays the SAME
+/// content as [AttendanceRow] — avatar + name + the inline status icons — into
+/// a narrow tile: identity on top, the status icons wrapping below, so it fits
+/// a ~180dp phone column where the one-row layout never would. Same statuses,
+/// same auto-save-on-tap, same re-tap-to-clear behaviour.
+class _AttendanceCell extends StatelessWidget {
+  const _AttendanceCell({
+    required this.subject,
+    required this.status,
+    required this.onChangeStatus,
+  });
+
+  final Subject subject;
+  final AttendanceStatus? status;
+  final Future<void> Function(AttendanceStatus?) onChangeStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final fullName = '${subject.firstName} ${subject.lastName}'.trim();
+    // RepaintBoundary mirrors AttendanceRow — a tap-ripple on one cell
+    // shouldn't repaint its neighbours on the morning-checklist sweep.
+    return RepaintBoundary(
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: Column(
+            // Shrink-wrap: the cell has a fixed mainAxisExtent, so content
+            // top-aligns and the status icons sit just below the name.
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      subject.firstName,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // The five status icons wrap to two rows in the narrow cell —
+              // each is a 40dp tap target (slightly tighter than the row's 48dp
+              // to fit two columns, still at/above the 40dp comfortable floor).
+              Wrap(
+                spacing: 2,
+                runSpacing: 2,
+                children: [
+                  for (final s in AttendanceStatus.values)
+                    _CellStatusButton(
+                      status: s,
+                      selected: s == status,
+                      onTap: () async {
+                        unawaited(HapticFeedback.selectionClick());
+                        await onChangeStatus(s == status ? null : s);
+                      },
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One status toggle inside an [_AttendanceCell]. Same semantics as the row's
+/// status button (fill when selected, semantic colour), sized 40dp so five fit
+/// the narrow 2-up cell.
+class _CellStatusButton extends StatelessWidget {
+  const _CellStatusButton({
+    required this.status,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AttendanceStatus status;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = status.color(scheme);
+    final bg = selected ? color : scheme.surfaceContainerLow;
+    final fg = selected ? _onColorFor(color, scheme) : scheme.onSurfaceVariant;
+    return Tooltip(
+      message: status.label,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: status.label,
+        child: Material(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(status.icon, size: 18, color: fg),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Mirror of AttendanceRow's on-color picker so the selected fill stays
+  /// readable across light + dark.
+  Color _onColorFor(Color bg, ColorScheme scheme) {
+    if (bg == scheme.error) return scheme.onError;
+    if (bg == scheme.tertiary) return scheme.onTertiary;
+    if (bg == scheme.secondary) return scheme.onSecondary;
+    if (bg == scheme.onSurfaceVariant) return scheme.surface;
+    return scheme.onPrimary;
+  }
+}
+
+/// Title-text-relative scale (1.0 = OS default) so the bento cells grow with
+/// the user's text-size setting instead of clipping at a fixed extent.
+double _textScale(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(14) / 14;
 
 class _SummaryBar extends StatelessWidget {
   const _SummaryBar({required this.subjects, required this.records});
