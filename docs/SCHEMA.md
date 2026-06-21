@@ -57,7 +57,7 @@ of the SQL.
 - `capabilities` (jsonb — carries `action_verbs` (list of verb ids for the activity matcher), `senses`, `curriculum_key` (`worldId:index` — present on curriculum-imported rows; idempotency marker), `curriculum_world` (world id of the source curriculum world))
 **RLS gist**: relaxed; reads open to all members.
 **Sync rule**: `by_space`.
-**Consumers**: [Schedule](FEATURES.md#schedule) (blocks reference activities; `activity_edit_screen.dart` in the schedule folder owns the edit UI), [Action Words](FEATURES.md#action-words) (writes via `CurriculumImporter.importActivities` — seeds ~75 curriculum activities tagged with `action_verbs` + `curriculum_key` in `capabilities` JSONB; also reads via the activity matcher screen `activity_match_screen.dart`), [Routines](FEATURES.md#routines) (READ-ONLY — reads `activitiesProvider` to resolve a block's activity name for the kid-legible timeline).
+**Consumers**: [Schedule](FEATURES.md#schedule) (blocks reference activities; `activity_edit_screen.dart` in the schedule folder owns the edit UI), [Action Words](FEATURES.md#action-words) (writes via `CurriculumImporter.importActivities` — seeds ~75 curriculum activities tagged with `action_verbs` + `curriculum_key` in `capabilities` JSONB; also reads via the activity matcher screen `activity_match_screen.dart`), [Routines](FEATURES.md#routines) (READ-ONLY — reads `activitiesProvider` to resolve a block's activity name for the kid-legible timeline), [Entities](FEATURES.md#entities) (READ-ONLY — `activitiesProvider` feeds `entityIndexProvider` to autotag activity names in prose).
 **Last verified**: 2026-06-19
 
 ---
@@ -193,7 +193,7 @@ of the SQL.
 - `created_at` (timestamptz)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
-**Consumers**: [Groups](FEATURES.md#groups), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Schedule](FEATURES.md#schedule), [Subjects](FEATURES.md#subjects), [Today](FEATURES.md#today).
+**Consumers**: [Groups](FEATURES.md#groups), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Schedule](FEATURES.md#schedule), [Subjects](FEATURES.md#subjects), [Today](FEATURES.md#today), [Entities](FEATURES.md#entities) (READ-ONLY — `groupsProvider` feeds `entityIndexProvider` to autotag cohort names in prose).
 **Last verified**: 2026-05-21
 
 ---
@@ -276,7 +276,7 @@ of the SQL.
 - `notes` (text, nullable)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
-**Consumers**: [Schedule](FEATURES.md#schedule), [Settings](FEATURES.md#settings) (locations list), [Supplies](FEATURES.md#supplies) (Location lens reads `locationsProvider` to resolve `location_id → name`).
+**Consumers**: [Schedule](FEATURES.md#schedule), [Settings](FEATURES.md#settings) (locations list), [Supplies](FEATURES.md#supplies) (Location lens reads `locationsProvider` to resolve `location_id → name`), [Entities](FEATURES.md#entities) (READ-ONLY — `locationsProvider` feeds `entityIndexProvider` to autotag place names in prose; peek navigates to `/settings/locations`).
 **Last verified**: 2026-06-01
 
 ---
@@ -310,7 +310,7 @@ of the SQL.
 - `archived_at` (timestamptz, nullable — soft-delete)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
-**Consumers**: [Settings](FEATURES.md#settings) (Team), [Schedule](FEATURES.md#schedule) (lead assignment), [Vehicles](FEATURES.md#vehicles) (Driver cert), [Photos](FEATURES.md#photos), [Auth](FEATURES.md#auth), [Onboarding](FEATURES.md#onboarding) (writes initial member row on space creation), and most other features via `viewer.dart`.
+**Consumers**: [Settings](FEATURES.md#settings) (Team), [Schedule](FEATURES.md#schedule) (lead assignment), [Vehicles](FEATURES.md#vehicles) (Driver cert), [Photos](FEATURES.md#photos), [Auth](FEATURES.md#auth), [Onboarding](FEATURES.md#onboarding) (writes initial member row on space creation), [Entities](FEATURES.md#entities) (READ-ONLY — `membersInSpaceProvider` feeds `entityIndexProvider` to autotag staff names in prose), and most other features via `viewer.dart`.
 **Last verified**: 2026-05-22
 
 ---
@@ -419,7 +419,7 @@ of the SQL.
 - `withdrawn_at` (timestamptz, nullable)
 **RLS gist**: relaxed for staff. Guardian self-reads via direct PostgREST through `subject_guardians` join.
 **Sync rule**: `by_space` for staff. Guardian-side reads bypass PowerSync.
-**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [Incidents](FEATURES.md#incidents) (log screen reads `subjectsInSpaceProvider` to resolve child identity on each card), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name), [Cockpit](FEATURES.md#cockpit) (`subjectsInSpaceProvider` read by `ConductorScreen` to build the every-child-book grid), [ChildWorld](FEATURES.md#childworld) (reads `subjectByIdProvider` for the child's first name; subject_detail_screen.dart hosts the "Their world" EdgeAction).
+**Consumers**: [Subjects](FEATURES.md#subjects), [Attendance](FEATURES.md#attendance), [Entries](FEATURES.md#entries), [Exports](FEATURES.md#exports), [Family](FEATURES.md#family), [Messages](FEATURES.md#messages), [Surveys](FEATURES.md#surveys), [Photos](FEATURES.md#photos), [Incidents](FEATURES.md#incidents) (log screen reads `subjectsInSpaceProvider` to resolve child identity on each card), [World](FEATURES.md#world) (reads `subjectByIdProvider` on the Me screen to resolve the child's first name), [Cockpit](FEATURES.md#cockpit) (`subjectsInSpaceProvider` read by `ConductorScreen` to build the every-child-book grid), [ChildWorld](FEATURES.md#childworld) (reads `subjectByIdProvider` for the child's first name; subject_detail_screen.dart hosts the "Their world" EdgeAction), [Entities](FEATURES.md#entities) (READ-ONLY — `subjectsInSpaceProvider` feeds `entityIndexProvider`; first names indexed only when unambiguous in the visible roster; the peek shows cohort + age + allergies and navigates to the full profile).
 **Last verified**: 2026-06-19
 
 ---
@@ -572,7 +572,7 @@ of the SQL.
 - `capabilities` (jsonb — `body_color`, `fuel_type`, `accessibility`, etc.)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
-**Consumers**: [Vehicles](FEATURES.md#vehicles), [Schedule](FEATURES.md#schedule) (trip assignment).
+**Consumers**: [Vehicles](FEATURES.md#vehicles), [Schedule](FEATURES.md#schedule) (trip assignment), [Entities](FEATURES.md#entities) (READ-ONLY — `vehiclesProvider` feeds `entityIndexProvider` to autotag vehicle names in prose; peek navigates to `/vehicles/:id`).
 **Last verified**: 2026-05-21
 
 ---

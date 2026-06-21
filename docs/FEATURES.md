@@ -360,6 +360,31 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ---
 
+## Entities
+**Path**: `lib/features/entities/`
+**Purpose**: Every named thing in the app (child, staff member, cohort, activity, place, vehicle, role, world, action-word) is tappable anywhere it appears — structured chips open a detail peek instantly; free-text prose auto-detects the same names on-device and links them too.
+**Personas served**: All staff (ambient — no persona-specific gate; the peek and autotag work wherever staff prose appears).
+**Discovery surfaces**:
+- Routes: none — no destination route. Entities is an ambient enhancement wired into existing screens, not a navigable section. The peek (`showEntityPeek`) is a modal glass sheet that opens from a tap, never from a URL. Absence of a route is BY DESIGN.
+- Omnibox: no — not a destination; no catalog entry. The feature makes OTHER destinations' content tappable, rather than adding an entry of its own.
+- Slash: none — same rationale as Omnibox.
+- Drawer: no — not a top-level destination.
+- Settings: yes — "Live entities" switch (`_LiveEntitiesTile`, `SwitchListTile`) in the **Preferences** `_SettingsGroup` of `lib/features/settings/settings_screen.dart`. Default ON; the toggle is the escape hatch if auto-detection over-matches.
+**Capabilities**: None — open to all signed-in staff. The feature is staff-scoped at the `EntityScope` level: `LinkifiedText` degrades to plain `Text` in `EntityScope.family` so guardian-facing surfaces never auto-link other children's names (the family-scope privacy boundary; pairs with `scrubOtherNames`).
+**Data**: No new tables and no migration. Reads existing local Drift streams only: [subjects](SCHEMA.md#subjects), [members](SCHEMA.md#members) (via `membersInSpaceProvider`), [groups](SCHEMA.md#groups), [activities](SCHEMA.md#activities), [locations](SCHEMA.md#locations), [vehicles](SCHEMA.md#vehicles). Roles (`roleDecks`) and worlds (`curriculumWorldsProvider`) come from bundled Dart catalogs, not synced tables. All matching is on-device — PII never leaves the device.
+**Surfaces**:
+- *EntityRef / EntityKind* — `lib/features/entities/entity_ref.dart`. Value type `EntityRef` (kind + id + label) and `EntityKind` enum (subject / member / group / activity / location / vehicle / role / world / verb). `EntityKindVisual` extension supplies per-kind accent colour, icon, and noun label. `readableEntityTint` + `entityChipFill` are the two AA-safe color helpers that every consumer reaches for.
+- *Matcher* — `lib/features/entities/entity_match.dart`. `findEntityMatches(text, terms, {exclude})` — pure function, zero Flutter, unit-testable (`test/unit/entity_match_test.dart`). Whole-word, proper-noun-gated for people names, longest-match-wins on overlap, `exclude` set is the family-scope guard hook.
+- *Index provider* — `lib/features/entities/entity_providers.dart`. `liveEntitiesProvider` (AsyncNotifierProvider<bool>, SharedPreferences-backed, default ON) + `liveEntitiesOn(ref)` sync helper. `entityIndexProvider` (Provider<List<EntityMatchTerm>>) builds the on-device name→ref index from `subjectsInSpaceProvider`, `membersInSpaceProvider`, `groupsProvider`, `activitiesProvider`, `locationsProvider`, `vehiclesProvider`, `curriculumWorldsProvider`, and `roleDecks`; bare first names indexed only when unambiguous in the visible roster; verbs excluded (too common in prose).
+- *Peek* — `lib/features/entities/entity_peek.dart`. `showEntityPeek(context, entity)` — glass sheet (`showGlassSheet`) showing identity header, kind eyebrow, a few live facts, and an optional "open full" button that navigates into the entity's real screen. Resolves live from the same local providers as the index; never hits the network.
+- *Structured link* — `lib/features/entities/entity_link.dart`. `EntityLink` (ConsumerWidget) — renders a tappable tinted chip (padded) or inline tinted text (padded: false) for places that already know the entity id. Degrades to plain `Text` when live entities are off. Verified: `test/widget/entity_link_test.dart`.
+- *Autotag text* — `lib/features/entities/linkified_text.dart`. `LinkifiedText` + `EntityScope` enum. Drop-in replacement for `Text` in staff prose surfaces — auto-detects entity names via `entityIndexProvider` + `findEntityMatches` and renders them as tappable inline spans opening `showEntityPeek`. Degrades to plain `Text` when live entities are off, in `EntityScope.family`, or when nothing matches.
+**Depends on**: Schedule (activitiesProvider, locationsProvider), Groups, Subjects, Vehicles, Action Words (curriculumWorldsProvider for world index), ActivityRuntime (roleDecks for role index).
+**Consumed by**: Entries (observation feeds — `observations_index_screen.dart`, `observations_screen.dart` use `LinkifiedText` on entry body), Incidents (`incident_card.dart` uses `LinkifiedText` on narrative), Captures (`capture_inbox_screen.dart`), Story (`widgets/moment_tile.dart`), Reflections (`reflection_session_screen.dart`), Missions (`missions_list_screen.dart`), Schedule (`schedule_screen.dart`, `trip_detail_screen.dart`, `widgets/substitute_lead_sheet.dart`, `activities_list_screen.dart` use `EntityLink` on activity/location/vehicle/member references), Attendance (`widgets/attendance_row.dart`), Groups (`group_detail_screen.dart`), Subjects (`widgets/observation_item.dart`), Pickup (`pickup_board_screen.dart`), Today (`today_sections.dart`), Vehicles (`vehicles_list_screen.dart`), Heroes (`heroes_hub_screen.dart`), Settings/Team (`team_screen.dart`), Action Words (`program_hub_screen.dart`, `themed_world_screen.dart`), Cockpit (`conductor_screen.dart`).
+**Last verified**: 2026-06-20
+
+---
+
 ## Exports
 **Path**: `lib/features/exports/`
 **Purpose**: Compile a child's observations into a shareable PDF and send to family via email or copy-link.
