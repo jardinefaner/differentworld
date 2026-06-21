@@ -273,13 +273,18 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
 
     void selectEntry(OmniboxEntry entry) {
       bumpRecent(ref, entry.id);
-      // Clear the query so reopening search starts fresh next time.
-      ref.read(omniboxQueryProvider.notifier).clear();
-      close();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!dispatchCtx.mounted) return;
-        entry.onSelect(dispatchCtx, ref);
-      });
+      // Dismiss the IME first: the search field stays alive underneath now, so
+      // without this the destination could appear with the keyboard still up.
+      _focus.unfocus();
+      // Keep `/search` in the back stack (do NOT pop) and keep the query (do
+      // NOT clear): entries navigate via `ctx.push`, so the destination lands
+      // ON TOP of the search page. A swipe-back from the destination then
+      // returns to the search page exactly as the user left it — same query,
+      // same results — which is the requested behaviour. (A `ctx.go` entry — a
+      // top-level jump like Today — still resets the stack, the right thing for
+      // a section switch, not a result.) Navigates from THIS page's live
+      // context since we no longer pop it out from under the call.
+      entry.onSelect(context, ref);
     }
 
     Future<void> saveAsCapture() async {
