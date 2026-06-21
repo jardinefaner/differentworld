@@ -11,6 +11,7 @@ import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/multi_shot_camera.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -602,6 +603,17 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // "Bento everywhere" for forms = a toggle-gated responsive 2-column
+    // field layout. This form has NO two adjacent SHORT fields to pair:
+    // it's a subject picker (full-width horizontal scroller) + one long
+    // multi-line narrative + a full-width photo grid. Pairing the long
+    // narrative or the photo grid into a half-column is exactly what the
+    // spec forbids ("long fields stay full-width"), so there are no fake
+    // columns here — when bento is on we just give the single column more
+    // room (900 vs 600) so the narrative + photos breathe on desktop.
+    // Phone stays full-width regardless (the cap is the binding limit
+    // only above ~600dp).
+    final bento = bentoEnabled(ref, perScreen: null);
     final subjectsAsync = _effectiveGroupId.isEmpty
         ? const AsyncValue<List<Subject>>.data([])
         : ref.watch(subjectsInGroupProvider(_effectiveGroupId));
@@ -629,6 +641,7 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
       },
       child: EdgeScaffold(
         body: FormBody(
+          maxWidth: bento ? 900 : 600,
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           children: [
             ContentHeader(

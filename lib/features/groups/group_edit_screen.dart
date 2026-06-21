@@ -5,6 +5,8 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/cap_switch.dart';
@@ -177,10 +179,18 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
     });
   }
 
+  /// The width at which short fields pair up 2-across (tablet portrait
+  /// and wider). Below this, the form stays single-column. There's no
+  /// shared constant at exactly this value — `Breakpoints.smallTablet`
+  /// (840) is the next-nearest — so it lives here, named, for the
+  /// "grids everywhere" sweep.
+  static const double _twoColMinWidth = 720;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final labels = ref.watch(verticalLabelsProvider);
+    final bento = bentoEnabled(ref, perScreen: null);
     final groupAsync = widget.isEdit
         ? ref.watch(_groupByIdProvider(widget.groupId!))
         : const AsyncValue<Group?>.data(null);
@@ -227,156 +237,227 @@ class _GroupEditScreenState extends ConsumerState<GroupEditScreen> {
               );
             }
             final groupLower = labels.group.toLowerCase();
-            return FormBody(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              children: [
-                ContentHeader(
-                  title: widget.isEdit
-                      ? 'Edit $groupLower'
-                      : 'New $groupLower',
-                  subtitle: widget.isEdit
-                      ? null
-                      : 'Add a $groupLower to this ${labels.space.toLowerCase()}',
-                ),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: _nameController,
-                        autofocus: !widget.isEdit,
-                        textCapitalization: TextCapitalization.words,
-                        textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
-                          labelText: '${labels.group} name',
-                          hintText: 'e.g. Sunshine Room',
-                          border: const OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          final v = value?.trim() ?? '';
-                          if (v.isEmpty) return 'Required';
-                          if (v.length < 2) return 'Too short';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        initialValue: _ageBand,
-                        decoration: const InputDecoration(
-                          labelText: 'Age band',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          for (final band in AgeBands.all)
-                            DropdownMenuItem(
-                              value: band,
-                              child: Text(AgeBands.label(band)),
-                            ),
-                        ],
-                        onChanged: _onAgeBandChanged,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _ageRangeController,
-                        textInputAction: TextInputAction.done,
-                        decoration: const InputDecoration(
-                          labelText: 'Age range label (optional)',
-                          hintText: 'e.g. 3–4 years',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final twoCol =
+                    bento && constraints.maxWidth >= _twoColMinWidth;
+
+                // Each field is built ONCE here and placed into either the
+                // single-column Column or the paired 2-column rows below.
+                // Same widget instance + stable ValueKey across both layouts,
+                // so moving a field between a Column slot and a Row slot can't
+                // tear down its TextField IME connection (the keyboard-closes
+                // bug from CLAUDE.md).
+                final nameField = TextFormField(
+                  key: const ValueKey('group-edit-name'),
+                  controller: _nameController,
+                  autofocus: !widget.isEdit,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: '${labels.group} name',
+                    hintText: 'e.g. Sunshine Room',
+                    border: const OutlineInputBorder(),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text("What's tracked", style: theme.textTheme.titleSmall),
-                const SizedBox(height: 4),
-                Text(
-                  'Defaults come from the age band. Override anything '
-                  "that doesn't match this room.",
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  validator: (value) {
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return 'Required';
+                    if (v.length < 2) return 'Too short';
+                    return null;
+                  },
+                );
+                final ageBandField = DropdownButtonFormField<String>(
+                  key: const ValueKey('group-edit-age-band'),
+                  initialValue: _ageBand,
+                  decoration: const InputDecoration(
+                    labelText: 'Age band',
+                    border: OutlineInputBorder(),
                   ),
-                ),
-                const SizedBox(height: 4),
-                CapSwitch(
+                  items: [
+                    for (final band in AgeBands.all)
+                      DropdownMenuItem(
+                        value: band,
+                        child: Text(AgeBands.label(band)),
+                      ),
+                  ],
+                  onChanged: _onAgeBandChanged,
+                );
+                final ageRangeField = TextFormField(
+                  key: const ValueKey('group-edit-age-range'),
+                  controller: _ageRangeController,
+                  textInputAction: TextInputAction.done,
+                  decoration: const InputDecoration(
+                    labelText: 'Age range label (optional)',
+                    hintText: 'e.g. 3–4 years',
+                    border: OutlineInputBorder(),
+                  ),
+                );
+
+                // Capability toggles — short, pairable in 2-col mode.
+                final diapersSwitch = CapSwitch(
+                  key: const ValueKey('group-edit-cap-diapers'),
                   label: 'Diaper changes',
                   subtitle: 'Log every diaper change',
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksDiapers),
                   onChanged: (v) => _setBool(GroupCaps.tracksDiapers, v),
-                ),
-                CapSwitch(
+                );
+                final napsSwitch = CapSwitch(
+                  key: const ValueKey('group-edit-cap-naps'),
                   label: 'Naps',
                   subtitle: 'Track start, end, and quality',
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksNaps),
                   onChanged: (v) => _setBool(GroupCaps.tracksNaps, v),
-                ),
-                CapSwitch(
+                );
+                final bottleSwitch = CapSwitch(
+                  key: const ValueKey('group-edit-cap-bottle'),
                   label: 'Bottle feeds',
                   subtitle: 'Infants — milk type and volume',
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksBottleFeeds),
                   onChanged: (v) => _setBool(GroupCaps.tracksBottleFeeds, v),
-                ),
-                CapSwitch(
+                );
+                final mealsSwitch = CapSwitch(
+                  key: const ValueKey('group-edit-cap-meals'),
                   label: 'Detailed meal logs',
                   subtitle: 'Log each meal/snack item and amount',
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.tracksMealsDetailed),
-                  onChanged: (v) =>
-                      _setBool(GroupCaps.tracksMealsDetailed, v),
-                ),
-                CapSwitch(
+                  onChanged: (v) => _setBool(GroupCaps.tracksMealsDetailed, v),
+                );
+                final outdoorSwitch = CapSwitch(
+                  key: const ValueKey('group-edit-cap-outdoor'),
                   label: 'Outdoor time',
                   subtitle: 'Sun-safety and weather reminders',
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.hasOutdoorTime),
                   onChanged: (v) => _setBool(GroupCaps.hasOutdoorTime, v),
-                ),
-                CapSwitch(
+                );
+                final fieldTripsSwitch = CapSwitch(
+                  key: const ValueKey('group-edit-cap-field-trips'),
                   label: 'Field trips',
                   subtitle: 'Trips + permission slips',
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                   value: _caps.getBool(GroupCaps.hasFieldTrips),
                   onChanged: (v) => _setBool(GroupCaps.hasFieldTrips, v),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.error,
+                );
+
+                final formChildren = twoCol
+                    ? <Widget>[
+                        _row(nameField, ageBandField),
+                        const SizedBox(height: 12),
+                        // Age range pairs with an empty cell so it keeps
+                        // half-width alignment with the row above.
+                        _row(ageRangeField, const SizedBox.shrink()),
+                      ]
+                    : [
+                        nameField,
+                        const SizedBox(height: 12),
+                        ageBandField,
+                        const SizedBox(height: 12),
+                        ageRangeField,
+                      ];
+
+                final capChildren = twoCol
+                    ? <Widget>[
+                        _row(diapersSwitch, napsSwitch),
+                        _row(bottleSwitch, mealsSwitch),
+                        _row(outdoorSwitch, fieldTripsSwitch),
+                      ]
+                    : [
+                        diapersSwitch,
+                        napsSwitch,
+                        bottleSwitch,
+                        mealsSwitch,
+                        outdoorSwitch,
+                        fieldTripsSwitch,
+                      ];
+
+                return FormBody(
+                  // Widen the column so two fields fit side by side; the
+                  // single-column form stays at the comfortable reading width.
+                  maxWidth: twoCol ? 900 : Breakpoints.contentMaxWidth,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  children: [
+                    ContentHeader(
+                      title: widget.isEdit
+                          ? 'Edit $groupLower'
+                          : 'New $groupLower',
+                      subtitle: widget.isEdit
+                          ? null
+                          : 'Add a $groupLower to this '
+                                '${labels.space.toLowerCase()}',
                     ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                if (widget.isEdit &&
-                    ref.watch(viewerProvider).canManageSpace) ...[
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: DestructiveButton(
-                      label: 'Delete classroom',
-                      onPressed: _saving ? null : _delete,
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: formChildren,
+                      ),
                     ),
-                  ),
-                ],
-                const SizedBox(height: 64),
-              ],
+                    const SizedBox(height: 24),
+                    Text("What's tracked", style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Defaults come from the age band. Override anything '
+                      "that doesn't match this room.",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    ...capChildren,
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    if (widget.isEdit &&
+                        ref.watch(viewerProvider).canManageSpace) ...[
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: DestructiveButton(
+                          label: 'Delete classroom',
+                          onPressed: _saving ? null : _delete,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 64),
+                  ],
+                );
+              },
             );
           },
         ),
       ),
+    );
+  }
+
+  /// Lay two short fields side by side, each taking half the width with
+  /// a gap between. Used only in the 2-column (bento + wide) layout. The
+  /// children keep their own `ValueKey`s, so the pairing is purely visual.
+  Widget _row(Widget left, Widget right) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        const SizedBox(width: 16),
+        Expanded(child: right),
+      ],
     );
   }
 }

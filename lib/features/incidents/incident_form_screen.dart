@@ -1,7 +1,9 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
@@ -136,6 +138,146 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
     final theme = Theme.of(context);
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
     final subjects = subjectsAsync.value ?? const <Subject>[];
+    // "Bento everywhere" for forms = a toggle-gated responsive 2-column
+    // layout. The two SHORT, adjacent top selectors (Child picker + Type)
+    // pair 2-up; the three multi-line narratives + the family-notified
+    // switch + submit stay full-width. Order is preserved exactly (the
+    // pair sits where Child→Type already are). Phone / bento-off ⇒ the
+    // byte-for-byte single column below.
+    final bento = bentoEnabled(ref, perScreen: null);
+
+    // --- Field sections, each a keyed widget so a 1-col↔2-col reflow
+    // can NEVER tear down a TextField's IME connection (CLAUDE.md: every
+    // child of a layout whose shape changes carries a stable ValueKey). ---
+
+    // Child picker (who) — full-width horizontal avatar scroller; on the
+    // 2-up row it scrolls within its half.
+    final Widget childSection = Column(
+      key: const ValueKey('incident-child-section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Child', style: theme.textTheme.labelLarge),
+        const SizedBox(height: 8),
+        if (subjectsAsync.isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(),
+          )
+        else if (subjects.isEmpty)
+          Text(
+            'No children on file yet.',
+            style: theme.textTheme.bodySmall,
+          )
+        else
+          SizedBox(
+            height: 92,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: subjects.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (_, i) {
+                final s = subjects[i];
+                return _SubjectPick(
+                  subject: s,
+                  selected: s.id == _subjectId,
+                  onTap: () => setState(() => _subjectId = s.id),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+
+    // Incident type (what kind) — chip wrap.
+    final Widget typeSection = Column(
+      key: const ValueKey('incident-type-section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Type', style: theme.textTheme.labelLarge),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final t in IncidentType.values)
+              ChoiceChip(
+                avatar: Icon(
+                  t.icon,
+                  size: 18,
+                  color: t == _type
+                      ? theme.colorScheme.onSecondaryContainer
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+                label: Text(t.label),
+                selected: t == _type,
+                onSelected: (_) => setState(() => _type = t),
+              ),
+          ],
+        ),
+      ],
+    );
+
+    // What happened (long, multi-line) — full-width.
+    final Widget narrativeField = TextField(
+      key: const ValueKey('incident-narrative-field'),
+      controller: _narrative,
+      autofocus: _subjectId != null,
+      minLines: 3,
+      maxLines: 8,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: const InputDecoration(
+        labelText: 'What happened?',
+        hintText: 'Where, when, who was involved, how it resolved.',
+        border: OutlineInputBorder(),
+      ),
+    );
+
+    // What staff did (long, multi-line) — full-width.
+    final Widget actionField = TextField(
+      key: const ValueKey('incident-action-field'),
+      controller: _action,
+      minLines: 2,
+      maxLines: 5,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: const InputDecoration(
+        labelText: 'Action taken (optional)',
+        hintText: 'Ice applied, redirected, parent called…',
+        border: OutlineInputBorder(),
+      ),
+    );
+
+    // Family-facing note (long, multi-line) — the ONLY free text a
+    // guardian sees (the narrative above stays staff-only, since it can
+    // name other children). Leave blank to keep this incident internal.
+    final Widget familyNoteField = TextField(
+      key: const ValueKey('incident-family-note-field'),
+      controller: _familyNote,
+      minLines: 2,
+      maxLines: 4,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: const InputDecoration(
+        labelText: 'Note for the family (optional)',
+        hintText: 'What the family will see — about their child only.',
+        helperText: 'Only this note + the type reach the family lens.',
+        helperMaxLines: 2,
+        prefixIcon: Icon(Icons.family_restroom_outlined),
+        border: OutlineInputBorder(),
+      ),
+    );
+
+    // Family-notified switch (short) — kept under the family note it
+    // belongs to, so it stays full-width (its only adjacent short field,
+    // Type, lives at the top; moving it up would break that semantic).
+    final Widget notifiedSwitch = SwitchListTile(
+      key: const ValueKey('incident-notified-switch'),
+      contentPadding: EdgeInsets.zero,
+      title: const Text('Family notified'),
+      subtitle: const Text('Mark once you’ve told a parent/guardian'),
+      value: _parentNotified,
+      onChanged: (v) => setState(() => _parentNotified = v),
+    );
 
     return PopScope(
       canPop: !_isDirty(),
@@ -152,154 +294,87 @@ class _IncidentFormScreenState extends ConsumerState<IncidentFormScreen> {
         if (ok && context.mounted && context.canPop()) context.pop();
       },
       child: EdgeScaffold(
-        body: FormBody(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          children: [
-            const ContentHeader(
-              title: 'Log an incident',
-              subtitle: 'A bump, a conflict, an illness — the structured '
-                  'record families and licensing can rely on.',
-            ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            // Two columns only fit at small-tablet and up (840dp — the
+            // codebase's defined two-column threshold; phone-landscape
+            // stays single-column, fields need the width). Below that, or
+            // bento off, render the original single column verbatim.
+            final twoUp =
+                bento && constraints.maxWidth >= Breakpoints.smallTablet;
 
-            // Child picker.
-            Text('Child', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
-            if (subjectsAsync.isLoading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              )
-            else if (subjects.isEmpty)
-              Text(
-                'No children on file yet.',
-                style: theme.textTheme.bodySmall,
-              )
-            else
-              SizedBox(
-                height: 92,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: subjects.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (_, i) {
-                    final s = subjects[i];
-                    return _SubjectPick(
-                      subject: s,
-                      selected: s.id == _subjectId,
-                      onTap: () => setState(() => _subjectId = s.id),
-                    );
-                  },
-                ),
-              ),
-            const SizedBox(height: 20),
+            // The top selectors: paired 2-up when there's room, else
+            // stacked exactly as before.
+            final Widget topSelectors = twoUp
+                ? Row(
+                    key: const ValueKey('incident-top-2up'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: childSection),
+                      const SizedBox(width: 24),
+                      Expanded(child: typeSection),
+                    ],
+                  )
+                : Column(
+                    key: const ValueKey('incident-top-stacked'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      childSection,
+                      const SizedBox(height: 20),
+                      typeSection,
+                    ],
+                  );
 
-            // Incident type.
-            Text('Type', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            return FormBody(
+              // Widen when two columns are in play so they both fit
+              // comfortably; the single-column form keeps its 600 cap.
+              maxWidth: twoUp ? 900 : Breakpoints.contentMaxWidth,
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               children: [
-                for (final t in IncidentType.values)
-                  ChoiceChip(
-                    avatar: Icon(
-                      t.icon,
-                      size: 18,
-                      color: t == _type
-                          ? theme.colorScheme.onSecondaryContainer
-                          : theme.colorScheme.onSurfaceVariant,
+                const ContentHeader(
+                  title: 'Log an incident',
+                  subtitle: 'A bump, a conflict, an illness — the structured '
+                      'record families and licensing can rely on.',
+                ),
+                topSelectors,
+                const SizedBox(height: 20),
+                narrativeField,
+                const SizedBox(height: 16),
+                actionField,
+                const SizedBox(height: 16),
+                familyNoteField,
+                const SizedBox(height: 8),
+                notifiedSwitch,
+                if (_error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _error!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
                     ),
-                    label: Text(t.label),
-                    selected: t == _type,
-                    onSelected: (_) => setState(() => _type = t),
                   ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // What happened.
-            TextField(
-              controller: _narrative,
-              autofocus: _subjectId != null,
-              minLines: 3,
-              maxLines: 8,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'What happened?',
-                hintText: 'Where, when, who was involved, how it resolved.',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // What staff did.
-            TextField(
-              controller: _action,
-              minLines: 2,
-              maxLines: 5,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Action taken (optional)',
-                hintText: 'Ice applied, redirected, parent called…',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Family-facing note — the ONLY free text a guardian sees
-            // (the narrative above stays staff-only, since it can name
-            // other children). Leave blank to keep this incident internal.
-            TextField(
-              controller: _familyNote,
-              minLines: 2,
-              maxLines: 4,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Note for the family (optional)',
-                hintText: 'What the family will see — about their child only.',
-                helperText: 'Only this note + the type reach the family lens.',
-                helperMaxLines: 2,
-                prefixIcon: Icon(Icons.family_restroom_outlined),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Family notified'),
-              subtitle: const Text('Mark once you’ve told a parent/guardian'),
-              value: _parentNotified,
-              onChanged: (v) => setState(() => _parentNotified = v),
-            ),
-
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                const Spacer(),
-                FilledButton.icon(
-                  onPressed: _saving ? null : () => _save(subjects),
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.check),
-                  label: Text(_saving ? 'Saving…' : 'Log incident'),
+                ],
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    const Spacer(),
+                    FilledButton.icon(
+                      onPressed: _saving ? null : () => _save(subjects),
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check),
+                      label: Text(_saving ? 'Saving…' : 'Log incident'),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

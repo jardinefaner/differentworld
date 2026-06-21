@@ -4,6 +4,8 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
@@ -110,74 +112,81 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
             ? roles[roles.length - 2]
             : roles.last;
     final selected = _role ?? defaultRole;
+    final bento = bentoEnabled(ref, perScreen: null);
+
     return EdgeScaffold(
       backFallbackRoute: '/settings/team',
-      body: FormBody(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-        children: [
-          const ContentHeader(
-            title: 'Invite a teammate',
-            subtitle: 'Pick their role. They join by code or by signing in '
-                'with the email below.',
-          ),
-          Text('Role', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final twoCol = bento && constraints.maxWidth >= _twoColMinWidth;
+
+          // Role picker — label + choice chips. Carries a stable key so it
+          // survives moving between the single-column and 2-column slots.
+          final roleBlock = Column(
+            key: const ValueKey('invite-role-block'),
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final key in roles)
-                ChoiceChip(
-                  label: Text(
-                    RoleLabels.of(key, vertical: labels.vertical),
-                  ),
-                  selected: selected == key,
-                  onSelected: (s) {
-                    if (s) setState(() => _role = key);
-                  },
-                ),
-            ],
-          ),
-          // Specialist hint — invite carries the role only; the
-          // specialty (coach / tutor / etc.) is set per-member on the
-          // Team detail screen after they accept. Surfacing the hint
-          // here so the director knows what to do next instead of
-          // hunting for a specialty field that isn't on the invite.
-          if (selected == 'specialist') ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiaryContainer.withValues(
-                  alpha: 0.4,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Text('Role', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Icon(
-                    Icons.school_outlined,
-                    size: 18,
-                    color: theme.colorScheme.tertiary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'After they accept, open their profile in Team to '
-                      'set their specialty (coach, tutor, health aide, '
-                      'and others).',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onTertiaryContainer,
+                  for (final key in roles)
+                    ChoiceChip(
+                      label: Text(
+                        RoleLabels.of(key, vertical: labels.vertical),
                       ),
+                      selected: selected == key,
+                      onSelected: (s) {
+                        if (s) setState(() => _role = key);
+                      },
                     ),
-                  ),
                 ],
               ),
+            ],
+          );
+
+          // Specialist hint — invite carries the role only; the specialty
+          // (coach / tutor / etc.) is set per-member on the Team detail
+          // screen after they accept. Surfacing the hint here so the
+          // director knows what to do next instead of hunting for a
+          // specialty field that isn't on the invite. Full-width in both
+          // layouts.
+          final specialistHint = Container(
+            key: const ValueKey('invite-specialist-hint'),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.tertiaryContainer.withValues(
+                alpha: 0.4,
+              ),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
-          const SizedBox(height: 20),
-          TextField(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.school_outlined,
+                  size: 18,
+                  color: theme.colorScheme.tertiary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'After they accept, open their profile in Team to '
+                    'set their specialty (coach, tutor, health aide, '
+                    'and others).',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          final emailField = TextField(
+            key: const ValueKey('invite-email'),
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
@@ -194,51 +203,106 @@ class _InviteCreateScreenState extends ConsumerState<InviteCreateScreen> {
               helperMaxLines: 3,
               border: OutlineInputBorder(),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text('Expires after', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
+          );
+
+          // Expiry picker — label + choice chips. Short, pairs with the
+          // email field in 2-column mode (email left, expiry right) so the
+          // field order Role → email → expiry is preserved.
+          final expiryBlock = Column(
+            key: const ValueKey('invite-expiry-block'),
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final option in InviteExpiry.values)
-                ChoiceChip(
-                  label: Text(option.label),
-                  selected: _expiry == option,
-                  onSelected: (s) {
-                    if (s) setState(() => _expiry = option);
-                  },
+              Text('Expires after', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in InviteExpiry.values)
+                    ChoiceChip(
+                      label: Text(option.label),
+                      selected: _expiry == option,
+                      onSelected: (s) {
+                        if (s) setState(() => _expiry = option);
+                      },
+                    ),
+                ],
+              ),
+            ],
+          );
+
+          // email (left) + expiry (right) pair in 2-col; stacked otherwise.
+          final emailAndExpiry = twoCol
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: emailField),
+                    const SizedBox(width: 16),
+                    Expanded(child: expiryBlock),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    emailField,
+                    const SizedBox(height: 20),
+                    expiryBlock,
+                  ],
+                );
+
+          return FormBody(
+            // Widen so the email + expiry pair fits side by side in 2-col;
+            // the single-column form keeps the comfortable reading width.
+            maxWidth: twoCol ? 900 : Breakpoints.contentMaxWidth,
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            children: [
+              const ContentHeader(
+                title: 'Invite a teammate',
+                subtitle: 'Pick their role. They join by code or by signing '
+                    'in with the email below.',
+              ),
+              roleBlock,
+              if (selected == 'specialist') ...[
+                const SizedBox(height: 12),
+                specialistHint,
+              ],
+              const SizedBox(height: 20),
+              emailAndExpiry,
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _error!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
                 ),
-            ],
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-          ],
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FilledButton.icon(
-                onPressed: _saving ? null : _create,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send_outlined),
-                label: const Text('Create invite'),
+              ],
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _create,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send_outlined),
+                    label: const Text('Create invite'),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
+
+  /// Two short fields pair up at this width and wider (tablet portrait+).
+  /// No shared constant sits exactly here (`Breakpoints.smallTablet` is
+  /// 840); kept local for the "grids everywhere" sweep.
+  static const double _twoColMinWidth = 720;
 }

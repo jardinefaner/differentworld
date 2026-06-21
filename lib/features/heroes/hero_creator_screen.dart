@@ -4,6 +4,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/heroes/hero_catalog.dart';
 import 'package:differentworld/features/heroes/widgets/hero_card.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
@@ -187,63 +188,125 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
     }
   }
 
+  /// At this width and wider the live preview sits BESIDE the building
+  /// sections (master-detail) instead of stacked on top. No shared
+  /// constant lands exactly here (`Breakpoints.smallTablet` is 840); kept
+  /// local for the "grids everywhere" sweep.
+  static const double _twoColMinWidth = 720;
+
   @override
   Widget build(BuildContext context) {
     final name = widget.displayName?.trim();
     final title = (name != null && name.isNotEmpty)
         ? 'Make $name’s hero'
         : 'Make a hero';
+    final bento = bentoEnabled(ref, perScreen: null);
+
+    // The live preview. Same widget instance + stable key in both layouts,
+    // so moving it from the top of the list into the side column doesn't
+    // tear it (or any descendant) down.
+    final preview = HeroCard(
+      key: const ValueKey('hero-preview'),
+      data: _draftData,
+    );
+
+    // The Save button — stays at the foot of the building flow in both
+    // layouts.
+    final saveButton = FilledButton.icon(
+      onPressed: _canSave && !_saving ? () => unawaited(_save()) : null,
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(54),
+      ),
+      icon: _saving
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.check),
+      label: const Text('Save my hero'),
+    );
 
     return DismissGuard(
       isDirty: () => _dirty && !_saving,
       child: EdgeScaffold(
         body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-            children: [
-              ContentHeader(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final twoCol =
+                  bento && constraints.maxWidth >= _twoColMinWidth;
+
+              final header = ContentHeader(
                 title: title,
                 subtitle: 'Build your animal, one piece at a time',
-              ),
-              HeroCard(data: _draftData),
-              const SizedBox(height: 24),
-              _section('Pick your animal'),
-              _animalGrid(),
-              const SizedBox(height: 24),
-              _section('Pick a skin'),
-              _skinChips(),
-              const SizedBox(height: 24),
-              _section(
-                'Choose powers',
-                trailing: '${_powerIds.length}/$heroMaxPowers',
-              ),
-              _powerChips(),
-              const SizedBox(height: 24),
-              _section('Name your hero'),
-              _nameField(),
-              const SizedBox(height: 12),
-              _originChips(),
-              const SizedBox(height: 24),
-              _section('Draw it (optional)'),
-              _drawingBlock(),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: _canSave && !_saving
-                    ? () => unawaited(_save())
-                    : null,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(54),
+              );
+
+              // The guided building sections, top-to-bottom. This is a
+              // CREATIVE flow, not a field form — the pickers are already
+              // responsive Wraps. We do NOT split sections into columns or
+              // pair the two text fields (that would scramble the guided
+              // narrative); the only bento move is floating the live
+              // preview into a side column on a wide canvas.
+              final sections = <Widget>[
+                _section('Pick your animal'),
+                _animalGrid(),
+                const SizedBox(height: 24),
+                _section('Pick a skin'),
+                _skinChips(),
+                const SizedBox(height: 24),
+                _section(
+                  'Choose powers',
+                  trailing: '${_powerIds.length}/$heroMaxPowers',
                 ),
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.check),
-                label: const Text('Save my hero'),
-              ),
-            ],
+                _powerChips(),
+                const SizedBox(height: 24),
+                _section('Name your hero'),
+                _nameField(),
+                const SizedBox(height: 12),
+                _originChips(),
+                const SizedBox(height: 24),
+                _section('Draw it (optional)'),
+                _drawingBlock(),
+                const SizedBox(height: 24),
+                saveButton,
+              ];
+
+              if (twoCol) {
+                // Master-detail: building sections scroll on the left, the
+                // live preview pinned in its own column on the right. Each
+                // column scrolls independently so a long left column never
+                // pushes the preview off-screen.
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 12, 96),
+                        children: [header, const SizedBox(height: 16), ...sections],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 16, 96),
+                        children: [preview],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                children: [
+                  header,
+                  preview,
+                  const SizedBox(height: 24),
+                  ...sections,
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -337,6 +400,9 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
 
   Widget _nameField() {
     return TextField(
+      // Stable key so the field's Element + IME connection survive the
+      // 1-col <-> 2-col (master-detail) re-lay (interaction invariant #7).
+      key: const ValueKey('hero-name-field'),
       controller: _name,
       textCapitalization: TextCapitalization.words,
       textInputAction: TextInputAction.done,
@@ -393,6 +459,10 @@ class _HeroCreatorScreenState extends ConsumerState<HeroCreatorScreen> {
           ),
           const SizedBox(height: 12),
           TextField(
+            // Stable key so the IME connection survives the master-detail
+            // re-lay (interaction invariant #7) — this is the input that
+            // carries state inside the drawing block.
+            key: const ValueKey('hero-drawing-name-field'),
             controller: _drawingName,
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.done,

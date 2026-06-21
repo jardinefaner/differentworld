@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -178,9 +179,15 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // "Bento everywhere" for forms = a toggle-gated responsive 2-column
+    // field layout. Capture is essentially ONE long note field, so there's
+    // nothing to pair — when bento is on we just give the single column a
+    // touch more breathing room (720 vs the 600 default). No fake columns.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       backFallbackRoute: '/captures',
       body: FormBody(
+        maxWidth: bento ? 720 : 600,
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           Row(
