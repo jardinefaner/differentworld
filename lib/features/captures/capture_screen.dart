@@ -1,8 +1,13 @@
 import 'dart:async';
 
 import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
+import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
@@ -10,6 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 /// Drop a quick "I noticed…" into the capture inbox.
 ///
@@ -47,6 +54,16 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
   /// The id of this capture's row, after the first non-empty save.
   /// Subsequent saves UPDATE this row.
   String? _captureId;
+
+  /// URLs (Storage paths or `pending:` tokens) of photos attached to
+  /// this capture, in attach order. Drives the inline thumbnail strip.
+  /// A capture carrying any photo is NON-EMPTY — `dispose`'s discard
+  /// guard checks this so a photo-only capture is never thrown away.
+  List<String> _photos = const [];
+
+  /// True while a compress+upload is in flight, so the camera button
+  /// shows a spinner and re-taps are ignored.
+  bool _photoUploading = false;
 
   /// True while a save round-trip is in flight, so the "Saved" chip
   /// can flash green.
@@ -88,12 +105,16 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     _voiceSub = null;
     unawaited(_voice.dispose());
     // If the user opened the screen, never typed anything meaningful,
-    // and navigated away — hard-delete the shell row so the inbox
-    // stays tidy. Capture `id` here because `this._captureId` may be
-    // read by the chain after super.dispose().
+    // attached NO photo, and navigated away — hard-delete the shell row
+    // so the inbox stays tidy. A photo-only capture is NON-EMPTY, so the
+    // `_photos.isEmpty` guard keeps it (without it, `discardEmpty` would
+    // wipe a capture whose only content is a snapped photo — orphaning
+    // the attachment row). Capture `id`/`_photos` here because
+    // `this._captureId` may be read by the chain after super.dispose().
     final id = _captureId;
     final lastText = _ctrl.text;
-    if (id != null && lastText.trim().isEmpty) {
+    final hasPhoto = _photos.isNotEmpty;
+    if (id != null && lastText.trim().isEmpty && !hasPhoto) {
       _saveChain = _saveChain.then((_) => _actions.discardEmpty(id));
     }
     _ctrl.dispose();
@@ -154,7 +175,12 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     try {
       if (_captureId == null) {
         if (text.trim().isEmpty) return; // nothing to persist yet
-        _captureId = await _actions.start(body: text);
+        // `??=`, not `=`: a camera tap's `_ensureCaptureId` may have
+        // created the row between this save being queued and running
+        // (both chain on `_saveChain`, so they're sequential — but the
+        // symmetric `??=` makes "first writer wins" hold structurally,
+        // not by argument order, so neither path ever creates a 2nd row).
+        _captureId ??= await _actions.start(body: text);
       } else {
         await _actions.updateBody(id: _captureId!, body: text);
       }
@@ -174,6 +200,88 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
       if (!mounted) return;
       setState(() => _savedFlash = false);
     });
+  }
+
+  /// Guarantee the capture row exists and return its id, WITHOUT
+  /// racing the auto-save chain. Routed through `_saveChain` so a
+  /// keystroke-save and a camera tap can't both call `start` and
+  /// create two rows — whichever runs first sets `_captureId`, the
+  /// other sees it set. The body may still be empty (photo-first
+  /// capture); `start` accepts that.
+  Future<String> _ensureCaptureId() {
+    final op = _saveChain.then((_) async {
+      _captureId ??= await _actions.start(body: _ctrl.text);
+      return _captureId!;
+    });
+    // Keep the chain alive even if this op throws, so later keystroke
+    // saves still run; the caller (`_addPhoto`) still sees the error.
+    _saveChain = op.then((_) {}).catchError((Object _) {});
+    return op;
+  }
+
+  /// Snap (mobile) or pick (web/desktop) a photo, upload it offline-
+  /// safe, and attach it to this capture. Follows the stable-id
+  /// contract: the attachment id is pre-generated and passed to BOTH
+  /// `uploadOnly(entityId:)` AND `attachments.add(id:)`, so a deferred
+  /// (offline) upload's queue-side `updateUrl(id)` patches the SAME
+  /// row instead of silently losing the photo.
+  Future<void> _addPhoto() async {
+    if (_photoUploading) return;
+    final service = ref.read(photoServiceProvider);
+    final attachments = ref.read(attachmentActionsProvider);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    // Camera on mobile; a file/gallery pick everywhere else — no in-app
+    // camera off-mobile (docs/PLATFORM_RUBRIC.md P1), same gate the
+    // observation + work-sample flows use.
+    final source =
+        isMobileCapturePlatform ? ImageSource.camera : ImageSource.gallery;
+    final XFile? picked;
+    try {
+      picked = await service.pickPhoto(source);
+    } on Exception catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'captures'),
+      );
+      if (!mounted) return;
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Could not open the camera.')),
+      );
+      return;
+    }
+    if (picked == null) return; // user backed out of the picker
+    if (!mounted) return;
+    setState(() => _photoUploading = true);
+    unawaited(HapticFeedback.mediumImpact());
+    try {
+      // Create the row up front so a photo-first capture (no typed text)
+      // has something to attach to. Serialized with auto-save.
+      final captureId = await _ensureCaptureId();
+      final attId = const Uuid().v4();
+      final url = await service.uploadOnly(
+        entityKind: 'attachment',
+        entityId: attId,
+        picked: picked,
+      );
+      await attachments.add(
+        id: attId,
+        entityKind: 'capture',
+        entityId: captureId,
+        url: url,
+      );
+      if (!mounted) return;
+      setState(() => _photos = [..._photos, url]);
+      _flashSaved();
+    } on Object catch (e, st) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'captures'),
+      );
+      if (!mounted) return;
+      messenger?.showSnackBar(
+        const SnackBar(content: Text("Couldn't save that photo. Try again.")),
+      );
+    } finally {
+      if (mounted) setState(() => _photoUploading = false);
+    }
   }
 
   @override
@@ -247,6 +355,21 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          // Photo affordance — answers the flag "what if I want to take
+          // pictures instead." A photo-only capture is valid: the camera
+          // button creates the row up front, so you can snap without
+          // typing a word. The thumbnail strip shows what's attached.
+          _PhotoStrip(
+            photos: _photos,
+            uploading: _photoUploading,
+            onAdd: _addPhoto,
+            onView: (i) => PhotoViewer.open(
+              context,
+              urls: _photos,
+              initialIndex: i,
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
             'Saves to the inbox automatically. Triage later from '
             '/captures or the weekly review. Empty captures are '
@@ -269,6 +392,102 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "add a photo" affordance + the thumbnails already attached.
+/// A leading tile (camera on mobile, library elsewhere) opens the
+/// picker; each thumbnail opens the full-screen viewer. Lives inline
+/// under the note field so the photo path is as obvious as typing —
+/// the answer to "what if I want to take pictures instead."
+class _PhotoStrip extends StatelessWidget {
+  const _PhotoStrip({
+    required this.photos,
+    required this.uploading,
+    required this.onAdd,
+    required this.onView,
+  });
+
+  final List<String> photos;
+  final bool uploading;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onView;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    // Mobile gets a camera glyph (in-app camera); web/desktop falls back
+    // to a library/add glyph since there's no reliable camera there.
+    final addIcon = isMobileCapturePlatform
+        ? Icons.photo_camera_outlined
+        : Icons.add_photo_alternate_outlined;
+    final addLabel = isMobileCapturePlatform ? 'Photo' : 'Add photo';
+    return SizedBox(
+      height: 72,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          // Add tile.
+          Semantics(
+            button: true,
+            label: addLabel,
+            child: InkWell(
+              onTap: uploading ? null : onAdd,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: scheme.outlineVariant),
+                  color: scheme.surfaceContainerHighest,
+                ),
+                child: uploading
+                    ? const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(addIcon, color: scheme.primary),
+                          const SizedBox(height: 2),
+                          Text(
+                            addLabel,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+          for (var i = 0; i < photos.length; i++) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => onView(i),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: PersonPhotoNetwork(
+                    urlOrPath: photos[i],
+                    errorBuilder: (_) =>
+                        const Icon(Icons.broken_image_outlined),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

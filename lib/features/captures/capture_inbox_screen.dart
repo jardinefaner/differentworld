@@ -4,6 +4,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/entities/linkified_text.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -217,6 +219,16 @@ class _CaptureCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    // Show a thumbnail when this capture carries photos (mirrors the
+    // observation index's _IndexPhotoThumb). `.value` (not requireValue)
+    // so a still-loading stream just renders no thumb — never an error.
+    final photos = ref
+            .watch(
+              attachmentsForEntityProvider((kind: 'capture', id: capture.id)),
+            )
+            .value
+            ?.urls ??
+        const <String>[];
     final created = DateTime.tryParse(capture.createdAt)?.toLocal();
     final ageDays = created == null
         ? 0
@@ -296,6 +308,17 @@ class _CaptureCard extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      // Photo thumb — at-a-glance "this capture has a
+                      // picture." Tapping the card still opens triage;
+                      // the thumb is a passive cue, not a separate tap
+                      // target (keeps the row's one-tap-to-triage model).
+                      if (photos.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: _CapturePhotoThumb(photos: photos),
+                        ),
+                      ],
                       if (!selectMode)
                         IconButton(
                           tooltip: 'Triage',
@@ -310,6 +333,63 @@ class _CaptureCard extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact thumbnail for a capture that carries photos. Renders the
+/// first photo with a small "+N" badge when there are more. Mirrors
+/// the observation index's `_IndexPhotoThumb`, sized down for the
+/// inbox row. Signed URL is minted by [PersonPhotoNetwork].
+class _CapturePhotoThumb extends StatelessWidget {
+  const _CapturePhotoThumb({required this.photos});
+
+  final List<String> photos;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final extras = photos.length - 1;
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: PersonPhotoNetwork(
+                urlOrPath: photos.first,
+                errorBuilder: (_) =>
+                    const Icon(Icons.broken_image_outlined, size: 20),
+              ),
+            ),
+          ),
+          if (extras > 0)
+            Positioned(
+              bottom: -3,
+              right: -3,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 5,
+                  vertical: 1,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '+$extras',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -120,4 +120,30 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
   Future<void> deleteById(String id) async {
     await (delete(attachments)..where((a) => a.id.equals(id))).go();
   }
+
+  /// Re-point every attachment under `(oldKind, oldId)` to a new owning
+  /// entity `(newKind, newId)`. Used when a capture is promoted to an
+  /// entry/task: the photos were attached to the capture, and we move
+  /// them onto the new row so they aren't orphaned. Typed Drift UPDATE
+  /// so PowerSync's CRUD queue picks the change up; the attachment id
+  /// (and the bytes in Storage) stay put — only the owner pointer moves.
+  Future<void> reparent({
+    required String oldKind,
+    required String oldId,
+    required String newKind,
+    required String newId,
+  }) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(attachments)
+          ..where(
+            (a) => a.entityKind.equals(oldKind) & a.entityId.equals(oldId),
+          ))
+        .write(
+          AttachmentsCompanion(
+            entityKind: Value(newKind),
+            entityId: Value(newId),
+            updatedAt: Value(now),
+          ),
+        );
+  }
 }

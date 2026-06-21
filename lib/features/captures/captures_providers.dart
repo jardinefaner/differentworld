@@ -122,6 +122,15 @@ class CaptureActions {
         subjectId: subjectId,
         body: cap.body,
       );
+      // Carry forward any photos snapped onto the capture so they land
+      // on the new observation instead of being orphaned. Same txn as
+      // markPromoted → the reparent commits atomically with the promote.
+      await db.attachmentsDao.reparent(
+        oldKind: 'capture',
+        oldId: captureId,
+        newKind: 'entry',
+        newId: entryId,
+      );
       await db.capturesDao.markPromoted(
         id: captureId,
         promotedToKind: 'entry',
@@ -160,6 +169,18 @@ class CaptureActions {
         subjectId: subjectId,
         dueAt: dueAt,
         createdFromCaptureId: captureId,
+      );
+      // Tasks don't render photos today, but a photo snapped onto the
+      // capture must not be orphaned. Reparent onto the task row
+      // (entityKind 'task') so the bytes stay referenced — if a task
+      // photo surface lands later it picks them up for free, and until
+      // then they're still reachable via the attachment row. Same txn
+      // as markPromoted so it commits atomically.
+      await db.attachmentsDao.reparent(
+        oldKind: 'capture',
+        oldId: captureId,
+        newKind: 'task',
+        newId: taskId,
       );
       await db.capturesDao.markPromoted(
         id: captureId,
