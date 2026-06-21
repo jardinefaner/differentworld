@@ -147,6 +147,7 @@ import 'package:differentworld/features/subjects/health_profile_screen.dart';
 import 'package:differentworld/features/subjects/subject_detail_screen.dart';
 import 'package:differentworld/features/subjects/subject_edit_screen.dart';
 import 'package:differentworld/features/supplies/supplies_list_screen.dart';
+import 'package:differentworld/features/supplies/supply_edit_screen.dart';
 import 'package:differentworld/features/surveys/survey_list_screen.dart';
 import 'package:differentworld/features/surveys/survey_table_screen.dart';
 import 'package:differentworld/features/surveys/survey_take_screen.dart';
@@ -905,6 +906,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                   title: 'Supplies',
                   child: SuppliesListScreen(),
                 ),
+                routes: [
+                  // Create / edit a supply as a PAGE, not a sheet (CLAUDE.md
+                  // "No modal is a task"). Save pops the new id back for
+                  // parity with the locations conversion.
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, _) => const RouteTitle(
+                      title: 'New supply',
+                      child: SupplyEditScreen(),
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':id/edit',
+                    builder: (_, state) => RouteTitle(
+                      title: 'Edit supply',
+                      child: SupplyEditScreen(
+                        supplyId: state.pathParameters['id'],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'missions',
