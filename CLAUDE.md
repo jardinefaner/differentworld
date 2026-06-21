@@ -1551,6 +1551,23 @@ just kick it. Filter the log monitor to `Built build|Syncing
 files|Hot reload|Exception CAUGHT|Lost connection|Build failed`
 — routine PowerSync stream blips are noise, don't surface them.
 
+## Dev flags — the in-app "flag this screen" button
+
+The user can **flag a screen for review** by tapping the floating flag
+(bottom-right; **debug builds only**, gated on `kDebugMode` in
+`lib/shared/widgets/app_shell.dart` → `lib/features/dev_flags/dev_flags.dart`).
+Each tap appends `{route, label, note, timestamp}` to a JSON file in the app's
+sandboxed docs dir on the device; an optional note can be added from the toast.
+
+**When the user references "the screens I flagged" / "my flags" — or at the
+start of a session that follows on-device testing — run
+`scripts/read_dev_flags.sh`** to pull them off the Pixel
+(`adb run-as … cat app_flutter/dw_flags.json`). The output is the route +
+note + timestamp for each flag — i.e. exactly which screens (and entities, since
+the route carries ids) to open and address. This replaces "go back and find the
+screen I meant." Flags persist on the device across sessions; there's no
+auto-clear, so treat older timestamps as possibly-already-addressed.
+
 ---
 
 ## Commands

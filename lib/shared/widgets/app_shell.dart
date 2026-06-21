@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/dev_flags/dev_flags.dart';
 import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/family/guardian_drawer.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
@@ -497,6 +498,16 @@ class _AppShellState extends ConsumerState<AppShell> {
             right: 0,
             bottom: 0,
             child: BottomOmniboxBar(onTap: _openSearch),
+          ),
+        // DEV-ONLY: a floating flag to bookmark this screen for the next
+        // Claude Code session (read via scripts/read_dev_flags.sh). Gated on
+        // kDebugMode so it never ships; hidden in kid mode like the rest.
+        if (kDebugMode && !inKidMode)
+          const Positioned(
+            key: ValueKey('shell-dev-flag'),
+            right: 12,
+            bottom: ShellMetrics.bottomOmniboxHeight + 12,
+            child: DevFlagButton(),
           ),
       ],
     );
