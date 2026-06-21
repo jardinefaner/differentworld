@@ -482,19 +482,18 @@ class _MissionEditSheetState extends ConsumerState<_MissionEditSheet> {
   }
 
   Future<void> _delete() async {
-    final existingId = widget.existing?.id;
-    if (existingId == null) return;
+    final existing = widget.existing;
+    if (existing == null) return;
     final navigator = Navigator.of(context);
-    final confirm = await confirmDestructive(
+    final actions = ref.read(missionActionsProvider);
+    // deleteWithUndo's snackbar rides the root messenger, so Undo still works
+    // after this sheet pops. The full row is in scope → onUndo re-inserts it.
+    await deleteWithUndo(
       context,
-      title: 'Remove this mission?',
-      message:
-          'This permanently deletes the mission and its checklist. '
-          'It cannot be undone.',
-      confirmLabel: 'Remove',
+      label: 'mission',
+      onDelete: () => actions.delete_(existing.id),
+      onUndo: () => actions.restore(existing),
     );
-    if (!confirm || !mounted) return;
-    await ref.read(missionActionsProvider).delete_(existingId);
     if (mounted) navigator.pop();
   }
 

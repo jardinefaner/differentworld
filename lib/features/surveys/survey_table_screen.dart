@@ -525,29 +525,13 @@ DataRow _row(
             size: 20,
           ),
           onPressed: () async {
-            final timestamp = _formatTimestamp(
-              response.completedAt ?? response.updatedAt,
-            );
-            final identityBits = <String>[
-              if (response.ageBand != null) response.ageBand!,
-              if (response.grade != null) response.grade!,
-              if (response.school != null) response.school!,
-            ];
-            final identity = identityBits.isEmpty
-                ? 'no identity recorded'
-                : identityBits.join(' · ');
-            final confirmed = await confirmDestructive(
+            final actions = ref.read(surveyActionsProvider);
+            await deleteWithUndo(
               context,
-              title: 'Delete this response?',
-              message:
-                  'Recorded $timestamp · $identity. This removes '
-                  'just this row from the table — the template '
-                  'itself stays put. This action cannot be undone.',
+              label: 'response',
+              onDelete: () => actions.reset(id: response.id),
+              onUndo: () => actions.restore(response),
             );
-            if (!confirmed) return;
-            await ref
-                .read(surveyActionsProvider)
-                .reset(id: response.id);
           },
         ),
       ),

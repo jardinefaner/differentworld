@@ -258,6 +258,13 @@ class SurveyActions {
     await db.surveysDao.deleteById(id);
   }
 
+  /// Re-insert a deleted response verbatim — the `deleteWithUndo` undo path
+  /// for the table view's row delete.
+  Future<void> restore(SurveyResponse response) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.surveysDao.restore(response);
+  }
+
   /// Wave 138: convenience for "Start a new survey" — generates a
   /// fresh response id without touching the DB. The take screen
   /// inserts the row lazily on its first autosave.

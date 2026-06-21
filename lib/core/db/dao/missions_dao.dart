@@ -120,4 +120,12 @@ class MissionsDao extends DatabaseAccessor<AppDatabase>
   Future<void> delete_(String id) async {
     await (delete(missions)..where((m) => m.id.equals(id))).go();
   }
+
+  /// Re-insert a previously-deleted mission VERBATIM — the undo path for
+  /// `deleteWithUndo`. The mission's checklist rides in its `actions` JSON
+  /// column, so a single row carries the whole thing; the stable client UUID
+  /// means insert-or-replace re-creates the exact row and PowerSync re-syncs it.
+  Future<void> restore(Mission mission) async {
+    await into(missions).insertOnConflictUpdate(mission);
+  }
 }

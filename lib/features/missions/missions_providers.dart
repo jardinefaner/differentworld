@@ -108,6 +108,12 @@ class MissionActions {
     await db.missionsDao.delete_(id);
   }
 
+  /// Re-insert a deleted mission verbatim — the `deleteWithUndo` undo path.
+  Future<void> restore(Mission mission) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.missionsDao.restore(mission);
+  }
+
   /// Seed the editable catalog from the shipped starter templates — the
   /// director's one-tap head start. Each row is generated fresh (uuid +
   /// timestamps) and ordered by template position.

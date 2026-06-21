@@ -340,15 +340,14 @@ class _SlotRow extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 20),
             onPressed: () async {
-              final confirmed = await confirmDestructive(
-                context,
-                title: 'Remove slot?',
-                message: 'This removes the slot from the weekly template.',
-                confirmLabel: 'Remove',
-              );
-              if (!confirmed || !context.mounted) return;
               final db = await ref.read(appDatabaseProvider.future);
-              await db.weeklyTemplateDao.deleteSlot(slot.id);
+              if (!context.mounted) return;
+              await deleteWithUndo(
+                context,
+                label: 'slot',
+                onDelete: () => db.weeklyTemplateDao.deleteSlot(slot.id),
+                onUndo: () => db.weeklyTemplateDao.restoreSlot(slot),
+              );
             },
             tooltip: 'Remove',
           ),

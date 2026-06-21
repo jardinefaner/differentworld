@@ -207,6 +207,20 @@ class DayTemplateActions {
   }) =>
       _mutate(spaceId, (l) => [for (final t in l) if (t.id != id) t]);
 
+  /// Re-add a deleted template verbatim — the `deleteWithUndo` undo path.
+  /// The library lives in the caps JSON (no Drift row), so restore re-inserts
+  /// the [DayTemplate] model through the same serialized `_mutate` queue as
+  /// every other edit. Idempotent: if a row with this id already exists (a
+  /// double-undo race) it is replaced, never duplicated.
+  Future<void> restoreTemplate({
+    required String spaceId,
+    required DayTemplate template,
+  }) =>
+      _mutate(
+        spaceId,
+        (l) => [for (final t in l) if (t.id != template.id) t, template],
+      );
+
   /// Materialize a template onto a specific date for one or more groups —
   /// packs the duration-blocks into clock windows on [date] and writes real
   /// `schedule_blocks` (which Today / the live "now" / the family lens all

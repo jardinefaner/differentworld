@@ -162,15 +162,17 @@ class DayTemplateEditorScreen extends ConsumerWidget {
     DayTemplate template,
     String spaceId,
   ) async {
-    final confirmed = await confirmDestructive(
-      context,
-      title: 'Delete “${template.name}”?',
-      message: 'This removes the template. Days you already generated from '
-          'it are not affected.',
-    );
-    if (!confirmed || !context.mounted) return;
     final router = GoRouter.of(context);
-    await actions.deleteTemplate(spaceId: spaceId, id: template.id);
+    // deleteWithUndo's snackbar rides the root messenger, so Undo still works
+    // after the editor pops. The library lives in caps JSON (no Drift row), so
+    // onUndo re-adds the in-scope DayTemplate model through the actions queue.
+    await deleteWithUndo(
+      context,
+      label: 'template',
+      onDelete: () => actions.deleteTemplate(spaceId: spaceId, id: template.id),
+      onUndo: () =>
+          actions.restoreTemplate(spaceId: spaceId, template: template),
+    );
     if (router.canPop()) router.pop();
   }
 

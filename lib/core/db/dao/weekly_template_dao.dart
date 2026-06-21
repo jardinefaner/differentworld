@@ -99,6 +99,13 @@ class WeeklyTemplateDao extends DatabaseAccessor<AppDatabase>
     await (delete(weeklyTemplateBlocks)..where((b) => b.id.equals(id))).go();
   }
 
+  /// Re-insert a previously-deleted slot VERBATIM — the undo path for
+  /// `deleteWithUndo`. The row keeps its stable client UUID, so
+  /// insert-or-replace re-creates the exact row and PowerSync re-syncs it.
+  Future<void> restoreSlot(WeeklyTemplateBlock slot) async {
+    await into(weeklyTemplateBlocks).insertOnConflictUpdate(slot);
+  }
+
   /// Wave 154: materialize schedule_blocks rows for every (date,
   /// matching template slot) in [fromDate]..[toDate] inclusive.
   ///

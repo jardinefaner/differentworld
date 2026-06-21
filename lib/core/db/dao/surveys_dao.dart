@@ -125,6 +125,13 @@ class SurveysDao extends DatabaseAccessor<AppDatabase>
     await (delete(surveyResponses)..where((r) => r.id.equals(id))).go();
   }
 
+  /// Re-insert a previously-deleted response VERBATIM — the undo path for
+  /// `deleteWithUndo`. The row keeps its stable client UUID, so
+  /// insert-or-replace re-creates the exact row and PowerSync re-syncs it.
+  Future<void> restore(SurveyResponse response) async {
+    await into(surveyResponses).insertOnConflictUpdate(response);
+  }
+
   // === Wave 135 — picker options catalog ===
 
   /// Stream every picker option for a program + dimension, sorted by
