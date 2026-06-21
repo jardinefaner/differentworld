@@ -6,9 +6,11 @@ import 'package:differentworld/features/captures/captures_providers.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/insights/insights_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
@@ -57,149 +59,234 @@ class YearlyReviewScreen extends ConsumerWidget {
     final certBreakdown = _CertBreakdown.from(certs);
     final insightBySeverity = _countBySeverity(insights);
 
+    final stats = [
+      _Stat(label: labels.subjectPlural, value: subjects.length),
+      _Stat(label: labels.groupPlural, value: groups.length),
+      _Stat(label: 'Vehicles', value: vehicles.length),
+      _Stat(label: 'Open captures', value: captures.length),
+    ];
+
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the snapshot re-lays so the four "right
+    // now" counts pack 2-up on a phone while the narrative sections (cert
+    // strip, what-we-noticed, foundation prompts, the closing reflection) stay
+    // full-width; off keeps the existing single-column scroll. Same providers,
+    // same taps.
+    final bento = bentoEnabled(ref, perScreen: null);
+
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: ContentHeader(
-              title: 'Yearly review',
-              subtitle: 'A snapshot of where your program is — '
-                  'and an invitation to decide what comes next.',
+      body: bento
+          ? _bentoBody(
+              context: context,
+              theme: theme,
+              yearLabel: yearLabel,
+              stats: stats,
+              certs: certs,
+              certBreakdown: certBreakdown,
+              insights: insights,
+              insightBySeverity: insightBySeverity,
+            )
+          : _flatBody(
+              context: context,
+              theme: theme,
+              yearLabel: yearLabel,
+              stats: stats,
+              certs: certs,
+              certBreakdown: certBreakdown,
+              insights: insights,
+              insightBySeverity: insightBySeverity,
+            ),
+    );
+  }
+
+  /// The default layout — one calm single-column scroll, read top to bottom
+  /// like a letter.
+  Widget _flatBody({
+    required BuildContext context,
+    required ThemeData theme,
+    required String yearLabel,
+    required List<_Stat> stats,
+    required List<MemberCertification> certs,
+    required _CertBreakdown certBreakdown,
+    required List<Insight> insights,
+    required Map<InsightSeverity, int> insightBySeverity,
+  }) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: ContentHeader(
+            title: 'Yearly review',
+            subtitle: 'A snapshot of where your program is — '
+                'and an invitation to decide what comes next.',
+          ),
+        ),
+
+        // -- Year label --------------------------------------------------
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+          child: Text(
+            yearLabel,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
             ),
           ),
+        ),
 
-          // -- Year label --------------------------------------------------
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-            child: Text(
-              yearLabel,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w800,
+        // -- Snapshot ----------------------------------------------------
+        const _SectionHeader('Right now'),
+        _StatGrid(stats: stats),
+
+        // -- Certifications ---------------------------------------------
+        if (certs.isNotEmpty) ...[
+          const _SectionHeader('Certifications'),
+          _CertStrip(breakdown: certBreakdown),
+        ],
+
+        // -- What the system noticed ------------------------------------
+        const _SectionHeader('What the system noticed'),
+        _NoticedSection(
+          insights: insights,
+          insightBySeverity: insightBySeverity,
+        ),
+
+        // -- Foundation prompts (reflective questions) ------------------
+        const _SectionHeader('Foundation questions'),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: _FoundationPrompts(),
+        ),
+
+        // -- Capture closing reflection ---------------------------------
+        const _SectionHeader('Note something'),
+        // `_CaptureReflection` carries its own 20dp gutter (horizontalInset
+        // default) — don't wrap it in another, or it double-insets.
+        const _CaptureReflection(),
+      ],
+    );
+  }
+
+  /// The bento variant — SAME content, re-laid as a modular grid. The four
+  /// "right now" counts become individual `phone: 1` stat tiles (2-up on a
+  /// phone, 3-up on desktop); each narrative section is a full-width banner
+  /// tile, headed by the same section label. Every tile carries a stable id,
+  /// and every tile body shrink-wraps (no Spacer/Expanded) so an unbounded
+  /// bento cell never throws (docs/GRID.md).
+  Widget _bentoBody({
+    required BuildContext context,
+    required ThemeData theme,
+    required String yearLabel,
+    required List<_Stat> stats,
+    required List<MemberCertification> certs,
+    required _CertBreakdown certBreakdown,
+    required List<Insight> insights,
+    required Map<InsightSeverity, int> insightBySeverity,
+  }) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 32),
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: ContentHeader(
+            title: 'Yearly review',
+            subtitle: 'A snapshot of where your program is — '
+                'and an invitation to decide what comes next.',
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+          child: Text(
+            yearLabel,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        // The grid carries the same 20dp gutter the flat sections use, so the
+        // stat tiles + full-width banners line up with the year label above.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: BentoGrid(
+            tiles: [
+              // "Right now" label spans the row above the counts.
+              const BentoTile(
+                id: 'yearly-right-now-label',
+                span: BentoSpan.wide(),
+                child: _BentoSectionLabel('Right now'),
               ),
-            ),
-          ),
-
-          // -- Snapshot ----------------------------------------------------
-          const _SectionHeader('Right now'),
-          _StatGrid(
-            stats: [
-              _Stat(label: labels.subjectPlural, value: subjects.length),
-              _Stat(label: labels.groupPlural, value: groups.length),
-              _Stat(label: 'Vehicles', value: vehicles.length),
-              _Stat(label: 'Open captures', value: captures.length),
+              // Four short stat tiles — 2-up on a phone, 3-up on desktop.
+              for (var i = 0; i < stats.length; i++)
+                BentoTile(
+                  id: 'yearly-stat-${stats[i].label}',
+                  span: const BentoSpan(phone: 1),
+                  child: _StatTile(
+                    key: ValueKey('yearly-stat-tile-${stats[i].label}'),
+                    stat: stats[i],
+                  ),
+                ),
+              // Certifications — narrative chips, full-width. The section
+              // widgets render flush (`horizontalInset: 0`) because the grid's
+              // 20dp Padding already owns the gutter.
+              if (certs.isNotEmpty) ...[
+                const BentoTile(
+                  id: 'yearly-certs-label',
+                  span: BentoSpan.wide(),
+                  child: _BentoSectionLabel('Certifications'),
+                ),
+                BentoTile(
+                  id: 'yearly-certs',
+                  span: const BentoSpan.wide(),
+                  child: _CertStrip(
+                    breakdown: certBreakdown,
+                    horizontalInset: 0,
+                  ),
+                ),
+              ],
+              // What the system noticed — prose + chips + actions, full-width.
+              const BentoTile(
+                id: 'yearly-noticed-label',
+                span: BentoSpan.wide(),
+                child: _BentoSectionLabel('What the system noticed'),
+              ),
+              BentoTile(
+                id: 'yearly-noticed',
+                span: const BentoSpan.wide(),
+                child: _NoticedSection(
+                  insights: insights,
+                  insightBySeverity: insightBySeverity,
+                  horizontalInset: 0,
+                ),
+              ),
+              // Foundation questions — reflective prose cards, full-width.
+              const BentoTile(
+                id: 'yearly-foundation-label',
+                span: BentoSpan.wide(),
+                child: _BentoSectionLabel('Foundation questions'),
+              ),
+              const BentoTile(
+                id: 'yearly-foundation',
+                span: BentoSpan.wide(),
+                child: _FoundationPrompts(),
+              ),
+              // Closing reflection — full-width.
+              const BentoTile(
+                id: 'yearly-note-label',
+                span: BentoSpan.wide(),
+                child: _BentoSectionLabel('Note something'),
+              ),
+              const BentoTile(
+                id: 'yearly-note',
+                span: BentoSpan.wide(),
+                child: _CaptureReflection(horizontalInset: 0),
+              ),
             ],
           ),
-
-          // -- Certifications ---------------------------------------------
-          if (certs.isNotEmpty) ...[
-            const _SectionHeader('Certifications'),
-            _CertStrip(breakdown: certBreakdown),
-          ],
-
-          // -- What the system noticed ------------------------------------
-          const _SectionHeader('What the system noticed'),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: Text(
-              insights.isEmpty
-                  ? "The system isn't surfacing any questions right now."
-                      ' Quiet is a good place to start the year from.'
-                  : '${insights.length} '
-                      '${insights.length == 1 ? 'question' : 'questions'} '
-                      'open across your data.',
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
-          if (insights.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  if (insightBySeverity[InsightSeverity.urgent]! > 0)
-                    _SeverityChip(
-                      label:
-                          '${insightBySeverity[InsightSeverity.urgent]} urgent',
-                      bg: theme.colorScheme.errorContainer,
-                      fg: theme.colorScheme.onErrorContainer,
-                    ),
-                  if (insightBySeverity[InsightSeverity.suggestion]! > 0) ...[
-                    if (insightBySeverity[InsightSeverity.urgent]! > 0)
-                      const SizedBox(width: 8),
-                    _SeverityChip(
-                      label:
-                          '${insightBySeverity[InsightSeverity.suggestion]} suggestions',
-                      bg: theme.colorScheme.tertiaryContainer,
-                      fg: theme.colorScheme.onTertiaryContainer,
-                    ),
-                  ],
-                  if (insightBySeverity[InsightSeverity.info]! > 0) ...[
-                    const SizedBox(width: 8),
-                    _SeverityChip(
-                      label:
-                          '${insightBySeverity[InsightSeverity.info]} FYI',
-                      bg: theme.colorScheme.surfaceContainerHighest,
-                      fg: theme.colorScheme.onSurface,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (insights.isNotEmpty)
-                  FilledButton.tonalIcon(
-                    onPressed: () => context.push('/insights'),
-                    icon: const Icon(Icons.lightbulb_outline),
-                    label: const Text('See insights'),
-                  ),
-                if (insights.length >= 2)
-                  FilledButton.icon(
-                    onPressed: () => context.push('/review'),
-                    icon: const Icon(Icons.play_circle_outline),
-                    label: const Text('Weekly walk-through'),
-                  ),
-              ],
-            ),
-          ),
-
-          // -- Foundation prompts (reflective questions) ------------------
-          const _SectionHeader('Foundation questions'),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: _FoundationPrompts(),
-          ),
-
-          // -- Capture closing reflection ---------------------------------
-          const _SectionHeader('Note something'),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: Text(
-              'Anything you want to come back to lives in the capture '
-              "inbox. Drop a note here — you'll see it again the next "
-              'time the system asks.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: FilledButton.icon(
-              onPressed: () => context.push('/captures/new'),
-              icon: const Icon(Icons.bolt_outlined),
-              label: const Text('Capture a reflection'),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -227,6 +314,169 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Section label for the bento variant — same uppercase eyebrow as
+/// [_SectionHeader] but with NO horizontal inset (the BentoGrid already owns
+/// the page margin, so the label aligns with the tiles below it).
+class _BentoSectionLabel extends StatelessWidget {
+  const _BentoSectionLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Text(
+        label.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          letterSpacing: 1.4,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+/// "What the system noticed" — the prose line, the severity chip row, and the
+/// See-insights / Weekly-walk-through actions. Extracted from the inline body
+/// so the flat scroll AND the bento tile render the identical content + taps.
+/// Shrink-wraps (`mainAxisSize.min`) so it sits safely in an unbounded bento
+/// cell (docs/GRID.md).
+class _NoticedSection extends StatelessWidget {
+  const _NoticedSection({
+    required this.insights,
+    required this.insightBySeverity,
+    this.horizontalInset = 20,
+  });
+
+  final List<Insight> insights;
+  final Map<InsightSeverity, int> insightBySeverity;
+
+  /// Horizontal page gutter — 20dp in the flat scroll, 0 in the bento tile
+  /// (the grid's own Padding owns the gutter there).
+  final double horizontalInset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final h = horizontalInset;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(h, 0, h, 8),
+          child: Text(
+            insights.isEmpty
+                ? "The system isn't surfacing any questions right now."
+                    ' Quiet is a good place to start the year from.'
+                : '${insights.length} '
+                    '${insights.length == 1 ? 'question' : 'questions'} '
+                    'open across your data.',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        if (insights.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: h),
+            child: Row(
+              children: [
+                if (insightBySeverity[InsightSeverity.urgent]! > 0)
+                  _SeverityChip(
+                    label:
+                        '${insightBySeverity[InsightSeverity.urgent]} urgent',
+                    bg: theme.colorScheme.errorContainer,
+                    fg: theme.colorScheme.onErrorContainer,
+                  ),
+                if (insightBySeverity[InsightSeverity.suggestion]! > 0) ...[
+                  if (insightBySeverity[InsightSeverity.urgent]! > 0)
+                    const SizedBox(width: 8),
+                  _SeverityChip(
+                    label:
+                        '${insightBySeverity[InsightSeverity.suggestion]} suggestions',
+                    bg: theme.colorScheme.tertiaryContainer,
+                    fg: theme.colorScheme.onTertiaryContainer,
+                  ),
+                ],
+                if (insightBySeverity[InsightSeverity.info]! > 0) ...[
+                  const SizedBox(width: 8),
+                  _SeverityChip(
+                    label: '${insightBySeverity[InsightSeverity.info]} FYI',
+                    bg: theme.colorScheme.surfaceContainerHighest,
+                    fg: theme.colorScheme.onSurface,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(h, 12, h, 0),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (insights.isNotEmpty)
+                FilledButton.tonalIcon(
+                  onPressed: () => context.push('/insights'),
+                  icon: const Icon(Icons.lightbulb_outline),
+                  label: const Text('See insights'),
+                ),
+              if (insights.length >= 2)
+                FilledButton.icon(
+                  onPressed: () => context.push('/review'),
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('Weekly walk-through'),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The closing "Note something" reflection — the prose line + the
+/// Capture-a-reflection action. Extracted so the flat scroll and the bento
+/// tile share the identical content + tap. Shrink-wraps for the bento cell.
+class _CaptureReflection extends StatelessWidget {
+  const _CaptureReflection({this.horizontalInset = 20});
+
+  /// Horizontal page gutter — 20dp in the flat scroll, 0 in the bento tile.
+  final double horizontalInset;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final h = horizontalInset;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(h, 0, h, 16),
+          child: Text(
+            'Anything you want to come back to lives in the capture '
+            "inbox. Drop a note here — you'll see it again the next "
+            'time the system asks.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: h),
+          child: FilledButton.icon(
+            onPressed: () => context.push('/captures/new'),
+            icon: const Icon(Icons.bolt_outlined),
+            label: const Text('Capture a reflection'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // -- Stats grid -------------------------------------------------------------
 
 class _Stat {
@@ -241,7 +491,6 @@ class _StatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: GridView.count(
@@ -252,33 +501,48 @@ class _StatGrid extends StatelessWidget {
         mainAxisSpacing: 12,
         childAspectRatio: 2.2,
         children: [
-          for (final s in stats)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${s.value}',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  Text(
-                    s.label,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+          for (final s in stats) _StatTile(stat: s),
+        ],
+      ),
+    );
+  }
+}
+
+/// One stat cell — a big number over its label. Extracted so the bento
+/// variant can pack the SAME cells 2-up on a phone (the grid read) instead
+/// of the flat 2-column [GridView]. Shrink-wraps vertically (`mainAxisSize.min`)
+/// so it sits safely in an unbounded bento cell (docs/GRID.md).
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.stat, super.key});
+  final _Stat stat;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${stat.value}',
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: theme.colorScheme.primary,
             ),
+          ),
+          Text(
+            stat.label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
@@ -332,14 +596,17 @@ class _CertBreakdown {
 }
 
 class _CertStrip extends StatelessWidget {
-  const _CertStrip({required this.breakdown});
+  const _CertStrip({required this.breakdown, this.horizontalInset = 20});
   final _CertBreakdown breakdown;
+
+  /// Horizontal page gutter — 20dp in the flat scroll, 0 in the bento tile.
+  final double horizontalInset;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: horizontalInset),
       child: Wrap(
         spacing: 8,
         runSpacing: 8,

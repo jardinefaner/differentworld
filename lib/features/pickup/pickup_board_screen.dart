@@ -7,6 +7,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/pickup/pickup_board_providers.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -36,6 +37,12 @@ class PickupBoardScreen extends ConsumerWidget {
     final labels = ref.watch(verticalLabelsProvider);
     final canRelease = ref.watch(viewerProvider).canTakeAttendance;
     final kids = labels.subjectPlural.toLowerCase();
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the still-here board re-lays as a dense
+    // 2-up grid of compact pickup cards over the SAME pickupBoard data; off
+    // keeps the existing one-row-per-child list. The header, all-clear card,
+    // and "Picked up today" section are unchanged either way.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
@@ -62,6 +69,8 @@ class PickupBoardScreen extends ConsumerWidget {
               ),
               if (board.stillHere.isEmpty)
                 _AllClearCard(count: board.releasedCount, kids: kids)
+              else if (bento)
+                _StillHereGrid(entries: board.stillHere, canRelease: canRelease)
               else
                 for (final e in board.stillHere)
                   Padding(
@@ -73,12 +82,17 @@ class PickupBoardScreen extends ConsumerWidget {
                 visible: board.released.isNotEmpty,
                 icon: Icons.check_circle_outline,
                 title: 'Picked up today',
-                child: Column(
-                  children: [
-                    for (final e in board.released)
-                      _ReleasedRow(entry: e, canRelease: canRelease),
-                  ],
-                ),
+                child: bento
+                    ? _ReleasedGrid(
+                        entries: board.released,
+                        canRelease: canRelease,
+                      )
+                    : Column(
+                        children: [
+                          for (final e in board.released)
+                            _ReleasedRow(entry: e, canRelease: canRelease),
+                        ],
+                      ),
               ),
             ],
           );
@@ -180,6 +194,272 @@ class _ReleasedRow extends ConsumerWidget {
     );
   }
 }
+
+/// The bento variant of the still-here board: the SAME children, re-laid as a
+/// dense 2-up grid of compact pickup cards (≈180dp cells) instead of one row
+/// each. A pickup rush is a small bounded set, so a shrink-wrapped grid (the
+/// present-hub / wall pattern) is fine inside the [ResponsivePage] scroll — the
+/// builder still constructs cells on demand. maxCrossAxisExtent 180 → 2 columns
+/// on a ~380dp phone.
+class _StillHereGrid extends StatelessWidget {
+  const _StillHereGrid({required this.entries, required this.canRelease});
+
+  final List<PickupBoardEntry> entries;
+  final bool canRelease;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      primary: false,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 180,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        // Grows with text scale so a large accessibility floor doesn't clip the
+        // name + Release button (the fixed-aspect-ratio trap).
+        mainAxisExtent: 134 + 56 * _textScale(context),
+      ),
+      itemCount: entries.length,
+      itemBuilder: (_, i) {
+        final e = entries[i];
+        return _StillHereCell(
+          key: ValueKey('pickup-here-${e.subject.id}'),
+          entry: e,
+          canRelease: canRelease,
+        );
+      },
+    );
+  }
+}
+
+/// A compact still-here cell for the 2-up bento board. Re-lays the SAME content
+/// as [_StillHereRow] — avatar + name + group + Release — into a narrow tile:
+/// identity on top, a full-width Release button below. Same `_openRelease` tap,
+/// same gating.
+class _StillHereCell extends ConsumerWidget {
+  const _StillHereCell({
+    required this.entry,
+    required this.canRelease,
+    super.key,
+  });
+
+  final PickupBoardEntry entry;
+  final bool canRelease;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return RepaintBoundary(
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: canRelease ? () => _openRelease(context, ref, entry) : null,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    PersonAvatar(
+                      name: entry.fullName,
+                      photoUrl: entry.subject.photoUrl,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            entry.fullName,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            entry.group.name,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (canRelease) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.tonalIcon(
+                      onPressed: () => _openRelease(context, ref, entry),
+                      icon: const Icon(Icons.directions_walk, size: 18),
+                      label: const Text('Release'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The bento variant of the picked-up list: the SAME released children as a
+/// dense 2-up grid of compact cards. Sits inside the "Picked up today"
+/// [SectionCard], so it shrink-wraps + never scrolls itself.
+class _ReleasedGrid extends StatelessWidget {
+  const _ReleasedGrid({required this.entries, required this.canRelease});
+
+  final List<PickupBoardEntry> entries;
+  final bool canRelease;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      primary: false,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 180,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        mainAxisExtent: 120 + 44 * _textScale(context),
+      ),
+      itemCount: entries.length,
+      itemBuilder: (_, i) {
+        final e = entries[i];
+        return _ReleasedCell(
+          key: ValueKey('pickup-gone-${e.subject.id}'),
+          entry: e,
+          canRelease: canRelease,
+        );
+      },
+    );
+  }
+}
+
+/// A compact picked-up cell for the 2-up bento board. Re-lays the SAME content
+/// as [_ReleasedRow] — dimmed avatar + name + who/when + Undo — into a narrow
+/// tile. Same undo behaviour (optimistic, fire-and-forget).
+class _ReleasedCell extends ConsumerWidget {
+  const _ReleasedCell({
+    required this.entry,
+    required this.canRelease,
+    super.key,
+  });
+
+  final PickupBoardEntry entry;
+  final bool canRelease;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final dep = entry.departure;
+    final when =
+        dep == null ? null : DateTime.tryParse(dep.recordedAt)?.toLocal();
+    final to = (dep?.body ?? '').trim();
+    final String subtitle;
+    if (entry.leftEarly) {
+      subtitle = 'Left early';
+    } else {
+      final parts = <String>[
+        if (to.isNotEmpty) 'to $to',
+        if (when != null) timeOfDay(when),
+      ];
+      subtitle = parts.isEmpty ? 'Picked up' : parts.join(' · ');
+    }
+    return RepaintBoundary(
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Opacity(
+                    opacity: 0.6,
+                    child: PersonAvatar(
+                      name: entry.fullName,
+                      photoUrl: entry.subject.photoUrl,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      entry.fullName,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              // Only board releases (which carry a departure entry) can be
+              // undone; an early_pickup is an attendance fact, edited there.
+              if (canRelease && dep != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      final messenger = ScaffoldMessenger.of(context);
+                      unawaited(HapticFeedback.selectionClick());
+                      unawaited(
+                        ref.read(pickupBoardActionsProvider).undo(dep.id),
+                      );
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '${entry.fullName} back on the board',
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Undo'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Title-text-relative scale (1.0 = OS default) so the bento cells grow with
+/// the user's text-size setting instead of clipping at a fixed extent.
+double _textScale(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(14) / 14;
 
 /// Shown in place of the still-here list when everyone's been picked up.
 class _AllClearCard extends StatelessWidget {

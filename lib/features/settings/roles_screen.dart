@@ -1,6 +1,8 @@
 import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
@@ -31,34 +33,93 @@ class RolesScreen extends ConsumerWidget {
     final labels = ref.watch(verticalLabelsProvider);
     final vertical = labels.vertical;
     final roles = RoleBundles.rolesFor(vertical);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the role directory re-lays as a dense
+    // responsive grid (2-up on a phone) over the SAME role bundles; off keeps
+    // the existing single-column list.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
-      body: ResponsivePage(
-        children: [
-          const ContentHeader(
+      body: bento
+          ? _bentoBody(theme, roles, vertical)
+          : _flatBody(theme, roles, vertical),
+    );
+  }
+
+  /// The default layout — a single-column list of role cards, each one a
+  /// full-width card, with the cert-gated note at the foot.
+  Widget _flatBody(ThemeData theme, List<String> roles, String vertical) {
+    return ResponsivePage(
+      children: [
+        const ContentHeader(
+          title: 'Roles & permissions',
+          subtitle:
+              'What each role can do by default. Directors can '
+              'fine-tune individual permissions on the Member detail '
+              'screen.',
+        ),
+        for (final key in roles) ...[
+          _RoleCard(roleKey: key, vertical: vertical),
+          const SizedBox(height: 12),
+        ],
+        // Cert-gated reminder — these caps stay off until a
+        // certification is added to the member, regardless of role.
+        const SizedBox(height: 8),
+        _CertGatedNote(theme: theme),
+      ],
+    );
+  }
+
+  /// The bento variant — SAME role cards, re-laid as importance-weighted
+  /// tiles. Each role is a SHORT card → `phone: 1` so they pack 2-up on a
+  /// phone (the grid read), 3-up on desktop; the cert-gated note is a
+  /// text-heavy banner → full-width at every width. `_RoleCard` already
+  /// shrink-wraps its `FeatureCard` (`mainAxisSize.min`), so it drops into an
+  /// unbounded bento cell without the Spacer/Expanded throw (docs/GRID.md).
+  Widget _bentoBody(ThemeData theme, List<String> roles, String vertical) {
+    return ResponsivePage(
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: ContentHeader(
             title: 'Roles & permissions',
             subtitle:
                 'What each role can do by default. Directors can '
                 'fine-tune individual permissions on the Member detail '
                 'screen.',
           ),
-          for (final key in roles) ...[
-            _RoleCard(roleKey: key, vertical: vertical),
-            const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 12),
+        BentoGrid(
+          tiles: [
+            for (final key in roles)
+              BentoTile(
+                id: 'role-$key',
+                // 2-up on phone, 2-of-4 on tablet, 2-of-6 (3-up) on desktop.
+                span: const BentoSpan(phone: 1),
+                child: _RoleCard(
+                  key: ValueKey('role-card-$key'),
+                  roleKey: key,
+                  vertical: vertical,
+                ),
+              ),
+            // The cert-gated reminder is narrative copy — full-width banner so
+            // it reads as a closing note, not one tile in the role run.
+            BentoTile(
+              id: 'cert-gated-note',
+              span: const BentoSpan.wide(),
+              child: _CertGatedNote(theme: theme),
+            ),
           ],
-          // Cert-gated reminder — these caps stay off until a
-          // certification is added to the member, regardless of role.
-          const SizedBox(height: 8),
-          _CertGatedNote(theme: theme),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 class _RoleCard extends StatelessWidget {
-  const _RoleCard({required this.roleKey, required this.vertical});
+  const _RoleCard({required this.roleKey, required this.vertical, super.key});
 
   final String roleKey;
   final String vertical;

@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/staff/staff_ladder.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -22,6 +24,14 @@ class StaffLadderScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rolesAsync = ref.watch(staffRolesProvider);
     final myLevel = ref.watch(staffLevelProvider).value;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). The ladder is TEXT-HEAVY (each rung expands to a
+    // description + "Can do" / "Not yet" lists), so the bento variant keeps the
+    // rungs FULL-WIDTH — a 2-up grid would clip the inline ExpansionTile. What
+    // bento changes: the current rung leads as a hero banner and the rungs +
+    // see-also become bento tiles, inheriting the system grid + keys. Same
+    // roles, same "This is me" tap, same expand-in-place behaviour.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       body: rolesAsync.when(
         loading: () => const LoadingSlot(),
@@ -37,42 +47,110 @@ class StaffLadderScreen extends ConsumerWidget {
               break;
             }
           }
-          return ResponsivePage(
-            children: [
-              const ContentHeader(
-                title: 'The staff ladder',
-                subtitle: 'You climb by practice, not by time',
+          return bento
+              ? _bentoBody(ref, roles, myLevel, mine)
+              : _flatBody(ref, roles, myLevel, mine);
+        },
+      ),
+    );
+  }
+
+  /// The default layout — the current-rung banner + the rungs as a vertical
+  /// stack of expanding cards.
+  Widget _flatBody(
+    WidgetRef ref,
+    List<StaffRole> roles,
+    String? myLevel,
+    StaffRole? mine,
+  ) {
+    return ResponsivePage(
+      children: [
+        const ContentHeader(
+          title: 'The staff ladder',
+          subtitle: 'You climb by practice, not by time',
+        ),
+        if (mine != null) _CurrentRung(role: mine),
+        for (var i = 0; i < roles.length; i++)
+          _RoleCard(
+            role: roles[i],
+            rung: i + 1,
+            isMine: roles[i].id == myLevel,
+            onMarkMine: () => unawaited(
+              ref.read(staffLevelProvider.notifier).set(roles[i].id),
+            ),
+          ),
+        const SizedBox(height: 8),
+        _SeeAlso(),
+      ],
+    );
+  }
+
+  /// The bento variant — the SAME rungs as modular tiles. The current rung
+  /// leads as a hero; the rungs stay full-width (they expand in place, so they
+  /// can't shrink into a 2-up cell) but flow through [BentoGrid] so the screen
+  /// reads as the system. The rung tiles are min-height — the ExpansionTile
+  /// grows past the floor (never a fixed box; no `Spacer`/`Expanded` inside, so
+  /// the unbounded-max cell is safe — see docs/GRID.md).
+  Widget _bentoBody(
+    WidgetRef ref,
+    List<StaffRole> roles,
+    String? myLevel,
+    StaffRole? mine,
+  ) {
+    return ResponsivePage(
+      children: [
+        const ContentHeader(
+          title: 'The staff ladder',
+          subtitle: 'You climb by practice, not by time',
+        ),
+        BentoGrid(
+          tiles: [
+            if (mine != null)
+              BentoTile(
+                id: 'current-rung',
+                span: const BentoSpan.wide(rows: 2),
+                child: _CurrentRung(role: mine, embedded: true),
               ),
-              if (mine != null) _CurrentRung(role: mine),
-              for (var i = 0; i < roles.length; i++)
-                _RoleCard(
+            for (var i = 0; i < roles.length; i++)
+              BentoTile(
+                id: 'rung-${roles[i].id}',
+                span: const BentoSpan.wide(),
+                child: _RoleCard(
                   role: roles[i],
                   rung: i + 1,
                   isMine: roles[i].id == myLevel,
+                  embedded: true,
                   onMarkMine: () => unawaited(
                     ref.read(staffLevelProvider.notifier).set(roles[i].id),
                   ),
                 ),
-              const SizedBox(height: 8),
-              _SeeAlso(),
-            ],
-          );
-        },
-      ),
+              ),
+            BentoTile(
+              id: 'see-also',
+              span: const BentoSpan.wide(),
+              child: _SeeAlso(),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
 class _CurrentRung extends StatelessWidget {
-  const _CurrentRung({required this.role});
+  const _CurrentRung({required this.role, this.embedded = false});
   final StaffRole role;
+
+  /// In the bento variant the tile + grid gap own the spacing, so the banner
+  /// drops its own bottom margin.
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: embedded ? EdgeInsets.zero : const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer,
@@ -126,6 +204,7 @@ class _RoleCard extends StatelessWidget {
     required this.rung,
     required this.isMine,
     required this.onMarkMine,
+    this.embedded = false,
   });
 
   final StaffRole role;
@@ -133,12 +212,16 @@ class _RoleCard extends StatelessWidget {
   final bool isMine;
   final VoidCallback onMarkMine;
 
+  /// In the bento variant the tile + grid gap own the spacing, so the card
+  /// drops its own bottom margin (it fills its full-width tile).
+  final bool embedded;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: embedded ? EdgeInsets.zero : const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isMine

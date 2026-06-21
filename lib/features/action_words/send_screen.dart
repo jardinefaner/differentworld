@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/parent_message.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -25,6 +26,14 @@ class SendScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subjectsAsync = ref.watch(subjectsInSpaceProvider);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). The send-home note is TEXT-HEAVY (a multi-line
+    // parent message each card shows + copies), so the bento variant keeps the
+    // cards FULL-WIDTH on a phone for readability and only packs them 2-up on a
+    // tablet/desktop where two messages read side by side. Same subjects, same
+    // per-child message + Copy, same self-filtering (only kids with picks
+    // today render).
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
       body: subjectsAsync.when(
@@ -48,8 +57,11 @@ class SendScreen extends ConsumerWidget {
                 title: 'Send home',
                 subtitle: 'Tap Copy, then paste into your messaging app.',
               ),
-              for (final s in subjects)
-                _SendCard(key: ValueKey(s.id), subject: s),
+              if (bento)
+                _SendGrid(subjects: subjects)
+              else
+                for (final s in subjects)
+                  _SendCard(key: ValueKey(s.id), subject: s),
             ],
           );
         },
@@ -58,10 +70,68 @@ class SendScreen extends ConsumerWidget {
   }
 }
 
+/// The bento variant — the SAME children, re-laid as a responsive [Wrap] of
+/// send-home cards. The message body is text-heavy, so cards stay FULL-WIDTH on
+/// a phone (one readable column) and pack 2-up only at tablet/desktop width
+/// where two messages fit side by side. A [Wrap] (not a [GridView]) is used on
+/// purpose: each [_SendCard] self-filters to `SizedBox.shrink()` when the child
+/// has no picks today, and a Wrap absorbs a zero-size child gracefully where a
+/// fixed grid would leave a hole. Each card carries a stable [ValueKey].
+class _SendGrid extends StatelessWidget {
+  const _SendGrid({required this.subjects});
+
+  final List<Subject> subjects;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 12.0;
+        final width = constraints.maxWidth;
+        // 2-up once there's room for two readable message columns; 1-up on a
+        // phone so the parent note never squeezes into an unreadable ribbon.
+        final twoUp = width >= 720;
+        final cardWidth = twoUp ? (width - gap) / 2 : width;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final s in subjects)
+              _SendCard(
+                key: ValueKey('send-${s.id}'),
+                subject: s,
+                // The card applies this width itself ONLY when it has a message
+                // to show; a child with no picks returns a bare zero-size
+                // SizedBox so it claims no slot in the Wrap run (keeping 2-up
+                // pairing intact). embedded → drop the card's own margin.
+                width: cardWidth,
+                embedded: true,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _SendCard extends ConsumerWidget {
-  const _SendCard({required this.subject, super.key});
+  const _SendCard({
+    required this.subject,
+    this.width,
+    this.embedded = false,
+    super.key,
+  });
 
   final Subject subject;
+
+  /// In the bento [Wrap] the card sizes itself to this width — but ONLY on the
+  /// content path. A child with no picks returns a bare zero-size SizedBox so
+  /// it claims no slot in the Wrap run.
+  final double? width;
+
+  /// In the bento variant the Wrap's runSpacing owns vertical spacing, so the
+  /// card drops its own bottom margin.
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -86,8 +156,8 @@ class _SendCard extends ConsumerWidget {
     );
     final emoji = match.world?.emoji ?? '🌟';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    final card = Card(
+      margin: embedded ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -143,5 +213,9 @@ class _SendCard extends ConsumerWidget {
         ),
       ),
     );
+
+    // In the bento Wrap the card sizes to its column; in the flat list it fills
+    // the page width as before.
+    return width == null ? card : SizedBox(width: width, child: card);
   }
 }
