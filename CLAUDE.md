@@ -2058,10 +2058,15 @@ These came out of the 10-persona audit. Smaller persona fixes (Marcus
 summary sentence, Brianna lock chip, Coach Sam pre-block brief) have
 shipped; what's below needs its own focused PR.
 
-- **Maya — tablet-first schedule grid.** Today the schedule editor is
-  per-cohort tabs (phone-friendly). A real cohorts × time matrix on
-  iPad/desktop is the right surface for a director planning the week;
-  needs a custom layout (not just a wider phone view).
+- **Maya — tablet-first schedule grid. DONE.** The cohorts × time matrix
+  on iPad/desktop is built — `ScheduleTimeGrid`
+  (`lib/features/schedule/widgets/schedule_time_grid.dart`): cohorts as
+  rows, a shared time axis, blocks span + position by start/end, with the
+  live signals + tap-to-edit + drag-to-reschedule the agenda rows have.
+  It is now the **default** wide-screen (≥ 720dp) view —
+  `scheduleTimeGridProvider` defaults ON; a director who prefers cohort
+  columns opts out in Settings → Preferences. Phones keep the per-cohort
+  tabs.
 - **Jordan — PARTIAL: voice-to-text on observation + omnibox.**
   Deepgram-powered mic is wired in the omnibox composer bar
   (`bottom_omnibox_bar.dart`) AND the observation form body field
