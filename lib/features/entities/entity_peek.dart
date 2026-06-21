@@ -11,6 +11,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -249,6 +250,20 @@ class _EntityPeekBody extends ConsumerWidget {
             if (practisedBy > 0)
               '$practisedBy ${practisedBy == 1 ? 'activity practises' : 'activities practise'} it',
           ],
+        );
+
+      case EntityKind.tool:
+        final t = _byId(allToolkitTools, entity.id, (x) => x.slug);
+        return _PeekScaffold(
+          entity: entity,
+          title: t?.name ?? entity.label,
+          facts: [
+            if (t != null && t.when.trim().isNotEmpty) 'When: ${t.when.trim()}',
+            if (t != null && t.why.trim().isNotEmpty) t.why.trim(),
+          ],
+          openLabel: t == null ? null : 'Open tool',
+          onOpen:
+              t == null ? null : () => onOpen('/settings/toolkit/${t.slug}'),
         );
     }
   }

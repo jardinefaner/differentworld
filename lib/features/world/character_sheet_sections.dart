@@ -339,10 +339,17 @@ class _Verbs extends StatelessWidget {
       children: [
         for (final v in kVerbs)
           if (practiced[v.id] case final n? when n > 0)
-            Chip(
-              avatar: Text(v.emoji),
-              label: Text('${v.label} ·$n'),
-              visualDensity: VisualDensity.compact,
+            EntityChipTap(
+              entity: EntityRef(
+                kind: EntityKind.verb,
+                id: v.id,
+                label: v.label,
+              ),
+              child: Chip(
+                avatar: Text(v.emoji),
+                label: Text('${v.label} ·$n'),
+                visualDensity: VisualDensity.compact,
+              ),
             )
           else
             // BLIND SPOT — a verb never practiced, an invitation.
@@ -380,20 +387,27 @@ class _Worlds extends StatelessWidget {
           childAspectRatio: 0.82,
           children: [
             for (final w in worlds)
-              Opacity(
-                opacity: visited.contains(w.week) ? 1 : 0.3,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(w.emoji, style: const TextStyle(fontSize: 30)),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Wk ${w.week}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+              EntityChipTap(
+                entity: EntityRef(
+                  kind: EntityKind.world,
+                  id: w.id,
+                  label: w.name,
+                ),
+                child: Opacity(
+                  opacity: visited.contains(w.week) ? 1 : 0.3,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(w.emoji, style: const TextStyle(fontSize: 30)),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Wk ${w.week}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -427,7 +441,7 @@ class _Milestones extends StatelessWidget {
                   Text(m.emoji, style: const TextStyle(fontSize: 18)),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
+                    child: LinkifiedText(
                       (m.body?.trim().isNotEmpty ?? false) ? m.body! : m.title,
                       style: theme.textTheme.bodyMedium,
                       maxLines: 2,
@@ -753,7 +767,8 @@ class _Allies extends StatelessWidget {
                       children: [
                         const Text('🤝  ', style: TextStyle(fontSize: 14)),
                         Expanded(
-                          child: Text(a, style: theme.textTheme.bodyMedium),
+                          child: LinkifiedText(a,
+                              style: theme.textTheme.bodyMedium),
                         ),
                       ],
                     ),

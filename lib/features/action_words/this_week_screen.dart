@@ -9,6 +9,8 @@ import 'package:differentworld/features/action_words/worksheet_pdf.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -333,9 +335,16 @@ class _VerbsSection extends StatelessWidget {
           children: [
             for (final id in world.featuredVerbs)
               if (verbById(id) case final v?)
-                Chip(
-                  label: Text('${v.emoji} ${v.label}'),
-                  visualDensity: VisualDensity.compact,
+                EntityChipTap(
+                  entity: EntityRef(
+                    kind: EntityKind.verb,
+                    id: v.id,
+                    label: v.label,
+                  ),
+                  child: Chip(
+                    label: Text('${v.emoji} ${v.label}'),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
           ],
         ),

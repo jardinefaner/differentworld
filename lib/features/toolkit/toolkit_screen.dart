@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/toolkit/toolkit_recents.dart';
@@ -220,7 +222,17 @@ class _MobileCatalog extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: FeatureCard(
                   leading: _CategoryGlyphChip(category: hit.category),
-                  title: hit.tool.name,
+                  title: EntityLink(
+                    entity: EntityRef(
+                      kind: EntityKind.tool,
+                      id: hit.tool.slug,
+                      label: hit.tool.name,
+                    ),
+                    padded: false,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   subtitle: '${hit.category.name} · ${hit.tool.when}',
                   trailing: const Icon(Icons.chevron_right, size: 18),
                   onTap: () => onPickTool(hit.tool.slug),
@@ -260,7 +272,18 @@ class _MobileCatalog extends StatelessWidget {
                               padding: const EdgeInsets.only(top: 8),
                               child: FeatureCard(
                                 leading: _CategoryAccentDot(color: cat.color),
-                                title: tool.name,
+                                title: EntityLink(
+                                  entity: EntityRef(
+                                    kind: EntityKind.tool,
+                                    id: tool.slug,
+                                    label: tool.name,
+                                  ),
+                                  padded: false,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                                 subtitle: tool.when,
                                 trailing: const Icon(
                                   Icons.chevron_right,
@@ -484,7 +507,17 @@ class _WideMasterPane extends StatelessWidget {
                       ? FeatureCardTone.selected
                       : FeatureCardTone.neutral,
                   leading: _CategoryGlyphChip(category: hit.category),
-                  title: hit.tool.name,
+                  title: EntityLink(
+                    entity: EntityRef(
+                      kind: EntityKind.tool,
+                      id: hit.tool.slug,
+                      label: hit.tool.name,
+                    ),
+                    padded: false,
+                    style: theme.textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   subtitle: '${hit.category.name} · ${hit.tool.when}',
                   onTap: () => onPickTool(hit.tool.slug),
                 ),
@@ -523,7 +556,17 @@ class _WideMasterPane extends StatelessWidget {
                     ? FeatureCardTone.selected
                     : FeatureCardTone.neutral,
                 leading: _CategoryAccentDot(color: cat.color),
-                title: tool.name,
+                title: EntityLink(
+                  entity: EntityRef(
+                    kind: EntityKind.tool,
+                    id: tool.slug,
+                    label: tool.name,
+                  ),
+                  padded: false,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: tool.when,
                 onTap: () => onPickTool(tool.slug),
               ),

@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 /// cleanly to plain text, and the family scope is a hard privacy boundary
 /// (autotag never fires) — the things the pure matcher test can't see.
 class _LiveStub extends LiveEntitiesNotifier {
+  // A one-arg test stub for the on/off toggle; a named param is needless here.
+  // ignore: avoid_positional_boolean_parameters
   _LiveStub(this.value);
   final bool value;
   // Synchronous so there's no loading frame (during which liveEntitiesOn

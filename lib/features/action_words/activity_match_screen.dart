@@ -9,6 +9,9 @@ import 'package:differentworld/features/action_words/curriculum_import.dart';
 import 'package:differentworld/features/action_words/senses.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -277,8 +280,13 @@ class _ActivityCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    activity.name,
+                  child: EntityLink(
+                    entity: EntityRef(
+                      kind: EntityKind.activity,
+                      id: activity.id,
+                      label: activity.name,
+                    ),
+                    padded: false,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -302,7 +310,7 @@ class _ActivityCard extends StatelessWidget {
             ),
             if (activity.description != null &&
                 activity.description!.isNotEmpty)
-              Text(
+              LinkifiedText(
                 activity.description!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -325,8 +333,15 @@ class _ActivityCard extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   for (final v in verbsByIds(tags))
-                    Text('${v.emoji} ${v.label}',
-                        style: theme.textTheme.bodySmall),
+                    EntityChipTap(
+                      entity: EntityRef(
+                        kind: EntityKind.verb,
+                        id: v.id,
+                        label: v.label,
+                      ),
+                      child: Text('${v.emoji} ${v.label}',
+                          style: theme.textTheme.bodySmall),
+                    ),
                   for (final s in activitySenses(activity))
                     Text(s.emoji, style: const TextStyle(fontSize: 14)),
                 ],

@@ -206,9 +206,16 @@ class _WorldSheet extends StatelessWidget {
                 children: [
                   for (final id in world.featuredVerbs)
                     if (verbById(id) case final v?)
-                      Chip(
-                        label: Text('${v.emoji} ${v.label}'),
-                        visualDensity: VisualDensity.compact,
+                      EntityChipTap(
+                        entity: EntityRef(
+                          kind: EntityKind.verb,
+                          id: v.id,
+                          label: v.label,
+                        ),
+                        child: Chip(
+                          label: Text('${v.emoji} ${v.label}'),
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
                 ],
               ),

@@ -8,6 +8,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // shared_preferences IS a direct dep; the analyzer sometimes warns spuriously
@@ -142,6 +143,24 @@ final entityIndexProvider = Provider<List<EntityMatchTerm>>((ref) {
       }
     }
   }
+
+  // ── tools (the toolkit reference — distinctive names, proper-noun gated) ──
+  for (final t in allToolkitTools) {
+    final n = t.name.trim();
+    if (n.length >= 3) {
+      terms.add(
+        EntityMatchTerm(
+          text: n,
+          ref: EntityRef(kind: EntityKind.tool, id: t.slug, label: n),
+          properNounOnly: true,
+        ),
+      );
+    }
+  }
+
+  // Verbs are intentionally EXCLUDED from the autotag index — words like
+  // "share" / "build" are too common to light up in prose; they stay
+  // available as structured `EntityLink`s only.
 
   return terms;
 });

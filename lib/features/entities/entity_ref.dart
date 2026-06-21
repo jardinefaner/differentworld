@@ -14,6 +14,7 @@ enum EntityKind {
   role,
   world,
   verb,
+  tool,
 }
 
 /// A reference to one named thing — `kind` + a stable `id` + the `label` as it
@@ -61,6 +62,7 @@ extension EntityKindVisual on EntityKind {
         EntityKind.role => const Color(0xFFBA7517), // amber — roles
         EntityKind.world => const Color(0xFF6E50D2), // purple — worlds
         EntityKind.verb => const Color(0xFFC23E6B), // rose — action words
+        EntityKind.tool => const Color(0xFF5A6BB5), // indigo — tools
       };
 
   IconData get icon => switch (this) {
@@ -73,6 +75,7 @@ extension EntityKindVisual on EntityKind {
         EntityKind.role => Icons.auto_awesome_outlined,
         EntityKind.world => Icons.travel_explore_outlined,
         EntityKind.verb => Icons.bolt_outlined,
+        EntityKind.tool => Icons.handyman_outlined,
       };
 
   /// The human label for the kind ("Child", "Activity"…) — the peek eyebrow.
@@ -86,6 +89,7 @@ extension EntityKindVisual on EntityKind {
         EntityKind.role => 'Role',
         EntityKind.world => 'World',
         EntityKind.verb => 'Action word',
+        EntityKind.tool => 'Tool',
       };
 
   /// People (→ a `PersonAvatar` with initials) vs a thing (→ [icon]).

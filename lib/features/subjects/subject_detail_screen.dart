@@ -6,6 +6,8 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/entries/work_sample_capture.dart';
 import 'package:differentworld/features/exports/widgets/exports_list.dart';
@@ -341,8 +343,13 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
                     ],
                     if (groupAsync.value != null) ...[
                       const SizedBox(height: 2),
-                      Text(
-                        groupAsync.value!.name,
+                      EntityLink(
+                        entity: EntityRef(
+                          kind: EntityKind.group,
+                          id: groupAsync.value!.id,
+                          label: groupAsync.value!.name,
+                        ),
+                        padded: false,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -677,8 +684,13 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
                     ],
                     if (groupAsync.value != null) ...[
                       const SizedBox(height: 2),
-                      Text(
-                        groupAsync.value!.name,
+                      EntityLink(
+                        entity: EntityRef(
+                          kind: EntityKind.group,
+                          id: groupAsync.value!.id,
+                          label: groupAsync.value!.name,
+                        ),
+                        padded: false,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),

@@ -80,3 +80,32 @@ class EntityLink extends ConsumerWidget {
     );
   }
 }
+
+/// Make an existing CHIP (or any small widget) open its entity peek on tap,
+/// WITHOUT restyling it as a text link — for the verb / world / role chips in
+/// detail views that should be explorable. Keeps the chip's own visual; just
+/// adds the tap. Degrades to the bare [child] when live entities are off.
+class EntityChipTap extends ConsumerWidget {
+  const EntityChipTap({
+    required this.entity,
+    required this.child,
+    super.key,
+  });
+
+  final EntityRef entity;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!liveEntitiesOn(ref)) return child;
+    return Semantics(
+      button: true,
+      label: '${entity.label}, ${entity.kind.noun}',
+      child: InkWell(
+        onTap: () => showEntityPeek(context, entity),
+        borderRadius: BorderRadius.circular(20),
+        child: child,
+      ),
+    );
+  }
+}
