@@ -380,6 +380,32 @@ not "games" — and (2) give existing content (the schedule, the photo feed) a
 A dated log so nothing spoken is lost. Promote each into a theme above
 once it has a home.
 
+- **2026-06-20** — **Every named thing, anywhere, is a live entity you can tap
+  for its details — and free-text names auto-detect ("autotagging").** In the
+  user's words: *"i want that every noun/thing anywhere they are, i can click on
+  them, and see extra details… you know what i'm saying? like autotagging."* The
+  whole app goes *linkified*: a child, a teacher, a cohort, an activity, a world,
+  a role, a place, a vehicle, an action-word — wherever its name appears it
+  becomes tappable and opens a **detail peek** (a glass sheet: who/what it is,
+  today's snapshot, recent activity, "open full →"). Two halves: **structured**
+  refs (a roster row, a block's activity, a trip's vehicle) already know their
+  id, so they link for free; **free-text** refs (an observation body, a weekly
+  log, an incident narrative) get **auto-detected on-device** against the local
+  roster the viewer can already see — Sofia-in-the-prose wires to Sofia, no
+  hand-tagging. This is the universal engine paying off: ONE `EntityRef` across
+  all kinds (Space/Member/Group/Subject + Activity/Role/World/Location/Vehicle/
+  Verb), ONE peek surface, ONE linkifier. It turns the accumulating record
+  (#documenting-the-now) into a navigable graph — every moment becomes a doorway
+  to every thing it touched. **Privacy is load-bearing:** detection is on-device
+  only (never sent anywhere — children's names are PII), and on FAMILY/EXPORT
+  surfaces the linkifier must NOT light up OTHER children's names — that would
+  re-leak the identity the `scrubOtherNames` rule strips (same gotcha, new
+  surface). **Open forks before coding:** structured links + the peek engine
+  first (fast, safe, no detection) then free-text autotagging — or both at once?
+  Peek as a bottom glass sheet (the app-consistent choice) vs an inline
+  hovercard? Which kinds ship first? Always-peek-on-tap, or peek-on-tap +
+  open-full-on-long-press?
+
 - **2026-06-20** — **Every ROLE comes with the tools to PRACTICE it — the role
   deck isn't just collectible, it's a curriculum.** In the user's words: *"for
   all the roles in role cards, the app provides the tools to make them practice
