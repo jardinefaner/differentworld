@@ -107,7 +107,11 @@ class AppColors extends ThemeExtension<AppColors> {
     final l = fill.computeLuminance();
     final contrastOnWhite = 1.05 / (l + 0.05);
     final contrastOnBlack = (l + 0.05) / 0.05;
-    return contrastOnBlack >= contrastOnWhite ? Colors.black87 : Colors.white;
+    // PURE black, not black87 — the math above is computed for pure black
+    // (luminance 0). Returning a translucent black87 falls SHORT of the AA the
+    // math promises on a mid-tone fill (brown #8B7363 sits at the crossover at
+    // ~4.6:1, where any weaker black drops below 4.5). White wins fully too.
+    return contrastOnBlack >= contrastOnWhite ? Colors.black : Colors.white;
   }
 }
 
@@ -149,119 +153,119 @@ abstract final class AppType {
   /// tracked. Colours are omitted so each style inherits the scheme's
   /// on-surface colour per brightness.
   static TextTheme textTheme() => const TextTheme(
-        // Fraunces serif heroes — w400 + tight tracking (the mockup voice),
-        // NOT the old thin/wide-tracked Jost treatment. Sentence-case at the
-        // call sites; the hierarchy comes from size + the serif, not from caps.
-        displayLarge: TextStyle(
-          fontFamily: display,
-          fontSize: 57,
-          fontWeight: FontWeight.w400,
-          height: 1.05,
-          letterSpacing: -0.5,
-        ),
-        displayMedium: TextStyle(
-          fontFamily: display,
-          fontSize: 45,
-          fontWeight: FontWeight.w400,
-          height: 1.08,
-          letterSpacing: -0.5,
-        ),
-        displaySmall: TextStyle(
-          fontFamily: display,
-          fontSize: 36,
-          fontWeight: FontWeight.w400,
-          height: 1.12,
-          letterSpacing: -0.25,
-        ),
-        headlineLarge: TextStyle(
-          fontFamily: display,
-          fontSize: 32,
-          fontWeight: FontWeight.w400,
-          height: 1.16,
-          letterSpacing: -0.25,
-        ),
-        headlineMedium: TextStyle(
-          fontFamily: display,
-          fontSize: 28,
-          fontWeight: FontWeight.w400,
-          height: 1.2,
-        ),
-        // Page titles (ContentHeader) + wide empty-state titles land here —
-        // the most-seen "big" style. Sentence-case serif.
-        headlineSmall: TextStyle(
-          fontFamily: display,
-          fontSize: 24,
-          fontWeight: FontWeight.w400,
-          height: 1.25,
-        ),
-        titleLarge: TextStyle(
-          fontFamily: ui,
-          fontSize: 22,
-          fontWeight: FontWeight.w500,
-          height: 1.3,
-          letterSpacing: 0.3,
-        ),
-        // FeatureCard row titles.
-        titleMedium: TextStyle(
-          fontFamily: ui,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          height: 1.5,
-          letterSpacing: 0.3,
-        ),
-        // SectionCard headings.
-        titleSmall: TextStyle(
-          fontFamily: ui,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          height: 1.45,
-          letterSpacing: 0.4,
-        ),
-        bodyLarge: TextStyle(
-          fontFamily: ui,
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          height: 1.55,
-          letterSpacing: 0.3,
-        ),
-        bodyMedium: TextStyle(
-          fontFamily: ui,
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          height: 1.5,
-          letterSpacing: 0.3,
-        ),
-        bodySmall: TextStyle(
-          fontFamily: ui,
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          height: 1.4,
-          letterSpacing: 0.4,
-        ),
-        // Button + eyebrow labels — medium weight, tracked. These are the
-        // small all-caps moments, so the baked-in tracking is generous.
-        labelLarge: TextStyle(
-          fontFamily: ui,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          height: 1.4,
-          letterSpacing: 0.8,
-        ),
-        labelMedium: TextStyle(
-          fontFamily: ui,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          height: 1.35,
-          letterSpacing: 1.2,
-        ),
-        labelSmall: TextStyle(
-          fontFamily: ui,
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          height: 1.45,
-          letterSpacing: 1.5,
-        ),
-      );
+    // Fraunces serif heroes — w400 + tight tracking (the mockup voice),
+    // NOT the old thin/wide-tracked Jost treatment. Sentence-case at the
+    // call sites; the hierarchy comes from size + the serif, not from caps.
+    displayLarge: TextStyle(
+      fontFamily: display,
+      fontSize: 57,
+      fontWeight: FontWeight.w400,
+      height: 1.05,
+      letterSpacing: -0.5,
+    ),
+    displayMedium: TextStyle(
+      fontFamily: display,
+      fontSize: 45,
+      fontWeight: FontWeight.w400,
+      height: 1.08,
+      letterSpacing: -0.5,
+    ),
+    displaySmall: TextStyle(
+      fontFamily: display,
+      fontSize: 36,
+      fontWeight: FontWeight.w400,
+      height: 1.12,
+      letterSpacing: -0.25,
+    ),
+    headlineLarge: TextStyle(
+      fontFamily: display,
+      fontSize: 32,
+      fontWeight: FontWeight.w400,
+      height: 1.16,
+      letterSpacing: -0.25,
+    ),
+    headlineMedium: TextStyle(
+      fontFamily: display,
+      fontSize: 28,
+      fontWeight: FontWeight.w400,
+      height: 1.2,
+    ),
+    // Page titles (ContentHeader) + wide empty-state titles land here —
+    // the most-seen "big" style. Sentence-case serif.
+    headlineSmall: TextStyle(
+      fontFamily: display,
+      fontSize: 24,
+      fontWeight: FontWeight.w400,
+      height: 1.25,
+    ),
+    titleLarge: TextStyle(
+      fontFamily: ui,
+      fontSize: 22,
+      fontWeight: FontWeight.w500,
+      height: 1.3,
+      letterSpacing: 0.3,
+    ),
+    // FeatureCard row titles.
+    titleMedium: TextStyle(
+      fontFamily: ui,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      height: 1.5,
+      letterSpacing: 0.3,
+    ),
+    // SectionCard headings.
+    titleSmall: TextStyle(
+      fontFamily: ui,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.45,
+      letterSpacing: 0.4,
+    ),
+    bodyLarge: TextStyle(
+      fontFamily: ui,
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      height: 1.55,
+      letterSpacing: 0.3,
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: ui,
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      height: 1.5,
+      letterSpacing: 0.3,
+    ),
+    bodySmall: TextStyle(
+      fontFamily: ui,
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      height: 1.4,
+      letterSpacing: 0.4,
+    ),
+    // Button + eyebrow labels — medium weight, tracked. These are the
+    // small all-caps moments, so the baked-in tracking is generous.
+    labelLarge: TextStyle(
+      fontFamily: ui,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.4,
+      letterSpacing: 0.8,
+    ),
+    labelMedium: TextStyle(
+      fontFamily: ui,
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      height: 1.35,
+      letterSpacing: 1.2,
+    ),
+    labelSmall: TextStyle(
+      fontFamily: ui,
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      height: 1.45,
+      letterSpacing: 1.5,
+    ),
+  );
 
   /// The CLEAN voice — the opt-in "Clean" display style (docs/VISION.md).
   /// Same Jost family + the same M3 sizes, but re-voiced to the calm,
@@ -272,100 +276,100 @@ abstract final class AppType {
   /// weight + whitespace, not from caps + spacing. Only two weights show up:
   /// w400 body, w500 everything structural.
   static TextTheme cleanTextTheme() => const TextTheme(
-        displayLarge: TextStyle(
-          fontFamily: display,
-          fontSize: 57,
-          fontWeight: FontWeight.w500,
-          height: 1.1,
-        ),
-        displayMedium: TextStyle(
-          fontFamily: display,
-          fontSize: 45,
-          fontWeight: FontWeight.w500,
-          height: 1.14,
-        ),
-        displaySmall: TextStyle(
-          fontFamily: display,
-          fontSize: 36,
-          fontWeight: FontWeight.w500,
-          height: 1.2,
-        ),
-        headlineLarge: TextStyle(
-          fontFamily: display,
-          fontSize: 32,
-          fontWeight: FontWeight.w500,
-          height: 1.25,
-        ),
-        headlineMedium: TextStyle(
-          fontFamily: display,
-          fontSize: 28,
-          fontWeight: FontWeight.w500,
-          height: 1.29,
-        ),
-        headlineSmall: TextStyle(
-          fontFamily: display,
-          fontSize: 24,
-          fontWeight: FontWeight.w500,
-          height: 1.33,
-        ),
-        titleLarge: TextStyle(
-          fontFamily: ui,
-          fontSize: 22,
-          fontWeight: FontWeight.w500,
-          height: 1.3,
-        ),
-        titleMedium: TextStyle(
-          fontFamily: ui,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          height: 1.5,
-        ),
-        titleSmall: TextStyle(
-          fontFamily: ui,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          height: 1.45,
-        ),
-        bodyLarge: TextStyle(
-          fontFamily: ui,
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          height: 1.55,
-        ),
-        bodyMedium: TextStyle(
-          fontFamily: ui,
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          height: 1.5,
-        ),
-        bodySmall: TextStyle(
-          fontFamily: ui,
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          height: 1.4,
-        ),
-        labelLarge: TextStyle(
-          fontFamily: ui,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          height: 1.4,
-          letterSpacing: 0.1,
-        ),
-        labelMedium: TextStyle(
-          fontFamily: ui,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          height: 1.35,
-          letterSpacing: 0.2,
-        ),
-        labelSmall: TextStyle(
-          fontFamily: ui,
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          height: 1.45,
-          letterSpacing: 0.2,
-        ),
-      );
+    displayLarge: TextStyle(
+      fontFamily: display,
+      fontSize: 57,
+      fontWeight: FontWeight.w500,
+      height: 1.1,
+    ),
+    displayMedium: TextStyle(
+      fontFamily: display,
+      fontSize: 45,
+      fontWeight: FontWeight.w500,
+      height: 1.14,
+    ),
+    displaySmall: TextStyle(
+      fontFamily: display,
+      fontSize: 36,
+      fontWeight: FontWeight.w500,
+      height: 1.2,
+    ),
+    headlineLarge: TextStyle(
+      fontFamily: display,
+      fontSize: 32,
+      fontWeight: FontWeight.w500,
+      height: 1.25,
+    ),
+    headlineMedium: TextStyle(
+      fontFamily: display,
+      fontSize: 28,
+      fontWeight: FontWeight.w500,
+      height: 1.29,
+    ),
+    headlineSmall: TextStyle(
+      fontFamily: display,
+      fontSize: 24,
+      fontWeight: FontWeight.w500,
+      height: 1.33,
+    ),
+    titleLarge: TextStyle(
+      fontFamily: ui,
+      fontSize: 22,
+      fontWeight: FontWeight.w500,
+      height: 1.3,
+    ),
+    titleMedium: TextStyle(
+      fontFamily: ui,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      height: 1.5,
+    ),
+    titleSmall: TextStyle(
+      fontFamily: ui,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.45,
+    ),
+    bodyLarge: TextStyle(
+      fontFamily: ui,
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      height: 1.55,
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: ui,
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      height: 1.5,
+    ),
+    bodySmall: TextStyle(
+      fontFamily: ui,
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      height: 1.4,
+    ),
+    labelLarge: TextStyle(
+      fontFamily: ui,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.4,
+      letterSpacing: 0.1,
+    ),
+    labelMedium: TextStyle(
+      fontFamily: ui,
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      height: 1.35,
+      letterSpacing: 0.2,
+    ),
+    labelSmall: TextStyle(
+      fontFamily: ui,
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      height: 1.45,
+      letterSpacing: 0.2,
+    ),
+  );
 }
 
 /// The spacing scale. Use instead of bare numbers so vertical rhythm is

@@ -27,9 +27,9 @@ class AccentCardTile extends StatelessWidget {
     this.semanticLabel,
     super.key,
   }) : assert(
-          (icon == null) != (emoji == null),
-          'Provide exactly one of icon or emoji.',
-        );
+         (icon == null) != (emoji == null),
+         'Provide exactly one of icon or emoji.',
+       );
 
   /// The accent fill. The foreground derives from this via [AppColors.onAccent].
   final Color color;
@@ -86,7 +86,11 @@ class AccentCardTile extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: fg.withValues(alpha: 0.85),
+                    // Full foreground, not a fade — the mid-tone fills (brown,
+                    // deep purple) clear WCAG AA only at full contrast; the
+                    // title/tagline hierarchy comes from size + weight, not
+                    // alpha (a ×0.85 fade sank every mid-tone subline under AA).
+                    color: fg,
                     fontSize: 13,
                   ),
                 ),
@@ -97,7 +101,12 @@ class AccentCardTile extends StatelessWidget {
       ),
     );
     if (semanticLabel case final label?) {
-      return Semantics(button: true, label: label, excludeSemantics: true, child: tile);
+      return Semantics(
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        child: tile,
+      );
     }
     return tile;
   }
