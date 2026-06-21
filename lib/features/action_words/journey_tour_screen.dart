@@ -1,6 +1,8 @@
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/features/action_words/widgets/beat_presenter.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,24 +19,12 @@ class JourneyTourScreen extends ConsumerWidget {
     final worlds =
         ref.watch(curriculumWorldsProvider).value ?? const <CurriculumWorld>[];
     if (worlds.isEmpty) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'The journey is loading…',
-                style: TextStyle(color: Colors.white70, fontSize: 18),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        ),
+      // EdgeScaffold — NOT a raw black Scaffold — so this transient loading
+      // state clears the floating chrome instead of rendering under it; the
+      // chrome's own back/hamburger is the way out. BeatPresenter owns
+      // immersive on the happy path below.
+      return const EdgeScaffold(
+        body: LoadingSlot(variant: LoadingVariant.spinner),
       );
     }
     return BeatPresenter(

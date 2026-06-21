@@ -4,6 +4,8 @@ import 'package:differentworld/features/action_words/widgets/beat_presenter.dart
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
+import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -66,24 +68,12 @@ class GrowthArcScreen extends ConsumerWidget {
     // mid-present and reset the page. Photos failing (no network for the
     // signed URLs) resolves to empty, not a stall.
     if (collection == null || photosAsync.isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Gathering the story…',
-                style: TextStyle(color: Colors.white70, fontSize: 18),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        ),
+      // EdgeScaffold — NOT a raw black Scaffold — so this transient loading
+      // state clears the floating chrome instead of rendering under it; the
+      // chrome's own back/hamburger is the way out. BeatPresenter owns
+      // immersive on the happy path below.
+      return const EdgeScaffold(
+        body: LoadingSlot(variant: LoadingVariant.spinner),
       );
     }
 

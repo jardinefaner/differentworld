@@ -5,6 +5,8 @@ import 'package:differentworld/features/action_words/widgets/beat_presenter.dart
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/today/today_providers.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,59 +25,22 @@ class DayRunScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final world = ref.watch(currentWorldProvider);
     if (world == null) {
-      // No live world (the journey isn't set up yet). NOT a dead-end: point
-      // the teacher at the setup surface (/this-week owns "Set up the journey"
-      // + the start-date picker) and always give them a way out — this surface
-      // can be reached as a cold deep link with nothing to pop.
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.map_outlined,
-                    color: Colors.white54,
-                    size: 44,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No world is live yet',
-                    style: TextStyle(color: Colors.white, fontSize: 22),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Set your journey start date and the day plays itself.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white60, fontSize: 15),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: () => context.push('/this-week'),
-                    icon: const Icon(Icons.flag_outlined),
-                    label: const Text('Set up your journey'),
-                  ),
-                  const SizedBox(height: 4),
-                  TextButton(
-                    onPressed: () {
-                      final nav = Navigator.of(context);
-                      if (nav.canPop()) {
-                        nav.pop();
-                      } else {
-                        context.go('/');
-                      }
-                    },
-                    child: const Text(
-                      'Close',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      // No live world (the journey isn't set up yet). NOT a dead-end: point the
+      // teacher at the setup surface (/this-week owns "Set up the journey" + the
+      // start-date picker). EdgeScaffold — NOT a raw black Scaffold — so the
+      // empty state clears the floating chrome instead of rendering under it
+      // and follows OS light/dark; the chrome's own hamburger/back is the way
+      // out for a cold deep link with nothing to pop. BeatPresenter owns
+      // immersive on the happy path below.
+      return EdgeScaffold(
+        body: EmptyState(
+          icon: Icons.map_outlined,
+          title: 'No world is live yet',
+          message: 'Set your journey start date and the day plays itself.',
+          action: FilledButton.icon(
+            onPressed: () => context.push('/this-week'),
+            icon: const Icon(Icons.flag_outlined),
+            label: const Text('Set up your journey'),
           ),
         ),
       );

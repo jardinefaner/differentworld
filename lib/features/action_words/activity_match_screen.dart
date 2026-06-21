@@ -10,6 +10,7 @@ import 'package:differentworld/features/action_words/senses.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/verb_grid.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -45,6 +46,7 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
   Widget build(BuildContext context) {
     final activitiesAsync = ref.watch(activitiesProvider);
     final isDirector = ref.watch(viewerProvider).isDirector;
+    final bento = bentoEnabled(ref, perScreen: null);
     // The default lens: explicit initialVerbs if passed, else today's most-
     // picked cohort verbs (live until the teacher taps a chip).
     final autoDefault = widget.initialVerbs.isNotEmpty
@@ -142,6 +144,8 @@ class _ActivityMatchScreenState extends ConsumerState<ActivityMatchScreen> {
                         ),
                   ),
                 )
+              else if (bento)
+                _MatchesBentoGrid(matches: matches, onTag: _openTag)
               else
                 for (final m in matches)
                   _ActivityCard(
@@ -204,11 +208,55 @@ class _VerbFilter extends StatelessWidget {
   }
 }
 
+/// The bento variant — the SAME matched activities, re-laid as a dense
+/// responsive grid. The card is text-heavy (name + description + a verb/
+/// sense chip run), so a ~240dp max-extent keeps it 1-up on a phone and
+/// 2-up on a tablet (GRID.md "text-heavy → wider cell"), mirroring the twin
+/// `activities_list_screen`'s `_ActivitiesBentoGrid` so the two activity
+/// surfaces grid identically.
+class _MatchesBentoGrid extends StatelessWidget {
+  const _MatchesBentoGrid({required this.matches, required this.onTag});
+
+  final List<ActivityMatch> matches;
+  final ValueChanged<Activity> onTag;
+
+  @override
+  Widget build(BuildContext context) {
+    // 1.0 at the OS default; cells grow as the user scales text up.
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return GridView.builder(
+      shrinkWrap: true,
+      primary: false,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 240,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        // name (2 lines) + description (2 lines) + a chip run, growing with
+        // text scale so nothing clips in the fixed-extent cell.
+        mainAxisExtent: 168 + 56 * scale,
+      ),
+      itemCount: matches.length,
+      itemBuilder: (context, i) {
+        final m = matches[i];
+        return _ActivityCard(
+          key: ValueKey('match-${m.activity.id}'),
+          activity: m.activity,
+          overlap: m.overlap,
+          onTag: () => onTag(m.activity),
+        );
+      },
+    );
+  }
+}
+
 class _ActivityCard extends StatelessWidget {
   const _ActivityCard({
     required this.activity,
     required this.overlap,
     required this.onTag,
+    super.key,
   });
 
   final Activity activity;
