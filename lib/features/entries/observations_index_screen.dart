@@ -6,6 +6,7 @@ import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/widgets/quick_actions.dart';
 import 'package:differentworld/shared/breakpoints.dart';
@@ -50,6 +51,9 @@ class _ObservationsIndexScreenState
     final viewer = ref.watch(viewerProvider);
     final entriesAsync = ref.watch(observationsInSpaceProvider);
     final groupsAsync = ref.watch(groupsProvider);
+    // App-wide "Bento everywhere" sweep — global-only toggle, no per-screen
+    // provider. On → per-day card grid; off → the day-grouped list feed.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       actions: [
@@ -93,6 +97,7 @@ class _ObservationsIndexScreenState
             allCount: entries.length,
             groups: groups,
             groupFilter: _groupFilter,
+            bento: bento,
             onFilterChanged: (g) => setState(() => _groupFilter = g),
           );
         },
@@ -107,6 +112,7 @@ class _ObservationsFeed extends StatelessWidget {
     required this.allCount,
     required this.groups,
     required this.groupFilter,
+    required this.bento,
     required this.onFilterChanged,
   });
 
@@ -114,6 +120,13 @@ class _ObservationsFeed extends StatelessWidget {
   final int allCount;
   final List<Group> groups;
   final String? groupFilter;
+
+  /// When true, each day's entries render as a responsive card grid (1 col
+  /// phone, 2-3 tablet/desktop) instead of the full-width list. The pinned
+  /// day headers stay full-width in both layouts so the chronological spine
+  /// (Today / Yesterday / …) is preserved.
+  final bool bento;
+
   final ValueChanged<String?> onFilterChanged;
 
   @override
@@ -185,12 +198,30 @@ class _ObservationsFeed extends StatelessWidget {
                 pinned: true,
                 delegate: _DayHeader(label: _dayLabel(key)),
               ),
-              SliverList.builder(
-                itemCount: byDay[key]!.length,
-                itemBuilder: (_, i) => _ObservationListItem(
-                  entry: byDay[key]![i],
+              if (bento)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  sliver: SliverGrid.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 240,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          mainAxisExtent: 168,
+                        ),
+                    itemCount: byDay[key]!.length,
+                    itemBuilder: (_, i) => _ObservationGridCard(
+                      entry: byDay[key]![i],
+                    ),
+                  ),
+                )
+              else
+                SliverList.builder(
+                  itemCount: byDay[key]!.length,
+                  itemBuilder: (_, i) => _ObservationListItem(
+                    entry: byDay[key]![i],
+                  ),
                 ),
-              ),
             ],
             const SliverToBoxAdapter(child: SizedBox(height: 96)),
           ],
@@ -369,6 +400,109 @@ class _ObservationListItem extends ConsumerWidget {
       onTap: () => context.push(
         '/observations/${entry.id}/edit',
         extra: entry,
+      ),
+    );
+  }
+}
+
+/// The card-cell variant of [_ObservationListItem] for the bento grid.
+/// Same data + same tap target (open the edit sheet), re-laid as a
+/// fixed-height card so it tiles cleanly into a grid cell: avatar + name
+/// header, the body capped at 3 lines, a meta line, and a small photo
+/// indicator when the entry carries attachments. Shrink-wraps inside the
+/// cell — no `Expanded`/`Spacer` (a grid cell is a bounded box).
+class _ObservationGridCard extends ConsumerWidget {
+  const _ObservationGridCard({required this.entry});
+
+  final Entry entry;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final attachmentsAsync = ref.watch(
+      attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
+    );
+    final photos = attachmentsAsync.value?.urls ?? const <String>[];
+    final when = DateTime.tryParse(entry.recordedAt)?.toLocal();
+    final whenLabel = relativeTimeAgo(when);
+
+    final subjectAsync = entry.subjectId == null
+        ? const AsyncValue<Subject?>.data(null)
+        : ref.watch(subjectByIdProvider(entry.subjectId!));
+    final subject = subjectAsync.value;
+    final subjectName = subject == null
+        ? 'Unknown student'
+        : '${subject.firstName} ${subject.lastName}';
+
+    final groupsAsync = ref.watch(groupsProvider);
+    final groupName = entry.groupId == null
+        ? null
+        : groupsAsync.value
+              ?.where((g) => g.id == entry.groupId)
+              .map((g) => g.name)
+              .firstOrNull;
+
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () =>
+            context.push('/observations/${entry.id}/edit', extra: entry),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  PersonAvatar(
+                    name: subjectName,
+                    photoUrl: subject?.photoUrl,
+                    radius: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      subjectName,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (photos.isNotEmpty)
+                    Icon(
+                      Icons.photo_outlined,
+                      size: 16,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                entry.body ?? '',
+                style: theme.textTheme.bodyMedium,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                groupName == null ? whenLabel : '$groupName · $whenLabel',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

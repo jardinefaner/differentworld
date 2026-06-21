@@ -5,6 +5,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:differentworld/features/incidents/templates/incident_report.dart';
 import 'package:differentworld/features/incidents/widgets/incident_card.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -57,6 +58,9 @@ class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
           in ref.watch(subjectsInSpaceProvider).value ?? const <Subject>[])
         s.id: s,
     };
+    // App-wide "Bento everywhere" sweep — global-only toggle, no per-screen
+    // provider. On → a responsive card grid; off → the calm single column.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       actions: [
@@ -105,30 +109,73 @@ class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
               : incidents;
           final allClear = filtered.isEmpty;
 
+          final header = _Header(
+            filter: _filter,
+            needsCount: needsCount,
+            onFilter: (f) => setState(() => _filter = f),
+          );
+
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 maxWidth: Breakpoints.splitMaxWidth,
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 96),
-                itemCount: (allClear ? 1 : filtered.length) + 1,
-                itemBuilder: (_, i) {
-                  if (i == 0) {
-                    return _Header(
-                      filter: _filter,
-                      needsCount: needsCount,
-                      onFilter: (f) => setState(() => _filter = f),
-                    );
-                  }
-                  if (allClear) return const _AllNotifiedNote();
-                  final incident = filtered[i - 1];
-                  return IncidentCard(
-                    incident: incident,
-                    subject: subjectsById[incident.subjectId],
-                  );
-                },
-              ),
+              child: bento
+                  // "Bento everywhere": header + filter chips stay full-
+                  // width (they aren't cards); the incidents flow into a
+                  // responsive card grid (1 col phone, 2-3 tablet/desktop)
+                  // via the max-cross-axis-extent delegate. The card lays
+                  // out at its natural height inside a fixed-height cell,
+                  // clipped to fit so a long narrative truncates cleanly
+                  // (IncidentCard is a shared widget — no maxLines to add).
+                  ? CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(child: header),
+                        if (allClear)
+                          const SliverToBoxAdapter(child: _AllNotifiedNote())
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                            sliver: SliverGrid.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 240,
+                                    mainAxisSpacing: 12,
+                                    crossAxisSpacing: 12,
+                                    mainAxisExtent: 220,
+                                  ),
+                              itemCount: filtered.length,
+                              itemBuilder: (_, i) {
+                                final incident = filtered[i];
+                                return ClipRect(
+                                  child: OverflowBox(
+                                    minHeight: 0,
+                                    maxHeight: double.infinity,
+                                    alignment: Alignment.topCenter,
+                                    child: IncidentCard(
+                                      incident: incident,
+                                      subject: subjectsById[incident.subjectId],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 96),
+                      itemCount: (allClear ? 1 : filtered.length) + 1,
+                      itemBuilder: (_, i) {
+                        if (i == 0) return header;
+                        if (allClear) return const _AllNotifiedNote();
+                        final incident = filtered[i - 1];
+                        return IncidentCard(
+                          incident: incident,
+                          subject: subjectsById[incident.subjectId],
+                        );
+                      },
+                    ),
             ),
           );
         },

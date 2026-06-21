@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -13,7 +14,6 @@ import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/feature_card.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
-import 'package:differentworld/shared/widgets/responsive_grid.dart';
 import 'package:differentworld/shared/widgets/secondary_action_button.dart';
 import 'package:differentworld/shared/widgets/subject_picker_sheet.dart';
 import 'package:flutter/material.dart';
@@ -83,6 +83,9 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
   @override
   Widget build(BuildContext context) {
     final capturesAsync = ref.watch(openCapturesProvider);
+    // Part of the app-wide "Bento everywhere" sweep — global-only toggle, no
+    // per-screen provider. On → responsive card GRID; off → a plain list.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       showBack: !_selectMode,
       actions: _selectMode
@@ -131,10 +134,23 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
               ),
             );
           }
-          // Wave 116: ResponsiveGrid so captures flow as 2-3 columns
-          // at tablet/desktop. Captures are card-shaped (body + age
-          // pill + a small set of triage actions) and vary in height
-          // only slightly, so a uniform aspect grid reads well.
+          // "Bento everywhere": when on, captures flow as a responsive
+          // card grid (1 col on phone, 2-3 on tablet/desktop) via the
+          // max-cross-axis-extent delegate; when off, the calm single-
+          // column list. SAME _CaptureCard cell in both. `mainAxisExtent`
+          // pins a stable card height so the IntrinsicHeight age-bar row
+          // never overflows a fixed grid cell.
+          Widget cell(int i) {
+            final c = rows[i];
+            return _CaptureCard(
+              capture: c,
+              selectMode: _selectMode,
+              selected: _selected.contains(c.id),
+              onLongPress: () => _toggle(c.id),
+              onTapInSelectMode: () => _toggle(c.id),
+            );
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -148,24 +164,29 @@ class _CaptureInboxScreenState extends ConsumerState<CaptureInboxScreen> {
                 ),
               ),
               Expanded(
-                child: ResponsiveGrid(
-                  itemCount: rows.length,
-                  // Capture cards carry 2-4 lines of body text + a
-                  // metadata row. ~2.5 reads "card-shaped, not a
-                  // tile."
-                  aspectRatio: 2.5,
-                  itemMaxWidth: 460,
-                  itemBuilder: (_, i) {
-                    final c = rows[i];
-                    return _CaptureCard(
-                      capture: c,
-                      selectMode: _selectMode,
-                      selected: _selected.contains(c.id),
-                      onLongPress: () => _toggle(c.id),
-                      onTapInSelectMode: () => _toggle(c.id),
-                    );
-                  },
-                ),
+                child: bento
+                    ? GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 240,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              // Tall enough for the worst case: 12+12 padding +
+                              // the body's 96dp cap (4 lines) + the time row.
+                              mainAxisExtent: 148,
+                            ),
+                        itemCount: rows.length,
+                        itemBuilder: (_, i) => cell(i),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                        itemCount: rows.length,
+                        itemBuilder: (_, i) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: cell(i),
+                        ),
+                      ),
               ),
             ],
           );

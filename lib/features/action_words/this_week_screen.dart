@@ -11,7 +11,9 @@ import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/destructive_button.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -82,6 +84,8 @@ class _FortnightSection extends ConsumerWidget {
     final today = ref.watch(currentProgramDayProvider);
     if (block == null || block.days.isEmpty) return const SizedBox.shrink();
     return Column(
+      // Shrink-wrap for the bento cell (min-height / unbounded-max).
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Label(text: 'This week, day by day', accent: accent),
@@ -107,88 +111,221 @@ class _LiveWorld extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final accent = world.color;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the SAME sections (hero / actions /
+    // day-by-day / verbs / rules / watch→do / big thinking / activities)
+    // re-lay as importance-weighted bento tiles instead of one tall scroll.
+    // Every section is built from the same closures below, so the two layouts
+    // never drift; all behaviour (cast, play, add-rule, navigation) is shared.
+    final bento = bentoEnabled(ref, perScreen: null);
+
+    // ----- Section content, shared by both layouts -----------------------
+    // Each returns a shrink-wrapping widget so it's safe in a bento cell
+    // (min-height / unbounded-max → no Expanded/Spacer; docs/GRID.md).
+    final hero = _Hero(world: world, accent: accent);
+    final actions = _ActionsRow(world: world, accent: accent);
+    final fortnight = _FortnightSection(accent: accent);
+    final verbs = _VerbsSection(world: world, accent: accent);
+    final rules = _RulesSection(world: world, accent: accent);
+    final watchDo = world.videos.isEmpty
+        ? null
+        : _WatchDoSection(world: world, accent: accent);
     // This world's Big Thinking game(s) — play → name → bridge → question.
     final thinking = thinkingGamesForWeek(
       ref.watch(thinkingGamesProvider).value ?? const [],
       world.week,
     );
+    final bigThinking = thinking.isEmpty
+        ? null
+        : _BigThinkingSection(games: thinking, accent: accent);
+    final activities = _ActivitiesSection(world: world, accent: accent);
+
+    if (bento) {
+      // Hero leads (the "what world are we in" identity): full on phone,
+      // two-thirds on desktop, two rows tall. Actions pairs beside it to fill
+      // the top desktop run. The content sections are text/list-shaped and
+      // read best full-width, so they're wide banners below — which also keeps
+      // the 1-D Wrap packing into clean runs (no ragged gaps).
+      return ResponsivePage(
+        children: [
+          const ContentHeader(
+            title: 'This week’s world',
+            subtitle: 'The world the room is living in right now',
+          ),
+          const SizedBox(height: 12),
+          BentoGrid(
+            tiles: [
+              BentoTile(id: 'hero', span: const BentoSpan.hero(), child: hero),
+              BentoTile(
+                id: 'actions',
+                span: const BentoSpan(tablet: 4, rows: 2),
+                child: actions,
+              ),
+              // _FortnightSection renders nothing until the journey is active;
+              // when empty the tile is a min-height empty box, which the Wrap
+              // packs harmlessly — keeping the section's own gating intact.
+              BentoTile(
+                id: 'fortnight',
+                span: const BentoSpan.wide(),
+                child: fortnight,
+              ),
+              BentoTile(
+                id: 'verbs',
+                span: const BentoSpan.wide(),
+                child: verbs,
+              ),
+              BentoTile(
+                id: 'rules',
+                span: const BentoSpan.wide(),
+                child: rules,
+              ),
+              if (watchDo != null)
+                BentoTile(
+                  id: 'watch-do',
+                  span: const BentoSpan.wide(),
+                  child: watchDo,
+                ),
+              if (bigThinking != null)
+                BentoTile(
+                  id: 'big-thinking',
+                  span: const BentoSpan.wide(),
+                  child: bigThinking,
+                ),
+              BentoTile(
+                id: 'activities',
+                span: const BentoSpan.wide(),
+                child: activities,
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
     return ResponsivePage(
       children: [
         const ContentHeader(
           title: 'This week’s world',
           subtitle: 'The world the room is living in right now',
         ),
-        // Hero
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-          decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: accent.withValues(alpha: 0.4)),
-          ),
-          child: Column(
-            children: [
-              Text(world.emoji, style: const TextStyle(fontSize: 60)),
-              const SizedBox(height: 6),
-              Text(
-                'Week ${world.week}',
-                style: theme.textTheme.labelMedium?.copyWith(color: accent),
-              ),
-              Text(
-                world.name,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '“${world.question}”',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
+        hero,
         const SizedBox(height: 16),
-        // Actions
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: accent),
-              onPressed: () => context.push('/play-today'),
-              icon: const Icon(Icons.play_circle_fill),
-              label: const Text('Play today'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => _castOptions(context, world),
-              icon: const Icon(Icons.cast),
-              label: const Text('Cast to the room'),
-            ),
-            // The 6 secondary verbs were a wall of co-equal buttons (this-week
-            // was 🔴, 8 equal CTAs — docs/CLARITY_RUBRIC.md). Now one "More"
-            // opens them in a sheet so Play today + Cast clearly lead.
-            OutlinedButton.icon(
-              onPressed: () => _moreActions(context, world),
-              icon: const Icon(Icons.more_horiz),
-              label: const Text('More'),
-            ),
-          ],
-        ),
+        actions,
         const SizedBox(height: 20),
         // This week, day by day — the weekly world's five authored days. Tap
         // any day to read its full focus + wall question + room; today is
         // badged. Lets staff prep ahead, not just see today (renders nothing
         // until the worlds load).
-        _FortnightSection(accent: accent),
-        // Verbs
+        fortnight,
+        verbs,
+        const SizedBox(height: 20),
+        rules,
+        const SizedBox(height: 20),
+        if (watchDo != null) ...[watchDo, const SizedBox(height: 20)],
+        if (bigThinking != null) ...[bigThinking, const SizedBox(height: 20)],
+        activities,
+      ],
+    );
+  }
+}
+
+/// The world identity hero — emoji, week, name, the world's question.
+class _Hero extends StatelessWidget {
+  const _Hero({required this.world, required this.accent});
+  final CurriculumWorld world;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(world.emoji, style: const TextStyle(fontSize: 60)),
+          const SizedBox(height: 6),
+          Text(
+            'Week ${world.week}',
+            style: theme.textTheme.labelMedium?.copyWith(color: accent),
+          ),
+          Text(
+            world.name,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '“${world.question}”',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The lead actions — Play today + Cast + More. Wraps, so it shrink-wraps in
+/// a bento cell.
+class _ActionsRow extends StatelessWidget {
+  const _ActionsRow({required this.world, required this.accent});
+  final CurriculumWorld world;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(backgroundColor: accent),
+          onPressed: () => context.push('/play-today'),
+          icon: const Icon(Icons.play_circle_fill),
+          label: const Text('Play today'),
+        ),
+        OutlinedButton.icon(
+          onPressed: () => _castOptions(context, world),
+          icon: const Icon(Icons.cast),
+          label: const Text('Cast to the room'),
+        ),
+        // The 6 secondary verbs were a wall of co-equal buttons (this-week
+        // was 🔴, 8 equal CTAs — docs/CLARITY_RUBRIC.md). Now one "More"
+        // opens them in a sheet so Play today + Cast clearly lead.
+        OutlinedButton.icon(
+          onPressed: () => _moreActions(context, world),
+          icon: const Icon(Icons.more_horiz),
+          label: const Text('More'),
+        ),
+      ],
+    );
+  }
+}
+
+/// This week's featured verbs as compact chips, under a label.
+class _VerbsSection extends StatelessWidget {
+  const _VerbsSection({required this.world, required this.accent});
+  final CurriculumWorld world;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         _Label(text: 'This week’s verbs', accent: accent),
         Wrap(
           spacing: 8,
@@ -202,7 +339,23 @@ class _LiveWorld extends ConsumerWidget {
                 ),
           ],
         ),
-        const SizedBox(height: 20),
+      ],
+    );
+  }
+}
+
+/// The world's bible — authored rules + any the room added, plus "Add a rule".
+class _RulesSection extends ConsumerWidget {
+  const _RulesSection({required this.world, required this.accent});
+  final CurriculumWorld world;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         // The world's rules — the authored ones (every kid hears all three;
         // their verbs decide which is theirs) PLUS any the ROOM added (the
         // "add a rule" mechanic; docs/VISION.md). The bible is extensible.
@@ -227,33 +380,107 @@ class _LiveWorld extends ConsumerWidget {
             label: const Text('Add a rule'),
           ),
         ),
-        const SizedBox(height: 20),
-        // Watch -> Do
-        if (world.videos.isNotEmpty) ...[
-          _Label(text: 'Watch → Do', accent: accent),
-          for (final v in world.videos)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+      ],
+    );
+  }
+}
+
+/// Today's Watch → Do videos + the screen-time guidance line.
+class _WatchDoSection extends StatelessWidget {
+  const _WatchDoSection({required this.world, required this.accent});
+  final CurriculumWorld world;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(text: 'Watch → Do', accent: accent),
+        for (final v in world.videos)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(Icons.play_circle_outline, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${v.title}  ·  ${v.minutes} min',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        '→ ${v.after}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 6),
+        Text(
+          kScreenTimeRules.first,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// This world's Big Thinking game(s) — play → name → bridge → question.
+class _BigThinkingSection extends StatelessWidget {
+  const _BigThinkingSection({required this.games, required this.accent});
+  final List<ThinkingGame> games;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Label(text: 'Big thinking', accent: accent),
+        for (final g in games)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: InkWell(
+              onTap: () => unawaited(context.push('/thinking')),
+              borderRadius: BorderRadius.circular(10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.play_circle_outline, size: 20),
-                  ),
-                  const SizedBox(width: 10),
+                  Text('${g.emoji}  ', style: const TextStyle(fontSize: 18)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${v.title}  ·  ${v.minutes} min',
+                          g.concept,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
                         ),
                         Text(
-                          '→ ${v.after}',
+                          g.meaning,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -261,59 +488,29 @@ class _LiveWorld extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  const Icon(Icons.chevron_right, size: 18),
                 ],
               ),
             ),
-          const SizedBox(height: 6),
-          Text(
-            kScreenTimeRules.first,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
           ),
-          const SizedBox(height: 20),
-        ],
-        // Big thinking — this world's play→name→bridge→question game(s).
-        if (thinking.isNotEmpty) ...[
-          _Label(text: 'Big thinking', accent: accent),
-          for (final g in thinking)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                onTap: () => unawaited(context.push('/thinking')),
-                borderRadius: BorderRadius.circular(10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${g.emoji}  ', style: const TextStyle(fontSize: 18)),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            g.concept,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          Text(
-                            g.meaning,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right, size: 18),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(height: 20),
-        ],
-        // Activities
+      ],
+    );
+  }
+}
+
+/// The world's activities, as a bulleted list under a label.
+class _ActivitiesSection extends StatelessWidget {
+  const _ActivitiesSection({required this.world, required this.accent});
+  final CurriculumWorld world;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         _Label(text: 'Activities', accent: accent),
         for (final a in world.activities)
           Padding(

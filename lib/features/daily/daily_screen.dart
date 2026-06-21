@@ -6,8 +6,10 @@ import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/daily/daily_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/platform.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -138,6 +140,11 @@ class _DailyScreenState extends ConsumerState<DailyScreen> {
     final question = trio.question;
     final quote = trio.quote;
     final mission = trio.mission;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the same three prompt cards re-lay as
+    // importance-weighted bento tiles over the SAME provider; off keeps the
+    // existing stacked list. The respond / mission flows are untouched.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     if (question == null && quote == null && mission == null) {
       return const EdgeScaffold(
@@ -151,6 +158,35 @@ class _DailyScreenState extends ConsumerState<DailyScreen> {
       );
     }
 
+    // The three cards, shared by both layouts so they never drift. In bento
+    // they drop their bottom margin (the grid's run-spacing handles the gap).
+    Widget questionCard({required bool margin}) => _PromptCard(
+      eyebrow: 'question of the day',
+      icon: Icons.help_outline,
+      accent: ActivityPalette.purple,
+      text: (question!.payload['text'] as String?) ?? '',
+      margin: margin,
+      onRespond: () => unawaited(
+        _respond(
+          ContentKind.question,
+          (question.payload['text'] as String?) ?? '',
+        ),
+      ),
+    );
+    Widget quoteCard({required bool margin}) => _PromptCard(
+      eyebrow: 'quote of the day',
+      icon: Icons.format_quote_outlined,
+      accent: ActivityPalette.amber,
+      text: _quoteText(quote!),
+      margin: margin,
+      onRespond: () => unawaited(_respond(ContentKind.quote, _quoteText(quote))),
+    );
+    Widget missionCard() => _MissionCard(
+      text: (mission!.payload['text'] as String?) ?? '',
+      saving: _missionSaving,
+      onDone: () => unawaited(_missionDone(mission)),
+    );
+
     return EdgeScaffold(
       body: SafeArea(
         child: ListView(
@@ -160,35 +196,38 @@ class _DailyScreenState extends ConsumerState<DailyScreen> {
               title: 'Today',
               subtitle: 'Answer in your own way — a sentence or a drawing',
             ),
-            if (question != null)
-              _PromptCard(
-                eyebrow: 'question of the day',
-                icon: Icons.help_outline,
-                accent: ActivityPalette.purple,
-                text: (question.payload['text'] as String?) ?? '',
-                onRespond: () => unawaited(
-                  _respond(
-                    ContentKind.question,
-                    (question.payload['text'] as String?) ?? '',
-                  ),
-                ),
-              ),
-            if (quote != null)
-              _PromptCard(
-                eyebrow: 'quote of the day',
-                icon: Icons.format_quote_outlined,
-                accent: ActivityPalette.amber,
-                text: _quoteText(quote),
-                onRespond: () => unawaited(
-                  _respond(ContentKind.quote, _quoteText(quote)),
-                ),
-              ),
-            if (mission != null)
-              _MissionCard(
-                text: (mission.payload['text'] as String?) ?? '',
-                saving: _missionSaving,
-                onDone: () => unawaited(_missionDone(mission)),
-              ),
+            if (bento)
+              BentoGrid(
+                tiles: [
+                  // Question leads as the hero ("what matters now"): full on
+                  // phone, two-thirds on desktop, two rows tall. Quote pairs
+                  // beside it; Mission is the full-width action band below
+                  // (its CTA is a full-width button — wants the room).
+                  if (question != null)
+                    BentoTile(
+                      id: 'question',
+                      span: const BentoSpan.hero(),
+                      child: questionCard(margin: false),
+                    ),
+                  if (quote != null)
+                    BentoTile(
+                      id: 'quote',
+                      span: const BentoSpan(tablet: 4, rows: 2),
+                      child: quoteCard(margin: false),
+                    ),
+                  if (mission != null)
+                    BentoTile(
+                      id: 'mission',
+                      span: const BentoSpan.wide(),
+                      child: missionCard(),
+                    ),
+                ],
+              )
+            else ...[
+              if (question != null) questionCard(margin: true),
+              if (quote != null) quoteCard(margin: true),
+              if (mission != null) missionCard(),
+            ],
           ],
         ),
       ),
@@ -210,6 +249,7 @@ class _PromptCard extends StatelessWidget {
     required this.accent,
     required this.text,
     required this.onRespond,
+    this.margin = true,
   });
 
   final String eyebrow;
@@ -218,12 +258,17 @@ class _PromptCard extends StatelessWidget {
   final String text;
   final VoidCallback onRespond;
 
+  /// Bottom margin between stacked cards in the list layout. The bento layout
+  /// drops it (the grid's run-spacing handles the gap) so the tile fills its
+  /// cell cleanly.
+  final bool margin;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: margin ? const EdgeInsets.only(bottom: 14) : EdgeInsets.zero,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
@@ -234,6 +279,9 @@ class _PromptCard extends StatelessWidget {
         border: Border(left: BorderSide(color: accent, width: 4)),
       ),
       child: Column(
+        // Shrink-wrap so a bento cell (min-height / unbounded-max) doesn't try
+        // to expand a default-max Column into unbounded height (docs/GRID.md).
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -299,6 +347,8 @@ class _MissionCard extends StatelessWidget {
         ),
       ),
       child: Column(
+        // Shrink-wrap for the bento cell (unbounded-max height; docs/GRID.md).
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(

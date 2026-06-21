@@ -11,9 +11,11 @@ import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skin_picker.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -55,6 +57,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     final groupAsync = ref.watch(_groupProvider(widget.groupId));
     final subjectsAsync =
         ref.watch(subjectsInGroupProvider(widget.groupId));
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the room overview (header + skin chip +
+    // search + roster) re-lays as bento tiles over the SAME providers; off
+    // keeps the existing Column + ResponsiveGrid. The RoomSkinBackground
+    // (EdgeScaffold.background) and every action are untouched either way.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     final group = groupAsync.value;
     final groupId = widget.groupId;
@@ -191,59 +199,66 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
           // flows into a ResponsiveGrid so a class of 24 kids
           // renders as 2 columns at tablet, 3 columns at desktop
           // instead of a 1920-wide single column.
+          //
+          // The header / skin chip / search are built once and shared by both
+          // layouts so they never drift. The search TextField keeps a stable
+          // key so re-laying around it (the bento tile vs the flat Column)
+          // can't poison its Element / drop the IME (CLAUDE.md "Stack children
+          // without keys").
+          final identity = _RoomIdentity(
+            title: group?.name ?? labels.group,
+            subtitle: group?.ageRange,
+            group: group,
+            query: _query,
+            controller: _searchCtl,
+            onChanged: (v) => setState(() => _query = v),
+            onClear: () {
+              _searchCtl.clear();
+              setState(() => _query = '');
+            },
+          );
+
+          if (bento) {
+            // Identity (name + skin + search) leads as a full-width banner;
+            // the roster is the tall full-width tile below. Both wide → the
+            // 1-D Wrap packs into clean single-column runs at every width.
+            // The roster renders as a shrink-wrapping (non-scrolling) grid so
+            // it's safe inside the outer scroll + the bento cell's unbounded
+            // max height (docs/GRID.md).
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 96),
+              children: [
+                BentoGrid(
+                  tiles: [
+                    BentoTile(
+                      id: 'identity',
+                      span: const BentoSpan.wide(),
+                      child: identity,
+                    ),
+                    BentoTile(
+                      id: 'roster',
+                      span: const BentoSpan.wide(rows: 2),
+                      child: _RosterGrid(
+                        subjects: filtered,
+                        groupId: groupId,
+                        shrinkWrap: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ContentHeader(
-                  title: group?.name ?? labels.group,
-                  subtitle: group?.ageRange,
-                  bottomGap: 8,
-                ),
-              ),
-              // The room's permanent theme skin (docs/VISION.md).
-              if (group != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: RoomSkinChip(group: group),
-                ),
-              // Search pill — useful when rosters cross 10 kids.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: TextField(
-                  controller: _searchCtl,
-                  onChanged: (v) => setState(() => _query = v),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: 'Find a student…',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    suffixIcon: _query.isEmpty
-                        ? null
-                        : IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchCtl.clear();
-                              setState(() => _query = '');
-                            },
-                          ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
+              identity,
               Expanded(
-                child: ResponsiveGrid(
-                  itemCount: filtered.length,
-                  // Roster tiles are short (avatar + name + age).
-                  // 3.0 = wide-and-short — fits more kids on screen.
-                  aspectRatio: 3,
-                  itemMaxWidth: 320,
-                  itemBuilder: (_, i) => _SubjectTile(
-                    subject: filtered[i],
-                    groupId: groupId,
-                  ),
+                child: _RosterGrid(
+                  subjects: filtered,
+                  groupId: groupId,
+                  shrinkWrap: false,
                 ),
               ),
             ],
@@ -266,6 +281,125 @@ final _groupProvider = StreamProvider.family<Group?, String>(
     yield* db.groupsDao.watchById(groupId);
   },
 );
+
+/// The room's identity block — name + age, the permanent skin chip, and the
+/// roster search pill. Shared by the flat + bento layouts so they never drift.
+class _RoomIdentity extends StatelessWidget {
+  const _RoomIdentity({
+    required this.title,
+    required this.subtitle,
+    required this.group,
+    required this.query,
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Group? group;
+  final String query;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final group = this.group;
+    return Column(
+      // Shrink-wrap: in the bento path this fills a min-height / unbounded-max
+      // cell; in the flat path it's a non-Expanded Column child (docs/GRID.md).
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ContentHeader(title: title, subtitle: subtitle, bottomGap: 8),
+        ),
+        // The room's permanent theme skin (docs/VISION.md).
+        if (group != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: RoomSkinChip(group: group),
+          ),
+        // Search pill — useful when rosters cross 10 kids.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: TextField(
+            // Stable key: re-laying this field between the flat Column and a
+            // bento tile must not poison its Element / drop the IME (CLAUDE.md
+            // "Stack children without keys").
+            key: const ValueKey('group-roster-search'),
+            controller: controller,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: 'Find a student…',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              suffixIcon: query.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: onClear,
+                    ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The roster as a responsive grid of `_SubjectTile`s. `shrinkWrap` chooses
+/// between the flat layout's scrollable `ResponsiveGrid` (lives in an
+/// `Expanded`, scrolls itself) and the bento layout's non-scrolling grid
+/// (lives inside the outer ListView + a bento cell — shrink-wraps so it never
+/// nests an unbounded scrollable; docs/GRID.md).
+class _RosterGrid extends StatelessWidget {
+  const _RosterGrid({
+    required this.subjects,
+    required this.groupId,
+    required this.shrinkWrap,
+  });
+
+  final List<Subject> subjects;
+  final String groupId;
+  final bool shrinkWrap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!shrinkWrap) {
+      return ResponsiveGrid(
+        itemCount: subjects.length,
+        // Roster tiles are short (avatar + name + age).
+        // 3.0 = wide-and-short — fits more kids on screen.
+        aspectRatio: 3,
+        itemMaxWidth: 320,
+        itemBuilder: (_, i) =>
+            _SubjectTile(subject: subjects[i], groupId: groupId),
+      );
+    }
+    return GridView.builder(
+      // Inside the outer ListView — don't scroll, just take the height the
+      // rows need.
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 320,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 3,
+      ),
+      itemCount: subjects.length,
+      itemBuilder: (_, i) =>
+          _SubjectTile(subject: subjects[i], groupId: groupId),
+    );
+  }
+}
 
 class _SubjectTile extends ConsumerWidget {
   const _SubjectTile({required this.subject, required this.groupId});
