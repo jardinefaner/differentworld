@@ -747,7 +747,7 @@ class _ToolkitToolDetailViewState
             height: 1.4,
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 26),
 
         // 1. QUICK SCRIPT — front and center. Featured tone, big
         // text, copy button. This is the line a teacher actually
@@ -756,6 +756,7 @@ class _ToolkitToolDetailViewState
           tone: SectionCardTone.featured,
           icon: Icons.bolt,
           title: 'Quick script',
+          bottomGap: 24,
           trailing: IconButton(
             tooltip: 'Copy script',
             icon: const Icon(Icons.copy_outlined, size: 20),
@@ -778,8 +779,9 @@ class _ToolkitToolDetailViewState
         SectionCard(
           icon: Icons.check_circle_outline,
           title: 'Try this',
+          bottomGap: 24,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
             child: SelectableText(
               tool.tryThis,
               style: theme.textTheme.bodyLarge?.copyWith(
@@ -794,8 +796,9 @@ class _ToolkitToolDetailViewState
         SectionCard(
           icon: Icons.psychology_outlined,
           title: 'Why this works',
+          bottomGap: 24,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
             child: SelectableText(
               tool.why,
               style: theme.textTheme.bodyMedium?.copyWith(
