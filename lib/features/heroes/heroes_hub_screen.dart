@@ -133,7 +133,17 @@ class _HeroRow extends StatelessWidget {
     if (h == null) {
       return FeatureCard(
         leading: PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
-        title: first,
+        title: EntityLink(
+          entity: EntityRef(
+            kind: EntityKind.subject,
+            id: subject.id,
+            label: first,
+          ),
+          padded: false,
+          style: Theme.of(context).textTheme.titleMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         subtitle: 'No hero yet — tap to make one',
         trailing: const Icon(Icons.add),
         onTap: edit,

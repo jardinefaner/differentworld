@@ -53,6 +53,7 @@ class CatalogCard extends StatelessWidget {
   const CatalogCard({
     required this.leading,
     required this.title,
+    this.titleWidget,
     this.onTap,
     this.subtitle,
     this.chips = const [],
@@ -61,6 +62,12 @@ class CatalogCard extends StatelessWidget {
 
   final Widget leading;
   final String title;
+
+  /// Optional widget rendered IN PLACE of [title] — e.g. an `EntityLink` so the
+  /// name peeks. [title] stays required as the plain-text label + a11y
+  /// fallback. Keeps this shared primitive entity-agnostic: the call-site (in a
+  /// feature) builds the widget.
+  final Widget? titleWidget;
   final String? subtitle;
   final List<Widget> chips;
 
@@ -82,14 +89,15 @@ class CatalogCard extends StatelessWidget {
         children: [
           leading,
           const SizedBox(height: 10),
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          titleWidget ??
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
           if (sub != null && sub.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text(

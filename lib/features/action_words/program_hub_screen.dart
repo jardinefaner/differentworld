@@ -491,7 +491,17 @@ class _ChildArcRow extends StatelessWidget {
             : '$worlds ${worlds == 1 ? 'world' : 'worlds'} collected');
     return FeatureCard(
       leading: PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
-      title: fullName,
+      title: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.subject,
+          id: subject.id,
+          label: fullName,
+        ),
+        padded: false,
+        style: Theme.of(context).textTheme.titleMedium,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: subtitle,
       trailing: const Icon(Icons.chevron_right),
       onTap: () => unawaited(context.push('/subjects/${subject.id}/day')),

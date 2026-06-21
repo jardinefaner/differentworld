@@ -5,6 +5,8 @@ import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/themed_worlds.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worksheet_pdf.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
@@ -111,6 +113,20 @@ class _WorldCard extends StatelessWidget {
     return CatalogCard(
       leading: CatalogIcon.emoji(world.emoji),
       title: world.name,
+      titleWidget: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.world,
+          id: world.id,
+          label: world.name,
+        ),
+        padded: false,
+        style: Theme.of(context)
+            .textTheme
+            .titleMedium
+            ?.copyWith(fontWeight: FontWeight.w600),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: world.tagline,
       chips: [
         CatalogChip(

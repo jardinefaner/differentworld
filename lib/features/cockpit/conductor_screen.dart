@@ -1,4 +1,6 @@
 import 'package:differentworld/features/action_words/world_blocks.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -66,7 +68,17 @@ class ConductorScreen extends ConsumerWidget {
                           photoUrl: s.photoUrl,
                           radius: 20,
                         ),
-                        title: '${s.firstName} ${s.lastName}'.trim(),
+                        title: EntityLink(
+                          entity: EntityRef(
+                            kind: EntityKind.subject,
+                            id: s.id,
+                            label: '${s.firstName} ${s.lastName}'.trim(),
+                          ),
+                          padded: false,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         subtitle: 'Open the 10-week book',
                         trailing: const Icon(Icons.menu_book_outlined),
                         onTap: () => context.push('/book/${s.id}'),

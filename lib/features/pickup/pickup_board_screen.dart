@@ -128,7 +128,17 @@ class _StillHereRow extends ConsumerWidget {
         name: entry.fullName,
         photoUrl: entry.subject.photoUrl,
       ),
-      title: entry.fullName,
+      title: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.subject,
+          id: entry.subject.id,
+          label: entry.fullName,
+        ),
+        padded: false,
+        style: Theme.of(context).textTheme.titleMedium,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: entry.group.name,
       trailing: canRelease
           ? FilledButton.tonalIcon(
@@ -173,7 +183,17 @@ class _ReleasedRow extends ConsumerWidget {
           photoUrl: entry.subject.photoUrl,
         ),
       ),
-      title: entry.fullName,
+      title: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.subject,
+          id: entry.subject.id,
+          label: entry.fullName,
+        ),
+        padded: false,
+        style: Theme.of(context).textTheme.titleMedium,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: subtitle,
       // Only board releases (which carry a departure entry) can be undone;
       // an early_pickup is an attendance fact, edited in attendance.

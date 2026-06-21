@@ -1,5 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -178,6 +180,20 @@ class _ActivityCard extends ConsumerWidget {
         isOutdoor ? Icons.park_outlined : Icons.local_activity_outlined,
       ),
       title: activity.name,
+      titleWidget: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.activity,
+          id: activity.id,
+          label: activity.name,
+        ),
+        padded: false,
+        style: Theme.of(context)
+            .textTheme
+            .titleMedium
+            ?.copyWith(fontWeight: FontWeight.w600),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: activity.description,
       chips: chips,
       onTap: () => context.push('/activities/${activity.id}'),
