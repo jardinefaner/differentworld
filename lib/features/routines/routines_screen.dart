@@ -5,6 +5,7 @@ import 'package:differentworld/features/groups/room_skins.dart';
 import 'package:differentworld/features/routines/routine_voice.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -68,6 +69,13 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
     );
     final activities =
         ref.watch(activitiesProvider).value ?? const <Activity>[];
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the day's routine steps re-lay as a
+    // dense 2-up grid (over the SAME schedule provider) instead of the
+    // single-column timeline; off keeps the existing list. The pinned header +
+    // cohort chips, the RoomSkinBackground, and the bounded-viewport
+    // loading/error/empty states are untouched either way.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     final skin = roomSkinForGroup(selected);
     return EdgeScaffold(
@@ -118,7 +126,7 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
                     )),
                   ),
                 ),
-                data: (blocks) => _timeline(blocks, activities),
+                data: (blocks) => _timeline(blocks, activities, bento: bento),
               ),
             ),
           ],
@@ -127,7 +135,11 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
     );
   }
 
-  Widget _timeline(List<ScheduleBlock> blocks, List<Activity> activities) {
+  Widget _timeline(
+    List<ScheduleBlock> blocks,
+    List<Activity> activities, {
+    required bool bento,
+  }) {
     if (blocks.isEmpty) {
       final theme = Theme.of(context);
       final scheme = theme.colorScheme;
@@ -164,6 +176,38 @@ class _RoutinesScreenState extends ConsumerState<RoutinesScreen> {
     }
     final sorted = [...blocks]..sort((a, b) => a.startAt.compareTo(b.startAt));
     final now = DateTime.now();
+    if (bento) {
+      // SAME steps, sorted the same way, re-laid as a dense grid that's 2-up
+      // on a phone (≈260dp cells), more across wider screens — a day at a
+      // glance instead of one long scroll. `mainAxisExtent` bounds each cell
+      // so the row's intrinsic-height card sits in a fixed tile. Stable keys
+      // per block (the Wrap/grid-children-need-keys rule).
+      // The cell grows with the user's text-size setting so the label + warm
+      // sublabel don't clip at 150% scale (the fixed-aspect trap; see
+      // present_hub).
+      final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+      return GridView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 260,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          // Tall enough for time + icon + label + a 2-line warm sublabel,
+          // scaling up with the text-size setting.
+          mainAxisExtent: 64 + 40 * textScale,
+        ),
+        itemCount: sorted.length,
+        itemBuilder: (context, i) {
+          final block = sorted[i];
+          return _RoutineRow(
+            key: ValueKey('routine-${block.id}'),
+            block: block,
+            label: _labelFor(block, activities),
+            now: now,
+          );
+        },
+      );
+    }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
       children: [
@@ -196,6 +240,7 @@ class _RoutineRow extends StatelessWidget {
     required this.block,
     required this.label,
     required this.now,
+    super.key,
   });
 
   final ScheduleBlock block;

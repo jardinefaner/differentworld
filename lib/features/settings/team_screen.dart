@@ -9,6 +9,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -37,6 +38,13 @@ class TeamScreen extends ConsumerWidget {
     // "Invite teammates" is the cap, not the role — a lead-teacher
     // with canInviteStaff = true also gets the invite FAB.
     final canInvite = viewer.canInviteStaff;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the short member rows re-lay as a dense
+    // 2-up card grid (over the SAME _teamProvider data); the text-heavy /
+    // swipe-interactive pending-invites section stays a full-width list. Off
+    // keeps the existing single-column scroll. Master-detail + every action
+    // are untouched either way.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     if (spaceId == null) {
       return const EdgeScaffold(
@@ -88,6 +96,14 @@ class TeamScreen extends ConsumerWidget {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Text('Nobody here yet.'),
+                )
+              else if (bento)
+                // SAME members, re-laid as a dense 2-up card grid (≈210dp
+                // cells). Each cell reuses the member identity + role + tap
+                // routing as the flat tile; only the shape is compact.
+                _MemberGrid(
+                  members: members,
+                  selectedId: selectedId,
                 )
               else
                 for (final m in members)
@@ -204,39 +220,9 @@ class _MemberTile extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final vertical = ref.watch(verticalLabelsProvider).vertical;
     final roleLabel = RoleLabels.of(member.role, vertical: vertical);
-    // For specialists, append the specialty if one is set —
-    // "Specialist · Coach" reads more usefully than the bare role.
-    // If none is set yet, render "Specialist · choose specialty" in
-    // the warning tint so a director can spot incomplete profiles
-    // from the list, no per-tile drill-in required.
-    final specialty = member.role == RoleKey.specialist
-        ? member.caps.getString(ChildcareCaps.specialty)
-        : null;
-    final hasSpecialty = specialty != null && specialty.isNotEmpty;
-    final isSpecialistMissingSpecialty =
-        member.role == RoleKey.specialist && !hasSpecialty;
-
-    final Widget subtitle;
-    if (isSpecialistMissingSpecialty) {
-      // Two-segment subtitle: role in normal tone, "choose specialty"
-      // hint in tertiary so it reads as a soft "please complete."
-      subtitle = Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(text: roleLabel),
-            const TextSpan(text: ' · '),
-            TextSpan(
-              text: 'choose specialty',
-              style: TextStyle(color: scheme.tertiary),
-            ),
-          ],
-        ),
-      );
-    } else if (hasSpecialty) {
-      subtitle = Text('$roleLabel · ${SpecialtyKeys.labelOf(specialty)}');
-    } else {
-      subtitle = Text(roleLabel);
-    }
+    // For specialists, append the specialty if one is set — shared with the
+    // bento card so the two layouts never drift.
+    final subtitle = _memberRoleSubtitle(member, roleLabel, scheme);
     // Wave 118: master-detail tap routing. On wide windows (≥1200dp,
     // matching MasterDetailScaffold's collapseAt) update the URL
     // with `?selected=<id>` so the right pane reflects the selection
@@ -263,6 +249,146 @@ class _MemberTile extends ConsumerWidget {
           unawaited(context.push('/settings/team/${member.id}'));
         }
       },
+    );
+  }
+}
+
+/// The member's role line, with the specialist-specialty handling shared by
+/// the flat [_MemberTile] and the bento [_MemberCard] so they never drift:
+/// "Specialist · Coach" when set, or "Specialist · choose specialty" in the
+/// tertiary tint so a director spots incomplete profiles from the list.
+Widget _memberRoleSubtitle(Member member, String roleLabel, ColorScheme scheme) {
+  final specialty = member.role == RoleKey.specialist
+      ? member.caps.getString(ChildcareCaps.specialty)
+      : null;
+  final hasSpecialty = specialty != null && specialty.isNotEmpty;
+  final isSpecialistMissingSpecialty =
+      member.role == RoleKey.specialist && !hasSpecialty;
+  if (isSpecialistMissingSpecialty) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: roleLabel),
+          const TextSpan(text: ' · '),
+          TextSpan(
+            text: 'choose specialty',
+            style: TextStyle(color: scheme.tertiary),
+          ),
+        ],
+      ),
+    );
+  }
+  if (hasSpecialty) {
+    return Text('$roleLabel · ${SpecialtyKeys.labelOf(specialty)}');
+  }
+  return Text(roleLabel);
+}
+
+/// Bento-path members: SAME list, re-laid as a dense card grid that's 2-up on
+/// a phone (≈210dp cells), more across wider screens. The member set is small
+/// and bounded, so a shrink-wrapping grid (the present-hub pattern) is fine
+/// inside the outer scroll — `mainAxisExtent` bounds each cell so the card's
+/// shrink-wrapping Column is safe.
+class _MemberGrid extends StatelessWidget {
+  const _MemberGrid({required this.members, this.selectedId});
+
+  final List<Member> members;
+  final String? selectedId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: GridView.builder(
+        shrinkWrap: true,
+        primary: false,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 210,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          // Bounded height: avatar + name + role line. Roomy enough that a
+          // two-line role ("Specialist · choose specialty") doesn't clip.
+          mainAxisExtent: 132,
+        ),
+        itemCount: members.length,
+        itemBuilder: (context, i) {
+          final m = members[i];
+          return _MemberCard(
+            key: ValueKey('member-card-${m.id}'),
+            member: m,
+            selectedId: selectedId,
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// One member as a compact bento card — avatar + name + role. Reuses the exact
+/// identity, role subtitle, and master-detail tap routing of [_MemberTile];
+/// only the shape (vertical card) differs so it fits a 2-up grid cell.
+class _MemberCard extends ConsumerWidget {
+  const _MemberCard({required this.member, this.selectedId, super.key});
+
+  final Member member;
+  final String? selectedId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final vertical = ref.watch(verticalLabelsProvider).vertical;
+    final roleLabel = RoleLabels.of(member.role, vertical: vertical);
+    final isSelected = selectedId == member.id;
+    final isWide = MediaQuery.sizeOf(context).width >= Breakpoints.tablet;
+    return Material(
+      color: isSelected
+          ? scheme.primaryContainer.withValues(alpha: 0.35)
+          : scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          if (isWide) {
+            context.replace('/settings/team?selected=${member.id}');
+          } else {
+            unawaited(context.push('/settings/team/${member.id}'));
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              PersonAvatar(
+                name: member.displayName,
+                photoUrl: member.avatarUrl,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                member.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              DefaultTextStyle.merge(
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall!.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                child: _memberRoleSubtitle(member, roleLabel, scheme),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/tasks/tasks_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -61,6 +62,12 @@ class TasksScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = _filterFromUri(GoRouterState.of(context).uri);
     final tasksAsync = ref.watch(openTasksProvider);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the SAME bucketed tasks re-lay as a
+    // responsive grid (full-width on a phone since task cards are text-heavy,
+    // 2-up on wider screens) instead of the one-per-row column. Same buckets,
+    // headers, chips, swipe gestures, and taps.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       actions: [
         PrimaryActionButton(
@@ -167,14 +174,20 @@ class TasksScreen extends ConsumerWidget {
                 for (final bucket in _Bucket.values)
                   if ((scoped[bucket] ?? const <Task>[]).isNotEmpty) ...[
                     _BucketHeader(label: bucket.label),
-                    for (final t in scoped[bucket]!)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                        child: _TaskCard(
-                          task: t,
-                          overdueBucket: bucket == _Bucket.overdue,
+                    if (bento)
+                      _TaskBucketGrid(
+                        tasks: scoped[bucket]!,
+                        overdueBucket: bucket == _Bucket.overdue,
+                      )
+                    else
+                      for (final t in scoped[bucket]!)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                          child: _TaskCard(
+                            task: t,
+                            overdueBucket: bucket == _Bucket.overdue,
+                          ),
                         ),
-                      ),
                   ],
             ],
           );
@@ -334,8 +347,50 @@ class _BucketHeader extends StatelessWidget {
   }
 }
 
+/// Bento variant of one bucket's task list — the SAME [_TaskCard]s re-laid as
+/// a responsive grid. Task cards are text-heavy (the body runs up to 4 lines),
+/// so a phone keeps them FULL-WIDTH (one column) and only wider screens go
+/// 2-up — a `maxCrossAxisExtent` of 420 yields 1 column under ~600dp and 2+
+/// above. Shrink-wrapped + non-scrolling because it nests inside the outer
+/// [ResponsivePage] scroll, and one bucket is a small bounded set; the builder
+/// still constructs cells on demand. A fixed `mainAxisExtent` bounds each cell
+/// so the card's `Expanded`/`Row` get a finite height (the unbounded-cell trap).
+class _TaskBucketGrid extends StatelessWidget {
+  const _TaskBucketGrid({required this.tasks, required this.overdueBucket});
+
+  final List<Task> tasks;
+  final bool overdueBucket;
+
+  @override
+  Widget build(BuildContext context) {
+    // Grow the cell with text scale so a 4-line body + meta row never clips.
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: GridView.builder(
+        shrinkWrap: true,
+        primary: false,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 420,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          mainAxisExtent: 120 + 60 * scale,
+        ),
+        itemCount: tasks.length,
+        itemBuilder: (context, i) => _TaskCard(
+          key: ValueKey('task-cell-${tasks[i].id}'),
+          task: tasks[i],
+          overdueBucket: overdueBucket,
+        ),
+      ),
+    );
+  }
+}
+
 class _TaskCard extends ConsumerWidget {
-  const _TaskCard({required this.task, required this.overdueBucket});
+  const _TaskCard({required this.task, required this.overdueBucket, super.key});
   final Task task;
 
   /// True iff the task lives in the Overdue bucket. We tint the whole

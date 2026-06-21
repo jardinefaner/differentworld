@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/toolkit/toolkit_catalog.dart';
 import 'package:differentworld/features/toolkit/toolkit_recents.dart';
 import 'package:differentworld/shared/breakpoints.dart';
@@ -86,6 +87,11 @@ class _ToolkitScreenState extends ConsumerState<ToolkitScreen> {
   Widget build(BuildContext context) {
     final form = FormFactor.of(context);
     final recents = ref.watch(toolkitRecentsProvider).value ?? const [];
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the phone catalog re-lays each
+    // category's short tool launchers 2-up over the SAME catalog data; the
+    // wide master-detail surface is left unchanged.
+    final bento = bentoEnabled(ref, perScreen: null);
     if (form == FormFactor.phone) {
       return EdgeScaffold(
         backFallbackRoute: '/settings',
@@ -93,6 +99,7 @@ class _ToolkitScreenState extends ConsumerState<ToolkitScreen> {
           categories: _categories,
           query: _query,
           recents: recents,
+          bento: bento,
           onQueryChanged: (q) => setState(() => _query = q),
           onPickTool: _pushToolPhone,
         ),
@@ -139,6 +146,7 @@ class _MobileCatalog extends StatelessWidget {
     required this.categories,
     required this.query,
     required this.recents,
+    required this.bento,
     required this.onQueryChanged,
     required this.onPickTool,
   });
@@ -146,6 +154,10 @@ class _MobileCatalog extends StatelessWidget {
   final List<ToolkitCategory> categories;
   final String query;
   final List<String> recents;
+
+  /// When true, render tool launchers as a dense 2-up grid (the "Bento
+  /// everywhere" sweep) instead of a column of full-width [FeatureCard] rows.
+  final bool bento;
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<String> onPickTool;
 
@@ -188,6 +200,20 @@ class _MobileCatalog extends StatelessWidget {
                 child: const Text('Clear search'),
               ),
             )
+          else if (bento)
+            _ToolGrid(
+              tools: [
+                for (final hit in hits)
+                  _GridTool(
+                    slug: hit.tool.slug,
+                    name: hit.tool.name,
+                    subtitle: '${hit.category.name} · ${hit.tool.when}',
+                    color: hit.category.color,
+                    glyph: hit.category.glyph,
+                  ),
+              ],
+              onPickTool: onPickTool,
+            )
           else
             for (final hit in hits)
               Padding(
@@ -210,24 +236,41 @@ class _MobileCatalog extends StatelessWidget {
               title: _CategorySectionTitle(category: cat),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 4, 8, 14),
-                child: Column(
-                  children: [
-                    for (final tool in cat.tools)
-                      Padding(
+                child: bento
+                    ? Padding(
                         padding: const EdgeInsets.only(top: 8),
-                        child: FeatureCard(
-                          leading: _CategoryAccentDot(color: cat.color),
-                          title: tool.name,
-                          subtitle: tool.when,
-                          trailing: const Icon(
-                            Icons.chevron_right,
-                            size: 18,
-                          ),
-                          onTap: () => onPickTool(tool.slug),
+                        child: _ToolGrid(
+                          tools: [
+                            for (final tool in cat.tools)
+                              _GridTool(
+                                slug: tool.slug,
+                                name: tool.name,
+                                subtitle: tool.when,
+                                color: cat.color,
+                                glyph: cat.glyph,
+                              ),
+                          ],
+                          onPickTool: onPickTool,
                         ),
+                      )
+                    : Column(
+                        children: [
+                          for (final tool in cat.tools)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: FeatureCard(
+                                leading: _CategoryAccentDot(color: cat.color),
+                                title: tool.name,
+                                subtitle: tool.when,
+                                trailing: const Icon(
+                                  Icons.chevron_right,
+                                  size: 18,
+                                ),
+                                onTap: () => onPickTool(tool.slug),
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
               ),
             ),
           ],
@@ -896,6 +939,140 @@ class _SearchHit {
   const _SearchHit({required this.category, required this.tool});
   final ToolkitCategory category;
   final ToolkitTool tool;
+}
+
+/// Flat view-model for one cell of the bento [_ToolGrid] — decouples the grid
+/// from whether the source is a category tool or a search hit.
+class _GridTool {
+  const _GridTool({
+    required this.slug,
+    required this.name,
+    required this.subtitle,
+    required this.color,
+    required this.glyph,
+  });
+
+  final String slug;
+  final String name;
+  final String subtitle;
+  final Color color;
+  final String glyph;
+}
+
+/// The bento variant of a tool list — SAME tools, re-laid as a dense 2-up grid
+/// (the "Bento everywhere" sweep). Short tool launchers pack 2-up on a phone
+/// (≈180dp cells), more across wider screens — a hub of equal-weight tools
+/// reads as a uniform grid (docs/GRID.md). Shrink-wrapped + non-scrolling
+/// because it nests inside the catalog's outer `ListView` (and within a
+/// `SectionCard`); each category is a small bounded set, and the builder still
+/// constructs cells on demand. A fixed `mainAxisExtent` bounds each cell so the
+/// card body shrink-wraps without overflow.
+class _ToolGrid extends StatelessWidget {
+  const _ToolGrid({required this.tools, required this.onPickTool});
+
+  final List<_GridTool> tools;
+  final ValueChanged<String> onPickTool;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return GridView.builder(
+      shrinkWrap: true,
+      primary: false,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 180,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        // Grow with text scale so the glyph + name (≤2 lines) + when (≤2
+        // lines) never clip the 2-up phone cells.
+        mainAxisExtent: 96 + 56 * scale,
+      ),
+      itemCount: tools.length,
+      itemBuilder: (context, i) {
+        final t = tools[i];
+        return _ToolGridCard(
+          key: ValueKey('toolkit-${t.slug}'),
+          tool: t,
+          onTap: () => onPickTool(t.slug),
+        );
+      },
+    );
+  }
+}
+
+/// One compact 2-up cell — a glyph chip + name + situation. Mirrors the
+/// [FeatureCard] row's content (category color as accent only) re-shaped for a
+/// fixed-height square. `mainAxisSize.min` keeps the column inside the cell.
+class _ToolGridCard extends StatelessWidget {
+  const _ToolGridCard({required this.tool, required this.onTap, super.key});
+
+  final _GridTool tool;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      label: tool.name,
+      button: true,
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: tool.color.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: ExcludeSemantics(
+                    child: Text(
+                      tool.glyph,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: tool.color,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  tool.name,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Flexible(
+                  child: Text(
+                    tool.subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _CategoryAccentDot extends StatelessWidget {
