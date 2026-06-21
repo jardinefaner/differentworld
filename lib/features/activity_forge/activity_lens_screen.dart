@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/responsive_page.dart';
@@ -14,6 +15,11 @@ import 'package:go_router/go_router.dart';
 /// the activity (a craft, a walk, snack, a board game) and see the twelve verbs
 /// as twelve ways to do it — each kid does it through their three picks, so one
 /// activity becomes twelve. Whatever you're doing already has twelve doors.
+///
+/// Two layouts over the SAME twelve verbs: the flush-left list of lens rows
+/// (default) and a BENTO grid (opt-in via the global "Bento everywhere"
+/// switch) that re-lays the twelve as compact cards — 2-up on a phone. The
+/// input + framing copy stay full-width either way.
 class ActivityLensScreen extends ConsumerStatefulWidget {
   const ActivityLensScreen({super.key});
 
@@ -45,6 +51,10 @@ class _ActivityLensScreenState extends ConsumerState<ActivityLensScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activity = _activity.text.trim();
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the twelve verbs re-lay as a dense
+    // 2-up grid; off keeps the existing flush-left lens rows. Same verbs.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       body: ResponsivePage(
         children: [
@@ -74,7 +84,30 @@ class _ActivityLensScreenState extends ConsumerState<ActivityLensScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          for (final v in kVerbs) _LensRow(verb: v),
+          if (bento)
+            // The twelve verbs as compact 2-up cards (≈180dp cells on phone,
+            // more across wider screens). A small bounded set, so a
+            // shrink-wrapped grid inside the page scroll is fine — the builder
+            // still constructs cells on demand. Cells grow with text scale.
+            GridView.builder(
+              shrinkWrap: true,
+              primary: false,
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 180,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                mainAxisExtent: 96 + 28 * _textScale(context),
+              ),
+              itemCount: kVerbs.length,
+              itemBuilder: (context, i) => _LensCard(
+                key: ValueKey('lens-${kVerbs[i].id}'),
+                verb: kVerbs[i],
+              ),
+            )
+          else
+            for (final v in kVerbs) _LensRow(verb: v),
           const SizedBox(height: 16),
           Text(
             'Each kid does it through THEIR three picks — so the same craft '
@@ -165,3 +198,62 @@ class _LensRow extends StatelessWidget {
     );
   }
 }
+
+/// The compact card for the bento grid — the SAME verb (emoji + label + lens),
+/// stacked to fit a narrow 2-up cell. No interaction (the lens rows are
+/// reference content, not tappable), so it's a plain tinted surface.
+/// `mainAxisSize.min` + a fixed gap keeps it safe inside the grid cell.
+class _LensCard extends StatelessWidget {
+  const _LensCard({required this.verb, super.key});
+  final Verb verb;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(verb.emoji, style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  verb.label.toUpperCase(),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Flexible(
+            child: Text(
+              verb.lens,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Title-text-relative scale (1.0 = OS default) so cells grow with the
+/// user's text-size setting instead of clipping at a fixed height.
+double _textScale(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(14) / 14;
