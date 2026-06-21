@@ -5,7 +5,9 @@ import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/themed_worlds.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worksheet_pdf.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -29,6 +31,10 @@ class ThemedWorldScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final worldsAsync = ref.watch(curriculumWorldsProvider);
     final worlds = worldsAsync.value ?? const <CurriculumWorld>[];
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the ten worlds re-lay as a denser bento
+    // grid over the SAME provider; off keeps the existing catalog grid.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       actions: [
@@ -53,12 +59,33 @@ class ThemedWorldScreen extends ConsumerWidget {
               subtitle: '10 weeks · 10 worlds · 1 Different World',
             ),
             const SizedBox(height: 4),
-            CatalogGrid(
-              children: [
-                for (final w in worlds)
-                  _WorldCard(world: w, onTap: () => _showWorld(context, w)),
-              ],
-            ),
+            if (bento)
+              // Each world card is SHORT → `phone: 1` packs them 2-up on a
+              // phone (the grid read), 2-up on tablet, 3-up on desktop. The
+              // [CatalogCard] already shrink-wraps (mainAxisSize.min, no
+              // Spacer/Expanded), so it's safe in the min-height/unbounded
+              // bento cell with no fixed-height wrapper (docs/GRID.md). Tap
+              // still opens the world sheet — same behavior as the flat grid.
+              BentoGrid(
+                tiles: [
+                  for (final w in worlds)
+                    BentoTile(
+                      id: 'world-${w.id}',
+                      span: const BentoSpan(phone: 1),
+                      child: _WorldCard(
+                        world: w,
+                        onTap: () => _showWorld(context, w),
+                      ),
+                    ),
+                ],
+              )
+            else
+              CatalogGrid(
+                children: [
+                  for (final w in worlds)
+                    _WorldCard(world: w, onTap: () => _showWorld(context, w)),
+                ],
+              ),
           ],
         ),
       ),

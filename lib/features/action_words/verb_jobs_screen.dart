@@ -1,7 +1,9 @@
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/action_words/verb_roles.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -19,6 +21,10 @@ class VerbJobsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rolesAsync = ref.watch(verbRolesProvider);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the verb cards re-pack as a responsive
+    // grid over the SAME provider data; off keeps the single-column list.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       body: rolesAsync.when(
         loading: () => const LoadingSlot(),
@@ -26,28 +32,73 @@ class VerbJobsScreen extends ConsumerWidget {
           title: 'Could not load the verb jobs',
           onRetry: () => ref.invalidate(verbRolesProvider),
         ),
-        data: (roles) => ResponsivePage(
-          children: [
-            const ContentHeader(
-              title: 'Jobs, missions & growth',
-              subtitle:
-                  'Every verb is a job a kid does, a mission they take '
-                  'on, and a way the grown-ups grow',
-            ),
-            // Walk the verbs in canonical order; pair each with its role.
+        data: (roles) {
+          // The verbs in canonical order, paired with their role.
+          final cards = [
             for (final v in kVerbs)
-              if (roles[v.id] case final role?) _VerbCard(verb: v, role: role),
+              if (roles[v.id] case final role?) (v, role),
+          ];
+          return bento ? _bentoBody(cards) : _flatBody(cards);
+        },
+      ),
+    );
+  }
+
+  /// The default layout — a single-column list of expandable verb cards.
+  Widget _flatBody(List<(Verb, VerbRole)> cards) {
+    return ResponsivePage(
+      children: [
+        const ContentHeader(
+          title: 'Jobs, missions & growth',
+          subtitle:
+              'Every verb is a job a kid does, a mission they take '
+              'on, and a way the grown-ups grow',
+        ),
+        for (final (verb, role) in cards) _VerbCard(verb: verb, role: role),
+      ],
+    );
+  }
+
+  /// The bento variant — SAME cards, re-packed as a responsive grid. The cards
+  /// expand in place to a text-heavy body (jobs + helper-says + a 3-level
+  /// mission + staff growth), so they stay FULL-WIDTH on a phone (a half-width
+  /// expanded body would crush the narrative) and go 2-up on a tablet, 3-up on
+  /// desktop — the [BentoGrid] default span does exactly that. Ragged runs when
+  /// one card is open are expected (the bento Wrap tolerates them).
+  Widget _bentoBody(List<(Verb, VerbRole)> cards) {
+    return ResponsivePage(
+      children: [
+        const ContentHeader(
+          title: 'Jobs, missions & growth',
+          subtitle:
+              'Every verb is a job a kid does, a mission they take '
+              'on, and a way the grown-ups grow',
+        ),
+        const SizedBox(height: 8),
+        BentoGrid(
+          tiles: [
+            for (final (verb, role) in cards)
+              BentoTile(
+                id: 'verb-${verb.id}',
+                // Full-width phone, 2-up tablet, 3-up desktop (the defaults).
+                span: const BentoSpan(),
+                child: _VerbCard(verb: verb, role: role, inGrid: true),
+              ),
           ],
         ),
-      ),
+      ],
     );
   }
 }
 
 class _VerbCard extends StatelessWidget {
-  const _VerbCard({required this.verb, required this.role});
+  const _VerbCard({required this.verb, required this.role, this.inGrid = false});
   final Verb verb;
   final VerbRole role;
+
+  /// In the bento grid the cell owns spacing, so drop the card's own bottom
+  /// margin (it'd add a gap inside the tile).
+  final bool inGrid;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +106,7 @@ class _VerbCard extends StatelessWidget {
     final accent = theme.colorScheme.primary;
     return Card(
       clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: inGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 10),
       child: ExpansionTile(
         leading: Text(verb.emoji, style: const TextStyle(fontSize: 26)),
         title: Text(

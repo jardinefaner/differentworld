@@ -4,6 +4,7 @@ import 'package:differentworld/features/action_words/wall.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -26,6 +27,11 @@ class WallScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final world = ref.watch(currentWorldProvider);
     final notesAsync = ref.watch(wallNotesProvider);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the wall's short sticky notes re-lay as
+    // a dense responsive grid (2-up on a phone) over the SAME provider data;
+    // off keeps the existing free-flowing Wrap.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     if (world == null) {
       return const EdgeScaffold(
@@ -55,39 +61,113 @@ class WallScreen extends ConsumerWidget {
         ),
         data: (entries) {
           final notes = wallNotesForWorld(entries, world.id);
-          return ResponsivePage(
-            children: [
-              ContentHeader(
-                title: 'The Wall · ${world.name}',
-                subtitle: 'The room’s notes for this world — no names',
-              ),
-              const _QuestionOfTheDayBanner(),
-              if (notes.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 32),
-                  child: EmptyState(
-                    icon: Icons.sticky_note_2_outlined,
-                    title: 'The wall is bare',
-                    message: 'Add the first note — a Problem this world is '
-                        'working on, or a Dream for it.',
-                  ),
-                )
-              else
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    for (final n in notes)
-                      _NoteCard(
-                        note: n,
-                        onDelete: () => _delete(context, ref, n),
-                      ),
-                  ],
-                ),
-            ],
-          );
+          return bento
+              ? _bentoBody(context, ref, world.name, notes)
+              : _flatBody(context, ref, world.name, notes);
         },
       ),
+    );
+  }
+
+  /// The default layout — header + banner + a free-flowing [Wrap] of
+  /// fixed-width sticky notes.
+  Widget _flatBody(
+    BuildContext context,
+    WidgetRef ref,
+    String worldName,
+    List<WallNote> notes,
+  ) {
+    return ResponsivePage(
+      children: [
+        ContentHeader(
+          title: 'The Wall · $worldName',
+          subtitle: 'The room’s notes for this world — no names',
+        ),
+        const _QuestionOfTheDayBanner(),
+        if (notes.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: EmptyState(
+              icon: Icons.sticky_note_2_outlined,
+              title: 'The wall is bare',
+              message: 'Add the first note — a Problem this world is '
+                  'working on, or a Dream for it.',
+            ),
+          )
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final n in notes)
+                SizedBox(
+                  width: 168,
+                  child: _NoteCard(
+                    note: n,
+                    onDelete: () => _delete(context, ref, n),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  /// The bento variant — SAME notes, re-laid as a dense responsive grid. The
+  /// header + question banner stay full-width (text-heavy); the short notes
+  /// pack into a `GridView.builder` that's 2-up on a phone (≈180dp cells),
+  /// more across wider screens. One room's wall is a small bounded set, so a
+  /// shrink-wrapped grid (the present-hub pattern) is fine — no virtualization
+  /// needed; the builder still constructs cells on demand.
+  Widget _bentoBody(
+    BuildContext context,
+    WidgetRef ref,
+    String worldName,
+    List<WallNote> notes,
+  ) {
+    return ResponsivePage(
+      children: [
+        ContentHeader(
+          title: 'The Wall · $worldName',
+          subtitle: 'The room’s notes for this world — no names',
+        ),
+        const _QuestionOfTheDayBanner(),
+        const SizedBox(height: 4),
+        if (notes.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: EmptyState(
+              icon: Icons.sticky_note_2_outlined,
+              title: 'The wall is bare',
+              message: 'Add the first note — a Problem this world is '
+                  'working on, or a Dream for it.',
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            primary: false,
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 180,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              // Sticky notes grow with their text; a generous min keeps the
+              // 2-up phone cells from clipping the body + timestamp.
+              mainAxisExtent: 132,
+            ),
+            itemCount: notes.length,
+            itemBuilder: (context, i) {
+              final n = notes[i];
+              return _NoteCard(
+                key: ValueKey('wall-note-${n.id}'),
+                note: n,
+                onDelete: () => _delete(context, ref, n),
+              );
+            },
+          ),
+      ],
     );
   }
 
@@ -183,7 +263,7 @@ Color _toneFor(WallNoteType t, ColorScheme s) => switch (t) {
     };
 
 class _NoteCard extends StatelessWidget {
-  const _NoteCard({required this.note, required this.onDelete});
+  const _NoteCard({required this.note, required this.onDelete, super.key});
   final WallNote note;
   final Future<void> Function() onDelete;
 
@@ -193,19 +273,29 @@ class _NoteCard extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => unawaited(onDelete()),
       child: Container(
-        width: 168,
+        // Width comes from the caller — a fixed `SizedBox(168)` in the flat
+        // Wrap, the grid cell in the bento variant. Height is intrinsic in the
+        // Wrap; the bento grid caps it, so the body flexes + ellipsises.
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: _toneFor(note.type, theme.colorScheme),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('${note.type.emoji} ${note.type.label}',
                 style: theme.textTheme.labelSmall),
             const SizedBox(height: 6),
-            Text(note.text, style: theme.textTheme.bodyMedium),
+            Flexible(
+              child: Text(
+                note.text,
+                style: theme.textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 4,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               relativeTimeAgo(

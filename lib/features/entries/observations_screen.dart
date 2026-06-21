@@ -6,6 +6,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -39,6 +40,12 @@ class ObservationsScreen extends ConsumerWidget {
         (groupId: groupId, kind: EntryKind.observation),
       ),
     );
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). The narrative rows are TEXT-HEAVY, so the bento
+    // variant keeps them FULL-WIDTH on phone (1-up) and only goes 2-up where
+    // there's room (tablet/desktop) — a max-extent grid, still LAZY, over the
+    // SAME provider. Off keeps the existing single-column feed.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     if (!viewer.canObserve && !viewer.canManageSpace) {
       return const EdgeScaffold(body: NoAccess());
@@ -87,6 +94,13 @@ class ObservationsScreen extends ConsumerWidget {
                   : null,
             );
           }
+          final header = Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ContentHeader(
+              title: 'Observations',
+              subtitle: group?.name,
+            ),
+          );
           // Cap + center the feed on desktop/web — the rows are ListTiles
           // (their own 16dp padding), so a width cap is the right fix rather
           // than ResponsivePage's extra padding.
@@ -95,29 +109,77 @@ class ObservationsScreen extends ConsumerWidget {
               constraints: const BoxConstraints(
                 maxWidth: Breakpoints.splitMaxWidth,
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.only(bottom: 96),
-                itemCount: entries.length + 1,
-                itemBuilder: (_, i) {
-                  if (i == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: ContentHeader(
-                        title: 'Observations',
-                        subtitle: group?.name,
-                      ),
-                    );
-                  }
-                  return _ObservationRow(
-                    entry: entries[i - 1],
-                    groupId: groupId,
-                  );
-                },
-              ),
+              child: bento
+                  ? _ObservationsBentoGrid(
+                      header: header,
+                      entries: entries,
+                      groupId: groupId,
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 96),
+                      itemCount: entries.length + 1,
+                      itemBuilder: (_, i) {
+                        if (i == 0) return header;
+                        return _ObservationRow(
+                          entry: entries[i - 1],
+                          groupId: groupId,
+                        );
+                      },
+                    ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+/// The bento variant of the observations feed — the SAME entries, kept LAZY
+/// and re-laid as a max-cross-axis-extent grid. The narrative rows are
+/// text-heavy, so a `maxCrossAxisExtent` of 440 keeps them FULL-WIDTH (1-up)
+/// on a phone (which never reaches 440 inside the width cap) and only goes
+/// 2-up on tablet/desktop where the body has room — never truncating the
+/// 3-line narrative more than the flat feed already does. Cells are
+/// fixed-height (the row's body is bounded — avatar + 3-line ellipsised body
+/// + timestamp), and the height scales with the text-size setting so a large
+/// scale doesn't overflow the cell (the fixed-aspect-ratio trap).
+class _ObservationsBentoGrid extends StatelessWidget {
+  const _ObservationsBentoGrid({
+    required this.header,
+    required this.entries,
+    required this.groupId,
+  });
+
+  final Widget header;
+  final List<Entry> entries;
+  final String groupId;
+
+  @override
+  Widget build(BuildContext context) {
+    // Title-relative text scale (1.0 = OS default) so the fixed cell height
+    // grows with the user's text-size setting instead of clipping.
+    final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(child: header),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+          sliver: SliverGrid.builder(
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 440,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              mainAxisExtent: 96 + 32 * textScale,
+            ),
+            itemCount: entries.length,
+            itemBuilder: (_, i) => _ObservationRow(
+              entry: entries[i],
+              groupId: groupId,
+              inGrid: true,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -132,10 +194,18 @@ final _groupForObsProvider = StreamProvider.autoDispose.family<Group?, String>(
 );
 
 class _ObservationRow extends ConsumerWidget {
-  const _ObservationRow({required this.entry, required this.groupId});
+  const _ObservationRow({
+    required this.entry,
+    required this.groupId,
+    this.inGrid = false,
+  });
 
   final Entry entry;
   final String groupId;
+
+  /// When laid out as a fixed-height bento grid cell, drop the outer
+  /// padding (grid spacing handles the gaps) so the card fills the cell.
+  final bool inGrid;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -165,49 +235,56 @@ class _ObservationRow extends ConsumerWidget {
     final photos = attachmentsAsync.value?.urls ?? const <String>[];
     // Calm card: a narrative observation reads warmer on a tile than as a flat
     // row. Vertical list (recency preserved) — just on-brand cards.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Material(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: ListTile(
-          contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-          leading: PersonAvatar(
-            name: fullName,
-            photoUrl: subject?.photoUrl,
-          ),
-          title: Text(fullName),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                entry.body ?? '',
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+    final card = Material(
+      color: theme.colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+        leading: PersonAvatar(
+          name: fullName,
+          photoUrl: subject?.photoUrl,
+        ),
+        title: Text(fullName, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              entry.body ?? '',
+              // Two lines in the fixed-height grid cell so a long narrative
+              // can't overflow it; three in the flexible flat list.
+              maxLines: inGrid ? 2 : 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              whenLabel,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 2),
-              Text(
-                whenLabel,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            ),
+          ],
+        ),
+        trailing: photos.isEmpty
+            ? null
+            : _PhotoThumb(
+                photos: photos,
+                onTap: () => PhotoViewer.open(context, urls: photos),
               ),
-            ],
-          ),
-          trailing: photos.isEmpty
-              ? null
-              : _PhotoThumb(
-                  photos: photos,
-                  onTap: () => PhotoViewer.open(context, urls: photos),
-                ),
-          isThreeLine: true,
-          onTap: () => context.push(
-            '/observations/${entry.id}/edit',
-            extra: entry,
-          ),
+        isThreeLine: true,
+        onTap: () => context.push(
+          '/observations/${entry.id}/edit',
+          extra: entry,
         ),
       ),
+    );
+    // In a fixed-height grid cell, fill the cell (no outer padding — grid
+    // spacing handles the gaps). In the flat list, keep the row's own
+    // horizontal margin + bottom gap.
+    if (inGrid) return SizedBox.expand(child: card);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: card,
     );
   }
 }

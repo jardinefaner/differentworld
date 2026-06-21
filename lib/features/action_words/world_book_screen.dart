@@ -3,7 +3,9 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/worlds.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -25,6 +27,10 @@ class WorldBookScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final gold = AppColors.goldOf(theme);
     final async = ref.watch(inventedWorldsProvider);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the invented worlds re-lay as a denser
+    // bento grid over the SAME provider; off keeps the existing catalog grid.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
@@ -60,11 +66,29 @@ class WorldBookScreen extends ConsumerWidget {
                 style: theme.textTheme.labelMedium?.copyWith(color: gold),
               ),
               const SizedBox(height: 12),
-              CatalogGrid(
-                children: [
-                  for (final w in invented) _InventedCard(world: w, gold: gold),
-                ],
-              ),
+              if (bento)
+                // Each world card is SHORT → `phone: 1` packs them 2-up on a
+                // phone (the grid read), 2-up on tablet, 3-up on desktop. The
+                // [CatalogCard] already shrink-wraps (mainAxisSize.min, no
+                // Spacer/Expanded), so it's safe in the min-height/unbounded
+                // bento cell with no fixed-height wrapper (docs/GRID.md).
+                BentoGrid(
+                  tiles: [
+                    for (final w in invented)
+                      BentoTile(
+                        id: 'world-${w.name}',
+                        span: const BentoSpan(phone: 1),
+                        child: _InventedCard(world: w, gold: gold),
+                      ),
+                  ],
+                )
+              else
+                CatalogGrid(
+                  children: [
+                    for (final w in invented)
+                      _InventedCard(world: w, gold: gold),
+                  ],
+                ),
             ],
           );
         },
