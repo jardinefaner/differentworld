@@ -12,6 +12,8 @@ import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/certifications/certifications_providers.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:differentworld/features/insights/insights_screen.dart';
 import 'package:differentworld/features/launch/launch_readiness.dart';
@@ -1210,8 +1212,13 @@ class _GroupTodayCard extends ConsumerWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Expanded(
-                child: Text(
-                  group.name,
+                child: EntityLink(
+                  entity: EntityRef(
+                    kind: EntityKind.group,
+                    id: group.id,
+                    label: group.name,
+                  ),
+                  padded: false,
                   style: theme.textTheme.titleMedium,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

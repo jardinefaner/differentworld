@@ -1,4 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
@@ -63,8 +66,13 @@ class MomentTile extends ConsumerWidget {
                         ),
                         const SizedBox(width: 6),
                         Flexible(
-                          child: Text(
-                            subject!.firstName,
+                          child: EntityLink(
+                            entity: EntityRef(
+                              kind: EntityKind.subject,
+                              id: subject!.id,
+                              label: subject!.firstName,
+                            ),
+                            padded: false,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w600,
@@ -91,7 +99,7 @@ class MomentTile extends ConsumerWidget {
                   ),
                   if (moment.body != null) ...[
                     const SizedBox(height: 4),
-                    Text(moment.body!),
+                    LinkifiedText(moment.body!),
                   ],
                   if (photos.isNotEmpty) ...[
                     const SizedBox(height: 8),

@@ -4,6 +4,9 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
@@ -521,14 +524,20 @@ class _CohortColumn extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          child: Text(
-            group.name,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+          child: Center(
+            child: EntityLink(
+              entity: EntityRef(
+                kind: EntityKind.group,
+                id: group.id,
+                label: group.name,
+              ),
+              padded: false,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
           ),
         ),
         Expanded(
@@ -1112,7 +1121,7 @@ class _BlockTile extends ConsumerWidget {
                               block.notes!.isNotEmpty &&
                               activity != null) ...[
                             const SizedBox(height: 4),
-                            Text(
+                            LinkifiedText(
                               block.notes!,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,

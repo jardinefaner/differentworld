@@ -9,6 +9,8 @@ import 'package:differentworld/features/action_words/journey_day_sheet.dart';
 import 'package:differentworld/features/action_words/program_hub_bento_setting.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -158,9 +160,13 @@ class _SeasonHero extends StatelessWidget {
         children: [
           Text(block.emoji, style: const TextStyle(fontSize: 56)),
           const SizedBox(height: 4),
-          Text(
-            block.name,
-            textAlign: TextAlign.center,
+          EntityLink(
+            entity: EntityRef(
+              kind: EntityKind.world,
+              id: block.id,
+              label: block.name,
+            ),
+            padded: false,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),

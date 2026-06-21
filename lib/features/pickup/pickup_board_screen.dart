@@ -4,6 +4,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/pickup/pickup_board_providers.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
@@ -277,8 +279,13 @@ class _StillHereCell extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            entry.fullName,
+                          EntityLink(
+                            entity: EntityRef(
+                              kind: EntityKind.subject,
+                              id: entry.subject.id,
+                              label: entry.fullName,
+                            ),
+                            padded: false,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),

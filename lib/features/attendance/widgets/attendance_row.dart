@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
@@ -72,8 +74,13 @@ class AttendanceRow extends StatelessWidget {
                 PersonAvatar(name: fullName, photoUrl: subject.photoUrl),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    fullName,
+                  child: EntityLink(
+                    entity: EntityRef(
+                      kind: EntityKind.subject,
+                      id: subject.id,
+                      label: fullName,
+                    ),
+                    padded: false,
                     style: theme.textTheme.bodyLarge,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/missions/mission_progress.dart';
 import 'package:differentworld/features/missions/mission_templates.dart';
 import 'package:differentworld/features/missions/missions_providers.dart';
@@ -257,7 +258,7 @@ class _MissionDetailSheet extends ConsumerWidget {
               const SizedBox(height: 20),
               _SectionLabel('The manual', muted),
               const SizedBox(height: 6),
-              Text(mission.rules!, style: theme.textTheme.bodyLarge),
+              LinkifiedText(mission.rules!, style: theme.textTheme.bodyLarge),
             ],
             if (actions.isNotEmpty) ...[
               const SizedBox(height: 20),

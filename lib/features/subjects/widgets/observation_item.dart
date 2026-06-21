@@ -1,4 +1,5 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
@@ -40,7 +41,7 @@ class SubjectObservationItem extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(entry.body ?? ''),
+            LinkifiedText(entry.body ?? ''),
             if (photos.isNotEmpty) ...[
               const SizedBox(height: 8),
               _ObservationPhotosStrip(photos: photos),

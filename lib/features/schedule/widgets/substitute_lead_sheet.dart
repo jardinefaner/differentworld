@@ -4,6 +4,8 @@ import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -416,7 +418,15 @@ class _SubstitutePickerSheet extends ConsumerWidget {
                   itemBuilder: (_, i) {
                     final m = candidates[i];
                     return ListTile(
-                      title: Text(m.displayName),
+                      title: EntityLink(
+                        entity: EntityRef(
+                          kind: EntityKind.member,
+                          id: m.id,
+                          label: m.displayName,
+                        ),
+                        padded: false,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       subtitle: Text(_roleLabel(m.role, vertical: vertical)),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => Navigator.of(context).pop(m),

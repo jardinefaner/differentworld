@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/schedule/widgets/trip_headcount_section.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/viewer_x.dart';
@@ -235,7 +237,15 @@ class _SlipsSection extends ConsumerWidget {
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
                 ),
-                title: Text('${subj.firstName} ${subj.lastName}'),
+                title: EntityLink(
+                  entity: EntityRef(
+                    kind: EntityKind.subject,
+                    id: subj.id,
+                    label: '${subj.firstName} ${subj.lastName}',
+                  ),
+                  padded: false,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 onTap: () async {
                   if (signedIds.contains(subj.id)) return;
                   final viewer = ref.read(viewerProvider);

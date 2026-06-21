@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/reflections/reflection_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -394,7 +395,7 @@ class _ReflectionTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                LinkifiedText(
                   r.note ?? 'No note',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

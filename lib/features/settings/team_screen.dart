@@ -8,6 +8,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/invites/invites_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/breakpoints.dart';
@@ -236,7 +238,15 @@ class _MemberTile extends ConsumerWidget {
         name: member.displayName,
         photoUrl: member.avatarUrl,
       ),
-      title: Text(member.displayName),
+      title: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.member,
+          id: member.id,
+          label: member.displayName,
+        ),
+        padded: false,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
       subtitle: subtitle,
       selected: isSelected,
       selectedTileColor:
@@ -368,8 +378,13 @@ class _MemberCard extends ConsumerWidget {
                 photoUrl: member.avatarUrl,
               ),
               const SizedBox(height: 10),
-              Text(
-                member.displayName,
+              EntityLink(
+                entity: EntityRef(
+                  kind: EntityKind.member,
+                  id: member.id,
+                  label: member.displayName,
+                ),
+                padded: false,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(

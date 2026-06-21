@@ -1,4 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/heroes/heroes_providers.dart';
 import 'package:differentworld/features/heroes/widgets/hero_card.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -146,8 +148,13 @@ class _HeroRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  first,
+                child: EntityLink(
+                  entity: EntityRef(
+                    kind: EntityKind.subject,
+                    id: subject.id,
+                    label: first,
+                  ),
+                  padded: false,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

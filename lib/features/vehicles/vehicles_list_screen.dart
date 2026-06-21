@@ -1,5 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/platform.dart';
@@ -184,7 +186,15 @@ class _VehicleTile extends ConsumerWidget {
               : scheme.onSurfaceVariant,
         ),
       ),
-      title: Text(vehicle.name),
+      title: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.vehicle,
+          id: vehicle.id,
+          label: vehicle.name,
+        ),
+        padded: false,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
       subtitle: chips.isEmpty
           ? const Text('—')
           : Padding(
@@ -302,8 +312,13 @@ class _VehicleGridCard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              Text(
-                vehicle.name,
+              EntityLink(
+                entity: EntityRef(
+                  kind: EntityKind.vehicle,
+                  id: vehicle.id,
+                  label: vehicle.name,
+                ),
+                padded: false,
                 style: theme.textTheme.titleSmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

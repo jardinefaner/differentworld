@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
@@ -405,7 +406,7 @@ class _TriageSheet extends StatelessWidget {
                 color: scheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
+              child: LinkifiedText(
                 capture.body,
                 style: theme.textTheme.bodyLarge,
                 maxLines: 8,

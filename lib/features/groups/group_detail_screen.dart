@@ -8,6 +8,8 @@ import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/groups/room_skin_background.dart';
 import 'package:differentworld/features/groups/room_skin_picker.dart';
 import 'package:differentworld/features/groups/room_skins.dart';
@@ -456,7 +458,15 @@ class _SubjectTile extends ConsumerWidget {
           ),
         ],
       ),
-      title: Text(fullName),
+      title: EntityLink(
+        entity: EntityRef(
+          kind: EntityKind.subject,
+          id: subject.id,
+          label: fullName,
+        ),
+        padded: false,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
       subtitle: ageLine == null ? null : Text(ageLine),
       // Wave 101: hide-don't-disable. If the subject is in this group's
       // roster, `groupId` is always set — but a tap target with no

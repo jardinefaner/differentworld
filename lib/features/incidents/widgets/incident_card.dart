@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/incidents/incidents_providers.dart';
 import 'package:differentworld/shared/format/relative_time.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
@@ -66,7 +67,7 @@ class IncidentCard extends ConsumerWidget {
               ),
             if (incident.narrative.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Text(incident.narrative),
+              LinkifiedText(incident.narrative),
             ],
             if (incident.actionTaken != null &&
                 incident.actionTaken!.isNotEmpty) ...[
