@@ -27,20 +27,37 @@ class DayRunScreen extends ConsumerWidget {
     if (world == null) {
       // No live world (the journey isn't set up yet). NOT a dead-end: point the
       // teacher at the setup surface (/this-week owns "Set up the journey" + the
-      // start-date picker). EdgeScaffold — NOT a raw black Scaffold — so the
-      // empty state clears the floating chrome instead of rendering under it
-      // and follows OS light/dark; the chrome's own hamburger/back is the way
-      // out for a cold deep link with nothing to pop. BeatPresenter owns
-      // immersive on the happy path below.
+      // start-date picker) AND keep a visible "Close" exit — this can be a cold
+      // deep link with nothing to pop, so we never rely on the system back
+      // gesture alone. EdgeScaffold — NOT a raw black Scaffold — so the empty
+      // state clears the floating chrome and follows OS light/dark. BeatPresenter
+      // owns immersive on the happy path below.
       return EdgeScaffold(
         body: EmptyState(
           icon: Icons.map_outlined,
           title: 'No world is live yet',
           message: 'Set your journey start date and the day plays itself.',
-          action: FilledButton.icon(
-            onPressed: () => context.push('/this-week'),
-            icon: const Icon(Icons.flag_outlined),
-            label: const Text('Set up your journey'),
+          action: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.push('/this-week'),
+                icon: const Icon(Icons.flag_outlined),
+                label: const Text('Set up your journey'),
+              ),
+              const SizedBox(height: 4),
+              TextButton(
+                onPressed: () {
+                  final nav = Navigator.of(context);
+                  if (nav.canPop()) {
+                    nav.pop();
+                  } else {
+                    context.go('/');
+                  }
+                },
+                child: const Text('Close'),
+              ),
+            ],
           ),
         ),
       );
