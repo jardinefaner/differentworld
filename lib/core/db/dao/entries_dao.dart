@@ -119,6 +119,14 @@ class EntriesDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Re-insert a previously-deleted entry VERBATIM — the undo path for
+  /// `deleteWithUndo`. The row keeps its stable client UUID, so
+  /// insert-or-replace re-creates the exact row and PowerSync re-syncs it
+  /// (it reappears on every device).
+  Future<void> restore(Entry entry) async {
+    await into(entries).insertOnConflictUpdate(entry);
+  }
+
   /// Update an entry's text. The other fields are effectively
   /// immutable here — kind / subject / group don't move once the row
   /// is created. Use [updatePhotos] to change attached photos.

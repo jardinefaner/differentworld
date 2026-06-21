@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/time_capsule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -155,13 +156,26 @@ class TimeCapsuleScreen extends ConsumerWidget {
     WidgetRef ref,
     TimeCapsule c,
   ) async {
-    final ok = await confirmDestructive(
+    // `restore` re-inserts the whole row, so capture the full Entry (matched by
+    // id from the same provider the screen watches) before deleting.
+    Entry? entry;
+    for (final e in ref.read(timeCapsulesProvider).value ?? const <Entry>[]) {
+      if (e.id == c.id) {
+        entry = e;
+        break;
+      }
+    }
+    if (entry == null) {
+      await ref.read(entryActionsProvider).delete(c.id);
+      return;
+    }
+    final row = entry;
+    await deleteWithUndo(
       context,
-      title: 'Dig up and discard this capsule?',
-      message: 'This removes it for good.',
+      label: 'time capsule',
+      onDelete: () => ref.read(entryActionsProvider).delete(row.id),
+      onUndo: () => ref.read(entryActionsProvider).restore(row),
     );
-    if (!ok || !context.mounted) return;
-    await ref.read(entryActionsProvider).delete(c.id);
   }
 }
 

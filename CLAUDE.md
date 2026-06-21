@@ -743,6 +743,31 @@ Navigation:
   on Android, the swipe back on iOS, browser back on web must all do
   the same thing.
 
+### Modals — a glance, never a task (2026-06-21, user: "maybe we shouldn't have any modals…")
+
+**No modal is a destination or a task.** The app is a calm, host-present spine;
+an overlay that floats over the room and traps focus fights that — and modals
+are the app's #1 bug class (the whole "Interaction invariants" section exists
+because of them: keyboard-vanishes, focus theft, the dismiss-guard dance, IME
+traps). So:
+
+- **A task** (fill / pick / multi-field form) → a **page (route)**, not a sheet.
+  Deep-linkable, room to breathe, and the IME/focus/DismissGuard traps just
+  evaporate (a page's back IS the "are you sure"). Don't reach for
+  `showGlassSheet` for a form.
+- **A destructive action** → **`deleteWithUndo(...)`** (`destructive_button.dart`),
+  NOT a confirm dialog: delete now, offer Undo in a snackbar for a few seconds.
+  The undo just re-inserts the row (stable client UUID → re-syncs); add a
+  `restore(row)` to the DAO if it lacks one (see `entriesDao.restore`). Keep
+  `confirmDestructive` ONLY for irreversible / **cascading** deletes (a cohort
+  that owns children) where one re-insert can't restore the tree.
+- **A glance you dismiss without acting** (the entity peek) → a light overlay is
+  fine; that's the ONE place a modal earns its place (a page would lose your
+  spot). It should be non-focus-trapping so it dodges the bug class.
+
+Migration is staged (bucket 1: confirms→undo; bucket 2: forms→pages; peek
+untouched). New code follows the law from the start.
+
 ### Instruction & microcopy — make it obvious first
 
 **The golden rule: the best instruction is the one the user never needs to

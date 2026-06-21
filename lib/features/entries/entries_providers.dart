@@ -461,6 +461,12 @@ class EntryActions {
     await db.entriesDao.deleteById(id);
   }
 
+  /// Re-insert a deleted entry verbatim — the `deleteWithUndo` undo path.
+  Future<void> restore(Entry entry) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    await db.entriesDao.restore(entry);
+  }
+
   /// Post a note to the room's Wall for a world (space-level, anonymous).
   Future<String> createWallNote({
     required String text,

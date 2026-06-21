@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/wall.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
@@ -180,13 +181,26 @@ class WallScreen extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref, WallNote n) async {
-    final ok = await confirmDestructive(
+    // `restore` re-inserts the whole row, so capture the full Entry (matched by
+    // id from the same provider the screen watches) before deleting.
+    Entry? entry;
+    for (final e in ref.read(wallNotesProvider).value ?? const <Entry>[]) {
+      if (e.id == n.id) {
+        entry = e;
+        break;
+      }
+    }
+    if (entry == null) {
+      await ref.read(entryActionsProvider).delete(n.id);
+      return;
+    }
+    final row = entry;
+    await deleteWithUndo(
       context,
-      title: 'Take this note off the wall?',
-      message: n.text,
+      label: 'note',
+      onDelete: () => ref.read(entryActionsProvider).delete(row.id),
+      onUndo: () => ref.read(entryActionsProvider).restore(row),
     );
-    if (!ok || !context.mounted) return;
-    await ref.read(entryActionsProvider).delete(n.id);
   }
 }
 

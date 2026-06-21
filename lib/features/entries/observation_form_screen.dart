@@ -575,15 +575,17 @@ class _ObservationFormScreenState extends ConsumerState<ObservationFormScreen> {
   Future<void> _delete() async {
     final existing = widget.existing;
     if (existing == null) return;
-    final confirmed = await confirmDestructive(
-      context,
-      title: 'Delete this observation?',
-      message: "This can't be undone.",
-    );
-    if (!confirmed || !mounted) return;
     setState(() => _saving = true);
     try {
-      await ref.read(entryActionsProvider).delete(existing.id);
+      // Modal-free delete: deleteWithUndo deletes now + shows an Undo snackbar
+      // on the ROOT messenger (captured before we pop, so it survives this
+      // route closing). The undo closure restores the full Entry row.
+      await deleteWithUndo(
+        context,
+        label: 'observation',
+        onDelete: () => ref.read(entryActionsProvider).delete(existing.id),
+        onUndo: () => ref.read(entryActionsProvider).restore(existing),
+      );
       if (!mounted) return;
       if (context.canPop()) context.pop();
     } on Object catch (e, st) {
