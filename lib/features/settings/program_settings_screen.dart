@@ -235,7 +235,7 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
               CollapsibleSection(
                 title: 'Defaults',
                 icon: Icons.settings_suggest_outlined,
-                collapsedSummary: 'photo consent · timer · play length',
+                collapsedSummary: 'photo consent · name privacy · timer',
                 initiallyExpanded: false,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -248,6 +248,21 @@ class _ProgramSettingsScreenState extends ConsumerState<ProgramSettingsScreen> {
                       value: caps.getBool(SpaceCaps.photoDefaultConsent),
                       onChanged: (v) =>
                           _setCap(spaceId, SpaceCaps.photoDefaultConsent, v),
+                    ),
+                    CapSwitch(
+                      label: "Hide other children's names from families",
+                      subtitle:
+                          'Observations shared with a parent replace any other '
+                          'child\'s name with "a friend." Recommended on.',
+                      value: caps.getBool(
+                        SpaceCaps.scrubFamilyObservations,
+                        fallback: true,
+                      ),
+                      onChanged: (v) => _setCap(
+                        spaceId,
+                        SpaceCaps.scrubFamilyObservations,
+                        v,
+                      ),
                     ),
                     _TimerPresetsTile(spaceId: spaceId),
                     _PlayLengthTile(spaceId: spaceId),

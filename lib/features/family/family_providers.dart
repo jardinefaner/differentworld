@@ -123,6 +123,23 @@ final familyEntriesForSubjectProvider =
     if (!viewer.canSeeSubject(key.subjectId)) return const <Entry>[];
     final supabase = Supabase.instance.client;
     final kind = key.kind;
+    // Observations can name OTHER children in the body ("Sofia and Mateo built
+    // a fort"). The family lens reads them through a server-side scrub RPC
+    // (app.family_observations_for_subject, migration 20260620000001) so another
+    // child's name never reaches a guardian's device — the guardian device
+    // can't scrub it itself (by design it has no roster). Director-gated by the
+    // space capability `scrub_family_observations`, default ON.
+    if (kind == 'observation') {
+      final uid = supabase.auth.currentUser?.id;
+      if (uid == null) return const <Entry>[];
+      final rows = await supabase.rpc<dynamic>(
+        'family_observations_for_subject',
+        params: {'caller_uid': uid, 'p_subject_id': key.subjectId},
+      ) as List<dynamic>;
+      return [
+        for (final r in rows) _entryFromMap(r as Map<String, dynamic>),
+      ];
+    }
     final filtered = kind == null
         ? supabase.from('entries').select().eq('subject_id', key.subjectId)
         : supabase

@@ -19,6 +19,13 @@ abstract class SpaceCaps {
   static const defaultClassSize = 'default_class_size';
   static const photoDefaultConsent = 'photo_default_consent';
 
+  /// Whether observations shared with a family have OTHER children's names
+  /// scrubbed to "a friend" server-side (migration 20260620000001's RPC reads
+  /// this cap). Director-controlled + server-enforced (a guardian can't disable
+  /// their own redaction). **Absent/true → scrub** — privacy-safe by default;
+  /// only an explicit `false` shows raw observation bodies to families.
+  static const scrubFamilyObservations = 'scrub_family_observations';
+
   /// The director's day-template library — a JSON-encoded list of
   /// duration-block day shapes (see features/schedule/day_template.dart).
   /// String cap (JSON); director-authored, read-mostly, no table.
