@@ -23,6 +23,8 @@ import 'package:differentworld/features/action_words/this_week_screen.dart';
 import 'package:differentworld/features/action_words/time_capsule_screen.dart';
 import 'package:differentworld/features/action_words/verb_jobs_screen.dart';
 import 'package:differentworld/features/action_words/wall_screen.dart';
+import 'package:differentworld/features/action_words/widgets/beat_presenter.dart';
+import 'package:differentworld/features/action_words/widgets/deck_overview.dart';
 import 'package:differentworld/features/action_words/world_book_screen.dart';
 import 'package:differentworld/features/action_words/world_present_screen.dart';
 import 'package:differentworld/features/activity_forge/activity_forge_screen.dart';
@@ -169,6 +171,7 @@ import 'package:differentworld/features/vehicles/vehicles_providers.dart'
 import 'package:differentworld/features/world/character_sheet_screen.dart';
 import 'package:differentworld/features/world/draw_self_screen.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
+import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1257,9 +1260,36 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           // "Play today" — the whole day on rails, one immersive run of show
           // assembled from this week's world (docs/VISION.md "day, on rails").
+          // With the deck-overview toggle ON, DayRunScreen renders the tappable
+          // grid and pushes the immersive presenter at the chosen beat via the
+          // nested `present` route below.
           GoRoute(
             path: '/play-today',
             builder: (_, _) => const DayRunScreen(),
+            routes: [
+              // The immersive presenter, fed by a DeckPresentArgs over `extra`.
+              // EdgeScaffold (NOT a bare Scaffold) so the immersive surface
+              // gets the same chrome-clearing wrapper the base screen uses; a
+              // missing `extra` (cold deep-link) falls back to the overview.
+              GoRoute(
+                path: 'present',
+                builder: (_, state) {
+                  final args = state.extra;
+                  if (args is! DeckPresentArgs) {
+                    return const DayRunScreen();
+                  }
+                  return EdgeScaffold(
+                    body: BeatPresenter(
+                      beats: args.beats,
+                      accent: args.accent,
+                      emoji: args.emoji,
+                      initialBeat: args.initialBeat,
+                      onBeatChanged: args.onBeatChanged,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           // The teleprompter for teaching — ANY activity (typed on /lens, or
           // generic) presented through its play → name → bridge → question
@@ -1274,10 +1304,36 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           // One cast that walks the WHOLE summer — the journey, world by world
-          // (docs/VISION.md "one cast that walks the whole experience").
+          // (docs/VISION.md "one cast that walks the whole experience"). With
+          // the deck-overview toggle ON, JourneyTourScreen renders the tappable
+          // grid and pushes the immersive presenter at the chosen world-beat via
+          // the nested `present` route below.
           GoRoute(
             path: '/journey',
             builder: (_, _) => const JourneyTourScreen(),
+            routes: [
+              // The immersive presenter, fed by a DeckPresentArgs over `extra`.
+              // EdgeScaffold (NOT a bare Scaffold) — same wrapper the base
+              // screen uses; a missing `extra` falls back to the overview.
+              GoRoute(
+                path: 'present',
+                builder: (_, state) {
+                  final args = state.extra;
+                  if (args is! DeckPresentArgs) {
+                    return const JourneyTourScreen();
+                  }
+                  return EdgeScaffold(
+                    body: BeatPresenter(
+                      beats: args.beats,
+                      accent: args.accent,
+                      emoji: args.emoji,
+                      initialBeat: args.initialBeat,
+                      onBeatChanged: args.onBeatChanged,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           // A child's GROWTH ARC — their story so far (words lived, worlds
           // collected, emerging title), cast on the present spine. The

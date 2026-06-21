@@ -2,7 +2,9 @@ import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
-import 'package:flutter/foundation.dart';
+// material.dart for Color (the per-beat tint) + @immutable. A pure-data file,
+// but Color comes from the painting/material layer, not foundation.
+import 'package:flutter/material.dart';
 
 /// One beat in the day's **run of show** — a single full-screen slide the
 /// teacher advances through (docs/VISION.md "The day, on rails"). The teacher
@@ -36,9 +38,18 @@ class DayBeat {
     this.emoji = '',
     this.guidance = '',
     this.imageUrl = '',
+    this.color,
   });
 
   final DayBeatKind kind;
+
+  /// Per-beat tint — the world's colour for a journey beat, so a tappable
+  /// deck-overview grid can tile each beat in its world's hue. Null → the
+  /// surface falls back to the deck accent (a one-world day run leaves it
+  /// null and uses the world accent uniformly). Content-driven, NOT a theme
+  /// colour: when used as a FILL behind text, pick the foreground via
+  /// `AppColors.onAccent`.
+  final Color? color;
 
   /// For [DayBeatKind.photo] — a (signed) image URL to render full-bleed.
   /// The growth arc fills this from the child's work-sample / observation
@@ -118,19 +129,19 @@ String beatGuidance(DayBeat beat) {
 /// A short name for a beat kind — labels the "Next — {…}" control so the staff
 /// sees what's coming without reading ahead.
 String beatKindShortLabel(DayBeatKind kind) => switch (kind) {
-      DayBeatKind.open => 'Open',
-      DayBeatKind.question => 'Question',
-      DayBeatKind.verbs => 'Words',
-      DayBeatKind.rule => 'Rule',
-      DayBeatKind.watch => 'Watch',
-      DayBeatKind.play => 'Play',
-      DayBeatKind.name => 'Name it',
-      DayBeatKind.bridge => 'Bridge',
-      DayBeatKind.ask => 'Ask',
-      DayBeatKind.activity => 'Activity',
-      DayBeatKind.photo => 'Photo',
-      DayBeatKind.close => 'Close',
-    };
+  DayBeatKind.open => 'Open',
+  DayBeatKind.question => 'Question',
+  DayBeatKind.verbs => 'Words',
+  DayBeatKind.rule => 'Rule',
+  DayBeatKind.watch => 'Watch',
+  DayBeatKind.play => 'Play',
+  DayBeatKind.name => 'Name it',
+  DayBeatKind.bridge => 'Bridge',
+  DayBeatKind.ask => 'Ask',
+  DayBeatKind.activity => 'Activity',
+  DayBeatKind.photo => 'Photo',
+  DayBeatKind.close => 'Close',
+};
 
 /// Assemble the day's run from the live context — the curriculum [world], its
 /// [rules], and this week's [thinking] game (the headline one). Pure +
@@ -291,11 +302,13 @@ List<DayBeat> buildJourneyTour(List<CurriculumWorld> worlds) {
         big: w.name,
         sub: w.tagline,
         emoji: w.emoji,
+        color: w.color,
       ),
       DayBeat(
         kind: DayBeatKind.question,
         label: 'The question of this world',
         big: '“${w.question}”',
+        color: w.color,
       ),
     ],
     const DayBeat(

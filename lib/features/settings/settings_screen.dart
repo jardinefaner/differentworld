@@ -4,6 +4,7 @@ import 'package:differentworld/core/auth/auth_providers.dart';
 import 'package:differentworld/core/capabilities/role_labels.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/present_deck_overview_setting.dart';
 import 'package:differentworld/features/action_words/program_hub_bento_setting.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
@@ -270,6 +271,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SpellbookBentoTile(),
               const _SettingsDivider(),
               const _ProgramHubBentoTile(),
+              const _SettingsDivider(),
+              const _PresentDeckOverviewTile(),
               const _SettingsDivider(),
               const _ChildDayBentoTile(),
               const _SettingsDivider(),
@@ -563,6 +566,30 @@ class _ProgramHubBentoTile extends ConsumerWidget {
       value: on,
       onChanged: (v) =>
           unawaited(ref.read(programHubBentoProvider.notifier).set(value: v)),
+    );
+  }
+}
+
+/// Opens the journey (`/journey`) + day run (`/play-today`) as a tappable
+/// **deck overview** — a grid of beat tiles you tap to present from THAT beat —
+/// instead of dropping straight into the immersive slideshow. Off by default;
+/// reversible (the decks keep their exact immersive behaviour when off).
+class _PresentDeckOverviewTile extends ConsumerWidget {
+  const _PresentDeckOverviewTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(presentDeckOverviewProvider).value ?? false;
+    return SwitchListTile(
+      secondary: const Icon(Icons.grid_view_outlined),
+      title: const Text('Deck overview'),
+      subtitle: const Text(
+        'See journey & play-today as a tappable grid, not a slideshow',
+      ),
+      value: on,
+      onChanged: (v) => unawaited(
+        ref.read(presentDeckOverviewProvider.notifier).set(value: v),
+      ),
     );
   }
 }

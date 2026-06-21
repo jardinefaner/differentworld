@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/features/action_words/house_timer.dart';
+import 'package:differentworld/features/action_words/present_deck_overview_setting.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/widgets/beat_presenter.dart';
+import 'package:differentworld/features/action_words/widgets/deck_overview.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/today/today_providers.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -83,6 +88,46 @@ class DayRunScreen extends ConsumerWidget {
     // page when the remembered index updates.
     final resume = ref.read(dayRunResumeProvider);
 
+    void remember(int i) =>
+        ref.read(dayRunResumeProvider.notifier).remember(date: today, index: i);
+
+    final overview = bentoEnabled(
+      ref,
+      perScreen: ref.watch(presentDeckOverviewProvider).value,
+    );
+    if (overview) {
+      // The tappable grid. Tapping a tile presents the immersive run from THAT
+      // beat (the "Present from the start" CTA is just beat 0). The resume
+      // `remember` threads through so the immersive run keeps its place — and
+      // the immersive presenter's own initialBeat is the tapped index, so the
+      // overview replaces the phase/resume auto-open with an explicit pick
+      // (the phase default still drives the toggle-OFF direct-present path).
+      // `phase`/`resume` stay read above so the OFF branch below is byte-for-
+      // byte unchanged.
+      return EdgeScaffold(
+        body: DeckOverview(
+          beats: beats,
+          accent: world.color,
+          emoji: world.emoji,
+          title: world.name,
+          subtitle: 'Week ${world.week} · tap any beat to present it',
+          onPresent: (i) => unawaited(
+            context.push(
+              '/play-today/present',
+              extra: DeckPresentArgs(
+                beats: beats,
+                accent: world.color,
+                emoji: world.emoji,
+                initialBeat: i,
+                onBeatChanged: remember,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Toggle OFF — the exact prior behaviour: straight into the immersive run.
     return BeatPresenter(
       beats: beats,
       accent: world.color,
@@ -93,9 +138,7 @@ class DayRunScreen extends ConsumerWidget {
         today: today,
         resume: resume,
       ),
-      onBeatChanged: (i) => ref
-          .read(dayRunResumeProvider.notifier)
-          .remember(date: today, index: i),
+      onBeatChanged: remember,
     );
   }
 
