@@ -11,6 +11,7 @@ import 'package:differentworld/features/entries/work_sample_capture.dart';
 import 'package:differentworld/features/exports/widgets/exports_list.dart';
 import 'package:differentworld/features/family/welcome_actions.dart';
 import 'package:differentworld/features/incidents/widgets/subject_incidents_section.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/alerts_section.dart';
 import 'package:differentworld/features/subjects/widgets/attendance_strip.dart';
@@ -23,6 +24,7 @@ import 'package:differentworld/features/subjects/widgets/work_gallery.dart';
 import 'package:differentworld/features/world/character_sheet_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/collapsible_section.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -254,6 +256,19 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
 
   @override
   Widget build(BuildContext context) {
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the per-child sections re-lay as a
+    // bento: the two SHORT glanceable cards (today's status + their world
+    // self) tile 2-up, and the narrative / feed / collapsible sections stay
+    // full-width below — same providers, same taps, only the layout differs.
+    final bento = bentoEnabled(ref, perScreen: null);
+    return bento ? _bentoBody(context) : _flatBody(context);
+  }
+
+  /// The default single-column timeline — every section stacked, with the
+  /// scroll-anchored [_SectionChips] TOC at the top. Unchanged from before
+  /// the bento sweep.
+  Widget _flatBody(BuildContext context) {
     final subject = widget.subject;
     final viewer = widget.viewer;
     final theme = Theme.of(context);
@@ -566,6 +581,276 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
     );
   }
 
+  /// The bento variant — the SAME sections + providers + taps, re-weighted.
+  /// The two SHORT glanceable cards (today's status + their world self) tile
+  /// **2-up** via a [BentoGrid] (`phone: 1` → side-by-side on phone). Every
+  /// other section — alerts, the quick-observation input, the observations
+  /// feed, incidents, attendance, family, the collapsibles, and notes — stays
+  /// **full-width** below as plain children, NOT fixed-min-height tiles: the
+  /// feeds are text/photo-heavy (truncating into a half-width column reads
+  /// badly), the quick-observation is a `TextField` (a Wrap-reflowing cell
+  /// risks the focus/IME footguns), the incidents section self-suppresses
+  /// (a wide tile would impose an empty cell floor), and the collapsibles
+  /// own their own height. The scroll-anchor TOC chips are dropped here —
+  /// they jump-scroll a single column; a reflowing grid has no stable order
+  /// to anchor to.
+  Widget _bentoBody(BuildContext context) {
+    final subject = widget.subject;
+    final viewer = widget.viewer;
+    final theme = Theme.of(context);
+    final caps = Capabilities.fromJson(subject.capabilities);
+    final fullName = '${subject.firstName} ${subject.lastName}';
+    final groupId = subject.groupId;
+    final groupAsync = groupId == null
+        ? const AsyncValue<Group?>.data(null)
+        : ref.watch(_groupForDetailProvider(groupId));
+    final ageLine = _ageLine(subject.dob);
+    final entriesAsync = ref.watch(
+      entriesForSubjectProvider(
+        (subjectId: subject.id, kind: EntryKind.observation),
+      ),
+    );
+    final entries = entriesAsync.value ?? const <Entry>[];
+    final totalObservations = entries.length;
+    final showIncidents = viewer.featureIncidentReports &&
+        (viewer.canObserve || viewer.canManageSpace);
+
+    // The two short, glanceable cards pair 2-up. Both default tablet/desktop
+    // to 2, so they stay a clean half-and-half pair at every width. The world
+    // self tile only appears when there's a subject (always true here), so no
+    // self-suppression gap to worry about.
+    final glanceTiles = <BentoTile>[
+      if (groupId != null)
+        BentoTile(
+          id: 'today',
+          span: const BentoSpan(phone: 1),
+          child: _BentoSection(
+            label: 'Today',
+            child: TodayStatusCard(subjectId: subject.id, groupId: groupId),
+          ),
+        ),
+      BentoTile(
+        id: 'world-self',
+        span: const BentoSpan(phone: 1),
+        child: _BentoSection(
+          label: 'Different World',
+          child: _WorldSelfTile(
+            subjectId: subject.id,
+            firstName: subject.firstName,
+          ),
+        ),
+      ),
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 96),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ContentHeader(title: fullName, bottomGap: 4),
+        ),
+
+        // Identity row — full-width page header, not a tile.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Row(
+            children: [
+              PersonAvatar(
+                name: fullName,
+                photoUrl: subject.photoUrl,
+                radius: 36,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(fullName, style: theme.textTheme.headlineSmall),
+                    if (ageLine != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        ageLine,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    if (groupAsync.value != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        groupAsync.value!.name,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // The grid IS the phone-density win: today's status + world self
+        // tile 2-up.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: BentoGrid(tiles: glanceTiles),
+        ),
+
+        // Alerts (allergies / IEP / meds) — full-width.
+        const _SectionGap(),
+        AlertsSection(subject: subject, caps: caps),
+        if (ref.watch(verticalLabelsProvider).vertical == 'childcare')
+          HealthProfileCard(subject: subject),
+
+        // Quick-observation entry — a plain full-width child (a TextField is
+        // not safe inside a Wrap-reflowing bento cell).
+        if (viewer.canObserve && groupId != null) ...[
+          const _SectionGap(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _QuickObservation(
+              groupId: groupId,
+              subjectId: subject.id,
+            ),
+          ),
+        ],
+
+        // Observations feed — full-width (text + photo heavy).
+        const _SectionGap(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Row(
+            children: [
+              Text('Observations', style: theme.textTheme.titleSmall),
+              const Spacer(),
+              Text(
+                entriesAsync.value == null ? '' : '$totalObservations',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        entriesAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: LinearProgressIndicator(),
+          ),
+          error: (_, _) => Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(
+              'Could not load observations.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+          data: (entries) {
+            if (entries.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Text(
+                  'No observations yet.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              );
+            }
+            return Column(
+              children: [
+                for (final e in entries.take(10))
+                  SubjectObservationItem(entry: e),
+                if (entries.length > 10)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => context.push('/observations'),
+                        icon: const Icon(Icons.unfold_more, size: 16),
+                        label: Text('View all ${entries.length}'),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+
+        // Per-child incident history (self-suppressing) — full-width.
+        if (showIncidents) ...[
+          const _SectionGap(),
+          SubjectIncidentsSection(subjectId: subject.id),
+        ],
+
+        // Attendance — full-width.
+        const _SectionGap(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Text(
+            'Attendance — last 30 days',
+            style: theme.textTheme.titleSmall,
+          ),
+        ),
+        AttendanceStrip(subjectId: subject.id),
+
+        // Family — full-width.
+        const _SectionGap(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Text('Family', style: theme.textTheme.titleSmall),
+        ),
+        GuardiansList(subjectId: subject.id),
+
+        // Collapsibles own their own height — keep them full-width children.
+        const _SectionGap(),
+        CollapsibleSection(
+          title: 'Their work',
+          icon: Icons.collections_outlined,
+          initiallyExpanded: false,
+          child: WorkGallery(subjectId: subject.id),
+        ),
+        const _SectionGap(),
+        CollapsibleSection(
+          title: 'Authorized for pickup',
+          icon: Icons.directions_walk_outlined,
+          initiallyExpanded: false,
+          child: PickupList(subject: subject),
+        ),
+        const _SectionGap(),
+        CollapsibleSection(
+          title: 'Sent reports',
+          icon: Icons.picture_as_pdf_outlined,
+          initiallyExpanded: false,
+          child: ExportsListForSubject(subjectId: subject.id),
+        ),
+
+        // Notes — full-width inline editable.
+        const _SectionGap(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Text('Notes', style: theme.textTheme.titleSmall),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: InlineEditableText(
+            value: subject.notes ?? '',
+            placeholder: 'Anything to remember about ${subject.firstName}?',
+            editable: viewer.canManageSpace,
+            maxLines: 4,
+            semanticLabel: 'Notes about ${subject.firstName}',
+            style: theme.textTheme.bodyMedium,
+            onCommit: (text) => ref
+                .read(subjectActionsProvider)
+                .update(id: subject.id, notes: text),
+          ),
+        ),
+      ],
+    );
+  }
+
   static String? _ageLine(String? dobIso) {
     if (dobIso == null || dobIso.isEmpty) return null;
     final dob = DateTime.tryParse(dobIso);
@@ -599,6 +884,40 @@ class _SectionGap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SizedBox(height: 32);
+}
+
+/// A bento-cell-safe wrapper used by the 2-up glance tiles: a small section
+/// label over its content in a shrink-wrapping column. `mainAxisSize.min` is
+/// required because a bento cell is min-height / unbounded-max (docs/GRID.md)
+/// — no `Expanded` / `Spacer` here for the same reason; the cell's `minHeight`
+/// is the tile floor and the content top-aligns.
+class _BentoSection extends StatelessWidget {
+  const _BentoSection({required this.label, required this.child});
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
+          child: Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        child,
+      ],
+    );
+  }
 }
 
 /// Entry point to the child's persistent in-world self (Different World;

@@ -1,6 +1,7 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/surveys/survey_templates.dart';
 import 'package:differentworld/features/surveys/surveys_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -26,6 +27,11 @@ class SurveyIndexScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const templates = SurveyTemplates.all;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the survey rows re-lay as a dense
+    // responsive card grid (2-up on a phone) over the SAME template list; off
+    // keeps the existing single-column list of rows.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       actions: const [SyncStatusIndicator()],
       body: ResponsivePage(
@@ -38,7 +44,40 @@ class SurveyIndexScreen extends ConsumerWidget {
               subtitle: 'Short check-ins kids can answer with smileys',
             ),
           ),
-          for (final t in templates) _SurveyTemplateCard(template: t),
+          if (bento)
+            // The survey catalog is a small bounded set (templates registered
+            // in code), so a shrink-wrapped grid is fine — no virtualization
+            // needed; the builder still constructs cells on demand. 240dp max
+            // extent → 2-up on a phone with room for the (sometimes two-line)
+            // template title.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GridView.builder(
+                shrinkWrap: true,
+                primary: false,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate:
+                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 240,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  // Fixed cell height that fits the icon + a two-line title +
+                  // the meta line + the count chip at the narrow phone width.
+                  mainAxisExtent: 168,
+                ),
+                itemCount: templates.length,
+                itemBuilder: (context, i) {
+                  final t = templates[i];
+                  return _SurveyTemplateGridCard(
+                    key: ValueKey('survey-card-${t.id}'),
+                    template: t,
+                  );
+                },
+              ),
+            )
+          else
+            for (final t in templates) _SurveyTemplateCard(template: t),
         ],
       ),
     );
@@ -108,6 +147,98 @@ class _SurveyTemplateCard extends ConsumerWidget {
             const SizedBox(width: 4),
             const Icon(Icons.chevron_right),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The bento-grid variant of [_SurveyTemplateCard] — the SAME provider read +
+/// tap, re-laid as a compact vertical card so the templates tile 2-up on a
+/// phone. `mainAxisSize.min` keeps the column inside the cell's fixed extent;
+/// the title clamps to two lines.
+class _SurveyTemplateGridCard extends ConsumerWidget {
+  const _SurveyTemplateGridCard({required this.template, super.key});
+  final SurveyTemplate template;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final viewer = ref.watch(viewerProvider);
+    final spaceId = viewer.spaceId;
+    final responsesAsync = spaceId == null
+        ? const AsyncValue<List<SurveyResponse>>.data([])
+        : ref.watch(
+            surveyResponsesProvider(
+              (spaceId: spaceId, templateId: template.id),
+            ),
+          );
+    final responses = responsesAsync.value ?? const <SurveyResponse>[];
+    final completed = responses
+        .where((r) => r.status == SurveyResponseStatus.completed)
+        .length;
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/surveys/${template.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: scheme.primaryContainer,
+                foregroundColor: scheme.onPrimaryContainer,
+                child: const Icon(Icons.poll_outlined, size: 18),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                template.title,
+                style: theme.textTheme.titleSmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${template.year} · ${template.scored.length} questions',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 10),
+              // Completed-count chip — same semantics as the list row's
+              // trailing badge (one row = one response, not one per kid).
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: completed > 0
+                      ? scheme.primaryContainer.withValues(alpha: 0.7)
+                      : scheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  completed == 1 ? '1 response' : '$completed responses',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: completed > 0
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

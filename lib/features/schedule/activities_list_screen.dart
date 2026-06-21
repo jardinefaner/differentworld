@@ -2,6 +2,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/catalog_card.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -30,6 +31,11 @@ class ActivitiesListScreen extends ConsumerWidget {
     // their own activity, which contradicts the design intent.
     final viewer = ref.watch(viewerProvider);
     final canEdit = viewer.member != null;
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the catalog re-lays as a dense
+    // responsive grid over the SAME provider data; off keeps the existing
+    // CatalogGrid (which already re-packs by width).
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       actions: [
@@ -73,11 +79,14 @@ class ActivitiesListScreen extends ConsumerWidget {
                     'teachers add their own.',
               ),
               const SizedBox(height: 4),
-              CatalogGrid(
-                children: [
-                  for (final a in activities) _ActivityCard(activity: a),
-                ],
-              ),
+              if (bento)
+                _ActivitiesBentoGrid(activities: activities)
+              else
+                CatalogGrid(
+                  children: [
+                    for (final a in activities) _ActivityCard(activity: a),
+                  ],
+                ),
             ],
           );
         },
@@ -86,8 +95,48 @@ class ActivitiesListScreen extends ConsumerWidget {
   }
 }
 
+/// The bento variant — SAME activities, re-laid as a dense responsive
+/// `GridView.builder`. Activity cards are text-heavy (a description line +
+/// up to five meta chips), so a 180dp 2-up phone cell would truncate; a
+/// ~240dp max-extent keeps them 1-up on a phone and 2-up on a tablet (the
+/// GRID.md "text-heavy → wider cell" rule). The cell height grows with the
+/// text-size setting so chips never overflow a fixed-aspect box.
+class _ActivitiesBentoGrid extends StatelessWidget {
+  const _ActivitiesBentoGrid({required this.activities});
+
+  final List<Activity> activities;
+
+  @override
+  Widget build(BuildContext context) {
+    // 1.0 at the OS default; cells grow as the user scales text up.
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return GridView.builder(
+      shrinkWrap: true,
+      primary: false,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 240,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        // Generous floor: name (2 lines) + description (2 lines) + a chip
+        // run, growing with text scale so nothing clips in a fixed cell.
+        mainAxisExtent: 168 + 56 * scale,
+      ),
+      itemCount: activities.length,
+      itemBuilder: (context, i) {
+        final a = activities[i];
+        return _ActivityCard(
+          key: ValueKey('activity-${a.id}'),
+          activity: a,
+        );
+      },
+    );
+  }
+}
+
 class _ActivityCard extends ConsumerWidget {
-  const _ActivityCard({required this.activity});
+  const _ActivityCard({required this.activity, super.key});
 
   final Activity activity;
 

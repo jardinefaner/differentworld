@@ -1,5 +1,6 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -26,6 +27,12 @@ class VehiclesListScreen extends ConsumerWidget {
     final viewer = ref.watch(viewerProvider);
     final canEditFleet = viewer.canManageSpace;
     final vehiclesAsync = ref.watch(vehiclesProvider);
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). When on, the fleet re-lays as a denser 2-up
+    // phone card grid (compact vertical tiles) over the SAME provider data;
+    // off keeps the existing ResponsiveGrid (single-column phone, 2–3 up on
+    // wider screens). Loading / empty / error are identical between the two.
+    final bento = bentoEnabled(ref, perScreen: null);
 
     return EdgeScaffold(
       backFallbackRoute: '/settings',
@@ -92,13 +99,37 @@ class VehiclesListScreen extends ConsumerWidget {
                 ),
               ),
               Expanded(
-                child: ResponsiveGrid(
-                  itemCount: vehicles.length,
-                  // Vehicle tiles are tall (photo + name + status +
-                  // driver row). Adjust aspect so they don't squash.
-                  aspectRatio: 1.4,
-                  itemBuilder: (_, i) => _VehicleTile(vehicle: vehicles[i]),
-                ),
+                child: bento
+                    // Bento sweep: a denser max-extent grid — 2-up on a phone
+                    // for the compact vertical tiles, more across wider
+                    // screens. A lazy `GridView.builder` (the fleet can grow),
+                    // so it virtualizes; ContentHeader stays the sibling above.
+                    ? GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 180,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          // Compact tile: icon row + name + chips + status.
+                          // A fixed cell that fits all four at the narrow
+                          // phone width without overflow.
+                          mainAxisExtent: 156,
+                        ),
+                        itemCount: vehicles.length,
+                        itemBuilder: (_, i) => _VehicleGridCard(
+                          key: ValueKey('vehicle-card-${vehicles[i].id}'),
+                          vehicle: vehicles[i],
+                        ),
+                      )
+                    : ResponsiveGrid(
+                        itemCount: vehicles.length,
+                        // Vehicle tiles are tall (photo + name + status +
+                        // driver row). Adjust aspect so they don't squash.
+                        aspectRatio: 1.4,
+                        itemBuilder: (_, i) =>
+                            _VehicleTile(vehicle: vehicles[i]),
+                      ),
               ),
             ],
           );
@@ -182,6 +213,117 @@ class _VehicleTile extends ConsumerWidget {
               : const Icon(Icons.chevron_right),
       onTap: () =>
           context.push('/vehicles/${vehicle.id}'),
+    );
+  }
+}
+
+/// The bento-grid variant of [_VehicleTile] — the SAME provider read, chips,
+/// and tap, re-laid as a compact vertical card so the fleet tiles 2-up on a
+/// phone. `mainAxisSize.min` keeps the column inside the cell's fixed extent;
+/// the name clamps to one line and only the first two chips show (a 2-up phone
+/// cell can't hold four without wrapping past the floor).
+class _VehicleGridCard extends ConsumerWidget {
+  const _VehicleGridCard({required this.vehicle, super.key});
+
+  final Vehicle vehicle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final latestAsync = ref.watch(latestVehicleLogProvider(vehicle.id));
+    final isOut = latestAsync.value?.isCheckout ?? false;
+    final stateUnknown = latestAsync.isLoading && latestAsync.value == null;
+
+    final chips = <Widget>[
+      if (vehicle.year != null) _MetaChip(label: vehicle.year!.toString()),
+      if (vehicle.make != null && vehicle.make!.isNotEmpty)
+        _MetaChip(label: vehicle.make!),
+      if (vehicle.model != null && vehicle.model!.isNotEmpty)
+        _MetaChip(label: vehicle.model!),
+      if (vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty)
+        _MetaChip(label: vehicle.licensePlate!.toUpperCase(), emphasis: true),
+    ];
+
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/vehicles/${vehicle.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: isOut
+                        ? scheme.tertiaryContainer
+                        : scheme.surfaceContainerHigh,
+                    child: Icon(
+                      isOut
+                          ? Icons.local_shipping_outlined
+                          : Icons.directions_bus_outlined,
+                      size: 18,
+                      color: isOut
+                          ? scheme.onTertiaryContainer
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Status badge mirrors the list row's trailing — Out pill,
+                  // skeleton while the latest log is still loading, nothing
+                  // when checked in (absence is the "in" cue).
+                  if (stateUnknown)
+                    const SkeletonShimmer(
+                      child: SkeletonBox(width: 30, height: 20, radius: 10),
+                    )
+                  else if (isOut)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: scheme.tertiaryContainer,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'Out',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onTertiaryContainer,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                vehicle.name,
+                style: theme.textTheme.titleSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (chips.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                // Cap at two chips so the cluster never wraps past the cell's
+                // fixed floor at the narrow phone width; the plate (emphasis)
+                // is sorted last in the source list so a normal year/make pair
+                // shows first.
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: chips.take(2).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
