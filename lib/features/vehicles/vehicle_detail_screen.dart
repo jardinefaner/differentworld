@@ -4,6 +4,8 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
@@ -450,8 +452,27 @@ class _LogRow extends ConsumerWidget {
                 : Icons.assignment_turned_in_outlined,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          title: Text(
-            '${isCheckout ? 'Checked out' : 'Checked in'} · $driverName',
+          title: Row(
+            children: [
+              Text('${isCheckout ? 'Checked out' : 'Checked in'} · '),
+              if (memberAsync.value != null)
+                Flexible(
+                  child: EntityLink(
+                    entity: EntityRef(
+                      kind: EntityKind.member,
+                      id: log.driverMemberId,
+                      label: driverName,
+                    ),
+                    padded: false,
+                    style: theme.textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )
+              else
+                Flexible(
+                  child: Text(driverName, overflow: TextOverflow.ellipsis),
+                ),
+            ],
           ),
           subtitle: Text(
             [
