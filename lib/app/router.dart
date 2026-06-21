@@ -110,6 +110,8 @@ import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
+import 'package:differentworld/features/pickup/pickup_person_edit_screen.dart';
+import 'package:differentworld/features/pickup/pickup_providers.dart';
 import 'package:differentworld/features/poster/poster_screen.dart';
 import 'package:differentworld/features/recap/recap_composer_screen.dart';
 import 'package:differentworld/features/reflections/reflection_session_screen.dart';
@@ -828,6 +830,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                   title: 'Trail',
                   child: ChildTrailScreen(
                     subjectId: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+              // Add / edit one of a child's pickup people — a page, not a
+              // sheet (CLAUDE.md "No modal is a task"). `existing` rides
+              // `extra`; the screen pops the built PickupPerson back to the
+              // child's PickupList, which saves it.
+              GoRoute(
+                path: 'subjects/:id/pickup-person',
+                builder: (_, state) => RouteTitle(
+                  title: 'Pickup person',
+                  child: PickupPersonEditScreen(
+                    subjectId: state.pathParameters['id']!,
+                    existing: state.extra as PickupPerson?,
                   ),
                 ),
               ),

@@ -1,13 +1,16 @@
-import 'dart:async';
-
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
-import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+/// A child's additional pickup people. Add / edit each one on the
+/// `/subjects/:id/pickup-person` PAGE (`PickupPersonEditScreen`) — not a
+/// sheet (CLAUDE.md "No modal is a task"). The page pops a [PickupPerson] back
+/// here; this widget owns the list math (insert / replace / remove) and the
+/// save through [pickupActionsProvider].
 class PickupList extends ConsumerWidget {
   const PickupList({required this.subject, super.key});
 
@@ -20,7 +23,10 @@ class PickupList extends ConsumerWidget {
   }) async {
     final all = pickupPeopleFor(subject);
     final existing = editIndex == null ? null : all[editIndex];
-    final result = await PickupPersonSheet.show(context, existing: existing);
+    final result = await context.push<PickupPerson>(
+      '/subjects/${subject.id}/pickup-person',
+      extra: existing,
+    );
     if (result == null) return;
     final next = [...all];
     if (editIndex == null) {
@@ -80,8 +86,7 @@ class PickupList extends ConsumerWidget {
                       IconButton(
                         tooltip: 'Edit',
                         icon: const Icon(Icons.edit_outlined, size: 20),
-                        onPressed: () =>
-                            _addOrEdit(context, ref, editIndex: i),
+                        onPressed: () => _addOrEdit(context, ref, editIndex: i),
                       ),
                       IconButton(
                         tooltip: 'Remove',
@@ -95,7 +100,9 @@ class PickupList extends ConsumerWidget {
                     ],
                   )
                 : null,
-            onTap: canEdit ? () => _addOrEdit(context, ref, editIndex: i) : null,
+            onTap: canEdit
+                ? () => _addOrEdit(context, ref, editIndex: i)
+                : null,
           ),
         if (canEdit)
           Padding(
@@ -110,141 +117,6 @@ class PickupList extends ConsumerWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class PickupPersonSheet extends StatefulWidget {
-  const PickupPersonSheet({super.key, this.existing});
-
-  final PickupPerson? existing;
-
-  static Future<PickupPerson?> show(
-    BuildContext context, {
-    PickupPerson? existing,
-  }) {
-    return showGlassSheet<PickupPerson>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => PickupPersonSheet(existing: existing),
-    );
-  }
-
-  @override
-  State<PickupPersonSheet> createState() => PickupPersonSheetState();
-}
-
-class PickupPersonSheetState extends State<PickupPersonSheet> {
-  late final TextEditingController _name;
-  late final TextEditingController _phone;
-  late final TextEditingController _notes;
-
-  @override
-  void initState() {
-    super.initState();
-    _name = TextEditingController(text: widget.existing?.name ?? '');
-    _phone = TextEditingController(text: widget.existing?.phone ?? '');
-    _notes = TextEditingController(text: widget.existing?.notes ?? '');
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _phone.dispose();
-    _notes.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    final name = _name.text.trim();
-    if (name.isEmpty) return;
-    final phone = _phone.text.trim();
-    final notes = _notes.text.trim();
-    Navigator.of(context).pop(
-      PickupPerson(
-        name: name,
-        phone: phone.isEmpty ? null : phone,
-        notes: notes.isEmpty ? null : notes,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.only(bottom: keyboardInset),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const GlassDragHandle(bottomMargin: 16),
-              Text(
-                widget.existing == null ? 'Add pickup person' : 'Edit pickup person',
-                style: theme.textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _name,
-                autofocus: widget.existing == null,
-                textCapitalization: TextCapitalization.words,
-                // Wave 115: pickup people often come from a parent's
-                // address book — autofill suggestions cut a lot of
-                // typing when grandma / babysitter / neighbor is
-                // being added.
-                autofillHints: const [AutofillHints.name],
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _phone,
-                keyboardType: TextInputType.phone,
-                autofillHints: const [
-                  AutofillHints.telephoneNumber,
-                ],
-                decoration: const InputDecoration(
-                  labelText: 'Phone (optional)',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _notes,
-                textCapitalization: TextCapitalization.sentences,
-                minLines: 2,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (e.g. "Picks up Wednesdays")',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _save,
-                    icon: const Icon(Icons.check),
-                    label: const Text('Save'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
