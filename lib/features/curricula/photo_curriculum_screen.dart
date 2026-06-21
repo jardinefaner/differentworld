@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -31,16 +33,18 @@ import 'package:go_router/go_router.dart';
 ///   2. **Vocabulary Journey** — the same 30 photography terms
 ///      grouped by which session they surface in. Closes with the
 ///      "they discovered ~30 terms" hero + a sample certificate.
-class PhotoCurriculumScreen extends StatefulWidget {
+class PhotoCurriculumScreen extends ConsumerStatefulWidget {
   const PhotoCurriculumScreen({super.key});
 
   @override
-  State<PhotoCurriculumScreen> createState() => _PhotoCurriculumScreenState();
+  ConsumerState<PhotoCurriculumScreen> createState() =>
+      _PhotoCurriculumScreenState();
 }
 
 enum _CurriculumView { sessions, vocabulary }
 
-class _PhotoCurriculumScreenState extends State<PhotoCurriculumScreen> {
+class _PhotoCurriculumScreenState
+    extends ConsumerState<PhotoCurriculumScreen> {
   /// Currently shown session index (0..5). Persisted only in widget
   /// state — opening the screen always starts at session 1.
   int _sessionIndex = 0;
@@ -64,6 +68,13 @@ class _PhotoCurriculumScreenState extends State<PhotoCurriculumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle). The per-session PLAN is a deep narrative reading
+    // flow (a TOC-detail — a grid anti-pattern, docs/GRID.md), so it's
+    // untouched by the toggle. Only the **Vocabulary journey** re-lays: its
+    // six short stop cards pack into a 2-up grid when bento is on; the intro,
+    // total-vocab hero, and certificate stay full-width.
+    final bento = bentoEnabled(ref, perScreen: null);
     return EdgeScaffold(
       backFallbackRoute: '/settings',
       // ResponsivePage caps the column at 1200dp + scales the side padding
@@ -101,7 +112,7 @@ class _PhotoCurriculumScreenState extends State<PhotoCurriculumScreen> {
               onToggleAi: _toggleAi,
             )
           else
-            const _VocabBody(),
+            _VocabBody(bento: bento),
         ],
       ),
     );
@@ -714,7 +725,11 @@ class _TermChip extends StatelessWidget {
 // ───────────────────────────────────────────────────────────────────
 
 class _VocabBody extends StatelessWidget {
-  const _VocabBody();
+  const _VocabBody({this.bento = false});
+
+  /// When true the six vocab stops re-lay as a 2-up bento grid (over the SAME
+  /// `vocabJourney` data); the intro, total, and certificate stay full-width.
+  final bool bento;
 
   @override
   Widget build(BuildContext context) {
@@ -742,11 +757,31 @@ class _VocabBody extends StatelessWidget {
             ),
           ),
         ),
-        for (var i = 0; i < vocabJourney.length; i++)
-          _VocabStopCard(
-            session: photoCurriculum[i],
-            stop: vocabJourney[i],
-          ),
+        if (bento)
+          // The six stops re-pack as a 2-up grid on a phone (`phone: 1`),
+          // 2-up on a tablet, 3-up on desktop. A bento cell is min-height
+          // (docs/GRID.md), so a stop with many term chips grows the cell
+          // instead of clipping — the chips wrap and the note stays readable.
+          BentoGrid(
+            tiles: [
+              for (var i = 0; i < vocabJourney.length; i++)
+                BentoTile(
+                  id: 'vocab-stop-${photoCurriculum[i].slug}',
+                  span: const BentoSpan(phone: 1),
+                  child: _VocabStopCard(
+                    session: photoCurriculum[i],
+                    stop: vocabJourney[i],
+                    inGrid: true,
+                  ),
+                ),
+            ],
+          )
+        else
+          for (var i = 0; i < vocabJourney.length; i++)
+            _VocabStopCard(
+              session: photoCurriculum[i],
+              stop: vocabJourney[i],
+            ),
         const SizedBox(height: 4),
         SectionCard(
           tone: SectionCardTone.featured,
@@ -792,15 +827,24 @@ class _VocabBody extends StatelessWidget {
 }
 
 class _VocabStopCard extends StatelessWidget {
-  const _VocabStopCard({required this.session, required this.stop});
+  const _VocabStopCard({
+    required this.session,
+    required this.stop,
+    this.inGrid = false,
+  });
 
   final PhotoSession session;
   final VocabStop stop;
+
+  /// When true the card is a bento grid cell — drop the [SectionCard]'s
+  /// trailing gap (the grid owns the inter-tile spacing).
+  final bool inGrid;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SectionCard(
+      bottomGap: inGrid ? 0 : 16,
       title: Row(
         children: [
           Container(

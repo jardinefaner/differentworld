@@ -6,10 +6,12 @@ import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/vehicles/inspection_checklist.dart';
 import 'package:differentworld/features/vehicles/vehicle_qr_pdf.dart';
 import 'package:differentworld/features/vehicles/vehicles_providers.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
@@ -31,13 +33,13 @@ class VehicleDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final viewer = ref.watch(viewerProvider);
     final canEdit = viewer.canManageSpace;
     final canDrive = viewer.canDrive;
     final vehicleAsync = ref.watch(vehicleByIdProvider(vehicleId));
+    // Drives the inline "Check out / Check in" action label; the body
+    // re-watches the same provider for its status banner (Riverpod dedupes).
     final latestAsync = ref.watch(latestVehicleLogProvider(vehicleId));
-    final logsAsync = ref.watch(vehicleLogsProvider(vehicleId));
 
     final isOut = latestAsync.value?.isCheckout ?? false;
     // Wave 113: dynamic tab title — the vehicle's name (e.g. "Big
@@ -101,84 +103,106 @@ class VehicleDetailScreen extends ConsumerWidget {
               title: 'Vehicle not found',
             );
           }
-          return ListView(
-            // Shell reserves top + bottom chrome.
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              ContentHeader(
-                title: v.name,
-                subtitle: _subtitleFor(v),
-              ),
-              _StatusBanner(
-                vehicle: v,
-                latest: latestAsync.value,
-              ),
-              if (!canDrive) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 18,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Check-out requires the Driver certification. '
-                          'Ask a director to add it on your Team profile.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              Text('Recent activity', style: theme.textTheme.titleSmall),
-              const SizedBox(height: 4),
-              logsAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: LinearProgressIndicator(),
-                ),
-                error: (_, _) => Text(
-                  'Could not load history.',
-                  style: theme.textTheme.bodySmall,
-                ),
-                data: (logs) {
-                  if (logs.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        'No check-outs yet.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    );
-                  }
-                  return Column(
-                    children: [
-                      for (final log in logs)
-                        _LogRow(log: log),
-                    ],
-                  );
-                },
-              ),
-            ],
-          );
+          return _VehicleBody(vehicle: v, canDrive: canDrive);
         },
       ),
     ),
+    );
+  }
+}
+
+/// The detail body: status banner + (gated) driver-cert note + the recent
+/// activity log. Re-laid out as a bento under the "Bento everywhere" switch;
+/// the flat single-column stack otherwise. Same providers, same taps either way.
+class _VehicleBody extends ConsumerWidget {
+  const _VehicleBody({required this.vehicle, required this.canDrive});
+
+  final Vehicle vehicle;
+  final bool canDrive;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Part of the "Bento everywhere" sweep — gated ONLY on the global switch
+    // (no per-screen toggle).
+    final bento = bentoEnabled(ref, perScreen: null);
+    return bento ? _bentoBody(context, ref) : _flatBody(context, ref);
+  }
+
+  /// The default single-column layout — unchanged from before the bento sweep.
+  Widget _flatBody(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final v = vehicle;
+    final latestAsync = ref.watch(latestVehicleLogProvider(v.id));
+    final logsAsync = ref.watch(vehicleLogsProvider(v.id));
+    return ListView(
+      // Shell reserves top + bottom chrome.
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      children: [
+        ContentHeader(
+          title: v.name,
+          subtitle: _subtitleFor(v),
+        ),
+        _StatusBanner(
+          vehicle: v,
+          latest: latestAsync.value,
+        ),
+        if (!canDrive) ...[
+          const SizedBox(height: 12),
+          const _DriverCertNote(),
+        ],
+        const SizedBox(height: 24),
+        Text('Recent activity', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        _RecentActivity(logsAsync: logsAsync),
+      ],
+    );
+  }
+
+  /// The bento variant — the SAME sections, re-weighted. The two SHORT
+  /// glanceable cards (the in/out status banner and the gated driver-cert
+  /// note) tile **2-up** via a [BentoGrid] (`phone: 1` → side-by-side on
+  /// phone); the recent-activity log stays **full-width** below as a plain
+  /// child, NOT a tile, because the feed is text + photo heavy (a half-width
+  /// column truncates the driver/odometer line and the photo strip badly).
+  /// When the viewer can drive, the cert note is absent and the status banner
+  /// simply takes the left half — a lone short tile, which the grid handles.
+  Widget _bentoBody(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final v = vehicle;
+    final latestAsync = ref.watch(latestVehicleLogProvider(v.id));
+    final logsAsync = ref.watch(vehicleLogsProvider(v.id));
+
+    final glanceTiles = <BentoTile>[
+      BentoTile(
+        id: 'status',
+        span: const BentoSpan(phone: 1),
+        child: _StatusBanner(vehicle: v, latest: latestAsync.value),
+      ),
+      if (!canDrive)
+        const BentoTile(
+          id: 'driver-cert',
+          span: BentoSpan(phone: 1),
+          child: _DriverCertNote(),
+        ),
+    ];
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      children: [
+        ContentHeader(
+          title: v.name,
+          subtitle: _subtitleFor(v),
+        ),
+        const SizedBox(height: 8),
+        // The grid IS the phone-density win: status + the gated cert note
+        // tile 2-up.
+        BentoGrid(tiles: glanceTiles),
+        const SizedBox(height: 24),
+        // Recent activity — full-width (text + photo heavy).
+        Text('Recent activity', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        _RecentActivity(logsAsync: logsAsync),
+      ],
     );
   }
 
@@ -190,6 +214,87 @@ class VehicleDetailScreen extends ConsumerWidget {
       if ((v.licensePlate ?? '').isNotEmpty) v.licensePlate!.toUpperCase(),
     ];
     return parts.isEmpty ? null : parts.join(' · ');
+  }
+}
+
+/// The "you need the Driver certification" note — shown to a viewer who can't
+/// drive. Extracted so it can be a bento tile child AND a flat-body child. A
+/// shrink-wrapping `Container` (no `Expanded`/`Spacer`) — bento-cell-safe
+/// against the cell's unbounded max height (docs/GRID.md).
+class _DriverCertNote extends StatelessWidget {
+  const _DriverCertNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Check-out requires the Driver certification. '
+              'Ask a director to add it on your Team profile.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The recent-activity log feed (loading / error / empty / data). Extracted so
+/// both body variants render the same full-width feed.
+class _RecentActivity extends StatelessWidget {
+  const _RecentActivity({required this.logsAsync});
+
+  final AsyncValue<List<VehicleLog>> logsAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return logsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: LinearProgressIndicator(),
+      ),
+      error: (_, _) => Text(
+        'Could not load history.',
+        style: theme.textTheme.bodySmall,
+      ),
+      data: (logs) {
+        if (logs.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'No check-outs yet.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+        return Column(
+          children: [
+            for (final log in logs) _LogRow(log: log),
+          ],
+        );
+      },
+    );
   }
 }
 
