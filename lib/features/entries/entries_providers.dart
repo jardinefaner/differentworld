@@ -92,11 +92,15 @@ class EntryActions {
     List<String> photoIds = const [],
     String? worldId,
     int? day,
+    String? role,
     String? id,
   }) async {
     final details = <String, dynamic>{
       'world_id': ?worldId,
       'day': ?day,
+      // The ROLE this piece was made practising (role-card capture), so the
+      // trail/role-card can count "was a Bee 4x this week". Null for general work.
+      'role': ?role,
     };
     final entryId = await _create(
       kind: EntryKind.workSample,

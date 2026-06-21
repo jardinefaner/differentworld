@@ -26,6 +26,7 @@ Future<void> snapWork(
   required String subjectId,
   required String groupId,
   required String subjectName,
+  String? role,
 }) async {
   // Capture context-dependent handles BEFORE the first await.
   final messenger = ScaffoldMessenger.maybeOf(context);
@@ -53,6 +54,7 @@ Future<void> snapWork(
           photoIds: [attId],
           worldId: world?.id,
           day: day,
+          role: role,
         );
     messenger?.showSnackBar(
       SnackBar(content: Text("Saved to $subjectName's work")),

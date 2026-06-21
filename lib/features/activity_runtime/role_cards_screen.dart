@@ -193,6 +193,33 @@ class _RoleCardFace extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
+            // The growth read — how many times this child has practised THIS
+            // role (counted off the role tag every capture writes). Only when
+            // opened for a child, and only once they've made something.
+            if (subject case final s?)
+              Consumer(
+                builder: (context, ref, _) {
+                  final n = ref.watch(
+                    rolePracticeCountProvider(
+                      (subjectId: s.subjectId, roleName: role.name),
+                    ),
+                  );
+                  if (n == 0) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Center(
+                      child: Text(
+                        '${s.subjectName} has practised this '
+                        '${n == 1 ? 'once' : '$n times'}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             const SizedBox(height: 20),
             _SectionLabel(label: 'My 3 habits', color: muted),
             const SizedBox(height: 8),
@@ -217,7 +244,11 @@ class _RoleCardFace extends StatelessWidget {
             // capture lands straight in their cumulative work. docs/VISION.md
             // 2026-06-20 — every role ships the tools to practise it.
             for (final artifact in role.artifacts)
-              _ArtifactTool(artifact: artifact, subject: subject),
+              _ArtifactTool(
+                artifact: artifact,
+                subject: subject,
+                roleName: role.name,
+              ),
             const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: () => unawaited(
@@ -258,9 +289,14 @@ class _RoleCardFace extends StatelessWidget {
 /// extra presses. Without one (catalog browse), the tap nudges to open the
 /// role from a child's world.
 class _ArtifactTool extends ConsumerWidget {
-  const _ArtifactTool({required this.artifact, this.subject});
+  const _ArtifactTool({
+    required this.artifact,
+    required this.roleName,
+    this.subject,
+  });
 
   final String artifact;
+  final String roleName;
   final RoleSubject? subject;
 
   @override
@@ -288,7 +324,13 @@ class _ArtifactTool extends ConsumerWidget {
               return;
             }
             unawaited(
-              captureRoleArtifact(context, ref, subject: s, artifact: artifact),
+              captureRoleArtifact(
+                context,
+                ref,
+                subject: s,
+                artifact: artifact,
+                roleName: roleName,
+              ),
             );
           },
           child: Padding(

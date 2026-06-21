@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
@@ -50,6 +52,37 @@ enum RoleToolKind { snap, draw, note }
   return (icon: Icons.edit_note_outlined, label: 'Note', kind: RoleToolKind.note);
 }
 
+/// How many pieces a child has made while practising a given role (all-time) —
+/// counted off the `role` tag every role capture now writes into the
+/// work_sample's details. Drives the "practised this N times" growth read on the
+/// role card. Derived from the already-watched per-subject stream, so it's free.
+// ignore: specify_nonobvious_property_types
+final rolePracticeCountProvider = Provider.autoDispose
+    .family<int, ({String subjectId, String roleName})>((ref, key) {
+      final samples =
+          ref
+              .watch(
+                entriesForSubjectProvider(
+                  (subjectId: key.subjectId, kind: EntryKind.workSample),
+                ),
+              )
+              .value ??
+          const <Entry>[];
+      var n = 0;
+      for (final e in samples) {
+        final raw = e.details.trim();
+        if (raw.isEmpty) continue;
+        try {
+          if ((jsonDecode(raw) as Map<String, dynamic>)['role'] == key.roleName) {
+            n++;
+          }
+        } on Object catch (_) {
+          // Malformed details — skip, don't crash the count.
+        }
+      }
+      return n;
+    });
+
 /// Run the artifact's tool IMMEDIATELY for [subject] — one tap, no form. Each
 /// result lands as a `work_sample` entry tagged to the child + today's
 /// world/day, so it accrues in their cumulative trail (docs/VISION.md — every
@@ -59,6 +92,7 @@ Future<void> captureRoleArtifact(
   WidgetRef ref, {
   required RoleSubject subject,
   required String artifact,
+  required String roleName,
 }) {
   switch (roleToolFor(artifact).kind) {
     case RoleToolKind.snap:
@@ -69,21 +103,26 @@ Future<void> captureRoleArtifact(
         subjectId: subject.subjectId,
         groupId: subject.groupId,
         subjectName: subject.subjectName,
+        role: roleName,
       );
     case RoleToolKind.draw:
-      return _captureDraw(context, subject);
+      return _captureDraw(context, subject, roleName);
     case RoleToolKind.note:
-      return _captureNote(context, subject, artifact);
+      return _captureNote(context, subject, artifact, roleName);
   }
 }
 
 /// On-screen drawing → a work_sample. Pushed on the ROOT navigator so the shell
 /// chrome doesn't float over the full-bleed canvas (the RevealOverlay pattern).
-Future<void> _captureDraw(BuildContext context, RoleSubject subject) {
+Future<void> _captureDraw(
+  BuildContext context,
+  RoleSubject subject,
+  String roleName,
+) {
   return Navigator.of(context, rootNavigator: true).push<void>(
     MaterialPageRoute<void>(
       fullscreenDialog: true,
-      builder: (_) => _RoleDrawScreen(subject: subject),
+      builder: (_) => _RoleDrawScreen(subject: subject, roleName: roleName),
     ),
   );
 }
@@ -94,19 +133,23 @@ Future<void> _captureNote(
   BuildContext context,
   RoleSubject subject,
   String artifact,
+  String roleName,
 ) {
   return showGlassSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _RoleNoteSheet(subject: subject, prompt: artifact),
+    builder: (_) =>
+        _RoleNoteSheet(subject: subject, prompt: artifact, roleName: roleName),
   );
 }
 
-/// Shared save: a caption-only work_sample tagged to the child + world/day.
+/// Shared save: a caption-only work_sample tagged to the child + world/day +
+/// the role being practised.
 Future<void> _saveNote(
   WidgetRef ref, {
   required RoleSubject subject,
   required String caption,
+  required String role,
 }) {
   final world = ref.read(currentWorldProvider);
   final day = ref.read(currentProgramDayProvider);
@@ -118,14 +161,20 @@ Future<void> _saveNote(
         caption: caption,
         worldId: world?.id,
         day: day,
+        role: role,
       );
 }
 
 class _RoleNoteSheet extends ConsumerStatefulWidget {
-  const _RoleNoteSheet({required this.subject, required this.prompt});
+  const _RoleNoteSheet({
+    required this.subject,
+    required this.prompt,
+    required this.roleName,
+  });
 
   final RoleSubject subject;
   final String prompt;
+  final String roleName;
 
   @override
   ConsumerState<_RoleNoteSheet> createState() => _RoleNoteSheetState();
@@ -148,7 +197,12 @@ class _RoleNoteSheetState extends ConsumerState<_RoleNoteSheet> {
     final nav = Navigator.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
     unawaited(HapticFeedback.selectionClick());
-    await _saveNote(ref, subject: widget.subject, caption: text);
+    await _saveNote(
+      ref,
+      subject: widget.subject,
+      caption: text,
+      role: widget.roleName,
+    );
     if (!mounted) return;
     nav.pop();
     messenger?.showSnackBar(
@@ -217,9 +271,10 @@ class _RoleNoteSheetState extends ConsumerState<_RoleNoteSheet> {
 }
 
 class _RoleDrawScreen extends ConsumerStatefulWidget {
-  const _RoleDrawScreen({required this.subject});
+  const _RoleDrawScreen({required this.subject, required this.roleName});
 
   final RoleSubject subject;
+  final String roleName;
 
   @override
   ConsumerState<_RoleDrawScreen> createState() => _RoleDrawScreenState();
@@ -275,6 +330,7 @@ class _RoleDrawScreenState extends ConsumerState<_RoleDrawScreen> {
             photoIds: [attId],
             worldId: world?.id,
             day: day,
+            role: widget.roleName,
           );
       if (!mounted) return;
       nav.pop();
