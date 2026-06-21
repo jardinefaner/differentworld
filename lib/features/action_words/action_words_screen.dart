@@ -200,7 +200,11 @@ class _KidRow extends ConsumerWidget {
         // Long-press → the child's world collection over time.
         onLongPress: () => context.push('/action-words/${subject.id}'),
         leading: _Leading(match: match),
-        title: Text(fullName),
+        title: Text(
+          fullName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         subtitle: hasPicks
             ? Text(
                 verbsByIds(picks).map((v) => v.emoji).join('  '),
@@ -219,6 +223,9 @@ class _KidRow extends ConsumerWidget {
             IconButton(
               tooltip: 'Let ${subject.firstName} pick',
               icon: const Icon(Icons.front_hand_outlined),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               onPressed: () =>
                   unawaited(context.push('/action-words/pick/${subject.id}')),
             ),
@@ -228,6 +235,9 @@ class _KidRow extends ConsumerWidget {
               IconButton(
                 tooltip: 'Hand ${subject.firstName} their jobs',
                 icon: const Icon(Icons.assignment_turned_in_outlined),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                 onPressed: () =>
                     unawaited(context.push('/action-words/job/${subject.id}')),
               ),
@@ -235,6 +245,9 @@ class _KidRow extends ConsumerWidget {
                 tooltip: 'Reveal ${subject.firstName}’s world',
                 icon: const Icon(Icons.auto_awesome),
                 color: WorldBadge.goldFor(theme),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                 onPressed: () => RevealOverlay.show(
                   context,
                   subject: subject,

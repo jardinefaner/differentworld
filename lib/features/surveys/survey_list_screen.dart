@@ -178,66 +178,37 @@ class _SurveyTemplateGridCard extends ConsumerWidget {
     final completed = responses
         .where((r) => r.status == SurveyResponseStatus.completed)
         .length;
-    return Material(
-      color: scheme.surfaceContainerHighest,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/surveys/${template.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: scheme.primaryContainer,
-                foregroundColor: scheme.onPrimaryContainer,
-                child: const Icon(Icons.poll_outlined, size: 18),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                template.title,
-                style: theme.textTheme.titleSmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${template.year} · ${template.scored.length} questions',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 10),
-              // Completed-count chip — same semantics as the list row's
-              // trailing badge (one row = one response, not one per kid).
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: completed > 0
-                      ? scheme.primaryContainer.withValues(alpha: 0.7)
-                      : scheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  completed == 1 ? '1 response' : '$completed responses',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: completed > 0
-                        ? scheme.onPrimaryContainer
-                        : scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ],
+    // Use the same FeatureCard primitive as the list variant so the bento
+    // grid matches the list. The completed-count chip rides as the trailing
+    // badge — identical semantics to the list row (one row = one response).
+    return FeatureCard(
+      onTap: () => context.push('/surveys/${template.id}'),
+      leading: CircleAvatar(
+        backgroundColor: scheme.primaryContainer,
+        foregroundColor: scheme.onPrimaryContainer,
+        child: const Icon(Icons.poll_outlined),
+      ),
+      title: template.title,
+      subtitle: '${template.year} · ${template.scored.length} questions',
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: completed > 0
+              ? scheme.primaryContainer.withValues(alpha: 0.7)
+              : scheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          '$completed',
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: completed > 0
+                ? scheme.onPrimaryContainer
+                : scheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ),

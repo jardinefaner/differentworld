@@ -399,6 +399,8 @@ class _IssueChip extends StatelessWidget {
     final isUnsafe = status == InspectionStatus.unsafe;
     final color =
         isUnsafe ? theme.colorScheme.error : theme.colorScheme.tertiary;
+    final onColor =
+        isUnsafe ? theme.colorScheme.onError : theme.colorScheme.onTertiary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -408,7 +410,7 @@ class _IssueChip extends StatelessWidget {
       child: Text(
         isUnsafe ? 'Unsafe' : 'Needs repair',
         style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onError,
+          color: onColor,
         ),
       ),
     );

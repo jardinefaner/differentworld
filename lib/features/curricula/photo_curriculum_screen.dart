@@ -320,7 +320,7 @@ class _SessionBody extends StatelessWidget {
                       session.title,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         height: 1.15,
                       ),
                     ),
@@ -796,7 +796,7 @@ class _VocabBody extends StatelessWidget {
                   '~${allTerms.length}',
                   style: theme.textTheme.displaySmall?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -859,7 +859,7 @@ class _VocabStopCard extends StatelessWidget {
               '${session.number}',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: session.color,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -938,7 +938,7 @@ class _SampleCertificate extends StatelessWidget {
           Text(
             'Maya, age 6',
             style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 10),
