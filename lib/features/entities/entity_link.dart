@@ -1,0 +1,82 @@
+import 'package:differentworld/features/entities/entity_peek.dart';
+import 'package:differentworld/features/entities/entity_providers.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// The tint + weight a linked entity's text wears, so a structured [EntityLink]
+/// and an autotagged span in `LinkifiedText` look identical. The accent is
+/// content-driven; [readableEntityTint] keeps it AA in both light and dark.
+TextStyle entityInlineTextStyle(
+  BuildContext context,
+  EntityKind kind, {
+  TextStyle? base,
+}) {
+  final tint = readableEntityTint(kind.accent, Theme.of(context).brightness);
+  return (base ?? const TextStyle())
+      .copyWith(color: tint, fontWeight: FontWeight.w500);
+}
+
+/// A STRUCTURED entity reference — a place that already knows the id (a roster
+/// row's name, a block's activity, a trip's vehicle). Renders the label as a
+/// tappable tinted chip that opens [showEntityPeek]. When live entities are
+/// switched off it degrades to plain [Text], so call sites never branch.
+class EntityLink extends ConsumerWidget {
+  const EntityLink({
+    required this.entity,
+    this.style,
+    this.padded = true,
+    this.maxLines,
+    this.overflow,
+    super.key,
+  });
+
+  final EntityRef entity;
+
+  /// Base text style; the tint + weight are layered on.
+  final TextStyle? style;
+
+  /// `true` → a soft tinted pill (a standalone chip). `false` → bare tinted
+  /// text (inline next to other words).
+  final bool padded;
+
+  /// Forwarded to the inner [Text] so the chip is safe in a constrained slot
+  /// (e.g. a grid-card header that caps the name at one line).
+  final int? maxLines;
+  final TextOverflow? overflow;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!liveEntitiesOn(ref)) {
+      return Text(entity.label,
+          style: style, maxLines: maxLines, overflow: overflow);
+    }
+    final theme = Theme.of(context);
+    final accent = entity.kind.accent;
+    final label = Text(
+      entity.label,
+      style: entityInlineTextStyle(context, entity.kind, base: style),
+      maxLines: maxLines,
+      overflow: overflow,
+    );
+    final inner = padded
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: entityChipFill(accent, theme.brightness),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: label,
+          )
+        : label;
+    return Semantics(
+      button: true,
+      label: '${entity.label}, ${entity.kind.noun}',
+      child: InkWell(
+        onTap: () => showEntityPeek(context, entity),
+        borderRadius: BorderRadius.circular(5),
+        child: inner,
+      ),
+    );
+  }
+}

@@ -1,6 +1,9 @@
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/entities/entity_link.dart';
+import 'package:differentworld/features/entities/entity_ref.dart';
+import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
@@ -372,11 +375,21 @@ class _ObservationListItem extends ConsumerWidget {
         name: subjectName,
         photoUrl: subject?.photoUrl,
       ),
-      title: Text(subjectName),
+      title: subject == null
+          ? Text(subjectName)
+          : EntityLink(
+              entity: EntityRef(
+                kind: EntityKind.subject,
+                id: subject.id,
+                label: subjectName,
+              ),
+              padded: false,
+              style: theme.textTheme.titleMedium,
+            ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          LinkifiedText(
             entry.body ?? '',
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
@@ -467,14 +480,28 @@ class _ObservationGridCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      subjectName,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: subject == null
+                        ? Text(
+                            subjectName,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : EntityLink(
+                            entity: EntityRef(
+                              kind: EntityKind.subject,
+                              id: subject.id,
+                              label: subjectName,
+                            ),
+                            padded: false,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                   ),
                   if (photos.isNotEmpty)
                     Icon(
@@ -485,7 +512,7 @@ class _ObservationGridCard extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
+              LinkifiedText(
                 entry.body ?? '',
                 style: theme.textTheme.bodyMedium,
                 maxLines: 3,

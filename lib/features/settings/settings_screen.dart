@@ -7,6 +7,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/action_words/program_hub_bento_setting.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
+import 'package:differentworld/features/entities/entity_providers.dart';
 import 'package:differentworld/features/heroes/heroes_setting.dart';
 import 'package:differentworld/features/live_session/room_screen_setting.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
@@ -260,6 +261,8 @@ class SettingsScreen extends ConsumerWidget {
               const _SettingsDivider(),
               const _CockpitHomeTile(),
               const _SettingsDivider(),
+              const _LiveEntitiesTile(),
+              const _SettingsDivider(),
               const _BentoEverywhereTile(),
               const _SettingsDivider(),
               const _BentoHomeTile(),
@@ -454,6 +457,26 @@ class _CockpitHomeTile extends ConsumerWidget {
 /// one tap (every screen with a bento variant honours it via `bentoEnabled`).
 /// The user's "bento everywhere" call; the per-screen switches below still work
 /// for granular control. Off by default; reversible.
+class _LiveEntitiesTile extends ConsumerWidget {
+  const _LiveEntitiesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(liveEntitiesProvider).value ?? true;
+    return SwitchListTile(
+      secondary: const Icon(Icons.touch_app_outlined),
+      title: const Text('Live entities'),
+      subtitle: const Text(
+        'Make every named thing tappable — children, activities, worlds, '
+        'roles — and auto-detect them in notes. Tap one for a quick peek.',
+      ),
+      value: on,
+      onChanged: (v) =>
+          unawaited(ref.read(liveEntitiesProvider.notifier).set(value: v)),
+    );
+  }
+}
+
 class _BentoEverywhereTile extends ConsumerWidget {
   const _BentoEverywhereTile();
 
