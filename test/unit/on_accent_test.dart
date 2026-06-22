@@ -49,7 +49,7 @@ void main() {
   group('onAccent returns a DARK foreground on the light fills', () {
     lightFills.forEach((name, fill) {
       test(name, () {
-        expect(AppColors.onAccent(fill), Colors.black87,
+        expect(AppColors.onAccent(fill), Colors.black,
             reason: '$name is light → white would fail AA');
       });
     });
@@ -58,7 +58,7 @@ void main() {
   test('onAccent never picks the lower-contrast foreground', () {
     palette.forEach((name, fill) {
       final picked = AppColors.onAccent(fill);
-      final other = picked == Colors.white ? Colors.black87 : Colors.white;
+      final other = picked == Colors.white ? Colors.black : Colors.white;
       expect(
         _contrast(picked, fill),
         greaterThanOrEqualTo(_contrast(other, fill)),
