@@ -14,6 +14,8 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
+import 'package:differentworld/features/curricula/photo_curriculum.dart';
+import 'package:differentworld/features/curricula/photo_s1_script.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
@@ -1247,6 +1249,33 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         ],
         onSelect: (ctx, _) => ctx.push('/settings/curricula/photo'),
       ),
+    // Run-the-session entries — one per session that has a written beat-by-beat
+    // script (Session 1 today). Lands directly on the presenter so a host can
+    // start the scripted hour in one tap; "run", "present", "script", "beat by
+    // beat" keywords surface it by intent. Guardian-gated with its sibling.
+    if (viewer is! GuardianViewer)
+      for (final s in photoCurriculum)
+        if (scriptForSession(s.slug) != null)
+          OmniboxEntry(
+            id: 'curriculum.photo.run.${s.slug}',
+            label: 'Run session · ${s.title}',
+            subtitle: 'Through my eyes · S${s.number} — beat by beat',
+            category: OmniboxCategory.action,
+            icon: Icons.play_lesson_outlined,
+            keywords: [
+              'run session',
+              'run the session',
+              'present session',
+              'beat by beat',
+              'script',
+              's${s.number}',
+              'session ${s.number}',
+              'photo session',
+              'through my eyes',
+              s.title.toLowerCase(),
+            ],
+            onSelect: (ctx, _) => ctx.push('/session/run?slug=${s.slug}'),
+          ),
     // Per-tool entries — typing "cool down" or "meltdown" should
     // land directly on the Cool Down detail screen, not on the
     // catalog top. Crisis-retrieval target is 1 tap from anywhere

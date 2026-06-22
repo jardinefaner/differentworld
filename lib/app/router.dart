@@ -53,6 +53,7 @@ import 'package:differentworld/features/child_world/child_world_screen.dart';
 import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
+import 'package:differentworld/features/curricula/session_run_screen.dart';
 import 'package:differentworld/features/daily/daily_screen.dart';
 import 'package:differentworld/features/daily/response_edit_screen.dart';
 import 'package:differentworld/features/entries/observation_form_screen.dart';
@@ -1352,6 +1353,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'This week’s world',
               child: ThisWeekScreen(),
+            ),
+          ),
+          // The SESSION RUN PRESENTER — run a scripted curriculum session beat
+          // by beat (one calm bento slide each). `?slug=` resolves the script
+          // via scriptForSession(); `?block=` (when launched from a block's run
+          // sheet) scopes the game-beat photo-turns handoff to that block. A
+          // slug with no script renders an EmptyState; the screen never errors.
+          GoRoute(
+            path: '/session/run',
+            builder: (_, state) => RouteTitle(
+              title: 'Run the session',
+              child: SessionRunScreen(
+                slug: state.uri.queryParameters['slug'] ?? '',
+                blockId: state.uri.queryParameters['block'],
+              ),
             ),
           ),
           // Project a world fullscreen to the room (device → projector).

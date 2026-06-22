@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
+import 'package:differentworld/features/curricula/photo_s1_script.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
@@ -173,6 +174,13 @@ class BlockRunSheetScreen extends ConsumerWidget {
 
     // ── PHOTO / "Through My Eyes" — the 7-tile photo tray, unchanged ──────
     if (isPhotoBlock) {
+      // The beat-by-beat session presenter is offered only when this block's
+      // stamped curriculum slug has a written script (Session 1 today). The
+      // slug — not the PhotoSession summary — is the contract scriptForSession
+      // joins on, so resolve straight off the block's slug.
+      final scriptSlug = block.curriculumSessionSlug;
+      final hasScript =
+          scriptSlug != null && scriptForSession(scriptSlug) != null;
       return _PhotoRunBento(
         block: block,
         session: session,
@@ -181,6 +189,10 @@ class BlockRunSheetScreen extends ConsumerWidget {
         metaParts: metaParts,
         routine: routine,
         onEdit: () => _openEdit(context),
+        // Only non-null when a script exists → the tile renders only then.
+        onRunSession: hasScript
+            ? () => _runSession(context, slug: scriptSlug)
+            : null,
         onRunTurns: () => _runPhotoTurns(
           context,
           prompt: photoTurnsPrompt,
@@ -362,6 +374,20 @@ class BlockRunSheetScreen extends ConsumerWidget {
     }
   }
 
+  /// Launch the beat-by-beat SESSION RUN PRESENTER for this block's stamped
+  /// curriculum session — the host runs the scripted hour beat by beat (one
+  /// calm slide each), distinct from "Run photo turns" (the just-shooting
+  /// path). Only offered when `scriptForSession(slug)` resolves a script;
+  /// `block=` scopes the game-beat photo-turns handoff back to this block.
+  void _runSession(BuildContext context, {required String slug}) {
+    unawaited(HapticFeedback.selectionClick());
+    final dest = Uri(
+      path: '/session/run',
+      queryParameters: {'slug': slug, 'block': block.id},
+    ).toString();
+    unawaited(context.push(dest));
+  }
+
   /// Launch the per-child timed photo TURNS for this block — the roster scopes
   /// to the block's group and every shot is tagged with the block id (the
   /// already-built `/activity/photo-turns` surface). The `prompt` becomes the
@@ -496,6 +522,7 @@ class _PhotoRunBento extends StatelessWidget {
     required this.metaParts,
     required this.routine,
     required this.onEdit,
+    required this.onRunSession,
     required this.onRunTurns,
     required this.onCapture,
     required this.onCast,
@@ -514,6 +541,12 @@ class _PhotoRunBento extends StatelessWidget {
   final List<String> routine;
 
   final VoidCallback onEdit;
+
+  /// Launch the beat-by-beat session presenter. Null when this block's session
+  /// has no written script — the "Run the session" tile then doesn't render
+  /// (no dead promise), and "Run photo turns" stays the way to run the hour.
+  final VoidCallback? onRunSession;
+
   final VoidCallback onRunTurns;
   final VoidCallback onCapture;
   final VoidCallback onCast;
@@ -531,7 +564,26 @@ class _PhotoRunBento extends StatelessWidget {
     final steps = _runsSteps(session, routine);
 
     final tiles = <BentoTile>[
-      // HERO — full width, warm signal tint, the primary way to run the hour.
+      // RUN THE SESSION — the beat-by-beat presenter, offered ONLY when this
+      // session has a written script. The lead tile when present: it's the
+      // "run the whole scripted hour" path (vs "Run photo turns", the just-
+      // shooting path below). A distinct full-width signal tile.
+      if (onRunSession != null)
+        BentoTile(
+          id: 'run-session',
+          span: const BentoSpan.wide(),
+          child: _HeroActionTile(
+            icon: Icons.menu_book_outlined,
+            title: 'Run the session',
+            subtitle: 'Beat by beat — the full scripted hour',
+            flowSteps: const ['the hook', 'the games', 'the close'],
+            semanticLabel:
+                'Run the session — the full scripted hour, beat by beat',
+            onTap: onRunSession!,
+          ),
+        ),
+      // HERO — full width, the primary way to just SHOOT (no script). When a
+      // script exists this sits under "Run the session" as the lighter path.
       BentoTile(
         id: 'run-turns',
         span: const BentoSpan.wide(),

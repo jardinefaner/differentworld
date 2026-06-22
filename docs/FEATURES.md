@@ -1164,22 +1164,26 @@ surface — preferences + roster + fleet, not primary workflows.
 
 ## Curricula (Through My Eyes)
 **Path**: `lib/features/curricula/`
-**Purpose**: Editorial reference content — a 3-week / 6-session photography curriculum ("Through My Eyes") for ages 5-7. Each session has setup instructions, a game (rules + duration), a "looking together" guided discussion, 3 expandable AI label examples, an end ritual, a takeaway highlight, and a materials list. A second view, "Vocabulary Journey," surfaces which photography terms attach to which session (~30 terms across 6 sessions). Shipped as a Dart const today; a per-space overrides table can layer on later if directors ask to author their own sessions.
-**Personas served**: All staff — particularly Coach Sam / specialists running a structured program; Maya as a curriculum reviewer.
+**Purpose**: Editorial reference content — a 3-week / 6-session photography curriculum ("Through My Eyes") for ages 5-7. Each session has setup instructions, a game (rules + duration), a "looking together" guided discussion, 3 expandable AI label examples, an end ritual, a takeaway highlight, and a materials list. A second view, "Vocabulary Journey," surfaces which photography terms attach to which session (~30 terms across 6 sessions). On top of the at-a-glance summary, a **runnable beat-by-beat presenter** lets a host drive a scripted session live — each beat is one calm bento slide (the say-this lines, the stage cue, the call-and-response, tap-to-expand the full verbatim script, a per-beat opt-in countdown), with a "Start shooting" handoff on game beats and a "Cast to the room" option. Shipped as a Dart const today; a per-space overrides table can layer on later if directors ask to author their own sessions.
+**Personas served**: All staff — particularly Coach Sam / specialists running a structured program; Maya as a curriculum reviewer. The session presenter additionally serves the host actually running the hour in the room.
 **Discovery surfaces**:
-- Routes: `/settings/curricula/photo`
-- Omnibox: yes — "Through My Eyes" (keywords: through my eyes, photo curriculum, photography, camera, photo program, gallery, six games)
+- Routes: `/settings/curricula/photo` · `/session/run?slug=<slug>&block=<blockId?>` (the beat-by-beat presenter)
+- Omnibox: yes — "Through My Eyes" (keywords: through my eyes, photo curriculum, photography, camera, photo program, gallery, six games) · "Run session · {title}" — one per session with a written script (keywords: run session, run the session, present session, beat by beat, script, s{n}, photo session)
 - Slash: no
 - Drawer: no
 - Settings: yes — "Through My Eyes" row under Resources group (alongside Teacher Toolkit)
-**Capabilities**: None — open to every signed-in staff member. Read-only in Wave 164. Guardian-gated at the omnibox layer (router redirect would bounce them anyway).
-**Data**: None (Wave 164, Dart const catalog). Stable per-session slugs (`photo.s1.click-game`, etc.) are the contract a future overrides table would join on.
+- Run sheet: yes — a "Run the session" hero tile appears on a photo block's run sheet (`block_run_sheet_screen.dart` `_PhotoRunBento`) when the block's stamped curriculum slug has a written script, alongside "Run photo turns".
+**Capabilities**: None — open to every signed-in staff member. Read-only in Wave 164. Guardian-gated at the omnibox layer (router redirect would bounce them anyway); the session-presenter omnibox entry is also guardian-gated.
+**Data**: None (Wave 164, Dart const catalog). Stable per-session slugs (`photo.s1.click-game`, etc.) are the contract a future overrides table would join on. The session SCRIPTS join on the same slug via `scriptForSession(slug)`.
 **Surfaces**:
 - *Photo curriculum catalog* — `lib/features/curricula/photo_curriculum.dart`. Dart const `photoCurriculum`: 6 sessions × 9 fields (slug, number, week, day, title, color, glyph, bigIdea, setup, gameName, gameRules, gameDuration, lookingTogether, aiExamples, endRitual, takeaway, materials). Also `vocabJourney`: 6 stops × terms + natural note.
 - *Photo curriculum screen* — `lib/features/curricula/photo_curriculum_screen.dart`. Session selector dots (6, color-progressed), SegmentedButton view toggle (Sessions / Vocabulary), session body with SectionCards for setup/game/looking/end-ritual/takeaway/materials + tappable-expand AI example cards, vocab journey with one card per session + total + sample certificate.
-**Depends on**: Nothing — pure content.
-**Consumed by**: Nothing yet. Future: a curriculum could attach to schedule blocks as the activity series for an afternoon, with each session auto-becoming a scheduled block.
-**Last verified**: 2026-05-26
+- *Session script model* — `lib/features/curricula/session_script.dart`. `SessionScript{slug, sessionNumber, title, beats}` + `SessionBeat{time, kind (BeatKind), title, startMinute?, durationMinutes?, keyLines, script (List<ScriptLine>), callResponse?, game (BeatGame?), vocabCards}`. Editorial, const; say-lines verbatim.
+- *Session 1 script* — `lib/features/curricula/photo_s1_script.dart`. `photoSession1Script` (slug `photo.s1.click-game`, 17 beats) + `scriptForSession(slug)` resolver (null when no script written yet).
+- *Session run presenter* — `lib/features/curricula/session_run_screen.dart`. `SessionRunScreen` (route `/session/run`): `EdgeScaffold` with a Cast pill, the current beat as a swipe-able bento slide (eyebrow time·kind → Fraunces title → tinted "Say this" keyLines → italic stage cue → call-and-response chip → tap-to-expand full script styled by ScriptLineKind → game block + "Start shooting" → vocab word-cards), a pausable per-beat countdown (Timer), an advance bar (Next · {next beat}), and the full sequence as a tappable vertical timeline. Slug-not-found → EmptyState. Kind→accent via ActivityPalette + AppColors.onAccent.
+**Depends on**: Nothing — pure content. The presenter hands off to `/activity/photo-turns` (photo turns) on game beats and `showCastToRoom` for casting.
+**Consumed by**: The block run sheet (`block_run_sheet_screen.dart`) surfaces "Run the session" when a block's curriculum slug has a script. Future: a curriculum could attach to schedule blocks as the activity series for an afternoon, with each session auto-becoming a scheduled block.
+**Last verified**: 2026-06-22
 
 ---
 
