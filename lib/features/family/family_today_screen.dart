@@ -297,6 +297,11 @@ class _ChildCard extends ConsumerWidget {
       // observation photo from today, so the family sees the kid's day
       // before reading anything.
       _PhotoOfTheMomentPeek(subjectId: child.id),
+      // Entry into the child's WHOLE photo collection — the ones they
+      // took + the ones of them, browsable. Sits right under today's hero
+      // so "there's more where this came from" is discoverable in place.
+      // The folder is viewer-aware (family RPC); read-only family-side.
+      _SeeAllPhotosLink(subjectId: child.id),
       // Today's recap — the room's shared day + this child's own moments,
       // sent by staff. Renders nothing until today's recap is sent, so the
       // card stays tight on a quiet morning. Already scrubbed of other
@@ -465,6 +470,36 @@ class _PickupStatusLine extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "See all photos" link into the child's photo folder
+/// (`/subjects/:id/photos`). A quiet text affordance under today's hero — the
+/// folder is the staff `ChildPhotosFolderScreen`, made viewer-aware so a
+/// guardian sees their own child's collection through a family RPC (read-only,
+/// no captions). Stateless + no provider read: the folder loads its own data,
+/// so this is just navigation.
+class _SeeAllPhotosLink extends StatelessWidget {
+  const _SeeAllPhotosLink({required this.subjectId});
+
+  final String subjectId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: () => context.push('/subjects/$subjectId/photos'),
+        icon: const Icon(Icons.photo_library_outlined, size: 18),
+        label: const Text('See all photos'),
+        style: TextButton.styleFrom(
+          foregroundColor: theme.colorScheme.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          visualDensity: VisualDensity.compact,
+        ),
       ),
     );
   }

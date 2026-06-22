@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/keepsake_actions.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
@@ -27,15 +28,24 @@ import 'package:go_router/go_router.dart';
 /// `captured_by_subject_id` / `subject_id` axes on `attachments`).
 ///
 /// Two lenses via a segmented toggle:
-/// - **Took** — `attachmentsCapturedByCuratedProvider`, FAVORITES-FIRST. A
-///   hearted shot floats to the top (the heart writes `sort_order = 0`, the
-///   same favorite mechanism the photo-turns review uses).
-/// - **Of {name}** — `attachmentsForSubjectProvider`, newest-first.
+/// - **Took** — the photos the child SHOT.
+/// - **Of {name}** — the photos OF the child.
 ///
-/// STAFF-side surface (the child's own folder on the subject detail). The
-/// other-child-name scrub does NOT apply here — that's a family/export rule
-/// (CLAUDE.md). The heart (a curation write) is gated on `canObserve`, so a
-/// guardian reaching this folder gets a calm read-only gallery.
+/// **Viewer-aware data path.** The reads branch on who's looking:
+/// - **Staff** read from local Drift (offline-first): Took =
+///   `attachmentsCapturedByCuratedProvider` (FAVORITES-FIRST — a hearted shot
+///   floats to the top via `sort_order = 0`, the photo-turns review's
+///   mechanism), Of = `attachmentsForSubjectProvider` (newest-first). The
+///   heart (a curation write) + "Make a keepsake" are gated on `canObserve`.
+/// - **Guardians** get NO rows from Drift (`members.space_id` is null →
+///   `by_space` delivers them nothing). They read the whole collection through
+///   `familyChildPhotosProvider` — one PostgREST RPC that returns both axes;
+///   the screen partitions Took/Of in-memory. Family-side is read-only
+///   (`canObserve` is false → no heart, no keepsake), newest-first (favorites
+///   ordering isn't meaningful family-side), and shows NO captions (privacy —
+///   a guardian has no roster to scrub other-child names with; the RPC omits
+///   the column). NOT offline-first — same trade-off as the other per-subject
+///   family reads (a loading state on a cold offline launch).
 class ChildPhotosFolderScreen extends ConsumerStatefulWidget {
   const ChildPhotosFolderScreen({required this.subjectId, super.key});
 
@@ -47,6 +57,14 @@ class ChildPhotosFolderScreen extends ConsumerStatefulWidget {
 }
 
 enum _Lens { took, of }
+
+/// The two lenses' photo lists, each as its own [AsyncValue] so the screen can
+/// show a per-lens loading / error / data state. Both the staff (Drift) and
+/// guardian (RPC) data paths resolve to this shape.
+typedef _LensData = ({
+  AsyncValue<List<Attachment>> took,
+  AsyncValue<List<Attachment>> of,
+});
 
 class _ChildPhotosFolderScreenState
     extends ConsumerState<ChildPhotosFolderScreen> {
@@ -68,20 +86,25 @@ class _ChildPhotosFolderScreenState
       );
     }
 
-    final subject = ref.watch(subjectByIdProvider(widget.subjectId)).value;
+    final isGuardian = viewer is GuardianViewer;
+
+    // Subject name: staff read Drift (`subjectByIdProvider`); guardians get
+    // nothing there, so the family path resolves the name via the PostgREST
+    // family provider.
+    final subject = isGuardian
+        ? ref.watch(familySubjectByIdProvider(widget.subjectId)).value
+        : ref.watch(subjectByIdProvider(widget.subjectId)).value;
     final firstName = (subject?.firstName ?? '').trim();
     final possessive = firstName.isEmpty ? 'This child' : firstName;
 
-    final tookAsync = ref.watch(
-      attachmentsCapturedByCuratedProvider(widget.subjectId),
-    );
-    final ofAsync = ref.watch(
-      attachmentsForSubjectProvider(widget.subjectId),
-    );
+    // The two lenses, sourced by viewer. Both branches resolve to a single
+    // `({took, of})` AsyncValue so the render below is shared.
+    final lensData = isGuardian ? _guardianLensData(ref) : _staffLensData(ref);
+    final active = _lens == _Lens.took ? lensData.took : lensData.of;
 
-    final active = _lens == _Lens.took ? tookAsync : ofAsync;
-    // Heart-to-favorite is a curation write — staff only. Only the "Took"
-    // lens carries the favorite ordering, so the heart shows there.
+    // Heart-to-favorite is a curation write — staff only (guardian
+    // `canObserve` is false). Only the "Took" lens carries the favorite
+    // ordering, so the heart shows there.
     final canFavorite = viewer.canObserve && _lens == _Lens.took;
     // "Make a keepsake" gathers the child's took-photos into a PDF that goes
     // home through the export channel — a staff action (same gate as the
@@ -101,24 +124,19 @@ class _ChildPhotosFolderScreenState
         loading: () => const LoadingSlot(variant: LoadingVariant.cards),
         error: (_, _) => ErrorState(
           title: 'Could not load photos',
-          onRetry: () {
-            ref
-              ..invalidate(
-                attachmentsCapturedByCuratedProvider(widget.subjectId),
-              )
-              ..invalidate(attachmentsForSubjectProvider(widget.subjectId));
-          },
+          onRetry: () => _invalidate(ref, isGuardian: isGuardian),
         ),
         data: (photos) {
           // The favorite count is read from the curated (Took) list — it's
-          // the only lens where the heart applies.
-          final tookPhotos = tookAsync.value ?? const <Attachment>[];
-          final favorites = tookPhotos
-              .where((p) => (p.sortOrder ?? 1) == 0)
-              .length;
+          // the only place the heart applies, and it's STAFF-only: the family
+          // RPC carries no `sort_order`, so a guardian's count is always 0.
+          final tookPhotos = lensData.took.value ?? const <Attachment>[];
+          final favorites = viewer.canObserve
+              ? tookPhotos.where((p) => (p.sortOrder ?? 1) == 0).length
+              : 0;
           final subtitle = _subtitle(
             tookCount: tookPhotos.length,
-            ofCount: (ofAsync.value ?? const <Attachment>[]).length,
+            ofCount: (lensData.of.value ?? const <Attachment>[]).length,
             favorites: favorites,
           );
 
@@ -173,6 +191,47 @@ class _ChildPhotosFolderScreenState
         },
       ),
     );
+  }
+
+  /// STAFF data path — local Drift, offline-first. "Took" is favorites-first
+  /// (the curated provider); "Of" is newest-first.
+  _LensData _staffLensData(WidgetRef ref) => (
+    took: ref.watch(attachmentsCapturedByCuratedProvider(widget.subjectId)),
+    of: ref.watch(attachmentsForSubjectProvider(widget.subjectId)),
+  );
+
+  /// GUARDIAN data path — one PostgREST RPC (`familyChildPhotosProvider`)
+  /// returns the child's whole collection with both tag axes; we partition it
+  /// into the two lenses in-memory. Newest-first (the RPC already orders by
+  /// created_at desc; favorites ordering isn't meaningful family-side). The
+  /// single source AsyncValue's loading / error is mapped onto BOTH lenses so
+  /// either toggle position shows the right state.
+  _LensData _guardianLensData(WidgetRef ref) {
+    final all = ref.watch(familyChildPhotosProvider(widget.subjectId));
+    final took = all.whenData(
+      (rows) => [
+        for (final a in rows)
+          if (a.capturedBySubjectId == widget.subjectId) a,
+      ],
+    );
+    final of = all.whenData(
+      (rows) => [
+        for (final a in rows)
+          if (a.subjectId == widget.subjectId) a,
+      ],
+    );
+    return (took: took, of: of);
+  }
+
+  /// Retry — invalidate whichever data path is live for this viewer.
+  void _invalidate(WidgetRef ref, {required bool isGuardian}) {
+    if (isGuardian) {
+      ref.invalidate(familyChildPhotosProvider(widget.subjectId));
+      return;
+    }
+    ref
+      ..invalidate(attachmentsCapturedByCuratedProvider(widget.subjectId))
+      ..invalidate(attachmentsForSubjectProvider(widget.subjectId));
   }
 
   /// Assemble the keepsake PDF, store it as an export, then confirm with a

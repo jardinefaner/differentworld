@@ -386,6 +386,84 @@ final familyTodaysMomentPhotoProvider = FutureProvider.autoDispose
       },
     );
 
+/// The family path for the per-child PHOTO FOLDER (the staff
+/// `ChildPhotosFolderScreen` at /subjects/:id/photos). Returns the child's
+/// WHOLE photo collection — the ones they SHOT
+/// (`captured_by_subject_id == subjectId`) and the ones OF them
+/// (`subject_id == subjectId`) — so the folder's "Took" / "Of {name}" toggle
+/// can partition them client-side (each row carries BOTH axes).
+///
+/// Staff read this folder from local Drift via `by_space`; guardians get NO
+/// rows there (`members.space_id` is null → `by_space` membership subquery is
+/// `IN (NULL)`). So the family path reads through the server-side scope RPC
+/// `app.family_child_photos_for_subject` (migration 20260622000001): the
+/// guardian passes only their child's subject_id + their own user id, Postgres
+/// re-checks the guardian↔child link and returns ONLY this child's photos.
+///
+/// Privacy (load-bearing — family-facing):
+///   • a photo tagged to ANOTHER child is NEVER returned — the RPC only
+///     matches `p_subject_id` on the two axes.
+///   • NO caption is returned (the RPC omits the column): a staff caption is
+///     free text that can name another child, and a guardian device has no
+///     roster to scrub it with (CLAUDE.md). The folder shows photos only.
+///
+/// Trade-off: NOT offline-first (PostgREST RPC — same as the other per-subject
+/// family reads). A cold launch without network shows the loading state until
+/// the round-trip lands; acceptable for a browse-the-collection surface.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final familyChildPhotosProvider = FutureProvider.autoDispose
+    .family<List<Attachment>, String>(
+      (ref, subjectId) async {
+        final viewer = ref.watch(viewerProvider);
+        if (viewer is! GuardianViewer) return const <Attachment>[];
+        if (!viewer.canSeeSubject(subjectId)) return const <Attachment>[];
+        final supabase = Supabase.instance.client;
+        final uid = supabase.auth.currentUser?.id;
+        if (uid == null) return const <Attachment>[];
+        // PostgREST, not offline-first (the documented family per-subject
+        // trade-off). Time-box it so a guardian on no / flaky connection lands
+        // on the screen's ErrorState (retry) instead of an endless skeleton.
+        final rows =
+            await supabase
+                    .rpc<dynamic>(
+                      'family_child_photos_for_subject',
+                      params: {'caller_uid': uid, 'p_subject_id': subjectId},
+                    )
+                    .timeout(const Duration(seconds: 15))
+                as List<dynamic>;
+        return [
+          for (final r in rows) _childPhotoFromRpc(r as Map<String, dynamic>),
+        ];
+      },
+    );
+
+/// Build an [Attachment] from the `family_child_photos_for_subject` RPC row
+/// (id, url, thumb_url, captured_by_subject_id, subject_id, schedule_block_id,
+/// taken_at, created_at). Mirrors [_roomPhotoFromRpc], but KEEPS the two tag
+/// axes (`subjectId` / `capturedBySubjectId`) — the folder partitions Took vs
+/// Of on them — and carries NO caption (the RPC omits it; privacy). The
+/// remaining columns the folder doesn't read (spaceId, entityKind/Id) carry
+/// safe defaults.
+Attachment _childPhotoFromRpc(Map<String, dynamic> r) {
+  final created = r['created_at'] as String;
+  return Attachment(
+    id: r['id'] as String,
+    spaceId: '',
+    entityKind: '',
+    entityId: '',
+    url: r['url'] as String,
+    thumbUrl: r['thumb_url'] as String?,
+    mimeType: 'image/jpeg',
+    subjectId: r['subject_id'] as String?,
+    capturedBySubjectId: r['captured_by_subject_id'] as String?,
+    scheduleBlockId: r['schedule_block_id'] as String?,
+    takenAt: r['taken_at'] as String?,
+    createdAt: created,
+    updatedAt: created,
+  );
+}
+
 /// True when an attachment was created today (local day). Prefers `takenAt`
 /// (when the shutter fired) and falls back to `createdAt` (row insert).
 bool _attachmentIsToday(Attachment a, String todayIso) {

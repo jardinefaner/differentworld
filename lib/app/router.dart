@@ -221,9 +221,24 @@ final routerProvider = Provider<GoRouter>((ref) {
           '/children',
           '/share-home',
         ];
-        final allowed = familyAllowed.any(
+        var allowed = familyAllowed.any(
           (prefix) => loc == prefix || loc.startsWith('$prefix/'),
         );
+        // The per-child PHOTO FOLDER lives at the staff path
+        // `/subjects/:id/photos`, but it's viewer-aware — a guardian sees
+        // their own child's collection through a family RPC (the heart /
+        // keepsake stay staff-only via `canObserve`). Allow ONLY that exact
+        // suffix through for guardians; the OTHER `/subjects/:id/*` staff
+        // routes (world, trail, pickup-person, character sheet) stay blocked.
+        // The screen itself re-gates on `canSeeSubject`, so a guessed foreign
+        // id renders a no-access state rather than another family's photos.
+        // Match EXACTLY `/subjects/<id>/photos` — a single id segment, nothing
+        // before or after — so no future nested route (e.g.
+        // `/subjects/:id/group/photos`) slips through on a loose suffix test.
+        // The screen still re-gates on `canSeeSubject` (defence in depth).
+        if (!allowed && RegExp(r'^/subjects/[^/]+/photos$').hasMatch(loc)) {
+          allowed = true;
+        }
         if (!allowed) return '/';
       }
       // Wave 106: kid-mode pin. When a kid-launchable surface
