@@ -350,33 +350,32 @@ final familyTodaysMomentPhotoProvider = FutureProvider.autoDispose
           if (_attachmentIsToday(a, today)) candidates.add(a);
         }
 
-        // 2) The cohort's ROOM moments today — block captures with NO subject tag.
-        //    Fetch the child's group + today's block ids, then the null-subject
-        //    photos on those blocks. A photo tagged to another child is excluded
-        //    by the `subject_id IS NULL` filter.
-        final child = await ref.watch(
-          familySubjectByIdProvider(subjectId).future,
-        );
-        final groupId = child?.groupId;
-        if (groupId != null) {
-          final blocks = await ref.watch(
-            familyScheduleForGroupProvider(
-              (groupId: groupId, dateIso: today),
-            ).future,
-          );
-          final blockIds = [for (final b in blocks) b.id];
-          if (blockIds.isNotEmpty) {
-            final roomShots = await supabase
-                .from('attachments')
-                .select()
-                .inFilter('schedule_block_id', blockIds)
-                .isFilter('subject_id', null)
-                .order('created_at', ascending: false)
-                .limit(20);
-            for (final r in roomShots) {
-              final a = _attachmentFromMap(r);
-              if (_attachmentIsToday(a, today)) candidates.add(a);
-            }
+        // 2) The cohort's ROOM moments today — block captures with NO subject
+        //    tag. Read through a server-side scope RPC
+        //    (app.family_room_photos_for_subject, migration 20260621000002):
+        //    the guardian passes only the child's subject_id, and Postgres
+        //    resolves the child's group and returns ONLY the null-subject room
+        //    photos on THAT group's blocks today. The block-id filter used to
+        //    live CLIENT-SIDE — but `attachments` RLS is `using(true)`, so a
+        //    technical guardian could replay the old call with another cohort's
+        //    block id and read its room photos (commit c2dc886). The RPC also
+        //    re-checks the guardian↔child link, so this stays gated even though
+        //    the column set is room-level only (a photo tagged to another child
+        //    is excluded server-side by `subject_id IS NULL`).
+        final uid = supabase.auth.currentUser?.id;
+        if (uid != null) {
+          final roomShots =
+              await supabase.rpc<dynamic>(
+                    'family_room_photos_for_subject',
+                    params: {
+                      'caller_uid': uid,
+                      'p_subject_id': subjectId,
+                      'p_day': today,
+                    },
+                  )
+                  as List<dynamic>;
+          for (final r in roomShots) {
+            candidates.add(_roomPhotoFromRpc(r as Map<String, dynamic>));
           }
         }
 
@@ -520,6 +519,31 @@ Attachment _attachmentFromMap(Map<String, dynamic> r) => Attachment(
   createdAt: r['created_at'] as String,
   updatedAt: r['updated_at'] as String,
 );
+
+/// Build an [Attachment] from the narrow `family_room_photos_for_subject` RPC
+/// row (id, url, caption, created_at, schedule_block_id). The RPC only returns
+/// the columns the "photo of the moment" peek needs, so the rest carry safe
+/// defaults — `subjectId` is hard-coded null because the RPC returns ONLY
+/// room-level (untagged) photos by construction, which preserves the privacy
+/// invariant that another child's tagged keepsake never surfaces here.
+Attachment _roomPhotoFromRpc(Map<String, dynamic> r) {
+  final created = r['created_at'] as String;
+  // subjectId / capturedBySubjectId are left at their null default — the RPC
+  // returns ONLY room-level (untagged) photos by construction, so a row here
+  // is never a child's tagged keepsake (the privacy invariant).
+  return Attachment(
+    id: r['id'] as String,
+    spaceId: '',
+    entityKind: '',
+    entityId: '',
+    url: r['url'] as String,
+    mimeType: 'image/jpeg',
+    caption: r['caption'] as String?,
+    scheduleBlockId: r['schedule_block_id'] as String?,
+    createdAt: created,
+    updatedAt: created,
+  );
+}
 
 String _jsonString(Object? raw) {
   if (raw == null) return '{}';
