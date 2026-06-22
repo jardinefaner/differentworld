@@ -2,19 +2,12 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
-// `entries_providers.dart` is imported for `EntryKind` constants only —
-// the per-subject reads route through `family_providers.dart` because
-// the local Drift mirror is empty for guardians (see file header there).
-import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/exports/exports_providers.dart';
 import 'package:differentworld/features/family/family_providers.dart';
 import 'package:differentworld/features/family/widgets/received_reports_card.dart';
 import 'package:differentworld/features/family/widgets/todays_recap_peek.dart';
-// `attachments_providers.dart` is imported for the `AttachmentsX`
-// `.urls` / `.thumbUrls` extension; the read itself goes via
-// `familyAttachmentsForEntityProvider`.
-import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/schedule/widgets/now_next_strip.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/settings/widgets/text_size_tile.dart';
@@ -625,18 +618,22 @@ class _SummarySentence extends ConsumerWidget {
   }
 }
 
-/// "Photo of the moment" peek inside the child card. Surfaces the
-/// most recent observation photo from TODAY so a parent checking
-/// the family Today screen sees their kid's day before they read
-/// any text.
+/// "Photo of the moment" peek inside the child card. Surfaces the most recent
+/// photo from TODAY — broadened (seam 3) beyond observations to ALSO include
+/// the cohort's block captures, so a parent sees the day's pictures even when
+/// staff snapped a quick floor photo instead of filing an observation.
 ///
-/// Renders nothing when:
-///   - There's no observation for this child today
-///   - The most-recent observation has no attached photos
+/// Renders nothing when there's no photo for this child today.
 ///
-/// Lauren persona — opens the app at 11 AM during a coffee break,
-/// wants the warmest possible "what's my kid up to" signal in one
-/// glance.
+/// Privacy: the photo set is scoped in `familyTodaysMomentPhotoProvider` to
+/// THIS child's own tagged photos + the cohort's room moments (subject_id
+/// null) — never another child's tagged photo. We show NO caption text on the
+/// image: a block photo has no per-child narrative, and rendering an
+/// observation body here would risk surfacing another child's name. The time
+/// label is the only overlay.
+///
+/// Lauren persona — opens the app at 11 AM during a coffee break, wants the
+/// warmest possible "what's my kid up to" signal in one glance.
 class _PhotoOfTheMomentPeek extends ConsumerWidget {
   const _PhotoOfTheMomentPeek({required this.subjectId});
 
@@ -644,126 +641,81 @@ class _PhotoOfTheMomentPeek extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entriesAsync = ref.watch(
-      familyEntriesForSubjectProvider(
-        (subjectId: subjectId, kind: EntryKind.observation),
-      ),
-    );
-    final entries = entriesAsync.value ?? const <Entry>[];
-    if (entries.isEmpty) return const SizedBox.shrink();
-    // entriesForSubject returns newest-first per Drift's order-by
-    // recorded_at desc. Find the first one from today.
-    Entry? todayEntry;
-    final todayStart = DateTime.now().copyWith(
-      hour: 0,
-      minute: 0,
-      second: 0,
-      millisecond: 0,
-      microsecond: 0,
-    );
-    for (final e in entries) {
-      final ts = DateTime.tryParse(e.recordedAt);
-      if (ts == null) continue;
-      if (ts.isAfter(todayStart)) {
-        todayEntry = e;
-        break;
-      }
-    }
-    if (todayEntry == null) return const SizedBox.shrink();
-    final attachmentsAsync = ref.watch(
-      familyAttachmentsForEntityProvider(
-        (kind: 'entry', id: todayEntry.id, subjectId: subjectId),
-      ),
-    );
-    final urls = attachmentsAsync.value?.urls ?? const <String>[];
-    if (urls.isEmpty) return const SizedBox.shrink();
+    final photo = ref.watch(familyTodaysMomentPhotoProvider(subjectId)).value;
+    if (photo == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final ts = DateTime.tryParse(todayEntry.recordedAt);
+    final tsRaw = photo.takenAt ?? photo.createdAt;
+    final ts = DateTime.tryParse(tsRaw);
     final timeLabel = ts == null
         ? 'today'
         : DateFormat.jm().format(ts.toLocal());
     return Padding(
       padding: const EdgeInsets.only(top: 10),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: PersonPhotoNetwork(
-                urlOrPath: urls.first,
-                placeholderBuilder: (_) => Container(
-                  color: scheme.surfaceContainerHigh,
+      // Tap the hero to open it full-screen — it's the most prominent surface
+      // on the card, so a dead tap reads as broken. Single photo; the viewer
+      // handles the signed-URL mint.
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => PhotoViewer.open(context, urls: [photo.url]),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: PersonPhotoNetwork(
+                  urlOrPath: photo.url,
+                  placeholderBuilder: (_) => Container(
+                    color: scheme.surfaceContainerHigh,
+                  ),
                 ),
               ),
-            ),
-            // Caption strip — translucent bar with the time + first
-            // line of the observation body so the photo isn't
-            // context-less.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.55),
+              // Caption strip — translucent bar with JUST the time. No body text:
+              // block photos have none, and an observation body could name
+              // another child (privacy — see class doc).
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.55),
+                      ],
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.camera_alt_outlined,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          timeLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors
+                                .white, // raw-canvas: label over the photo
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.camera_alt_outlined,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        '$timeLabel · ${(todayEntry.body ?? '').split('\n').first}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color:
-                              Colors.white, // raw-canvas: label over the photo
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
-            if (urls.length > 1)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '+${urls.length - 1}',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.white, // raw-canvas: badge over the photo
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

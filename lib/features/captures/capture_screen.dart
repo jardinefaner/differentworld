@@ -5,6 +5,7 @@ import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/platform.dart';
@@ -229,12 +230,22 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
     if (_photoUploading) return;
     final service = ref.read(photoServiceProvider);
     final attachments = ref.read(attachmentActionsProvider);
+    // The block live RIGHT NOW — but ONLY when it's unambiguous which room it
+    // belongs to (exactly one of the viewer's cohorts is live). A capture has
+    // no cohort picker, so stamping the cross-room "most-recently-started"
+    // winner could flow a photo to the WRONG cohort's families (a director with
+    // two live rooms). When two-plus rooms are live this is null → the photo
+    // stays a plain inbox capture (block null), never auto-distributed. Single
+    // live room → certain stamp → it flows to that one cohort's recap. ref.read
+    // at photo time (not watch); see unambiguousLiveBlockProvider.
+    final liveBlock = ref.read(unambiguousLiveBlockProvider);
     final messenger = ScaffoldMessenger.maybeOf(context);
     // Camera on mobile; a file/gallery pick everywhere else — no in-app
     // camera off-mobile (docs/PLATFORM_RUBRIC.md P1), same gate the
     // observation + work-sample flows use.
-    final source =
-        isMobileCapturePlatform ? ImageSource.camera : ImageSource.gallery;
+    final source = isMobileCapturePlatform
+        ? ImageSource.camera
+        : ImageSource.gallery;
     final XFile? picked;
     try {
       picked = await service.pickPhoto(source);
@@ -267,6 +278,11 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
         entityKind: 'capture',
         entityId: captureId,
         url: url,
+        // Stamp the live block so the photo is queryable by block (the recap
+        // gathers a day's block photos). A capture has no subject picker, so
+        // subjectId stays null — a room moment, shown to every family of the
+        // cohort, never tagged to one child.
+        scheduleBlockId: liveBlock?.blockId,
       );
       if (!mounted) return;
       setState(() => _photos = [..._photos, url]);
@@ -339,13 +355,9 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> {
               // the transcript appends to whatever the user typed,
               // and auto-save catches it through `_onChanged`.
               suffixIcon: IconButton(
-                tooltip: _voiceActive
-                    ? 'Stop dictation'
-                    : 'Dictate by voice',
+                tooltip: _voiceActive ? 'Stop dictation' : 'Dictate by voice',
                 icon: Icon(
-                  _voiceActive
-                      ? Icons.stop_circle
-                      : Icons.mic_none_outlined,
+                  _voiceActive ? Icons.stop_circle : Icons.mic_none_outlined,
                   color: _voiceActive
                       ? Theme.of(context).colorScheme.error
                       : null,
@@ -473,6 +485,8 @@ class _PhotoStrip extends StatelessWidget {
           for (var i = 0; i < photos.length; i++) ...[
             const SizedBox(width: 8),
             GestureDetector(
+              // Opaque so the tap stays live even before the image loads.
+              behavior: HitTestBehavior.opaque,
               onTap: () => onView(i),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),

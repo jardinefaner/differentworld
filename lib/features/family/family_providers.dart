@@ -50,8 +50,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// subjects whose `subject_guardians` row matches the guardian's id.
 /// Empty list (not error) when the viewer isn't a guardian.
 // ignore: specify_nonobvious_property_types
-final familyChildrenProvider =
-    FutureProvider.autoDispose<List<Subject>>((ref) async {
+final familyChildrenProvider = FutureProvider.autoDispose<List<Subject>>((
+  ref,
+) async {
   final viewer = ref.watch(viewerProvider);
   if (viewer is! GuardianViewer) return const <Subject>[];
   final supabase = Supabase.instance.client;
@@ -70,20 +71,20 @@ final familyChildrenProvider =
 /// top of the router gate.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final familySubjectByIdProvider =
-    FutureProvider.autoDispose.family<Subject?, String>((ref, id) async {
-  final viewer = ref.watch(viewerProvider);
-  if (viewer is! GuardianViewer) return null;
-  if (!viewer.canSeeSubject(id)) return null;
-  final supabase = Supabase.instance.client;
-  final row = await supabase
-      .from('subjects')
-      .select()
-      .eq('id', id)
-      .maybeSingle();
-  if (row == null) return null;
-  return _subjectFromMap(row);
-});
+final familySubjectByIdProvider = FutureProvider.autoDispose
+    .family<Subject?, String>((ref, id) async {
+      final viewer = ref.watch(viewerProvider);
+      if (viewer is! GuardianViewer) return null;
+      if (!viewer.canSeeSubject(id)) return null;
+      final supabase = Supabase.instance.client;
+      final row = await supabase
+          .from('subjects')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
+      if (row == null) return null;
+      return _subjectFromMap(row);
+    });
 
 /// Today's attendance row for one subject. Single-row equivalent of
 /// the staff-side `attendanceForDayProvider` (which is per-group).
@@ -91,23 +92,23 @@ typedef FamilyAttendanceKey = ({String subjectId, String dateIso});
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final familyAttendanceForSubjectProvider =
-    FutureProvider.autoDispose.family<AttendanceRecord?, FamilyAttendanceKey>(
-  (ref, key) async {
-    final viewer = ref.watch(viewerProvider);
-    if (viewer is! GuardianViewer) return null;
-    if (!viewer.canSeeSubject(key.subjectId)) return null;
-    final supabase = Supabase.instance.client;
-    final row = await supabase
-        .from('attendance_records')
-        .select()
-        .eq('subject_id', key.subjectId)
-        .eq('date', key.dateIso)
-        .maybeSingle();
-    if (row == null) return null;
-    return _attendanceFromMap(row);
-  },
-);
+final familyAttendanceForSubjectProvider = FutureProvider.autoDispose
+    .family<AttendanceRecord?, FamilyAttendanceKey>(
+      (ref, key) async {
+        final viewer = ref.watch(viewerProvider);
+        if (viewer is! GuardianViewer) return null;
+        if (!viewer.canSeeSubject(key.subjectId)) return null;
+        final supabase = Supabase.instance.client;
+        final row = await supabase
+            .from('attendance_records')
+            .select()
+            .eq('subject_id', key.subjectId)
+            .eq('date', key.dateIso)
+            .maybeSingle();
+        if (row == null) return null;
+        return _attendanceFromMap(row);
+      },
+    );
 
 /// Entries for a subject, optionally filtered by kind. Newest first,
 /// capped at 100 rows so the round-trip stays bounded.
@@ -115,46 +116,48 @@ typedef FamilyEntriesKey = ({String subjectId, String? kind});
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final familyEntriesForSubjectProvider =
-    FutureProvider.autoDispose.family<List<Entry>, FamilyEntriesKey>(
-  (ref, key) async {
-    final viewer = ref.watch(viewerProvider);
-    if (viewer is! GuardianViewer) return const <Entry>[];
-    if (!viewer.canSeeSubject(key.subjectId)) return const <Entry>[];
-    final supabase = Supabase.instance.client;
-    final kind = key.kind;
-    // Observations can name OTHER children in the body ("Sofia and Mateo built
-    // a fort"). The family lens reads them through a server-side scrub RPC
-    // (app.family_observations_for_subject, migration 20260620000001) so another
-    // child's name never reaches a guardian's device — the guardian device
-    // can't scrub it itself (by design it has no roster). Director-gated by the
-    // space capability `scrub_family_observations`, default ON.
-    if (kind == 'observation') {
-      final uid = supabase.auth.currentUser?.id;
-      if (uid == null) return const <Entry>[];
-      final rows = await supabase.rpc<dynamic>(
-        'family_observations_for_subject',
-        params: {'caller_uid': uid, 'p_subject_id': key.subjectId},
-      ) as List<dynamic>;
-      return [
-        for (final r in rows) _entryFromMap(r as Map<String, dynamic>),
-      ];
-    }
-    final filtered = kind == null
-        ? supabase.from('entries').select().eq('subject_id', key.subjectId)
-        : supabase
-            .from('entries')
-            .select()
-            .eq('subject_id', key.subjectId)
-            .eq('kind', kind);
-    final rows = await filtered
-        .order('recorded_at', ascending: false)
-        .limit(100);
-    return [
-      for (final r in rows) _entryFromMap(r),
-    ];
-  },
-);
+final familyEntriesForSubjectProvider = FutureProvider.autoDispose
+    .family<List<Entry>, FamilyEntriesKey>(
+      (ref, key) async {
+        final viewer = ref.watch(viewerProvider);
+        if (viewer is! GuardianViewer) return const <Entry>[];
+        if (!viewer.canSeeSubject(key.subjectId)) return const <Entry>[];
+        final supabase = Supabase.instance.client;
+        final kind = key.kind;
+        // Observations can name OTHER children in the body ("Sofia and Mateo built
+        // a fort"). The family lens reads them through a server-side scrub RPC
+        // (app.family_observations_for_subject, migration 20260620000001) so another
+        // child's name never reaches a guardian's device — the guardian device
+        // can't scrub it itself (by design it has no roster). Director-gated by the
+        // space capability `scrub_family_observations`, default ON.
+        if (kind == 'observation') {
+          final uid = supabase.auth.currentUser?.id;
+          if (uid == null) return const <Entry>[];
+          final rows =
+              await supabase.rpc<dynamic>(
+                    'family_observations_for_subject',
+                    params: {'caller_uid': uid, 'p_subject_id': key.subjectId},
+                  )
+                  as List<dynamic>;
+          return [
+            for (final r in rows) _entryFromMap(r as Map<String, dynamic>),
+          ];
+        }
+        final filtered = kind == null
+            ? supabase.from('entries').select().eq('subject_id', key.subjectId)
+            : supabase
+                  .from('entries')
+                  .select()
+                  .eq('subject_id', key.subjectId)
+                  .eq('kind', kind);
+        final rows = await filtered
+            .order('recorded_at', ascending: false)
+            .limit(100);
+        return [
+          for (final r in rows) _entryFromMap(r),
+        ];
+      },
+    );
 
 /// What a parent most wants to know at pickup time: has my child been picked
 /// up, and when? Derived from today's attendance + today's departure entry.
@@ -219,7 +222,8 @@ final familyPickupStatusProvider = FutureProvider.autoDispose
       for (final e in departures) {
         final local = DateTime.tryParse(e.recordedAt)?.toLocal();
         if (local == null || dateKey(local) != today) continue;
-        if (releasedAtIso == null || e.recordedAt.compareTo(releasedAtIso) > 0) {
+        if (releasedAtIso == null ||
+            e.recordedAt.compareTo(releasedAtIso) > 0) {
           releasedAtIso = e.recordedAt;
         }
       }
@@ -236,31 +240,33 @@ final familyPickupStatusProvider = FutureProvider.autoDispose
 /// PostgREST-backed [familyEntriesForSubjectProvider].
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final familyIncidentsForSubjectProvider =
-    FutureProvider.autoDispose.family<List<Incident>, String>(
-  (ref, subjectId) async {
-    final viewer = ref.watch(viewerProvider);
-    if (viewer is! GuardianViewer) return const <Incident>[];
-    if (!viewer.canSeeSubject(subjectId)) return const <Incident>[];
-    final supabase = Supabase.instance.client;
-    final uid = supabase.auth.currentUser?.id;
-    if (uid == null) return const <Incident>[];
-    // Server-side stripping RPC: the narrative (`text`) + `action_taken`
-    // are nulled out in Postgres so they never reach this device — a
-    // conflict narrative naming another child can't leak over the wire
-    // (Red Team B1). The RPC re-checks the guardian↔child link and the
-    // surfaced-only policy (notified OR family note), so this client gate
-    // is defense-in-depth.
-    final rows = await supabase.rpc<dynamic>(
-      'family_incidents_for_subject',
-      params: {'caller_uid': uid, 'p_subject_id': subjectId},
-    ) as List<dynamic>;
-    return [
-      for (final r in rows)
-        Incident.fromEntry(_entryFromMap(r as Map<String, dynamic>)),
-    ];
-  },
-);
+final familyIncidentsForSubjectProvider = FutureProvider.autoDispose
+    .family<List<Incident>, String>(
+      (ref, subjectId) async {
+        final viewer = ref.watch(viewerProvider);
+        if (viewer is! GuardianViewer) return const <Incident>[];
+        if (!viewer.canSeeSubject(subjectId)) return const <Incident>[];
+        final supabase = Supabase.instance.client;
+        final uid = supabase.auth.currentUser?.id;
+        if (uid == null) return const <Incident>[];
+        // Server-side stripping RPC: the narrative (`text`) + `action_taken`
+        // are nulled out in Postgres so they never reach this device — a
+        // conflict narrative naming another child can't leak over the wire
+        // (Red Team B1). The RPC re-checks the guardian↔child link and the
+        // surfaced-only policy (notified OR family note), so this client gate
+        // is defense-in-depth.
+        final rows =
+            await supabase.rpc<dynamic>(
+                  'family_incidents_for_subject',
+                  params: {'caller_uid': uid, 'p_subject_id': subjectId},
+                )
+                as List<dynamic>;
+        return [
+          for (final r in rows)
+            Incident.fromEntry(_entryFromMap(r as Map<String, dynamic>)),
+        ];
+      },
+    );
 
 /// Attachments for an entity (entry id, subject id, …) for the
 /// family lens. Same shape as the staff
@@ -282,25 +288,113 @@ typedef FamilyAttachmentsKey = ({
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final familyAttachmentsForEntityProvider =
-    FutureProvider.autoDispose.family<List<Attachment>, FamilyAttachmentsKey>(
-  (ref, key) async {
-    final viewer = ref.watch(viewerProvider);
-    if (viewer is! GuardianViewer) return const <Attachment>[];
-    if (!viewer.canSeeSubject(key.subjectId)) return const <Attachment>[];
-    final supabase = Supabase.instance.client;
-    final rows = await supabase
-        .from('attachments')
-        .select()
-        .eq('entity_kind', key.kind)
-        .eq('entity_id', key.id)
-        .order('sort_order', ascending: true, nullsFirst: false)
-        .order('created_at', ascending: true);
-    return [
-      for (final r in rows) _attachmentFromMap(r),
-    ];
-  },
-);
+final familyAttachmentsForEntityProvider = FutureProvider.autoDispose
+    .family<List<Attachment>, FamilyAttachmentsKey>(
+      (ref, key) async {
+        final viewer = ref.watch(viewerProvider);
+        if (viewer is! GuardianViewer) return const <Attachment>[];
+        if (!viewer.canSeeSubject(key.subjectId)) return const <Attachment>[];
+        final supabase = Supabase.instance.client;
+        final rows = await supabase
+            .from('attachments')
+            .select()
+            .eq('entity_kind', key.kind)
+            .eq('entity_id', key.id)
+            .order('sort_order', ascending: true, nullsFirst: false)
+            .order('created_at', ascending: true);
+        return [
+          for (final r in rows) _attachmentFromMap(r),
+        ];
+      },
+    );
+
+/// The single most-recent photo from TODAY for the family "photo of the
+/// moment" — broadened (seam 3) beyond observations to ALSO include the
+/// cohort's block captures, so a parent at pickup sees the day's pictures
+/// even when staff snapped them on the floor instead of filing an observation.
+///
+/// Privacy (load-bearing — this is family-facing):
+///   • this child's OWN tagged photos (`subject_id == subjectId`) — fine.
+///   • the cohort's ROOM moments (`subject_id IS NULL` on today's blocks) —
+///     fine, the room's shared day.
+///   • a photo tagged to ANOTHER child (`subject_id == someoneElse`) is NEVER
+///     returned — we only ever query `subject_id == thisChild` OR the
+///     null-subject room set, so another child's keepsake can't surface here.
+/// `canSeeSubject` gates the whole thing first. Returns null when the child has
+/// no photo today (the peek then renders nothing). Not offline-first (PostgREST
+/// — same trade-off as the other per-subject family reads).
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final familyTodaysMomentPhotoProvider = FutureProvider.autoDispose
+    .family<Attachment?, String>(
+      (ref, subjectId) async {
+        final viewer = ref.watch(viewerProvider);
+        if (viewer is! GuardianViewer) return null;
+        if (!viewer.canSeeSubject(subjectId)) return null;
+        final supabase = Supabase.instance.client;
+        final today = todayKey();
+
+        // The candidate pool. Each entry is (url-carrying) Attachment; we pick the
+        // newest by created_at at the end.
+        final candidates = <Attachment>[];
+
+        // 1) This child's OWN photos taken today (tagged with their subject_id).
+        final mine = await supabase
+            .from('attachments')
+            .select()
+            .eq('subject_id', subjectId)
+            .order('created_at', ascending: false)
+            .limit(20);
+        for (final r in mine) {
+          final a = _attachmentFromMap(r);
+          if (_attachmentIsToday(a, today)) candidates.add(a);
+        }
+
+        // 2) The cohort's ROOM moments today — block captures with NO subject tag.
+        //    Fetch the child's group + today's block ids, then the null-subject
+        //    photos on those blocks. A photo tagged to another child is excluded
+        //    by the `subject_id IS NULL` filter.
+        final child = await ref.watch(
+          familySubjectByIdProvider(subjectId).future,
+        );
+        final groupId = child?.groupId;
+        if (groupId != null) {
+          final blocks = await ref.watch(
+            familyScheduleForGroupProvider(
+              (groupId: groupId, dateIso: today),
+            ).future,
+          );
+          final blockIds = [for (final b in blocks) b.id];
+          if (blockIds.isNotEmpty) {
+            final roomShots = await supabase
+                .from('attachments')
+                .select()
+                .inFilter('schedule_block_id', blockIds)
+                .isFilter('subject_id', null)
+                .order('created_at', ascending: false)
+                .limit(20);
+            for (final r in roomShots) {
+              final a = _attachmentFromMap(r);
+              if (_attachmentIsToday(a, today)) candidates.add(a);
+            }
+          }
+        }
+
+        if (candidates.isEmpty) return null;
+        // Newest first by created_at (taken_at is optional / not always set).
+        candidates.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return candidates.first;
+      },
+    );
+
+/// True when an attachment was created today (local day). Prefers `takenAt`
+/// (when the shutter fired) and falls back to `createdAt` (row insert).
+bool _attachmentIsToday(Attachment a, String todayIso) {
+  final raw = a.takenAt ?? a.createdAt;
+  final local = DateTime.tryParse(raw)?.toLocal();
+  if (local == null) return false;
+  return dateKey(local) == todayIso;
+}
 
 /// Wave 160: schedule blocks for a kid's group on a given date.
 /// Guardian devices don't have `schedule_blocks` in their local
@@ -316,38 +410,38 @@ typedef FamilyScheduleKey = ({String groupId, String dateIso});
 // ignore: specify_nonobvious_property_types
 final familyScheduleForGroupProvider = FutureProvider.autoDispose
     .family<List<ScheduleBlock>, FamilyScheduleKey>((ref, key) async {
-  final viewer = ref.watch(viewerProvider);
-  if (viewer is! GuardianViewer) return const <ScheduleBlock>[];
-  final supabase = Supabase.instance.client;
-  final rows = await supabase
-      .from('schedule_blocks')
-      .select()
-      .eq('group_id', key.groupId)
-      .eq('date', key.dateIso)
-      .order('start_at', ascending: true);
-  return [
-    for (final r in rows) _scheduleBlockFromMap(r),
-  ];
-});
+      final viewer = ref.watch(viewerProvider);
+      if (viewer is! GuardianViewer) return const <ScheduleBlock>[];
+      final supabase = Supabase.instance.client;
+      final rows = await supabase
+          .from('schedule_blocks')
+          .select()
+          .eq('group_id', key.groupId)
+          .eq('date', key.dateIso)
+          .order('start_at', ascending: true);
+      return [
+        for (final r in rows) _scheduleBlockFromMap(r),
+      ];
+    });
 
 ScheduleBlock _scheduleBlockFromMap(Map<String, dynamic> r) => ScheduleBlock(
-      id: r['id'] as String,
-      spaceId: r['space_id'] as String,
-      groupId: r['group_id'] as String,
-      date: r['date'] as String,
-      startAt: r['start_at'] as String,
-      endAt: r['end_at'] as String,
-      activityId: r['activity_id'] as String?,
-      leadMemberId: r['lead_member_id'] as String?,
-      leadSubstituteMemberId: r['lead_substitute_member_id'] as String?,
-      locationOverrideId: r['location_override_id'] as String?,
-      kind: r['kind'] as String? ?? 'on_site',
-      notes: r['notes'] as String?,
-      status: r['status'] as String? ?? 'planned',
-      statusReason: r['status_reason'] as String?,
-      createdAt: r['created_at'] as String,
-      updatedAt: r['updated_at'] as String,
-    );
+  id: r['id'] as String,
+  spaceId: r['space_id'] as String,
+  groupId: r['group_id'] as String,
+  date: r['date'] as String,
+  startAt: r['start_at'] as String,
+  endAt: r['end_at'] as String,
+  activityId: r['activity_id'] as String?,
+  leadMemberId: r['lead_member_id'] as String?,
+  leadSubstituteMemberId: r['lead_substitute_member_id'] as String?,
+  locationOverrideId: r['location_override_id'] as String?,
+  kind: r['kind'] as String? ?? 'on_site',
+  notes: r['notes'] as String?,
+  status: r['status'] as String? ?? 'planned',
+  statusReason: r['status_reason'] as String?,
+  createdAt: r['created_at'] as String,
+  updatedAt: r['updated_at'] as String,
+);
 
 // ---------------------------------------------------------------------
 // Converters — PostgREST snake_case → Drift model. Each one mirrors the
@@ -357,68 +451,75 @@ ScheduleBlock _scheduleBlockFromMap(Map<String, dynamic> r) => ScheduleBlock(
 // reads `entry.details` as a JSON string keeps working.
 
 Subject _subjectFromMap(Map<String, dynamic> r) => Subject(
-      id: r['id'] as String,
-      spaceId: r['space_id'] as String,
-      groupId: r['group_id'] as String?,
-      firstName: (r['first_name'] as String?) ?? '',
-      lastName: (r['last_name'] as String?) ?? '',
-      dob: r['dob'] as String?,
-      photoUrl: r['photo_url'] as String?,
-      allergies: r['allergies'] as String?,
-      notes: r['notes'] as String?,
-      capabilities: _jsonString(r['capabilities']),
-      dropoffWindowStart: r['dropoff_window_start'] as String?,
-      dropoffWindowEnd: r['dropoff_window_end'] as String?,
-      pickupWindowStart: r['pickup_window_start'] as String?,
-      pickupWindowEnd: r['pickup_window_end'] as String?,
-      createdAt: r['created_at'] as String,
-      updatedAt: r['updated_at'] as String,
-    );
+  id: r['id'] as String,
+  spaceId: r['space_id'] as String,
+  groupId: r['group_id'] as String?,
+  firstName: (r['first_name'] as String?) ?? '',
+  lastName: (r['last_name'] as String?) ?? '',
+  dob: r['dob'] as String?,
+  photoUrl: r['photo_url'] as String?,
+  allergies: r['allergies'] as String?,
+  notes: r['notes'] as String?,
+  capabilities: _jsonString(r['capabilities']),
+  dropoffWindowStart: r['dropoff_window_start'] as String?,
+  dropoffWindowEnd: r['dropoff_window_end'] as String?,
+  pickupWindowStart: r['pickup_window_start'] as String?,
+  pickupWindowEnd: r['pickup_window_end'] as String?,
+  createdAt: r['created_at'] as String,
+  updatedAt: r['updated_at'] as String,
+);
 
 AttendanceRecord _attendanceFromMap(Map<String, dynamic> r) => AttendanceRecord(
-      id: r['id'] as String,
-      spaceId: r['space_id'] as String,
-      groupId: r['group_id'] as String?,
-      subjectId: r['subject_id'] as String,
-      date: r['date'] as String,
-      status: r['status'] as String,
-      notes: r['notes'] as String?,
-      recordedBy: r['recorded_by'] as String,
-      recordedAt: r['recorded_at'] as String,
-      updatedAt: r['updated_at'] as String,
-    );
+  id: r['id'] as String,
+  spaceId: r['space_id'] as String,
+  groupId: r['group_id'] as String?,
+  subjectId: r['subject_id'] as String,
+  date: r['date'] as String,
+  status: r['status'] as String,
+  notes: r['notes'] as String?,
+  recordedBy: r['recorded_by'] as String,
+  recordedAt: r['recorded_at'] as String,
+  updatedAt: r['updated_at'] as String,
+);
 
 Entry _entryFromMap(Map<String, dynamic> r) => Entry(
-      id: r['id'] as String,
-      spaceId: r['space_id'] as String,
-      groupId: r['group_id'] as String?,
-      subjectId: r['subject_id'] as String?,
-      kind: r['kind'] as String,
-      // Drift `body` is mapped to the server column `text` via
-      // `.named('text')`. PostgREST returns the server name.
-      body: r['text'] as String?,
-      photoUrl: r['photo_url'] as String?,
-      details: _jsonString(r['details']),
-      recordedBy: r['recorded_by'] as String,
-      recordedAt: r['recorded_at'] as String,
-      updatedAt: r['updated_at'] as String,
-    );
+  id: r['id'] as String,
+  spaceId: r['space_id'] as String,
+  groupId: r['group_id'] as String?,
+  subjectId: r['subject_id'] as String?,
+  kind: r['kind'] as String,
+  // Drift `body` is mapped to the server column `text` via
+  // `.named('text')`. PostgREST returns the server name.
+  body: r['text'] as String?,
+  photoUrl: r['photo_url'] as String?,
+  details: _jsonString(r['details']),
+  recordedBy: r['recorded_by'] as String,
+  recordedAt: r['recorded_at'] as String,
+  updatedAt: r['updated_at'] as String,
+);
 
 Attachment _attachmentFromMap(Map<String, dynamic> r) => Attachment(
-      id: r['id'] as String,
-      spaceId: r['space_id'] as String,
-      entityKind: r['entity_kind'] as String,
-      entityId: r['entity_id'] as String,
-      url: r['url'] as String,
-      thumbUrl: r['thumb_url'] as String?,
-      mimeType: (r['mime_type'] as String?) ?? 'image/jpeg',
-      caption: r['caption'] as String?,
-      sortOrder: r['sort_order'] as int?,
-      uploadedBy: r['uploaded_by'] as String?,
-      takenAt: r['taken_at'] as String?,
-      createdAt: r['created_at'] as String,
-      updatedAt: r['updated_at'] as String,
-    );
+  id: r['id'] as String,
+  spaceId: r['space_id'] as String,
+  entityKind: r['entity_kind'] as String,
+  entityId: r['entity_id'] as String,
+  url: r['url'] as String,
+  thumbUrl: r['thumb_url'] as String?,
+  mimeType: (r['mime_type'] as String?) ?? 'image/jpeg',
+  caption: r['caption'] as String?,
+  sortOrder: r['sort_order'] as int?,
+  uploadedBy: r['uploaded_by'] as String?,
+  takenAt: r['taken_at'] as String?,
+  // The tag axes MUST be read here, not dropped: the family lens gates a
+  // block's photos on `subjectId` (a photo tagged to ANOTHER child must not
+  // appear on this child's family view). Omitting them left subjectId null
+  // on every family-side row, defeating that gate.
+  subjectId: r['subject_id'] as String?,
+  capturedBySubjectId: r['captured_by_subject_id'] as String?,
+  scheduleBlockId: r['schedule_block_id'] as String?,
+  createdAt: r['created_at'] as String,
+  updatedAt: r['updated_at'] as String,
+);
 
 String _jsonString(Object? raw) {
   if (raw == null) return '{}';

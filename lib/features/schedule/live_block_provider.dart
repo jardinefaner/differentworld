@@ -222,3 +222,30 @@ final liveBlockProvider = Provider.autoDispose<LiveBlock?>((ref) {
   lives.sort((a, b) => b.startAt.compareTo(a.startAt));
   return lives.first;
 });
+
+/// The live block ONLY when it's UNAMBIGUOUS which room it belongs to — i.e.
+/// exactly one of the viewer's groups has a block live right now. Null when
+/// zero OR two-plus rooms are live.
+///
+/// **Why this is the safe stamp for captures (the wrong-family guard).** A
+/// quick capture has no cohort picker; stamping it with [liveBlockProvider]
+/// (which picks the most-recently-started across ALL the viewer's rooms) would
+/// mean a director with two live cohorts could snap a photo in Room B and have
+/// it inherit Room A's block id — then it flows to Room A's families as a
+/// "room moment" (CLAUDE.md "don't broaden a child's card to show another
+/// child's tagged photos"; the seam-3 wrong-family risk). When two rooms are
+/// live the room is genuinely ambiguous, so we DON'T stamp — the photo stays a
+/// plain inbox capture (block null), never auto-distributed. Single live room
+/// → the stamp is certain → safe to flow to that one cohort's recap.
+// ignore: specify_nonobvious_property_types
+final unambiguousLiveBlockProvider = Provider.autoDispose<LiveBlock?>((ref) {
+  final groups = ref.watch(groupsProvider).value ?? const <Group>[];
+  LiveBlock? only;
+  for (final g in groups) {
+    final live = ref.watch(liveBlockForGroupProvider(g.id));
+    if (live == null) continue;
+    if (only != null) return null; // two-plus rooms live → ambiguous, no stamp
+    only = live;
+  }
+  return only;
+});

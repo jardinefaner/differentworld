@@ -20,6 +20,7 @@ class RecapChildInput {
     required this.ownNames,
     this.heroName,
     this.answer,
+    this.photoUrls = const [],
   });
 
   final String subjectId;
@@ -34,6 +35,13 @@ class RecapChildInput {
 
   /// This child's own answer to the day's question, if they gave one.
   final String? answer;
+
+  /// The day's pictures this child's family may see: the room's block photos
+  /// (untagged moments) PLUS this child's own tagged photos. NEVER another
+  /// child's tagged photo — the composer builds this list per child so a
+  /// child's keepsake can't surface someone else's photo. Storage paths /
+  /// signed-URL inputs (rendered via `PersonPhotoNetwork`).
+  final List<String> photoUrls;
 }
 
 /// Build the stored `details` map for ONE child's recap entry — the room's
@@ -48,21 +56,31 @@ Map<String, dynamic> recapDetailsForChild({
   String? question,
   String? momentNote,
 }) {
-  String? clean(String? s) =>
-      (s == null || s.trim().isEmpty) ? null : s.trim();
+  String? clean(String? s) => (s == null || s.trim().isEmpty) ? null : s.trim();
   final moment = clean(momentNote) == null
       ? null
       : scrubOtherNames(clean(momentNote)!, otherNames);
   final answer = clean(child.answer) == null
       ? null
       : scrubOtherNames(clean(child.answer)!, otherNames);
-  final q = clean(question);
+  // The question is usually a curriculum template, but it CAN be free-typed and
+  // name another child ("What did you and Mateo build?") — so it gets the same
+  // scrub as moment/answer (the family-facing free-text rule is unconditional).
+  final q = clean(question) == null
+      ? null
+      : scrubOtherNames(clean(question)!, otherNames);
   final hero = clean(child.heroName);
   return <String, dynamic>{
     'date': date,
     'activities': activities,
     'question': ?q,
     'moment': ?moment,
+    // The day's pictures for THIS child's family — already scoped by the
+    // composer to room moments + this child's own (never another child's
+    // tagged photo). Stored as bare paths: a URL carries no child's NAME, so
+    // there's no free-text to scrub (we deliberately omit photo captions
+    // family-side to keep the leak surface at zero).
+    'photos': child.photoUrls,
     'child': <String, dynamic>{
       'name': child.firstName,
       'hero': ?hero,
@@ -81,12 +99,14 @@ class RecapView {
     this.moment,
     this.heroName,
     this.answer,
+    this.photos = const [],
   });
 
   /// Parse the stored details map. Tolerant of missing keys (an older or
   /// partial recap still renders what it has).
   factory RecapView.fromJson(Map<String, dynamic> json) {
     final rawActivities = json['activities'];
+    final rawPhotos = json['photos'];
     final child = json['child'];
     final childMap = child is Map ? child : const <dynamic, dynamic>{};
     return RecapView(
@@ -96,6 +116,9 @@ class RecapView {
           : const <String>[],
       question: json['question'] as String?,
       moment: json['moment'] as String?,
+      photos: rawPhotos is List
+          ? rawPhotos.map((e) => '$e').toList()
+          : const <String>[],
       childName: (childMap['name'] as String?) ?? '',
       heroName: childMap['hero'] as String?,
       answer: childMap['answer'] as String?,
@@ -109,6 +132,10 @@ class RecapView {
   final String childName;
   final String? heroName;
   final String? answer;
+
+  /// The day's pictures (room block photos + this child's own), as stored at
+  /// send time. Bare paths, no captions — see `recapDetailsForChild`.
+  final List<String> photos;
 
   /// True when there's at least one personal touch for this child (beyond the
   /// shared room day) — drives whether the "their moments" section renders.

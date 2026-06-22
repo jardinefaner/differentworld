@@ -3,6 +3,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/daily/daily_providers.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/heroes/hero_catalog.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/recap/recap_model.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
@@ -40,6 +41,22 @@ class RecapDraft {
             (c.answer?.isNotEmpty ?? false),
       )
       .length;
+
+  /// Every distinct picture the day produced, for the STAFF preview — the union
+  /// across children (room moments appear once; each child's own tagged photos
+  /// are also surfaced so staff see the full day). De-duped, room-first by the
+  /// order children were assembled. Family-side each child only ever sees their
+  /// own scoped subset (see `RecapChildInput.photoUrls`).
+  List<String> get photos {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final c in children) {
+      for (final url in c.photoUrls) {
+        if (seen.add(url)) out.add(url);
+      }
+    }
+    return out;
+  }
 }
 
 /// Assemble today's recap draft for a cohort: activities from the schedule, the
@@ -73,11 +90,42 @@ final recapDraftProvider = FutureProvider.autoDispose
         return 'Activity';
       }
 
-      final sorted = [...blocks]..sort((a, b) => a.startAt.compareTo(b.startAt));
+      final sorted = [...blocks]
+        ..sort((a, b) => a.startAt.compareTo(b.startAt));
       final activities = <String>[];
       for (final b in sorted) {
         final name = labelFor(b);
         if (!activities.contains(name)) activities.add(name);
+      }
+
+      // The day's pictures — gathered once across today's blocks, then split by
+      // tag so each child's family sees the right set:
+      //   • roomPhotos    — untagged block captures (subject_id null): the
+      //                     ROOM's day, fine to show every family of the cohort.
+      //   • taggedBySubject — photos tagged to a specific child: shown ONLY on
+      //                     that child's family recap, never another's.
+      // This is the privacy seam: a photo OF child A must not appear in child
+      // B's keepsake (CLAUDE.md "don't broaden a child's card to show another
+      // child's tagged photos"). De-duped by url across overlapping blocks.
+      final roomPhotos = <String>[];
+      final taggedBySubject = <String, List<String>>{};
+      final seenUrls = <String>{};
+      for (final b in sorted) {
+        final shots = await ref.watch(attachmentsForBlockProvider(b.id).future);
+        for (final a in shots) {
+          // Skip a not-yet-uploaded photo: a `pending:<localpath>` token would
+          // be stored verbatim in the family-facing recap entry and render as a
+          // broken image on the parent's device (which can't see the local
+          // bytes). It rejoins on a later send once the upload syncs.
+          if (a.url.startsWith('pending:')) continue;
+          if (!seenUrls.add(a.url)) continue;
+          final sid = a.subjectId;
+          if (sid == null || sid.isEmpty) {
+            roomPhotos.add(a.url);
+          } else {
+            (taggedBySubject[sid] ??= <String>[]).add(a.url);
+          }
+        }
       }
 
       // The day's question (if the Daily is on).
@@ -131,6 +179,12 @@ final recapDraftProvider = FutureProvider.autoDispose
             }..removeWhere((n) => n.isEmpty),
             heroName: heroName,
             answer: answer,
+            // Room moments + this child's OWN tagged photos — never another
+            // child's. Room photos lead (the shared day) then the personal ones.
+            photoUrls: [
+              ...roomPhotos,
+              ...?taggedBySubject[s.id],
+            ],
           ),
         );
       }

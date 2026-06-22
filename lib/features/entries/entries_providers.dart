@@ -71,6 +71,13 @@ class EntryActions {
           entityId: entryId,
           url: photoUrls[i],
           sortOrder: i,
+          // Tag the attachment rows the same way the entry is tagged, so a new
+          // observation photo is directly block/child-queryable (the migration
+          // backfilled only EXISTING rows). subjectId → this photo is OF this
+          // child (family-side canSeeSubject gating uses it); scheduleBlockId →
+          // it flows to the block's recap.
+          subjectId: subjectId,
+          scheduleBlockId: scheduleBlockId,
         );
       }
     }

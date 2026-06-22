@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/family/family_providers.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/recap/recap_model.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter/material.dart';
@@ -116,6 +118,13 @@ class _RecapPeekCard extends StatelessWidget {
               ],
             ),
           ],
+          // The day's pictures — a small tappable strip. No captions (privacy:
+          // a caption could name another child; the strip is image-only by
+          // design). Renders nothing when the day had no photos.
+          if (view.photos.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _RecapPhotoStrip(urls: view.photos),
+          ],
           if (view.moment != null && view.moment!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(view.moment!, style: theme.textTheme.bodyMedium),
@@ -160,6 +169,44 @@ class _RecapPeekCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// A small horizontal strip of the day's pictures on the family recap. Image-
+/// only (no captions — privacy); each thumb opens the full-screen viewer over
+/// the whole set. The urls are already privacy-scoped at send time (room
+/// moments + this child's own).
+class _RecapPhotoStrip extends StatelessWidget {
+  const _RecapPhotoStrip({required this.urls});
+
+  final List<String> urls;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 64,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: urls.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => GestureDetector(
+          // Opaque so the tap stays live even before the image loads.
+          behavior: HitTestBehavior.opaque,
+          onTap: () => PhotoViewer.open(context, urls: urls, initialIndex: i),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 64,
+              height: 64,
+              child: PersonPhotoNetwork(
+                urlOrPath: urls[i],
+                errorBuilder: (_) => const Icon(Icons.broken_image_outlined),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

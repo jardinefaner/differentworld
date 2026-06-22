@@ -43,6 +43,37 @@ void main() {
       },
     );
 
+    test(
+      "stores this child's day photos verbatim — bare paths carry no names, "
+      'so the privacy scrub is unaffected',
+      () {
+        const maya = RecapChildInput(
+          subjectId: 's-maya',
+          firstName: 'Maya',
+          ownNames: {'Maya'},
+          // The composer already scoped this list to room moments + Maya's own
+          // tagged photos — never another child's. We assert it round-trips.
+          photoUrls: ['space/blockA/room1.jpg', 'space/blockA/maya2.jpg'],
+        );
+        final details = recapDetailsForChild(
+          date: '2026-06-19',
+          activities: const ['Garden'],
+          child: maya,
+          otherNames: const {'Sofia'},
+        );
+        expect(
+          details['photos'],
+          const ['space/blockA/room1.jpg', 'space/blockA/maya2.jpg'],
+        );
+        // Paths are not free-text → the flatten-and-scan privacy bar still holds.
+        expect(details.toString(), isNot(contains('Sofia')));
+
+        final v = RecapView.fromJson(details);
+        expect(v.photos, hasLength(2));
+        expect(v.photos.first, 'space/blockA/room1.jpg');
+      },
+    );
+
     test('omits empty optional fields', () {
       final d = recapDetailsForChild(
         date: '2026-06-19',
