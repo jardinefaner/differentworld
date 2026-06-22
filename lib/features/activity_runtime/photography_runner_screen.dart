@@ -124,6 +124,18 @@ class _PhotographyRunnerScreenState
   /// Showing the shared photos full-screen as "the findings".
   bool _presenting = false;
 
+  // ── Room slideshow (the present-to-the-wall surface) ─────────────────
+  // One shared photo at a time, full-bleed, auto-advancing on a timer the
+  // teacher can pause. ALL three are created in [_openPresentation] and
+  // torn down in [_closePresentation] + `dispose()` — never leak a Timer.
+  PageController? _slidePage;
+  Timer? _slideTimer;
+  int _slideIndex = 0;
+  bool _slidePaused = false;
+
+  /// How long each shared photo holds before the slideshow advances.
+  static const Duration _slideInterval = Duration(seconds: 4);
+
   @override
   void initState() {
     super.initState();
@@ -150,7 +162,9 @@ class _PhotographyRunnerScreenState
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _focusTimer?.cancel();
+    _slideTimer?.cancel();
     _viewerPage?.dispose();
+    _slidePage?.dispose();
     _filmstrip.dispose();
     _disposeCamera();
     super.dispose();
@@ -404,7 +418,7 @@ class _PhotographyRunnerScreenState
         if (_viewingIndex != null) {
           _closeViewer();
         } else if (_presenting) {
-          setState(() => _presenting = false);
+          _closePresentation();
         }
       },
       child: EdgeScaffold(
@@ -693,7 +707,7 @@ class _PhotographyRunnerScreenState
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
               child: FilledButton.icon(
-                onPressed: () => setState(() => _presenting = true),
+                onPressed: _openPresentation,
                 icon: const Icon(Icons.slideshow_outlined),
                 label: Text(
                   'Present $shared ${shared == 1 ? 'photo' : 'photos'}',
@@ -763,70 +777,314 @@ class _PhotographyRunnerScreenState
     );
   }
 
-  /// The findings presentation — the SHARED photos, full-screen, in the
-  /// justified gallery (the "show everyone" view). Single-device for now;
-  /// cross-device when submissions sync (SUBMISSIONS.md Slice B/C).
+  // ── Room slideshow lifecycle ─────────────────────────────────────────
+
+  /// The shared keepers, in capture order — the reel the slideshow plays.
+  /// Re-derived each call (cheap; the curate UI is gone while presenting so
+  /// the set is stable for the run, but deriving keeps it always-correct).
+  List<_Shot> get _sharedShots =>
+      _shots.where((s) => s.shared).toList(growable: false);
+
+  /// Open the present-to-the-wall slideshow: create the [PageController],
+  /// reset to the first photo, start auto-advance. Defensive empty guard
+  /// (the button already requires ≥1 shared). Idempotent on the controller
+  /// (dispose any stale one first) so a re-open never leaks.
+  void _openPresentation() {
+    if (_sharedShots.isEmpty) return;
+    _slidePage?.dispose();
+    _slidePage = PageController();
+    _slideIndex = 0;
+    _slidePaused = false;
+    setState(() => _presenting = true);
+    _scheduleSlide();
+  }
+
+  /// Close the slideshow: stop the timer, drop the controller, return to the
+  /// gallery. Safe to call from PopScope back, the in-screen back button, or
+  /// any path — cancels the timer so we never leak it on exit.
+  void _closePresentation() {
+    _slideTimer?.cancel();
+    _slideTimer = null;
+    final page = _slidePage;
+    _slidePage = null;
+    // Dispose after the frame so a PageView still attached this build isn't
+    // torn out from under itself.
+    WidgetsBinding.instance.addPostFrameCallback((_) => page?.dispose());
+    if (mounted) {
+      setState(() {
+        _presenting = false;
+        _slidePaused = false;
+      });
+    }
+  }
+
+  /// (Re)start the auto-advance timer. Always cancels the prior one first so
+  /// two timers can never run at once. Every tick guards on `mounted` and on
+  /// the still-presenting / not-paused state, and loops back to the first
+  /// photo after the last so an unattended wall display runs forever.
+  void _scheduleSlide() {
+    _slideTimer?.cancel();
+    _slideTimer = Timer.periodic(_slideInterval, (_) {
+      if (!mounted || !_presenting || _slidePaused) return;
+      final count = _sharedShots.length;
+      if (count == 0) return;
+      _goSlide((_slideIndex + 1) % count);
+    });
+  }
+
+  /// Move the slideshow to [target] (already a valid index). Animates the
+  /// PageView; `onPageChanged` keeps `_slideIndex` in lockstep so taps,
+  /// swipes, and the timer all agree on where we are.
+  void _goSlide(int target) {
+    if (!mounted) return;
+    final page = _slidePage;
+    final count = _sharedShots.length;
+    if (page == null || !page.hasClients || count == 0) return;
+    final next = target.clamp(0, count - 1);
+    unawaited(
+      page.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
+      ),
+    );
+  }
+
+  /// Manual prev/next (tap-zones + swipe land here via [_goSlide]). Wraps at
+  /// both ends so the room never hits a dead edge. A manual move also resets
+  /// the auto-advance clock so the photo you jumped to gets its full dwell.
+  void _stepSlide(int delta) {
+    final count = _sharedShots.length;
+    if (count == 0) return;
+    _goSlide((_slideIndex + delta + count) % count);
+    if (!_slidePaused) _scheduleSlide();
+  }
+
+  /// Tap the stage to pause/resume auto-advance — the teacher's "hold on this
+  /// one" gesture. Manual prev/next still works while paused.
+  void _toggleSlidePause() {
+    if (!mounted) return;
+    unawaited(HapticFeedback.selectionClick());
+    setState(() => _slidePaused = !_slidePaused);
+    if (_slidePaused) {
+      _slideTimer?.cancel();
+      _slideTimer = null;
+    } else {
+      _scheduleSlide();
+    }
+  }
+
+  /// The room slideshow — the SHARED photos, one at a time, full-bleed on a
+  /// dark stage, auto-advancing. THIS is the moment the teacher mirrors the
+  /// phone to the wall (AirPlay/HDMI/Cast). Presents from in-memory bytes
+  /// (`Image.memory`) so it's instant and offline-proof — never the network
+  /// URL. Tap the stage to pause; tap-zones / swipe go prev/next.
   Widget _presentation(BuildContext context) {
     final theme = Theme.of(context);
-    final sharedIdx = [
-      for (var i = 0; i < _shots.length; i++)
-        if (_shots[i].shared) i,
-    ];
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => setState(() => _presenting = false),
-                ),
-                Expanded(
-                  child: Text(
-                    widget.prompt,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+    final shared = _sharedShots;
+
+    // Defensive: the present button requires ≥1 shared, but if the reel is
+    // somehow empty, show a calm message + a way back rather than a void.
+    if (shared.isEmpty) {
+      return SafeArea(
+        child: Stack(
+          children: [
+            const Center(
+              child: Text(
+                'Nothing shared yet',
+                style: TextStyle(color: Colors.white54),
+              ),
+            ),
+            Positioned(
+              top: 4,
+              left: 4,
+              child: IconButton(
+                tooltip: 'Back',
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: _closePresentation,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final current = _slideIndex.clamp(0, shared.length - 1);
+    final reflection = shared[current].reflection.trim();
+
+    // The stage is a raw immersive canvas (this file is on the theme
+    // allowlist) — a hardcoded dark stage is correct here; chrome stays
+    // white-on-dark to match the rest of the present controls.
+    return Stack(
+      // Conditional children (caption, pause badge) → stable keys so an
+      // appearing sibling can't poison Element identity (CLAUDE.md "Stack
+      // children without keys"). The PageView is byte-backed so a rebuild is
+      // cheap, but keying is the house rule regardless.
+      children: [
+        // Full-bleed photo reel. Swipe = manual prev/next; onPageChanged is
+        // the single source of truth for the live index.
+        Positioned.fill(
+          key: const ValueKey('photo-present-pageview'),
+          child: PageView.builder(
+            controller: _slidePage,
+            itemCount: shared.length,
+            onPageChanged: (i) {
+              if (!mounted) return;
+              setState(() => _slideIndex = i);
+            },
+            itemBuilder: (_, i) => Center(
+              child: Image.memory(
+                shared[i].bytes,
+                fit: BoxFit.contain, // whole photo, full-bleed, no crop
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) =>
+                    const ColoredBox(color: Colors.black),
+              ),
             ),
           ),
-          Expanded(
-            child: sharedIdx.isEmpty
-                ? const Center(
+        ),
+        // Tap zones: centre tap pauses/resumes; left third = prev, right
+        // third = next. Opaque so a childless detector actually hit-tests.
+        Positioned.fill(
+          key: const ValueKey('photo-present-tapzones'),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _stepSlide(-1),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _toggleSlidePause,
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _stepSlide(1),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Caption — the learner's reflection over a legible bottom scrim.
+        if (reflection.isNotEmpty)
+          Positioned(
+            key: const ValueKey('photo-present-caption'),
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black87, Colors.transparent],
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(28, 56, 28, 28),
                     child: Text(
-                      'Nothing shared yet',
-                      style: TextStyle(color: Colors.white54),
+                      reflection,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                      ),
                     ),
-                  )
-                : CollageGallery(
-                    padding: const EdgeInsets.all(4),
-                    tiles: [
-                      for (final i in sharedIdx)
-                        JustifiedTile(
-                          aspectRatio: _ar(_shots[i]),
-                          child: GestureDetector(
-                            onTap: () => _openViewer(i),
-                            child: Image.memory(
-                              _shots[i].bytes,
-                              fit: BoxFit.cover,
-                              gaplessPlayback: true,
-                              errorBuilder: (_, _, _) =>
-                                  const ColoredBox(color: Colors.white12),
-                            ),
-                          ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        // Back — top-left, over a soft scrim so it reads on a bright photo.
+        Positioned(
+          key: const ValueKey('photo-present-back'),
+          top: 4,
+          left: 4,
+          child: SafeArea(
+            child: _PresentChromeButton(
+              icon: Icons.arrow_back,
+              tooltip: 'Back to the gallery',
+              onTap: _closePresentation,
+            ),
+          ),
+        ),
+        // Paused badge — top-centre, so "we're holding here" reads across the
+        // room. Only while paused.
+        if (_slidePaused)
+          Positioned(
+            key: const ValueKey('photo-present-paused'),
+            top: 4,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.pause, color: Colors.white, size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'Paused',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.4,
                         ),
+                      ),
                     ],
                   ),
+                ),
+              ),
+            ),
           ),
-        ],
-      ),
+        // Progress — "3 / 12" + a row of dots, bottom-centre, over a scrim so
+        // it survives a bright photo even with no caption.
+        Positioned(
+          key: const ValueKey('photo-present-progress'),
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _SlideProgress(
+                  index: current,
+                  count: shared.length,
+                  // Hide the dots behind the caption scrim's text, but always
+                  // show the counter; the counter sits low-left so it dodges
+                  // a centred caption.
+                  showDots: reflection.isEmpty,
+                  theme: theme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -970,6 +1228,107 @@ class _PhotographyRunnerScreenState
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A round, scrimmed chrome button for the present stage — readable over a
+/// bright photo (the back arrow). White-on-dark to match the raw stage.
+class _PresentChromeButton extends StatelessWidget {
+  const _PresentChromeButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.45),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
+/// The slideshow's subtle progress — a "3 / 12" counter plus an optional row
+/// of dots, both inside a soft pill so they read on any photo. White-on-dark
+/// (raw present stage). [showDots] is suppressed when a caption owns the
+/// bottom band, leaving just the counter.
+class _SlideProgress extends StatelessWidget {
+  const _SlideProgress({
+    required this.index,
+    required this.count,
+    required this.showDots,
+    required this.theme,
+  });
+
+  final int index;
+  final int count;
+  final bool showDots;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    // Cap the rendered dots so a 30-photo reel doesn't overflow a phone width;
+    // the counter always carries the exact position.
+    const maxDots = 12;
+    final dots = count <= maxDots;
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${index + 1} / $count',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+            if (showDots && dots) ...[
+              const SizedBox(width: 12),
+              for (var i = 0; i < count; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: i == index
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+            ],
+          ],
         ),
       ),
     );
