@@ -32,15 +32,23 @@ class DifferentWorldApp extends ConsumerWidget {
     ref.watch(deepLinkBootProvider);
 
     // Photo upload queue:
-    //   1. Drain any uploads queued from previous offline sessions
+    //   1. End-of-day cleanup: clear un-printed local photo-turn shots the
+    //      teacher DIDN'T keep (selective sync, slice 2). AWAITED BEFORE the
+    //      drain so a cleanup and an upload can never interleave on the queue.
+    //      It never touches a hearted (kept) shot — see cleanupExpiredDeferred.
+    //   2. Drain any uploads queued from previous offline sessions
     //      (cold-start case where the device is already online).
-    //   2. Start the connectivity listener so future offline-to-
+    //   3. Start the connectivity listener so future offline-to-
     //      online transitions auto-drain.
-    // Both fire-and-forget — the worker logs internally and entity
-    // rows hold the `pending:<id>` token until retries succeed, so
+    // Steps 1+2 are fire-and-forget relative to first frame (chained so the
+    // cleanup finishes before the drain begins) — the worker logs internally
+    // and entity rows hold the `pending:<id>` token until retries succeed, so
     // the UI doesn't depend on these completing before first frame.
     final photoQueue = ref.read(photoUploadQueueProvider);
-    unawaited(photoQueue.processQueue());
+    unawaited(() async {
+      await photoQueue.cleanupExpiredDeferred();
+      await photoQueue.processQueue();
+    }());
     photoQueue.startConnectivityListener();
     final router = ref.watch(routerProvider);
     // Outdoor mode (Jordan persona): when on, the high-contrast
@@ -48,8 +56,7 @@ class DifferentWorldApp extends ConsumerWidget {
     // theme is the outdoor variant regardless of OS brightness
     // setting. When off, normal light/dark theme behavior.
     final outdoorAsync = ref.watch(outdoorModeProvider);
-    final isOutdoor =
-        outdoorAsync.value == OutdoorMode.on;
+    final isOutdoor = outdoorAsync.value == OutdoorMode.on;
     final outdoor = isOutdoor ? outdoorTheme() : null;
     // Calm is the default look — flatten every raw Card app-wide (Today's
     // cards and the rest) via flatCardTheme. Default Calm (only an explicit
@@ -61,14 +68,18 @@ class DifferentWorldApp extends ConsumerWidget {
     // additionally re-voices the type ramp (tight tracking, medium weight,
     // sentence case) — the show_widget mockup look (docs/VISION.md).
     final isCalm = style != DisplayStyle.boxed;
-    final cleanText =
-        style == DisplayStyle.clean ? AppType.cleanTextTheme() : null;
+    final cleanText = style == DisplayStyle.clean
+        ? AppType.cleanTextTheme()
+        : null;
     // The in-app font picker (Settings → Display → Fonts). Re-skins the base
     // ramp with the chosen display + body families; the bundled Fraunces +
     // Space Grotesk default keeps the first frame offline-safe.
-    final fontChoice = ref.watch(fontChoiceProvider).value ?? FontChoice.fallback;
-    final fontText =
-        applyFontChoice(cleanText ?? AppType.textTheme(), fontChoice);
+    final fontChoice =
+        ref.watch(fontChoiceProvider).value ?? FontChoice.fallback;
+    final fontText = applyFontChoice(
+      cleanText ?? AppType.textTheme(),
+      fontChoice,
+    );
     ThemeData calmify(ThemeData t) =>
         isCalm ? t.copyWith(cardTheme: flatCardTheme(t.colorScheme)) : t;
     return MaterialApp.router(

@@ -295,6 +295,110 @@ class PhotoUploadQueue {
     }
   }
 
+  /// End-of-day cleanup of un-printed local photo-turn shots (selective
+  /// sync, slice 2). A timed-turn shot is held on the device as a DEFERRED
+  /// queue entry (bytes on disk, the attachment row's `url = 'pending:<id>'`)
+  /// and only uploads once the teacher hearts it (`sort_order == 0`). The
+  /// teacher chose "end of day" for the shots they DIDN'T keep: those clear
+  /// overnight so the device + bucket don't accumulate every throwaway frame.
+  ///
+  /// CARDINAL RULE — NEVER delete a photo the teacher kept. An entry is
+  /// cleared only when ALL THREE of these hold:
+  ///   (a) [PendingPhotoUpload.deferred] is true — a non-deferred entry
+  ///       (observation / avatar / character-sheet / plain-studio upload in
+  ///       flight) is NEVER touched here.
+  ///   (b) `createdAt.toLocal()` is strictly BEFORE today's LOCAL midnight —
+  ///       i.e. yesterday or older. Today's shots are always safe. (createdAt
+  ///       is stored UTC; we convert to local so "end of day" is the
+  ///       teacher's day, not UTC's.)
+  ///   (c) the attachment is NOT a keeper: the row is gone already (an orphan)
+  ///       OR its `sort_order != 0`. A hearted row (`sort_order == 0`) —
+  ///       whether already uploaded or still waiting offline — is a KEEPER and
+  ///       is never deleted. (A hearted shot that already uploaded has LEFT
+  ///       the queue, so it can't even be considered here.)
+  ///
+  /// When all three hold: delete the attachment row (if it still exists) so
+  /// the discard propagates via PowerSync — the un-printed shot is gone
+  /// everywhere, not left as a broken `pending:` placeholder on other
+  /// devices — then delete the local bytes and drop the queue entry (which
+  /// also prunes the render cache).
+  ///
+  /// Wired at app boot, AWAITED BEFORE [processQueue] so a cleanup and a
+  /// drain can never interleave. Reuses the [_processing] re-entry guard for
+  /// the same reason: if a drain is somehow already running, skip — the next
+  /// boot covers it. Idempotent. Returns the count cleared.
+  Future<int> cleanupExpiredDeferred() async {
+    if (_processing) {
+      // A drain (or another cleanup) is in flight — don't interleave a
+      // read-modify-write of the queue with it. Next boot covers any
+      // still-expired entries. Cleanup is idempotent, so skipping is safe.
+      return 0;
+    }
+    _processing = true;
+    try {
+      final entries = await _load();
+      if (entries.isEmpty) return 0;
+      // Today's LOCAL midnight. `DateTime.now()` is local; constructing a
+      // DateTime from its y/m/d (no time component) yields local midnight.
+      // An entry survives unless its creation instant is strictly before
+      // this — so anything created today (>= midnight) is always kept.
+      final now = DateTime.now();
+      final localMidnight = DateTime(now.year, now.month, now.day);
+      final db = await _ref.read(appDatabaseProvider.future);
+      final remaining = <PendingPhotoUpload>[];
+      var cleared = 0;
+      for (final e in entries) {
+        // (a) Only ever consider DEFERRED entries. Anything else (an
+        //     observation / avatar / character-sheet / plain-studio upload
+        //     still in flight) is left completely alone.
+        if (!e.deferred) {
+          remaining.add(e);
+          continue;
+        }
+        // (b) Only entries created BEFORE today's local midnight. Convert the
+        //     stored-UTC instant to local so the boundary is the teacher's
+        //     end-of-day. Today's shots (>= midnight) are kept.
+        if (!e.createdAt.toLocal().isBefore(localMidnight)) {
+          remaining.add(e);
+          continue;
+        }
+        // (c) Keeper check. A hearted row (sort_order == 0) is a keeper and
+        //     must survive — whether it already uploaded (it'd be gone from
+        //     the queue) or is still waiting offline. The row being ABSENT
+        //     means it was deleted → an orphan we can safely clear. Any other
+        //     sort_order means the teacher hasn't kept it → clear it.
+        final row = await db.attachmentsDao.findById(e.entityId);
+        final isKeeper = row != null && row.sortOrder == 0;
+        if (isKeeper) {
+          remaining.add(e);
+          continue;
+        }
+        // All three hold → discard this un-printed shot.
+        //   (i) If the row still exists, delete it so the discard propagates
+        //       via PowerSync (the pending placeholder vanishes everywhere).
+        //  (ii) Delete the local bytes + drop the entry + prune the render
+        //       cache (handled by _deleteLocalFile + omission from
+        //       `remaining`).
+        if (row != null) {
+          await db.attachmentsDao.deleteById(e.entityId);
+        }
+        await _deleteLocalFile(e);
+        cleared += 1;
+      }
+      await _save(remaining);
+      if (kDebugMode && cleared > 0) {
+        // Count only — never names, paths, or ids (PII / storage-path leak).
+        debugPrint(
+          '[photo-queue] end-of-day cleanup cleared $cleared un-printed '
+          'deferred shot(s)',
+        );
+      }
+      return cleared;
+    } finally {
+      _processing = false;
+    }
+  }
+
   /// One pass over the queue. Caller ([processQueue]) owns the [_processing]
   /// re-entry gate + the bounded re-run loop; this just does the work once.
   Future<int> _drainOnce() async {
