@@ -53,6 +53,7 @@ import 'package:differentworld/features/cockpit/conductor_screen.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum_screen.dart';
 import 'package:differentworld/features/daily/daily_screen.dart';
+import 'package:differentworld/features/daily/response_edit_screen.dart';
 import 'package:differentworld/features/entries/observation_form_screen.dart';
 import 'package:differentworld/features/entries/observations_index_screen.dart';
 import 'package:differentworld/features/entries/observations_screen.dart';
@@ -1257,6 +1258,22 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/daily',
             builder: (_, state) =>
                 DailyScreen(groupId: state.uri.queryParameters['group']),
+            routes: [
+              // Write a response to the day's prompt — a sentence and/or a
+              // drawing (CLAUDE.md "No modal is a task"; was `_ResponseSheet`).
+              // The prompt text rides in `extra` (prose, not a query param);
+              // the cohort rides in `?group=` to mirror `/daily`. Pops a
+              // `DailyResponse` back to DailyScreen, which persists it.
+              GoRoute(
+                path: 'response',
+                builder: (_, state) => ResponseEditScreen(
+                  promptText: state.extra is String
+                      ? state.extra! as String
+                      : '',
+                  groupId: state.uri.queryParameters['group'],
+                ),
+              ),
+            ],
           ),
           // The daily parent recap composer (docs/VISION.md 2026-06-19) —
           // staff assemble + send each family their child's day. Surfaced only

@@ -1,24 +1,21 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
-import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/daily/daily_providers.dart';
+import 'package:differentworld/features/daily/response_edit_screen.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
-import 'package:differentworld/features/subjects/subjects_providers.dart';
-import 'package:differentworld/shared/platform.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
-import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 /// `/daily` — the **Daily** ritual (docs/VISION.md 2026-06-19): the day's
@@ -42,13 +39,15 @@ class _DailyScreenState extends ConsumerState<DailyScreen> {
   bool _missionSaving = false;
 
   Future<void> _respond(String promptKind, String promptText) async {
-    final result = await showGlassSheet<_DailyResponse>(
-      context: context,
-      builder: (_) => _ResponseSheet(
-        promptText: promptText,
-        groupId: widget.groupId,
-      ),
-    );
+    // Writing the answer is a task → a deep-linkable page, not a sheet
+    // (CLAUDE.md "No modal is a task"). The page pops a [DailyResponse] back;
+    // we own the upload + persistence here. Cohort rides in `?group=` to mirror
+    // the `/daily` route; the prompt prose rides in `extra`.
+    final groupId = widget.groupId;
+    final route = groupId == null
+        ? '/daily/response'
+        : '/daily/response?group=$groupId';
+    final result = await context.push<DailyResponse>(route, extra: promptText);
     if (result == null || !mounted) return;
     final text = result.text?.trim();
     final hasText = text != null && text.isNotEmpty;
@@ -179,7 +178,8 @@ class _DailyScreenState extends ConsumerState<DailyScreen> {
       accent: ActivityPalette.amber,
       text: _quoteText(quote!),
       margin: margin,
-      onRespond: () => unawaited(_respond(ContentKind.quote, _quoteText(quote))),
+      onRespond: () =>
+          unawaited(_respond(ContentKind.quote, _quoteText(quote))),
     );
     Widget missionCard() => _MissionCard(
       text: (mission!.payload['text'] as String?) ?? '',
@@ -391,238 +391,6 @@ class _MissionCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// What the response sheet returns — a sentence and/or a drawing photo, and
-/// optionally the child it belongs to.
-class _DailyResponse {
-  const _DailyResponse({
-    this.text,
-    this.photo,
-    this.subjectId,
-    this.subjectName,
-  });
-
-  final String? text;
-  final XFile? photo;
-
-  /// The child this answer belongs to (→ their Book); null → the room answered.
-  final String? subjectId;
-
-  /// That child's first name, for the confirmation — null when room-level.
-  final String? subjectName;
-}
-
-/// The response sheet — write a sentence and/or snap a drawing of the answer,
-/// and (when launched from a cohort) tag whose answer it is.
-class _ResponseSheet extends ConsumerStatefulWidget {
-  const _ResponseSheet({required this.promptText, this.groupId});
-
-  final String promptText;
-
-  /// The room doing it — when set, the answer can be credited to a child.
-  final String? groupId;
-
-  @override
-  ConsumerState<_ResponseSheet> createState() => _ResponseSheetState();
-}
-
-class _ResponseSheetState extends ConsumerState<_ResponseSheet> {
-  final TextEditingController _text = TextEditingController();
-  XFile? _photo;
-  Uint8List? _bytes;
-  bool _picking = false;
-
-  /// Whose answer this is — null means the room answered together.
-  Subject? _subject;
-
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pick(ImageSource source) async {
-    if (_picking) return;
-    setState(() => _picking = true);
-    try {
-      final picked = await ref.read(photoServiceProvider).pickPhoto(source);
-      if (picked == null) return;
-      final bytes = await picked.readAsBytes();
-      if (!mounted) return;
-      setState(() {
-        _photo = picked;
-        _bytes = bytes;
-      });
-    } on Object catch (e) {
-      if (kDebugMode) debugPrint('[daily] pick failed: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not add that drawing.')),
-      );
-    } finally {
-      if (mounted) setState(() => _picking = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final bytes = _bytes;
-    final groupId = widget.groupId;
-    final roster = groupId == null
-        ? const <Subject>[]
-        : ref.watch(subjectsInGroupProvider(groupId)).value ??
-              const <Subject>[];
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const GlassDragHandle(),
-              const SizedBox(height: 8),
-              Text('Your response', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(
-                widget.promptText,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                // Stable key: the chip section below can appear once the async
-                // roster loads, growing the Column — keep this field's Element
-                // (and its IME connection) pinned. See "Stack children without
-                // keys" in CLAUDE.md.
-                key: const ValueKey('daily-response-text'),
-                controller: _text,
-                minLines: 2,
-                maxLines: 4,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'Write what they said…',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (bytes != null)
-                Row(
-                  key: const ValueKey('daily-photo-preview'),
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.memory(
-                        bytes,
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(child: Text('Drawing added')),
-                    TextButton(
-                      onPressed: () => setState(() {
-                        _photo = null;
-                        _bytes = null;
-                      }),
-                      child: const Text('Remove'),
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  key: const ValueKey('daily-photo-picker'),
-                  children: [
-                    if (isMobileCapturePlatform) ...[
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _picking
-                              ? null
-                              : () => unawaited(_pick(ImageSource.camera)),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                          ),
-                          icon: const Icon(Icons.photo_camera_outlined),
-                          label: const Text('Snap a drawing'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _picking
-                            ? null
-                            : () => unawaited(_pick(ImageSource.gallery)),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('Choose'),
-                      ),
-                    ),
-                  ],
-                ),
-              // One keyed child (not a spread) so the async roster appearing
-              // inserts a single stable node — no position-shift of the
-              // siblings above, which protects the TextField's Element.
-              if (roster.isNotEmpty)
-                Column(
-                  key: const ValueKey('daily-whose-response'),
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 20),
-                    Text(
-                      'Whose response is this?',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        ChoiceChip(
-                          label: const Text('The room'),
-                          selected: _subject == null,
-                          onSelected: (_) => setState(() => _subject = null),
-                        ),
-                        for (final s in roster)
-                          ChoiceChip(
-                            label: Text(s.firstName),
-                            selected: _subject?.id == s.id,
-                            onSelected: (_) => setState(() => _subject = s),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: _picking
-                    ? null
-                    : () => Navigator.of(context).pop(
-                        _DailyResponse(
-                          text: _text.text,
-                          photo: _photo,
-                          subjectId: _subject?.id,
-                          subjectName: _subject?.firstName,
-                        ),
-                      ),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                ),
-                child: const Text('Save'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
