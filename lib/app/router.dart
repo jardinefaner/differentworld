@@ -1807,16 +1807,25 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           // Timed per-child photo TURNS — the "Whose turn?" picker that hands
-          // each child a five-minute locked camera, then a review to pick
-          // favorites (docs/PHOTO_TURNS). `?block=<id>` scopes the roster to a
-          // block's group + tags shots with it; `?prompt=` sets the mission.
+          // each child a locked camera for the session's shooting minutes, then
+          // a review to pick favorites (docs/PHOTO_TURNS). `?block=<id>` scopes
+          // the roster to a block's group + tags shots with it; `?prompt=` sets
+          // the mission; `?minutes=<n>` sets each turn's countdown (default 5,
+          // clamped 1..20) — the schedule passes the session's shooting figure.
           GoRoute(
             path: '/activity/photo-turns',
-            builder: (_, state) => PhotoTurnsScreen(
-              blockId: state.uri.queryParameters['block'],
-              prompt:
-                  state.uri.queryParameters['prompt'] ?? 'Capture what you see',
-            ),
+            builder: (_, state) {
+              final rawMinutes = int.tryParse(
+                state.uri.queryParameters['minutes'] ?? '',
+              );
+              return PhotoTurnsScreen(
+                blockId: state.uri.queryParameters['block'],
+                prompt:
+                    state.uri.queryParameters['prompt'] ??
+                    'Capture what you see',
+                turnMinutes: (rawMinutes ?? 5).clamp(1, 20),
+              );
+            },
           ),
           // This or That — a kid-mode binary-choice game, content from the
           // content bank (docs/ACTIVITY_RUNTIME.md + CONTENT_BANK.md).

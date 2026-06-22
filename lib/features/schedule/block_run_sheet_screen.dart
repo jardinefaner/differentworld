@@ -156,6 +156,12 @@ class BlockRunSheetScreen extends ConsumerWidget {
               ? session.bigIdea.trim()
               : session.title.trim())
         : title.trim();
+    // The per-child turn length — the session's shooting minutes when a session
+    // is resolved (so a 12-min "Light Chasers" turn ≠ a 5-min default), else
+    // null → the turns screen falls back to its own 5-minute default.
+    final photoTurnsMinutes = session == null
+        ? null
+        : sessionShootMinutes(session);
 
     return EdgeScaffold(
       backFallbackRoute: '/schedule',
@@ -249,8 +255,11 @@ class BlockRunSheetScreen extends ConsumerWidget {
           // Start. Ordinary blocks never show this.
           if (isPhotoBlock) ...[
             FilledButton.icon(
-              onPressed: () =>
-                  _runPhotoTurns(context, prompt: photoTurnsPrompt),
+              onPressed: () => _runPhotoTurns(
+                context,
+                prompt: photoTurnsPrompt,
+                minutes: photoTurnsMinutes,
+              ),
               icon: const Icon(Icons.timer_outlined),
               label: const Text('Run photo turns'),
               style: FilledButton.styleFrom(
@@ -341,12 +350,21 @@ class BlockRunSheetScreen extends ConsumerWidget {
   /// Launch the per-child timed photo TURNS for this block — the roster scopes
   /// to the block's group and every shot is tagged with the block id (the
   /// already-built `/activity/photo-turns` surface). The `prompt` becomes the
-  /// mission shown inside each child's locked five minutes.
-  void _runPhotoTurns(BuildContext context, {required String prompt}) {
+  /// mission shown inside each child's locked turn; `minutes` (the session's
+  /// shooting figure, when one was resolved) sets that turn's countdown.
+  void _runPhotoTurns(
+    BuildContext context, {
+    required String prompt,
+    int? minutes,
+  }) {
     unawaited(HapticFeedback.selectionClick());
     final dest = Uri(
       path: '/activity/photo-turns',
-      queryParameters: {'block': block.id, 'prompt': prompt},
+      queryParameters: {
+        'block': block.id,
+        'prompt': prompt,
+        if (minutes != null) 'minutes': '$minutes',
+      },
     ).toString();
     unawaited(context.push(dest));
   }

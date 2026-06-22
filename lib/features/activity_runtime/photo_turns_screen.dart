@@ -39,6 +39,7 @@ class PhotoTurnsScreen extends ConsumerStatefulWidget {
   const PhotoTurnsScreen({
     this.blockId,
     this.prompt = 'Capture what you see',
+    this.turnMinutes = 5,
     super.key,
   });
 
@@ -49,6 +50,12 @@ class PhotoTurnsScreen extends ConsumerStatefulWidget {
 
   /// The mission shown inside each child's locked turn.
   final String prompt;
+
+  /// How many minutes each child gets on their locked turn — the countdown the
+  /// runner shows. Comes from the session's shooting figure (via the route's
+  /// `?minutes=`); defaults to 5. Clamped 1..20 at the call site so a stray
+  /// value can't hand a child a 0- or 90-minute turn.
+  final int turnMinutes;
 
   @override
   ConsumerState<PhotoTurnsScreen> createState() => _PhotoTurnsScreenState();
@@ -88,6 +95,10 @@ class _PhotoTurnsScreenState extends ConsumerState<PhotoTurnsScreen> {
             prompt: widget.prompt,
             turnSubjectId: child.id,
             turnSubjectName: firstName.isEmpty ? fullName : firstName,
+            // The countdown each child sees — the session's shooting minutes,
+            // clamped 1..20 at the route. `turnDuration` seeds `_secondsLeft`
+            // in the runner, which drives the one-second periodic countdown.
+            turnDuration: Duration(minutes: widget.turnMinutes.clamp(1, 20)),
             scheduleBlockId: widget.blockId,
             onTurnEnded: () {
               // Guard on `mounted` (the picker could have been disposed while

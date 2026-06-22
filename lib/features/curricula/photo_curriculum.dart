@@ -540,7 +540,12 @@ const List<PhotoSession> photoCurriculum = [
             'crumbs tell a story: someone was hungry. The '
             'afternoon light makes it warm. This is DOCUMENTARY '
             'PHOTOGRAPHY — photographing life exactly as it is.',
-        terms: ['still life', 'documentary', 'natural light', 'narrative detail'],
+        terms: [
+          'still life',
+          'documentary',
+          'natural light',
+          'narrative detail',
+        ],
       ),
     ],
     endRitual:
@@ -687,8 +692,7 @@ const List<VocabStop> vocabJourney = [
       'curating',
       'personal perspective',
     ],
-    naturalNote:
-        'They shot THEIR world. The words honor their choices.',
+    naturalNote: 'They shot THEIR world. The words honor their choices.',
   ),
   VocabStop(
     sessionSlug: 'photo.s6.gallery-show',
@@ -702,4 +706,18 @@ PhotoSession? findSessionBySlug(String slug) {
     if (s.slug == slug) return s;
   }
   return null;
+}
+
+/// The per-child SHOOTING minutes for a session — the countdown each kid gets
+/// on their locked turn. Read from the session's free-text [PhotoSession.gameDuration]
+/// (e.g. `'5 min shooting + 15 min looking together'` → 5), taking the FIRST
+/// `<n> min` it finds (always the shooting figure in these scripts). Defaults
+/// to 5 when the string can't be parsed or the number falls outside a sane
+/// 1..20 range, so a malformed override can never hand a child a 0- or
+/// 90-minute turn.
+int sessionShootMinutes(PhotoSession s) {
+  final match = RegExp(r'(\d+)\s*min').firstMatch(s.gameDuration);
+  final mins = match == null ? null : int.tryParse(match.group(1)!);
+  if (mins == null || mins < 1 || mins > 20) return 5;
+  return mins;
 }

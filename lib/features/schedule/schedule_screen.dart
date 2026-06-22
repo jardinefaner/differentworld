@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/entities/entity_link.dart';
 import 'package:differentworld/features/entities/entity_ref.dart';
@@ -884,6 +887,23 @@ class _BlockTile extends ConsumerWidget {
     final curriculumSession = block.curriculumSessionSlug == null
         ? null
         : findSessionBySlug(block.curriculumSessionSlug!);
+    // Is this a "Through My Eyes" photo block? Yes when it carries a `photo.`
+    // curriculum slug OR its linked activity runs as the photo studio / photo
+    // turns — the same test the run sheet uses. Those blocks get an inline
+    // "Photo turns" quick-launch that skips the run sheet (one tap from the
+    // agenda straight into the per-child timed turns). Ordinary / Trip / break
+    // / closed blocks never show it.
+    final activityRunnerSlug = activity == null
+        ? null
+        : runnerForSlug(
+            Capabilities.fromJson(
+              activity!.capabilities,
+            ).getString(ActivityCaps.runnerSlug),
+          )?.slug;
+    final isPhotoBlock =
+        (block.curriculumSessionSlug?.startsWith('photo.') ?? false) ||
+        activityRunnerSlug == 'photo' ||
+        activityRunnerSlug == 'photo-turns';
     // Free-text title wins (the formless name you typed); else fall back
     // to the linked session / activity; else empty so the inline field
     // shows its "Name this block" placeholder for a bare new card.
@@ -1098,6 +1118,51 @@ class _BlockTile extends ConsumerWidget {
                                 size: 16,
                               ),
                               label: const Text('Trip details'),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                minimumSize: const Size(0, 48),
+                              ),
+                            ),
+                          ],
+                          if (isPhotoBlock) ...[
+                            const SizedBox(height: 4),
+                            // Quick-launch the per-child timed turns straight
+                            // from the agenda (the whole-row tap still opens the
+                            // run sheet — this is an ADDITIONAL shortcut). Prompt
+                            // + per-turn minutes come from the resolved session
+                            // when one is linked; an activity-only photo block
+                            // falls back to the block title + the screen's
+                            // 5-minute default (minutes omitted).
+                            TextButton.icon(
+                              onPressed: () {
+                                unawaited(HapticFeedback.selectionClick());
+                                final prompt = curriculumSession == null
+                                    ? (title.isNotEmpty ? title : 'Photo turns')
+                                    : (curriculumSession.bigIdea
+                                              .trim()
+                                              .isNotEmpty
+                                          ? curriculumSession.bigIdea.trim()
+                                          : curriculumSession.title.trim());
+                                unawaited(
+                                  context.push(
+                                    Uri(
+                                      path: '/activity/photo-turns',
+                                      queryParameters: {
+                                        'block': block.id,
+                                        'prompt': prompt,
+                                        if (curriculumSession != null)
+                                          'minutes':
+                                              '${sessionShootMinutes(curriculumSession)}',
+                                      },
+                                    ).toString(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.timer_outlined, size: 16),
+                              label: const Text('Photo turns'),
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
