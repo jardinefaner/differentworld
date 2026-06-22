@@ -45,6 +45,48 @@ phases below all improve once Today tracks the day's phase.
    `lib/features/incidents/`. *Deferred:* photos, per‑subject history, PDF/CSV
    export.
 
+## The next layer — connective tissue (the day as one *sequence*)
+
+Phase‑aware Today (above) made the launchpad *name* the current moment. The
+deeper diagnosis (2026‑06‑21): the app has beautiful **moments** + a clock that
+names "now" — but almost no **connective tissue between** moments. Every
+transition is a `maybePop()` back to a hub + a manual re‑selection. The one
+truly on‑rails surface (`BeatPresenter` — `/play-today`, `/arc`) was a sealed
+island whose exit *forgot the day existed*. The vision ("the day plays itself;
+the teacher stays with the kids", VISION.md 2026‑06‑07) is a **spine**; today is
+still mostly a set of **destinations**.
+
+The seams, in day order (✓ = closed):
+- **Start** — no "begin my day"; the spine (cockpit) is opt‑in + OFF by default,
+  and even when on it shows only the clock‑derived "now", never "next".
+- **Morning** — the pick→mood inline chain is the app's *best* sequence ✓; but
+  arrival↔pick are parallel options, and there's no "next child" advance.
+- **Run a block → it ends** — *the big one.* `BeatPresenter` closed via
+  `maybePop()`, dropping you on the clock face with no "next block". **✓ closed
+  (b2c4505):** finishing a block raises a handoff → "Next · {time} {block}
+  [Run it]" / "[Back to today]" / (last block) "[Start the reveal]".
+- **Within a block** — captures dead‑end in a generic triage inbox, NOT linked
+  to the live block, the day timeline, or the family recap.
+- **Transition** — no mechanism; the cockpit passively re‑derives "now", never
+  "5 min to Garden time".
+- **Closing** — three rival closings (reveal ceremony · cast‑to‑room recap ·
+  send‑home) on three surfaces, no flow between; each exits via `maybePop()`.
+- **Pickup → home** — the "all clear" card is a literal dead‑end (no action);
+  `/recap` + `/action-words/send` are two forks that don't converge, and neither
+  carries the day's photos.
+
+The connective‑tissue roadmap (by leverage):
+1. **Run‑exit → next‑block handoff** — ✓ shipped (b2c4505).
+2. **The closing chain** — reveal → (cast recap) → pickup → "all clear → send
+   today's recap". Chain the end of the day; give the pickup all‑clear card an
+   action.
+3. **Capture → block → recap** — a capture made during a live block
+   auto‑associates with that block + becomes a recap candidate (stop content
+   going loose; one family‑send fed by the day's photos).
+4. **The advancing default spine** — beat‑completion state so the cockpit
+   *advances* (not just displays), and make the spine the default home. (The
+   default‑home change is a product call — flagged for the user.)
+
 ## Status
 
 - **Map:** this doc.
