@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/photos/photo_upload_queue.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -154,6 +157,15 @@ class AttachmentActions {
   Future<void> reorder({required String id, required int sortOrder}) async {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.attachmentsDao.update_(id: id, sortOrder: sortOrder);
+    // Selective sync: marking a shot "for print" (sort_order == 0, the
+    // heart) is what releases a held-local kid photo-turn shot to upload.
+    // Nudge the queue — `processQueue` is re-entry-guarded and only uploads
+    // a deferred entry whose row is now hearted, so this is a no-op for
+    // non-deferred photos and for un-hearting (which writes the large
+    // sentinel, never 0). Fire-and-forget so the heart tap stays instant.
+    if (sortOrder == 0) {
+      unawaited(_ref.read(photoUploadQueueProvider).processQueue());
+    }
   }
 
   Future<void> remove(String id) async {

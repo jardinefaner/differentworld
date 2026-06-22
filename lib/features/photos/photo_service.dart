@@ -78,7 +78,9 @@ class PhotoService {
     final db = await _ref.read(appDatabaseProvider.future);
     String storedValue;
     try {
-      await _supabase.storage.from(_bucket).uploadBinary(
+      await _supabase.storage
+          .from(_bucket)
+          .uploadBinary(
             path,
             compressed,
             fileOptions: const FileOptions(contentType: 'image/jpeg'),
@@ -97,7 +99,9 @@ class PhotoService {
         // native disk queue or silently losing the bytes.
         rethrow;
       }
-      storedValue = await _ref.read(photoUploadQueueProvider).enqueue(
+      storedValue = await _ref
+          .read(photoUploadQueueProvider)
+          .enqueue(
             bucket: _bucket,
             bucketPath: path,
             entityKind: entity.name,
@@ -147,6 +151,7 @@ class PhotoService {
     required String entityKind,
     required String entityId,
     required XFile picked,
+    bool deferUpload = false,
   }) async {
     final me = _ref.read(currentMemberProvider).value;
     final spaceId = me?.spaceId;
@@ -161,8 +166,36 @@ class PhotoService {
         ? _compressSync(bytes)
         : await Isolate.run(() => _compressSync(bytes));
     final path = '$spaceId/$entityKind/$entityId/${_uuid.v4()}.jpg';
+
+    // Selective sync (kid photo-turn shots): hold the bytes LOCAL and
+    // upload only when the teacher marks the shot "for print". On native,
+    // skip the immediate-upload try entirely and enqueue a `deferred`
+    // entry — the queue uploads it only once its attachment row is hearted
+    // (sort_order == 0).
+    //
+    // B5 (DOCUMENTED limitation): on WEB there's no on-device queue (no
+    // filesystem), so `deferUpload` is IGNORED and we fall through to the
+    // immediate upload below — meaning a web teacher running photo-turns
+    // uploads EVERY shot, uncurated, with no selective hold. Accepted because
+    // photo-turns is inherently a one-shared-phone-in-person flow (the phone
+    // is passed child to child), not a web use case. No hard block this slice.
+    if (deferUpload && !kIsWeb) {
+      return _ref
+          .read(photoUploadQueueProvider)
+          .enqueue(
+            bucket: _bucket,
+            bucketPath: path,
+            entityKind: entityKind,
+            entityId: entityId,
+            bytes: compressed,
+            deferred: true,
+          );
+    }
+
     try {
-      await _supabase.storage.from(_bucket).uploadBinary(
+      await _supabase.storage
+          .from(_bucket)
+          .uploadBinary(
             path,
             compressed,
             fileOptions: const FileOptions(contentType: 'image/jpeg'),
@@ -192,7 +225,9 @@ class PhotoService {
       // method to invoke; for `entityKind: 'observation'` (legacy)
       // the worker silently skips the row update (the original
       // entry photo is held in widget state until save).
-      return _ref.read(photoUploadQueueProvider).enqueue(
+      return _ref
+          .read(photoUploadQueueProvider)
+          .enqueue(
             bucket: _bucket,
             bucketPath: path,
             entityKind: entityKind,
@@ -201,7 +236,6 @@ class PhotoService {
           );
     }
   }
-
 }
 
 /// Top-level so it can run inside `Isolate.run` (closures over instance
@@ -266,5 +300,6 @@ Uint8List _compressSync(Uint8List input) {
   return encoded;
 }
 
-final Provider<PhotoService> photoServiceProvider =
-    Provider<PhotoService>(PhotoService.new);
+final Provider<PhotoService> photoServiceProvider = Provider<PhotoService>(
+  PhotoService.new,
+);

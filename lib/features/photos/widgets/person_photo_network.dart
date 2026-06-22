@@ -1,7 +1,27 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:differentworld/features/photos/person_photo_url.dart';
+import 'package:differentworld/features/photos/photo_upload_queue.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Resolves the on-disk path for a still-pending (`pending:<id>`) photo so
+/// a held-local shot renders from its bytes instead of a placeholder. Null
+/// when the queue has no such entry or the file is gone (e.g. it already
+/// uploaded + was deleted — the row's value will have flipped to the real
+/// path by then anyway). Native-only: web has no filesystem queue, so this
+/// is always null there and the placeholder shows.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final pendingPhotoFileProvider = FutureProvider.autoDispose
+    .family<String?, String>(
+      (ref, id) async {
+        if (kIsWeb) return null;
+        return ref.watch(photoUploadQueueProvider).localPathFor(id);
+      },
+    );
 
 /// Drop-in replacement for `CachedNetworkImage` when the URL points
 /// at the private `person-photos` Supabase bucket. Handles the signed-
@@ -53,8 +73,32 @@ class PersonPhotoNetwork extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final v = urlOrPath;
-    if (v == null || v.isEmpty || v.startsWith('pending:')) {
+    if (v == null || v.isEmpty) {
       return _placeholder(context);
+    }
+    // A `pending:<id>` value means the bytes haven't uploaded yet. For a
+    // held-local kid photo-turn shot, the bytes live in the upload queue's
+    // local file — render THAT so the review grid + progress folder show
+    // the real photo, not a grey box. No network involved. Falls through to
+    // the placeholder when there's no local file (web, or already-uploaded
+    // mid-flip).
+    if (v.startsWith('pending:')) {
+      final id = v.substring('pending:'.length);
+      final asyncLocal = ref.watch(pendingPhotoFileProvider(id));
+      return asyncLocal.when(
+        data: (localPath) {
+          if (localPath == null) return _placeholder(context);
+          return Image.file(
+            File(localPath),
+            fit: fit,
+            width: width,
+            height: height,
+            errorBuilder: (ctx, _, _) => _placeholder(ctx),
+          );
+        },
+        loading: () => _placeholder(context),
+        error: (_, _) => _placeholder(context),
+      );
     }
     final asyncUrl = ref.watch(signedPersonPhotoUrlProvider(v));
     return asyncUrl.when(

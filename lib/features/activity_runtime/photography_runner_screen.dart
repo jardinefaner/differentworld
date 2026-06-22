@@ -10,6 +10,7 @@ import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
 import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
+import 'package:differentworld/features/photos/photo_upload_queue.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
@@ -672,7 +673,11 @@ class _PhotographyRunnerScreenState
         newShot
           ..shared = true
           ..attachmentId = const Uuid().v4();
-        unawaited(_persistShot(newShot));
+        // TURN: hold the bytes LOCAL (selective sync) — they upload only once
+        // the teacher hearts the shot in review. The row + per-child tags write
+        // immediately so the folder + done-count work offline. (B1: this is the
+        // ONLY path that defers; the plain-studio heart uploads immediately.)
+        unawaited(_persistShot(newShot, deferUpload: true));
       }
       unawaited(HapticFeedback.mediumImpact());
       // Slide the filmstrip to the freshest shot.
@@ -781,24 +786,59 @@ class _PhotographyRunnerScreenState
       // a `pending:` token and queues when there's no network), so we
       // never block the heart tap on a round-trip.
       shot.attachmentId = const Uuid().v4();
-      unawaited(_persistShot(shot));
+      // PLAIN STUDIO: sharing IS the curation, so upload NORMALLY — no
+      // selective hold. A studio share's row gets `sort_order = max+1` (never
+      // 0), so deferring it would strand the bytes forever (B1). The hold is
+      // ONLY for timed-turn shots, which are hearted in a separate review.
+      unawaited(_persistShot(shot, deferUpload: false));
     }
   }
 
   /// Upload one shared shot's bytes to the private person-photos bucket
   /// and write the attachment row. No PII in logs — errors go to
   /// FlutterError (gated/scrubbed there), never a raw print of the path.
-  Future<void> _persistShot(_Shot shot) async {
+  ///
+  /// [deferUpload] is the selective-sync HOLD and MUST track which path called
+  /// us (the B1 correctness fix):
+  ///   • TIMED PER-CHILD TURN (`_shoot`, every shot) → `true`: the bytes stay
+  ///     LOCAL and upload only once the teacher hearts the shot in review (the
+  ///     attachment row's `sort_order == 0`, written by
+  ///     `attachmentActions.reorder`). The row + tags still write immediately,
+  ///     so the per-child folder + done-count work fully offline; only the
+  ///     bytes wait. The teacher curates the 50 → keeps a few.
+  ///   • PLAIN PHOTO STUDIO (`_toggleShared`, the gallery heart) → `false`: a
+  ///     shared studio shot uploads NORMALLY, right away. Sharing IS the
+  ///     curation, and the row's `sort_order` is `max+1` (never 0), so a
+  ///     deferred entry would `wait` forever and never upload — exactly the
+  ///     bug this parameter fixes.
+  ///
+  /// B5 (DOCUMENTED limitation): when `deferUpload == true` on WEB,
+  /// `uploadOnly` has no on-device queue (no filesystem) and falls back to an
+  /// IMMEDIATE upload — so a web teacher running turns uploads EVERY shot,
+  /// uncurated, with no selective hold. Accepted because the photo-turns flow
+  /// is inherently one-shared-phone-in-person (pass the phone child to child);
+  /// it is not a web use case. No hard block this slice.
+  Future<void> _persistShot(_Shot shot, {required bool deferUpload}) async {
     final attId = shot.attachmentId;
     if (attId == null) return;
     final service = ref.read(photoServiceProvider);
     final attachments = ref.read(attachmentActionsProvider);
+    // The `pending:<id>` token `uploadOnly` returns when it defers bytes to the
+    // offline queue. Captured so that if the row-create below throws, we drop
+    // that just-enqueued entry instead of orphaning its bytes on disk (B2).
+    // Stays null when the upload landed immediately (online, or the web
+    // fallback) — there's nothing queued to clean up then.
+    String? pendingToken;
     try {
       final url = await service.uploadOnly(
         entityKind: 'attachment',
         entityId: attId,
         picked: shot.file,
+        deferUpload: deferUpload,
       );
+      // Remember the queue id ONLY when bytes were actually deferred (token
+      // shape `pending:<id>`); a real path means nothing was queued.
+      if (url.startsWith('pending:')) pendingToken = url;
       await attachments.add(
         id: attId,
         entityKind: photoSessionEntity.kind,
@@ -818,6 +858,14 @@ class _PhotographyRunnerScreenState
       // Roll back the de-dupe marker so a later re-share can retry the
       // upload rather than being silently skipped forever.
       shot.attachmentId = null;
+      // B2: the deferred enqueue already wrote bytes to disk + a queue entry.
+      // With the row-create now failed, that entry is orphaned (no row points
+      // at it, and a re-share enqueues a FRESH copy), growing pending_uploads
+      // until the orphan-sweep. Drop it explicitly. The token carries the
+      // queue id; `remove` strips the `pending:` prefix itself.
+      if (pendingToken != null) {
+        unawaited(ref.read(photoUploadQueueProvider).remove(pendingToken));
+      }
       FlutterError.reportError(
         FlutterErrorDetails(exception: e, stack: st, library: 'photography'),
       );

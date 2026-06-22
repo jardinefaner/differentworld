@@ -32,6 +32,16 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// One-shot read of a single attachment by id. Returns null when the
+  /// row is gone (e.g. deleted). Used by the selective-upload queue to
+  /// check a deferred shot's `sort_order` (the "for print" heart) before
+  /// uploading, and to detect an orphaned (deleted) row.
+  Future<Attachment?> findById(String id) {
+    return (select(
+      attachments,
+    )..where((a) => a.id.equals(id))).getSingleOrNull();
+  }
+
   /// One-shot read of attachments for an entity. Used by writers that
   /// need the latest list to compute a new sort_order.
   Future<List<Attachment>> findFor({
