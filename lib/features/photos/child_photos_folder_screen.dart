@@ -4,10 +4,13 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/keepsake_actions.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
+import 'package:differentworld/shared/error_handling.dart';
+import 'package:differentworld/shared/print/pdf_output.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -49,6 +52,11 @@ class _ChildPhotosFolderScreenState
     extends ConsumerState<ChildPhotosFolderScreen> {
   _Lens _lens = _Lens.took;
 
+  /// True while a keepsake PDF is being assembled — drives the inline spinner
+  /// in the action and blocks a re-tap (the build is a multi-fetch network
+  /// job; a double-tap would create two export rows).
+  bool _generatingKeepsake = false;
+
   @override
   Widget build(BuildContext context) {
     final viewer = ref.watch(viewerProvider);
@@ -75,9 +83,20 @@ class _ChildPhotosFolderScreenState
     // Heart-to-favorite is a curation write — staff only. Only the "Took"
     // lens carries the favorite ordering, so the heart shows there.
     final canFavorite = viewer.canObserve && _lens == _Lens.took;
+    // "Make a keepsake" gathers the child's took-photos into a PDF that goes
+    // home through the export channel — a staff action (same gate as the
+    // heart), and only meaningful on the "Took" lens where favorites live.
+    final canMakeKeepsake = viewer.canObserve && _lens == _Lens.took;
 
     return EdgeScaffold(
-      actions: const [SyncStatusIndicator()],
+      actions: [
+        if (canMakeKeepsake)
+          _KeepsakeAction(
+            generating: _generatingKeepsake,
+            onPressed: () => _makeKeepsake(firstName),
+          ),
+        const SyncStatusIndicator(),
+      ],
       body: active.when(
         loading: () => const LoadingSlot(variant: LoadingVariant.cards),
         error: (_, _) => ErrorState(
@@ -156,6 +175,74 @@ class _ChildPhotosFolderScreenState
     );
   }
 
+  /// Assemble the keepsake PDF, store it as an export, then confirm with a
+  /// "View" snackbar that opens the file. Inline progress via
+  /// `_generatingKeepsake` (a spinner in the action, not a full-screen block);
+  /// the guard blocks a re-tap so a double-press can't make two exports.
+  Future<void> _makeKeepsake(String firstName) async {
+    if (_generatingKeepsake) return;
+    // Capture the messenger BEFORE the await — the widget may unmount mid-build
+    // (mounted-after-await skill); the messenger stays valid regardless.
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    setState(() => _generatingKeepsake = true);
+    try {
+      final result = await ref
+          .read(keepsakeActionsProvider)
+          .buildAndStore(widget.subjectId);
+      final photoWord = result.photoCount == 1 ? 'photo' : 'photos';
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            '${result.firstName}’s keepsake is ready · '
+            '${result.photoCount} $photoWord',
+          ),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'View',
+            // Open the exact bytes we just built — OS print on native,
+            // download on web (same seam every PDF leaves through). No Storage
+            // round-trip needed; we still hold the bytes.
+            onPressed: () => unawaited(
+              emitPdfBytes(
+                name: '${result.firstName} — keepsake',
+                bytes: result.bytes,
+              ),
+            ),
+          ),
+        ),
+      );
+    } on KeepsakeNoPhotosException {
+      // Distinct nudge, never an error frame: the folder just needs content
+      // (or a heart) before a keepsake can be made.
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Add some photos of ${firstName.isEmpty ? 'this child' : firstName} '
+            'first — heart your favorites and they’ll lead the keepsake.',
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } on Exception catch (e, st) {
+      // Building the keepsake needs the photo bytes over the network (Storage),
+      // like every other export — so a failure is usually "offline". A
+      // non-blocking, retry-on-a-connection message; the folder stays put.
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'keepsake'),
+      );
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Couldn’t build the keepsake — try again on a connection.',
+          ),
+          duration: kSnackErrorDuration,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _generatingKeepsake = false);
+    }
+  }
+
   String _subtitle({
     required int tookCount,
     required int ofCount,
@@ -202,6 +289,36 @@ class _LensToggle extends StatelessWidget {
       selected: {lens},
       showSelectedIcon: false,
       onSelectionChanged: (s) => onChanged(s.first),
+    );
+  }
+}
+
+/// The "Make a keepsake" glass-pill action. A book icon normally; while a
+/// keepsake is assembling it swaps to an inline spinner and disables (so a
+/// re-tap can't fire a second build). Themed — the spinner reads `primary`,
+/// the icon inherits the pill's foreground; no hardcoded colors.
+class _KeepsakeAction extends StatelessWidget {
+  const _KeepsakeAction({required this.generating, required this.onPressed});
+
+  final bool generating;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return IconButton(
+      tooltip: generating ? 'Making the keepsake…' : 'Make a keepsake',
+      onPressed: generating ? null : onPressed,
+      icon: generating
+          ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: theme.colorScheme.primary,
+              ),
+            )
+          : const Icon(Icons.auto_stories_outlined),
     );
   }
 }
