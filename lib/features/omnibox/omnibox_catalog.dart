@@ -15,7 +15,7 @@ import 'package:differentworld/features/attendance/attendance_providers.dart';
 import 'package:differentworld/features/attendance/attendance_status.dart';
 import 'package:differentworld/features/calm/calm_setting.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
-import 'package:differentworld/features/curricula/photo_s1_script.dart';
+import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/daily/daily_setting.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';

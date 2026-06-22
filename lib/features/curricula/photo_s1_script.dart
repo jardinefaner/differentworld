@@ -889,9 +889,3 @@ const photoSession1Script = SessionScript(
     ),
   ],
 );
-
-/// Resolve the full script for a session slug. Returns null when no script
-/// has been encoded for that slug yet. Lives here with the data so the model
-/// file (session_script.dart) stays free of any dependency on the scripts.
-SessionScript? scriptForSession(String slug) =>
-    slug == photoSession1Script.slug ? photoSession1Script : null;

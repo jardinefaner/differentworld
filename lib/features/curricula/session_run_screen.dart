@@ -18,8 +18,8 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
-import 'package:differentworld/features/curricula/photo_s1_script.dart';
 import 'package:differentworld/features/curricula/session_script.dart';
+import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';

@@ -7,7 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
-import 'package:differentworld/features/curricula/photo_s1_script.dart';
+import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
