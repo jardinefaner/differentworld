@@ -6,6 +6,8 @@ import 'package:differentworld/features/activity_runtime/activity_script.dart';
 import 'package:differentworld/features/activity_runtime/collage_gallery.dart';
 import 'package:differentworld/features/activity_runtime/justified_gallery.dart';
 import 'package:differentworld/features/activity_runtime/photography.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
+import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
@@ -13,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:uuid/uuid.dart';
 
 /// `/activity/photo?prompt=...` — the Photography activity (docs/
 /// ACTIVITY_RUNTIME.md §5 + SUBMISSIONS.md). Opens straight into a
@@ -25,9 +28,15 @@ import 'package:permission_handler/permission_handler.dart';
 /// back closes an open viewer/presentation first (rubric A6).
 ///
 /// SUBMISSIONS model (offline-first): every capture stays on the device;
-/// only the ones marked "share" become the submission. This slice is
-/// on-device / in-session — upload + the teacher aggregate are next.
-/// Photos are in-memory bytes (web-safe, no dart:io).
+/// only the ones marked "share" become the submission. A shared shot is
+/// PERSISTED the moment its heart is tapped — uploaded to the private
+/// person-photos bucket and written as an attachment under
+/// `(kind: 'photo_session', id: _sessionId)`, following the stable-
+/// attachment-id contract (offline-safe: a `pending:` token queues when
+/// there's no network). Un-shared keepers stay persisted. In-memory
+/// bytes drive the live filmstrip/preview; the retained `XFile` is what
+/// gets uploaded. The next slice (a "present to the room" cast) reads
+/// those rows via `attachmentsForEntityProvider(photoSessionEntity)`.
 class PhotographyRunnerScreen extends ConsumerStatefulWidget {
   const PhotographyRunnerScreen({
     this.prompt = 'Capture what you see',
@@ -46,14 +55,26 @@ enum _CamStatus { initializing, ready, denied, unavailable }
 /// One captured photo + the learner's choices about it. `aspectRatio`
 /// (width/height) drives the masonry so photos show whole at their true
 /// shape. `shared` is the opt-in that becomes the submission.
+///
+/// `bytes` stays in memory for the live filmstrip / preview (fast, no
+/// re-read). `file` is the `camera` package's `XFile` from `takePicture`
+/// — retained so a SHARED shot can be persisted to Storage through the
+/// stable-attachment-id contract without a temp-file round-trip.
+/// `attachmentId` is the row id once persisted (null until the heart is
+/// tapped); it MUST equal the id passed to `uploadOnly` so a deferred
+/// offline upload patches the right row (see CLAUDE.md "Offline
+/// attachment uploads").
 class _Shot {
-  _Shot(this.bytes, {required this.aspectRatio}) : capturedAt = DateTime.now();
+  _Shot(this.bytes, {required this.file, required this.aspectRatio})
+    : capturedAt = DateTime.now();
 
   final Uint8List bytes;
+  final XFile file;
   final double aspectRatio;
   final DateTime capturedAt;
   String reflection = '';
   bool shared = false;
+  String? attachmentId;
 }
 
 class _PhotographyRunnerScreenState
@@ -79,6 +100,18 @@ class _PhotographyRunnerScreenState
   Timer? _focusTimer;
 
   final ScrollController _filmstrip = ScrollController();
+
+  /// The owner id for every photo persisted from THIS run. Shared shots
+  /// are stored as attachments under `(kind: 'photo_session', id:
+  /// _sessionId)` — a free-string entityKind, no schema change. Public
+  /// so the next slice (a "present to the room" cast) can read
+  /// `attachmentsForEntityProvider((kind: 'photo_session', id:
+  /// sessionId))`.
+  final String _sessionId = const Uuid().v4();
+
+  /// Owner key for the persisted shared photos this run.
+  AttachmentEntity get photoSessionEntity =>
+      (kind: 'photo_session', id: _sessionId);
 
   /// Everything captured this session (newest last). Offline-first.
   final List<_Shot> _shots = <_Shot>[];
@@ -215,7 +248,7 @@ class _PhotographyRunnerScreenState
       final bytes = await shot.readAsBytes();
       final ar = await _aspectRatioOf(bytes);
       if (!mounted) return;
-      setState(() => _shots.add(_Shot(bytes, aspectRatio: ar)));
+      setState(() => _shots.add(_Shot(bytes, file: shot, aspectRatio: ar)));
       unawaited(HapticFeedback.mediumImpact());
       // Slide the filmstrip to the freshest shot.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -299,6 +332,63 @@ class _PhotographyRunnerScreenState
     final c = _viewerPage;
     _viewerPage = null;
     WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
+  }
+
+  /// Toggle a shot's share state AND persist it the first time it's
+  /// shared. This is the data-loss fix: only the curated keepers (the
+  /// shared shots) are uploaded — kids may take 50, we keep what they
+  /// chose. The upload follows the stable-attachment-id contract
+  /// (CLAUDE.md "Offline attachment uploads"): the same `attId` goes to
+  /// BOTH `uploadOnly(entityId:)` and `attachments.add(id:)`, so a
+  /// deferred offline upload's queue-side `updateUrl(id)` patches THIS
+  /// row.
+  ///
+  /// `shot.attachmentId` is the de-dupe guard: once set, toggling the
+  /// heart off and on again never re-uploads. Un-sharing leaves the
+  /// persisted row in place (simplest, and avoids a destructive delete
+  /// of a child's photo that PowerSync would have to round-trip) — the
+  /// in-memory `shared` flag still drives the present/curate UI.
+  void _toggleShared(_Shot shot) {
+    final nowShared = !shot.shared;
+    setState(() => shot.shared = nowShared);
+    if (nowShared && shot.attachmentId == null) {
+      // Optimistic + fire-and-forget. uploadOnly is offline-safe (returns
+      // a `pending:` token and queues when there's no network), so we
+      // never block the heart tap on a round-trip.
+      shot.attachmentId = const Uuid().v4();
+      unawaited(_persistShot(shot));
+    }
+  }
+
+  /// Upload one shared shot's bytes to the private person-photos bucket
+  /// and write the attachment row. No PII in logs — errors go to
+  /// FlutterError (gated/scrubbed there), never a raw print of the path.
+  Future<void> _persistShot(_Shot shot) async {
+    final attId = shot.attachmentId;
+    if (attId == null) return;
+    final service = ref.read(photoServiceProvider);
+    final attachments = ref.read(attachmentActionsProvider);
+    try {
+      final url = await service.uploadOnly(
+        entityKind: 'attachment',
+        entityId: attId,
+        picked: shot.file,
+      );
+      await attachments.add(
+        id: attId,
+        entityKind: photoSessionEntity.kind,
+        entityId: photoSessionEntity.id,
+        url: url,
+        caption: shot.reflection.trim().isEmpty ? null : shot.reflection.trim(),
+      );
+    } on Object catch (e, st) {
+      // Roll back the de-dupe marker so a later re-share can retry the
+      // upload rather than being silently skipped forever.
+      shot.attachmentId = null;
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: e, stack: st, library: 'photography'),
+      );
+    }
   }
 
   @override
@@ -665,7 +755,7 @@ class _PhotographyRunnerScreenState
             right: 4,
             child: _ShareBadge(
               shared: s.shared,
-              onTap: () => setState(() => s.shared = !s.shared),
+              onTap: () => _toggleShared(s),
             ),
           ),
         ],
@@ -782,10 +872,7 @@ class _PhotographyRunnerScreenState
                             : Colors.white,
                         size: 28,
                       ),
-                      onPressed: () => setState(
-                        () => _shots[_viewingIndex!].shared =
-                            !_shots[_viewingIndex!].shared,
-                      ),
+                      onPressed: () => _toggleShared(_shots[_viewingIndex!]),
                     ),
                   IconButton(
                     icon: const Icon(
@@ -864,7 +951,22 @@ class _PhotographyRunnerScreenState
                   fontStyle: FontStyle.italic,
                 ),
                 maxLines: 3,
-                onCommit: (t) async => setState(() => s.reflection = t),
+                onCommit: (t) async {
+                  setState(() => s.reflection = t);
+                  // If this shot is already a persisted keeper, push the
+                  // edited note onto its attachment row's caption so a
+                  // note typed AFTER sharing isn't lost. Fire-and-forget,
+                  // offline-safe (Drift write queues like any other).
+                  final attId = s.attachmentId;
+                  if (attId != null) {
+                    final caption = t.trim().isEmpty ? null : t.trim();
+                    unawaited(
+                      ref
+                          .read(attachmentActionsProvider)
+                          .updateCaption(id: attId, caption: caption),
+                    );
+                  }
+                },
               ),
             ],
           ),
