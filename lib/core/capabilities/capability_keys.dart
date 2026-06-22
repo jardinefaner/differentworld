@@ -103,6 +103,17 @@ abstract class ActivityCaps {
   /// activity_runtime/activity_runners.dart). Absent/empty → the default
   /// `/arc` launch.
   static const runnerSlug = 'runner_slug';
+
+  /// The activity's ROUTINE — its ordered, numbered how-to steps, authored
+  /// once on the activity so every block using it inherits the same play
+  /// (docs/VISION.md 2026-06-19: "each block self-contained — all its info
+  /// AND its actions, together"). Stored as a JSON string list of short step
+  /// texts ("Gather everyone on the rug."). Written via the serialized
+  /// read-modify-write queue on `RoutineActions` (a list-in-a-cell needs it;
+  /// see CLAUDE.md "A list stored in caps JSON needs a serialized
+  /// read-modify-write"). Absent/empty → the block run sheet shows its
+  /// "no routine yet" hint.
+  static const routine = 'routine';
 }
 
 /// Vertical-agnostic member capabilities. Every vertical we

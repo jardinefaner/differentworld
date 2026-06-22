@@ -188,3 +188,148 @@ class ActivityActions {
 }
 
 final activityActionsProvider = Provider<ActivityActions>(ActivityActions.new);
+
+/// The ordered routine steps authored on an activity, watched live off its
+/// `capabilities` JSON (key [ActivityCaps.routine]). Empty when the activity
+/// has no routine. Drives both the authoring editor's seed and the block run
+/// sheet's "The routine" section.
+// Riverpod 3 family providers don't have a stable public-typed name.
+// ignore: specify_nonobvious_property_types
+final routineForActivityProvider = StreamProvider.autoDispose
+    .family<List<String>, String>((ref, activityId) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      await for (final a in db.activitiesDao.watchById(activityId)) {
+        if (a == null) {
+          yield const <String>[];
+        } else {
+          yield Capabilities.fromJson(
+            a.capabilities,
+          ).getStringList(ActivityCaps.routine);
+        }
+      }
+    });
+
+/// Edits to an activity's routine (the ordered step list on its caps JSON).
+///
+/// Every mutation is a read-modify-write of the SAME `capabilities` cell, so
+/// two racing edits (a drag-reorder's `unawaited` write overlapping a delete
+/// tap) would both read the same pre-write state and the second `_save` would
+/// silently clobber the first. Chaining through [_pending] serializes them —
+/// the exact pattern `DayTemplateActions` uses (CLAUDE.md "A list stored in
+/// caps JSON needs a serialized read-modify-write"). Held as a stable
+/// singleton ([routineActionsProvider]) so `_pending` persists across calls.
+///
+/// Optimistic + offline-first like every other write: the local Drift write
+/// commits in one frame; PowerSync uploads later.
+class RoutineActions {
+  RoutineActions(this._ref);
+  final Ref _ref;
+
+  Future<List<String>> _load(String activityId) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final a = await db.activitiesDao.findById(activityId);
+    if (a == null) return const [];
+    return Capabilities.fromJson(
+      a.capabilities,
+    ).getStringList(ActivityCaps.routine);
+  }
+
+  Future<void> _save(String activityId, List<String> steps) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    // Re-read the row's CURRENT caps inside the serialized op so the routine
+    // write merges over its sibling keys (verbs / senses / runner_slug)
+    // instead of clobbering them, even if another surface edited those.
+    final a = await db.activitiesDao.findById(activityId);
+    final caps = Capabilities.fromJson(a?.capabilities).setting(
+      ActivityCaps.routine,
+      // Drop empties / whitespace-only steps so a stray blank line never
+      // persists; store `null` (removes the key) when nothing's left.
+      steps.where((s) => s.trim().isNotEmpty).isEmpty
+          ? null
+          : [
+              for (final s in steps) s.trim(),
+            ].where((s) => s.isNotEmpty).toList(),
+    );
+    await db.activitiesDao.update_(
+      id: activityId,
+      capabilitiesJson: caps.toJson(),
+    );
+  }
+
+  // Serialize every read-modify-write so concurrent edits apply in order.
+  Future<void> _pending = Future<void>.value();
+
+  Future<void> _mutate(
+    String activityId,
+    List<String> Function(List<String> steps) update,
+  ) {
+    final op = _pending.then((_) async {
+      final steps = await _load(activityId);
+      await _save(activityId, update(List<String>.of(steps)));
+    });
+    // The queue's tail must never be a rejected future, or one failed write
+    // would block every later mutation. Callers still see this op's own error.
+    _pending = op.catchError((Object _) {});
+    return op;
+  }
+
+  /// Append a step to the end of the routine.
+  Future<void> addStep(String activityId, String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return Future<void>.value();
+    return _mutate(activityId, (steps) => [...steps, trimmed]);
+  }
+
+  /// Replace the step at [index] with [text]. Out-of-range indices are a
+  /// no-op (a stale tap after the list shrank).
+  Future<void> updateStep(String activityId, int index, String text) {
+    final trimmed = text.trim();
+    return _mutate(activityId, (steps) {
+      if (index < 0 || index >= steps.length) return steps;
+      if (trimmed.isEmpty) {
+        // An emptied step is a delete — keeps the editor honest.
+        return [
+          for (var i = 0; i < steps.length; i++)
+            if (i != index) steps[i],
+        ];
+      }
+      steps[index] = trimmed;
+      return steps;
+    });
+  }
+
+  /// Remove the step at [index].
+  Future<void> removeStep(String activityId, int index) {
+    return _mutate(activityId, (steps) {
+      if (index < 0 || index >= steps.length) return steps;
+      return [
+        for (var i = 0; i < steps.length; i++)
+          if (i != index) steps[i],
+      ];
+    });
+  }
+
+  /// Reorder a step from [oldIndex] to [newIndex]. Matches
+  /// `ReorderableListView`'s post-removal-adjusted `newIndex`.
+  Future<void> reorder(String activityId, int oldIndex, int newIndex) {
+    return _mutate(activityId, (steps) {
+      if (oldIndex < 0 || oldIndex >= steps.length) return steps;
+      var target = newIndex;
+      if (target > oldIndex) target -= 1;
+      target = target.clamp(0, steps.length - 1);
+      final moved = steps.removeAt(oldIndex);
+      steps.insert(target, moved);
+      return steps;
+    });
+  }
+}
+
+final routineActionsProvider = Provider<RoutineActions>(RoutineActions.new);
+
+/// Tiny helper so call sites that already hold an [Activity] (the run sheet,
+/// the block tile) can read its routine without a provider round-trip. The
+/// live [routineForActivityProvider] is the canonical watch; this is the
+/// synchronous read off a row already in hand.
+List<String> routineOf(Activity activity) => Capabilities.fromJson(
+  activity.capabilities,
+).getStringList(ActivityCaps.routine);

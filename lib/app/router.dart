@@ -123,6 +123,7 @@ import 'package:differentworld/features/schedule/activities_list_screen.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
 import 'package:differentworld/features/schedule/block_present_screen.dart';
+import 'package:differentworld/features/schedule/block_run_sheet_screen.dart';
 import 'package:differentworld/features/schedule/day_template_editor_screen.dart';
 import 'package:differentworld/features/schedule/day_templates_screen.dart';
 import 'package:differentworld/features/schedule/location_edit_screen.dart';
@@ -738,6 +739,26 @@ final routerProvider = Provider<GoRouter>((ref) {
                       existing: args.existing,
                       prefillCurriculumSlug: args.prefillCurriculumSlug,
                     ),
+                  );
+                },
+              ),
+              // The Block Run Sheet — a content-bearing block's routine +
+              // supplies + actions in one place (docs/VISION.md 2026-06-19).
+              // Block rides via `extra` as a `BlockRunSheetArgs` record;
+              // missing-extra falls back to the schedule screen.
+              GoRoute(
+                path: 'schedule/block/run',
+                builder: (_, state) {
+                  final args = state.extra;
+                  if (args is! BlockRunSheetArgs) {
+                    return const RouteTitle(
+                      title: 'Schedule',
+                      child: ScheduleScreen(),
+                    );
+                  }
+                  return RouteTitle(
+                    title: 'Run block',
+                    child: BlockRunSheetScreen(block: args.block),
                   );
                 },
               ),

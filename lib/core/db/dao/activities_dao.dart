@@ -17,8 +17,7 @@ class ActivitiesDao extends DatabaseAccessor<AppDatabase>
 
   Stream<List<Activity>> watchActiveInSpace(String spaceId) {
     return (select(activities)
-          ..where((a) =>
-              a.spaceId.equals(spaceId) & a.archivedAt.isNull())
+          ..where((a) => a.spaceId.equals(spaceId) & a.archivedAt.isNull())
           ..orderBy([(a) => OrderingTerm(expression: a.name)]))
         .watch();
   }
@@ -34,8 +33,18 @@ class ActivitiesDao extends DatabaseAccessor<AppDatabase>
   }
 
   Stream<Activity?> watchById(String id) {
-    return (select(activities)..where((a) => a.id.equals(id)))
-        .watchSingleOrNull();
+    return (select(
+      activities,
+    )..where((a) => a.id.equals(id))).watchSingleOrNull();
+  }
+
+  /// One-shot read of a single activity — used by the serialized routine
+  /// read-modify-write (`RoutineActions`) which needs the row's current caps
+  /// at mutation time, not a live stream.
+  Future<Activity?> findById(String id) {
+    return (select(
+      activities,
+    )..where((a) => a.id.equals(id))).getSingleOrNull();
   }
 
   Future<String> create({
@@ -100,8 +109,9 @@ class ActivitiesDao extends DatabaseAccessor<AppDatabase>
             ? const Value.absent()
             : Value(capabilitiesJson),
         name: name == null ? const Value.absent() : Value(name),
-        description:
-            description == null ? const Value.absent() : Value(description),
+        description: description == null
+            ? const Value.absent()
+            : Value(description),
         ownerMemberId: ownerMemberId == null
             ? const Value.absent()
             : Value(ownerMemberId),
@@ -114,10 +124,12 @@ class ActivitiesDao extends DatabaseAccessor<AppDatabase>
         supplies: supplies == null ? const Value.absent() : Value(supplies),
         ageMin: ageMin == null ? const Value.absent() : Value(ageMin),
         ageMax: ageMax == null ? const Value.absent() : Value(ageMax),
-        maxCapacity:
-            maxCapacity == null ? const Value.absent() : Value(maxCapacity),
-        isOutdoor:
-            isOutdoor == null ? const Value.absent() : Value(isOutdoor ? 1 : 0),
+        maxCapacity: maxCapacity == null
+            ? const Value.absent()
+            : Value(maxCapacity),
+        isOutdoor: isOutdoor == null
+            ? const Value.absent()
+            : Value(isOutdoor ? 1 : 0),
         indoorAltActivityId: indoorAltActivityId == null
             ? const Value.absent()
             : Value(indoorAltActivityId),

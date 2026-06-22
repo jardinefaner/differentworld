@@ -638,6 +638,17 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                           border: OutlineInputBorder(),
                         ),
                       ),
+                      // The routine — ordered how-to steps every block using
+                      // this activity inherits. Edits write LIVE through the
+                      // serialized RoutineActions queue (not the Save button),
+                      // so it's available only once the activity has a stable
+                      // id; a brand-new activity gets the prompt below until
+                      // saved + reopened.
+                      const SizedBox(height: 20),
+                      if (widget.isEdit && a != null)
+                        _RoutineSection(activityId: a.id)
+                      else
+                        _RoutinePlaceholder(),
                       if (widget.isEdit && a != null) ...[
                         const SizedBox(height: 24),
                         const Divider(),
@@ -729,6 +740,272 @@ class _SupplyPickSheet extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// The "Routine" editor — the activity's ordered how-to steps, reorderable,
+/// each step inline-editable. Writes LIVE through the serialized
+/// [routineActionsProvider] (every add / edit / delete / reorder commits
+/// optimistically), so the steps every block using this activity inherits
+/// stay in sync without a Save tap. Authored once on the activity (the run
+/// sheet reads it back per block).
+class _RoutineSection extends ConsumerWidget {
+  const _RoutineSection({required this.activityId});
+
+  final String activityId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final steps =
+        ref.watch(routineForActivityProvider(activityId)).value ??
+        const <String>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'THE ROUTINE',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+            letterSpacing: 0.6,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'The steps to run this activity. Every block using it shows the '
+          'same routine.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (steps.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              'No steps yet — add the first one below.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          )
+        else
+          // shrinkWrap inside the outer FormBody ListView — the routine is
+          // short (a handful of steps), so the nested list never carries a
+          // scroll of its own.
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            itemCount: steps.length,
+            onReorder: (oldIndex, newIndex) => unawaited(
+              ref
+                  .read(routineActionsProvider)
+                  .reorder(activityId, oldIndex, newIndex),
+            ),
+            itemBuilder: (context, i) => _RoutineStepRow(
+              // Key by ORDINAL+text so a reorder/delete re-keys correctly
+              // and an edit of one row doesn't shuffle controller state onto
+              // a sibling (dynamic-child reconciliation; CLAUDE.md gotcha).
+              key: ValueKey('routine-$i-${steps[i]}'),
+              index: i,
+              text: steps[i],
+              onChanged: (text) => unawaited(
+                ref
+                    .read(routineActionsProvider)
+                    .updateStep(activityId, i, text),
+              ),
+              onRemove: () => unawaited(
+                ref.read(routineActionsProvider).removeStep(activityId, i),
+              ),
+            ),
+          ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: () => _addStep(context, ref),
+            icon: const Icon(Icons.add),
+            label: const Text('Add step'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _addStep(BuildContext context, WidgetRef ref) async {
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final ctrl = TextEditingController();
+        return AlertDialog(
+          title: const Text('Add a step'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            minLines: 1,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: 'Gather everyone on the rug.',
+            ),
+            onSubmitted: (v) => Navigator.of(ctx).pop(v),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(ctrl.text),
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+    final trimmed = text?.trim();
+    if (trimmed == null || trimmed.isEmpty) return;
+    await ref.read(routineActionsProvider).addStep(activityId, trimmed);
+  }
+}
+
+/// One routine step — a numbered, inline-editable line with a remove button.
+/// Wrapped in its own stateful widget so each row owns its TextEditingController
+/// (seeded from the live value) and commits on blur / submit.
+class _RoutineStepRow extends StatefulWidget {
+  const _RoutineStepRow({
+    required this.index,
+    required this.text,
+    required this.onChanged,
+    required this.onRemove,
+    super.key,
+  });
+
+  final int index;
+  final String text;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onRemove;
+
+  @override
+  State<_RoutineStepRow> createState() => _RoutineStepRowState();
+}
+
+class _RoutineStepRowState extends State<_RoutineStepRow> {
+  late final TextEditingController _ctrl;
+  late final FocusNode _focus;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.text);
+    _focus = FocusNode()..addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    // Commit when the field loses focus (tap away / next step). Skip a no-op
+    // so we don't churn the serialized write queue on every focus blur.
+    if (!_focus.hasFocus && _ctrl.text.trim() != widget.text.trim()) {
+      widget.onChanged(_ctrl.text);
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          // Numbered ordinal — reads as a how-to list.
+          SizedBox(
+            width: 24,
+            child: Text(
+              '${widget.index + 1}.',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: _ctrl,
+              focusNode: _focus,
+              textCapitalization: TextCapitalization.sentences,
+              minLines: 1,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: widget.onChanged,
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: widget.onRemove,
+            icon: const Icon(Icons.close),
+            tooltip: 'Remove step',
+          ),
+          // Drag handle on the right — buildDefaultDragHandles is off so we
+          // place it explicitly (keeps the inline text field tappable).
+          ReorderableDragStartListener(
+            index: widget.index,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Icon(
+                Icons.drag_handle,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown in place of the routine editor on a brand-new (unsaved) activity —
+/// the routine lives on the activity's caps, which needs a stable id first.
+class _RoutinePlaceholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'THE ROUTINE',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+            letterSpacing: 0.6,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Save this activity first, then reopen it to add the steps a block '
+          'shows when you run it.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,11 +1,8 @@
 import 'dart:async';
 
-import 'package:differentworld/core/capabilities/capabilities.dart';
-import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
-import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/entities/entity_link.dart';
 import 'package:differentworld/features/entities/entity_ref.dart';
@@ -671,15 +668,38 @@ class _CohortDay extends ConsumerWidget {
                     editable: canEdit,
                     conflictWith: conflictGroupNames,
                     isNow: isNow,
-                    onTap: () => _openBlockSheet(
-                      context,
-                      ref,
-                      groupId: group.id,
-                      date: DateTime.parse(b.startAt).toLocal(),
-                      defaultStart: DateTime.parse(b.startAt).toLocal(),
-                      existingBlocks: blocks,
-                      existing: b,
-                    ),
+                    // Content-bearing blocks (Activity / Trip) open the Block
+                    // Run Sheet — routine + supplies + actions in one place
+                    // (docs/VISION.md 2026-06-19). Break / closed / bare
+                    // blocks keep the straight-to-edit tap (there's nothing
+                    // to run). The run sheet carries its own Edit pencil + a
+                    // [Start] that folds in the old inline "Run" button.
+                    onTap: () {
+                      if (_opensRunSheet(b)) {
+                        // A bare `(block: b)` record structurally IS the run
+                        // sheet's `BlockRunSheetArgs`; the route matches on
+                        // `is` (same bare-literal convention as the block
+                        // edit args below).
+                        unawaited(
+                          context.push<void>(
+                            '/schedule/block/run',
+                            extra: (block: b),
+                          ),
+                        );
+                      } else {
+                        unawaited(
+                          _openBlockSheet(
+                            context,
+                            ref,
+                            groupId: group.id,
+                            date: DateTime.parse(b.startAt).toLocal(),
+                            defaultStart: DateTime.parse(b.startAt).toLocal(),
+                            existingBlocks: blocks,
+                            existing: b,
+                          ),
+                        );
+                      }
+                    },
                   );
                 },
               ),
@@ -772,6 +792,13 @@ class _CoverLeadStrip extends StatelessWidget {
   }
 }
 
+/// Whether tapping [b] opens the Block Run Sheet (routine + supplies +
+/// actions) instead of the straight-to-edit page. Content-bearing blocks —
+/// Activity (`on_site`) and Trip (`field_trip`) — get the run sheet; Break /
+/// Closed / bare blocks have nothing to run, so their tap stays edit.
+bool _opensRunSheet(ScheduleBlock b) =>
+    b.kind == BlockKind.onSite || b.kind == BlockKind.fieldTrip;
+
 /// Wave 156: which OTHER cohort group-names this block conflicts with
 /// at this date+time, by sharing the effective location (override on
 /// the block OR the activity's default). Empty list = no conflict.
@@ -850,7 +877,6 @@ class _BlockTile extends ConsumerWidget {
 
     final isField = block.kind == BlockKind.fieldTrip;
     final isBreak = block.kind == BlockKind.breakBlock;
-    final isClosed = block.kind == BlockKind.closed;
     // Wave 165: when a block is linked to a curriculum session, the
     // session title wins over the (likely-empty) activity field. The
     // session badge below tells the staff this isn't an ad-hoc
@@ -868,31 +894,10 @@ class _BlockTile extends ConsumerWidget {
               activity?.name ??
               (isBreak ? 'Break' : ''));
 
-    // "Run" affordance — present the planned activity through its
-    // play → name → bridge → question arc (`/arc`). Only Activity
-    // ('on_site') and Trip ('field_trip') blocks that HAVE something
-    // to present (a linked activity OR a non-empty name) get it;
-    // breaks / closed days don't. `/arc` takes the topic as a String
-    // via `extra` — feed it the activity's name, else the resolved
-    // block title.
-    final runTopic = (activity?.name.trim().isNotEmpty ?? false)
-        ? activity!.name.trim()
-        : title.trim();
-    final canRun =
-        !isBreak &&
-        !isClosed &&
-        runTopic.isNotEmpty &&
-        (block.activityId != null || blockTitle.isNotEmpty);
-    // If the linked activity names a specific full-screen RUNNER (Photo
-    // Studio, etc.), "Run" launches THAT directly instead of the generic
-    // teaching arc. Unknown / unset slug → null → default `/arc` launch.
-    final runner = activity == null
-        ? null
-        : runnerForSlug(
-            Capabilities.fromJson(
-              activity!.capabilities,
-            ).getString(ActivityCaps.runnerSlug),
-          );
+    // The inline "Run" affordance moved INTO the Block Run Sheet (the whole
+    // tile now opens it for Activity / Trip blocks; its [Start] is the single
+    // "run" path, with the same runner-slug / `/arc` launch). One affordance,
+    // not two on the same row.
 
     // Only true SIGNALS keep colour in the agenda: the live block (now)
     // gets a teal now-line + tint + NOW pill, field trips an amber left
@@ -1080,41 +1085,6 @@ class _BlockTile extends ConsumerWidget {
                               location!.name,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                          if (canRun) ...[
-                            const SizedBox(height: 4),
-                            TextButton.icon(
-                              onPressed: () {
-                                if (runner != null) {
-                                  // Launch the activity's chosen runner. Seed
-                                  // the on-screen prompt with the block topic
-                                  // for runners that accept one (Photo Studio).
-                                  final dest = runner.takesPrompt
-                                      ? Uri(
-                                          path: runner.route,
-                                          queryParameters: {'prompt': runTopic},
-                                        ).toString()
-                                      : runner.route;
-                                  unawaited(context.push(dest));
-                                } else {
-                                  unawaited(
-                                    context.push('/arc', extra: runTopic),
-                                  );
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.slideshow_outlined,
-                                size: 16,
-                              ),
-                              label: const Text('Run'),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                minimumSize: const Size(0, 48),
                               ),
                             ),
                           ],
