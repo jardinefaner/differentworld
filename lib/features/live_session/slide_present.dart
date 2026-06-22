@@ -41,22 +41,32 @@ class PresentSlide {
   final String? imagePath;
 }
 
-/// Arguments for the generic `/present-deck` route — a titled deck of slides.
-typedef PresentDeckArgs = ({String title, List<PresentSlide> slides});
+/// Arguments for the generic `/present-deck` route — a titled deck of slides,
+/// plus the slide to open on (`initialIndex`, default 0).
+typedef PresentDeckArgs = ({
+  String title,
+  List<PresentSlide> slides,
+  int initialIndex,
+});
 
 /// Throw a deck of slides to the room — the one call any feature makes to
 /// present/cast its content. Opens the immersive [SlidePresentScreen]; the
 /// staffer mirrors their screen to the TV (HDMI / AirPlay / Cast), the same
 /// "show it on this screen" path the cast sheet offers.
+///
+/// [initialIndex] opens the deck on a specific slide (clamped) — e.g. casting
+/// from a session's current beat opens the room deck on that beat's slide.
+/// Defaults to 0 (the start), so every existing call site is unaffected.
 Future<void> presentSlides(
   BuildContext context, {
   required String title,
   required List<PresentSlide> slides,
+  int initialIndex = 0,
 }) {
   if (slides.isEmpty) return Future<void>.value();
   return context.push<void>(
     '/present-deck',
-    extra: (title: title, slides: slides),
+    extra: (title: title, slides: slides, initialIndex: initialIndex),
   );
 }
 
@@ -66,10 +76,19 @@ Future<void> presentSlides(
 /// deliberately-dark raw canvas (it lives on a TV regardless of OS theme) on
 /// the theme-adherence allowlist.
 class SlidePresentScreen extends ConsumerStatefulWidget {
-  const SlidePresentScreen({required this.title, required this.slides, super.key});
+  const SlidePresentScreen({
+    required this.title,
+    required this.slides,
+    this.initialIndex = 0,
+    super.key,
+  });
 
   final String title;
   final List<PresentSlide> slides;
+
+  /// The slide to open on (clamped to the deck). Lets a caster open the deck at
+  /// the current beat's slide instead of always at slide 0.
+  final int initialIndex;
 
   @override
   ConsumerState<SlidePresentScreen> createState() => _SlidePresentScreenState();
@@ -77,12 +96,17 @@ class SlidePresentScreen extends ConsumerStatefulWidget {
 
 class _SlidePresentScreenState extends ConsumerState<SlidePresentScreen> {
   late final CastImmersive _immersive;
-  final PageController _page = PageController();
-  int _index = 0;
+  late final PageController _page;
+  late int _index;
 
   @override
   void initState() {
     super.initState();
+    // Seed the starting slide from initialIndex, clamped into the deck so a
+    // stale/out-of-range index can never throw or land off the end.
+    final lastIndex = widget.slides.isEmpty ? 0 : widget.slides.length - 1;
+    _index = widget.initialIndex.clamp(0, lastIndex);
+    _page = PageController(initialPage: _index);
     _immersive = ref.read(castImmersiveProvider.notifier);
     unawaited(
       Future.microtask(() {

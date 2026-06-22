@@ -1396,7 +1396,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) {
               final args = state.extra;
               return args is PresentDeckArgs
-                  ? SlidePresentScreen(title: args.title, slides: args.slides)
+                  ? SlidePresentScreen(
+                      title: args.title,
+                      slides: args.slides,
+                      initialIndex: args.initialIndex,
+                    )
                   : const SlidePresentScreen(
                       title: '',
                       slides: <PresentSlide>[],

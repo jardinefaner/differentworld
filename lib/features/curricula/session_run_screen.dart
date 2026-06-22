@@ -19,9 +19,10 @@ import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
 import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
+import 'package:differentworld/features/curricula/session_room_slides.dart';
 import 'package:differentworld/features/curricula/session_script.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
-import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/live_session/slide_present.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
@@ -171,23 +172,20 @@ class _SessionRunScreenState extends ConsumerState<SessionRunScreen> {
     unawaited(context.push(dest));
   }
 
-  void _cast(BuildContext context) {
-    // Reuse the one "Cast to the room" chooser — mirror this presenter onto a
-    // TV (the host keeps driving from the phone), or pair a second screen. The
-    // mirror shows whatever beat is up, so this same call serves every beat's
-    // "Cast to room" tool (the vocab cards, the game prompt) — no per-beat work.
-    final blockId = widget.blockId;
+  /// Cast the KID-FACING room deck to the screen — NOT a mirror of this
+  /// presenter. Mirroring would put the teacher's script ("Say this…", the
+  /// stage cues) on the TV; instead we build a clean kid deck from the script
+  /// ([sessionRoomSlides]: the big prompt, the game, the words, the call-back)
+  /// and present it via the shared engine. [beatIndex] opens the deck on the
+  /// current beat's slide, so what the room sees tracks where the host is. Both
+  /// the top Cast pill and every per-beat "Cast to room" tool route here.
+  void _cast(BuildContext context, SessionScript script, int beatIndex) {
     unawaited(
-      showCastToRoom(
+      presentSlides(
         context,
-        mirrorRoute: Uri(
-          path: '/session/run',
-          queryParameters: {
-            'slug': widget.slug,
-            'block': ?blockId,
-          },
-        ).toString(),
-        mirrorLabel: 'Show this session on the screen',
+        title: script.title,
+        slides: sessionRoomSlides(script),
+        initialIndex: roomSlideIndexForBeat(script, beatIndex),
       ),
     );
   }
@@ -266,7 +264,7 @@ class _SessionRunScreenState extends ConsumerState<SessionRunScreen> {
         IconButton(
           tooltip: 'Cast to the room',
           icon: const Icon(Icons.cast),
-          onPressed: () => _cast(context),
+          onPressed: () => _cast(context, script, safeIndex),
         ),
       ],
       body: SafeArea(
@@ -323,7 +321,7 @@ class _SessionRunScreenState extends ConsumerState<SessionRunScreen> {
                     beat: current,
                     blockId: widget.blockId,
                     onStartShooting: () => _startShooting(current),
-                    onCast: () => _cast(context),
+                    onCast: () => _cast(context, script, safeIndex),
                     onReview: (blockId) => _openReview(context, blockId),
                     onCapture: () => _capture(context),
                     onSendToFamilies: (groupId) =>
