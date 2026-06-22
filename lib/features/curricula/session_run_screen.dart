@@ -18,9 +18,11 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
 import 'package:differentworld/features/curricula/session_script.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -171,7 +173,9 @@ class _SessionRunScreenState extends ConsumerState<SessionRunScreen> {
 
   void _cast(BuildContext context) {
     // Reuse the one "Cast to the room" chooser — mirror this presenter onto a
-    // TV (the host keeps driving from the phone), or pair a second screen.
+    // TV (the host keeps driving from the phone), or pair a second screen. The
+    // mirror shows whatever beat is up, so this same call serves every beat's
+    // "Cast to room" tool (the vocab cards, the game prompt) — no per-beat work.
     final blockId = widget.blockId;
     unawaited(
       showCastToRoom(
@@ -186,6 +190,42 @@ class _SessionRunScreenState extends ConsumerState<SessionRunScreen> {
         mirrorLabel: 'Show this session on the screen',
       ),
     );
+  }
+
+  /// Open the timed-turns REVIEW for this block — the warm "pick your favorites"
+  /// screen scoped to this block's photos. REUSES the same [PhotoTurnsReviewScreen]
+  /// the run sheet's tray and the turns flow both end in (pushed imperatively,
+  /// the same way), so a cooldown beat can look back together inline. Block-
+  /// scoped: only offered when a block id is present (the row hides it otherwise).
+  void _openReview(BuildContext context, String blockId) {
+    unawaited(HapticFeedback.selectionClick());
+    unawaited(
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => PhotoTurnsReviewScreen(blockId: blockId),
+        ),
+      ),
+    );
+  }
+
+  /// Snap a journal drawing / the wall photo / a quick moment — REUSES the same
+  /// `/captures/new` flow the run sheet's Capture tile pushes. The one tool every
+  /// beat that wants a quick photo keeps inline.
+  void _capture(BuildContext context) {
+    unawaited(HapticFeedback.selectionClick());
+    unawaited(context.push('/captures/new'));
+  }
+
+  /// Send today's recap home — REUSES the `/recap` composer (the daily parent
+  /// recap), seeded to this block's cohort so the "after" beat closes the loop
+  /// without hunting for it. The recap route reads `?group=` to pick the cohort.
+  void _sendToFamilies(BuildContext context, String groupId) {
+    unawaited(HapticFeedback.selectionClick());
+    final dest = Uri(
+      path: '/recap',
+      queryParameters: {'group': groupId},
+    ).toString();
+    unawaited(context.push(dest));
   }
 
   @override
@@ -271,8 +311,23 @@ class _SessionRunScreenState extends ConsumerState<SessionRunScreen> {
                       paused: _paused,
                       onToggleExpand: () =>
                           setState(() => _expanded = !_expanded),
-                      onStartShooting: () => _startShooting(current),
                     ),
+                  ),
+                  // The per-beat TOOLS row — every tool THIS beat needs, inline,
+                  // so the host never hunts across the app mid-session. Gated by
+                  // beat kind; each tool reuses an existing flow (shoot / cast /
+                  // review / capture / recap). Renders nothing for beats with no
+                  // tools (prep/hook/reveal/rules/frame/closing/doorway), so the
+                  // slide flows straight into the advance bar on those.
+                  _BeatTools(
+                    beat: current,
+                    blockId: widget.blockId,
+                    onStartShooting: () => _startShooting(current),
+                    onCast: () => _cast(context),
+                    onReview: (blockId) => _openReview(context, blockId),
+                    onCapture: () => _capture(context),
+                    onSendToFamilies: (groupId) =>
+                        _sendToFamilies(context, groupId),
                   ),
                   const SizedBox(height: 16),
                   // The advance bar — timer controls + the big Next button.
@@ -463,8 +518,9 @@ class _DirectionedKey extends ValueKey<String> {
 /// The current beat as a calm card (the mockup): eyebrow (time · kind) + a
 /// small countdown when one's running → the Fraunces title → a warm tinted
 /// "Say this" card of the keyLines → an italic stage cue → a call-and-response
-/// chip → a "tap to expand" that reveals the FULL script. A game beat adds the
-/// game block + a "Start shooting" button; a vocab beat renders word-cards.
+/// chip → a "tap to expand" that reveals the FULL script. A game beat shows the
+/// game block (its rules); a vocab beat renders word-cards. The ACTIONS (Start
+/// shooting, Cast, …) live in the [_BeatTools] row below the slide, not here.
 class _BeatSlide extends StatelessWidget {
   const _BeatSlide({
     required this.beat,
@@ -472,7 +528,6 @@ class _BeatSlide extends StatelessWidget {
     required this.remaining,
     required this.paused,
     required this.onToggleExpand,
-    required this.onStartShooting,
     super.key,
   });
 
@@ -481,7 +536,6 @@ class _BeatSlide extends StatelessWidget {
   final int? remaining;
   final bool paused;
   final VoidCallback onToggleExpand;
-  final VoidCallback onStartShooting;
 
   @override
   Widget build(BuildContext context) {
@@ -545,14 +599,11 @@ class _BeatSlide extends StatelessWidget {
               const SizedBox(height: 14),
               _VocabCards(words: beat.vocabCards, accent: accent),
             ],
-            // GAME beat: the game block + "Start shooting".
+            // GAME beat: the game block (name + rules). The "Start shooting"
+            // action moved to the [_BeatTools] row below the slide.
             if (beat.game != null) ...[
               const SizedBox(height: 14),
-              _GameBlock(
-                game: beat.game!,
-                accent: accent,
-                onStartShooting: onStartShooting,
-              ),
+              _GameBlock(game: beat.game!, accent: accent),
             ],
             // Tap to expand → the FULL script.
             const SizedBox(height: 14),
@@ -562,6 +613,225 @@ class _BeatSlide extends StatelessWidget {
               _FullScript(lines: beat.script, accent: accent),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// The per-beat tools row
+// ─────────────────────────────────────────────────────────────────────────
+
+/// The per-beat TOOLS row — every tool THIS beat needs, inline, so the host
+/// never hunts across the app mid-session (the user: *"per beat should have all
+/// the tools we need… without hunting for them across the whole app"*). The set
+/// is gated by [SessionBeat.kind]; each tool REUSES an existing flow rather than
+/// inventing a screen:
+///
+/// | kind     | tools                                                  |
+/// |----------|--------------------------------------------------------|
+/// | game     | **Start shooting** (dominant) · Cast to room           |
+/// | cooldown | Cast to room · Review & favorites                      |
+/// | drawing  | Capture                                                |
+/// | after    | Capture · Send to families                             |
+/// | vocab    | Cast to room                                           |
+///
+/// Every other kind (prep / hook / reveal / rules / frame / closing / doorway)
+/// earns no tools and the row renders nothing.
+///
+/// BLOCK RESOLUTION + DEGRADE: Review and Send-to-families need the schedule
+/// block's `groupId` / `id`. When [blockId] is present the block is resolved via
+/// `scheduleBlockByIdProvider`; the block-dependent tools render only once it
+/// resolves (and not at all on an ad-hoc, no-block run) — no dead buttons. Start
+/// shooting, Cast, and Capture never need the block, so they always render.
+class _BeatTools extends ConsumerWidget {
+  const _BeatTools({
+    required this.beat,
+    required this.blockId,
+    required this.onStartShooting,
+    required this.onCast,
+    required this.onReview,
+    required this.onCapture,
+    required this.onSendToFamilies,
+  });
+
+  final SessionBeat beat;
+
+  /// The schedule block this run belongs to, when launched from a run sheet.
+  /// Null on an ad-hoc run → the block-dependent tools (review, send home) hide.
+  final String? blockId;
+
+  /// Start shooting — the game-beat handoff to the per-child timed photo turns
+  /// (seeded with the game's prompt + minutes). The presenter owns the push.
+  final VoidCallback onStartShooting;
+
+  /// Cast to room — mirror this presenter (showing the current beat) to the TV.
+  final VoidCallback onCast;
+
+  /// Review & favorites — opens [PhotoTurnsReviewScreen] for the resolved block.
+  final ValueChanged<String> onReview;
+
+  /// Capture — `/captures/new` (a journal drawing, the wall photo, a moment).
+  final VoidCallback onCapture;
+
+  /// Send to families — the `/recap` composer for the resolved block's cohort.
+  final ValueChanged<String> onSendToFamilies;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kind = beat.kind;
+
+    // The kinds that earn NO tools render nothing — the slide flows straight
+    // into the advance bar (cheap early-out; no block watch, no spacing).
+    const toolKinds = {
+      BeatKind.game,
+      BeatKind.cooldown,
+      BeatKind.drawing,
+      BeatKind.after,
+      BeatKind.vocab,
+    };
+    if (!toolKinds.contains(kind)) return const SizedBox.shrink();
+
+    // Resolve the block once (only when one was passed) — review + send-home
+    // need its groupId/id. A null block (still syncing, or an ad-hoc run) means
+    // those tools simply don't render; the rest of the row stands on its own.
+    final block = blockId == null
+        ? null
+        : ref.watch(scheduleBlockByIdProvider(blockId!)).value;
+    final groupId = block?.groupId;
+
+    // The shared chips, reused across kinds.
+    final castChip = _ToolChip(
+      icon: Icons.cast,
+      label: 'Cast to room',
+      onTap: onCast,
+    );
+    final captureChip = _ToolChip(
+      icon: Icons.photo_camera_outlined,
+      label: 'Capture',
+      onTap: onCapture,
+    );
+
+    // Build the chips per kind, in priority order. The game beat's "Start
+    // shooting" is the dominant (filled) chip; everything else is a quiet tonal
+    // chip. Block-dependent chips (review, send home) appear only once the block
+    // (and its groupId) is resolved — so a no-block run shows the rest alone.
+    final chips = switch (kind) {
+      // game → Start shooting (dominant) + Cast.
+      BeatKind.game => <Widget>[
+        _ToolChip.primary(
+          icon: Icons.photo_camera_outlined,
+          label: 'Start shooting',
+          onTap: onStartShooting,
+        ),
+        castChip,
+      ],
+      // cooldown → Cast + Review & favorites (the looking-together tools).
+      BeatKind.cooldown => <Widget>[
+        castChip,
+        if (blockId != null && block != null)
+          _ToolChip(
+            icon: Icons.favorite_outline,
+            label: 'Review & favorites',
+            onTap: () => onReview(blockId!),
+          ),
+      ],
+      // drawing → Capture (snap the journal drawing).
+      BeatKind.drawing => <Widget>[captureChip],
+      // after → Capture (the wall photo) + Send to families (the recap).
+      BeatKind.after => <Widget>[
+        captureChip,
+        if (groupId != null)
+          _ToolChip(
+            icon: Icons.send_outlined,
+            label: 'Send to families',
+            onTap: () => onSendToFamilies(groupId),
+          ),
+      ],
+      // vocab → Cast (put the word-cards on the screen).
+      BeatKind.vocab => <Widget>[castChip],
+      // No other kind earns tools (early-out above), but the switch must be
+      // exhaustive over the enum.
+      _ => const <Widget>[],
+    };
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    // A lone block-less cooldown collapses to just "Cast", a lone block-less
+    // "after" to just "Capture" — both still useful, never an empty row.
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Wrap(spacing: 10, runSpacing: 10, children: chips),
+    );
+  }
+}
+
+/// One tool in the [_BeatTools] row — a compact icon + short-label chip, ≥48dp
+/// tall, with a Semantics label and a selection haptic. Two emphases: the
+/// `.primary` constructor is the filled, visually-dominant chip (the game
+/// beat's "Start shooting"); the default constructor is the quiet tonal chip
+/// for the secondary tools. Themed — `colorScheme` only, so it follows
+/// dark/light.
+class _ToolChip extends StatelessWidget {
+  const _ToolChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  }) : primary = false;
+
+  const _ToolChip.primary({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  }) : primary = true;
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    // Primary = the seeded primary pair (the dominant verb); secondary = the
+    // calm surfaceContainerHighest tonal pair. Both AA by construction.
+    final bg = primary ? scheme.primary : scheme.surfaceContainerHighest;
+    final fg = primary ? scheme.onPrimary : scheme.onSurface;
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: bg,
+        shape: const StadiumBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            unawaited(HapticFeedback.selectionClick());
+            onTap();
+          },
+          child: ConstrainedBox(
+            // ≥48dp tall so it's a comfortable touch target on every device.
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 18, color: fg),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: fg,
+                      fontWeight: primary ? FontWeight.w700 : FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -945,19 +1215,15 @@ class _VocabCards extends StatelessWidget {
   }
 }
 
-/// The game block on a game beat — the game's name, its rules as short lines,
-/// and a "Start shooting" primary button that hands off to the per-child timed
-/// turns.
+/// The game block on a game beat — the game's name and its rules as short
+/// lines. The "Start shooting" handoff to the per-child timed turns now lives
+/// in the [_BeatTools] row below the slide (so it sits with the beat's other
+/// tools), not on this info block.
 class _GameBlock extends StatelessWidget {
-  const _GameBlock({
-    required this.game,
-    required this.accent,
-    required this.onStartShooting,
-  });
+  const _GameBlock({required this.game, required this.accent});
 
   final BeatGame game;
   final Color accent;
-  final VoidCallback onStartShooting;
 
   @override
   Widget build(BuildContext context) {
@@ -1033,15 +1299,6 @@ class _GameBlock extends StatelessWidget {
                 ),
               ),
           ],
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onStartShooting,
-              icon: const Icon(Icons.photo_camera_outlined, size: 18),
-              label: const Text('Start shooting'),
-            ),
-          ),
         ],
       ),
     );
