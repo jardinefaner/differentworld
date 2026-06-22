@@ -111,6 +111,7 @@ import 'package:differentworld/features/missions/mission_do_screen.dart';
 import 'package:differentworld/features/missions/missions_list_screen.dart';
 import 'package:differentworld/features/omnibox/omnibox_search_screen.dart';
 import 'package:differentworld/features/onboarding/join_or_create_screen.dart';
+import 'package:differentworld/features/photos/child_photos_folder_screen.dart';
 import 'package:differentworld/features/pickup/pickup_board_screen.dart';
 import 'package:differentworld/features/pickup/pickup_person_edit_screen.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
@@ -852,6 +853,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (_, state) => RouteTitle(
                   title: 'Trail',
                   child: ChildTrailScreen(
+                    subjectId: state.pathParameters['id']!,
+                  ),
+                ),
+              ),
+              // The per-child PROGRESS FOLDER — every photo they SHOT + every
+              // photo OF them, browsable, favorites-first. The payoff of the
+              // per-child media tagging. Builds from the path id alone so a
+              // deep link (or a kid-mode bounce that drops `extra`) rebuilds
+              // cleanly.
+              GoRoute(
+                path: 'subjects/:id/photos',
+                builder: (_, state) => RouteTitle(
+                  title: 'Photos',
+                  child: ChildPhotosFolderScreen(
                     subjectId: state.pathParameters['id']!,
                   ),
                 ),

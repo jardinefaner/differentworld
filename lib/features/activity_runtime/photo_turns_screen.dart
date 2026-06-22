@@ -594,7 +594,10 @@ class _FavoriteButton extends StatelessWidget {
           ),
           child: Icon(
             favorited ? Icons.favorite : Icons.favorite_border,
-            color: favorited ? Colors.pinkAccent : Colors.white,
+            color: favorited
+                ? Colors
+                      .pinkAccent // raw-canvas: over a photo
+                : Colors.white, // raw-canvas: over a photo
             size: 22,
           ),
         ),

@@ -1628,6 +1628,28 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
             unawaited(ctx.push('/groups/$gid/students/${s.id}')),
       ),
     );
+    // The child's PROGRESS FOLDER — every photo they shot + every photo of
+    // them, favorites-first (`/subjects/:id/photos`). Surfaced for anyone who
+    // can see the subject; the catalog list is already viewer-scoped.
+    entries.add(
+      OmniboxEntry(
+        id: 'subject:${s.id}:photos',
+        label: 'Photos · $fullName',
+        category: OmniboxCategory.action,
+        icon: Icons.photo_library_outlined,
+        keywords: const [
+          'photo',
+          'photos',
+          'folder',
+          'gallery',
+          'pictures',
+          'media',
+          'progress',
+        ],
+        groupId: 'subject:${s.id}',
+        onSelect: (ctx, _) => unawaited(ctx.push('/subjects/${s.id}/photos')),
+      ),
+    );
     // `gid` is guaranteed non-null here (we `continue`d above).
     if (viewer.canObserve) {
       entries.add(

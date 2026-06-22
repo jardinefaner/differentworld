@@ -47,6 +47,19 @@ final attachmentsCapturedByCuratedProvider = StreamProvider.autoDispose
       },
     );
 
+/// Every photo OF a child — the photos where this subject appears (tagged via
+/// `subject_id` at capture). Keyed on the subject id, newest first. The "of
+/// {name}" half of the per-child progress folder (the other half is
+/// [attachmentsCapturedByProvider] — the photos they SHOT).
+// ignore: specify_nonobvious_property_types
+final attachmentsForSubjectProvider = StreamProvider.autoDispose
+    .family<List<Attachment>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.attachmentsDao.watchForSubject(subjectId);
+      },
+    );
+
 /// Every photo from a schedule block — the activity's package (seam 3: the
 /// captures a block produced). Keyed on the block id.
 // ignore: specify_nonobvious_property_types

@@ -13,6 +13,7 @@ import 'package:differentworld/features/entries/work_sample_capture.dart';
 import 'package:differentworld/features/exports/widgets/exports_list.dart';
 import 'package:differentworld/features/family/welcome_actions.dart';
 import 'package:differentworld/features/incidents/widgets/subject_incidents_section.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/subjects/widgets/alerts_section.dart';
@@ -78,140 +79,140 @@ class SubjectDetailScreen extends ConsumerWidget {
     final subjectName = subjectAsync.value == null
         ? 'Student'
         : '${subjectAsync.value!.firstName} ${subjectAsync.value!.lastName}'
-            .trim();
+              .trim();
 
     return RouteTitle(
       title: subjectName.isEmpty ? 'Student' : subjectName,
       child: EdgeScaffold(
-      actions: [
-        // Up to six verbs here — past two they crowd a phone, so all but
-        // the primary collapse into the "⋯" menu (OverflowActions). The
-        // sync indicator stays OUTSIDE the menu: it's a status, not an
-        // action, and is the one place online/offline is surfaced.
-        OverflowActions([
-          // Primary verb on the kid's detail screen is "Observation" —
-          // the most-frequent action a teacher does here.
-          if (viewer.canObserve && subjectAsync.value != null)
-            EdgeAction(
-              icon: Icons.add,
-              label: 'New observation',
-              isPrimary: true,
-              onPressed: () => context.push(
-                '/observations/new'
-                '?groupId=${subjectAsync.value!.groupId ?? ''}'
-                '&subjectId=$subjectId',
-              ),
-            ),
-          // Snap the kid's paper into their cumulative work (the routine's
-          // "writing their answers on paper" — docs/VISION.md). One tap →
-          // camera → saved to their work, offline-safe.
-          if (viewer.canObserve &&
-              (subjectAsync.value?.groupId?.isNotEmpty ?? false))
-            EdgeAction(
-              icon: Icons.photo_camera_outlined,
-              label: 'Snap work',
-              onPressed: () => unawaited(
-                snapWork(
-                  context,
-                  ref,
-                  subjectId: subjectId,
-                  groupId: subjectAsync.value!.groupId!,
-                  subjectName: subjectAsync.value!.firstName,
+        actions: [
+          // Up to six verbs here — past two they crowd a phone, so all but
+          // the primary collapse into the "⋯" menu (OverflowActions). The
+          // sync indicator stays OUTSIDE the menu: it's a status, not an
+          // action, and is the one place online/offline is surfaced.
+          OverflowActions([
+            // Primary verb on the kid's detail screen is "Observation" —
+            // the most-frequent action a teacher does here.
+            if (viewer.canObserve && subjectAsync.value != null)
+              EdgeAction(
+                icon: Icons.add,
+                label: 'New observation',
+                isPrimary: true,
+                onPressed: () => context.push(
+                  '/observations/new'
+                  '?groupId=${subjectAsync.value!.groupId ?? ''}'
+                  '&subjectId=$subjectId',
                 ),
               ),
-            ),
-          // The child's Story — every captured moment, woven over time.
-          if (subjectAsync.value != null)
-            EdgeAction(
-              icon: Icons.auto_stories_outlined,
-              label: 'Story',
-              onPressed: () => unawaited(context.push('/story/$subjectId')),
-            ),
-          // First-day welcome — a printable one-pager for the parent: the big
-          // idea + the family-app invite QR + the practicals. Staff-only.
-          if (viewer is! GuardianViewer && subjectAsync.value != null)
-            EdgeAction(
-              icon: Icons.waving_hand_outlined,
-              label: 'First-day welcome',
-              onPressed: () =>
-                  unawaited(generateFirstDayWelcome(context, ref, subjectId)),
-            ),
-          // The Character Sheet — who they're becoming over the 10 weeks.
-          if (subjectAsync.value != null)
-            EdgeAction(
-              icon: Icons.badge_outlined,
-              label: 'Character sheet',
-              onPressed: () =>
-                  unawaited(context.push('/subjects/$subjectId/me')),
-            ),
-          // Their WORLD — this week's intention, their own project, today's
-          // answer + hero, and their growth, a bento all THEIRS.
-          if (subjectAsync.value != null)
-            EdgeAction(
-              icon: Icons.public_outlined,
-              label: 'Their world',
-              onPressed: () =>
-                  unawaited(context.push('/subjects/$subjectId/world')),
-            ),
-          // Wave 101: hide-don't-disable. Both Progress report and Edit
-          // require a group id to build the route, so gate visibility on
-          // `groupId != null && isNotEmpty` rather than rendering an inert
-          // button that silently no-ops.
-          if (viewer.canObserve &&
-              (subjectAsync.value?.groupId?.isNotEmpty ?? false))
-            EdgeAction(
-              icon: Icons.description_outlined,
-              label: 'Progress report',
-              onPressed: () => unawaited(
-                context.push(
-                  '/groups/${subjectAsync.value!.groupId}'
-                  '/students/$subjectId/progress-report',
+            // Snap the kid's paper into their cumulative work (the routine's
+            // "writing their answers on paper" — docs/VISION.md). One tap →
+            // camera → saved to their work, offline-safe.
+            if (viewer.canObserve &&
+                (subjectAsync.value?.groupId?.isNotEmpty ?? false))
+              EdgeAction(
+                icon: Icons.photo_camera_outlined,
+                label: 'Snap work',
+                onPressed: () => unawaited(
+                  snapWork(
+                    context,
+                    ref,
+                    subjectId: subjectId,
+                    groupId: subjectAsync.value!.groupId!,
+                    subjectName: subjectAsync.value!.firstName,
+                  ),
                 ),
               ),
-            ),
-          if (viewer.canManageSpace &&
-              (subjectAsync.value?.groupId?.isNotEmpty ?? false))
-            EdgeAction(
-              icon: Icons.edit_outlined,
-              label: 'Edit',
-              onPressed: () => unawaited(
-                context.push(
-                  '/groups/${subjectAsync.value!.groupId}'
-                  '/students/$subjectId/edit',
+            // The child's Story — every captured moment, woven over time.
+            if (subjectAsync.value != null)
+              EdgeAction(
+                icon: Icons.auto_stories_outlined,
+                label: 'Story',
+                onPressed: () => unawaited(context.push('/story/$subjectId')),
+              ),
+            // First-day welcome — a printable one-pager for the parent: the big
+            // idea + the family-app invite QR + the practicals. Staff-only.
+            if (viewer is! GuardianViewer && subjectAsync.value != null)
+              EdgeAction(
+                icon: Icons.waving_hand_outlined,
+                label: 'First-day welcome',
+                onPressed: () =>
+                    unawaited(generateFirstDayWelcome(context, ref, subjectId)),
+              ),
+            // The Character Sheet — who they're becoming over the 10 weeks.
+            if (subjectAsync.value != null)
+              EdgeAction(
+                icon: Icons.badge_outlined,
+                label: 'Character sheet',
+                onPressed: () =>
+                    unawaited(context.push('/subjects/$subjectId/me')),
+              ),
+            // Their WORLD — this week's intention, their own project, today's
+            // answer + hero, and their growth, a bento all THEIRS.
+            if (subjectAsync.value != null)
+              EdgeAction(
+                icon: Icons.public_outlined,
+                label: 'Their world',
+                onPressed: () =>
+                    unawaited(context.push('/subjects/$subjectId/world')),
+              ),
+            // Wave 101: hide-don't-disable. Both Progress report and Edit
+            // require a group id to build the route, so gate visibility on
+            // `groupId != null && isNotEmpty` rather than rendering an inert
+            // button that silently no-ops.
+            if (viewer.canObserve &&
+                (subjectAsync.value?.groupId?.isNotEmpty ?? false))
+              EdgeAction(
+                icon: Icons.description_outlined,
+                label: 'Progress report',
+                onPressed: () => unawaited(
+                  context.push(
+                    '/groups/${subjectAsync.value!.groupId}'
+                    '/students/$subjectId/progress-report',
+                  ),
                 ),
               ),
-            ),
-        ]),
-        const SyncStatusIndicator(),
-      ],
-      body: subjectAsync.when(
-        loading: () => const LoadingSlot(),
-        error: (_, _) => ErrorState(
-          title: 'Could not load',
-          onRetry: () => ref.invalidate(subjectByIdProvider(subjectId)),
-        ),
-        data: (subject) {
-          if (subject == null) {
-            return const EmptyState(
-              icon: Icons.search_off,
-              title: 'Student not found.',
+            if (viewer.canManageSpace &&
+                (subjectAsync.value?.groupId?.isNotEmpty ?? false))
+              EdgeAction(
+                icon: Icons.edit_outlined,
+                label: 'Edit',
+                onPressed: () => unawaited(
+                  context.push(
+                    '/groups/${subjectAsync.value!.groupId}'
+                    '/students/$subjectId/edit',
+                  ),
+                ),
+              ),
+          ]),
+          const SyncStatusIndicator(),
+        ],
+        body: subjectAsync.when(
+          loading: () => const LoadingSlot(),
+          error: (_, _) => ErrorState(
+            title: 'Could not load',
+            onRetry: () => ref.invalidate(subjectByIdProvider(subjectId)),
+          ),
+          data: (subject) {
+            if (subject == null) {
+              return const EmptyState(
+                icon: Icons.search_off,
+                title: 'Student not found.',
+              );
+            }
+            // Cap + center on wide windows so the per-child timeline doesn't
+            // run edge-to-edge on a desktop monitor (docs/PLATFORM_RUBRIC.md
+            // flagged subjects as the worst adaptive offender). Phone is
+            // unchanged — the cap isn't binding below 1200dp.
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: Breakpoints.splitMaxWidth,
+                ),
+                child: _SubjectBody(subject: subject, viewer: viewer),
+              ),
             );
-          }
-          // Cap + center on wide windows so the per-child timeline doesn't
-          // run edge-to-edge on a desktop monitor (docs/PLATFORM_RUBRIC.md
-          // flagged subjects as the worst adaptive offender). Phone is
-          // unchanged — the cap isn't binding below 1200dp.
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: Breakpoints.splitMaxWidth,
-              ),
-              child: _SubjectBody(subject: subject, viewer: viewer),
-            ),
-          );
-        },
+          },
+        ),
       ),
-    ),
     );
   }
 }
@@ -291,7 +292,8 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
     final totalObservations = entries.length;
     // Per-child incident history — gated on the program feature + view
     // permission (matches the incident log screen's NoAccess gate).
-    final showIncidents = viewer.featureIncidentReports &&
+    final showIncidents =
+        viewer.featureIncidentReports &&
         (viewer.canObserve || viewer.canManageSpace);
 
     return ListView(
@@ -371,6 +373,17 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
           ),
         ),
 
+        // The child's PROGRESS FOLDER — every photo they shot + every photo of
+        // them, browsable and favorites-first (the payoff of per-child media
+        // tagging). Mirrors how the world-self tile links out.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: _PhotosFolderTile(
+            subjectId: subject.id,
+            firstName: subject.firstName,
+          ),
+        ),
+
         // Section index chips: scroll-anchored quick links. Tap to
         // jump to a section. Lightweight; doesn't introduce slivers.
         _SectionChips(
@@ -434,9 +447,7 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
               Text('Observations', style: theme.textTheme.titleSmall),
               const Spacer(),
               Text(
-                entriesAsync.value == null
-                    ? ''
-                    : '$totalObservations',
+                entriesAsync.value == null ? '' : '$totalObservations',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -474,13 +485,11 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
                   SubjectObservationItem(entry: e),
                 if (entries.length > 10)
                   Padding(
-                    padding:
-                        const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
-                        onPressed: () =>
-                            context.push('/observations'),
+                        onPressed: () => context.push('/observations'),
                         icon: const Icon(Icons.unfold_more, size: 16),
                         label: Text(
                           'View all ${entries.length}',
@@ -619,7 +628,8 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
     );
     final entries = entriesAsync.value ?? const <Entry>[];
     final totalObservations = entries.length;
-    final showIncidents = viewer.featureIncidentReports &&
+    final showIncidents =
+        viewer.featureIncidentReports &&
         (viewer.canObserve || viewer.canManageSpace);
 
     // The two short, glanceable cards pair 2-up. Both default tablet/desktop
@@ -708,6 +718,16 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: BentoGrid(tiles: glanceTiles),
+        ),
+
+        // Progress folder link — full-width card (same as the flat body).
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _PhotosFolderTile(
+            subjectId: subject.id,
+            firstName: subject.firstName,
+          ),
         ),
 
         // Alerts (allergies / IEP / meds) — full-width.
@@ -883,13 +903,13 @@ class _SubjectBodyState extends ConsumerState<_SubjectBody> {
 
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final _groupForDetailProvider =
-    StreamProvider.autoDispose.family<Group?, String>(
-  (ref, id) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.groupsDao.watchById(id);
-  },
-);
+final _groupForDetailProvider = StreamProvider.autoDispose
+    .family<Group?, String>(
+      (ref, id) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.groupsDao.watchById(id);
+      },
+    );
 
 class _SectionGap extends StatelessWidget {
   const _SectionGap();
@@ -960,6 +980,34 @@ class _WorldSelfTile extends ConsumerWidget {
       subtitle: subtitle,
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push('/subjects/$subjectId/me'),
+    );
+  }
+}
+
+/// Entry point to the child's PROGRESS FOLDER (`/subjects/:id/photos`) — the
+/// browsable collection of photos they SHOT + photos OF them, favorites-first.
+/// Reactive subtitle shows the running count so the card reads as "there's
+/// stuff in here," not just a link. Mirrors [_WorldSelfTile].
+class _PhotosFolderTile extends ConsumerWidget {
+  const _PhotosFolderTile({required this.subjectId, required this.firstName});
+
+  final String subjectId;
+  final String firstName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final took = ref.watch(attachmentsCapturedByProvider(subjectId)).value;
+    final of = ref.watch(attachmentsForSubjectProvider(subjectId)).value;
+    final total = (took?.length ?? 0) + (of?.length ?? 0);
+    final subtitle = total == 0
+        ? 'Photos they take and photos of them collect here'
+        : '$total ${total == 1 ? 'photo' : 'photos'}';
+    return FeatureCard(
+      leading: const Icon(Icons.photo_library_outlined),
+      title: 'Photos',
+      subtitle: subtitle,
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push('/subjects/$subjectId/photos'),
     );
   }
 }
@@ -1036,8 +1084,7 @@ class _QuickObservation extends ConsumerStatefulWidget {
   final String subjectId;
 
   @override
-  ConsumerState<_QuickObservation> createState() =>
-      _QuickObservationState();
+  ConsumerState<_QuickObservation> createState() => _QuickObservationState();
 }
 
 class _QuickObservationState extends ConsumerState<_QuickObservation> {
@@ -1056,7 +1103,9 @@ class _QuickObservationState extends ConsumerState<_QuickObservation> {
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.maybeOf(context);
     try {
-      await ref.read(entryActionsProvider).createObservation(
+      await ref
+          .read(entryActionsProvider)
+          .createObservation(
             groupId: widget.groupId,
             subjectId: widget.subjectId,
             text: body,

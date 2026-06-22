@@ -10,41 +10,71 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-/// The child's photos for the growth arc — newest-first, from their
-/// observation attachments. Captions are SAFE by construction: the date,
-/// never the observation body. The body is staff free-text that can name
-/// OTHER children, and the arc is family-facing — so a body caption would
-/// leak another kid's identity into this child's keepsake (the scrub rule,
-/// CLAUDE.md). Date captions sidestep that entirely; richer scrubbed captions
-/// are a follow-up. Capped at 6 so the reel stays a highlight, not a dump.
+/// The child's photos for the growth arc — their actual moments woven into
+/// the reel. Two sources, the child's OWN shots first:
+///
+/// 1. **Photos they SHOT** ([attachmentsCapturedByProvider]) — the camera
+///    turns where they were the photographer. Prime growth-book material:
+///    it's what THEY made, not just what happened to them. Favorites-first
+///    isn't needed here (the arc is a curated highlight, not the folder), so
+///    we take them newest-first as the DAO returns them.
+/// 2. **Photos on their observations** ([attachmentsForEntityProvider]) —
+///    backfill so a child who never held the camera still gets moments.
+///
+/// Captions are SAFE by construction: the date, never any free-text body.
+/// A body is staff free-text that can name OTHER children, and the arc is
+/// family-facing — a body caption would leak another kid's identity into this
+/// child's keepsake (the scrub rule, CLAUDE.md). Date captions sidestep that
+/// entirely. Capped at 6 so the reel stays a highlight, not a dump.
 // ignore: specify_nonobvious_property_types
-final growthArcPhotosProvider =
-    FutureProvider.autoDispose.family<List<GrowthPhoto>, String>(
-  (ref, subjectId) async {
-    // ref.read (not watch): the arc is a one-time snapshot built when the
-    // screen opens — a live subscription per attachment would re-subscribe N
-    // providers on every rebuild and thrash the reel mid-cast on sync events.
-    final entries = await ref.read(
-      entriesForSubjectProvider(
-        (subjectId: subjectId, kind: EntryKind.observation),
-      ).future,
+final growthArcPhotosProvider = FutureProvider.autoDispose
+    .family<List<GrowthPhoto>, String>(
+      (ref, subjectId) async {
+        // ref.read (not watch): the arc is a one-time snapshot built when the
+        // screen opens — a live subscription per attachment would re-subscribe N
+        // providers on every rebuild and thrash the reel mid-cast on sync events.
+        final photos = <GrowthPhoto>[];
+        final seen = <String>{};
+
+        String dateCaption(String? iso) {
+          final ts = iso == null ? null : DateTime.tryParse(iso)?.toLocal();
+          return ts == null ? 'A moment' : DateFormat.MMMMd().format(ts);
+        }
+
+        // 1. The child's own shots — what they MADE — lead the reel.
+        final shot = await ref.read(
+          attachmentsCapturedByProvider(subjectId).future,
+        );
+        for (final a in shot) {
+          if (photos.length >= 6) break;
+          if (!seen.add(a.url)) continue;
+          photos.add((
+            url: a.url,
+            caption: dateCaption(a.takenAt ?? a.createdAt),
+          ));
+        }
+
+        // 2. Backfill from observation attachments until we hit the cap.
+        if (photos.length < 6) {
+          final entries = await ref.read(
+            entriesForSubjectProvider(
+              (subjectId: subjectId, kind: EntryKind.observation),
+            ).future,
+          );
+          for (final e in entries) {
+            if (photos.length >= 6) break;
+            final atts = await ref.read(
+              attachmentsForEntityProvider((kind: 'entry', id: e.id)).future,
+            );
+            if (atts.isEmpty) continue;
+            final url = atts.first.url;
+            if (!seen.add(url)) continue;
+            photos.add((url: url, caption: dateCaption(e.recordedAt)));
+          }
+        }
+        return photos;
+      },
     );
-    final photos = <GrowthPhoto>[];
-    for (final e in entries) {
-      if (photos.length >= 6) break;
-      final atts = await ref.read(
-        attachmentsForEntityProvider((kind: 'entry', id: e.id)).future,
-      );
-      if (atts.isEmpty) continue;
-      final ts = DateTime.tryParse(e.recordedAt)?.toLocal();
-      photos.add((
-        url: atts.first.url,
-        caption: ts == null ? 'A moment' : DateFormat.MMMMd().format(ts),
-      ));
-    }
-    return photos;
-  },
-);
 
 /// `/growth/:subjectId` — a child's **growth arc**, cast on the shared present
 /// spine (the fourth sibling of `/play-today`, `/arc`, `/journey`). Auto-
@@ -60,7 +90,9 @@ class GrowthArcScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subject = ref.watch(subjectByIdProvider(subjectId)).value;
-    final collection = ref.watch(actionWordsCollectionProvider(subjectId)).value;
+    final collection = ref
+        .watch(actionWordsCollectionProvider(subjectId))
+        .value;
     final photosAsync = ref.watch(growthArcPhotosProvider(subjectId));
 
     // Wait for BOTH the collection and the photos before building, so the beat
