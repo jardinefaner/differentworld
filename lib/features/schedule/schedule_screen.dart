@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/entities/entity_link.dart';
 import 'package:differentworld/features/entities/entity_ref.dart';
@@ -880,6 +883,16 @@ class _BlockTile extends ConsumerWidget {
         !isClosed &&
         runTopic.isNotEmpty &&
         (block.activityId != null || blockTitle.isNotEmpty);
+    // If the linked activity names a specific full-screen RUNNER (Photo
+    // Studio, etc.), "Run" launches THAT directly instead of the generic
+    // teaching arc. Unknown / unset slug → null → default `/arc` launch.
+    final runner = activity == null
+        ? null
+        : runnerForSlug(
+            Capabilities.fromJson(
+              activity!.capabilities,
+            ).getString(ActivityCaps.runnerSlug),
+          );
 
     // Only true SIGNALS keep colour in the agenda: the live block (now)
     // gets a teal now-line + tint + NOW pill, field trips an amber left
@@ -1073,9 +1086,24 @@ class _BlockTile extends ConsumerWidget {
                           if (canRun) ...[
                             const SizedBox(height: 4),
                             TextButton.icon(
-                              onPressed: () => unawaited(
-                                context.push('/arc', extra: runTopic),
-                              ),
+                              onPressed: () {
+                                if (runner != null) {
+                                  // Launch the activity's chosen runner. Seed
+                                  // the on-screen prompt with the block topic
+                                  // for runners that accept one (Photo Studio).
+                                  final dest = runner.takesPrompt
+                                      ? Uri(
+                                          path: runner.route,
+                                          queryParameters: {'prompt': runTopic},
+                                        ).toString()
+                                      : runner.route;
+                                  unawaited(context.push(dest));
+                                } else {
+                                  unawaited(
+                                    context.push('/arc', extra: runTopic),
+                                  );
+                                }
+                              },
                               icon: const Icon(
                                 Icons.slideshow_outlined,
                                 size: 16,

@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/supplies/activity_supplies_providers.dart';
@@ -45,6 +48,10 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
 
   String? _locationId;
   bool _isOutdoor = false;
+  // Which full-screen runner this activity launches from a block's "Run"
+  // button; null = the default `/arc` teaching arc. Stored on the
+  // activity's caps under [ActivityCaps.runnerSlug].
+  String? _runnerSlug;
   bool _saving = false;
   bool _seeded = false;
 
@@ -90,6 +97,9 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
     _maxCapacity.text = a.maxCapacity?.toString() ?? '';
     _locationId = a.defaultLocationId;
     _isOutdoor = a.isOutdoor == 1;
+    _runnerSlug = Capabilities.fromJson(
+      a.capabilities,
+    ).getString(ActivityCaps.runnerSlug);
     _seeded = true;
   }
 
@@ -121,6 +131,7 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
           _maxCapacity.text.trim().isNotEmpty ||
           _locationId != null ||
           _isOutdoor ||
+          _runnerSlug != null ||
           _picks.isNotEmpty;
     }
     return _name.text.trim() != base.name ||
@@ -133,6 +144,10 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
         _maxCapacity.text.trim() != (base.maxCapacity?.toString() ?? '') ||
         _locationId != base.defaultLocationId ||
         _isOutdoor != (base.isOutdoor == 1) ||
+        _runnerSlug !=
+            Capabilities.fromJson(
+              base.capabilities,
+            ).getString(ActivityCaps.runnerSlug) ||
         _picksSig() != _initialPicksSig;
   }
 
@@ -145,6 +160,12 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     final existingId = widget.activityId;
+    // The activity's current caps JSON — so the runner-slug write merges
+    // over its sibling keys (verbs / senses) instead of clobbering them.
+    // A fresh row hasn't been created yet → no caps to preserve.
+    final existingCaps = existingId == null
+        ? null
+        : ref.read(activityByIdProvider(existingId)).value?.capabilities;
 
     String? createdOrEditedId;
     final ok = await runReported(
@@ -190,6 +211,14 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
           await ref
               .read(activitySuppliesActionsProvider)
               .setForActivity(aid, _picks);
+          // Persist the chosen runner on the activity's caps. Merge over
+          // the row's existing caps so verbs/senses survive (a fresh row
+          // has none).
+          await actions.setRunnerSlug(
+            aid,
+            _runnerSlug,
+            currentCapabilities: existingCaps,
+          );
         }
       },
     );
@@ -570,6 +599,29 @@ class _ActivityEditScreenState extends ConsumerState<ActivityEditScreen> {
                         ),
                         value: _isOutdoor,
                         onChanged: (v) => setState(() => _isOutdoor = v),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String?>(
+                        initialValue: _runnerSlug,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Runs as',
+                          helperText:
+                              'What the "Run" button opens on a scheduled '
+                              'block.',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            child: Text('Teaching arc (default)'),
+                          ),
+                          for (final r in kActivityRunners)
+                            DropdownMenuItem<String?>(
+                              value: r.slug,
+                              child: Text(r.label),
+                            ),
+                        ],
+                        onChanged: (v) => setState(() => _runnerSlug = v),
                       ),
                       const SizedBox(height: 12),
                       _packListSection(context, supplies),

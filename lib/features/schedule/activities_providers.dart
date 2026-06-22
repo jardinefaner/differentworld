@@ -1,4 +1,5 @@
 import 'package:differentworld/core/capabilities/capabilities.dart';
+import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
@@ -31,11 +32,11 @@ final allActivitiesProvider = StreamProvider<List<Activity>>((ref) {
 
 /// A single activity, watched live. Used by the activity edit screen.
 // ignore: specify_nonobvious_property_types
-final activityByIdProvider =
-    StreamProvider.autoDispose.family<Activity?, String>((ref, id) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.activitiesDao.watchById(id);
-});
+final activityByIdProvider = StreamProvider.autoDispose
+    .family<Activity?, String>((ref, id) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.activitiesDao.watchById(id);
+    });
 
 class ActivityActions {
   ActivityActions(this._ref);
@@ -128,10 +129,36 @@ class ActivityActions {
   }) async {
     final db = await _ref.read(appDatabaseProvider.future);
     final caps = Capabilities.fromJson(activity.capabilities)
-        .setting('action_verbs', verbs)
-        .setting('senses', senses);
+        .setting(ActivityCaps.actionVerbs, verbs)
+        .setting(ActivityCaps.senses, senses);
     await db.activitiesDao.update_(
       id: activity.id,
+      capabilitiesJson: caps.toJson(),
+    );
+  }
+
+  /// Choose (or clear) the full-screen RUNNER a scheduled block launches
+  /// for this activity via its "Run" button, instead of the generic `/arc`
+  /// teaching arc. Pass a runner slug (see activity_runtime/activity_runners.dart)
+  /// or null to clear back to the default arc.
+  ///
+  /// A single-string-cap read-modify-write that preserves the activity's
+  /// other caps (verbs / senses). Pass [currentCapabilities] (the activity's
+  /// existing `capabilities` JSON, `null`/`{}` for a fresh row) so the merge
+  /// keeps those sibling keys. Optimistic: the local write commits in one
+  /// frame; PowerSync syncs later.
+  Future<void> setRunnerSlug(
+    String activityId,
+    String? slug, {
+    String? currentCapabilities,
+  }) async {
+    final db = await _ref.read(appDatabaseProvider.future);
+    final caps = Capabilities.fromJson(currentCapabilities).setting(
+      ActivityCaps.runnerSlug,
+      (slug == null || slug.isEmpty) ? null : slug,
+    );
+    await db.activitiesDao.update_(
+      id: activityId,
       capabilitiesJson: caps.toJson(),
     );
   }
@@ -148,8 +175,8 @@ class ActivityActions {
     final spaceId = viewer.requireSpaceId(action: 'create an activity');
     final db = await _ref.read(appDatabaseProvider.future);
     final caps = Capabilities.fromJson('{}')
-        .setting('action_verbs', verbs)
-        .setting('senses', senses);
+        .setting(ActivityCaps.actionVerbs, verbs)
+        .setting(ActivityCaps.senses, senses);
     return db.activitiesDao.create(
       spaceId: spaceId,
       name: name,
@@ -160,5 +187,4 @@ class ActivityActions {
   }
 }
 
-final activityActionsProvider =
-    Provider<ActivityActions>(ActivityActions.new);
+final activityActionsProvider = Provider<ActivityActions>(ActivityActions.new);

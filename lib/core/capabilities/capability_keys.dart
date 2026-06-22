@@ -85,6 +85,25 @@ abstract class SpaceCaps {
   static const vertical = 'vertical';
 }
 
+/// Capability keys stored on an **Activity**'s `capabilities` JSONB.
+/// Activities don't have schema columns for these — they ride the blob so
+/// a new flag is a single write, no migration (same trick as `SpaceCaps`).
+abstract class ActivityCaps {
+  /// Action Words verbs this activity satisfies — a JSON string list
+  /// (drives the verb→activity matcher). Written via
+  /// `ActivityActions.setActivityTags`.
+  static const actionVerbs = 'action_verbs';
+
+  /// Sensory facets this activity engages — a JSON string list.
+  static const senses = 'senses';
+
+  /// The full-screen RUNNER this activity launches when you tap "Run" on a
+  /// scheduled block, instead of the generic `/arc` teaching arc. A single
+  /// string = an `ActivityRunner.slug` (see
+  /// activity_runtime/activity_runners.dart). Absent/empty → the default
+  /// `/arc` launch.
+  static const runnerSlug = 'runner_slug';
+}
 
 /// Vertical-agnostic member capabilities. Every vertical we
 /// target (childcare, construction, healthcare, hospitality,
@@ -175,12 +194,17 @@ abstract class SpecialtyKeys {
       inclusion => 'Inclusion Aide',
       reading => 'Reading Specialist',
       bilingual => 'Bilingual / ESL Specialist',
-      _ => (key ?? '').isEmpty
-          ? 'Specialist'
-          : key!.replaceAll('_', ' ').split(' ').map((w) {
-              if (w.isEmpty) return w;
-              return w[0].toUpperCase() + w.substring(1);
-            }).join(' '),
+      _ =>
+        (key ?? '').isEmpty
+            ? 'Specialist'
+            : key!
+                  .replaceAll('_', ' ')
+                  .split(' ')
+                  .map((w) {
+                    if (w.isEmpty) return w;
+                    return w[0].toUpperCase() + w.substring(1);
+                  })
+                  .join(' '),
     };
   }
 }
@@ -390,41 +414,41 @@ abstract class RoleBundles {
   static List<String> rolesFor(String vertical) {
     return switch (vertical) {
       'construction' => const [
-          'pm',
-          'foreman',
-          'journeyman',
-          'apprentice',
-          'subcontractor',
-        ],
+        'pm',
+        'foreman',
+        'journeyman',
+        'apprentice',
+        'subcontractor',
+      ],
       'healthcare' => const [
-          'physician',
-          'np',
-          'rn',
-          'tech',
-          'admin',
-        ],
+        'physician',
+        'np',
+        'rn',
+        'tech',
+        'admin',
+      ],
       'hospitality' => const [
-          'gm',
-          'manager',
-          'server',
-          'cook',
-          'host',
-        ],
+        'gm',
+        'manager',
+        'server',
+        'cook',
+        'host',
+      ],
       'manufacturing' => const [
-          'production_manager',
-          'line_lead',
-          'operator',
-          'qa',
-          'maintenance',
-        ],
+        'production_manager',
+        'line_lead',
+        'operator',
+        'qa',
+        'maintenance',
+      ],
       _ => const [
-          'director',
-          'lead_teacher',
-          'teacher',
-          'substitute',
-          'specialist',
-          'kitchen',
-        ],
+        'director',
+        'lead_teacher',
+        'teacher',
+        'substitute',
+        'specialist',
+        'kitchen',
+      ],
     };
   }
 
