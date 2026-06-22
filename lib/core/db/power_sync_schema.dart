@@ -220,8 +220,30 @@ const appSchema = Schema([
     Column.integer('sort_order'),
     Column.text('uploaded_by'),
     Column.text('taken_at'),
+    // The tag axes (migration 20260621000001): the child the photo is OF, the
+    // child who SHOT it (their progress folder), and the activity/block it
+    // came from. Each is a single-owner query.
+    Column.text('subject_id'),
+    Column.text('captured_by_subject_id'),
+    Column.text('schedule_block_id'),
     Column.text('created_at'),
     Column.text('updated_at'),
+  ], indexes: [
+    // Each new axis is a single-owner watch ordered newest-first — index so a
+    // per-child folder / per-block package doesn't full-scan the growing
+    // table (mirrors the entries indexes above).
+    Index('attachments_subject', [
+      IndexedColumn('subject_id'),
+      IndexedColumn.descending('created_at'),
+    ]),
+    Index('attachments_captured_by', [
+      IndexedColumn('captured_by_subject_id'),
+      IndexedColumn.descending('created_at'),
+    ]),
+    Index('attachments_block', [
+      IndexedColumn('schedule_block_id'),
+      IndexedColumn.descending('created_at'),
+    ]),
   ]),
   Table('survey_responses', [
     Column.text('space_id'),

@@ -23,6 +23,28 @@ final attachmentsForEntityProvider =
   },
 );
 
+/// Every photo a child SHOT — their progress folder (the per-child media
+/// collection that feeds the growth book). Keyed on the subject id.
+// ignore: specify_nonobvious_property_types
+final attachmentsCapturedByProvider =
+    StreamProvider.autoDispose.family<List<Attachment>, String>(
+  (ref, subjectId) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* db.attachmentsDao.watchCapturedBy(subjectId);
+  },
+);
+
+/// Every photo from a schedule block — the activity's package (seam 3: the
+/// captures a block produced). Keyed on the block id.
+// ignore: specify_nonobvious_property_types
+final attachmentsForBlockProvider =
+    StreamProvider.autoDispose.family<List<Attachment>, String>(
+  (ref, blockId) async* {
+    final db = await ref.watch(appDatabaseProvider.future);
+    yield* db.attachmentsDao.watchForBlock(blockId);
+  },
+);
+
 /// Convenience extension: extract just the URLs in order. Handy
 /// because most UI surfaces just want a `List<String>` for the
 /// PhotoViewer / thumbnail list.
@@ -59,6 +81,12 @@ class AttachmentActions {
     String? caption,
     int? sortOrder,
     String? id,
+    // The tag axes (migration 20260621000001): the child the photo is OF, the
+    // child who SHOT it (their progress folder), and the activity/block it
+    // came from. All optional — pass what the capture context knows.
+    String? subjectId,
+    String? capturedBySubjectId,
+    String? scheduleBlockId,
   }) async {
     final viewer = _ref.read(viewerProvider);
     final spaceId = viewer.spaceId;
@@ -84,6 +112,9 @@ class AttachmentActions {
       sortOrder: effectiveSort,
       uploadedBy: viewer.memberId,
       takenAt: DateTime.now().toUtc().toIso8601String(),
+      subjectId: subjectId,
+      capturedBySubjectId: capturedBySubjectId,
+      scheduleBlockId: scheduleBlockId,
     );
     return attachmentId;
   }

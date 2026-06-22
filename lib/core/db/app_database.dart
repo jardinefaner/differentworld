@@ -406,6 +406,11 @@ class Attachments extends Table {
   IntColumn get sortOrder => integer().nullable()();
   TextColumn get uploadedBy => text().nullable()();
   TextColumn get takenAt => text().nullable()();
+  // Tag axes (migration 20260621000001): the child the photo is OF, the child
+  // who SHOT it (their progress folder), and the activity/block it came from.
+  TextColumn get subjectId => text().nullable()();
+  TextColumn get capturedBySubjectId => text().nullable()();
+  TextColumn get scheduleBlockId => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 

@@ -8234,6 +8234,39 @@ class $AttachmentsTable extends Attachments
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _subjectIdMeta = const VerificationMeta(
+    'subjectId',
+  );
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+    'subject_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _capturedBySubjectIdMeta =
+      const VerificationMeta('capturedBySubjectId');
+  @override
+  late final GeneratedColumn<String> capturedBySubjectId =
+      GeneratedColumn<String>(
+        'captured_by_subject_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _scheduleBlockIdMeta = const VerificationMeta(
+    'scheduleBlockId',
+  );
+  @override
+  late final GeneratedColumn<String> scheduleBlockId = GeneratedColumn<String>(
+    'schedule_block_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8269,6 +8302,9 @@ class $AttachmentsTable extends Attachments
     sortOrder,
     uploadedBy,
     takenAt,
+    subjectId,
+    capturedBySubjectId,
+    scheduleBlockId,
     createdAt,
     updatedAt,
   ];
@@ -8359,6 +8395,30 @@ class $AttachmentsTable extends Attachments
         takenAt.isAcceptableOrUnknown(data['taken_at']!, _takenAtMeta),
       );
     }
+    if (data.containsKey('subject_id')) {
+      context.handle(
+        _subjectIdMeta,
+        subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta),
+      );
+    }
+    if (data.containsKey('captured_by_subject_id')) {
+      context.handle(
+        _capturedBySubjectIdMeta,
+        capturedBySubjectId.isAcceptableOrUnknown(
+          data['captured_by_subject_id']!,
+          _capturedBySubjectIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('schedule_block_id')) {
+      context.handle(
+        _scheduleBlockIdMeta,
+        scheduleBlockId.isAcceptableOrUnknown(
+          data['schedule_block_id']!,
+          _scheduleBlockIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -8428,6 +8488,18 @@ class $AttachmentsTable extends Attachments
         DriftSqlType.string,
         data['${effectivePrefix}taken_at'],
       ),
+      subjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}subject_id'],
+      ),
+      capturedBySubjectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}captured_by_subject_id'],
+      ),
+      scheduleBlockId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}schedule_block_id'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -8457,6 +8529,9 @@ class Attachment extends DataClass implements Insertable<Attachment> {
   final int? sortOrder;
   final String? uploadedBy;
   final String? takenAt;
+  final String? subjectId;
+  final String? capturedBySubjectId;
+  final String? scheduleBlockId;
   final String createdAt;
   final String updatedAt;
   const Attachment({
@@ -8471,6 +8546,9 @@ class Attachment extends DataClass implements Insertable<Attachment> {
     this.sortOrder,
     this.uploadedBy,
     this.takenAt,
+    this.subjectId,
+    this.capturedBySubjectId,
+    this.scheduleBlockId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -8497,6 +8575,15 @@ class Attachment extends DataClass implements Insertable<Attachment> {
     }
     if (!nullToAbsent || takenAt != null) {
       map['taken_at'] = Variable<String>(takenAt);
+    }
+    if (!nullToAbsent || subjectId != null) {
+      map['subject_id'] = Variable<String>(subjectId);
+    }
+    if (!nullToAbsent || capturedBySubjectId != null) {
+      map['captured_by_subject_id'] = Variable<String>(capturedBySubjectId);
+    }
+    if (!nullToAbsent || scheduleBlockId != null) {
+      map['schedule_block_id'] = Variable<String>(scheduleBlockId);
     }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
@@ -8526,6 +8613,15 @@ class Attachment extends DataClass implements Insertable<Attachment> {
       takenAt: takenAt == null && nullToAbsent
           ? const Value.absent()
           : Value(takenAt),
+      subjectId: subjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subjectId),
+      capturedBySubjectId: capturedBySubjectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(capturedBySubjectId),
+      scheduleBlockId: scheduleBlockId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduleBlockId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -8548,6 +8644,11 @@ class Attachment extends DataClass implements Insertable<Attachment> {
       sortOrder: serializer.fromJson<int?>(json['sortOrder']),
       uploadedBy: serializer.fromJson<String?>(json['uploadedBy']),
       takenAt: serializer.fromJson<String?>(json['takenAt']),
+      subjectId: serializer.fromJson<String?>(json['subjectId']),
+      capturedBySubjectId: serializer.fromJson<String?>(
+        json['capturedBySubjectId'],
+      ),
+      scheduleBlockId: serializer.fromJson<String?>(json['scheduleBlockId']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -8567,6 +8668,9 @@ class Attachment extends DataClass implements Insertable<Attachment> {
       'sortOrder': serializer.toJson<int?>(sortOrder),
       'uploadedBy': serializer.toJson<String?>(uploadedBy),
       'takenAt': serializer.toJson<String?>(takenAt),
+      'subjectId': serializer.toJson<String?>(subjectId),
+      'capturedBySubjectId': serializer.toJson<String?>(capturedBySubjectId),
+      'scheduleBlockId': serializer.toJson<String?>(scheduleBlockId),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -8584,6 +8688,9 @@ class Attachment extends DataClass implements Insertable<Attachment> {
     Value<int?> sortOrder = const Value.absent(),
     Value<String?> uploadedBy = const Value.absent(),
     Value<String?> takenAt = const Value.absent(),
+    Value<String?> subjectId = const Value.absent(),
+    Value<String?> capturedBySubjectId = const Value.absent(),
+    Value<String?> scheduleBlockId = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => Attachment(
@@ -8598,6 +8705,13 @@ class Attachment extends DataClass implements Insertable<Attachment> {
     sortOrder: sortOrder.present ? sortOrder.value : this.sortOrder,
     uploadedBy: uploadedBy.present ? uploadedBy.value : this.uploadedBy,
     takenAt: takenAt.present ? takenAt.value : this.takenAt,
+    subjectId: subjectId.present ? subjectId.value : this.subjectId,
+    capturedBySubjectId: capturedBySubjectId.present
+        ? capturedBySubjectId.value
+        : this.capturedBySubjectId,
+    scheduleBlockId: scheduleBlockId.present
+        ? scheduleBlockId.value
+        : this.scheduleBlockId,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -8618,6 +8732,13 @@ class Attachment extends DataClass implements Insertable<Attachment> {
           ? data.uploadedBy.value
           : this.uploadedBy,
       takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      capturedBySubjectId: data.capturedBySubjectId.present
+          ? data.capturedBySubjectId.value
+          : this.capturedBySubjectId,
+      scheduleBlockId: data.scheduleBlockId.present
+          ? data.scheduleBlockId.value
+          : this.scheduleBlockId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -8637,6 +8758,9 @@ class Attachment extends DataClass implements Insertable<Attachment> {
           ..write('sortOrder: $sortOrder, ')
           ..write('uploadedBy: $uploadedBy, ')
           ..write('takenAt: $takenAt, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('capturedBySubjectId: $capturedBySubjectId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -8656,6 +8780,9 @@ class Attachment extends DataClass implements Insertable<Attachment> {
     sortOrder,
     uploadedBy,
     takenAt,
+    subjectId,
+    capturedBySubjectId,
+    scheduleBlockId,
     createdAt,
     updatedAt,
   );
@@ -8674,6 +8801,9 @@ class Attachment extends DataClass implements Insertable<Attachment> {
           other.sortOrder == this.sortOrder &&
           other.uploadedBy == this.uploadedBy &&
           other.takenAt == this.takenAt &&
+          other.subjectId == this.subjectId &&
+          other.capturedBySubjectId == this.capturedBySubjectId &&
+          other.scheduleBlockId == this.scheduleBlockId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -8690,6 +8820,9 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
   final Value<int?> sortOrder;
   final Value<String?> uploadedBy;
   final Value<String?> takenAt;
+  final Value<String?> subjectId;
+  final Value<String?> capturedBySubjectId;
+  final Value<String?> scheduleBlockId;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -8705,6 +8838,9 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
     this.sortOrder = const Value.absent(),
     this.uploadedBy = const Value.absent(),
     this.takenAt = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.capturedBySubjectId = const Value.absent(),
+    this.scheduleBlockId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8721,6 +8857,9 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
     this.sortOrder = const Value.absent(),
     this.uploadedBy = const Value.absent(),
     this.takenAt = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.capturedBySubjectId = const Value.absent(),
+    this.scheduleBlockId = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -8744,6 +8883,9 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
     Expression<int>? sortOrder,
     Expression<String>? uploadedBy,
     Expression<String>? takenAt,
+    Expression<String>? subjectId,
+    Expression<String>? capturedBySubjectId,
+    Expression<String>? scheduleBlockId,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -8760,6 +8902,10 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (uploadedBy != null) 'uploaded_by': uploadedBy,
       if (takenAt != null) 'taken_at': takenAt,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (capturedBySubjectId != null)
+        'captured_by_subject_id': capturedBySubjectId,
+      if (scheduleBlockId != null) 'schedule_block_id': scheduleBlockId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -8778,6 +8924,9 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
     Value<int?>? sortOrder,
     Value<String?>? uploadedBy,
     Value<String?>? takenAt,
+    Value<String?>? subjectId,
+    Value<String?>? capturedBySubjectId,
+    Value<String?>? scheduleBlockId,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -8794,6 +8943,9 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
       sortOrder: sortOrder ?? this.sortOrder,
       uploadedBy: uploadedBy ?? this.uploadedBy,
       takenAt: takenAt ?? this.takenAt,
+      subjectId: subjectId ?? this.subjectId,
+      capturedBySubjectId: capturedBySubjectId ?? this.capturedBySubjectId,
+      scheduleBlockId: scheduleBlockId ?? this.scheduleBlockId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -8836,6 +8988,17 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
     if (takenAt.present) {
       map['taken_at'] = Variable<String>(takenAt.value);
     }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (capturedBySubjectId.present) {
+      map['captured_by_subject_id'] = Variable<String>(
+        capturedBySubjectId.value,
+      );
+    }
+    if (scheduleBlockId.present) {
+      map['schedule_block_id'] = Variable<String>(scheduleBlockId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -8862,6 +9025,9 @@ class AttachmentsCompanion extends UpdateCompanion<Attachment> {
           ..write('sortOrder: $sortOrder, ')
           ..write('uploadedBy: $uploadedBy, ')
           ..write('takenAt: $takenAt, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('capturedBySubjectId: $capturedBySubjectId, ')
+          ..write('scheduleBlockId: $scheduleBlockId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -29015,6 +29181,9 @@ typedef $$AttachmentsTableCreateCompanionBuilder =
       Value<int?> sortOrder,
       Value<String?> uploadedBy,
       Value<String?> takenAt,
+      Value<String?> subjectId,
+      Value<String?> capturedBySubjectId,
+      Value<String?> scheduleBlockId,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -29032,6 +29201,9 @@ typedef $$AttachmentsTableUpdateCompanionBuilder =
       Value<int?> sortOrder,
       Value<String?> uploadedBy,
       Value<String?> takenAt,
+      Value<String?> subjectId,
+      Value<String?> capturedBySubjectId,
+      Value<String?> scheduleBlockId,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -29098,6 +29270,21 @@ class $$AttachmentsTableFilterComposer
 
   ColumnFilters<String> get takenAt => $composableBuilder(
     column: $table.takenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get capturedBySubjectId => $composableBuilder(
+    column: $table.capturedBySubjectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -29176,6 +29363,21 @@ class $$AttachmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+    column: $table.subjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capturedBySubjectId => $composableBuilder(
+    column: $table.capturedBySubjectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -29233,6 +29435,19 @@ class $$AttachmentsTableAnnotationComposer
   GeneratedColumn<String> get takenAt =>
       $composableBuilder(column: $table.takenAt, builder: (column) => column);
 
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get capturedBySubjectId => $composableBuilder(
+    column: $table.capturedBySubjectId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get scheduleBlockId => $composableBuilder(
+    column: $table.scheduleBlockId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -29282,6 +29497,9 @@ class $$AttachmentsTableTableManager
                 Value<int?> sortOrder = const Value.absent(),
                 Value<String?> uploadedBy = const Value.absent(),
                 Value<String?> takenAt = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
+                Value<String?> capturedBySubjectId = const Value.absent(),
+                Value<String?> scheduleBlockId = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -29297,6 +29515,9 @@ class $$AttachmentsTableTableManager
                 sortOrder: sortOrder,
                 uploadedBy: uploadedBy,
                 takenAt: takenAt,
+                subjectId: subjectId,
+                capturedBySubjectId: capturedBySubjectId,
+                scheduleBlockId: scheduleBlockId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -29314,6 +29535,9 @@ class $$AttachmentsTableTableManager
                 Value<int?> sortOrder = const Value.absent(),
                 Value<String?> uploadedBy = const Value.absent(),
                 Value<String?> takenAt = const Value.absent(),
+                Value<String?> subjectId = const Value.absent(),
+                Value<String?> capturedBySubjectId = const Value.absent(),
+                Value<String?> scheduleBlockId = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -29329,6 +29553,9 @@ class $$AttachmentsTableTableManager
                 sortOrder: sortOrder,
                 uploadedBy: uploadedBy,
                 takenAt: takenAt,
+                subjectId: subjectId,
+                capturedBySubjectId: capturedBySubjectId,
+                scheduleBlockId: scheduleBlockId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

@@ -52,6 +52,32 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  /// Every photo a child SHOT — their progress folder. Keyed on
+  /// `captured_by_subject_id`, newest first (indexed in the PowerSync schema).
+  Stream<List<Attachment>> watchCapturedBy(String subjectId) {
+    return (select(attachments)
+          ..where((a) => a.capturedBySubjectId.equals(subjectId))
+          ..orderBy([(a) => OrderingTerm.desc(a.createdAt)]))
+        .watch();
+  }
+
+  /// Every photo OF a child, across activities. Keyed on `subject_id`.
+  Stream<List<Attachment>> watchForSubject(String subjectId) {
+    return (select(attachments)
+          ..where((a) => a.subjectId.equals(subjectId))
+          ..orderBy([(a) => OrderingTerm.desc(a.createdAt)]))
+        .watch();
+  }
+
+  /// Every photo from a schedule block — the activity's package. Keyed on
+  /// `schedule_block_id`.
+  Stream<List<Attachment>> watchForBlock(String scheduleBlockId) {
+    return (select(attachments)
+          ..where((a) => a.scheduleBlockId.equals(scheduleBlockId))
+          ..orderBy([(a) => OrderingTerm.desc(a.createdAt)]))
+        .watch();
+  }
+
   Future<void> create({
     required String id,
     required String spaceId,
@@ -64,6 +90,9 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
     int? sortOrder,
     String? uploadedBy,
     String? takenAt,
+    String? subjectId,
+    String? capturedBySubjectId,
+    String? scheduleBlockId,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
     await into(attachments).insert(
@@ -79,6 +108,9 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
         sortOrder: Value(sortOrder),
         uploadedBy: Value(uploadedBy),
         takenAt: Value(takenAt),
+        subjectId: Value(subjectId),
+        capturedBySubjectId: Value(capturedBySubjectId),
+        scheduleBlockId: Value(scheduleBlockId),
         createdAt: now,
         updatedAt: now,
       ),
