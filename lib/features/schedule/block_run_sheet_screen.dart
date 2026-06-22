@@ -5,14 +5,20 @@ import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/activity_runtime/activity_runners.dart';
+import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
+import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/supplies/activity_supplies_providers.dart';
 import 'package:differentworld/features/supplies/supplies_providers.dart';
+import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/bento_grid.dart';
+import 'package:differentworld/shared/widgets/bento_module.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
@@ -163,6 +169,34 @@ class BlockRunSheetScreen extends ConsumerWidget {
         ? null
         : sessionShootMinutes(session);
 
+    // A "Through My Eyes" / photo block runs the hour from a BENTO dashboard —
+    // every tool on one tray (the approved mockup). Ordinary blocks keep the
+    // scroll-through run sheet below, byte-for-byte unchanged.
+    if (isPhotoBlock) {
+      return _PhotoRunBento(
+        block: block,
+        session: session,
+        title: title,
+        metaParts: metaParts,
+        routine: routine,
+        runner: runner,
+        runTopic: runTopic,
+        startLabel: startLabel,
+        photoTurnsPrompt: photoTurnsPrompt,
+        photoTurnsMinutes: photoTurnsMinutes,
+        onEdit: () => _openEdit(context),
+        onRunTurns: () => _runPhotoTurns(
+          context,
+          prompt: photoTurnsPrompt,
+          minutes: photoTurnsMinutes,
+        ),
+        onStart: () => _start(context, runner: runner, topic: runTopic),
+        onCapture: () => _capture(context),
+        onCast: () => _cast(context),
+        onReview: () => _openReview(context),
+      );
+    }
+
     return EdgeScaffold(
       backFallbackRoute: '/schedule',
       actions: [
@@ -250,45 +284,17 @@ class BlockRunSheetScreen extends ConsumerWidget {
 
           // ── Actions ──────────────────────────────────────────────────
           const SizedBox(height: 32),
-          // For a photo-curriculum block, the primary way to RUN the session on
-          // one shared device is the per-child timed turns — so it sits above
-          // Start. Ordinary blocks never show this.
-          if (isPhotoBlock) ...[
-            FilledButton.icon(
-              onPressed: () => _runPhotoTurns(
-                context,
-                prompt: photoTurnsPrompt,
-                minutes: photoTurnsMinutes,
-              ),
-              icon: const Icon(Icons.timer_outlined),
-              label: const Text('Run photo turns'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+          // Start the linked activity / teaching arc — the SAME runner-slug /
+          // teaching-arc launch the agenda tile's "Run" button used. (A photo /
+          // curriculum block never reaches here — it runs from the bento above.)
+          FilledButton.icon(
+            onPressed: () => _start(context, runner: runner, topic: runTopic),
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: Text(startLabel),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            const SizedBox(height: 10),
-          ],
-          // Start the linked activity / teaching arc. For a photo-curriculum
-          // block this is the secondary path (turns is primary above), so it
-          // reads as outlined rather than filled.
-          if (isPhotoBlock)
-            OutlinedButton.icon(
-              onPressed: () => _start(context, runner: runner, topic: runTopic),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(startLabel),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            )
-          else
-            FilledButton.icon(
-              onPressed: () => _start(context, runner: runner, topic: runTopic),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(startLabel),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
+          ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () => _capture(context),
@@ -369,6 +375,22 @@ class BlockRunSheetScreen extends ConsumerWidget {
     unawaited(context.push(dest));
   }
 
+  /// Open the timed-turns REVIEW for this block directly — the warm "pick your
+  /// favorites" screen, scoped to this block's photos. Reuses the same
+  /// [PhotoTurnsReviewScreen] the turns flow ends in (pushed imperatively, the
+  /// way the turns picker opens it), so review is reachable as its own tool from
+  /// the tray without first stepping through a turn.
+  void _openReview(BuildContext context) {
+    unawaited(HapticFeedback.selectionClick());
+    unawaited(
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => PhotoTurnsReviewScreen(blockId: block.id),
+        ),
+      ),
+    );
+  }
+
   void _capture(BuildContext context) {
     unawaited(HapticFeedback.selectionClick());
     unawaited(context.push('/captures/new'));
@@ -389,6 +411,731 @@ class BlockRunSheetScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// The BENTO run-sheet for a "Through My Eyes" / photo block — every tool to run
+/// the hour on one tray (the approved mockup). Header (eyebrow · session title ·
+/// meta) → a warm SIGNAL hero "Run photo turns" → a 2-col bento: Whose turn
+/// (live) · How it runs · Cast to room · Review & favorites · Capture · You'll
+/// need (a quiet INFO tile). Each tile is a real dispatch; the live tiles read
+/// Drift watches. Replaces the photo branch's old scroll-through body; ordinary
+/// blocks keep that body untouched.
+class _PhotoRunBento extends StatelessWidget {
+  const _PhotoRunBento({
+    required this.block,
+    required this.session,
+    required this.title,
+    required this.metaParts,
+    required this.routine,
+    required this.runner,
+    required this.runTopic,
+    required this.startLabel,
+    required this.photoTurnsPrompt,
+    required this.photoTurnsMinutes,
+    required this.onEdit,
+    required this.onRunTurns,
+    required this.onStart,
+    required this.onCapture,
+    required this.onCast,
+    required this.onReview,
+  });
+
+  final ScheduleBlock block;
+  final PhotoSession? session;
+  final String title;
+  final List<String> metaParts;
+
+  /// The session's ordered lesson steps (the full-text routine). Drives the
+  /// "How it runs" tile's fallback when the session can't supply the short
+  /// four-beat captions.
+  final List<String> routine;
+
+  final ActivityRunner? runner;
+  final String runTopic;
+  final String startLabel;
+  final String photoTurnsPrompt;
+  final int? photoTurnsMinutes;
+
+  final VoidCallback onEdit;
+  final VoidCallback onRunTurns;
+  final VoidCallback onStart;
+  final VoidCallback onCapture;
+  final VoidCallback onCast;
+  final VoidCallback onReview;
+
+  @override
+  Widget build(BuildContext context) {
+    // The eyebrow — "through my eyes · session {N}" when a session is resolved,
+    // else a plain "photo session" label so an un-stamped photo block still
+    // reads right.
+    final eyebrow = session != null
+        ? 'through my eyes · session ${session!.number}'
+        : 'photo session';
+    // The "You'll need" line — the session's plain-prose materials, else a calm
+    // generic for a photo block with no session.
+    final needs = (session != null && session!.materials.trim().isNotEmpty)
+        ? session!.materials.trim()
+        : '1 device · a screen · timer';
+    // The short four-beat "How it runs" steps (hand over → play → look → pick),
+    // each gated on the session having that lesson field.
+    final steps = _runsSteps(session, routine);
+
+    final tiles = <BentoTile>[
+      // HERO — full width, warm signal tint, the primary way to run the hour.
+      BentoTile(
+        id: 'run-turns',
+        span: const BentoSpan.wide(),
+        child: _HeroTurnsTile(onTap: onRunTurns),
+      ),
+      // Whose turn — LIVE: {done} of {N} + roster dots. Tap → photo turns.
+      BentoTile(
+        id: 'whose-turn',
+        span: const BentoSpan(phone: 1),
+        child: _WhoseTurnTile(block: block, onTap: onRunTurns),
+      ),
+      // How it runs — the session's routine as short numbered steps.
+      BentoTile(
+        id: 'how-it-runs',
+        span: const BentoSpan(phone: 1),
+        child: _HowItRunsTile(steps: steps),
+      ),
+      // Cast to room — mirror to the big screen.
+      BentoTile(
+        id: 'cast',
+        span: const BentoSpan(phone: 1),
+        child: _SimpleToolTile(
+          icon: Icons.cast,
+          title: 'Cast to room',
+          subtitle: 'Mirror to the big screen',
+          onTap: onCast,
+        ),
+      ),
+      // Review & favorites — LIVE photo count. Tap → the review screen.
+      BentoTile(
+        id: 'review',
+        span: const BentoSpan(phone: 1),
+        child: _ReviewTile(block: block, onTap: onReview),
+      ),
+      // Capture — a quick one-off snap.
+      BentoTile(
+        id: 'capture',
+        span: const BentoSpan(phone: 1),
+        child: _SimpleToolTile(
+          icon: Icons.photo_camera_outlined,
+          title: 'Capture',
+          subtitle: 'Snap a quick one',
+          onTap: onCapture,
+        ),
+      ),
+      // You'll need — an INFO tile (not tappable), the session's materials.
+      BentoTile(
+        id: 'needs',
+        span: const BentoSpan(phone: 1),
+        child: _NeedsTile(text: needs),
+      ),
+    ];
+
+    return EdgeScaffold(
+      backFallbackRoute: '/schedule',
+      actions: [
+        IconButton(
+          tooltip: 'Edit block',
+          icon: const Icon(Icons.edit_outlined),
+          onPressed: onEdit,
+        ),
+      ],
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+          // Cap + center so the header + bento don't stretch edge-to-edge on a
+          // desktop window (matches the subject-detail treatment).
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: Breakpoints.splitMaxWidth,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _BentoHeader(
+                    eyebrow: eyebrow,
+                    title: title,
+                    meta: metaParts.join('  ·  '),
+                  ),
+                  BentoGrid(tiles: tiles),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The bento header — eyebrow (small tracked label) over the Fraunces session
+/// title, then the time · group · count meta. Clears the top chrome through
+/// the same `MediaQuery.padding.top` reservation `ContentHeader` honours.
+class _BentoHeader extends StatelessWidget {
+  const _BentoHeader({
+    required this.eyebrow,
+    required this.title,
+    required this.meta,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String meta;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final chromeReservation = MediaQuery.paddingOf(context).top;
+    return Padding(
+      padding: EdgeInsets.only(top: chromeReservation + 8, bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            eyebrow,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(title, style: theme.textTheme.headlineSmall),
+          if (meta.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              meta,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The HERO tile — a warm signal-tinted card ("Run photo turns"). Tertiary
+/// container is the app's softer "all good / featured" tint; the foreground
+/// rides `onTertiaryContainer` so text + icons always clear AA on it. The
+/// 3-step flow strip (pick a child → 5 locked min → give it back) reads as the
+/// shape of a turn at a glance.
+class _HeroTurnsTile extends StatelessWidget {
+  const _HeroTurnsTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final fg = scheme.onTertiaryContainer;
+    return BentoModule(
+      background: scheme.tertiaryContainer,
+      foreground: fg,
+      onTap: onTap,
+      semanticLabel:
+          'Run photo turns — one phone, one child, five minutes each',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoModuleIcon(
+                icon: Icons.play_arrow_rounded,
+                tint: scheme.tertiary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Run photo turns',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'One phone, one child — 5 min each',
+                      // Full-strength fg (the seeded AA pair); the size + weight
+                      // step down from the title carries the hierarchy, not a
+                      // dimmed alpha (which would risk failing contrast).
+                      style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: fg.withValues(alpha: 0.7)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _FlowStrip(
+            steps: const ['pick a child', '5 locked min', 'give it back'],
+            fill: scheme.tertiary,
+            onFill: scheme.onTertiary,
+            connector: fg.withValues(alpha: 0.55),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The hero's 3-step flow strip — pill · arrow · pill · arrow · pill, wrapping
+/// on narrow widths. Pills use the tile's accent fill with its paired
+/// foreground (never colour alone — the label carries the meaning).
+class _FlowStrip extends StatelessWidget {
+  const _FlowStrip({
+    required this.steps,
+    required this.fill,
+    required this.onFill,
+    required this.connector,
+  });
+
+  final List<String> steps;
+  final Color fill;
+  final Color onFill;
+  final Color connector;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final children = <Widget>[];
+    for (var i = 0; i < steps.length; i++) {
+      if (i > 0) {
+        children.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(Icons.arrow_right_alt, size: 16, color: connector),
+          ),
+        );
+      }
+      children.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            steps[i],
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: onFill,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      runSpacing: 6,
+      children: children,
+    );
+  }
+}
+
+/// "Whose turn" — LIVE. Reads `attachmentsForBlockProvider(block.id)` for the
+/// set of children who've SHOT (distinct `captured_by_subject_id`) and
+/// `subjectsInGroupProvider(block.groupId)` for the roster size N, so the tile
+/// shows "{done} of {N} had a turn" + a row of roster dots (done filled, the
+/// rest faint). Tap → the photo-turns picker.
+class _WhoseTurnTile extends ConsumerWidget {
+  const _WhoseTurnTile({required this.block, required this.onTap});
+
+  final ScheduleBlock block;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final roster =
+        ref.watch(subjectsInGroupProvider(block.groupId)).value ??
+        const <Subject>[];
+    final shots =
+        ref.watch(attachmentsForBlockProvider(block.id)).value ??
+        const <Attachment>[];
+
+    // {done} = distinct children who appear as the SHOOTER of any shot tagged to
+    // this block. {N} = roster size. Both derived cheaply from the two watches.
+    final shooters = <String>{};
+    for (final a in shots) {
+      final by = a.capturedBySubjectId;
+      if (by != null) shooters.add(by);
+    }
+    final n = roster.length;
+    final done = roster.where((s) => shooters.contains(s.id)).length;
+
+    final fg = scheme.onSecondaryContainer;
+    return BentoModule(
+      background: scheme.secondaryContainer,
+      foreground: fg,
+      onTap: onTap,
+      semanticLabel: 'Whose turn — $done of $n had a turn',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoModuleIcon(
+                icon: Icons.groups_outlined,
+                tint: scheme.secondary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Whose turn',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$done',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                TextSpan(
+                  text: ' of $n',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: fg.withValues(alpha: 0.82),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            'had a turn',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: fg.withValues(alpha: 0.82),
+            ),
+          ),
+          if (n > 0) ...[
+            const SizedBox(height: 10),
+            _RosterDots(total: n, done: done, color: scheme.secondary),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A compact row of dots — one per roster member, the first `done` filled and
+/// the rest faint. Caps at a sensible width so a big roster wraps rather than
+/// overflowing the tile. Decorative (the count above is the real signal), so
+/// it's excluded from semantics.
+class _RosterDots extends StatelessWidget {
+  const _RosterDots({
+    required this.total,
+    required this.done,
+    required this.color,
+  });
+
+  final int total;
+  final int done;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Wrap(
+        spacing: 5,
+        runSpacing: 5,
+        children: [
+          for (var i = 0; i < total; i++)
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                color: i < done ? color : color.withValues(alpha: 0.28),
+                shape: BoxShape.circle,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "How it runs" — the session's routine as short numbered steps. An INFO tile
+/// (NOT tappable — reference, not an action), neutral-filled so the hero stays
+/// the one warm thing on the tray.
+class _HowItRunsTile extends StatelessWidget {
+  const _HowItRunsTile({required this.steps});
+
+  final List<String> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      label: 'How it runs: ${steps.join(', ')}',
+      // Info-only tile: a Material SURFACE with no InkWell — reading the steps
+      // is the point, there's nothing to tap. Don't add an onTap here.
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  BentoModuleIcon(
+                    icon: Icons.format_list_numbered,
+                    tint: scheme.surfaceContainerLow,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'How it runs',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              for (var i = 0; i < steps.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(
+                    '${i + 1} · ${steps[i]}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Review & favorites" — LIVE photo count. Reads
+/// `attachmentsForBlockProvider(block.id)` for "{m} photos"; tap → the review
+/// screen.
+class _ReviewTile extends ConsumerWidget {
+  const _ReviewTile({required this.block, required this.onTap});
+
+  final ScheduleBlock block;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final count =
+        ref.watch(attachmentsForBlockProvider(block.id)).value?.length ?? 0;
+    return BentoModule(
+      background: scheme.surfaceContainerHighest,
+      foreground: scheme.onSurface,
+      onTap: onTap,
+      semanticLabel: count == 0
+          ? 'Review and favorites'
+          : 'Review and favorites — $count photos',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoModuleIcon(
+                icon: Icons.favorite_outline,
+                tint: scheme.surfaceContainerLow,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Review & favorites',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Look back · pick the keepers',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          if (count > 0) ...[
+            const SizedBox(height: 3),
+            Text(
+              count == 1 ? '1 photo' : '$count photos',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A plain neutral tool tile — an icon, a title, and a one-line subtitle, the
+/// whole card tapping its action. Used for Cast + Capture.
+class _SimpleToolTile extends StatelessWidget {
+  const _SimpleToolTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return BentoModule(
+      background: scheme.surfaceContainerHighest,
+      foreground: scheme.onSurface,
+      onTap: onTap,
+      semanticLabel: '$title — $subtitle',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoModuleIcon(icon: icon, tint: scheme.surfaceContainerLow),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "You'll need" — an INFO tile, NOT tappable: a dashed-outline quiet card
+/// carrying the session's materials line. Reads as reference, not an action, so
+/// it never looks like a dead-tap button.
+class _NeedsTile extends StatelessWidget {
+  const _NeedsTile({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Semantics(
+      label: "You'll need: $text",
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  BentoModuleIcon(
+                    icon: Icons.checklist_outlined,
+                    tint: scheme.surfaceContainerHighest,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "You'll need",
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                text,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The short four-beat "How it runs" captions — hand it over → five-minute game
+/// → look together → each picks one. Each beat maps to one of the session's
+/// lesson fields (`setup → gameRules → lookingTogether → endRitual`, the same
+/// four [_sessionRoutine] reads), so a beat only shows when the session actually
+/// has that field — an override that drops "looking together" drops that line
+/// rather than showing a phantom step. With NO session resolved (a bare photo
+/// block), falls back to the full [routine] text if any, else a sensible
+/// default four-beat.
+List<String> _runsSteps(PhotoSession? session, List<String> routine) {
+  const fallback = [
+    'Hand it over',
+    'Five-minute game',
+    'Look together',
+    'Each picks one',
+  ];
+  if (session == null) {
+    return routine.isNotEmpty ? routine : fallback;
+  }
+  final steps = <String>[];
+  if (session.setup.trim().isNotEmpty) steps.add('Hand it over');
+  if (session.gameRules.trim().isNotEmpty) steps.add('Five-minute game');
+  if (session.lookingTogether.trim().isNotEmpty) steps.add('Look together');
+  if (session.endRitual.trim().isNotEmpty) steps.add('Each picks one');
+  return steps.isEmpty ? fallback : steps;
 }
 
 /// Build a curriculum session's lesson into the run sheet's numbered routine:
@@ -464,7 +1211,7 @@ class _RoutineEmptyHint extends StatelessWidget {
               label: Text('Edit ${activity!.name.trim()}'),
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 48),
+                minimumSize: const Size(48, 48),
                 visualDensity: VisualDensity.compact,
               ),
             ),
