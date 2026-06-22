@@ -847,6 +847,7 @@ class _BlockTile extends ConsumerWidget {
 
     final isField = block.kind == BlockKind.fieldTrip;
     final isBreak = block.kind == BlockKind.breakBlock;
+    final isClosed = block.kind == BlockKind.closed;
     // Wave 165: when a block is linked to a curriculum session, the
     // session title wins over the (likely-empty) activity field. The
     // session badge below tells the staff this isn't an ad-hoc
@@ -863,6 +864,22 @@ class _BlockTile extends ConsumerWidget {
         : (curriculumSession?.title ??
               activity?.name ??
               (isBreak ? 'Break' : ''));
+
+    // "Run" affordance — present the planned activity through its
+    // play → name → bridge → question arc (`/arc`). Only Activity
+    // ('on_site') and Trip ('field_trip') blocks that HAVE something
+    // to present (a linked activity OR a non-empty name) get it;
+    // breaks / closed days don't. `/arc` takes the topic as a String
+    // via `extra` — feed it the activity's name, else the resolved
+    // block title.
+    final runTopic = (activity?.name.trim().isNotEmpty ?? false)
+        ? activity!.name.trim()
+        : title.trim();
+    final canRun =
+        !isBreak &&
+        !isClosed &&
+        runTopic.isNotEmpty &&
+        (block.activityId != null || blockTitle.isNotEmpty);
 
     // Only true SIGNALS keep colour in the agenda: the live block (now)
     // gets a teal now-line + tint + NOW pill, field trips an amber left
@@ -1050,6 +1067,26 @@ class _BlockTile extends ConsumerWidget {
                               location!.name,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                          if (canRun) ...[
+                            const SizedBox(height: 4),
+                            TextButton.icon(
+                              onPressed: () => unawaited(
+                                context.push('/arc', extra: runTopic),
+                              ),
+                              icon: const Icon(
+                                Icons.slideshow_outlined,
+                                size: 16,
+                              ),
+                              label: const Text('Run'),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                minimumSize: const Size(0, 48),
                               ),
                             ),
                           ],
