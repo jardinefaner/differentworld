@@ -19,6 +19,7 @@ class DeckPresentArgs {
     this.emoji = '',
     this.initialBeat = 0,
     this.onBeatChanged,
+    this.onFinished,
   });
 
   /// The ordered run to present.
@@ -36,6 +37,12 @@ class DeckPresentArgs {
   /// Threaded through to the presenter (the day run remembers where the
   /// teacher landed; the journey leaves it null).
   final ValueChanged<int>? onBeatChanged;
+
+  /// The "what's next" handoff builder, threaded to the presenter so the
+  /// deck-overview path of `/play-today` gets the same end-of-run handoff as
+  /// the direct path. The journey leaves it null (just pops, unchanged). See
+  /// `BeatPresenter.onFinished`.
+  final Widget Function(BuildContext context, VoidCallback dismiss)? onFinished;
 }
 
 /// A toggle-gated, NON-immersive overview of a BeatPresenter deck (the journey

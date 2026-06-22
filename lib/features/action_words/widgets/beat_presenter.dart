@@ -41,6 +41,7 @@ class BeatPresenter extends ConsumerStatefulWidget {
     this.emoji = '',
     this.initialBeat = 0,
     this.onBeatChanged,
+    this.onFinished,
     this.showGuidance = true,
     super.key,
   });
@@ -49,6 +50,20 @@ class BeatPresenter extends ConsumerStatefulWidget {
   /// conductor's score (what to say / watch for / what's next), per beat.
   /// On for the day run + activity arc; a tour can pass false.
   final bool showGuidance;
+
+  /// The "what's next" handoff, shown WHEN the run ENDS — the user advances
+  /// past the last beat, or taps Close while on it. Builds an overlay over
+  /// the (still-mounted) present surface, so the run's immersive mode + the
+  /// wakelock are NOT torn down for the handoff (a [Run it] re-enters the
+  /// next run cleanly). The builder is handed a `dismiss` callback to close
+  /// the handoff and return to the run (e.g. the user backs out of it).
+  ///
+  /// **Null is the default and preserves today's exact behaviour**: finishing
+  /// (or Close) does a bare [Navigator.maybePop]. Only the schedule-aware run
+  /// (`/play-today`, which knows the cohort + the day) passes this; the
+  /// summer tour (`/journey`) and a standalone `/arc` leave it null so they
+  /// just pop, unchanged.
+  final Widget Function(BuildContext context, VoidCallback dismiss)? onFinished;
 
   /// The ordered run. Rendered one beat per full-screen page.
   final List<DayBeat> beats;
@@ -88,6 +103,12 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
   Timer? _autoTimer;
   bool _autoPlaying = false;
   static const _autoAdvanceInterval = Duration(seconds: 8);
+
+  // The "what's next" handoff is up (covering the run). Only ever true when
+  // `widget.onFinished != null`. While up, the run keeps its immersive mode +
+  // wakelock (the handoff is an overlay, not a new screen) but the OS bars are
+  // restored so the handoff's buttons read like normal chrome.
+  bool _handoffOpen = false;
 
   int get _count => widget.beats.length;
 
@@ -144,13 +165,49 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
     _autoTimer?.cancel();
     _autoTimer = Timer.periodic(_autoAdvanceInterval, (_) {
       if (!mounted || !_autoPlaying) return;
-      // Loop at the end so an unattended showcase runs forever.
+      // Loop at the end so an unattended showcase runs forever. (The handoff
+      // is for a HUMAN finishing a run; an unattended auto-play loops instead
+      // of dead-ending on a "what's next" the room can't tap.)
       if (_index >= _count - 1) {
         _jumpTo(0);
       } else {
         _go(1);
       }
     });
+  }
+
+  /// The run is DONE — advancing past the last beat, or Close on the last
+  /// beat. With a handoff builder, raise it over the run (and restore the OS
+  /// bars so its buttons read as chrome); without one, the bare pop that's
+  /// always been the close behaviour.
+  void _finish() {
+    if (!mounted) return;
+    if (widget.onFinished == null) {
+      unawaited(Navigator.of(context).maybePop());
+      return;
+    }
+    if (_handoffOpen) return; // already showing — don't double-raise
+    // Stop auto-advance so it can't flip beats behind the handoff.
+    _autoTimer?.cancel();
+    _autoTimer = null;
+    setState(() {
+      _autoPlaying = false;
+      _handoffOpen = true;
+    });
+    unawaited(HapticFeedback.selectionClick());
+    // Bring the OS bars back for the handoff's interactive surface; the run
+    // stays immersive-enabled underneath, restored on dismiss.
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+  }
+
+  /// Close the handoff and return to the run (the user backed out of it).
+  /// Re-arms the run's immersive mode; the run was never disposed.
+  void _dismissHandoff() {
+    if (!mounted) return;
+    setState(() => _handoffOpen = false);
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+    );
   }
 
   @override
@@ -227,14 +284,23 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   ],
                 ),
               ),
-              // Close — top-right.
+              // Close — top-right. On the LAST beat this IS finishing, so it
+              // routes through the handoff (a teacher who reaches the close
+              // beat and taps X gets "what's next", not a dead exit). On any
+              // earlier beat it's a plain bail-out — they're not done.
               Positioned(
                 key: const ValueKey('bp-close'),
                 top: 8,
                 right: 8,
                 child: IconButton(
                   icon: const Icon(Icons.close, color: Colors.white70),
-                  onPressed: () => Navigator.of(context).maybePop(),
+                  onPressed: () {
+                    if (_index >= _count - 1) {
+                      _finish();
+                    } else {
+                      unawaited(Navigator.of(context).maybePop());
+                    }
+                  },
                 ),
               ),
               // Fullscreen — top-left, WEB ONLY. Native already hides the
@@ -266,8 +332,7 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
               // above the controls; ignores pointers so the tap-to-advance
               // zones still fire through it. (A future two-device cast keeps
               // it off the room screen entirely; for now it's bottom chrome.)
-              if (widget.showGuidance &&
-                  beatGuidance(beats[_index]).isNotEmpty)
+              if (widget.showGuidance && beatGuidance(beats[_index]).isNotEmpty)
                 Positioned(
                   key: const ValueKey('bp-guidance'),
                   left: 8,
@@ -319,6 +384,15 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
                   ],
                 ),
               ),
+              // The "what's next" handoff — covers the run when it ends. Last
+              // in the Stack so it sits over everything; keyed so it appearing
+              // can't poison the Element identity of the keyed siblings above
+              // (the house rule — see CLAUDE.md "Stack children without keys").
+              if (_handoffOpen && widget.onFinished != null)
+                Positioned.fill(
+                  key: const ValueKey('bp-handoff'),
+                  child: widget.onFinished!(context, _dismissHandoff),
+                ),
             ],
           ),
         ),
@@ -427,6 +501,13 @@ class _BeatPresenterState extends ConsumerState<BeatPresenter> {
 
   void _go(int delta) {
     if (!mounted) return;
+    // Forward off the end IS the finish — hand off to "what's next" instead of
+    // clamping (the dead-stop on the last slide that dropped the teacher on a
+    // bare clock). Only a real forward step at the last beat; backward clamps.
+    if (delta > 0 && _index >= _count - 1) {
+      _finish();
+      return;
+    }
     final next = (_index + delta).clamp(0, _count - 1);
     if (next == _index) return;
     unawaited(

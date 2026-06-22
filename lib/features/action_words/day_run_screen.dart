@@ -5,6 +5,7 @@ import 'package:differentworld/features/action_words/house_timer.dart';
 import 'package:differentworld/features/action_words/present_deck_overview_setting.dart';
 import 'package:differentworld/features/action_words/thinking_games.dart';
 import 'package:differentworld/features/action_words/widgets/beat_presenter.dart';
+import 'package:differentworld/features/action_words/widgets/block_handoff.dart';
 import 'package:differentworld/features/action_words/widgets/deck_overview.dart';
 import 'package:differentworld/features/action_words/world_rules.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
@@ -120,6 +121,11 @@ class DayRunScreen extends ConsumerWidget {
                 emoji: world.emoji,
                 initialBeat: i,
                 onBeatChanged: remember,
+                onFinished: (context, dismiss) => BlockHandoff(
+                  justFinishedTitle: world.name,
+                  accent: world.color,
+                  onDismiss: dismiss,
+                ),
               ),
             ),
           ),
@@ -127,7 +133,8 @@ class DayRunScreen extends ConsumerWidget {
       );
     }
 
-    // Toggle OFF — the exact prior behaviour: straight into the immersive run.
+    // Toggle OFF — the exact prior behaviour: straight into the immersive run,
+    // now with the schedule-aware "what's next" handoff when it ends.
     return BeatPresenter(
       beats: beats,
       accent: world.color,
@@ -139,6 +146,11 @@ class DayRunScreen extends ConsumerWidget {
         resume: resume,
       ),
       onBeatChanged: remember,
+      onFinished: (context, dismiss) => BlockHandoff(
+        justFinishedTitle: world.name,
+        accent: world.color,
+        onDismiss: dismiss,
+      ),
     );
   }
 

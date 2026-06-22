@@ -1362,6 +1362,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                       emoji: args.emoji,
                       initialBeat: args.initialBeat,
                       onBeatChanged: args.onBeatChanged,
+                      // The schedule-aware end-of-run handoff (set by the
+                      // /play-today deck path; the journey leaves it null).
+                      onFinished: args.onFinished,
                     ),
                   );
                 },
