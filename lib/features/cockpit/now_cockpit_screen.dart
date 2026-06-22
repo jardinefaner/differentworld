@@ -1,11 +1,15 @@
 import 'dart:async';
 
+import 'package:differentworld/features/action_words/action_words_providers.dart';
 import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/recap/recap_setting.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/today/context_lead.dart';
+import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/slide_block.dart';
 import 'package:flutter/material.dart';
@@ -263,7 +267,7 @@ Widget _beatFrame(
   );
 }
 
-class _LeadCard extends StatelessWidget {
+class _LeadCard extends ConsumerWidget {
   const _LeadCard({
     required this.lead,
     required this.beat,
@@ -275,7 +279,7 @@ class _LeadCard extends StatelessWidget {
   final bool hasWorld;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final (bg, fg) = _toneColors(theme.colorScheme, lead.tone);
     // The reveal is a manual beat (COCKPIT.md fork ③): surface it as a quiet
@@ -283,9 +287,29 @@ class _LeadCard extends StatelessWidget {
     // a curriculum world is actually running, or /play-today is a dead end.
     final showReveal =
         hasWorld && (beat == CockpitBeat.now || beat == CockpitBeat.pickup);
+    // The "advance" cue (docs/WORKFLOWS.md seam 4 "the cockpit shows now but
+    // never next"): on the LIVE program beat, surface the cohort's NEXT planned
+    // block so the cockpit hands the teacher what's coming instead of just
+    // naming now. Resolve the live cohort the SAME way cockpitBeatProvider does
+    // — honor the context-pill room override, else "live across my rooms" — so
+    // "next" is the next block for whatever room is live now. Only on `now`
+    // (pickup/trip have their own forward chain); self-hides when nothing's
+    // left on the day or no room is live.
+    final override = ref.watch(contextRoomOverrideProvider);
+    String? liveGroupId;
+    if (beat == CockpitBeat.now) {
+      // A pinned room IS the cohort; otherwise take whichever of my rooms is
+      // live now (most-recently-started, same as the beat).
+      liveGroupId = override ?? ref.watch(liveBlockProvider)?.groupId;
+    }
+    final next = liveGroupId == null
+        ? null
+        : ref.watch(nextScheduledBlockProvider(liveGroupId));
     // The live beat IS a slide (docs/VISION.md 2026-06-19): info + actions in
     // one block. Render-identical to the hand-rolled card it replaces; the
     // shape is now the shared SlideBlock primitive every other beat reuses.
+    // The "what's next" line rides the slide's `footer` slot (NOT an outer
+    // Column — that breaks the slide's Spacers under IntrinsicHeight).
     return _beatFrame(
       context,
       bg: bg,
@@ -311,8 +335,9 @@ class _LeadCard extends StatelessWidget {
             ),
         ],
         // The slide coordinates the room: cast the live world to the TV while
-        // the phone stays the remote (docs/VISION.md 2026-06-19, dream #14/#18).
-        // Only when a world is running — otherwise there's nothing to present.
+        // the phone stays the remote (docs/VISION.md 2026-06-19, dream
+        // #14/#18). Only when a world is running — otherwise there's nothing
+        // to present.
         onCast: hasWorld
             ? () => unawaited(
                 showCastToRoom(
@@ -331,6 +356,103 @@ class _LeadCard extends StatelessWidget {
                 onPressed: () => context.push('/play-today'),
               )
             : null,
+        footer: next == null
+            ? null
+            : _NextBlockLine(next: next, foreground: fg),
+      ),
+    );
+  }
+}
+
+/// The quiet "what's next" line under the live beat's actions — the cockpit's
+/// ADVANCE cue (docs/WORKFLOWS.md seam 4). Reads as one subtle row, in the
+/// beat's own foreground so it stays on the calm surface (never a loud second
+/// card). A tap LAUNCHES the next block's run the exact way the schedule's
+/// "Run" button does: the activity's chosen runner if it names one, else the
+/// generic `/arc` teaching arc.
+class _NextBlockLine extends StatelessWidget {
+  const _NextBlockLine({required this.next, required this.foreground});
+
+  final NextBlock next;
+  final Color foreground;
+
+  void _launch(BuildContext context) {
+    // Mirror block_run_sheet_screen._start exactly — the SAME runner-slug /
+    // teaching-arc launch the agenda tile's "Run" button uses.
+    final runner = runnerForSlug(next.runnerSlug);
+    if (runner != null) {
+      final dest = runner.takesPrompt
+          ? Uri(
+              path: runner.route,
+              queryParameters: {'prompt': next.runTopic},
+            ).toString()
+          : runner.route;
+      unawaited(context.push(dest));
+    } else {
+      unawaited(context.push('/arc', extra: next.runTopic));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fg = foreground;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => _launch(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Semantics(
+            button: true,
+            label:
+                'Next: ${next.title} at ${timeOfDay(next.startAt)}. '
+                'Tap to start it.',
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 48),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: fg.withValues(alpha: 0.25)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.skip_next_outlined,
+                    size: 18,
+                    color: fg.withValues(alpha: 0.8),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: fg.withValues(alpha: 0.9),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Next · ${timeOfDay(next.startAt)}  ',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          TextSpan(text: next.title),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: fg.withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -446,6 +568,16 @@ class _MorningCard extends ConsumerWidget {
     final bg = scheme.primaryContainer;
     final fg = scheme.onPrimaryContainer;
     final lead = this.lead;
+    // The morning beat's one cheap "done → next" signal (docs/WORKFLOWS.md
+    // seam 4): if the room has already picked its words today, don't keep
+    // telling the teacher to pick — acknowledge it's set and point the primary
+    // FORWARD to the words that are in. Pure derivation off the existing picks
+    // stream; no completion-state table.
+    final picked = ref.watch(todaysRevealItemsProvider).length;
+    final hasPicked = picked > 0;
+    final worldLine = world != null
+        ? '${world.emoji}  ${world.name} · week ${position!.week}'
+        : "Check the room in, then pick today's words.";
     return _beatFrame(
       context,
       bg: bg,
@@ -457,15 +589,22 @@ class _MorningCard extends ConsumerWidget {
         eyebrow: 'GOOD MORNING',
         title: world != null ? 'Day ${position!.day}' : 'A new day',
         body: Text(
-          world != null
-              ? '${world.emoji}  ${world.name} · week ${position!.week}'
-              : "Check the room in, then pick today's words.",
+          hasPicked
+              ? '$picked ${picked == 1 ? 'child has' : 'children have'} '
+                    'picked their words — the room is set.'
+              : worldLine,
         ),
-        primary: SlideAction(
-          label: "Pick today's verbs",
-          icon: Icons.auto_awesome_outlined,
-          onPressed: () => context.push('/action-words'),
-        ),
+        primary: hasPicked
+            ? SlideAction(
+                label: "See today's words",
+                icon: Icons.auto_awesome_outlined,
+                onPressed: () => context.push('/action-words'),
+              )
+            : SlideAction(
+                label: "Pick today's verbs",
+                icon: Icons.auto_awesome_outlined,
+                onPressed: () => context.push('/action-words'),
+              ),
         actions: lead == null
             ? const []
             : [

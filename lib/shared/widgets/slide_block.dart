@@ -30,6 +30,11 @@ class SlideAction {
 /// [accentBackground] / [accentForeground] fill the primary button. It pushes
 /// the actions to the bottom with [Spacer]s, so it lives inside a min-height /
 /// scrolling frame (never a fixed box — text-scale stays safe).
+///
+/// An optional [footer] renders BELOW the actions, inside the same single child
+/// (so it shares the slide's intrinsic-height layout — wrapping the SlideBlock
+/// in an outer Column breaks the inner Spacers under IntrinsicHeight). Use it
+/// for a quiet trailing affordance like the cockpit's "what's next" line.
 class SlideBlock extends StatelessWidget {
   const SlideBlock({
     required this.title,
@@ -43,6 +48,7 @@ class SlideBlock extends StatelessWidget {
     this.actions = const [],
     this.tertiary,
     this.onCast,
+    this.footer,
     super.key,
   });
 
@@ -57,6 +63,10 @@ class SlideBlock extends StatelessWidget {
   final List<SlideAction> actions;
   final SlideAction? tertiary;
   final VoidCallback? onCast;
+
+  /// A quiet trailing widget rendered below all actions (e.g. a "what's next"
+  /// row). Part of the slide's single child so it lays out with the Spacers.
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +165,7 @@ class SlideBlock extends StatelessWidget {
             ),
           ),
         ],
+        ?footer,
       ],
     );
   }

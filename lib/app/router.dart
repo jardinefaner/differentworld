@@ -2250,11 +2250,13 @@ class _SignedInHomeState extends ConsumerState<_SignedInHome> {
       _handleVehicleLink(next);
     });
 
-    // Slice 4 (docs/COCKPIT.md): the home surface is Today by default, the
-    // clock-driven cockpit when the director opts in, or the bento dashboard
-    // when THAT's opted in. Today is never lost — it's reachable at /today.
-    // Precedence: cockpit > bento > Today (cockpit is the established
-    // promotion path; bento is the grid-navigation experiment).
+    // Slice 4 (docs/COCKPIT.md → docs/WORKFLOWS.md seam 4): the home surface is
+    // the clock-driven cockpit BY DEFAULT (the advancing spine — now AND next),
+    // the bento dashboard when that's opted in, or Today when the cockpit is
+    // turned off. Today is never lost — it's reachable at /today. Precedence:
+    // cockpit > bento > Today (cockpit is the established promotion path; bento
+    // is the grid-navigation experiment). Guardians never reach here — the
+    // `_Home` GuardianViewer branch returns FamilyTodayScreen first.
     final cockpitAsHome = ref.watch(cockpitAsHomeProvider).value ?? false;
     final bentoHome =
         (ref.watch(bentoEverywhereProvider).value ?? false) ||

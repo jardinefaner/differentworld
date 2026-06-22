@@ -14,6 +14,7 @@ import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/cockpit/now_cockpit_screen.dart';
+import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,10 +34,23 @@ const _lead = ContextLead(
   ),
 );
 
+/// A live block in `groupId`, for driving the "what's next" cohort resolution.
+LiveBlock _live(String groupId) => LiveBlock(
+  blockId: 'b-live',
+  groupId: groupId,
+  title: 'ABC Time',
+  kind: 'on_site',
+  isOutdoor: false,
+  startAt: DateTime(2026, 1, 1, 9),
+  endAt: DateTime(2026, 1, 1, 10),
+);
+
 Future<void> _pump(
   WidgetTester tester, {
   required CockpitBeat beat,
   ContextLead? lead,
+  LiveBlock? liveBlock,
+  NextBlock? nextBlock,
 }) async {
   tester.view.physicalSize = const Size(400 * 3, 800 * 3);
   tester.view.devicePixelRatio = 3.0;
@@ -57,6 +71,8 @@ Future<void> _pump(
         '/play-today',
         '/action-words',
         '/action-words/send',
+        '/arc',
+        '/activity/photo',
       ])
         GoRoute(
           path: p,
@@ -74,6 +90,12 @@ Future<void> _pump(
         // and the morning card falls back to "A new day".
         currentWorldProvider.overrideWith((ref) => null),
         seasonPositionProvider.overrideWith((ref) => null),
+        // The live cohort + its next block drive the "what's next" line.
+        liveBlockProvider.overrideWith((ref) => liveBlock),
+        if (liveBlock != null)
+          nextScheduledBlockProvider(
+            liveBlock.groupId,
+          ).overrideWith((ref) => nextBlock),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -89,23 +111,82 @@ void main() {
       expect(find.text('Run the session'), findsOneWidget);
     });
 
-    testWidgets('"Start the reveal" is hidden when no world is running',
-        (tester) async {
+    testWidgets('"Start the reveal" is hidden when no world is running', (
+      tester,
+    ) async {
       await _pump(tester, beat: CockpitBeat.now, lead: _lead);
       // The reveal launch would drop the teacher into a dead-end /play-today
       // when there's no curriculum world — so it must not appear.
       expect(find.text('Start the reveal'), findsNothing);
     });
 
-    testWidgets('the after-pickup send beat renders its authored card',
-        (tester) async {
+    testWidgets('the live beat shows a "what\'s next" line + launches it', (
+      tester,
+    ) async {
+      final nextBlock = NextBlock(
+        blockId: 'b-next',
+        groupId: 'g1',
+        title: 'Story Circle',
+        startAt: DateTime(2026, 1, 1, 10, 30),
+        runnerSlug: null,
+        runTopic: 'Story Circle',
+      );
+      await _pump(
+        tester,
+        beat: CockpitBeat.now,
+        lead: _lead,
+        liveBlock: _live('g1'),
+        nextBlock: nextBlock,
+      );
+      // The advance cue: "Next · 10:30  Story Circle" (RichText spans, so the
+      // finder must descend into rich text).
+      expect(
+        find.textContaining('Next · 10:30', findRichText: true),
+        findsOneWidget,
+      );
+
+      // Tapping it launches the run (no runner slug → the generic /arc arc).
+      await tester.tap(find.textContaining('Next · 10:30', findRichText: true));
+      await tester.pumpAndSettle();
+      expect(find.text('pushed'), findsOneWidget);
+    });
+
+    testWidgets('the "what\'s next" line is absent off the program beat', (
+      tester,
+    ) async {
+      // Pickup has its own forward chain — the next-block cue is `now`-only.
+      final nextBlock = NextBlock(
+        blockId: 'b-next',
+        groupId: 'g1',
+        title: 'Story Circle',
+        startAt: DateTime(2026, 1, 1, 10, 30),
+        runnerSlug: null,
+        runTopic: 'Story Circle',
+      );
+      await _pump(
+        tester,
+        beat: CockpitBeat.pickup,
+        lead: _lead,
+        liveBlock: _live('g1'),
+        nextBlock: nextBlock,
+      );
+      expect(
+        find.textContaining('Next · 10:30', findRichText: true),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the after-pickup send beat renders its authored card', (
+      tester,
+    ) async {
       await _pump(tester, beat: CockpitBeat.send);
       expect(find.text('Send today home'), findsOneWidget);
       expect(find.text('Send home'), findsOneWidget);
     });
 
-    testWidgets('the closed beat renders the rest state, no send button',
-        (tester) async {
+    testWidgets('the closed beat renders the rest state, no send button', (
+      tester,
+    ) async {
       await _pump(tester, beat: CockpitBeat.closed);
       expect(find.text('All done for today'), findsOneWidget);
       expect(find.text('Send home'), findsNothing);
@@ -119,8 +200,9 @@ void main() {
       expect(find.text('Run the session'), findsOneWidget);
     });
 
-    testWidgets('the reveal beat offers the closing launch + an escape',
-        (tester) async {
+    testWidgets('the reveal beat offers the closing launch + an escape', (
+      tester,
+    ) async {
       await _pump(tester, beat: CockpitBeat.reveal);
       expect(find.text('Reveal the day'), findsOneWidget);
       expect(find.text('Start the reveal'), findsOneWidget);
@@ -128,8 +210,9 @@ void main() {
       expect(find.text('Not yet — stay in program'), findsOneWidget);
     });
 
-    testWidgets('the curiosity bar toggles open to reveal Layer-2 places',
-        (tester) async {
+    testWidgets('the curiosity bar toggles open to reveal Layer-2 places', (
+      tester,
+    ) async {
       await _pump(tester, beat: CockpitBeat.now, lead: _lead);
       // Collapsed: the destinations aren't in the tree yet.
       expect(find.text('Schedule'), findsNothing);

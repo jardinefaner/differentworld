@@ -431,8 +431,9 @@ class _SettingsDivider extends StatelessWidget {
 /// gutter), so a list reads as one continuous surface instead of a stack of
 /// boxes; signal cards keep their tint. Toggle off to revert to boxed cards.
 /// Toggles whether the clock-driven cockpit takes the home slot
-/// (docs/COCKPIT.md slice 4). Off by default; Today is never lost — it stays
-/// reachable at /today (the cockpit's "More places").
+/// (docs/COCKPIT.md slice 4). ON by default (the advancing spine); Today is
+/// never lost — it stays reachable at /today (the cockpit's "More places").
+/// Turn off to land on the Today dashboard instead.
 class _CockpitHomeTile extends ConsumerWidget {
   const _CockpitHomeTile();
 
