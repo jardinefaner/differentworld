@@ -4,6 +4,7 @@ import 'package:differentworld/features/action_words/world_blocks.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/cockpit/cockpit_beat.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
+import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/slide_block.dart';
@@ -228,9 +229,7 @@ Color _beatBg(ColorScheme scheme, CockpitBeat beat, ContextLead? lead) =>
       CockpitBeat.now ||
       CockpitBeat.fieldTrip ||
       CockpitBeat.pickup =>
-        lead != null
-            ? _toneColors(scheme, lead.tone).$1
-            : scheme.surface,
+        lead != null ? _toneColors(scheme, lead.tone).$1 : scheme.surface,
     };
 
 /// Full-bleed beat frame: the [bg] colour fills the surface (the emotional
@@ -337,16 +336,21 @@ class _LeadCard extends StatelessWidget {
   }
 }
 
-class _AfterPickupCard extends StatelessWidget {
+class _AfterPickupCard extends ConsumerWidget {
   const _AfterPickupCard({required this.beat});
 
   final CockpitBeat beat;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isSend = beat == CockpitBeat.send;
+    // The send beat has two ways home that didn't converge (docs/WORKFLOWS.md
+    // "the closing chain"): the action-words note AND the daily recap. When
+    // recap is on, offer it as a quiet second link beside Send home — same
+    // discovery gate the omnibox + pickup board use.
+    final recapOn = ref.watch(recapEnabledProvider).value ?? false;
     return _beatFrame(
       context,
       bg: scheme.surface,
@@ -389,7 +393,7 @@ class _AfterPickupCard extends StatelessWidget {
           ),
           const Spacer(),
           const SizedBox(height: 16),
-          if (isSend)
+          if (isSend) ...[
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -404,6 +408,21 @@ class _AfterPickupCard extends StatelessWidget {
                 label: const Text('Send home'),
               ),
             ),
+            if (recapOn) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => context.push('/recap'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: scheme.onSurfaceVariant,
+                  ),
+                  icon: const Icon(Icons.auto_stories_outlined, size: 18),
+                  label: const Text('Or send today’s recap'),
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );
@@ -497,6 +516,17 @@ class _RevealCard extends ConsumerWidget {
           icon: Icons.play_circle_outline,
           onPressed: () => context.push('/play-today'),
         ),
+        // Make the closing SEQUENCE legible (docs/WORKFLOWS.md "the closing
+        // chain": reveal → pickup → send) — a quiet forward link to the
+        // dismissal board sits next to the reveal, so the day reads as a chain,
+        // not three isolated surfaces. Small link, not a new engine.
+        actions: [
+          SlideAction(
+            label: 'Then: pickup',
+            icon: Icons.directions_walk,
+            onPressed: () => context.push('/pickup'),
+          ),
+        ],
         // Never cage: the reveal auto-appears near pickup, but a teacher
         // mid-activity can stay in program — one tap back.
         tertiary: SlideAction(

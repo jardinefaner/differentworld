@@ -9,6 +9,7 @@ import 'package:differentworld/features/entities/entity_ref.dart';
 import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/pickup/pickup_board_providers.dart';
 import 'package:differentworld/features/pickup/pickup_providers.dart';
+import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -24,6 +25,7 @@ import 'package:differentworld/shared/widgets/section_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// The dismissal board — the pickup-rush counterpart to the morning
 /// checklist (docs/WORKFLOWS.md gap #2). One cross-program view of who's
@@ -59,7 +61,8 @@ class PickupBoardScreen extends ConsumerWidget {
             return EmptyState(
               icon: Icons.directions_walk_outlined,
               title: 'No one to release yet',
-              message: 'Mark $kids present in attendance and they’ll appear '
+              message:
+                  'Mark $kids present in attendance and they’ll appear '
                   'here at pickup time — one tap to release each one.',
             );
           }
@@ -163,7 +166,9 @@ class _ReleasedRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dep = entry.departure;
-    final when = dep == null ? null : DateTime.tryParse(dep.recordedAt)?.toLocal();
+    final when = dep == null
+        ? null
+        : DateTime.tryParse(dep.recordedAt)?.toLocal();
     final to = (dep?.body ?? '').trim();
     final String subtitle;
     if (entry.leftEarly) {
@@ -207,7 +212,9 @@ class _ReleasedRow extends ConsumerWidget {
                 unawaited(HapticFeedback.selectionClick());
                 unawaited(ref.read(pickupBoardActionsProvider).undo(dep.id));
                 messenger.showSnackBar(
-                  SnackBar(content: Text('${entry.fullName} back on the board')),
+                  SnackBar(
+                    content: Text('${entry.fullName} back on the board'),
+                  ),
                 );
               },
               child: const Text('Undo'),
@@ -397,8 +404,9 @@ class _ReleasedCell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final dep = entry.departure;
-    final when =
-        dep == null ? null : DateTime.tryParse(dep.recordedAt)?.toLocal();
+    final when = dep == null
+        ? null
+        : DateTime.tryParse(dep.recordedAt)?.toLocal();
     final to = (dep?.body ?? '').trim();
     final String subtitle;
     if (entry.leftEarly) {
@@ -489,37 +497,74 @@ double _textScale(BuildContext context) =>
     MediaQuery.textScalerOf(context).scale(14) / 14;
 
 /// Shown in place of the still-here list when everyone's been picked up.
-class _AllClearCard extends StatelessWidget {
+///
+/// This is where the day actually ENDS, so it's the highest-value link in the
+/// closing chain (docs/WORKFLOWS.md "the closing chain"): when the daily recap
+/// is switched on, the card carries a primary **[Send today's recap →]** that
+/// routes to the `/recap` composer — getting the day home, from the moment the
+/// last child leaves. When recap is off the card stays a calm "that's a wrap"
+/// (no orphan action for a feature the director hasn't enabled).
+class _AllClearCard extends ConsumerWidget {
   const _AllClearCard({required this.count, required this.kids});
 
   final int count;
   final String kids;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    // Mirror the recap discovery gate used in the omnibox + brain-breaks deck:
+    // the link only appears when the director has opted recap on.
+    final recapOn = ref.watch(recapEnabledProvider).value ?? false;
     return Card(
       color: theme.colorScheme.primaryContainer,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.celebration_outlined,
-              color: theme.colorScheme.onPrimaryContainer,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                count == 1
-                    ? 'That’s a wrap — everyone’s been picked up.'
-                    : 'That’s a wrap — all $count picked up and accounted for.',
-                style: theme.textTheme.titleMedium?.copyWith(
+            Row(
+              children: [
+                Icon(
+                  Icons.celebration_outlined,
                   color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    count == 1
+                        ? 'That’s a wrap — everyone’s been picked up.'
+                        : 'That’s a wrap — all $count picked up and accounted for.',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (recapOn) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  // The recap composer is cross-cohort-tolerant (it defaults to
+                  // the first cohort when no `?group=` is supplied), so the
+                  // board's program-wide all-clear can push it argument-free.
+                  onPressed: () {
+                    unawaited(HapticFeedback.selectionClick());
+                    unawaited(context.push('/recap'));
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.onPrimaryContainer,
+                    foregroundColor: theme.colorScheme.primaryContainer,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  icon: const Icon(Icons.send_outlined, size: 18),
+                  label: const Text('Send today’s recap'),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -645,7 +690,9 @@ class _ReleaseSheetState extends ConsumerState<_ReleaseSheet> {
     final messenger = ScaffoldMessenger.of(context);
     final nav = Navigator.of(context);
     unawaited(HapticFeedback.selectionClick());
-    final ok = await ref.read(pickupBoardActionsProvider).release(
+    final ok = await ref
+        .read(pickupBoardActionsProvider)
+        .release(
           subjectId: entry.subject.id,
           groupId: entry.group.id,
           releasedTo: releasedTo,

@@ -296,6 +296,23 @@ class _LastBlockState extends ConsumerState<_LastBlock> {
           ),
         ),
         const SizedBox(height: 10),
+        // After the day's run ends, the next real move is dismissal — point the
+        // teacher at the pickup board so the run leads INTO the hand-off
+        // instead of dead-ending on the ceremony (docs/WORKFLOWS.md "the
+        // closing chain": reveal → pickup → send). `go` (not push) so the
+        // immersive run leaves the stack as we cross into the dismissal board.
+        FilledButton.tonalIcon(
+          onPressed: () {
+            unawaited(HapticFeedback.selectionClick());
+            context.go('/pickup');
+          },
+          icon: const Icon(Icons.directions_walk),
+          label: const Text('Go to pickup'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+        const SizedBox(height: 10),
         TextButton(
           onPressed: () => context.go('/'),
           style: TextButton.styleFrom(
