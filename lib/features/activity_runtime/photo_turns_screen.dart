@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
+import 'package:differentworld/features/kid_mode/screen_pinning.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
@@ -70,6 +71,65 @@ class _PhotoTurnsScreenState extends ConsumerState<PhotoTurnsScreen> {
 
   /// Guards against a double-launch if the roster rebuilds mid-tap.
   bool _launching = false;
+
+  /// The OS screen-pinning (lock-task) service. Cached in initState — a plain
+  /// `ref.read` there is safe, and dispose must NOT touch `ref`. Stable const
+  /// singleton, so this just avoids the `ref` reach in dispose.
+  late final ScreenPinning _pinning;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pin the WHOLE session, not each kid's turn. Opening "Whose turn?" is the
+    // start of the session: pin here so the OS "Pin this app?" confirm fires
+    // ONCE, then every child's pushed runner route stays inside the one pinned
+    // session (a per-kid pin would re-prompt on every turn). Leaving this
+    // screen unpins (dispose). The in-app kid-lock (kidMode + 5-tap reclaim)
+    // inside each runner is UNCHANGED — screen-pinning is the OS layer on top.
+    _pinning = ref.read(screenPinningProvider);
+    // Defer the channel call past the first frame (mounted-guarded): a
+    // post-frame microtask keeps it off the build phase and lets the OS confirm
+    // dialog land cleanly over a painted screen. pin() never throws, so a
+    // device without lock-task support just runs with the in-app lock alone.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_pinning.pin());
+      _maybeShowManualLockHint();
+    });
+  }
+
+  @override
+  void dispose() {
+    // ALWAYS unpin on teardown — even if pin() failed (unpin is idempotent and
+    // a no-op when never pinned). This is the safety release: leaving the
+    // picker (back, or the OS killing + relaunching to here) can never strand
+    // the device in a pinned state reachable from this screen. Fire-and-forget;
+    // `ref`/`context` are untouched (cached service), so it's dispose-safe.
+    unawaited(_pinning.unpin());
+    super.dispose();
+  }
+
+  /// iOS only: a one-time themed hint that there's no programmatic lock there —
+  /// staff start Guided Access themselves. Android pins automatically (no hint);
+  /// web/desktop have no lock-task concept. Shown once per session open.
+  void _maybeShowManualLockHint() {
+    if (!_pinning.needsManualLockHint) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    final scheme = Theme.of(context).colorScheme;
+    messenger.showSnackBar(
+      SnackBar(
+        // Themed — colorScheme only, no hardcoded colors.
+        backgroundColor: scheme.secondaryContainer,
+        content: Text(
+          'To lock the phone to this app, triple-click the side button → '
+          'Guided Access.',
+          style: TextStyle(color: scheme.onSecondaryContainer),
+        ),
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
 
   Future<void> _startTurn(Subject child) async {
     // Set the guard SYNCHRONOUSLY (and via setState so the row grays at once):
