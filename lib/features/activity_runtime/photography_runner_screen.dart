@@ -6,11 +6,14 @@ import 'package:differentworld/features/activity_runtime/activity_script.dart';
 import 'package:differentworld/features/activity_runtime/collage_gallery.dart';
 import 'package:differentworld/features/activity_runtime/justified_gallery.dart';
 import 'package:differentworld/features/activity_runtime/photography.dart';
+import 'package:differentworld/features/kid_mode/kid_mode_exit_dialog.dart';
+import 'package:differentworld/features/kid_mode/kid_mode_provider.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/inline_editable_text.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,8 +27,22 @@ import 'package:uuid/uuid.dart';
 /// tap-to-focus enhance the capture. Done → a dynamic masonry gallery
 /// (photos kept whole, varied sizes); tap any for a full-screen view with
 /// its context + an editable reflection. Teacher-paced (game-show-host
-/// model), NOT a locked kid surface — the floating back arrow exits, and
-/// back closes an open viewer/presentation first (rubric A6).
+/// model) by default — the floating back arrow exits, and back closes an
+/// open viewer/presentation first (rubric A6).
+///
+/// KID LOCK (opt-in): the runner is ALSO teacher-run, so kid mode is NOT
+/// forced. A lock toggle in the camera top bar ("Hand to the kids") enters
+/// kid mode the same way the reference kid screens do
+/// (`action_words_kid_screen` / `draw_self_screen`): `kidModeProvider.enter()`
+/// + `kidModeLockedRouteProvider.pin('/activity/photo')`. AppShell then strips
+/// the omnibox bar + drawer, the router redirect bounces away-nav back to the
+/// pinned route, and a `PopScope(canPop: false)` blocks system-back — so a
+/// child can shoot but can't escape to staff screens. A hidden staff 5-tap on
+/// the top-left 56×56 corner opens `showKidModeExitDialog` (staff PIN, or the
+/// 5-tap alone when no PIN is set); on success the lock releases and the
+/// teacher reclaims the phone. The camera keeps running the whole time — the
+/// lock never touches the controller. Dispose exits kid mode if still locked,
+/// so leaving never strands the whole app in kid mode.
 ///
 /// SUBMISSIONS model (offline-first): every capture stays on the device;
 /// only the ones marked "share" become the submission. A shared shot is
@@ -136,13 +153,52 @@ class _PhotographyRunnerScreenState
   /// How long each shared photo holds before the slideshow advances.
   static const Duration _slideInterval = Duration(seconds: 4);
 
+  // ── Kid lock (opt-in "Hand to the kids") ─────────────────────────────
+  // The pinned route MUST equal the GoRoute path WITHOUT query params: the
+  // router redirect compares `state.matchedLocation != lockedRoute`, and
+  // matchedLocation is '/activity/photo' even when the URL carries
+  // `?prompt=…`. Pinning the prompt'd URL would never match → infinite
+  // redirect loop.
+  static const String _lockedRoute = '/activity/photo';
+
+  /// Notifiers cached EAGERLY in initState — a plain `ref.read` there is
+  /// safe, but `ref` in dispose is not (Riverpod: "save the provider state in
+  /// a field"). They must NOT be `late final … = ref.read(…)`: a lazy field
+  /// first touched from dispose (e.g. fast-back before the engage microtask
+  /// fires, then dispose hits `if (_locked)`) would run `ref.read` IN dispose
+  /// — the exact forbidden case. Assigning in initState makes the field
+  /// already-resolved by the time dispose reads it. Mirrors `draw_self_screen`
+  /// / the `KidModeLock` mixin.
+  late final KidMode _kidMode;
+  late final KidModeLockedRoute _kidLockedRoute;
+
+  /// True once THIS screen has engaged the lock (drives the visible lock
+  /// chip + which PopScope branch wins). Mirrors `kidModeProvider` but is a
+  /// local flag so dispose never has to read a provider.
+  bool _locked = false;
+
+  /// Hidden staff exit: five quick taps in the top-left corner, each within
+  /// [_staffTapWindow] of the last, so a kid mashing the corner can't
+  /// accumulate. [_exitDialogOpen] is the re-entrancy guard.
+  int _staffTapCount = 0;
+  Timer? _staffTapReset;
+  bool _exitDialogOpen = false;
+  static const int _staffTapTarget = 5;
+  static const Duration _staffTapWindow = Duration(milliseconds: 800);
+
   @override
   void initState() {
     super.initState();
-    // Observe lifecycle for the CAMERA only (release on background,
-    // re-init on resume) — this is a teacher-paced break, not a locked
-    // kid surface; the floating back arrow exits.
+    // Observe lifecycle for the CAMERA (release on background, re-init on
+    // resume) AND, once locked, to re-engage kid mode if the OS resurrects
+    // the Activity without rebuilding the tree.
     WidgetsBinding.instance.addObserver(this);
+    // Cache the kid-lock notifiers now (a plain read in initState is safe) so
+    // dispose never touches `ref`. The .enter() WRITE is deferred to a tap +
+    // microtask, not done here — entering on mount would force kid mode (this
+    // surface is opt-in / teacher-run by default).
+    _kidMode = ref.read(kidModeProvider.notifier);
+    _kidLockedRoute = ref.read(kidModeLockedRouteProvider.notifier);
     unawaited(_initCamera());
   }
 
@@ -152,15 +208,33 @@ class _PhotographyRunnerScreenState
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
       _disposeCamera();
-    } else if (state == AppLifecycleState.resumed &&
-        _run.current.mode == ActivityMode.shoot) {
-      unawaited(_initCamera());
+    } else if (state == AppLifecycleState.resumed) {
+      // Re-engage the lock if the OS resurrected the Activity while locked —
+      // initState wouldn't fire again, so a resumed screen could otherwise
+      // expose staff chrome with the kid still holding the phone.
+      if (_locked && mounted) {
+        _kidMode.enter();
+        _kidLockedRoute.pin(_lockedRoute);
+      }
+      if (_run.current.mode == ActivityMode.shoot) {
+        unawaited(_initCamera());
+      }
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // Leave kid mode if we exit the screen still locked, so leaving never
+    // strands the whole app in kid mode (AppShell would keep chrome stripped
+    // on every staff screen). Cached notifiers — never `ref` in dispose.
+    // exit()/pin(null) are idempotent, so this is safe even when already
+    // unlocked. Guarded by `_locked` so a never-locked run is a no-op.
+    if (_locked) {
+      _kidMode.exit();
+      _kidLockedRoute.pin(null);
+    }
+    _staffTapReset?.cancel();
     _focusTimer?.cancel();
     _slideTimer?.cancel();
     _viewerPage?.dispose();
@@ -231,6 +305,99 @@ class _PhotographyRunnerScreenState
     // init's own `if (!mounted)` guards dispose a late-finishing controller.
     _initInFlight = false;
     unawaited(c?.dispose());
+  }
+
+  // ── Kid lock ─────────────────────────────────────────────────────────
+
+  /// Engage the opt-in lock ("Hand to the kids"). Enters kid mode + pins the
+  /// route exactly as the reference kid screens do. The camera is untouched —
+  /// it keeps running so the kid can shoot. Idempotent.
+  ///
+  /// Writing `kidModeProvider` (which AppShell watches) synchronously from a
+  /// tap is fine — the tap is well outside the build phase. We defer through
+  /// a microtask anyway to match the documented shape and to stay robust if
+  /// this ever moves into a build-adjacent callback; the `mounted` guard
+  /// covers a same-frame pop.
+  void _engageKidLock() {
+    if (_locked) return;
+    setState(() => _locked = true);
+    _staffTapCount = 0;
+    _exitDialogOpen = false;
+    unawaited(HapticFeedback.mediumImpact());
+    unawaited(
+      Future.microtask(() {
+        if (!mounted) return;
+        try {
+          _kidMode.enter();
+          _kidLockedRoute.pin(_lockedRoute);
+        } on Object catch (e, st) {
+          if (kDebugMode) {
+            debugPrint('[photography] kid-lock enter failed: $e\n$st');
+          }
+        }
+      }),
+    );
+  }
+
+  /// Release the lock (staff unlocked via the corner gesture). Clears the
+  /// pin BEFORE anything else so the router stops bouncing nav, exits kid
+  /// mode (AppShell restores chrome), and flips the local flag so the
+  /// runner's normal PopScope behaviour resumes. Idempotent.
+  void _releaseKidLock() {
+    if (!_locked) return;
+    _kidLockedRoute.pin(null);
+    _kidMode.exit();
+    if (mounted) setState(() => _locked = false);
+  }
+
+  /// Tapping the (now-locked) lock button can't unlock — that would defeat
+  /// the lock. Point staff at the real exit instead of a dead no-op.
+  void _hintStaffExit() {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Locked. Staff: tap the top-left corner 5 times to exit.',
+        ),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
+  /// Hidden staff-exit: count taps on the top-left corner; on the fifth
+  /// within the window, open the PIN dialog. A correct PIN (or no PIN
+  /// configured) releases the lock so the teacher reclaims the phone.
+  Future<void> _onStaffCornerTap() async {
+    _staffTapCount += 1;
+    _staffTapReset?.cancel();
+    if (_staffTapCount >= _staffTapTarget) {
+      _staffTapCount = 0;
+      _staffTapReset = null;
+      // Re-entrancy guard: a kid hammering the corner while staff is in the
+      // dialog must not stack a second dialog.
+      if (_exitDialogOpen) return;
+      _exitDialogOpen = true;
+      try {
+        final result = await showKidModeExitDialog(context, ref);
+        if (!mounted) return;
+        switch (result) {
+          case KidModeExitResult.unlocked:
+          case KidModeExitResult.noPinConfigured:
+            _releaseKidLock();
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+              const SnackBar(content: Text('Unlocked. Press back to exit.')),
+            );
+          case KidModeExitResult.cancelled:
+            break;
+        }
+      } finally {
+        _exitDialogOpen = false;
+      }
+      return;
+    }
+    _staffTapReset = Timer(_staffTapWindow, () {
+      _staffTapCount = 0;
+      _staffTapReset = null;
+    });
   }
 
   Future<double> _aspectRatioOf(Uint8List bytes) async {
@@ -407,14 +574,29 @@ class _PhotographyRunnerScreenState
 
   @override
   Widget build(BuildContext context) {
-    // Back closes an open overlay first (the full-screen viewer, then the
-    // presentation), and otherwise exits the activity — no lock; the
-    // floating back arrow gets you out from any phase.
-    final canExit = _viewingIndex == null && !_presenting;
+    // ONE effective PopScope, branched on lock state so there's exactly one
+    // behaviour per state:
+    //   • LOCKED   → canPop:false, back is fully blocked (the kid-lock wins);
+    //                the snackbar tells the teacher how to get out. Overlay
+    //                back is intentionally suppressed too — a kid can't
+    //                back-out of the viewer/present either; the staff corner
+    //                is the only way.
+    //   • UNLOCKED → the runner's normal behaviour: back closes an open
+    //                overlay first (viewer, then presentation), else exits.
+    final canPop = !_locked && _viewingIndex == null && !_presenting;
     return PopScope(
-      canPop: canExit,
+      canPop: canPop,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
+        if (_locked) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text('Hand the device back to a teacher to exit.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
         if (_viewingIndex != null) {
           _closeViewer();
         } else if (_presenting) {
@@ -424,9 +606,15 @@ class _PhotographyRunnerScreenState
       child: EdgeScaffold(
         body: ColoredBox(
           color: Colors.black,
+          // Conditional / runtime-swapped children → stable Keys so an
+          // appearing/disappearing sibling (the lock cue + corner) can't shift
+          // position-based Element matching and poison the viewer's
+          // InlineEditableText input connection (CLAUDE.md interaction rule
+          // #7 / "Stack children without keys").
           child: Stack(
             children: [
               Positioned.fill(
+                key: const ValueKey('photo-runner-content'),
                 child: _run.current.mode == ActivityMode.shoot
                     ? _shootView(context)
                     : (_presenting
@@ -434,7 +622,38 @@ class _PhotographyRunnerScreenState
                           : _galleryView(context)),
               ),
               if (_viewingIndex != null && _viewingIndex! < _shots.length)
-                Positioned.fill(child: _viewer(context)),
+                Positioned.fill(
+                  key: const ValueKey('photo-runner-viewer'),
+                  child: _viewer(context),
+                ),
+              // Visible "locked" cue — phase-independent (the top-bar lock
+              // button only shows in the shoot view; gallery + present have no
+              // top bar). Top-centre so the teacher reads the state from
+              // across the room. Icon + word, never colour alone. IgnorePointer
+              // so it can't steal the staff-corner tap or any control.
+              if (_locked)
+                const Positioned(
+                  key: ValueKey('photo-runner-locked-chip'),
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(child: _LockedChip()),
+                ),
+              // Hidden staff-exit corner — only while locked. Top-left 56×56,
+              // translucent so it never eats a real control but still
+              // hit-tests the five taps. Sits ABOVE every overlay (and the
+              // cue) so staff can always reach it (viewer/present included).
+              if (_locked)
+                Positioned(
+                  key: const ValueKey('photo-runner-staff-corner'),
+                  top: 0,
+                  left: 0,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () => unawaited(_onStaffCornerTap()),
+                    child: const SizedBox(width: 56, height: 56),
+                  ),
+                ),
             ],
           ),
         ),
@@ -546,6 +765,21 @@ class _PhotographyRunnerScreenState
                 icon: Icons.cameraswitch_outlined,
                 tooltip: 'Flip camera',
                 onTap: () => unawaited(_switchCamera()),
+              ),
+              const SizedBox(width: 8),
+              // Opt-in kid lock. Once locked, the button stays in the bar as
+              // the visible "locked" cue (filled amber lock). A kid CAN tap it,
+              // but it CANNOT unlock — instead it surfaces the staff-exit
+              // guidance (no silent no-op, per the interaction rules). The
+              // only real way out is the hidden staff 5-tap corner. The camera
+              // keeps running regardless.
+              _CapButton(
+                icon: _locked ? Icons.lock : Icons.lock_open_outlined,
+                active: _locked,
+                tooltip: _locked
+                    ? 'Locked — staff exit only'
+                    : 'Hand to the kids',
+                onTap: _locked ? _hintStaffExit : _engageKidLock,
               ),
             ],
           ),
@@ -1227,6 +1461,52 @@ class _PhotographyRunnerScreenState
                 },
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The visible "kid lock is on" cue — a small pill, top-centre, shown across
+/// every phase while locked. Icon + the word "Locked" (never colour alone,
+/// per the no-color-only rule). White-on-dark hardcode is correct: this whole
+/// screen is a raw camera/immersive canvas on the theme allowlist, and the
+/// pill must read on top of a live camera feed or a bright photo.
+class _LockedChip extends StatelessWidget {
+  const _LockedChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.amberAccent.withValues(alpha: 0.7),
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock, color: Colors.amberAccent, size: 16),
+                SizedBox(width: 6),
+                Text(
+                  'Locked',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
