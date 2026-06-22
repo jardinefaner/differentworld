@@ -47,6 +47,12 @@ const List<ActivityRunner> kActivityRunners = [
     label: 'Photo Studio',
     takesPrompt: true,
   ),
+  ActivityRunner(
+    slug: 'photo-turns',
+    route: '/activity/photo-turns',
+    label: 'Photo turns · one device, per child',
+    takesPrompt: true,
+  ),
   ActivityRunner(slug: 'do-it', route: '/activity/do-it', label: 'Do It'),
   ActivityRunner(
     slug: 'penny',

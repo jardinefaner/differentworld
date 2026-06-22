@@ -5,6 +5,7 @@ import 'package:differentworld/core/capabilities/capability_keys.dart';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/activity_runtime/activity_runners.dart';
+import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
@@ -57,6 +58,16 @@ class BlockRunSheetScreen extends ConsumerWidget {
         ? null
         : activities.where((a) => a.id == block.activityId).firstOrNull;
 
+    // Resolve the curriculum session the block was stamped with (the same
+    // 'Through My Eyes · S{N}' badge the schedule tile shows). When present,
+    // the SESSION'S lesson drives the run sheet — its routine, its materials,
+    // its big idea — because a curriculum block carries no activity and would
+    // otherwise read empty. A block with no slug resolves null → every
+    // session-driven branch below falls back to the unchanged activity path.
+    final session = block.curriculumSessionSlug == null
+        ? null
+        : findSessionBySlug(block.curriculumSessionSlug!);
+
     // Effective location: the block's override, else the activity default.
     final locations = ref.watch(locationsProvider).value ?? const <Location>[];
     final effectiveLocationId =
@@ -79,9 +90,14 @@ class BlockRunSheetScreen extends ConsumerWidget {
         ? blockTitle
         : (activity?.name ?? 'This block');
 
-    // The activity's prompt/subtitle (its description) — what staff (and
-    // parents on the block) read for "what happens here".
-    final subtitle = activity?.description?.trim();
+    // The header subtitle — what staff read for "what happens here". A
+    // curriculum block leads with the session's big idea (its title as a
+    // fallback); an ordinary block keeps the linked activity's description.
+    final subtitle = session != null
+        ? (session.bigIdea.trim().isNotEmpty
+              ? session.bigIdea.trim()
+              : session.title.trim())
+        : activity?.description?.trim();
 
     final start = DateTime.tryParse(block.startAt)?.toLocal();
     final end = DateTime.tryParse(block.endAt)?.toLocal();
@@ -95,8 +111,14 @@ class BlockRunSheetScreen extends ConsumerWidget {
       if (lead != null) lead.displayName,
     ];
 
-    // The routine — read live off the activity's caps.
-    final routine = activity == null
+    // The routine. A curriculum session's lesson takes PRECEDENCE: build its
+    // ordered steps (setup → game rules → looking together → end ritual),
+    // using the session's own text trimmed, skipping any empty field. Only
+    // when there's no session do we read the linked activity's caps routine
+    // (the unchanged path for an ordinary block).
+    final routine = session != null
+        ? _sessionRoutine(session)
+        : activity == null
         ? const <String>[]
         : ref.watch(routineForActivityProvider(activity.id)).value ??
               const <String>[];
@@ -117,6 +139,23 @@ class BlockRunSheetScreen extends ConsumerWidget {
     final startLabel = activity != null
         ? 'Start ${activity.name.trim()}'
         : 'Start';
+
+    // Is this a "Through My Eyes" photo block? Yes when the block was stamped
+    // with a `photo.` curriculum slug, OR its linked activity runs as the
+    // photo studio / photo turns (read off the already-resolved `runner`).
+    // Those are the blocks where the primary way to run a session on one
+    // shared device is the per-child timed turns.
+    final isPhotoBlock =
+        (block.curriculumSessionSlug?.startsWith('photo.') ?? false) ||
+        runner?.slug == 'photo' ||
+        runner?.slug == 'photo-turns';
+    // The mission carried into each child's locked turn — the session's big
+    // idea (its title as a fallback), else the resolved block title.
+    final photoTurnsPrompt = session != null
+        ? (session.bigIdea.trim().isNotEmpty
+              ? session.bigIdea.trim()
+              : session.title.trim())
+        : title.trim();
 
     return EdgeScaffold(
       backFallbackRoute: '/schedule',
@@ -191,24 +230,56 @@ class BlockRunSheetScreen extends ConsumerWidget {
           const SizedBox(height: 28),
           const _SectionLabel(text: "What you'll need"),
           const SizedBox(height: 8),
-          if (activity == null)
+          if (activity != null)
+            _SupplyChips(activityId: activity.id)
+          else if (session != null && session.materials.trim().isNotEmpty)
+            // Curriculum block — no activity to pull a supply pack from, so the
+            // session's own plain-prose materials line stands in.
+            _NeedsHint(text: session.materials.trim())
+          else
             const _NeedsHint(
               text:
                   'Link an activity to this block to pull in its supply list.',
-            )
-          else
-            _SupplyChips(activityId: activity.id),
+            ),
 
           // ── Actions ──────────────────────────────────────────────────
           const SizedBox(height: 32),
-          FilledButton.icon(
-            onPressed: () => _start(context, runner: runner, topic: runTopic),
-            icon: const Icon(Icons.play_arrow_rounded),
-            label: Text(startLabel),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+          // For a photo-curriculum block, the primary way to RUN the session on
+          // one shared device is the per-child timed turns — so it sits above
+          // Start. Ordinary blocks never show this.
+          if (isPhotoBlock) ...[
+            FilledButton.icon(
+              onPressed: () =>
+                  _runPhotoTurns(context, prompt: photoTurnsPrompt),
+              icon: const Icon(Icons.timer_outlined),
+              label: const Text('Run photo turns'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
             ),
-          ),
+            const SizedBox(height: 10),
+          ],
+          // Start the linked activity / teaching arc. For a photo-curriculum
+          // block this is the secondary path (turns is primary above), so it
+          // reads as outlined rather than filled.
+          if (isPhotoBlock)
+            OutlinedButton.icon(
+              onPressed: () => _start(context, runner: runner, topic: runTopic),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: Text(startLabel),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            )
+          else
+            FilledButton.icon(
+              onPressed: () => _start(context, runner: runner, topic: runTopic),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: Text(startLabel),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () => _capture(context),
@@ -267,6 +338,19 @@ class BlockRunSheetScreen extends ConsumerWidget {
     }
   }
 
+  /// Launch the per-child timed photo TURNS for this block — the roster scopes
+  /// to the block's group and every shot is tagged with the block id (the
+  /// already-built `/activity/photo-turns` surface). The `prompt` becomes the
+  /// mission shown inside each child's locked five minutes.
+  void _runPhotoTurns(BuildContext context, {required String prompt}) {
+    unawaited(HapticFeedback.selectionClick());
+    final dest = Uri(
+      path: '/activity/photo-turns',
+      queryParameters: {'block': block.id, 'prompt': prompt},
+    ).toString();
+    unawaited(context.push(dest));
+  }
+
   void _capture(BuildContext context) {
     unawaited(HapticFeedback.selectionClick());
     unawaited(context.push('/captures/new'));
@@ -287,6 +371,25 @@ class BlockRunSheetScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Build a curriculum session's lesson into the run sheet's numbered routine:
+/// one step each for setup → game rules → looking together → end ritual, in
+/// that order, using the session's own text trimmed and skipping any field
+/// that's empty. This is what REPLACES the (empty) activity routine when the
+/// block carries a `curriculumSessionSlug`.
+List<String> _sessionRoutine(PhotoSession session) {
+  final steps = <String>[];
+  for (final field in [
+    session.setup,
+    session.gameRules,
+    session.lookingTogether,
+    session.endRitual,
+  ]) {
+    final trimmed = field.trim();
+    if (trimmed.isNotEmpty) steps.add(trimmed);
+  }
+  return steps;
 }
 
 /// Section eyebrow — the calm flush-left label over each run-sheet section.
