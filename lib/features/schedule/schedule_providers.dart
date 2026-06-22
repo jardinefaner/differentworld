@@ -74,6 +74,19 @@ final scheduleBlockByIdProvider = StreamProvider.autoDispose
       },
     );
 
+/// The field-trip logistics row (destination / address / notes) for one
+/// block, live. 1:1 with the block (kind = field_trip); null for a trip
+/// block whose details haven't been filled in yet. Lets the block run
+/// sheet's bento show the trip's "Where" without a second fetch.
+// ignore: specify_nonobvious_property_types
+final tripLogisticsForBlockProvider = StreamProvider.autoDispose
+    .family<TripLogistic?, String>(
+      (ref, blockId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.tripsDao.watchByBlockId(blockId);
+      },
+    );
+
 /// Blocks the given staff member is leading on the given `date`.
 /// Powers the "what I'm leading today" specialist brief.
 // ignore: specify_nonobvious_property_types

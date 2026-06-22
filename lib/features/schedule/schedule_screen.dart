@@ -671,12 +671,13 @@ class _CohortDay extends ConsumerWidget {
                     editable: canEdit,
                     conflictWith: conflictGroupNames,
                     isNow: isNow,
-                    // Content-bearing blocks (Activity / Trip) open the Block
-                    // Run Sheet — routine + supplies + actions in one place
-                    // (docs/VISION.md 2026-06-19). Break / closed / bare
-                    // blocks keep the straight-to-edit tap (there's nothing
-                    // to run). The run sheet carries its own Edit pencil + a
-                    // [Start] that folds in the old inline "Run" button.
+                    // EVERY block now opens the Block Run Sheet — a single
+                    // no-hunting bento tray with that block's tools + actions
+                    // (docs/VISION.md: "all what is needed are in that bento").
+                    // Activity / Trip get the full run tray; Break / Closed /
+                    // bare get a calm minimal tray (a quiet note + Capture).
+                    // The sheet carries its own Edit pencil, so the old
+                    // straight-to-edit tap loses nothing.
                     onTap: () {
                       if (_opensRunSheet(b)) {
                         // A bare `(block: b)` record structurally IS the run
@@ -795,12 +796,18 @@ class _CoverLeadStrip extends StatelessWidget {
   }
 }
 
-/// Whether tapping [b] opens the Block Run Sheet (routine + supplies +
-/// actions) instead of the straight-to-edit page. Content-bearing blocks —
-/// Activity (`on_site`) and Trip (`field_trip`) — get the run sheet; Break /
-/// Closed / bare blocks have nothing to run, so their tap stays edit.
+/// Whether tapping [b] opens the Block Run Sheet bento. EVERY block kind now
+/// does (docs/VISION.md: "all what is needed are in that bento") — Activity
+/// (`on_site`) and Trip (`field_trip`) get the full run tray; Break / Closed
+/// get a calm minimal tray (a quiet note + Capture). The sheet's own Edit
+/// pencil covers the old straight-to-edit tap, so nothing is lost. Kept as a
+/// named predicate so the (currently universal) routing decision stays one
+/// readable place if a future kind ever needs to opt out.
 bool _opensRunSheet(ScheduleBlock b) =>
-    b.kind == BlockKind.onSite || b.kind == BlockKind.fieldTrip;
+    b.kind == BlockKind.onSite ||
+    b.kind == BlockKind.fieldTrip ||
+    b.kind == BlockKind.breakBlock ||
+    b.kind == BlockKind.closed;
 
 /// Wave 156: which OTHER cohort group-names this block conflicts with
 /// at this date+time, by sharing the effective location (override on
