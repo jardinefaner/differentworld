@@ -38,6 +38,7 @@ import 'package:differentworld/features/activity_runtime/letters_screen.dart';
 import 'package:differentworld/features/activity_runtime/math_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/pattern_maker_screen.dart';
 import 'package:differentworld/features/activity_runtime/penny_screen.dart';
+import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
 import 'package:differentworld/features/activity_runtime/photography_runner_screen.dart';
 import 'package:differentworld/features/activity_runtime/potions_screen.dart';
 import 'package:differentworld/features/activity_runtime/role_capture.dart';
@@ -1801,6 +1802,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/photo',
             builder: (_, state) => PhotographyRunnerScreen(
+              prompt:
+                  state.uri.queryParameters['prompt'] ?? 'Capture what you see',
+            ),
+          ),
+          // Timed per-child photo TURNS — the "Whose turn?" picker that hands
+          // each child a five-minute locked camera, then a review to pick
+          // favorites (docs/PHOTO_TURNS). `?block=<id>` scopes the roster to a
+          // block's group + tags shots with it; `?prompt=` sets the mission.
+          GoRoute(
+            path: '/activity/photo-turns',
+            builder: (_, state) => PhotoTurnsScreen(
+              blockId: state.uri.queryParameters['block'],
               prompt:
                   state.uri.queryParameters['prompt'] ?? 'Capture what you see',
             ),

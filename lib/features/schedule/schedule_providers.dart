@@ -37,41 +37,57 @@ String isoDateLocal(DateTime when) => dateKey(when);
 // ignore: specify_nonobvious_property_types
 final scheduleDayProvider = StreamProvider.autoDispose
     .family<List<ScheduleBlock>, String>((ref, date) async* {
-  final viewer = ref.watch(viewerProvider);
-  final spaceId = viewer.spaceId;
-  final db = await ref.watch(appDatabaseProvider.future);
-  if (spaceId == null) {
-    yield const <ScheduleBlock>[];
-    return;
-  }
-  yield* db.scheduleDao.watchDay(spaceId: spaceId, date: date);
-});
+      final viewer = ref.watch(viewerProvider);
+      final spaceId = viewer.spaceId;
+      final db = await ref.watch(appDatabaseProvider.future);
+      if (spaceId == null) {
+        yield const <ScheduleBlock>[];
+        return;
+      }
+      yield* db.scheduleDao.watchDay(spaceId: spaceId, date: date);
+    });
 
 /// Blocks for one cohort on the given `date`. Drives the family-side
 /// schedule strip for a kid's room.
 // ignore: specify_nonobvious_property_types
 final scheduleDayForGroupProvider = StreamProvider.autoDispose
-    .family<List<ScheduleBlock>, ({String groupId, String date})>(
-        (ref, key) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.scheduleDao.watchDayForGroup(
-    groupId: key.groupId,
-    date: key.date,
-  );
-});
+    .family<List<ScheduleBlock>, ({String groupId, String date})>((
+      ref,
+      key,
+    ) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.scheduleDao.watchDayForGroup(
+        groupId: key.groupId,
+        date: key.date,
+      );
+    });
+
+/// One schedule block by id, live. Used by surfaces launched from a block
+/// (e.g. the per-child photo turns) that need the block's group/title without
+/// re-fetching the whole day.
+// ignore: specify_nonobvious_property_types
+final scheduleBlockByIdProvider = StreamProvider.autoDispose
+    .family<ScheduleBlock?, String>(
+      (ref, id) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.scheduleDao.watchById(id);
+      },
+    );
 
 /// Blocks the given staff member is leading on the given `date`.
 /// Powers the "what I'm leading today" specialist brief.
 // ignore: specify_nonobvious_property_types
 final scheduleDayForLeadProvider = StreamProvider.autoDispose
-    .family<List<ScheduleBlock>, ({String memberId, String date})>(
-        (ref, key) async* {
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.scheduleDao.watchDayForLead(
-    memberId: key.memberId,
-    date: key.date,
-  );
-});
+    .family<List<ScheduleBlock>, ({String memberId, String date})>((
+      ref,
+      key,
+    ) async* {
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.scheduleDao.watchDayForLead(
+        memberId: key.memberId,
+        date: key.date,
+      );
+    });
 
 /// Wave 158: events on the given `date` for the current space.
 /// Drives the banner above the schedule grid and the
@@ -79,15 +95,15 @@ final scheduleDayForLeadProvider = StreamProvider.autoDispose
 // ignore: specify_nonobvious_property_types
 final eventsForDateProvider = StreamProvider.autoDispose
     .family<List<Event>, String>((ref, date) async* {
-  final viewer = ref.watch(viewerProvider);
-  final spaceId = viewer.spaceId;
-  if (spaceId == null) {
-    yield const <Event>[];
-    return;
-  }
-  final db = await ref.watch(appDatabaseProvider.future);
-  yield* db.eventsDao.watchForDate(spaceId: spaceId, date: date);
-});
+      final viewer = ref.watch(viewerProvider);
+      final spaceId = viewer.spaceId;
+      if (spaceId == null) {
+        yield const <Event>[];
+        return;
+      }
+      final db = await ref.watch(appDatabaseProvider.future);
+      yield* db.eventsDao.watchForDate(spaceId: spaceId, date: date);
+    });
 
 /// Discriminator for `events.mode`.
 class EventMode {
@@ -213,7 +229,6 @@ class ScheduleActions {
     );
   }
 
-
   Future<void> delete_(String id) async {
     final db = await _ref.read(appDatabaseProvider.future);
     await db.scheduleDao.delete_(id);
@@ -275,8 +290,7 @@ class ScheduleActions {
   }
 }
 
-final scheduleActionsProvider =
-    Provider<ScheduleActions>(ScheduleActions.new);
+final scheduleActionsProvider = Provider<ScheduleActions>(ScheduleActions.new);
 
 /// Wave 158: create / delete one-off events. Updates aren't wired
 /// yet — director's options on a created event are "use as is" or

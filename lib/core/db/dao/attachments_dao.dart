@@ -23,8 +23,7 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
     return (select(attachments)
           ..where(
             (a) =>
-                a.entityKind.equals(entityKind) &
-                a.entityId.equals(entityId),
+                a.entityKind.equals(entityKind) & a.entityId.equals(entityId),
           )
           ..orderBy([
             (a) => OrderingTerm(expression: a.sortOrder),
@@ -42,8 +41,7 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
     return (select(attachments)
           ..where(
             (a) =>
-                a.entityKind.equals(entityKind) &
-                a.entityId.equals(entityId),
+                a.entityKind.equals(entityKind) & a.entityId.equals(entityId),
           )
           ..orderBy([
             (a) => OrderingTerm(expression: a.sortOrder),
@@ -58,6 +56,30 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
     return (select(attachments)
           ..where((a) => a.capturedBySubjectId.equals(subjectId))
           ..orderBy([(a) => OrderingTerm.desc(a.createdAt)]))
+        .watch();
+  }
+
+  /// Same per-child progress folder, but FAVORITES-FIRST. The photo-turns
+  /// review (docs/PHOTO_TURNS) reuses `sort_order` as a favorite flag with
+  /// NO extra migration: a hearted photo is written `sort_order = 0`, the
+  /// rest a higher value, so ordering by sort_order ASC floats favorites to
+  /// the top. SQLite sorts NULLs FIRST on an ASC order, which would wrongly
+  /// hoist un-favorited (null) rows above the favorites — so we coalesce
+  /// NULL → a large sentinel, then tiebreak by newest-first. Same rows as
+  /// `watchCapturedBy`; only the ordering differs.
+  Stream<List<Attachment>> watchCapturedByCurated(String subjectId) {
+    // 1e9 ≫ any real sort_order; pushes the un-favorited (NULL) rows below
+    // every favorite (0) while keeping them ahead of nothing else.
+    final orderKey = coalesce<int>([
+      attachments.sortOrder,
+      const Constant<int>(1000000000),
+    ]);
+    return (select(attachments)
+          ..where((a) => a.capturedBySubjectId.equals(subjectId))
+          ..orderBy([
+            (a) => OrderingTerm(expression: orderKey),
+            (a) => OrderingTerm.desc(a.createdAt),
+          ]))
         .watch();
   }
 
@@ -127,8 +149,7 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
     await (update(attachments)..where((a) => a.id.equals(id))).write(
       AttachmentsCompanion(
         caption: caption == null ? const Value.absent() : Value(caption),
-        sortOrder:
-            sortOrder == null ? const Value.absent() : Value(sortOrder),
+        sortOrder: sortOrder == null ? const Value.absent() : Value(sortOrder),
         thumbUrl: thumbUrl == null ? const Value.absent() : Value(thumbUrl),
         updatedAt: Value(now),
       ),
@@ -166,10 +187,9 @@ class AttachmentsDao extends DatabaseAccessor<AppDatabase>
     required String newId,
   }) async {
     final now = DateTime.now().toUtc().toIso8601String();
-    await (update(attachments)
-          ..where(
-            (a) => a.entityKind.equals(oldKind) & a.entityId.equals(oldId),
-          ))
+    await (update(attachments)..where(
+          (a) => a.entityKind.equals(oldKind) & a.entityId.equals(oldId),
+        ))
         .write(
           AttachmentsCompanion(
             entityKind: Value(newKind),

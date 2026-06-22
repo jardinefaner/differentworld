@@ -17,6 +17,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
@@ -54,13 +55,55 @@ import 'package:uuid/uuid.dart';
 /// bytes drive the live filmstrip/preview; the retained `XFile` is what
 /// gets uploaded. The next slice (a "present to the room" cast) reads
 /// those rows via `attachmentsForEntityProvider(photoSessionEntity)`.
+///
+/// TIMED PER-CHILD TURNS (docs/PHOTO_TURNS, opt-in via [turnSubjectId]):
+/// the same runner doubles as one child's locked turn. When [turnSubjectId]
+/// is set, the kid-lock auto-engages on mount, a [turnDuration] countdown
+/// shows in the camera chrome with the child's name + mission, and EVERY
+/// shot persisted this turn is stamped `captured_by_subject_id =
+/// turnSubjectId` + `schedule_block_id = scheduleBlockId` (the new tag axes)
+/// so each photo files into that child's progress folder. At 0 the camera
+/// hard-stops behind a "Time's up — give the phone to your teacher" overlay;
+/// staff reclaim via the hidden corner gesture and [onTurnEnded] pops back to
+/// the "Whose turn?" picker. Without [turnSubjectId] the runner behaves
+/// exactly as the plain Photo Studio (untouched).
 class PhotographyRunnerScreen extends ConsumerStatefulWidget {
   const PhotographyRunnerScreen({
     this.prompt = 'Capture what you see',
+    this.turnSubjectId,
+    this.turnSubjectName,
+    this.scheduleBlockId,
+    this.turnDuration = const Duration(minutes: 5),
+    this.onTurnEnded,
     super.key,
   });
 
   final String prompt;
+
+  /// When non-null, this run is ONE child's timed turn. Drives the auto
+  /// kid-lock, the countdown, and the per-shot `captured_by_subject_id`
+  /// stamp. Null ⇒ the plain, un-timed Photo Studio.
+  final String? turnSubjectId;
+
+  /// The child's display name, shown in the timer chrome ("Maya's turn ·
+  /// 4:32"). Only read when [turnSubjectId] is set.
+  final String? turnSubjectName;
+
+  /// The block this turn belongs to (stamped onto every shot as
+  /// `schedule_block_id`). Null for an ad-hoc turn with no block.
+  final String? scheduleBlockId;
+
+  /// How long the locked turn lasts before the hard-stop. Defaults to the
+  /// 5-minute classroom default; a const so it's tunable per launch.
+  final Duration turnDuration;
+
+  /// Called once the turn is OVER and staff have reclaimed the phone (after
+  /// the hard-stop, on the staff-corner unlock). The picker uses this to mark
+  /// the child done and return to the roster. Null for a standalone turn.
+  final VoidCallback? onTurnEnded;
+
+  /// True when launched as a timed per-child turn.
+  bool get isTurn => turnSubjectId != null;
 
   @override
   ConsumerState<PhotographyRunnerScreen> createState() =>
@@ -82,8 +125,13 @@ enum _CamStatus { initializing, ready, denied, unavailable }
 /// offline upload patches the right row (see CLAUDE.md "Offline
 /// attachment uploads").
 class _Shot {
-  _Shot(this.bytes, {required this.file, required this.aspectRatio})
-    : capturedAt = DateTime.now();
+  _Shot(
+    this.bytes, {
+    required this.file,
+    required this.aspectRatio,
+    this.capturedBySubjectId,
+    this.scheduleBlockId,
+  }) : capturedAt = DateTime.now();
 
   final Uint8List bytes;
   final XFile file;
@@ -92,6 +140,15 @@ class _Shot {
   String reflection = '';
   bool shared = false;
   String? attachmentId;
+
+  /// The turn's child id + block, SNAPSHOTTED on the shot at capture time —
+  /// NOT re-read from `widget` at persist time. A deferred/in-flight
+  /// `_persistShot` must stamp the child who actually took the photo even if
+  /// the widget were ever recycled with a different turn (hot reload / OS
+  /// resurrection). Null in the plain Photo Studio. This is the privacy
+  /// guarantee that one child's shot can never file into another's folder.
+  final String? capturedBySubjectId;
+  final String? scheduleBlockId;
 }
 
 class _PhotographyRunnerScreenState
@@ -159,7 +216,22 @@ class _PhotographyRunnerScreenState
   // matchedLocation is '/activity/photo' even when the URL carries
   // `?prompt=…`. Pinning the prompt'd URL would never match → infinite
   // redirect loop.
+  //
+  // This is the DEFAULT pin for the plain Photo Studio, reached directly at
+  // `/activity/photo`. A TIMED TURN is pushed imperatively ON TOP of the
+  // picker's route (`/activity/photo-turns`), so its matchedLocation is the
+  // picker's — pinning '/activity/photo' there would make the redirect bounce
+  // the whole stack to the plain studio. So in turn mode we pin the LIVE
+  // location instead (see `_resolvePinnedRoute`).
   static const String _lockedRoute = '/activity/photo';
+
+  /// The route the kid-lock pins — the location the redirect refuses to leave.
+  /// Defaults to [_lockedRoute] (plain studio); a timed turn overwrites it
+  /// with the live shell location at lock time so the redirect targets where
+  /// the runner actually sits (the picker's `/activity/photo-turns`), not the
+  /// plain studio. Captured BEFORE any `ref`/context use in dispose, so dispose
+  /// (which clears with `pin(null)`, route-agnostic) never reads it.
+  String _pinnedRoute = _lockedRoute;
 
   /// Notifiers cached EAGERLY in initState — a plain `ref.read` there is
   /// safe, but `ref` in dispose is not (Riverpod: "save the provider state in
@@ -174,8 +246,17 @@ class _PhotographyRunnerScreenState
 
   /// True once THIS screen has engaged the lock (drives the visible lock
   /// chip + which PopScope branch wins). Mirrors `kidModeProvider` but is a
-  /// local flag so dispose never has to read a provider.
+  /// local flag so dispose never has to read a provider. In a timed turn it's
+  /// set SYNCHRONOUSLY in initState so PopScope blocks back from frame 0; the
+  /// provider write is what `_engageKidLock` actually performs (guarded by
+  /// [_lockEngaged], not this flag).
   bool _locked = false;
+
+  /// Whether the kid-mode PROVIDER write (enter + pin) has fired. Distinct from
+  /// [_locked]: a timed turn pre-sets `_locked` for the PopScope guard before
+  /// the deferred `_engageKidLock` does the provider write, so the double-engage
+  /// guard keys on THIS flag instead.
+  bool _lockEngaged = false;
 
   /// Hidden staff exit: five quick taps in the top-left corner, each within
   /// [_staffTapWindow] of the last, so a kid mashing the corner can't
@@ -185,6 +266,22 @@ class _PhotographyRunnerScreenState
   bool _exitDialogOpen = false;
   static const int _staffTapTarget = 5;
   static const Duration _staffTapWindow = Duration(milliseconds: 800);
+
+  // ── Timed per-child turn (opt-in, when widget.isTurn) ────────────────
+  // A single countdown drives the whole turn. It's a one-second periodic
+  // Timer (never two at once — _startCountdown cancels first), every tick is
+  // mounted-guarded, and it's torn down in dispose AND the instant it hits 0.
+  // When it hits 0 we set _timeUp (the hard-stop) and DON'T release the lock —
+  // the kid keeps the phone but can't shoot; staff reclaim via the corner.
+  Timer? _countdown;
+
+  /// Seconds left in this turn. Seeded from `widget.turnDuration` in
+  /// initState; only meaningful when `widget.isTurn`.
+  int _secondsLeft = 0;
+
+  /// True once the countdown has reached 0 — the hard-stop. Blocks the
+  /// shutter and paints the "Time's up" overlay over the camera.
+  bool _timeUp = false;
 
   @override
   void initState() {
@@ -199,6 +296,25 @@ class _PhotographyRunnerScreenState
     // surface is opt-in / teacher-run by default).
     _kidMode = ref.read(kidModeProvider.notifier);
     _kidLockedRoute = ref.read(kidModeLockedRouteProvider.notifier);
+    // A timed turn auto-locks + starts its countdown — the child is handed a
+    // phone that's already in their turn.
+    if (widget.isTurn) {
+      _secondsLeft = widget.turnDuration.inSeconds;
+      // Set `_locked` SYNCHRONOUSLY so PopScope blocks system-back from the
+      // very first frame — otherwise there's a one-frame window before the
+      // post-frame lock fires where `canPop` is true and a fast back escapes
+      // the turn. The provider WRITE (kidModeProvider/pin) still defers to the
+      // post-frame microtask: initState runs inside the parent's build phase,
+      // and kidModeProvider is watched by AppShell, so a synchronous write
+      // would trip "modified a provider while building". Pin resolution needs
+      // a valid context (GoRouterState), which the post-frame callback has.
+      _locked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _engageKidLock();
+      });
+      _startCountdown();
+    }
     unawaited(_initCamera());
   }
 
@@ -214,7 +330,7 @@ class _PhotographyRunnerScreenState
       // expose staff chrome with the kid still holding the phone.
       if (_locked && mounted) {
         _kidMode.enter();
-        _kidLockedRoute.pin(_lockedRoute);
+        _kidLockedRoute.pin(_pinnedRoute);
       }
       if (_run.current.mode == ActivityMode.shoot) {
         unawaited(_initCamera());
@@ -229,14 +345,17 @@ class _PhotographyRunnerScreenState
     // strands the whole app in kid mode (AppShell would keep chrome stripped
     // on every staff screen). Cached notifiers — never `ref` in dispose.
     // exit()/pin(null) are idempotent, so this is safe even when already
-    // unlocked. Guarded by `_locked` so a never-locked run is a no-op.
-    if (_locked) {
+    // unlocked. Guarded so a never-locked run is a no-op; covers both the
+    // PopScope flag and the provider-write flag so neither path strands kid
+    // mode.
+    if (_locked || _lockEngaged) {
       _kidMode.exit();
       _kidLockedRoute.pin(null);
     }
     _staffTapReset?.cancel();
     _focusTimer?.cancel();
     _slideTimer?.cancel();
+    _countdown?.cancel();
     _viewerPage?.dispose();
     _slidePage?.dispose();
     _filmstrip.dispose();
@@ -319,8 +438,18 @@ class _PhotographyRunnerScreenState
   /// this ever moves into a build-adjacent callback; the `mounted` guard
   /// covers a same-frame pop.
   void _engageKidLock() {
-    if (_locked) return;
-    setState(() => _locked = true);
+    if (_lockEngaged) return;
+    _lockEngaged = true;
+    // Resolve the route to pin BEFORE the microtask, while context is valid.
+    // A timed turn pins the LIVE shell location (the picker's route the runner
+    // was pushed over) so the redirect targets here, not the plain studio.
+    _pinnedRoute = _resolvePinnedRoute();
+    // `_locked` is already true in a timed turn (set in initState); setState
+    // here covers the opt-in "Hand to the kids" path and is a harmless no-op
+    // when already locked.
+    if (!_locked) {
+      setState(() => _locked = true);
+    }
     _staffTapCount = 0;
     _exitDialogOpen = false;
     unawaited(HapticFeedback.mediumImpact());
@@ -329,7 +458,7 @@ class _PhotographyRunnerScreenState
         if (!mounted) return;
         try {
           _kidMode.enter();
-          _kidLockedRoute.pin(_lockedRoute);
+          _kidLockedRoute.pin(_pinnedRoute);
         } on Object catch (e, st) {
           if (kDebugMode) {
             debugPrint('[photography] kid-lock enter failed: $e\n$st');
@@ -339,14 +468,33 @@ class _PhotographyRunnerScreenState
     );
   }
 
+  /// The route the redirect should pin to. The plain studio (reached directly
+  /// at `/activity/photo`) pins that constant. A timed turn is pushed
+  /// imperatively over the picker, so its matchedLocation is the picker's
+  /// (`/activity/photo-turns`) — pin THAT so the redirect doesn't bounce the
+  /// stack to the plain studio. Reads the live location defensively; falls
+  /// back to the constant if the router state can't be read.
+  String _resolvePinnedRoute() {
+    if (!widget.isTurn) return _lockedRoute;
+    try {
+      final path = GoRouterState.of(context).uri.path;
+      return path.isEmpty ? _lockedRoute : path;
+    } on Object catch (_) {
+      // Defensive: if GoRouterState isn't available for any reason, fall back
+      // to the picker route by name so the pin is at least plausible.
+      return '/activity/photo-turns';
+    }
+  }
+
   /// Release the lock (staff unlocked via the corner gesture). Clears the
   /// pin BEFORE anything else so the router stops bouncing nav, exits kid
   /// mode (AppShell restores chrome), and flips the local flag so the
   /// runner's normal PopScope behaviour resumes. Idempotent.
   void _releaseKidLock() {
-    if (!_locked) return;
+    if (!_locked && !_lockEngaged) return;
     _kidLockedRoute.pin(null);
     _kidMode.exit();
+    _lockEngaged = false;
     if (mounted) setState(() => _locked = false);
   }
 
@@ -383,9 +531,19 @@ class _PhotographyRunnerScreenState
           case KidModeExitResult.unlocked:
           case KidModeExitResult.noPinConfigured:
             _releaseKidLock();
-            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-              const SnackBar(content: Text('Unlocked. Press back to exit.')),
-            );
+            // In a timed turn, the corner-unlock is the staff "reclaim the
+            // phone" gesture — whether the buzzer fired or staff cut it short.
+            // Release the lock, then hand control back to the picker (mark this
+            // child done + return to the roster) instead of stranding staff on
+            // a now-unlocked camera. `_releaseKidLock` already cleared the pin,
+            // so `_endTurn`'s pop won't fight the router redirect.
+            if (widget.isTurn) {
+              _endTurn();
+            } else {
+              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                const SnackBar(content: Text('Unlocked. Press back to exit.')),
+              );
+            }
           case KidModeExitResult.cancelled:
             break;
         }
@@ -398,6 +556,62 @@ class _PhotographyRunnerScreenState
       _staffTapCount = 0;
       _staffTapReset = null;
     });
+  }
+
+  // ── Timed-turn countdown ─────────────────────────────────────────────
+
+  /// (Re)start the turn countdown. Cancels any prior timer first so two can
+  /// never run at once. Each tick decrements `_secondsLeft`, guards on
+  /// `mounted`, and at 0 cancels itself and raises the hard-stop. A no-op
+  /// when this isn't a timed turn.
+  void _startCountdown() {
+    if (!widget.isTurn) return;
+    _countdown?.cancel();
+    _countdown = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_secondsLeft <= 1) {
+        timer.cancel();
+        _countdown = null;
+        setState(() {
+          _secondsLeft = 0;
+          _timeUp = true;
+        });
+        // Close any open viewer/present so the hard-stop is the only thing on
+        // screen — a kid shouldn't keep curating past the buzzer.
+        if (_viewingIndex != null) _closeViewer();
+        if (_presenting) _closePresentation();
+        unawaited(HapticFeedback.heavyImpact());
+        return;
+      }
+      setState(() => _secondsLeft -= 1);
+    });
+  }
+
+  /// `mm:ss` for the chrome timer. Clamps at 0 so a late tick can't render
+  /// a negative.
+  String _formatCountdown(int seconds) {
+    final s = seconds < 0 ? 0 : seconds;
+    final m = s ~/ 60;
+    final r = s % 60;
+    return '$m:${r.toString().padLeft(2, '0')}';
+  }
+
+  /// The turn is over and staff have reclaimed the phone (corner-unlock after
+  /// the buzzer). Hand control back to the picker, which marks this child done
+  /// and returns to the roster. Falls back to a plain pop if no callback was
+  /// wired (standalone turn).
+  void _endTurn() {
+    _countdown?.cancel();
+    _countdown = null;
+    final cb = widget.onTurnEnded;
+    if (cb != null) {
+      cb();
+    } else if (mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<double> _aspectRatioOf(Uint8List bytes) async {
@@ -416,6 +630,10 @@ class _PhotographyRunnerScreenState
   }
 
   Future<void> _shoot() async {
+    // Hard-stop: once the turn's buzzer has fired, the shutter is dead. The
+    // overlay also blocks the tap visually, but guard here too so a queued
+    // gesture can't sneak a frame in after time.
+    if (_timeUp) return;
     final c = _controller;
     if (c == null ||
         !c.value.isInitialized ||
@@ -429,7 +647,33 @@ class _PhotographyRunnerScreenState
       final bytes = await shot.readAsBytes();
       final ar = await _aspectRatioOf(bytes);
       if (!mounted) return;
-      setState(() => _shots.add(_Shot(bytes, file: shot, aspectRatio: ar)));
+      // Re-check the buzzer AFTER the (async) capture: a `takePicture()` that
+      // was already in flight when time ran out must NOT land as a post-buzzer
+      // shot. Drop the frame silently — the turn is over.
+      if (_timeUp) return;
+      // Snapshot the turn's child + block onto the shot NOW, so persistence
+      // stamps the child who actually took it regardless of any later widget
+      // change (the cross-child-leak guard).
+      final newShot = _Shot(
+        bytes,
+        file: shot,
+        aspectRatio: ar,
+        capturedBySubjectId: widget.turnSubjectId,
+        scheduleBlockId: widget.scheduleBlockId,
+      );
+      setState(() => _shots.add(newShot));
+      // In a timed turn, EVERY shot files into the child's folder — persist it
+      // immediately (stamped with capturedBySubjectId) so nothing the child
+      // captures in their five minutes is lost, and the review can show their
+      // full set. Favorites are chosen later, in the review. (In the plain
+      // Photo Studio, persistence stays opt-in via the share heart.)
+      if (widget.isTurn) {
+        // A turn shot is a keeper by default + gets its stable attachment id.
+        newShot
+          ..shared = true
+          ..attachmentId = const Uuid().v4();
+        unawaited(_persistShot(newShot));
+      }
       unawaited(HapticFeedback.mediumImpact());
       // Slide the filmstrip to the freshest shot.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -561,6 +805,14 @@ class _PhotographyRunnerScreenState
         entityId: photoSessionEntity.id,
         url: url,
         caption: shot.reflection.trim().isEmpty ? null : shot.reflection.trim(),
+        // Per-child turn tags (migration 20260621000001): stamp WHO shot it
+        // (their progress folder, read by attachmentsCapturedByProvider) and
+        // WHICH block it came from. Read from the SHOT (snapshotted at capture),
+        // never `widget`, so an in-flight persist can't mis-stamp if the widget
+        // is ever recycled. Null in the plain Photo Studio. This is the keystone
+        // of the timed turns — every shot files into the child's folder.
+        capturedBySubjectId: shot.capturedBySubjectId,
+        scheduleBlockId: shot.scheduleBlockId,
       );
     } on Object catch (e, st) {
       // Roll back the de-dupe marker so a later re-share can retry the
@@ -625,6 +877,16 @@ class _PhotographyRunnerScreenState
                 Positioned.fill(
                   key: const ValueKey('photo-runner-viewer'),
                   child: _viewer(context),
+                ),
+              // The turn's hard-stop. Covers the camera (opaque) so the kid
+              // can't shoot once time's up; the only way forward is staff
+              // reclaiming via the corner. Below the locked-chip + corner so
+              // both stay reachable. A kid reads "give the phone to your
+              // teacher"; staff read the 5-tap hint.
+              if (_timeUp)
+                const Positioned.fill(
+                  key: ValueKey('photo-runner-times-up'),
+                  child: _TimesUpOverlay(),
                 ),
               // Visible "locked" cue — phase-independent (the top-bar lock
               // button only shows in the shoot view; gallery + present have no
@@ -748,7 +1010,16 @@ class _PhotographyRunnerScreenState
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _MissionBanner(prompt: widget.prompt)),
+              Expanded(
+                child: widget.isTurn
+                    ? _TurnBanner(
+                        name: widget.turnSubjectName ?? 'Their',
+                        prompt: widget.prompt,
+                        countdown: _formatCountdown(_secondsLeft),
+                        urgent: _secondsLeft <= 30,
+                      )
+                    : _MissionBanner(prompt: widget.prompt),
+              ),
               const SizedBox(width: 8),
               _CapButton(
                 icon: _flash == FlashMode.off
@@ -766,21 +1037,27 @@ class _PhotographyRunnerScreenState
                 tooltip: 'Flip camera',
                 onTap: () => unawaited(_switchCamera()),
               ),
-              const SizedBox(width: 8),
               // Opt-in kid lock. Once locked, the button stays in the bar as
               // the visible "locked" cue (filled amber lock). A kid CAN tap it,
               // but it CANNOT unlock — instead it surfaces the staff-exit
               // guidance (no silent no-op, per the interaction rules). The
               // only real way out is the hidden staff 5-tap corner. The camera
               // keeps running regardless.
-              _CapButton(
-                icon: _locked ? Icons.lock : Icons.lock_open_outlined,
-                active: _locked,
-                tooltip: _locked
-                    ? 'Locked — staff exit only'
-                    : 'Hand to the kids',
-                onTap: _locked ? _hintStaffExit : _engageKidLock,
-              ),
+              //
+              // Hidden in a timed turn: the lock auto-engages and the
+              // `_LockedChip` already shows the state, so a manual toggle is
+              // redundant noise on a child's locked turn.
+              if (!widget.isTurn) ...[
+                const SizedBox(width: 8),
+                _CapButton(
+                  icon: _locked ? Icons.lock : Icons.lock_open_outlined,
+                  active: _locked,
+                  tooltip: _locked
+                      ? 'Locked — staff exit only'
+                      : 'Hand to the kids',
+                  onTap: _locked ? _hintStaffExit : _engageKidLock,
+                ),
+              ],
             ],
           ),
         ),
@@ -807,24 +1084,47 @@ class _PhotographyRunnerScreenState
               padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
               child: Row(
                 children: [
-                  const SizedBox(width: 64),
+                  // Left slot: a non-interactive shot count in a turn (balances
+                  // the row); empty in the plain studio.
+                  SizedBox(
+                    width: 64,
+                    child: widget.isTurn
+                        ? Center(
+                            child: Text(
+                              '${_shots.length}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                          )
+                        : null,
+                  ),
                   Expanded(
                     child: Center(
                       child: _ShutterButton(busy: _shooting, onTap: _shoot),
                     ),
                   ),
+                  // Right slot: the kid-tappable "Done" ends the plain studio
+                  // session. HIDDEN in a turn — a turn ends on the buzzer or a
+                  // staff corner-unlock, never a kid tap, so a child can't cut
+                  // their own time short or escape into the curate flow.
                   SizedBox(
                     width: 64,
-                    child: TextButton(
-                      onPressed: _finishShooting,
-                      child: const Text(
-                        'Done',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+                    child: widget.isTurn
+                        ? null
+                        : TextButton(
+                            onPressed: _finishShooting,
+                            child: const Text(
+                              'Done',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -1670,6 +1970,158 @@ class _MissionBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The timed-turn header — the child's name, a big live countdown, and the
+/// mission, in one card the kid (and the room) read at a glance. White-on-dark
+/// hardcode is correct: this is the raw camera canvas on the theme allowlist,
+/// and it must read over a live feed. The countdown flips to a warm red in the
+/// final 30 s so "wrap it up" reads without watching the digits.
+class _TurnBanner extends StatelessWidget {
+  const _TurnBanner({
+    required this.name,
+    required this.prompt,
+    required this.countdown,
+    required this.urgent,
+  });
+
+  final String name;
+  final String prompt;
+  final String countdown;
+  final bool urgent;
+
+  @override
+  Widget build(BuildContext context) {
+    final timerColor = urgent ? const Color(0xFFFF6B6B) : Colors.white;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  '$name’s turn',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(Icons.timer_outlined, color: timerColor, size: 18),
+              const SizedBox(width: 4),
+              Text(
+                countdown,
+                style: TextStyle(
+                  color: timerColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            prompt,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              height: 1.15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The turn's hard-stop overlay — a calm, opaque full-screen "Time's up" the
+/// kid reads when the buzzer fires. It blocks the camera (no more shooting);
+/// the only way forward is staff reclaiming the phone via the hidden corner.
+/// Raw-canvas white-on-dark (theme allowlist). A second line tells staff how
+/// to reclaim, so the screen is never a dead end.
+class _TimesUpOverlay extends StatelessWidget {
+  const _TimesUpOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      // Opaque (not translucent) so the kid can't peek at the camera and keep
+      // composing — the turn is genuinely over.
+      color: const Color(0xFF101216),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.amberAccent.withValues(alpha: 0.18),
+                  ),
+                  child: const Icon(
+                    Icons.timer_off_outlined,
+                    color: Colors.amberAccent,
+                    size: 44,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Time’s up!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Give the phone to your teacher.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  'Staff: tap the top-left corner 5 times to take the next turn.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

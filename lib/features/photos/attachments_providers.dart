@@ -12,38 +12,51 @@ typedef AttachmentEntity = ({String kind, String id});
 /// `sort_order` (nulls last) then `created_at`.
 // Riverpod 3 family providers don't have a stable public-typed name.
 // ignore: specify_nonobvious_property_types
-final attachmentsForEntityProvider =
-    StreamProvider.autoDispose.family<List<Attachment>, AttachmentEntity>(
-  (ref, key) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.attachmentsDao.watchFor(
-      entityKind: key.kind,
-      entityId: key.id,
+final attachmentsForEntityProvider = StreamProvider.autoDispose
+    .family<List<Attachment>, AttachmentEntity>(
+      (ref, key) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.attachmentsDao.watchFor(
+          entityKind: key.kind,
+          entityId: key.id,
+        );
+      },
     );
-  },
-);
 
 /// Every photo a child SHOT — their progress folder (the per-child media
 /// collection that feeds the growth book). Keyed on the subject id.
 // ignore: specify_nonobvious_property_types
-final attachmentsCapturedByProvider =
-    StreamProvider.autoDispose.family<List<Attachment>, String>(
-  (ref, subjectId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.attachmentsDao.watchCapturedBy(subjectId);
-  },
-);
+final attachmentsCapturedByProvider = StreamProvider.autoDispose
+    .family<List<Attachment>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.attachmentsDao.watchCapturedBy(subjectId);
+      },
+    );
+
+/// A child's progress folder, FAVORITES-FIRST. Same rows as
+/// [attachmentsCapturedByProvider] but ordered so hearted photos (written
+/// `sort_order = 0` by the photo-turns review) float to the top. Used by the
+/// per-child folder view in the timed-turns review.
+// ignore: specify_nonobvious_property_types
+final attachmentsCapturedByCuratedProvider = StreamProvider.autoDispose
+    .family<List<Attachment>, String>(
+      (ref, subjectId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.attachmentsDao.watchCapturedByCurated(subjectId);
+      },
+    );
 
 /// Every photo from a schedule block — the activity's package (seam 3: the
 /// captures a block produced). Keyed on the block id.
 // ignore: specify_nonobvious_property_types
-final attachmentsForBlockProvider =
-    StreamProvider.autoDispose.family<List<Attachment>, String>(
-  (ref, blockId) async* {
-    final db = await ref.watch(appDatabaseProvider.future);
-    yield* db.attachmentsDao.watchForBlock(blockId);
-  },
-);
+final attachmentsForBlockProvider = StreamProvider.autoDispose
+    .family<List<Attachment>, String>(
+      (ref, blockId) async* {
+        final db = await ref.watch(appDatabaseProvider.future);
+        yield* db.attachmentsDao.watchForBlock(blockId);
+      },
+    );
 
 /// Convenience extension: extract just the URLs in order. Handy
 /// because most UI surfaces just want a `List<String>` for the
@@ -53,8 +66,8 @@ extension AttachmentsX on List<Attachment> {
 
   /// Like `urls` but prefers `thumb_url` when available — used by
   /// thumbnail strips so a list view doesn't pull the full-res image.
-  List<String> get thumbUrls => map((a) => a.thumbUrl ?? a.url)
-      .toList(growable: false);
+  List<String> get thumbUrls =>
+      map((a) => a.thumbUrl ?? a.url).toList(growable: false);
 }
 
 /// Mutators for attachments. Upload bytes happens in `PhotoService`;
@@ -99,7 +112,8 @@ class AttachmentActions {
     // so a deferred (offline) upload's queue-side `updateUrl(id)` patches THIS
     // row. Default: a fresh id.
     final attachmentId = id ?? _uuid.v4();
-    final effectiveSort = sortOrder ?? await _nextSortOrder(db, entityKind, entityId);
+    final effectiveSort =
+        sortOrder ?? await _nextSortOrder(db, entityKind, entityId);
     await db.attachmentsDao.create(
       id: attachmentId,
       spaceId: spaceId,
@@ -158,5 +172,6 @@ class AttachmentActions {
   }
 }
 
-final attachmentActionsProvider =
-    Provider<AttachmentActions>(AttachmentActions.new);
+final attachmentActionsProvider = Provider<AttachmentActions>(
+  AttachmentActions.new,
+);

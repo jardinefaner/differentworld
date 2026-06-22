@@ -225,6 +225,21 @@ final List<SlashCommand> allSlashCommands = <SlashCommand>[
         unawaited(ctx.push('/activity/photo$q'));
       },
     ),
+  // Per-child timed turns — one phone, each child gets five locked minutes,
+  // then a favorites review. Same camera-platform gate as /photo.
+  if (isMobileCapturePlatform)
+    SlashCommand(
+      name: 'phototurns',
+      label: '/phototurns {prompt}',
+      hint: 'Each child gets a timed photo turn',
+      icon: Icons.timer_outlined,
+      aliases: const ['turns', 'cameraturns', 'phototurn'],
+      exec: (ctx, _, args) {
+        final p = (args ?? '').trim();
+        final q = p.isEmpty ? '' : '?prompt=${Uri.encodeComponent(p)}';
+        unawaited(ctx.push('/activity/photo-turns$q'));
+      },
+    ),
   SlashCommand(
     name: 'thisorthat',
     label: '/thisorthat',
