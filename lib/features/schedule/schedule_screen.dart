@@ -1429,7 +1429,11 @@ class _EventBanner extends ConsumerWidget {
         ],
       ),
     );
-    if (ok == true) {
+    // Guard the cross-await gap: `_EventBanner` is a ConsumerWidget (no
+    // `mounted`), and the banner can unmount while the dialog is open (e.g. the
+    // date scrubber changes the day mid-dialog) — firing the delete against a
+    // deactivated tree. `context.mounted` is the per-context equivalent.
+    if (ok == true && context.mounted) {
       await ref.read(eventActionsProvider).delete_(e.id);
     }
   }
