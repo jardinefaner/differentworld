@@ -15,6 +15,7 @@ import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/block_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
+import 'package:differentworld/features/schedule/trip_map_tile.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
 import 'package:differentworld/features/supplies/activity_supplies_providers.dart';
 import 'package:differentworld/features/supplies/supplies_providers.dart';
@@ -308,13 +309,21 @@ class BlockRunSheetScreen extends ConsumerWidget {
           onTap: () => _capture(context),
         ),
       ),
-      // TRIP appends its prep tiles — a live "Where" + the door into the full
-      // headcount / slips / vehicles screen.
+      // TRIP appends its own surfaces — the live MAP (its hero: destination +
+      // "we're here" pins, GPS pin-drop + directions) above the door into the
+      // full headcount / slips / vehicles screen. The map folds in the old
+      // "Where" line as its caption, so there's no separate destination tile.
       if (block.kind == BlockKind.fieldTrip) ...[
         BentoTile(
-          id: 'trip-where',
-          span: const BentoSpan(phone: 1),
-          child: _TripWhereTile(block: block, location: location),
+          id: 'trip-map',
+          span: const BentoSpan.wide(),
+          child: TripMapTile(
+            block: block,
+            // The caption name: the activity-resolved block title (the trip's
+            // own name), so "Lincoln Park Zoo" sits under the map. The map's
+            // own watch supplies the live address line beneath it.
+            destinationName: title,
+          ),
         ),
         BentoTile(
           id: 'trip-prep',
@@ -1370,90 +1379,6 @@ class _SuppliesTile extends ConsumerWidget {
                       ),
                   ],
                 ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// "Where" — a field trip's destination, LIVE. Reads
-/// [tripLogisticsForBlockProvider] for the trip's destination + address; falls
-/// back to the block's effective [location] name, else a calm "set the
-/// destination" prompt. An INFO tile (not tappable — the prep tile is the door
-/// into editing).
-class _TripWhereTile extends ConsumerWidget {
-  const _TripWhereTile({required this.block, required this.location});
-
-  final ScheduleBlock block;
-  final Location? location;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final logisticsAsync = ref.watch(tripLogisticsForBlockProvider(block.id));
-    final logistics = logisticsAsync.value;
-
-    final dest = logistics?.destination.trim() ?? '';
-    final address = logistics?.destinationAddress?.trim() ?? '';
-    // Distinguish "still loading" from a genuine empty: only say "not set yet"
-    // once the watch has resolved (a synchronous block location short-circuits
-    // both). Otherwise a cold-launch flash reads as "not set" on a trip whose
-    // destination is about to arrive — actionable copy a director might act on.
-    final where = dest.isNotEmpty
-        ? dest
-        : location?.name ??
-              (logisticsAsync.isLoading
-                  ? 'Checking…'
-                  : 'Destination not set yet');
-
-    return Semantics(
-      label: 'Where: $where${address.isNotEmpty ? ', $address' : ''}',
-      child: Material(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  BentoModuleIcon(
-                    icon: Icons.place_outlined,
-                    tint: scheme.surfaceContainerLow,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Where',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: scheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                where,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface,
-                ),
-              ),
-              if (address.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  address,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
