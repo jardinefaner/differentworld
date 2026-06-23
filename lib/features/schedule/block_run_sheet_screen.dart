@@ -9,6 +9,7 @@ import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
 import 'package:differentworld/features/curricula/session_script.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
+import 'package:differentworld/features/guardians/guardians_providers.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
@@ -23,11 +24,15 @@ import 'package:differentworld/shared/breakpoints.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/bento_grid.dart';
 import 'package:differentworld/shared/widgets/bento_module.dart';
+import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
+import 'package:differentworld/shared/widgets/empty_state.dart';
+import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Args for the Block Run Sheet route, passed via go_router `extra`.
 /// Carries the whole [ScheduleBlock] so the sheet resolves its linked
@@ -310,8 +315,9 @@ class BlockRunSheetScreen extends ConsumerWidget {
         ),
       ),
       // TRIP appends its own surfaces — the live MAP (its hero: destination +
-      // "we're here" pins, GPS pin-drop + directions) above the door into the
-      // full headcount / slips / vehicles screen. The map folds in the old
+      // "we're here" pins, GPS pin-drop + directions), then the three trip
+      // TOOLS (count heads · emergency · notify families), then the door into
+      // the full headcount / slips / vehicles screen. The map folds in the old
       // "Where" line as its caption, so there's no separate destination tile.
       if (block.kind == BlockKind.fieldTrip) ...[
         BentoTile(
@@ -324,6 +330,33 @@ class BlockRunSheetScreen extends ConsumerWidget {
             // own watch supplies the live address line beneath it.
             destinationName: title,
           ),
+        ),
+        // Count heads — a glance (live N) + the door into the headcount
+        // roll-call that already lives on the trip screen. Not a new store.
+        BentoTile(
+          id: 'trip-headcount',
+          span: const BentoSpan(phone: 1),
+          child: _TripHeadcountTile(
+            block: block,
+            onTap: () => _openTrip(context),
+          ),
+        ),
+        // Emergency — the safety one-tap: each child's allergies / medical
+        // note + a one-tap call to a linked guardian. Strong error tone.
+        BentoTile(
+          id: 'trip-emergency',
+          span: const BentoSpan(phone: 1),
+          child: _TripEmergencyTile(
+            block: block,
+            onTap: () => _openEmergency(context),
+          ),
+        ),
+        // Notify families — open the daily recap composer for this cohort
+        // (the existing send-the-family-their-child's-day surface).
+        BentoTile(
+          id: 'trip-notify',
+          span: const BentoSpan(phone: 1),
+          child: _TripNotifyTile(onTap: () => _openRecap(context)),
         ),
         BentoTile(
           id: 'trip-prep',
@@ -350,6 +383,31 @@ class BlockRunSheetScreen extends ConsumerWidget {
   void _openTrip(BuildContext context) {
     unawaited(HapticFeedback.selectionClick());
     unawaited(context.push('/trips/${block.id}'));
+  }
+
+  /// Open the trip's EMERGENCY card — each roster child's allergies / medical
+  /// note + a one-tap call to a linked guardian. Pushed imperatively (the way
+  /// `_openReview` opens the turns review) so it needs no router wiring; the
+  /// screen reads everything live off Drift watches, so it works offline.
+  void _openEmergency(BuildContext context) {
+    unawaited(HapticFeedback.selectionClick());
+    unawaited(
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => _EmergencyContactsScreen(groupId: block.groupId),
+        ),
+      ),
+    );
+  }
+
+  /// Open the daily RECAP composer for this trip's cohort — the existing
+  /// "send each family their child's day" surface (`/recap?group=…`). The
+  /// trip's "Arrived safe" / "Heading back" note rides that flow; the
+  /// composer takes no prefill hint today, so we just open it scoped to the
+  /// group (noted in the report).
+  void _openRecap(BuildContext context) {
+    unawaited(HapticFeedback.selectionClick());
+    unawaited(context.push('/recap?group=${block.groupId}'));
   }
 
   void _openEdit(BuildContext context) {
@@ -1450,6 +1508,477 @@ class _TripPrepTile extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// "Count heads" — a glance + a door. Shows the live roster size N and the
+/// three checkpoints the trip screen's headcount roll-call already covers
+/// (at leaving · arrived · before back), then taps INTO that screen. This is
+/// deliberately NOT a new checkpoint store — the count lives on the trip
+/// screen (`TripHeadcountSection`); this tile is the entry point + the glance.
+class _TripHeadcountTile extends ConsumerWidget {
+  const _TripHeadcountTile({required this.block, required this.onTap});
+
+  final ScheduleBlock block;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final roster =
+        ref.watch(subjectsInGroupProvider(block.groupId)).value ??
+        const <Subject>[];
+    final n = roster.length;
+    final kidsLabel = n == 1 ? '1 kid' : '$n kids';
+
+    return BentoModule(
+      background: scheme.surfaceContainerHighest,
+      foreground: scheme.onSurface,
+      onTap: onTap,
+      semanticLabel:
+          'Count heads — $kidsLabel, at leaving, arrived, and before back',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoModuleIcon(
+                icon: Icons.groups_2_outlined,
+                tint: scheme.surfaceContainerLow,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Count heads',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '$kidsLabel · at leaving · arrived · before back',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Emergency" — the safety one-tap. A strong error-toned tile carrying the
+/// count of roster kids who have an allergy / medical note, tapping into the
+/// [_EmergencyContactsScreen] (per-child medical + a one-tap call to a linked
+/// guardian). The one tile on the trip tray that earns the error container —
+/// it's the "something's wrong, who do I call" card.
+class _TripEmergencyTile extends ConsumerWidget {
+  const _TripEmergencyTile({required this.block, required this.onTap});
+
+  final ScheduleBlock block;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final roster =
+        ref.watch(subjectsInGroupProvider(block.groupId)).value ??
+        const <Subject>[];
+    // {k} = roster kids with a non-empty allergy OR medical-conditions note.
+    // Allergies ride their own `subjects.allergies` column; medical conditions
+    // live in the caps bag (SubjectCaps.medicalConditions).
+    final k = roster.where(_hasMedicalNote).length;
+    final subtitle = k == 0
+        ? 'Who to call'
+        : '${k == 1 ? '1 allergy' : '$k allergies'} · who to call';
+
+    // Error container is the seeded "danger" pair — onErrorContainer always
+    // clears AA on it, so the foreground rides that the same way the hero
+    // rides onTertiaryContainer.
+    final fg = scheme.onErrorContainer;
+    return BentoModule(
+      background: scheme.errorContainer,
+      foreground: fg,
+      onTap: onTap,
+      semanticLabel: 'Emergency — $subtitle',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoModuleIcon(
+                icon: Icons.emergency_outlined,
+                tint: scheme.error,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Emergency',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            // Full-strength fg (the seeded AA pair on errorContainer); size
+            // carries the hierarchy, not a dimmed alpha that could fail AA.
+            style: theme.textTheme.bodyMedium?.copyWith(color: fg),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Notify families" — opens the daily RECAP composer for the cohort, the
+/// existing "send each family their child's day" surface. The trip's
+/// "Arrived safe" / "Heading back" note rides that flow.
+class _TripNotifyTile extends StatelessWidget {
+  const _TripNotifyTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return BentoModule(
+      background: scheme.surfaceContainerHighest,
+      foreground: scheme.onSurface,
+      onTap: onTap,
+      semanticLabel:
+          'Notify families — send the cohort a quick update like '
+          'arrived safe or heading back',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoModuleIcon(
+                icon: Icons.outgoing_mail,
+                tint: scheme.surfaceContainerLow,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Notify families',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '“Arrived safe” · “Heading back”',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// True when a subject carries any allergy or medical-conditions note. Drives
+/// the emergency tile's count + the per-child medical line on the screen.
+bool _hasMedicalNote(Subject s) {
+  final allergies = s.allergies?.trim() ?? '';
+  final conditions =
+      s.caps.getString(SubjectCaps.medicalConditions)?.trim() ?? '';
+  return allergies.isNotEmpty || conditions.isNotEmpty;
+}
+
+/// The EMERGENCY card — pushed from the trip tray. One row per roster child:
+/// their allergies / medical-conditions / emergency-instructions note, plus a
+/// one-tap CALL to each linked guardian (a `tel:` launch). The data is rich
+/// (allergies on `subjects.allergies`; conditions + instructions in the caps
+/// bag; guardians via [guardiansForSubjectProvider]) — so this surfaces it all
+/// rather than only deep-linking out. A child with no medical note still shows,
+/// with their guardians, because "who to call" matters for every kid.
+///
+/// Offline-first: roster + per-child guardians are Drift watches; nothing
+/// awaits the network. No PII is ever logged — phone numbers / allergies stay
+/// on-screen only.
+class _EmergencyContactsScreen extends ConsumerWidget {
+  const _EmergencyContactsScreen({required this.groupId});
+
+  final String groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roster =
+        ref.watch(subjectsInGroupProvider(groupId)).value ?? const <Subject>[];
+    return EdgeScaffold(
+      body: SafeArea(
+        bottom: false,
+        child: roster.isEmpty
+            ? const Center(
+                child: EmptyState(
+                  icon: Icons.emergency_outlined,
+                  title: 'No children on this roster',
+                  message:
+                      'Assign children to this cohort and their allergies and '
+                      'emergency contacts will show here.',
+                ),
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                children: [
+                  const ContentHeader(
+                    title: 'Emergency',
+                    subtitle:
+                        'Allergies, medical notes, and who to call — one tap '
+                        'to dial.',
+                  ),
+                  const SizedBox(height: 8),
+                  for (final subj in roster)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _EmergencyChildCard(subject: subj),
+                    ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+/// One child's emergency card — name + photo, their allergy / medical /
+/// emergency-instruction lines (only the ones present), then a call button per
+/// linked guardian. Guardians read live via [guardiansForSubjectProvider].
+class _EmergencyChildCard extends ConsumerWidget {
+  const _EmergencyChildCard({required this.subject});
+
+  final Subject subject;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final caps = subject.caps;
+
+    final allergies = subject.allergies?.trim() ?? '';
+    final conditions =
+        caps.getString(SubjectCaps.medicalConditions)?.trim() ?? '';
+    final medications = caps.getString(SubjectCaps.medications)?.trim() ?? '';
+    final instructions =
+        caps.getString(SubjectCaps.emergencyInstructions)?.trim() ?? '';
+
+    final guardians =
+        ref.watch(guardiansForSubjectProvider(subject.id)).value ??
+        const <Guardian>[];
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                PersonAvatar(
+                  name: '${subject.firstName} ${subject.lastName}',
+                  photoUrl: subject.photoUrl,
+                  radius: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '${subject.firstName} ${subject.lastName}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Medical lines — each only when present. Allergies lead in the
+            // error tone (the "watch out" line); the rest are neutral.
+            if (allergies.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _MedicalLine(
+                icon: Icons.warning_amber_rounded,
+                label: 'Allergies',
+                value: allergies,
+                tone: scheme.error,
+              ),
+            ],
+            if (conditions.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _MedicalLine(
+                icon: Icons.medical_information_outlined,
+                label: 'Medical',
+                value: conditions,
+                tone: scheme.onSurfaceVariant,
+              ),
+            ],
+            if (medications.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _MedicalLine(
+                icon: Icons.medication_outlined,
+                label: 'Medications',
+                value: medications,
+                tone: scheme.onSurfaceVariant,
+              ),
+            ],
+            if (instructions.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _MedicalLine(
+                icon: Icons.assignment_outlined,
+                label: 'If something happens',
+                value: instructions,
+                tone: scheme.onSurfaceVariant,
+              ),
+            ],
+            const SizedBox(height: 12),
+            // Who to call — one row per linked guardian. A guardian with a
+            // phone gets a tappable call chip; one without is shown but
+            // disabled (so staff still see the contact exists).
+            if (guardians.isEmpty)
+              Text(
+                'No emergency contact on file — add a guardian on the '
+                "child's profile.",
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              )
+            else
+              for (final g in guardians) _GuardianCallRow(guardian: g),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A single labelled medical line — icon · label · value. The `tone` colours
+/// the icon + label (error for allergies, neutral for the rest); the value
+/// rides the full-strength on-surface so it never fails contrast.
+class _MedicalLine extends StatelessWidget {
+  const _MedicalLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.tone,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: tone),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurface,
+              ),
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: TextStyle(color: tone, fontWeight: FontWeight.w600),
+                ),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One guardian's call row — name + relationship, and a one-tap call button
+/// when a phone is on file. The button launches a `tel:` URL externally.
+/// Never logs the number.
+class _GuardianCallRow extends StatelessWidget {
+  const _GuardianCallRow({required this.guardian});
+
+  final Guardian guardian;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final phone = guardian.phone?.trim() ?? '';
+    final relationship = guardian.relationship?.trim() ?? '';
+    final hasPhone = phone.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  guardian.name,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  relationship.isNotEmpty
+                      ? (hasPhone ? '$relationship · $phone' : relationship)
+                      : (hasPhone ? phone : 'No phone on file'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          if (hasPhone)
+            FilledButton.tonalIcon(
+              onPressed: () => _call(phone),
+              icon: const Icon(Icons.call, size: 18),
+              label: const Text('Call'),
+            )
+          else
+            // Tap-target-sized disabled placeholder so the row stays aligned
+            // and the "no number" state is unmistakable.
+            const SizedBox(
+              height: 40,
+              child: Center(child: Icon(Icons.call_outlined)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Launch a `tel:` URL externally. Fire-and-forget — we don't block the UI
+  /// on the launch, and we NEVER log the number (PII).
+  void _call(String phone) {
+    unawaited(HapticFeedback.selectionClick());
+    final uri = Uri(scheme: 'tel', path: phone);
+    unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
   }
 }
 
