@@ -23,6 +23,7 @@ import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/semantics/noun_scope.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/day_tools_bento.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
@@ -602,12 +603,20 @@ class _CohortDay extends ConsumerWidget {
       },
       data: (blocks) {
         if (blocks.isEmpty) {
-          return EmptyState(
-            icon: Icons.event_available_outlined,
-            title: 'No blocks yet for ${group.name}',
-            message:
-                'Tap "+ Block" to add the first one. You set the time '
-                "range — there's no fixed grid.",
+          // Even an empty cohort keeps one-tap reach: the day's tools scroll
+          // below the empty state (docs/VISION.md: "everything one tap away").
+          return ListView(
+            padding: const EdgeInsets.only(bottom: 96),
+            children: [
+              EmptyState(
+                icon: Icons.event_available_outlined,
+                title: 'No blocks yet for ${group.name}',
+                message:
+                    'Tap "+ Block" to add the first one. You set the time '
+                    "range — there's no fixed grid.",
+              ),
+              const _ScheduleToolsSection(),
+            ],
           );
         }
         // Show the "Cover lead" strip when there's at least one
@@ -629,8 +638,14 @@ class _CohortDay extends ConsumerWidget {
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.only(bottom: 96),
-                itemCount: blocks.length,
+                // +1 trailing row: the one-tap tools grid scrolls in BELOW the
+                // day's blocks, so a teacher reaches any tool without the
+                // drawer (docs/VISION.md: "all things in the schedule bento").
+                itemCount: blocks.length + 1,
                 itemBuilder: (_, i) {
+                  if (i == blocks.length) {
+                    return const _ScheduleToolsSection();
+                  }
                   final b = blocks[i];
                   final activity = b.activityId == null
                       ? null
@@ -846,6 +861,34 @@ List<String> _conflictsForBlock({
     }
   }
   return out;
+}
+
+/// The schedule's one-tap tools footer — wraps [DayToolsBento] with the
+/// agenda separation + horizontal gutter. Scrolls in below the day's blocks
+/// (or below the empty state) so the tools are reachable without the drawer,
+/// while the agenda stays the hero above. Excludes Schedule (you're here).
+class _ScheduleToolsSection extends StatelessWidget {
+  const _ScheduleToolsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 20),
+          const DayToolsBento(excludeRoute: '/schedule'),
+        ],
+      ),
+    );
+  }
 }
 
 class _BlockTile extends ConsumerWidget {

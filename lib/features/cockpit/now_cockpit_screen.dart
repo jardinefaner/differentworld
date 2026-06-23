@@ -10,6 +10,7 @@ import 'package:differentworld/features/recap/recap_setting.dart';
 import 'package:differentworld/features/schedule/live_block_provider.dart';
 import 'package:differentworld/features/today/context_lead.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
+import 'package:differentworld/shared/widgets/day_tools_bento.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/slide_block.dart';
 import 'package:flutter/material.dart';
@@ -58,12 +59,36 @@ class _NowCockpitScreenState extends ConsumerState<NowCockpitScreen> {
               open: _curiosityOpen,
               onToggle: () => setState(() => _curiosityOpen = !_curiosityOpen),
             ),
+            // The beat stays the hero — sized to fill the viewport so it owns
+            // the first screen. The one-tap tools grid lives just BELOW the
+            // fold in the SAME scroll, so it's reachable by a scroll (never the
+            // drawer) without ever painting a band: the EdgeScaffold background
+            // still bleeds edge-to-edge under everything (it's the Scaffold
+            // background, not the body), and the tools ride their own inset
+            // panel so they read cleanly over any beat colour.
             Expanded(
-              child: _BeatBody(
-                key: const ValueKey('cockpit-beat-body'),
-                beat: beat,
-                lead: lead,
-                hasWorld: hasWorld,
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        // The beat keeps its full-viewport stage; its own
+                        // internal scroll (in `_beatFrame`) still handles
+                        // 200% text — bounding it here keeps that intact.
+                        height: constraints.maxHeight,
+                        child: _BeatBody(
+                          key: const ValueKey('cockpit-beat-body'),
+                          beat: beat,
+                          lead: lead,
+                          hasWorld: hasWorld,
+                        ),
+                      ),
+                      const _CockpitToolsSection(
+                        key: ValueKey('cockpit-tools'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
@@ -166,6 +191,40 @@ class _CuriosityBar extends StatelessWidget {
               : const SizedBox(width: double.infinity),
         ),
       ],
+    );
+  }
+}
+
+/// The one-tap tools grid below the fold (docs/VISION.md: "everything one tap
+/// away… I still hunt down things"). Rides its OWN inset panel — a soft
+/// `surface` card with a rounded top — so the grid reads cleanly over whatever
+/// colour the beat above paints, WITHOUT becoming a band: the EdgeScaffold
+/// background still bleeds edge-to-edge under the chrome (it's the Scaffold's
+/// background, not the body). The beat stays the hero; this is reached by a
+/// scroll. Excludes Today (you're already here). Bottom padding clears the
+/// floating omnibox bar so the last row never hides behind it.
+class _CockpitToolsSection extends StatelessWidget {
+  const _CockpitToolsSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.5),
+            width: 0.5,
+          ),
+        ),
+      ),
+      // Clear the bottom omnibox bar (76dp) plus breathing room so the last
+      // row of tools never renders behind the floating glass.
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 96),
+      child: const DayToolsBento(excludeRoute: '/'),
     );
   }
 }
