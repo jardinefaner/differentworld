@@ -20223,6 +20223,61 @@ class $TripLogisticsTable extends TripLogistics
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _destinationLatMeta = const VerificationMeta(
+    'destinationLat',
+  );
+  @override
+  late final GeneratedColumn<double> destinationLat = GeneratedColumn<double>(
+    'destination_lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _destinationLngMeta = const VerificationMeta(
+    'destinationLng',
+  );
+  @override
+  late final GeneratedColumn<double> destinationLng = GeneratedColumn<double>(
+    'destination_lng',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinnedLatMeta = const VerificationMeta(
+    'pinnedLat',
+  );
+  @override
+  late final GeneratedColumn<double> pinnedLat = GeneratedColumn<double>(
+    'pinned_lat',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinnedLngMeta = const VerificationMeta(
+    'pinnedLng',
+  );
+  @override
+  late final GeneratedColumn<double> pinnedLng = GeneratedColumn<double>(
+    'pinned_lng',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pinnedAtMeta = const VerificationMeta(
+    'pinnedAt',
+  );
+  @override
+  late final GeneratedColumn<String> pinnedAt = GeneratedColumn<String>(
+    'pinned_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -20256,6 +20311,11 @@ class $TripLogisticsTable extends TripLogistics
     returnAt,
     requiresPermissionSlip,
     notes,
+    destinationLat,
+    destinationLng,
+    pinnedLat,
+    pinnedLng,
+    pinnedAt,
     createdAt,
     updatedAt,
   ];
@@ -20347,6 +20407,42 @@ class $TripLogisticsTable extends TripLogistics
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('destination_lat')) {
+      context.handle(
+        _destinationLatMeta,
+        destinationLat.isAcceptableOrUnknown(
+          data['destination_lat']!,
+          _destinationLatMeta,
+        ),
+      );
+    }
+    if (data.containsKey('destination_lng')) {
+      context.handle(
+        _destinationLngMeta,
+        destinationLng.isAcceptableOrUnknown(
+          data['destination_lng']!,
+          _destinationLngMeta,
+        ),
+      );
+    }
+    if (data.containsKey('pinned_lat')) {
+      context.handle(
+        _pinnedLatMeta,
+        pinnedLat.isAcceptableOrUnknown(data['pinned_lat']!, _pinnedLatMeta),
+      );
+    }
+    if (data.containsKey('pinned_lng')) {
+      context.handle(
+        _pinnedLngMeta,
+        pinnedLng.isAcceptableOrUnknown(data['pinned_lng']!, _pinnedLngMeta),
+      );
+    }
+    if (data.containsKey('pinned_at')) {
+      context.handle(
+        _pinnedAtMeta,
+        pinnedAt.isAcceptableOrUnknown(data['pinned_at']!, _pinnedAtMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -20408,6 +20504,26 @@ class $TripLogisticsTable extends TripLogistics
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      destinationLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}destination_lat'],
+      ),
+      destinationLng: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}destination_lng'],
+      ),
+      pinnedLat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}pinned_lat'],
+      ),
+      pinnedLng: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}pinned_lng'],
+      ),
+      pinnedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pinned_at'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
@@ -20435,6 +20551,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
   final String? returnAt;
   final int requiresPermissionSlip;
   final String? notes;
+  final double? destinationLat;
+  final double? destinationLng;
+  final double? pinnedLat;
+  final double? pinnedLng;
+  final String? pinnedAt;
   final String createdAt;
   final String updatedAt;
   const TripLogistic({
@@ -20447,6 +20568,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
     this.returnAt,
     required this.requiresPermissionSlip,
     this.notes,
+    this.destinationLat,
+    this.destinationLng,
+    this.pinnedLat,
+    this.pinnedLng,
+    this.pinnedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -20469,6 +20595,21 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
     map['requires_permission_slip'] = Variable<int>(requiresPermissionSlip);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || destinationLat != null) {
+      map['destination_lat'] = Variable<double>(destinationLat);
+    }
+    if (!nullToAbsent || destinationLng != null) {
+      map['destination_lng'] = Variable<double>(destinationLng);
+    }
+    if (!nullToAbsent || pinnedLat != null) {
+      map['pinned_lat'] = Variable<double>(pinnedLat);
+    }
+    if (!nullToAbsent || pinnedLng != null) {
+      map['pinned_lng'] = Variable<double>(pinnedLng);
+    }
+    if (!nullToAbsent || pinnedAt != null) {
+      map['pinned_at'] = Variable<String>(pinnedAt);
     }
     map['created_at'] = Variable<String>(createdAt);
     map['updated_at'] = Variable<String>(updatedAt);
@@ -20494,6 +20635,21 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      destinationLat: destinationLat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(destinationLat),
+      destinationLng: destinationLng == null && nullToAbsent
+          ? const Value.absent()
+          : Value(destinationLng),
+      pinnedLat: pinnedLat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinnedLat),
+      pinnedLng: pinnedLng == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinnedLng),
+      pinnedAt: pinnedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinnedAt),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -20518,6 +20674,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
         json['requiresPermissionSlip'],
       ),
       notes: serializer.fromJson<String?>(json['notes']),
+      destinationLat: serializer.fromJson<double?>(json['destinationLat']),
+      destinationLng: serializer.fromJson<double?>(json['destinationLng']),
+      pinnedLat: serializer.fromJson<double?>(json['pinnedLat']),
+      pinnedLng: serializer.fromJson<double?>(json['pinnedLng']),
+      pinnedAt: serializer.fromJson<String?>(json['pinnedAt']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       updatedAt: serializer.fromJson<String>(json['updatedAt']),
     );
@@ -20535,6 +20696,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
       'returnAt': serializer.toJson<String?>(returnAt),
       'requiresPermissionSlip': serializer.toJson<int>(requiresPermissionSlip),
       'notes': serializer.toJson<String?>(notes),
+      'destinationLat': serializer.toJson<double?>(destinationLat),
+      'destinationLng': serializer.toJson<double?>(destinationLng),
+      'pinnedLat': serializer.toJson<double?>(pinnedLat),
+      'pinnedLng': serializer.toJson<double?>(pinnedLng),
+      'pinnedAt': serializer.toJson<String?>(pinnedAt),
       'createdAt': serializer.toJson<String>(createdAt),
       'updatedAt': serializer.toJson<String>(updatedAt),
     };
@@ -20550,6 +20716,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
     Value<String?> returnAt = const Value.absent(),
     int? requiresPermissionSlip,
     Value<String?> notes = const Value.absent(),
+    Value<double?> destinationLat = const Value.absent(),
+    Value<double?> destinationLng = const Value.absent(),
+    Value<double?> pinnedLat = const Value.absent(),
+    Value<double?> pinnedLng = const Value.absent(),
+    Value<String?> pinnedAt = const Value.absent(),
     String? createdAt,
     String? updatedAt,
   }) => TripLogistic(
@@ -20565,6 +20736,15 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
     requiresPermissionSlip:
         requiresPermissionSlip ?? this.requiresPermissionSlip,
     notes: notes.present ? notes.value : this.notes,
+    destinationLat: destinationLat.present
+        ? destinationLat.value
+        : this.destinationLat,
+    destinationLng: destinationLng.present
+        ? destinationLng.value
+        : this.destinationLng,
+    pinnedLat: pinnedLat.present ? pinnedLat.value : this.pinnedLat,
+    pinnedLng: pinnedLng.present ? pinnedLng.value : this.pinnedLng,
+    pinnedAt: pinnedAt.present ? pinnedAt.value : this.pinnedAt,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -20589,6 +20769,15 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
           ? data.requiresPermissionSlip.value
           : this.requiresPermissionSlip,
       notes: data.notes.present ? data.notes.value : this.notes,
+      destinationLat: data.destinationLat.present
+          ? data.destinationLat.value
+          : this.destinationLat,
+      destinationLng: data.destinationLng.present
+          ? data.destinationLng.value
+          : this.destinationLng,
+      pinnedLat: data.pinnedLat.present ? data.pinnedLat.value : this.pinnedLat,
+      pinnedLng: data.pinnedLng.present ? data.pinnedLng.value : this.pinnedLng,
+      pinnedAt: data.pinnedAt.present ? data.pinnedAt.value : this.pinnedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -20606,6 +20795,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
           ..write('returnAt: $returnAt, ')
           ..write('requiresPermissionSlip: $requiresPermissionSlip, ')
           ..write('notes: $notes, ')
+          ..write('destinationLat: $destinationLat, ')
+          ..write('destinationLng: $destinationLng, ')
+          ..write('pinnedLat: $pinnedLat, ')
+          ..write('pinnedLng: $pinnedLng, ')
+          ..write('pinnedAt: $pinnedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -20623,6 +20817,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
     returnAt,
     requiresPermissionSlip,
     notes,
+    destinationLat,
+    destinationLng,
+    pinnedLat,
+    pinnedLng,
+    pinnedAt,
     createdAt,
     updatedAt,
   );
@@ -20639,6 +20838,11 @@ class TripLogistic extends DataClass implements Insertable<TripLogistic> {
           other.returnAt == this.returnAt &&
           other.requiresPermissionSlip == this.requiresPermissionSlip &&
           other.notes == this.notes &&
+          other.destinationLat == this.destinationLat &&
+          other.destinationLng == this.destinationLng &&
+          other.pinnedLat == this.pinnedLat &&
+          other.pinnedLng == this.pinnedLng &&
+          other.pinnedAt == this.pinnedAt &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -20653,6 +20857,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
   final Value<String?> returnAt;
   final Value<int> requiresPermissionSlip;
   final Value<String?> notes;
+  final Value<double?> destinationLat;
+  final Value<double?> destinationLng;
+  final Value<double?> pinnedLat;
+  final Value<double?> pinnedLng;
+  final Value<String?> pinnedAt;
   final Value<String> createdAt;
   final Value<String> updatedAt;
   final Value<int> rowid;
@@ -20666,6 +20875,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
     this.returnAt = const Value.absent(),
     this.requiresPermissionSlip = const Value.absent(),
     this.notes = const Value.absent(),
+    this.destinationLat = const Value.absent(),
+    this.destinationLng = const Value.absent(),
+    this.pinnedLat = const Value.absent(),
+    this.pinnedLng = const Value.absent(),
+    this.pinnedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -20680,6 +20894,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
     this.returnAt = const Value.absent(),
     required int requiresPermissionSlip,
     this.notes = const Value.absent(),
+    this.destinationLat = const Value.absent(),
+    this.destinationLng = const Value.absent(),
+    this.pinnedLat = const Value.absent(),
+    this.pinnedLng = const Value.absent(),
+    this.pinnedAt = const Value.absent(),
     required String createdAt,
     required String updatedAt,
     this.rowid = const Value.absent(),
@@ -20700,6 +20919,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
     Expression<String>? returnAt,
     Expression<int>? requiresPermissionSlip,
     Expression<String>? notes,
+    Expression<double>? destinationLat,
+    Expression<double>? destinationLng,
+    Expression<double>? pinnedLat,
+    Expression<double>? pinnedLng,
+    Expression<String>? pinnedAt,
     Expression<String>? createdAt,
     Expression<String>? updatedAt,
     Expression<int>? rowid,
@@ -20715,6 +20939,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
       if (requiresPermissionSlip != null)
         'requires_permission_slip': requiresPermissionSlip,
       if (notes != null) 'notes': notes,
+      if (destinationLat != null) 'destination_lat': destinationLat,
+      if (destinationLng != null) 'destination_lng': destinationLng,
+      if (pinnedLat != null) 'pinned_lat': pinnedLat,
+      if (pinnedLng != null) 'pinned_lng': pinnedLng,
+      if (pinnedAt != null) 'pinned_at': pinnedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -20731,6 +20960,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
     Value<String?>? returnAt,
     Value<int>? requiresPermissionSlip,
     Value<String?>? notes,
+    Value<double?>? destinationLat,
+    Value<double?>? destinationLng,
+    Value<double?>? pinnedLat,
+    Value<double?>? pinnedLng,
+    Value<String?>? pinnedAt,
     Value<String>? createdAt,
     Value<String>? updatedAt,
     Value<int>? rowid,
@@ -20746,6 +20980,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
       requiresPermissionSlip:
           requiresPermissionSlip ?? this.requiresPermissionSlip,
       notes: notes ?? this.notes,
+      destinationLat: destinationLat ?? this.destinationLat,
+      destinationLng: destinationLng ?? this.destinationLng,
+      pinnedLat: pinnedLat ?? this.pinnedLat,
+      pinnedLng: pinnedLng ?? this.pinnedLng,
+      pinnedAt: pinnedAt ?? this.pinnedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -20784,6 +21023,21 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (destinationLat.present) {
+      map['destination_lat'] = Variable<double>(destinationLat.value);
+    }
+    if (destinationLng.present) {
+      map['destination_lng'] = Variable<double>(destinationLng.value);
+    }
+    if (pinnedLat.present) {
+      map['pinned_lat'] = Variable<double>(pinnedLat.value);
+    }
+    if (pinnedLng.present) {
+      map['pinned_lng'] = Variable<double>(pinnedLng.value);
+    }
+    if (pinnedAt.present) {
+      map['pinned_at'] = Variable<String>(pinnedAt.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
@@ -20808,6 +21062,11 @@ class TripLogisticsCompanion extends UpdateCompanion<TripLogistic> {
           ..write('returnAt: $returnAt, ')
           ..write('requiresPermissionSlip: $requiresPermissionSlip, ')
           ..write('notes: $notes, ')
+          ..write('destinationLat: $destinationLat, ')
+          ..write('destinationLng: $destinationLng, ')
+          ..write('pinnedLat: $pinnedLat, ')
+          ..write('pinnedLng: $pinnedLng, ')
+          ..write('pinnedAt: $pinnedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -34786,6 +35045,11 @@ typedef $$TripLogisticsTableCreateCompanionBuilder =
       Value<String?> returnAt,
       required int requiresPermissionSlip,
       Value<String?> notes,
+      Value<double?> destinationLat,
+      Value<double?> destinationLng,
+      Value<double?> pinnedLat,
+      Value<double?> pinnedLng,
+      Value<String?> pinnedAt,
       required String createdAt,
       required String updatedAt,
       Value<int> rowid,
@@ -34801,6 +35065,11 @@ typedef $$TripLogisticsTableUpdateCompanionBuilder =
       Value<String?> returnAt,
       Value<int> requiresPermissionSlip,
       Value<String?> notes,
+      Value<double?> destinationLat,
+      Value<double?> destinationLng,
+      Value<double?> pinnedLat,
+      Value<double?> pinnedLng,
+      Value<String?> pinnedAt,
       Value<String> createdAt,
       Value<String> updatedAt,
       Value<int> rowid,
@@ -34857,6 +35126,31 @@ class $$TripLogisticsTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get destinationLat => $composableBuilder(
+    column: $table.destinationLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get destinationLng => $composableBuilder(
+    column: $table.destinationLng,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get pinnedLat => $composableBuilder(
+    column: $table.pinnedLat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get pinnedLng => $composableBuilder(
+    column: $table.pinnedLng,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pinnedAt => $composableBuilder(
+    column: $table.pinnedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -34925,6 +35219,31 @@ class $$TripLogisticsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get destinationLat => $composableBuilder(
+    column: $table.destinationLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get destinationLng => $composableBuilder(
+    column: $table.destinationLng,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get pinnedLat => $composableBuilder(
+    column: $table.pinnedLat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get pinnedLng => $composableBuilder(
+    column: $table.pinnedLng,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pinnedAt => $composableBuilder(
+    column: $table.pinnedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -34982,6 +35301,25 @@ class $$TripLogisticsTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<double> get destinationLat => $composableBuilder(
+    column: $table.destinationLat,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get destinationLng => $composableBuilder(
+    column: $table.destinationLng,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get pinnedLat =>
+      $composableBuilder(column: $table.pinnedLat, builder: (column) => column);
+
+  GeneratedColumn<double> get pinnedLng =>
+      $composableBuilder(column: $table.pinnedLng, builder: (column) => column);
+
+  GeneratedColumn<String> get pinnedAt =>
+      $composableBuilder(column: $table.pinnedAt, builder: (column) => column);
+
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -35029,6 +35367,11 @@ class $$TripLogisticsTableTableManager
                 Value<String?> returnAt = const Value.absent(),
                 Value<int> requiresPermissionSlip = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<double?> destinationLat = const Value.absent(),
+                Value<double?> destinationLng = const Value.absent(),
+                Value<double?> pinnedLat = const Value.absent(),
+                Value<double?> pinnedLng = const Value.absent(),
+                Value<String?> pinnedAt = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<String> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -35042,6 +35385,11 @@ class $$TripLogisticsTableTableManager
                 returnAt: returnAt,
                 requiresPermissionSlip: requiresPermissionSlip,
                 notes: notes,
+                destinationLat: destinationLat,
+                destinationLng: destinationLng,
+                pinnedLat: pinnedLat,
+                pinnedLng: pinnedLng,
+                pinnedAt: pinnedAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -35057,6 +35405,11 @@ class $$TripLogisticsTableTableManager
                 Value<String?> returnAt = const Value.absent(),
                 required int requiresPermissionSlip,
                 Value<String?> notes = const Value.absent(),
+                Value<double?> destinationLat = const Value.absent(),
+                Value<double?> destinationLng = const Value.absent(),
+                Value<double?> pinnedLat = const Value.absent(),
+                Value<double?> pinnedLng = const Value.absent(),
+                Value<String?> pinnedAt = const Value.absent(),
                 required String createdAt,
                 required String updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -35070,6 +35423,11 @@ class $$TripLogisticsTableTableManager
                 returnAt: returnAt,
                 requiresPermissionSlip: requiresPermissionSlip,
                 notes: notes,
+                destinationLat: destinationLat,
+                destinationLng: destinationLng,
+                pinnedLat: pinnedLat,
+                pinnedLng: pinnedLng,
+                pinnedAt: pinnedAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

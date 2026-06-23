@@ -760,6 +760,15 @@ class TripLogistics extends Table {
   TextColumn get returnAt => text().nullable()();
   IntColumn get requiresPermissionSlip => integer()(); // 0/1
   TextColumn get notes => text().nullable()();
+  // Field-trip maps. destination_* = the geocoded/manual destination pin
+  // (where the group is HEADED); pinned_* = the group's live "we are here"
+  // pin from GPS, with pinnedAt the ISO-8601 instant of the last drop. All
+  // nullable — a trip has no coordinates until prep / until it pins itself.
+  RealColumn get destinationLat => real().nullable()();
+  RealColumn get destinationLng => real().nullable()();
+  RealColumn get pinnedLat => real().nullable()();
+  RealColumn get pinnedLng => real().nullable()();
+  TextColumn get pinnedAt => text().nullable()();
   TextColumn get createdAt => text()();
   TextColumn get updatedAt => text()();
 

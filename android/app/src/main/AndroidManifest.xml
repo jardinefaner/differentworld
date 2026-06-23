@@ -13,6 +13,13 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Field-trip location: the live "we are here" pin uses the
+         device GPS (geolocator). FINE for a precise pin; COARSE is the
+         graceful-degrade fallback the OS may grant instead. Requested at
+         runtime via geolocator's permission flow at first pin. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:label="differentworld"
         android:name="${applicationName}"

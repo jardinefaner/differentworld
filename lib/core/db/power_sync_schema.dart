@@ -503,6 +503,15 @@ const appSchema = Schema([
     Column.text('return_at'),
     Column.integer('requires_permission_slip'),
     Column.text('notes'),
+    // Field-trip maps: destination_* is the geocoded/manual destination
+    // pin; pinned_* is the group's live "we are here" pin (pinned_at =
+    // ISO-8601 string of the last drop). Postgres double precision → REAL
+    // locally; timestamptz → TEXT.
+    Column.real('destination_lat'),
+    Column.real('destination_lng'),
+    Column.real('pinned_lat'),
+    Column.real('pinned_lng'),
+    Column.text('pinned_at'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),

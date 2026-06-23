@@ -112,6 +112,21 @@ dependencies:
   wakelock_plus: ^1.2.8
   google_fonts: ^8.1.0
 
+  # Field-trip maps + location (Wave: field-trip foundation). The trip
+  # map is an EMBEDDED OpenStreetMap — free, no API key, no per-tile
+  # billing — rendered by flutter_map over OSM raster tiles.
+  #   flutter_map — the map widget (OSM tile layer + markers).
+  #   latlong2    — the LatLng type flutter_map + geocoding speak.
+  #   geolocator  — device GPS for the live "we are here" pin (works
+  #                 offline; the fix comes from the GPS chip, not network).
+  #   geocoding   — address → coordinates via the ON-DEVICE platform
+  #                 geocoder (Android Geocoder / iOS CLGeocoder). No API
+  #                 key; may need network, so callers handle a null result.
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

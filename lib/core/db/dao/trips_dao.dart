@@ -66,6 +66,50 @@ class TripsDao extends DatabaseAccessor<AppDatabase> with _$TripsDaoMixin {
     return id;
   }
 
+  /// Field-trip maps: drop the group's live "we are here" pin from a
+  /// GPS fix. Optimistic Drift write; PowerSync syncs the coordinates
+  /// to other staff + the family map later. `atIso` is the ISO-8601
+  /// UTC instant of the drop (so a viewer can show "last seen N min
+  /// ago"). Bumps updated_at so the row is marked dirty for upload.
+  Future<void> setGroupPin(
+    String scheduleBlockId,
+    double lat,
+    double lng,
+    String atIso,
+  ) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(tripLogistics)
+          ..where((t) => t.scheduleBlockId.equals(scheduleBlockId)))
+        .write(
+      TripLogisticsCompanion(
+        pinnedLat: Value(lat),
+        pinnedLng: Value(lng),
+        pinnedAt: Value(atIso),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  /// Field-trip maps: set the destination pin (the geocoded address or
+  /// a manual map tap) — where the group is HEADED. Drives the map
+  /// marker + "Get directions". Optimistic Drift write.
+  Future<void> setDestinationCoords(
+    String scheduleBlockId,
+    double lat,
+    double lng,
+  ) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await (update(tripLogistics)
+          ..where((t) => t.scheduleBlockId.equals(scheduleBlockId)))
+        .write(
+      TripLogisticsCompanion(
+        destinationLat: Value(lat),
+        destinationLng: Value(lng),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   // -------- trip_vehicles ---------------------------------------------------
 
   Stream<List<TripVehicle>> watchVehiclesFor(String tripLogisticsId) {

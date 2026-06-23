@@ -114,6 +114,11 @@
 	     stored on-device or uploaded to our own servers. -->
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Dictate captures and observations by voice instead of typing.</string>
+		<!-- Field-trip location: drop a live "we are here" pin from the
+	     device GPS and get directions to the destination. Used only
+	     while the app is open (when-in-use). -->
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Different World pins where your group is on a field trip and gets directions to your destination.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>
