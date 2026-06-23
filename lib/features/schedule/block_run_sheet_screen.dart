@@ -7,6 +7,7 @@ import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/activity_runtime/activity_runners.dart';
 import 'package:differentworld/features/activity_runtime/photo_turns_screen.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
+import 'package:differentworld/features/curricula/session_script.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/live_session/cast_to_room.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
@@ -175,23 +176,26 @@ class BlockRunSheetScreen extends ConsumerWidget {
     // ── PHOTO / "Through My Eyes" — the 7-tile photo tray, unchanged ──────
     if (isPhotoBlock) {
       // The beat-by-beat session presenter is offered only when this block's
-      // stamped curriculum slug has a written script (Session 1 today). The
-      // slug — not the PhotoSession summary — is the contract scriptForSession
-      // joins on, so resolve straight off the block's slug.
+      // stamped curriculum slug has a written script (all 6 sessions today).
+      // The slug — not the PhotoSession summary — is the contract
+      // scriptForSession joins on, so resolve straight off the block's slug.
+      // That same resolved script also drives the "How it runs" + "You'll need"
+      // tiles below (the real beat arc + prep materials) instead of the stale
+      // PhotoSession summary, so a scripted block reads its actual hour.
       final scriptSlug = block.curriculumSessionSlug;
-      final hasScript =
-          scriptSlug != null && scriptForSession(scriptSlug) != null;
+      final script = scriptSlug == null ? null : scriptForSession(scriptSlug);
       return _PhotoRunBento(
         block: block,
         session: session,
+        script: script,
         eyebrow: eyebrow,
         title: title,
         metaParts: metaParts,
         routine: routine,
         onEdit: () => _openEdit(context),
         // Only non-null when a script exists → the tile renders only then.
-        onRunSession: hasScript
-            ? () => _runSession(context, slug: scriptSlug)
+        onRunSession: script != null
+            ? () => _runSession(context, slug: scriptSlug!)
             : null,
         onRunTurns: () => _runPhotoTurns(
           context,
@@ -517,6 +521,7 @@ class _PhotoRunBento extends StatelessWidget {
   const _PhotoRunBento({
     required this.block,
     required this.session,
+    required this.script,
     required this.eyebrow,
     required this.title,
     required this.metaParts,
@@ -531,6 +536,13 @@ class _PhotoRunBento extends StatelessWidget {
 
   final ScheduleBlock block;
   final PhotoSession? session;
+
+  /// The block's resolved SESSION SCRIPT when its slug has a written one
+  /// (all 6 today), else null. When present it drives the "How it runs" +
+  /// "You'll need" tiles — the real beat arc + prep materials — instead of the
+  /// stale PhotoSession summary. Null → both tiles keep the summary path.
+  final SessionScript? script;
+
   final String eyebrow;
   final String title;
   final List<String> metaParts;
@@ -554,14 +566,21 @@ class _PhotoRunBento extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The "You'll need" line — the session's plain-prose materials, else a calm
-    // generic for a photo block with no session.
-    final needs = (session != null && session!.materials.trim().isNotEmpty)
+    // "You'll need" — when this block has a written SCRIPT, the materials come
+    // from the script's prep beat (the host's "before they arrive" list); else
+    // the PhotoSession's plain-prose materials, else a calm generic.
+    final scriptForTiles = script;
+    final needs = scriptForTiles != null
+        ? _scriptNeeds(scriptForTiles)
+        : (session != null && session!.materials.trim().isNotEmpty)
         ? session!.materials.trim()
         : '1 device · a screen · timer';
-    // The short four-beat "How it runs" steps (hand over → play → look → pick),
-    // each gated on the session having that lesson field.
-    final steps = _runsSteps(session, routine);
+    // "How it runs" — when a SCRIPT exists, the real beat arc (its content-beat
+    // titles in order); else the short four-beat summary steps (hand over →
+    // play → look → pick), each gated on the PhotoSession having that field.
+    final steps = scriptForTiles != null
+        ? _scriptRunSteps(scriptForTiles)
+        : _runsSteps(session, routine);
 
     final tiles = <BentoTile>[
       // RUN THE SESSION — the beat-by-beat presenter, offered ONLY when this
@@ -1577,6 +1596,78 @@ List<String> _runsSteps(PhotoSession? session, List<String> routine) {
   if (session.lookingTogether.trim().isNotEmpty) steps.add('Look together');
   if (session.endRitual.trim().isNotEmpty) steps.add('Each picks one');
   return steps.isEmpty ? fallback : steps;
+}
+
+/// The real arc of a SCRIPTED session for the "How it runs" tile — the
+/// content-beat TITLES in order (e.g. "The Hook · The Camera Reveal · The Rules
+/// · The Speed Round · …"), so a host reads the actual hour, not the tablet-era
+/// four-beat summary. Skips the un-run bookends (`prep` / `doorway` / `after`);
+/// keeps every taught beat (hook / reveal / rules / game / cooldown / partner /
+/// frame / drawing / vocab / closing). Caps at 8 shown + a final
+/// "+N more in the deck" line so the tile stays scannable — the full beat list
+/// lives in the presenter the hero opens. Only called when a script resolves;
+/// when none does, the caller keeps the existing `_runsSteps` path untouched.
+List<String> _scriptRunSteps(SessionScript script) {
+  const skip = {BeatKind.prep, BeatKind.doorway, BeatKind.after};
+  final titles = [
+    for (final beat in script.beats)
+      if (!skip.contains(beat.kind)) beat.title.trim(),
+  ].where((t) => t.isNotEmpty).toList();
+  const cap = 8;
+  if (titles.length <= cap) return titles;
+  final hidden = titles.length - cap;
+  return [...titles.take(cap), '+$hidden more in the deck'];
+}
+
+/// The "You'll need" line for a SCRIPTED session — derived from its PREP beat's
+/// `keyLines` (the host's "before they arrive" checklist), keeping the lines
+/// that read like MATERIALS to stage and dropping the room-/wall-state lines
+/// ("Tubes on the table", "the wall has six words now"). A prep keyLine often
+/// front-loads "Have ready: …"; we trim that prefix so the result is the bare
+/// list. When a session's prep is all room-setup with no clean materials line
+/// (e.g. the gallery-day finale), fall back to the photo-session essentials so
+/// the tile never reads empty. Only called when a script resolves.
+String _scriptNeeds(SessionScript script) {
+  // The photo curriculum's through-line: every session hands out tube cameras,
+  // journals, crayons. A safe, honest default when prep names nothing else.
+  const essentials = 'Tube cameras · journals · crayons';
+
+  final prep = script.beats.where((b) => b.kind == BeatKind.prep).firstOrNull;
+  if (prep == null) return essentials;
+
+  // A keyLine is a MATERIALS line when it points at things to bring/stage,
+  // rather than describing the room's standing state. Keyword-gated so the
+  // tile stays trustworthy across the six prep beats' varied prose.
+  bool looksLikeMaterials(String line) {
+    final l = line.toLowerCase();
+    return l.contains('have ready') ||
+        l.contains('have 2') || // "Have 2–3 flashlights"
+        l.contains('journals') ||
+        l.contains('crayons') ||
+        l.contains('flashlight') ||
+        l.contains('slips of paper') ||
+        l.contains('picture-card') ||
+        l.contains('special object');
+  }
+
+  final picked = <String>[];
+  for (final raw in prep.keyLines) {
+    final line = raw.trim();
+    if (line.isEmpty || !looksLikeMaterials(line)) continue;
+    // Trim a leading "Have ready: " / "Have ready " framing so the line is the
+    // bare list; leave everything else (incl. "Have 2–3 flashlights") intact.
+    final stripped = line.replaceFirst(
+      RegExp(r'^have ready[:,]?\s*', caseSensitive: false),
+      '',
+    );
+    final cleaned = stripped.trim();
+    if (cleaned.isNotEmpty) picked.add(cleaned);
+  }
+
+  if (picked.isEmpty) return essentials;
+  // One line per materials keyLine, joined by the app's mid-dot separator so it
+  // reads as a single scannable inventory in the quiet INFO tile.
+  return picked.join('  ·  ');
 }
 
 /// Build a curriculum session's lesson into the run sheet's numbered routine:
