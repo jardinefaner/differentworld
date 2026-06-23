@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// What to do with a DEFERRED (selective-sync) entry on this pass.
-enum _DeferredDisposition {
+enum DeferredDisposition {
   /// The attachment row is hearted (`sort_order == 0`) → upload now.
   upload,
 
@@ -419,21 +420,21 @@ class PhotoUploadQueue {
       if (e.deferred) {
         final disposition = await _deferredDisposition(e);
         switch (disposition) {
-          case _DeferredDisposition.wait:
+          case DeferredDisposition.wait:
             // Intentionally waiting — NOT a failure. Keep the entry +
             // the local file untouched; do NOT bump attempts. The shot
             // stays on the device until it's hearted (or the future
             // end-of-day job, slice 2, releases it).
             remaining.add(e);
             continue;
-          case _DeferredDisposition.orphan:
+          case DeferredDisposition.orphan:
             // The attachment row is gone (deleted). Drop the entry +
             // bytes — same as the missing-bytes branch. Nothing to
             // upload to and nothing to point at.
             await _deleteLocalFile(e);
             processed += 1;
             continue;
-          case _DeferredDisposition.upload:
+          case DeferredDisposition.upload:
             // Hearted — fall through to the normal upload path below.
             break;
         }
@@ -537,17 +538,13 @@ class PhotoUploadQueue {
   /// drop an entry. The caller acts on the returned disposition, and the
   /// only byte-dropping path (`orphan`) fires solely when the row is
   /// confirmed absent.
-  Future<_DeferredDisposition> _deferredDisposition(
+  Future<DeferredDisposition> _deferredDisposition(
     PendingPhotoUpload e,
   ) async {
-    if (e.entityKind != 'attachment') return _DeferredDisposition.upload;
+    if (e.entityKind != 'attachment') return DeferredDisposition.upload;
     final db = await _ref.read(appDatabaseProvider.future);
     final row = await db.attachmentsDao.findById(e.entityId);
-    if (row == null) return _DeferredDisposition.orphan;
-    // sort_order == 0 is the "for print" / favorite marker (the heart).
-    return row.sortOrder == 0
-        ? _DeferredDisposition.upload
-        : _DeferredDisposition.wait;
+    return deferredDispositionFor(entityKind: e.entityKind, row: row);
   }
 
   /// Best-effort delete of a queue entry's local bytes. Used by the
@@ -679,3 +676,26 @@ class PhotoUploadQueue {
 
 final Provider<PhotoUploadQueue> photoUploadQueueProvider =
     Provider<PhotoUploadQueue>(PhotoUploadQueue.new);
+
+/// The PURE selective-sync decision for a deferred turn-shot, given its owning
+/// attachment [row] (null = the row is gone). Extracted from
+/// `_deferredDisposition` so the upload-vs-wait gate — the LEAK side ("an
+/// un-hearted shot must never upload") — is unit-testable without the
+/// Supabase/queue plumbing (the queue's drain path touches `Supabase.instance`,
+/// which throws pre-init, so the live method can't be exercised in a unit test).
+///
+/// The contract this pins: ONLY a hearted attachment (`sort_order == 0`)
+/// uploads; an un-hearted one WAITS; a non-attachment kind uploads as before;
+/// a vanished row is an orphan. This function only reads — it never deletes.
+@visibleForTesting
+DeferredDisposition deferredDispositionFor({
+  required String entityKind,
+  required Attachment? row,
+}) {
+  if (entityKind != 'attachment') return DeferredDisposition.upload;
+  if (row == null) return DeferredDisposition.orphan;
+  // sort_order == 0 is the "for print" / favorite marker (the heart).
+  return row.sortOrder == 0
+      ? DeferredDisposition.upload
+      : DeferredDisposition.wait;
+}

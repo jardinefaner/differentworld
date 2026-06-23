@@ -152,9 +152,7 @@ void main() {
     final raw = prefs.getString(queueKey);
     if (raw == null || raw.isEmpty) return <String>{};
     final list = jsonDecode(raw) as List<dynamic>;
-    return list
-        .map((e) => (e as Map<String, dynamic>)['id'] as String)
-        .toSet();
+    return list.map((e) => (e as Map<String, dynamic>)['id'] as String).toSet();
   }
 
   // Deterministic "yesterday" / "today" anchors relative to LOCAL midnight,
@@ -275,7 +273,11 @@ void main() {
         isNotNull,
         reason: 'in-flight upload row untouched',
       );
-      expect(await queuedIds(), contains(id), reason: 'entry survives to retry');
+      expect(
+        await queuedIds(),
+        contains(id),
+        reason: 'entry survives to retry',
+      );
       expect(File(path).existsSync(), isTrue);
     },
   );
@@ -344,6 +346,55 @@ void main() {
       expect(File(pB).existsSync(), isFalse);
     },
   );
+
+  // (A) the LEAK side — the upload-vs-wait gate, now reachable via the pure
+  // `deferredDispositionFor` (extracted so it needs no Supabase/queue plumbing).
+  // The contract: ONLY a hearted shot uploads; an un-hearted one WAITS forever.
+  group('deferredDispositionFor — only a hearted shot uploads', () {
+    test('HEARTED attachment (sort_order == 0) → upload', () async {
+      await seedAttachment('h', sortOrder: 0);
+      final row = await db.attachmentsDao.findById('h');
+      expect(
+        deferredDispositionFor(entityKind: 'attachment', row: row),
+        DeferredDisposition.upload,
+      );
+    });
+
+    test(
+      'UN-hearted attachment (sort_order != 0) → wait (never uploads)',
+      () async {
+        await seedAttachment('u', sortOrder: 5);
+        final row = await db.attachmentsDao.findById('u');
+        expect(
+          deferredDispositionFor(entityKind: 'attachment', row: row),
+          DeferredDisposition.wait,
+        );
+      },
+    );
+
+    test('un-marked attachment (sort_order null) → wait', () async {
+      await seedAttachment('n');
+      final row = await db.attachmentsDao.findById('n');
+      expect(
+        deferredDispositionFor(entityKind: 'attachment', row: row),
+        DeferredDisposition.wait,
+      );
+    });
+
+    test('a vanished row → orphan', () {
+      expect(
+        deferredDispositionFor(entityKind: 'attachment', row: null),
+        DeferredDisposition.orphan,
+      );
+    });
+
+    test('a non-attachment kind → upload (unchanged)', () {
+      expect(
+        deferredDispositionFor(entityKind: 'member', row: null),
+        DeferredDisposition.upload,
+      );
+    });
+  });
 
   // --- (A) the upload-gate's NEVER-LOSE half ---
   //
