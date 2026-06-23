@@ -389,6 +389,25 @@ When you ASK "is X served":
   Drawer / omnibox / settings entries are derived facts the agent
   reconciles against.
 
+### Curricula — a session is a runnable, castable deck
+
+The Through-My-Eyes curriculum is authored as a **beat-by-beat runnable deck**,
+not prose:
+
+- **Model:** `lib/features/curricula/session_script.dart` —
+  `SessionScript` / `SessionBeat` / `ScriptLine` / `BeatGame` / `BeatKind`.
+- **Content:** `photo_s1..s6_script.dart` (the 6 sessions). Every say-line is
+  **VERBATIM — editorial, do NOT paraphrase** when touching these.
+- **Registry:** `session_scripts.dart` — `allSessionScripts` +
+  `scriptForSession(slug)`. Adding a session = one new data file + one
+  `allSessionScripts` entry; **zero presenter changes.**
+- **Runner:** `SessionRunScreen` (`/session/run?slug=&block=`) runs it; per-beat
+  tools (cast / review / capture / start-shooting / notify) reuse existing flows.
+- **Casting law:** casting shows the **ROOM** a kid-facing deck via
+  `sessionRoomSlides`, drawn **ONLY** from structured fields
+  (`keyLines` / `game` / `vocab` / `callResponse`) — **NEVER** the script's
+  `say` / `cue` lines, so the teacher's script never reaches the TV.
+
 ---
 
 ## Cross-cutting standards
@@ -459,6 +478,32 @@ to any table; don't add Storage buckets for them. If a teacher asks for
 voice notes on observations later, we'll design that feature properly
 (streaming chunked uploads, separate sync stream for transcripts, etc.)
 rather than retrofitting.
+
+#### Selective photo sync — the photo-turns model (a shot stays LOCAL until hearted)
+
+Most photos upload immediately (above). The timed per-child TURN shot is the
+exception: it's held **local on the device and NOT auto-uploaded** — only the
+ones a teacher HEARTS leave the phone. This keeps Storage (and PowerSync's
+budget) to the keepers, not every throwaway frame.
+
+- **Capture (timed turn only):** `PhotoService.uploadOnly(deferUpload: true)`
+  saves the bytes to the offline queue as a `deferred` entry and writes the
+  row's `url = 'pending:<id>'`. The attachment ROW + its tags still sync via
+  PowerSync, so the folder + the whose-turn count work offline — only the
+  bytes wait. `deferUpload` is true **ONLY** on the timed-turn path
+  (`widget.isTurn`); the plain studio + observations upload normally.
+- **Heart → upload:** hearting sets the attachment's `sort_order == 0`
+  ("for print"). `AttachmentActions.reorder` fires `PhotoUploadQueue.processQueue`
+  when `sortOrder == 0`; `processQueue` gates each deferred entry on its
+  attachment's `sort_order` (wait / orphan / upload) and only then pushes the
+  bytes to Storage + swaps the `pending:` URL.
+- **Un-hearted cleanup:** `PhotoUploadQueue.cleanupExpiredDeferred` at app boot
+  clears local shots, but ONLY when **ALL THREE** hold: `deferred == true` AND
+  `createdAt.toLocal() < today's local midnight` AND not-a-keeper (row gone OR
+  `sort_order != 0`). A hearted keeper — **even one hearted OFFLINE that's
+  still waiting to upload** — is NEVER deleted.
+- **Web has no local hold:** `deferUpload` falls back to immediate upload on
+  web (no app-docs dir).
 
 ### Face-aligned auto-snap camera (planned)
 
@@ -822,6 +867,20 @@ COPPA in the US) will eventually audit.
   public buckets for student photos. The `person-photos` bucket is
   RLS-scoped to space membership (first path segment matches caller's
   members.space_id).
+  - **Signed-URL broker (NOT `createSignedUrl`).** `signedPersonPhotoUrlProvider`
+    now mints URLs through the `sign-photo` Edge Function
+    (`supabase/functions/sign-photo`), which **authorizes server-side before
+    signing**: STAFF = a member of the photo's space (path's first segment);
+    GUARDIAN = (a) a subject-pathed object whose subject they guard, or (b) an
+    attachment-pathed object whose row is tagged (`subject_id` / `captured_by`)
+    to a subject they guard. The authorization is a pure function
+    (`authorizePhotoAccess`) with a Deno test.
+  - **DEFERRED — bucket lockdown not pushed yet.** The migration that DROPS the
+    old permissive `person_photos_read_own_space` policy is written but **NOT
+    pushed**, gated on an on-device "photos load" check (pushing it before
+    verifying the broker would blank every photo). Until it lands the read-hole
+    is mitigated (signing goes through the broker) but **not closed** — the old
+    policy still allows a direct `createSignedUrl` by any space member.
 - **Background screenshots** on iOS/Android are blocked in release
   builds — Android sets `FLAG_SECURE` in `MainActivity.onCreate`;
   iOS overlays a solid-colour `UIView` over the key window in
@@ -1513,6 +1572,26 @@ today. Acceptance bar for any such surface: a unit test that flattens
 the rendered artifact for Child A and asserts no other child's name
 appears (`test/unit/summer_book_privacy_test.dart` is the template).
 
+### The block run sheet is ONE bento per block KIND — not a list (+ trip maps)
+
+`block_run_sheet_screen.dart` gives every block KIND a single one-tray bento
+(no scrolling list). The tray content is kind-specific:
+- **activity** — Start/runner + how-it-runs + supplies + cast + capture.
+- **photo / curriculum** — Run the session deck + photo turns + … . A scripted
+  block's "how it runs" + "you'll need" derive from the **SCRIPT**
+  (`scriptForSession`), **NOT** the stale `PhotoSession` summary.
+- **field_trip** — the embedded OSM map (`flutter_map`, **no API key**) with
+  destination + live "we're here" pin (`geolocator`) + Get-directions
+  (`url_launcher`) + headcount + emergency (allergies + guardian `tel:` call) +
+  notify + prep.
+- **break / closed** — a calm note + capture.
+
+**DEFERRED — trip-location migration not pushed.** `20260622000002_trip_location.sql`
+(adds `trip_logistics` coords / pin columns) is written but **NOT pushed**
+(Supabase pooler timeout, status 544 — retry when reachable). Until it lands the
+pin writes won't sync; the local schema changed, so a device **clean-reinstall is
+needed** to recreate the local SQLite.
+
 ---
 
 ## Mutations: write through Drift, sync through PowerSync
@@ -1871,6 +1950,14 @@ that way.
   OAuth URL)
 - **Background photo upload + thumbnail generation** — when we wire
   observations
+- **`sign-photo` bucket lockdown** — the migration that DROPS the permissive
+  `person_photos_read_own_space` policy (so the `sign-photo` broker is the ONLY
+  read path) is written but NOT pushed, gated on an on-device "photos still
+  load" check. See the Photos bullet under Privacy & security.
+- **`20260622000002_trip_location.sql`** (`trip_logistics` coords / pin columns
+  for the field-trip run sheet) — written but NOT pushed (Supabase pooler
+  timeout 544; retry when reachable). Local schema changed → device
+  clean-reinstall needed once it lands. See the block-run-sheet gotcha.
 
 ## Interaction invariants — input surfaces
 
@@ -2083,6 +2170,19 @@ do / dictate. Some key invariants:
   enters in `initState`, exits in `dispose`. Future kid-launchable
   surfaces (kid-journal) will need a staff-only exit gesture before
   they can ship.
+  - **Screen-pinning is the OS layer kid-mode can't reach.** `kidMode` hides
+    the app's own chrome, but it can't block the OS Home / recents buttons —
+    a kid can still swipe out. `MainActivity.kt` adds a MethodChannel
+    `com.jardine.differentworld/screen_pinning`
+    (`startLockTask` / `stopLockTask` / `isLockTaskActive`);
+    `lib/features/kid_mode/screen_pinning.dart` wraps it, platform-gated
+    (Android only; iOS shows a Guided-Access reminder via
+    `needsManualLockHint`). Engage it at the **session** level
+    (`PhotoTurnsScreen`: pin on `initState`, unpin on `dispose`) so the OS
+    "Pin this app?" confirm fires **ONCE per session, not per kid**. A
+    non-device-owner app's `startLockTask` always triggers that OS confirm —
+    expected; the channel answers `success(false)` on Security/IllegalState,
+    never `result.error`. Native change → **full rebuild, not hot reload.**
 - **DONE — `person-photos` bucket is private with signed URLs.** Migration
   `20260519000005_person_photos_private.sql` flipped the bucket private
   and added the space-gated read policy. Dart side: every photo render
