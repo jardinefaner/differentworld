@@ -190,6 +190,12 @@ class BlockRunSheetScreen extends ConsumerWidget {
       // PhotoSession summary, so a scripted block reads its actual hour.
       final scriptSlug = block.curriculumSessionSlug;
       final script = scriptSlug == null ? null : scriptForSession(scriptSlug);
+      // "Review & favorites" only earns a tile once there's something to review —
+      // before the first shot there's nothing to look back at, so omit it.
+      final hasPhotos =
+          (ref.watch(attachmentsForBlockProvider(block.id)).value ??
+                  const <Attachment>[])
+              .isNotEmpty;
       return _PhotoRunBento(
         block: block,
         session: session,
@@ -198,6 +204,7 @@ class BlockRunSheetScreen extends ConsumerWidget {
         title: title,
         metaParts: metaParts,
         routine: routine,
+        hasPhotos: hasPhotos,
         onEdit: () => _openEdit(context),
         // Only non-null when a script exists → the tile renders only then.
         onRunSession: script != null
@@ -260,6 +267,31 @@ class BlockRunSheetScreen extends ConsumerWidget {
     // The generic tiles every runnable block earns. A field TRIP shares all of
     // these AND appends its own ("Where" + the door into the headcount / slips
     // / vehicles screen) at the tail, so a counselor never hunts for trip prep.
+
+    // Per-block gates — show ONLY what's necessary for THIS block. The photo +
+    // break/closed kinds already returned above, so the only kinds reaching
+    // this generic tray are on-site activities and field trips.
+    //
+    // CAST — there's a room to mirror to only for an on-site activity; a field
+    // trip has no in-room screen to cast onto, so its tile would be a dead
+    // promise. (Photo blocks cast too, but they take the photo tray above and
+    // keep their own Cast tile.)
+    final canCast = block.kind == BlockKind.onSite || isPhotoBlock;
+    // YOU'LL NEED — there's a packing list only when the linked activity has
+    // supply links OR the session/script names materials. Nothing to bring →
+    // omit the tile rather than show a hollow "no supplies yet" card.
+    final hasSupplies =
+        (activity != null &&
+            (ref.watch(activitySupplyLinksProvider(activity.id)).value ??
+                    const <ActivitySupply>[])
+                .isNotEmpty) ||
+        (session?.materials.trim().isNotEmpty ?? false) ||
+        (() {
+          final slug = block.curriculumSessionSlug;
+          final script = slug == null ? null : scriptForSession(slug);
+          return script != null && _scriptNeeds(script).trim().isNotEmpty;
+        }());
+
     final tiles = <BentoTile>[
       // HERO — the primary verb: start the linked runner, else the teaching
       // arc. Full-width warm signal so it's unmistakably the thing to tap.
@@ -286,24 +318,28 @@ class BlockRunSheetScreen extends ConsumerWidget {
           child: _HowItRunsTile(steps: routine),
         ),
       // You'll need — the activity's supply pack (live chips), else the
-      // session's materials line, else a calm generic. Always present so the
-      // tray reads complete.
-      BentoTile(
-        id: 'needs',
-        span: const BentoSpan(phone: 1),
-        child: _SuppliesTile(activity: activity, session: session),
-      ),
-      // Cast to room · Capture — the same two tools every block keeps.
-      BentoTile(
-        id: 'cast',
-        span: const BentoSpan(phone: 1),
-        child: _SimpleToolTile(
-          icon: Icons.cast,
-          title: 'Cast to room',
-          subtitle: 'Mirror to the big screen',
-          onTap: () => _cast(context),
+      // session's materials line. Only when there's genuinely something to
+      // bring (supply links / session materials); nothing → omit the tile.
+      if (hasSupplies)
+        BentoTile(
+          id: 'needs',
+          span: const BentoSpan(phone: 1),
+          child: _SuppliesTile(activity: activity, session: session),
         ),
-      ),
+      // Cast to room — only when there's a room to mirror to (an on-site
+      // activity). A field trip has no in-room screen, so its tile is dropped.
+      if (canCast)
+        BentoTile(
+          id: 'cast',
+          span: const BentoSpan(phone: 1),
+          child: _SimpleToolTile(
+            icon: Icons.cast,
+            title: 'Cast to room',
+            subtitle: 'Mirror to the big screen',
+            onTap: () => _cast(context),
+          ),
+        ),
+      // Capture — always: a moment is worth keeping on any block.
       BentoTile(
         id: 'capture',
         span: const BentoSpan(phone: 1),
@@ -593,6 +629,7 @@ class _PhotoRunBento extends StatelessWidget {
     required this.title,
     required this.metaParts,
     required this.routine,
+    required this.hasPhotos,
     required this.onEdit,
     required this.onRunSession,
     required this.onRunTurns,
@@ -618,6 +655,12 @@ class _PhotoRunBento extends StatelessWidget {
   /// "How it runs" tile's fallback when the session can't supply the short
   /// four-beat captions.
   final List<String> routine;
+
+  /// Whether this block already has any photos tagged to it. Computed at the
+  /// assembly point (where `ref` is available) so this stateless bento can gate
+  /// the "Review & favorites" tile without a watch of its own. False → that
+  /// tile is omitted (nothing to review before the first shot).
+  final bool hasPhotos;
 
   final VoidCallback onEdit;
 
@@ -706,12 +749,14 @@ class _PhotoRunBento extends StatelessWidget {
           onTap: onCast,
         ),
       ),
-      // Review & favorites — LIVE photo count. Tap → the review screen.
-      BentoTile(
-        id: 'review',
-        span: const BentoSpan(phone: 1),
-        child: _ReviewTile(block: block, onTap: onReview),
-      ),
+      // Review & favorites — LIVE photo count. Only once there's at least one
+      // shot to look back at; before then there's nothing to review, so omit.
+      if (hasPhotos)
+        BentoTile(
+          id: 'review',
+          span: const BentoSpan(phone: 1),
+          child: _ReviewTile(block: block, onTap: onReview),
+        ),
       // Capture — a quick one-off snap.
       BentoTile(
         id: 'capture',
