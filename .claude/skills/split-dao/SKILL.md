@@ -1,6 +1,6 @@
 ---
 name: split-dao
-description: Add a new domain DAO under lib/core/db/dao/ when a feature's mutators sprawl, OR consult this for the conventions every existing DAO already follows. The 15-DAO refactor is done — new domains slot in alongside.
+description: Add a new domain DAO under lib/core/db/dao/ when a feature's mutators sprawl, OR consult this for the conventions every existing DAO already follows. The per-domain DAO split is done (~58 DAOs) — new domains slot in alongside.
 ---
 
 # /split-dao — the established DAO pattern
@@ -79,7 +79,7 @@ builder) — declaring a method named `update` on the DAO would shadow
 it and break calls like `update(foos)..where(...)`. The codebase uses
 `update_` as the consistent rename when the verb is just "update".
 Reads at the call site as `db.foosDao.update_(id: ...)` — slightly
-ugly but unambiguous and consistent across all 15 DAOs.
+ugly but unambiguous and consistent across all DAOs.
 
 ## Registering the DAO
 

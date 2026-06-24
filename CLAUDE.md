@@ -893,10 +893,17 @@ COPPA in the US) will eventually audit.
   `flutter_secure_storage`-backed channels only.
 - **Vendor API keys.** **Deepgram (STT) + the TTS keys are already
   brokered** — they live as server-side secrets on Supabase Edge
-  Functions (`voice-token`, `tts-generate`), never in `.env` / the app
-  bundle. The client calls the function, gets a short-lived token /
-  result, and the master key never reaches the device. Any NEW vendor
-  key should follow that same broker pattern, not ship in `.env`. Full
+  Functions, never in `.env` / the app bundle. The client calls the
+  function, gets a short-lived token / result, and the master key never
+  reaches the device. **The five Edge Functions** (`supabase/functions/`):
+  `voice-token` (mints a ≤30 s Deepgram STT token), `tts-generate` +
+  `tts-subtitles` (ElevenLabs TTS — the latter also returns char-level
+  word timings for the `/speak` karaoke screen, cached globally in the
+  `tts-cache` bucket), `sign-photo` (authorizes server-side, then signs
+  private-bucket photo reads), and `send-export` (mints a signed URL +
+  emails an export's recipients via Resend, stamps `export_recipients`).
+  Any NEW vendor key should follow that same broker pattern, not ship in
+  `.env`. Full
   pattern + tier table in `docs/SECRETS.md`. Public config (Supabase
   URL, anon key, PowerSync URL, Sentry DSN) stays in the binary — RLS
   is the real gate. (`.env` holds only that public config; if a key
