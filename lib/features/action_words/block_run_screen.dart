@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/block_run.dart';
 import 'package:differentworld/features/action_words/widgets/block_handoff.dart';
+import 'package:differentworld/features/action_words/widgets/day_arc_strip.dart';
 import 'package:differentworld/features/action_words/widgets/deck_overview.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
@@ -169,6 +170,7 @@ class _BlockDayDeck extends ConsumerWidget {
           title: 'Run the day',
           subtitle:
               '${group.name} · ${beats.length} ${beats.length == 1 ? 'block' : 'blocks'}',
+          arc: DayArcStrip(beats: beats, accent: accent),
           onPresent: (i) {
             // A block carrying a curriculum session drills into its own beat
             // deck (the nested level from the mockups); a plain block presents

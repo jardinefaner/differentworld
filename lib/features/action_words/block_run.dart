@@ -78,5 +78,28 @@ DayBeat _beatForBlock(BlockRunInput b) {
         ? const ['▶ Runnable session — open to play its beats']
         : const [],
     suggestedSeconds: seconds,
+    energy: blockEnergy(b.kind, b.title),
   );
+}
+
+/// A coarse energy level (0..1) for a block, from its kind + a light title
+/// keyword scan — so the day's order draws an arc without anyone hand-tuning it
+/// yet (an explicit per-block energy field is a later slice). calm ≈ 0.3,
+/// active ≈ 0.6, peak ≈ 0.9.
+double blockEnergy(String kind, String title) {
+  if (kind == 'closed') return 0.18;
+  if (kind == 'break') return 0.32;
+  if (kind == 'field_trip') return 0.9;
+  final t = title.toLowerCase();
+  const peak = [
+    'play', 'outside', 'recess', 'gym', 'free', 'run', 'dance', 'sport',
+    'ball', 'game', 'active', 'move', //
+  ];
+  const calm = [
+    'circle', 'story', 'rest', 'quiet', 'calm', 'nap', 'arrival', 'welcome',
+    'meeting', 'reflect', 'wind', 'snack', 'read', 'journal', //
+  ];
+  if (peak.any(t.contains)) return 0.9;
+  if (calm.any(t.contains)) return 0.32;
+  return 0.6; // a generic do-it block — mid-high
 }

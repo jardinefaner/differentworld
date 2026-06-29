@@ -35,6 +35,7 @@ class DayBeat {
     this.sub = '',
     this.lines = const [],
     this.suggestedSeconds = 0,
+    this.energy = 0.5,
     this.emoji = '',
     this.guidance = '',
     this.imageUrl = '',
@@ -85,6 +86,12 @@ class DayBeat {
   /// the surface remembers their customs. The Watch beat suggests the
   /// video's length; the Big-Thinking play beat the 5-minute play.
   final int suggestedSeconds;
+
+  /// Where this beat sits in the day's energy arc, 0..1 (low → calm, high →
+  /// peak). Drives the run / compose arc curve (docs/VISION.md "the order is
+  /// an arc"). Block runs derive it from the block kind + title; the other
+  /// builders leave it at the neutral default.
+  final double energy;
 }
 
 /// The staff cue for a beat — its authored [DayBeat.guidance] if set, else a

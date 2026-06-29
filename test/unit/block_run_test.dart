@@ -153,5 +153,14 @@ void main() {
         'z',
       ]);
     });
+
+    test('energy is derived from kind + title (drives the arc)', () {
+      double e(BlockRunInput b) => buildBlockRun([b]).single.energy;
+      expect(e(_blk(kind: 'closed')), lessThan(0.3));
+      expect(e(_blk(kind: 'field_trip')), greaterThan(0.8));
+      expect(e(_blk(title: 'Free play outside')), greaterThan(0.8));
+      expect(e(_blk(title: 'Morning circle')), lessThan(0.4));
+      expect(e(_blk(title: 'Make a robot')), inInclusiveRange(0.5, 0.75));
+    });
   });
 }

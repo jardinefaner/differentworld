@@ -63,6 +63,7 @@ class DeckOverview extends StatelessWidget {
     required this.onPresent,
     this.emoji = '',
     this.subtitle,
+    this.arc,
     super.key,
   });
 
@@ -80,6 +81,10 @@ class DeckOverview extends StatelessWidget {
 
   /// Optional supporting line ("10 worlds · tap any to start there").
   final String? subtitle;
+
+  /// Optional widget shown between the header and the grid — the run-day arc
+  /// strip (the day's energy curve). Null for decks with no arc.
+  final Widget? arc;
 
   /// Present the deck starting at `beatIndex`. The caller pushes the immersive
   /// present route with a [DeckPresentArgs] built from the SAME beats + accent.
@@ -104,6 +109,13 @@ class DeckOverview extends StatelessWidget {
             child: ContentHeader(title: title, subtitle: subtitle),
           ),
         ),
+        if (arc != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: arc,
+            ),
+          ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverGrid(
