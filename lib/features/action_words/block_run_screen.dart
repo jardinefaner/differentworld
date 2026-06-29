@@ -170,7 +170,7 @@ class _BlockDayDeck extends ConsumerWidget {
           title: 'Run the day',
           subtitle:
               '${group.name} · ${beats.length} ${beats.length == 1 ? 'block' : 'blocks'}',
-          arc: DayArcStrip(beats: beats, accent: accent),
+          arc: DayArcStrip(energies: [for (final b in beats) b.energy], accent: accent),
           onPresent: (i) {
             // A block carrying a curriculum session drills into its own beat
             // deck (the nested level from the mockups); a plain block presents

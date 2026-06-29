@@ -7,22 +7,27 @@ import 'package:uuid/uuid.dart';
 /// palette and maps to the `schedule_blocks.kind` the runtime understands
 /// (on_site / break / field_trip) when a template is applied to a date.
 enum DayBlockKind {
-  arrival('🛬', 'Arrival', 'on_site'),
-  circle('⭕', 'Circle', 'on_site'),
-  activity('🎯', 'Activity', 'on_site'),
-  outdoor('🌳', 'Outdoor', 'on_site'),
-  meal('🍎', 'Snack / Meal', 'break'),
-  rest('😴', 'Rest', 'break'),
-  story('📖', 'Story', 'on_site'),
-  free('🧸', 'Free play', 'on_site'),
-  transition('🔁', 'Transition', 'on_site'),
-  pickup('👋', 'Pickup', 'on_site'),
-  fieldTrip('🚌', 'Field trip', 'field_trip');
+  arrival('🛬', 'Arrival', 'on_site', 0.25),
+  circle('⭕', 'Circle', 'on_site', 0.35),
+  activity('🎯', 'Activity', 'on_site', 0.65),
+  outdoor('🌳', 'Outdoor', 'on_site', 0.85),
+  meal('🍎', 'Snack / Meal', 'break', 0.3),
+  rest('😴', 'Rest', 'break', 0.2),
+  story('📖', 'Story', 'on_site', 0.3),
+  free('🧸', 'Free play', 'on_site', 0.9),
+  transition('🔁', 'Transition', 'on_site', 0.4),
+  pickup('👋', 'Pickup', 'on_site', 0.18),
+  fieldTrip('🚌', 'Field trip', 'field_trip', 0.9);
 
-  const DayBlockKind(this.emoji, this.label, this.scheduleKind);
+  const DayBlockKind(this.emoji, this.label, this.scheduleKind, this.energy);
   final String emoji;
   final String label;
   final String scheduleKind;
+
+  /// Where this kind sits in the day's energy arc, 0..1 (calm → peak) — drives
+  /// the arc preview in the template editor (docs/VISION.md "the order is an
+  /// arc").
+  final double energy;
 
   static DayBlockKind fromName(String? name) {
     for (final k in DayBlockKind.values) {

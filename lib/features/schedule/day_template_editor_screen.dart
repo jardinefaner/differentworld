@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/core/viewer/viewer.dart';
+import 'package:differentworld/features/action_words/widgets/day_arc_strip.dart';
 import 'package:differentworld/features/schedule/day_template.dart';
 import 'package:differentworld/features/schedule/day_template_providers.dart';
 import 'package:differentworld/features/schedule/widgets/apply_day_template_sheet.dart';
@@ -73,6 +74,16 @@ class DayTemplateEditorScreen extends ConsumerWidget {
               spaceId: spaceId,
               onRename: () => _rename(context, actions, template, spaceId),
             ),
+            // The arc the current order makes — redraws as blocks reorder, so
+            // "the order matters" is visible while composing (docs/VISION.md).
+            if (template.blocks.length >= 2)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: DayArcStrip(
+                  energies: [for (final b in template.blocks) b.kind.energy],
+                  accent: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             Expanded(
               child: template.blocks.isEmpty
                   ? const _NoBlocks()

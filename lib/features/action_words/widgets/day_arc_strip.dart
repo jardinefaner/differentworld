@@ -1,33 +1,33 @@
-import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// The day's energy arc — each beat plotted by its [DayBeat.energy], drawn as a
+/// The day's energy arc — each beat plotted by its energy value, drawn as a
 /// line so the run-of-show's *shape* (gather → rise → peak → wind-down → close)
 /// is visible at a glance (docs/VISION.md "the order is an arc"). A glance, not
 /// a control — it doesn't respond to taps; it just shows the day's shape above
 /// the deck.
 class DayArcStrip extends StatelessWidget {
-  const DayArcStrip({required this.beats, required this.accent, super.key});
+  const DayArcStrip({required this.energies, required this.accent, super.key});
 
-  final List<DayBeat> beats;
+  /// Each beat / block's energy 0..1, in order — the curve's y-values.
+  final List<double> energies;
 
-  /// The deck's accent — the dots' colour (content-driven, like the tiles).
+  /// The accent — the dots' colour (content-driven, like the deck tiles).
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
     // An arc needs at least two points to read as a shape.
-    if (beats.length < 2) return const SizedBox.shrink();
+    if (energies.length < 2) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
     return Semantics(
-      label: "The day's energy arc across ${beats.length} blocks",
+      label: "The day's energy arc across ${energies.length} blocks",
       child: SizedBox(
         height: 64,
         width: double.infinity,
         child: CustomPaint(
           painter: _ArcPainter(
-            energies: [for (final b in beats) b.energy.clamp(0.0, 1.0)],
+            energies: [for (final e in energies) e.clamp(0.0, 1.0)],
             accent: accent,
             line: scheme.onSurfaceVariant,
             textDirection: Directionality.of(context),
