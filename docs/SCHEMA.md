@@ -386,8 +386,8 @@ of the SQL.
 - `notes` (text, nullable)
 **RLS gist**: relaxed.
 **Sync rule**: `by_space`.
-**Consumers**: [Schedule](FEATURES.md#schedule) (block editor + day-template builder `applyToDate` writes via `scheduleDao.createDayBlocks`), [Today](FEATURES.md#today) (LeadingTodayCard; `contextLeadProvider` reads `liveBlockProvider` for the live-block path of the contextual lead), [Routines](FEATURES.md#routines) (READ-ONLY kid-legible re-skin of the day via `scheduleDayForGroupProvider`; no writes).
-**Last verified**: 2026-06-15
+**Consumers**: [Schedule](FEATURES.md#schedule) (block editor + day-template builder `applyToDate` writes via `scheduleDao.createDayBlocks`), [Today](FEATURES.md#today) (LeadingTodayCard; `contextLeadProvider` reads `liveBlockProvider` for the live-block path of the contextual lead), [Routines](FEATURES.md#routines) (READ-ONLY kid-legible re-skin of the day via `scheduleDayForGroupProvider`; no writes), [Action Words](FEATURES.md#action-words) (READ-ONLY — `BlockRunScreen` reads `scheduleDayForGroupProvider(today)` from the Schedule feature to build the run-of-show deck via `buildBlockRun`; no writes to this table).
+**Last verified**: 2026-06-28
 
 ---
 
