@@ -7,6 +7,8 @@ import 'package:differentworld/features/action_words/widgets/block_handoff.dart'
 import 'package:differentworld/features/action_words/widgets/day_arc_strip.dart';
 import 'package:differentworld/features/action_words/widgets/deck_overview.dart';
 import 'package:differentworld/features/action_words/world_schedule.dart';
+import 'package:differentworld/features/curricula/session_scripts.dart';
+import 'package:differentworld/features/curricula/today_photo_session.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
@@ -69,6 +71,45 @@ class _BlockRunScreenState extends ConsumerState<BlockRunScreen> {
     if (picked != null && mounted) setState(() => _groupId = picked);
   }
 
+  /// Pick today's photo class — the lesson that fills every Rotation block.
+  Future<void> _pickSession(BuildContext context) async {
+    final current =
+        ref.read(todayPhotoSessionProvider).value ??
+        allSessionScripts.first.slug;
+    final picked = await showGlassSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 6),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Today's photo class — fills the Rotation blocks",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ),
+            for (final s in allSessionScripts)
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 14,
+                  child: Text('${s.sessionNumber}'),
+                ),
+                title: Text(s.title),
+                trailing: s.slug == current ? const Icon(Icons.check) : null,
+                onTap: () => Navigator.of(ctx).pop(s.slug),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || !mounted) return;
+    await ref.read(todayPhotoSessionProvider.notifier).set(picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupsAsync = ref.watch(groupsProvider);
@@ -81,6 +122,11 @@ class _BlockRunScreenState extends ConsumerState<BlockRunScreen> {
 
     return EdgeScaffold(
       actions: [
+        IconButton(
+          tooltip: "Today's photo class",
+          icon: const Icon(Icons.photo_camera_outlined),
+          onPressed: () => unawaited(_pickSession(context)),
+        ),
         if (groups.length > 1)
           IconButton(
             tooltip: 'Choose cohort',
@@ -111,6 +157,13 @@ class _BlockRunScreenState extends ConsumerState<BlockRunScreen> {
   }
 }
 
+/// A block is "the photo class" rotation when its title says so — the user's
+/// template labels them "Rotation 1/2/3". A block carrying an explicit
+/// `curriculumSessionSlug` is honoured directly; this only auto-fills the
+/// generic rotation blocks with today's class.
+bool _isRotationBlock(String? title) =>
+    (title ?? '').toLowerCase().contains('rotation');
+
 /// The selected cohort's day, today — its blocks as the tappable run deck.
 class _BlockDayDeck extends ConsumerWidget {
   const _BlockDayDeck({required this.group, required this.accent});
@@ -122,6 +175,13 @@ class _BlockDayDeck extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final key = (groupId: group.id, date: todayKey());
     final blocksAsync = ref.watch(scheduleDayForGroupProvider(key));
+    // Today's photo class — fills the generic "Rotation" blocks so the same
+    // lesson runs as cohorts rotate through (docs/VISION.md). Falls back to the
+    // first session on the loading frame, so a Rotation is never briefly
+    // generic — it's always today's class.
+    final todaySlug =
+        ref.watch(todayPhotoSessionProvider).value ??
+        allSessionScripts.first.slug;
 
     return blocksAsync.when(
       loading: () => const LoadingSlot(),
@@ -130,19 +190,26 @@ class _BlockDayDeck extends ConsumerWidget {
         onRetry: () => ref.invalidate(scheduleDayForGroupProvider(key)),
       ),
       data: (blocks) {
-        final inputs = [
-          for (final b in blocks)
-            (
-              blockId: b.id,
-              title: b.title ?? '',
-              startAt: b.startAt,
-              endAt: b.endAt,
-              kind: b.kind,
-              notes: b.notes,
-              sessionSlug: b.curriculumSessionSlug,
-              status: b.status,
-            ),
-        ];
+        final inputs = <BlockRunInput>[];
+        for (final b in blocks) {
+          // Honour an explicit session; else auto-fill a Rotation block with
+          // today's photo class, resolving the slug's title so the tile names
+          // the lesson instead of staying generic.
+          final slug =
+              b.curriculumSessionSlug ??
+              (_isRotationBlock(b.title) ? todaySlug : null);
+          inputs.add((
+            blockId: b.id,
+            title: b.title ?? '',
+            startAt: b.startAt,
+            endAt: b.endAt,
+            kind: b.kind,
+            notes: b.notes,
+            sessionSlug: slug,
+            sessionTitle: slug == null ? null : scriptForSession(slug)?.title,
+            status: b.status,
+          ));
+        }
         // ONE aligned pass: run.beats[i] is built from run.ordered[i], so a
         // tapped tile index resolves back to its source block for the drill.
         final run = buildBlockRunAligned(inputs);

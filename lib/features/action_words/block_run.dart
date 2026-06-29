@@ -13,6 +13,7 @@ typedef BlockRunInput = ({
   String kind, // on_site | field_trip | break | closed
   String? notes,
   String? sessionSlug, // curriculum_session_slug, if the block runs a deck
+  String? sessionTitle, // resolved lesson title, so the tile isn't generic
   String? status, // planned | skipped | cancelled (null == planned)
 });
 
@@ -67,16 +68,18 @@ DayBeat _beatForBlock(BlockRunInput b) {
   // Cap at 6h so a malformed/overnight range can't seed an absurd timer.
   final seconds = rawSeconds < 0 ? 0 : (rawSeconds > 21600 ? 21600 : rawSeconds);
   final hasSession = (b.sessionSlug ?? '').trim().isNotEmpty;
+  final sessionTitle = (b.sessionTitle ?? '').trim();
   // A 'closed' block is the day's handoff beat; everything else is a do-it.
   final kind = b.kind == 'closed' ? DayBeatKind.close : DayBeatKind.activity;
   return DayBeat(
     kind: kind,
     label: timeLabel,
     big: b.title.trim().isEmpty ? 'Untitled block' : b.title.trim(),
-    sub: (b.notes ?? '').trim(),
-    lines: hasSession
-        ? const ['▶ Runnable session — open to play its beats']
-        : const [],
+    // A filled session names its lesson (not generic); otherwise the notes.
+    sub: hasSession && sessionTitle.isNotEmpty
+        ? 'Photo class · $sessionTitle'
+        : (b.notes ?? '').trim(),
+    lines: hasSession ? const ['▶ Open to run the lesson'] : const [],
     suggestedSeconds: seconds,
     energy: blockEnergy(b.kind, b.title),
   );

@@ -11,6 +11,7 @@ BlockRunInput _blk({
   String kind = 'on_site',
   String? notes,
   String? sessionSlug,
+  String? sessionTitle,
   String? status,
 }) => (
   blockId: id,
@@ -20,6 +21,7 @@ BlockRunInput _blk({
   kind: kind,
   notes: notes,
   sessionSlug: sessionSlug,
+  sessionTitle: sessionTitle,
   status: status,
 );
 
@@ -161,6 +163,24 @@ void main() {
       expect(e(_blk(title: 'Free play outside')), greaterThan(0.8));
       expect(e(_blk(title: 'Morning circle')), lessThan(0.4));
       expect(e(_blk(title: 'Make a robot')), inInclusiveRange(0.5, 0.75));
+    });
+
+    test('a filled session names its lesson in the sub (not generic)', () {
+      final withTitle = buildBlockRun([
+        _blk(
+          title: 'Rotation 1',
+          sessionSlug: 'photo.s3.upside-down',
+          sessionTitle: 'Upside-down',
+        ),
+      ]).single;
+      expect(withTitle.sub, 'Photo class · Upside-down');
+      expect(withTitle.lines, isNotEmpty);
+
+      // No session → the sub falls back to the block's own notes.
+      final plain = buildBlockRun([
+        _blk(title: 'Snack', notes: 'allergy table'),
+      ]).single;
+      expect(plain.sub, 'allergy table');
     });
   });
 }
