@@ -1341,6 +1341,40 @@ once it has a home.
     whole-room? Is "community" a future shared/public layer (cf. "teaching in
     public") or just every parent seeing their child's day?
 
+- **2026-06-28** — **The whole day is one ordered deck — an arc from open to
+  close.** In the user's words: *"i want it so that a whole day schedule is
+  going to be run by this… this app is really a bunch of slides… so the order of
+  each slide matters… this is to create an arc from the moment our program begins
+  to when it ends."* This is the synthesis the scattered pieces have been reaching
+  for: the app **is** a deck, and the **day is the top-level deck.** Today there's
+  a Now & Next board (#18), `play-today` ("the day, on rails — one immersive run
+  of show"), and the curriculum's "a session is a runnable, castable deck"
+  (`SessionScript` / `SessionBeat`). This names the whole: the ordered
+  `schedule_blocks` are the day's spine, each block is a slide (or expands into its
+  own sub-deck of beats), and the program plays from arrival to pickup as ONE
+  continuous, castable run-of-show. The sharpening is **order-as-authorship** — the
+  sequence isn't a checklist, it's an **arc**: gather → rise → focus / make →
+  wind-down → close. The day has a *shape*, and the director composes it. Reuses
+  the spine we already have (`schedule_blocks`, the SessionScript decks,
+  `live_session` casting each slide to the room, `block_run_sheet` per block, the
+  transition cues from #18 as first-class between-block beats); the new thing is
+  the **day-level arc you run end to end.** **Open forks before coding:** the unit
+  of the deck — is a "slide" a block, a beat within a block, a transition cue, or
+  all three nested (day = deck of blocks; block = deck of beats)? Authoring — a
+  replayed day-template or assembled per-day from the live schedule; does the
+  director sequence the energy by hand, or does the app propose an arc from block
+  kinds + energy tags? Driving — staff advances slide-by-slide (phone as remote),
+  time-driven auto-advance on the clock, or hybrid (suggested-next, staff
+  confirms)? Are transitions ("eyes up / clean up / breathe") first-class slides
+  in the arc? Does this extend `play-today` into the full open→close run, or become
+  the cockpit's spine? And since the day never runs on rails — how does it skip,
+  reorder, run long, and resume (the `day-run-resume` seed)? **Status:** seed
+  (every piece exists — schedule blocks, runnable session decks, casting,
+  play-today, block run sheets — but "the whole day as one authored arc, run
+  open-to-close" is unbuilt synthesis). **Lives in:** lib/features/schedule/,
+  lib/features/curricula/ (SessionScript), lib/features/today/ (play-today /
+  cockpit), lib/features/live_session/.
+
 ---
 
 ## How to keep this alive (for future me)
