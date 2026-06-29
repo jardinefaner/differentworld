@@ -198,6 +198,13 @@ List<NavDestination> buildNavDestinations(Viewer viewer) {
       route: '/reflect',
       group: 'Activities',
     ),
+    NavDestination(
+      icon: Icons.play_circle_outline,
+      label: 'Run the day',
+      route: '/run-day',
+      group: 'Activities',
+      onlyFor: (v) => v.canObserve,
+    ),
     const NavDestination(
       icon: Icons.co_present_outlined,
       label: 'Present',

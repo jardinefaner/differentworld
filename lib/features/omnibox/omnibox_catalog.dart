@@ -80,6 +80,24 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
   // -- Static pages + actions -------------------------------------------
   final entries = <OmniboxEntry>[
     OmniboxEntry(
+      id: 'page.run-day',
+      label: 'Run the day',
+      category: OmniboxCategory.page,
+      icon: Icons.play_circle_outline,
+      keywords: const [
+        'run',
+        'run the day',
+        'run of show',
+        'present the day',
+        'slides',
+        'deck',
+        'arc',
+        'schedule run',
+      ],
+      contextTags: const ['morning', 'afternoon'],
+      onSelect: (ctx, _) => ctx.push('/run-day'),
+    ),
+    OmniboxEntry(
       id: 'page.today',
       label: 'Today',
       category: OmniboxCategory.page,
