@@ -9,6 +9,7 @@ import 'package:differentworld/features/action_words/action_words_kid_screen.dar
 import 'package:differentworld/features/action_words/action_words_screen.dart';
 import 'package:differentworld/features/action_words/activity_arc_screen.dart';
 import 'package:differentworld/features/action_words/activity_match_screen.dart';
+import 'package:differentworld/features/action_words/block_run_screen.dart';
 import 'package:differentworld/features/action_words/book_screen.dart';
 import 'package:differentworld/features/action_words/collection_screen.dart';
 import 'package:differentworld/features/action_words/day_run_screen.dart';
@@ -1436,6 +1437,35 @@ final routerProvider = Provider<GoRouter>((ref) {
                       onBeatChanged: args.onBeatChanged,
                       // The schedule-aware end-of-run handoff (set by the
                       // /play-today deck path; the journey leaves it null).
+                      onFinished: args.onFinished,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          // The whole day as one run of show — today's schedule blocks as an
+          // ordered, advanceable, castable deck (docs/VISION.md "the day is one
+          // ordered deck"). Mirrors /play-today: base screen + a nested
+          // immersive present route fed by DeckPresentArgs.
+          GoRoute(
+            path: '/run-day',
+            builder: (_, _) => const BlockRunScreen(),
+            routes: [
+              GoRoute(
+                path: 'present',
+                builder: (_, state) {
+                  final args = state.extra;
+                  if (args is! DeckPresentArgs) {
+                    return const BlockRunScreen();
+                  }
+                  return EdgeScaffold(
+                    body: BeatPresenter(
+                      beats: args.beats,
+                      accent: args.accent,
+                      emoji: args.emoji,
+                      initialBeat: args.initialBeat,
+                      onBeatChanged: args.onBeatChanged,
                       onFinished: args.onFinished,
                     ),
                   );
