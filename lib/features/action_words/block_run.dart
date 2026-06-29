@@ -6,6 +6,7 @@ import 'package:differentworld/shared/format/date_keys.dart';
 /// Drift import), deterministic, and unit-testable — exactly like the other
 /// run builders in day_run.dart.
 typedef BlockRunInput = ({
+  String blockId, // schedule_blocks.id — the drill target for a session block
   String title,
   String startAt, // ISO 8601
   String endAt, // ISO 8601
@@ -25,13 +26,19 @@ typedef BlockRunInput = ({
 /// just like [buildDayRun]. The schedule's order IS the arc: blocks are sorted
 /// by start time, and skipped / cancelled blocks are dropped — you don't run
 /// what won't happen.
-List<DayBeat> buildBlockRun(List<BlockRunInput> blocks) {
-  final live = [
-    for (final b in blocks)
-      if (b.status != 'skipped' && b.status != 'cancelled') b,
-  ]..sort((a, b) => a.startAt.compareTo(b.startAt));
-  return [for (final b in live) _beatForBlock(b)];
-}
+List<DayBeat> buildBlockRun(List<BlockRunInput> blocks) => [
+  for (final b in liveBlockOrder(blocks)) _beatForBlock(b),
+];
+
+/// The blocks that will run, in beat order — the SAME filter + sort
+/// [buildBlockRun] applies (skipped / cancelled dropped, sorted by start time).
+/// Exposed so a caller can align per-beat metadata (e.g. a session drill
+/// target) with the produced deck by index: `liveBlockOrder(x)[i]` is the
+/// source block for `buildBlockRun(x)[i]`.
+List<BlockRunInput> liveBlockOrder(List<BlockRunInput> blocks) => [
+  for (final b in blocks)
+    if (b.status != 'skipped' && b.status != 'cancelled') b,
+]..sort((a, b) => a.startAt.compareTo(b.startAt));
 
 DayBeat _beatForBlock(BlockRunInput b) {
   final start = DateTime.tryParse(b.startAt)?.toLocal();

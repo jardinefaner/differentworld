@@ -129,9 +129,10 @@ class _BlockDayDeck extends ConsumerWidget {
         onRetry: () => ref.invalidate(scheduleDayForGroupProvider(key)),
       ),
       data: (blocks) {
-        final beats = buildBlockRun([
+        final inputs = [
           for (final b in blocks)
             (
+              blockId: b.id,
               title: b.title ?? '',
               startAt: b.startAt,
               endAt: b.endAt,
@@ -140,7 +141,11 @@ class _BlockDayDeck extends ConsumerWidget {
               sessionSlug: b.curriculumSessionSlug,
               status: b.status,
             ),
-        ]);
+        ];
+        final beats = buildBlockRun(inputs);
+        // Aligned 1:1 with `beats` (same filter + sort), so a tapped tile index
+        // resolves back to its source block — for the session drill below.
+        final ordered = liveBlockOrder(inputs);
 
         if (beats.isEmpty) {
           return EmptyState(
@@ -163,21 +168,35 @@ class _BlockDayDeck extends ConsumerWidget {
           title: 'Run the day',
           subtitle:
               '${group.name} · ${beats.length} ${beats.length == 1 ? 'block' : 'blocks'}',
-          onPresent: (i) => unawaited(
-            context.push(
-              '/run-day/present',
-              extra: DeckPresentArgs(
-                beats: beats,
-                accent: accent,
-                initialBeat: i,
-                onFinished: (context, dismiss) => BlockHandoff(
-                  justFinishedTitle: '${group.name} · today',
+          onPresent: (i) {
+            // A block carrying a curriculum session drills into its own beat
+            // deck (the nested level from the mockups); a plain block presents
+            // the run from here.
+            final slug = ordered[i].sessionSlug?.trim() ?? '';
+            if (slug.isNotEmpty) {
+              unawaited(
+                context.push(
+                  '/session/run?slug=$slug&block=${ordered[i].blockId}',
+                ),
+              );
+              return;
+            }
+            unawaited(
+              context.push(
+                '/run-day/present',
+                extra: DeckPresentArgs(
+                  beats: beats,
                   accent: accent,
-                  onDismiss: dismiss,
+                  initialBeat: i,
+                  onFinished: (context, dismiss) => BlockHandoff(
+                    justFinishedTitle: '${group.name} · today',
+                    accent: accent,
+                    onDismiss: dismiss,
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );

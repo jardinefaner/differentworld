@@ -4,6 +4,7 @@ import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 BlockRunInput _blk({
+  String id = 'b1',
   String title = 'Block',
   String start = '2026-06-28T09:00:00.000Z',
   String end = '2026-06-28T09:45:00.000Z',
@@ -12,6 +13,7 @@ BlockRunInput _blk({
   String? sessionSlug,
   String? status,
 }) => (
+  blockId: id,
   title: title,
   startAt: start,
   endAt: end,
@@ -111,6 +113,32 @@ void main() {
 
     test('empty schedule yields an empty run', () {
       expect(buildBlockRun(const []), isEmpty);
+    });
+
+    test('liveBlockOrder aligns 1:1 with buildBlockRun (drops + sorts)', () {
+      final inputs = [
+        _blk(
+          id: 'late',
+          title: 'Late',
+          start: '2026-06-28T17:00:00.000Z',
+          end: '2026-06-28T17:30:00.000Z',
+        ),
+        _blk(id: 'skip', title: 'Skip', status: 'skipped'),
+        _blk(
+          id: 'early',
+          title: 'Early',
+          start: '2026-06-28T15:00:00.000Z',
+          end: '2026-06-28T15:30:00.000Z',
+        ),
+      ];
+      final ordered = liveBlockOrder(inputs);
+      final beats = buildBlockRun(inputs);
+
+      expect(ordered.map((b) => b.blockId).toList(), ['early', 'late']);
+      expect(beats.length, ordered.length);
+      for (var i = 0; i < beats.length; i++) {
+        expect(beats[i].big, ordered[i].title);
+      }
     });
   });
 }
