@@ -69,20 +69,124 @@ DayBeat _beatForBlock(BlockRunInput b) {
   final seconds = rawSeconds < 0 ? 0 : (rawSeconds > 21600 ? 21600 : rawSeconds);
   final hasSession = (b.sessionSlug ?? '').trim().isNotEmpty;
   final sessionTitle = (b.sessionTitle ?? '').trim();
+  final notes = (b.notes ?? '').trim();
+  // A session block runs the photo deck; otherwise a routine run-script fills
+  // it (the steps + tools to run THIS block), so no slide is just a title.
+  final recipe = hasSession ? null : blockRunScript(b.kind, b.title);
   // A 'closed' block is the day's handoff beat; everything else is a do-it.
   final kind = b.kind == 'closed' ? DayBeatKind.close : DayBeatKind.activity;
+
+  final String sub;
+  final List<String> lines;
+  if (hasSession) {
+    sub = sessionTitle.isNotEmpty ? 'Photo class · $sessionTitle' : notes;
+    lines = const ['▶ Open to run the lesson'];
+  } else if (recipe != null) {
+    sub = recipe.tools.isEmpty ? notes : 'Bring: ${recipe.tools.join(', ')}';
+    lines = recipe.steps;
+  } else {
+    sub = notes;
+    lines = const [];
+  }
+
   return DayBeat(
     kind: kind,
     label: timeLabel,
     big: b.title.trim().isEmpty ? 'Untitled block' : b.title.trim(),
-    // A filled session names its lesson (not generic); otherwise the notes.
-    sub: hasSession && sessionTitle.isNotEmpty
-        ? 'Photo class · $sessionTitle'
-        : (b.notes ?? '').trim(),
-    lines: hasSession ? const ['▶ Open to run the lesson'] : const [],
+    sub: sub,
+    lines: lines,
     suggestedSeconds: seconds,
     energy: blockEnergy(b.kind, b.title),
   );
+}
+
+/// A run-script for a routine / non-session block — the steps to run it + the
+/// tools to bring, so the slide carries everything to run THAT block instead of
+/// a generic title. Derived from the title (the template's rich `DayBlockKind`
+/// collapses to a coarse schedule kind when applied, so the label is the
+/// signal). Returns null for a block we have no recipe for — it keeps its title
+/// + notes. Rotation / session blocks don't use this; they run the photo deck.
+typedef BlockRunScript = ({List<String> steps, List<String> tools});
+
+BlockRunScript? blockRunScript(String kind, String title) {
+  final t = title.toLowerCase();
+  bool has(List<String> words) => words.any(t.contains);
+
+  if (has(['arrival', 'check-in', 'check in', 'drop-off', 'drop off'])) {
+    return (
+      steps: [
+        'Greet each kid by name at the door',
+        'Sign in + mark attendance',
+        'Settle into a quiet choice',
+      ],
+      tools: ['sign-in sheet'],
+    );
+  }
+  if (has(['breakfast', 'lunch', 'snack', 'meal'])) {
+    return (
+      steps: [
+        'Wash hands',
+        'Hand out / serve',
+        'Eat together — table talk',
+        'Clean up together',
+      ],
+      tools: ['the food', 'wipes'],
+    );
+  }
+  if (has(['rest', 'nap', 'quiet time'])) {
+    return (
+      steps: [
+        'Lights low, calm music on',
+        'Mats / quiet spots',
+        'Rest or a quiet activity',
+        'Wake gently',
+      ],
+      tools: ['mats', 'soft music'],
+    );
+  }
+  if (kind == 'closed' || has(['pickup', 'goodbye', 'dismissal'])) {
+    return (
+      steps: [
+        'Pack up belongings',
+        'Goodbye circle — one win each',
+        'Check out each kid to their guardian',
+      ],
+      tools: ['sign-out sheet', "today's reveal"],
+    );
+  }
+  if (has(['transition'])) {
+    return (
+      steps: [
+        'Eyes up',
+        'Clean up the space',
+        'Move calmly / line up',
+        'Breathe together',
+      ],
+      tools: const [],
+    );
+  }
+  if (has(['icebreaker', 'welcome', 'circle', 'morning meeting'])) {
+    return (
+      steps: [
+        'Quick name + energy check',
+        'One thing about your day',
+        "Claim today's verb",
+      ],
+      tools: const [],
+    );
+  }
+  if (has(['free play', 'free', 'outdoor', 'outside', 'recess', 'play'])) {
+    return (
+      steps: [
+        'Set the choices out',
+        'Step back — let them lead',
+        'Circulate + capture moments',
+        '5-minute warning before cleanup',
+      ],
+      tools: const [],
+    );
+  }
+  return null;
 }
 
 /// A coarse energy level (0..1) for a block, from its kind + a light title

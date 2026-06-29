@@ -176,11 +176,35 @@ void main() {
       expect(withTitle.sub, 'Photo class · Upside-down');
       expect(withTitle.lines, isNotEmpty);
 
-      // No session → the sub falls back to the block's own notes.
+      // No session AND no recipe → the sub falls back to the block's notes.
       final plain = buildBlockRun([
-        _blk(title: 'Snack', notes: 'allergy table'),
+        _blk(title: 'Open studio', notes: 'art room'),
       ]).single;
-      expect(plain.sub, 'allergy table');
+      expect(plain.sub, 'art room');
+    });
+
+    test('routine blocks get a run-script (steps + tools), not just a title', () {
+      final arrival = buildBlockRun([_blk(title: 'Arrival & check-in')]).single;
+      expect(arrival.lines, isNotEmpty); // the steps
+      expect(arrival.sub, contains('Bring')); // the tools
+
+      final transition = buildBlockRun([_blk(title: 'Transition')]).single;
+      expect(transition.lines, isNotEmpty); // steps, no tools
+
+      final pickup = buildBlockRun([_blk(title: 'Pickup', kind: 'closed')]).single;
+      expect(pickup.kind, DayBeatKind.close);
+      expect(pickup.lines, isNotEmpty);
+
+      // A filled session keeps the session treatment, not a routine recipe.
+      final rotation = buildBlockRun([
+        _blk(
+          title: 'Rotation 1',
+          sessionSlug: 'photo.s1.click-game',
+          sessionTitle: 'The click game',
+        ),
+      ]).single;
+      expect(rotation.sub, startsWith('Photo class'));
+      expect(rotation.lines, ['▶ Open to run the lesson']);
     });
   });
 }
