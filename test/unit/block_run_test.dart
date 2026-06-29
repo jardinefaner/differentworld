@@ -115,7 +115,7 @@ void main() {
       expect(buildBlockRun(const []), isEmpty);
     });
 
-    test('liveBlockOrder aligns 1:1 with buildBlockRun (drops + sorts)', () {
+    test('buildBlockRunAligned aligns beats with source blocks (drops + sorts)', () {
       final inputs = [
         _blk(
           id: 'late',
@@ -131,14 +131,27 @@ void main() {
           end: '2026-06-28T15:30:00.000Z',
         ),
       ];
-      final ordered = liveBlockOrder(inputs);
-      final beats = buildBlockRun(inputs);
+      final run = buildBlockRunAligned(inputs);
 
-      expect(ordered.map((b) => b.blockId).toList(), ['early', 'late']);
-      expect(beats.length, ordered.length);
-      for (var i = 0; i < beats.length; i++) {
-        expect(beats[i].big, ordered[i].title);
+      expect(run.ordered.map((b) => b.blockId).toList(), ['early', 'late']);
+      expect(run.beats.length, run.ordered.length);
+      for (var i = 0; i < run.beats.length; i++) {
+        expect(run.beats[i].big, run.ordered[i].title);
       }
+    });
+
+    test('liveBlockOrder is deterministic for equal start times (blockId tiebreak)', () {
+      final inputs = [
+        _blk(id: 'z', title: 'Z'),
+        _blk(id: 'a', title: 'A'),
+        _blk(id: 'm', title: 'M'),
+      ];
+      // All share the default start; the blockId tiebreaker gives a stable order.
+      expect(liveBlockOrder(inputs).map((b) => b.blockId).toList(), [
+        'a',
+        'm',
+        'z',
+      ]);
     });
   });
 }

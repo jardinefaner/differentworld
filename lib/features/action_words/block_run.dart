@@ -26,19 +26,34 @@ typedef BlockRunInput = ({
 /// just like [buildDayRun]. The schedule's order IS the arc: blocks are sorted
 /// by start time, and skipped / cancelled blocks are dropped — you don't run
 /// what won't happen.
-List<DayBeat> buildBlockRun(List<BlockRunInput> blocks) => [
-  for (final b in liveBlockOrder(blocks)) _beatForBlock(b),
-];
+/// Beats + their source blocks, aligned by index from ONE [liveBlockOrder]
+/// pass: `beats[i]` is always built from `ordered[i]`. Use this (not two
+/// separate calls) whenever you need the source block behind a tapped beat —
+/// it makes the alignment a structural identity rather than an assumption that
+/// two independent sorts produce the same permutation.
+({List<DayBeat> beats, List<BlockRunInput> ordered}) buildBlockRunAligned(
+  List<BlockRunInput> blocks,
+) {
+  final ordered = liveBlockOrder(blocks);
+  return (beats: [for (final b in ordered) _beatForBlock(b)], ordered: ordered);
+}
 
-/// The blocks that will run, in beat order — the SAME filter + sort
-/// [buildBlockRun] applies (skipped / cancelled dropped, sorted by start time).
-/// Exposed so a caller can align per-beat metadata (e.g. a session drill
-/// target) with the produced deck by index: `liveBlockOrder(x)[i]` is the
-/// source block for `buildBlockRun(x)[i]`.
+/// The day's run-of-show beats. Convenience over [buildBlockRunAligned] for
+/// callers that don't need the source blocks (e.g. tests).
+List<DayBeat> buildBlockRun(List<BlockRunInput> blocks) =>
+    buildBlockRunAligned(blocks).beats;
+
+/// The blocks that will run, in beat order — skipped / cancelled dropped,
+/// sorted by start time then `blockId`. The blockId tiebreaker makes it a
+/// total order, so the sequence is deterministic across rebuilds (equal-start
+/// blocks never reshuffle) and any two passes agree.
 List<BlockRunInput> liveBlockOrder(List<BlockRunInput> blocks) => [
   for (final b in blocks)
     if (b.status != 'skipped' && b.status != 'cancelled') b,
-]..sort((a, b) => a.startAt.compareTo(b.startAt));
+]..sort((a, b) {
+  final byStart = a.startAt.compareTo(b.startAt);
+  return byStart != 0 ? byStart : a.blockId.compareTo(b.blockId);
+});
 
 DayBeat _beatForBlock(BlockRunInput b) {
   final start = DateTime.tryParse(b.startAt)?.toLocal();

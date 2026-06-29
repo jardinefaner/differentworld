@@ -56,7 +56,7 @@ class _BlockRunScreenState extends ConsumerState<BlockRunScreen> {
             for (final g in groups)
               ListTile(
                 title: Text(g.name),
-                trailing: g.id == (_groupId ?? groups.first.id)
+                trailing: g.id == _resolve(groups)?.id
                     ? const Icon(Icons.check)
                     : null,
                 onTap: () => Navigator.of(ctx).pop(g.id),
@@ -84,7 +84,7 @@ class _BlockRunScreenState extends ConsumerState<BlockRunScreen> {
           IconButton(
             tooltip: 'Choose cohort',
             icon: const Icon(Icons.groups_outlined),
-            onPressed: () => _pickGroup(context, groups),
+            onPressed: () => unawaited(_pickGroup(context, groups)),
           ),
         const SyncStatusIndicator(),
       ],
@@ -142,10 +142,11 @@ class _BlockDayDeck extends ConsumerWidget {
               status: b.status,
             ),
         ];
-        final beats = buildBlockRun(inputs);
-        // Aligned 1:1 with `beats` (same filter + sort), so a tapped tile index
-        // resolves back to its source block — for the session drill below.
-        final ordered = liveBlockOrder(inputs);
+        // ONE aligned pass: run.beats[i] is built from run.ordered[i], so a
+        // tapped tile index resolves back to its source block for the drill.
+        final run = buildBlockRunAligned(inputs);
+        final beats = run.beats;
+        final ordered = run.ordered;
 
         if (beats.isEmpty) {
           return EmptyState(
@@ -176,7 +177,8 @@ class _BlockDayDeck extends ConsumerWidget {
             if (slug.isNotEmpty) {
               unawaited(
                 context.push(
-                  '/session/run?slug=$slug&block=${ordered[i].blockId}',
+                  '/session/run?slug=${Uri.encodeQueryComponent(slug)}'
+                  '&block=${Uri.encodeQueryComponent(ordered[i].blockId)}',
                 ),
               );
               return;
