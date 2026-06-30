@@ -1449,6 +1449,43 @@ once it has a home.
   synthesis). **Lives in:** lib/features/action_words/ (BeatPresenter, the day
   run), lib/features/schedule/ (block_run_sheet — the action catalog to share).
 
+- **2026-06-30** — **Every verb has skills underneath it. The verb is WHAT you do;
+  the skill is HOW WELL — and it's a number that goes up with practice.** In the
+  user's words: *"Each skill is one word, measurable, and gets better with practice…
+  The growth in skills IS the character development. Not described. Measured. Not
+  hoped for. Tracked. Not abstract. Visible."* This is the **measurement spine** of
+  the whole app — the thing that makes Different World different from every "build
+  character" product, which only ever *describes*. Here, character is a **number with
+  a history.** Each of the 12 verbs ([[verbs.dart]] — carry/listen/play/spark/flow/
+  build/watch/wait/solve/help/echo/shine) gets **5 skills** = **60 total**, and every
+  one is: **one word · zero materials · measurable (a duration, a count, a frequency,
+  a rating) · improves with practice · maps to one verb · practiceable right now.**
+  Examples — CARRY: Lift (how heavy, in objects) · Steady (how little spills) · Gentle
+  (the range between max force and min force) · Deliver (times/day you bring before
+  asked) · Endure (seconds holding). LISTEN: Count (sounds in 30s) · Locate (point
+  accuracy) · Separate (seconds on one sound) · Remember (pattern length) · Silence
+  (seconds of true stillness). WAIT: Still · Pause · Tolerate · Yield · Trust (plant a
+  seed, don't dig it up). SHINE: Stand · Name · Show · Claim · Receive (replace "no I'm
+  not" with "thank you"). Full 60 authored in code (see Lives-in). **The core
+  insight:** *"The number IS the lesson. The number IS the proof. The number IS the
+  story you tell the parent, the funder, and the kid."* — "Day 1: 12 seconds. Day 50:
+  2 minutes. That's YOU. You did that. Nobody taught you patience. You practiced it,
+  and now it's yours." This is the **growth arc made measurable**: the kid's story
+  (the deferred showcase / [[#1]] "every child becomes their own book") is no longer a
+  compilation of moments — it's a set of **curves trending up**, one per skill
+  practiced, over 50 days. **What it needs:** (a) the skill **catalog** — DONE, 60
+  skills as structured data (`skills.dart`); (b) a **measurements** record — one row
+  per (subject, skill, date, value) so the curve has data; (c) a **record-a-rep** flow
+  — a stopwatch / counter / tally / 1–5 the staffer taps in seconds (the skills need
+  zero materials, so recording must too); (d) a **progression** view — the number, its
+  history, the Day-1→today delta, told back to the kid as "you did that"; (e) the
+  **roll-up** — today's reps feed the family message + the term keepsake. Fits the
+  PRIMITIVES (Scale = the measure, Name = the one-word skill) — no 12th primitive.
+  **Status:** seed → building (catalog shipped; the measurements table + record/track
+  UI are the next slices). **Lives in:** lib/features/action_words/ (`skills.dart`
+  catalog under `verbs.dart`; the future progression view + the growth arc it feeds),
+  a new `skill_measurements` table when (b) lands.
+
 ---
 
 ## How to keep this alive (for future me)
