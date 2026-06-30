@@ -189,6 +189,28 @@ BlockRunScript? blockRunScript(String kind, String title) {
   return null;
 }
 
+/// A routine block's steps as a runnable sub-deck — one beat per step, so a
+/// routine drills into its own little run-of-show (eyes up → clean up →
+/// breathe), castable like any beat deck. Empty when the block has no recipe
+/// (a session block runs the photo deck instead; a plain block has nothing to
+/// drill into).
+List<DayBeat> routineRunBeats(String kind, String title) {
+  final recipe = blockRunScript(kind, title);
+  if (recipe == null) return const [];
+  final n = recipe.steps.length;
+  return [
+    for (var i = 0; i < n; i++)
+      DayBeat(
+        kind: DayBeatKind.activity,
+        label: '$title · ${i + 1}/$n',
+        big: recipe.steps[i],
+        sub: i == 0 && recipe.tools.isNotEmpty
+            ? 'Bring: ${recipe.tools.join(', ')}'
+            : '',
+      ),
+  ];
+}
+
 /// A coarse energy level (0..1) for a block, from its kind + a light title
 /// keyword scan — so the day's order draws an arc without anyone hand-tuning it
 /// yet (an explicit per-block energy field is a later slice). calm ≈ 0.3,

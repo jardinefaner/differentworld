@@ -252,15 +252,21 @@ class _BlockDayDeck extends ConsumerWidget {
               );
               return;
             }
+            // A routine block drills into its own steps (eyes up → clean up →
+            // breathe) as a sub-deck; a plain block presents the day from here.
+            final steps = routineRunBeats(ordered[i].kind, ordered[i].title);
+            final isRoutine = steps.isNotEmpty;
             unawaited(
               context.push(
                 '/run-day/present',
                 extra: DeckPresentArgs(
-                  beats: beats,
+                  beats: isRoutine ? steps : beats,
                   accent: accent,
-                  initialBeat: i,
+                  initialBeat: isRoutine ? 0 : i,
                   onFinished: (context, dismiss) => BlockHandoff(
-                    justFinishedTitle: '${group.name} · today',
+                    justFinishedTitle: isRoutine
+                        ? ordered[i].title
+                        : '${group.name} · today',
                     accent: accent,
                     onDismiss: dismiss,
                   ),

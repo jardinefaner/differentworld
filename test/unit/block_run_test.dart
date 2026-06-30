@@ -206,5 +206,16 @@ void main() {
       expect(rotation.sub, startsWith('Photo class'));
       expect(rotation.lines, ['▶ Open to run the lesson']);
     });
+
+    test('routineRunBeats turns a routine into a step-by-step sub-deck', () {
+      final beats = routineRunBeats('on_site', 'Arrival & check-in');
+      expect(beats.length, greaterThan(1));
+      expect(beats.first.big, isNotEmpty); // the first step
+      expect(beats.first.label, contains('1/')); // step numbering
+      expect(beats.first.sub, contains('Bring')); // tools ride step 1
+
+      // No recipe → nothing to drill into.
+      expect(routineRunBeats('on_site', 'Open studio'), isEmpty);
+    });
   });
 }
