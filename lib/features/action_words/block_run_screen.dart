@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
+import 'package:differentworld/features/action_words/block_actions.dart';
 import 'package:differentworld/features/action_words/block_run.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
 import 'package:differentworld/features/action_words/routine_script_providers.dart';
@@ -300,6 +301,17 @@ class _BlockDayDeck extends ConsumerWidget {
           subtitle:
               '${group.name} · ${beats.length} ${beats.length == 1 ? 'block' : 'blocks'}',
           arc: DayArcStrip(energies: [for (final b in beats) b.energy], accent: accent),
+          // Each slide-card carries its "use right now" tray — the app features
+          // relevant to THAT block, one tap away (docs/VISION.md "the slide is a
+          // launchpad"). Host-only: the overview card is never mirrored.
+          actionsForBeat: (i) => blockActionsFor(
+            context,
+            blockId: ordered[i].blockId,
+            groupId: group.id,
+            scheduleKind: ordered[i].kind,
+            title: ordered[i].title,
+            sessionSlug: ordered[i].sessionSlug,
+          ),
           onPresent: (i) {
             // A block carrying a curriculum session drills into its own beat
             // deck (the nested level from the mockups); a plain block presents

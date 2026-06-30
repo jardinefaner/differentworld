@@ -1417,6 +1417,38 @@ once it has a home.
   lib/features/omnibox/, lib/features/today/ (cockpit), lib/features/action_words/
   (the day run), lib/features/schedule/.
 
+- **2026-06-29** — **The slide is a launchpad, not a teleprompter — every block
+  carries its actions, not just its script.** In the user's words: *"not only the
+  slides tell me what to do, but all the necessary features of the app that i can
+  use."* The run-of-show slide already shows the script (what to do) + the
+  routine's steps + tools-to-bring; the sharpening is that the slide also surfaces
+  the **app features relevant to THAT block, one tap away** — a "use right now"
+  tray. On Snack: log the meal, headcount, capture. On a field trip: map,
+  headcount, emergency, notify families. On a photo class: run the deck, photo
+  turns, review, cast. This is the "each block self-contained — all its info AND
+  its actions, together" law (the 2026-06-19 dream) finally reaching the *run*
+  surface. **Host-only by the casting law:** the tray lives on the host's phone
+  (the script already does); the ROOM keeps seeing the clean kid-facing slide —
+  the tray never casts. The per-block toolbox already exists in
+  `block_run_sheet_screen.dart` (activity → run / cast / capture / turns / review;
+  field_trip → map / headcount / emergency / notify; meal → capture …); the new
+  thing is bringing that toolbox ONTO the live slide so the host never leaves the
+  run to act. **Build approach:** the beat already knows its source block
+  (`blockId` + `kind` from `buildBlockRunAligned`), so the run-day screen computes
+  an action set per beat and hands it to `BeatPresenter` as a host-only tray;
+  factor a shared `blockActions(blockId, groupId, kind, title)` catalog out of
+  `block_run_sheet` so the slide + the sheet stay one source of truth. **Per-kind
+  tray (proposed):** arrival → check-in / capture / message · welcome → words-pick
+  / cast / observe · activity → run / timer / cast / capture / observe · photo →
+  deck / turns / review / cast · meal → log-snack / headcount / capture · rest →
+  log-rest / capture · outdoor → headcount / capture / observe / incident ·
+  transition → headcount / cue · field-trip → map / headcount / emergency / notify
+  · pickup → checkout / who's-left / message · plus a "more…" overflow so any beat
+  reaches capture / observe / incident. **Status:** seed (the toolbox + the run
+  deck + the casting split all exist; the on-slide host tray is the unbuilt
+  synthesis). **Lives in:** lib/features/action_words/ (BeatPresenter, the day
+  run), lib/features/schedule/ (block_run_sheet — the action catalog to share).
+
 ---
 
 ## How to keep this alive (for future me)

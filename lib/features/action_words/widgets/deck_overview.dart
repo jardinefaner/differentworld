@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:differentworld/app/design_tokens.dart';
+import 'package:differentworld/features/action_words/block_actions.dart';
 import 'package:differentworld/features/action_words/day_run.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,7 @@ class DeckOverview extends StatelessWidget {
     this.emoji = '',
     this.subtitle,
     this.arc,
+    this.actionsForBeat,
     super.key,
   });
 
@@ -89,6 +91,12 @@ class DeckOverview extends StatelessWidget {
   /// Present the deck starting at `beatIndex`. The caller pushes the immersive
   /// present route with a [DeckPresentArgs] built from the SAME beats + accent.
   final void Function(int beatIndex) onPresent;
+
+  /// Optional per-beat "use right now" launchers — the app features relevant to
+  /// that block, rendered as a host-only tray on the (never-mirrored) card so
+  /// the slide is a launchpad, not just a teleprompter (docs/VISION.md). Null
+  /// for decks with no block context (the journey, play-today's world run).
+  final List<BeatAction> Function(int beatIndex)? actionsForBeat;
 
   @override
   Widget build(BuildContext context) {
@@ -124,8 +132,9 @@ class DeckOverview extends StatelessWidget {
               mainAxisSpacing: Insets.md,
               crossAxisSpacing: Insets.md,
               // Slightly taller than square — room for the emoji + a two-line
-              // headline + the eyebrow without crowding.
-              childAspectRatio: 0.92,
+              // headline + the eyebrow. Taller again when each tile also carries
+              // its action tray (48dp chips, up to two rows) without crowding.
+              childAspectRatio: actionsForBeat != null ? 0.62 : 0.92,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, i) => _BeatTile(
@@ -133,6 +142,7 @@ class DeckOverview extends StatelessWidget {
                 accent: accent,
                 emoji: emoji,
                 onTap: () => onPresent(i),
+                actions: actionsForBeat?.call(i),
               ),
               childCount: beats.length,
             ),
@@ -144,12 +154,18 @@ class DeckOverview extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           sliver: SliverToBoxAdapter(
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: beats.isEmpty ? null : () => onPresent(0),
-                icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text('Present from the start'),
+            child: Center(
+              child: ConstrainedBox(
+                // Don't let the CTA stretch the full desktop width.
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: beats.isEmpty ? null : () => onPresent(0),
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: const Text('Present from the start'),
+                  ),
+                ),
               ),
             ),
           ),
@@ -168,12 +184,17 @@ class _BeatTile extends StatelessWidget {
     required this.accent,
     required this.emoji,
     required this.onTap,
+    this.actions,
   });
 
   final DayBeat beat;
   final Color accent;
   final String emoji;
   final VoidCallback onTap;
+
+  /// The block's "use right now" launchers, rendered as a tray below the
+  /// headline. Null on decks with no block context (the tile is present-only).
+  final List<BeatAction>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -203,56 +224,74 @@ class _BeatTile extends StatelessWidget {
     // The headline read on the tile — the big line, or the label when a beat
     // (a verbs/activity list) carries no headline.
     final headline = beat.big.isNotEmpty ? beat.big : beat.label;
+    final hasTray = actions != null && actions!.isNotEmpty;
 
-    return Semantics(
-      button: true,
-      label: 'Present from ${headline.isEmpty ? beat.label : headline}',
-      child: Material(
-        color: fill,
-        borderRadius: BorderRadius.circular(Radii.card),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () {
-            unawaited(HapticFeedback.selectionClick());
-            onTap();
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(glyph, style: const TextStyle(fontSize: 34)),
-                const SizedBox(height: 10),
-                // Eyebrow — small, tracked, uppercase (the brand's label voice).
-                if (beat.label.isNotEmpty)
-                  Text(
-                    beat.label.toUpperCase(),
-                    semanticsLabel: beat.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: eyebrowColor,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                const SizedBox(height: 4),
-                Expanded(
-                  child: Text(
-                    headline,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: onFill,
-                      fontWeight: FontWeight.w600,
-                      height: 1.25,
-                    ),
+    return Material(
+      color: fill,
+      borderRadius: BorderRadius.circular(Radii.card),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // The card body — tap to present this slide.
+          Expanded(
+            key: const ValueKey('tile-body'),
+            child: Semantics(
+              button: true,
+              label: 'Present from ${headline.isEmpty ? beat.label : headline}',
+              child: InkWell(
+                onTap: () {
+                  unawaited(HapticFeedback.selectionClick());
+                  onTap();
+                },
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(14, 14, 14, hasTray ? 6 : 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(glyph, style: const TextStyle(fontSize: 34)),
+                      const SizedBox(height: 10),
+                      // Eyebrow — small, tracked, uppercase (the brand's label
+                      // voice).
+                      if (beat.label.isNotEmpty)
+                        Text(
+                          beat.label.toUpperCase(),
+                          semanticsLabel: beat.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: eyebrowColor,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: Text(
+                          headline,
+                          maxLines: hasTray ? 2 : 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: onFill,
+                            fontWeight: FontWeight.w600,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          // The "use right now" tray — the block's launchers, host-only.
+          if (hasTray)
+            Padding(
+              key: const ValueKey('tile-tray'),
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+              child: _ActionTray(actions: actions!, onFill: onFill),
+            ),
+        ],
       ),
     );
   }
@@ -273,4 +312,66 @@ class _BeatTile extends StatelessWidget {
     DayBeatKind.photo => '📷',
     DayBeatKind.close => '🌟',
   };
+}
+
+/// The block's "use right now" launchers as a compact tray of chips. Sits on the
+/// tinted card, so its ink derives from the card's contrast-correct [onFill]
+/// (not a hardcoded colour) and stays readable on any world hue. Each chip taps
+/// independently of the card's present-tap.
+class _ActionTray extends StatelessWidget {
+  const _ActionTray({required this.actions, required this.onFill});
+
+  final List<BeatAction> actions;
+  final Color onFill;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final border = onFill.withValues(alpha: 0.22);
+    final ink = onFill.withValues(alpha: 0.92);
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final a in actions)
+          Tooltip(
+            message: a.label,
+            child: Semantics(
+              button: true,
+              label: a.label,
+              child: Material(
+                color: Colors.transparent,
+                shape: StadiumBorder(side: BorderSide(color: border)),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: a.onTap,
+                  child: ConstrainedBox(
+                    // ≥48dp tap target — a raw InkWell gets no minimum on its
+                    // own (only themed buttons do).
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(a.icon, size: 16, color: ink),
+                          const SizedBox(width: 5),
+                          Text(
+                            a.label,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: ink,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
