@@ -243,9 +243,27 @@ class DayTemplateActions {
     for (final t in list) {
       if (t.id == templateId) template = t;
     }
-    if (template == null || template.blocks.isEmpty || groupIds.isEmpty) {
-      return 0;
-    }
+    if (template == null) return 0;
+    return applyTemplateToDate(
+      spaceId: spaceId,
+      template: template,
+      date: date,
+      groupIds: groupIds,
+    );
+  }
+
+  /// Materialize a template OBJECT (not a saved id) onto a date for one or more
+  /// groups — the path the "propose the day" draft uses, so a proposed day can
+  /// be applied without first saving it to the library. Same packing →
+  /// `schedule_blocks` as [applyToDate]; existing blocks are NOT removed (the
+  /// caller confirms first if the day already has some).
+  Future<int> applyTemplateToDate({
+    required String spaceId,
+    required DayTemplate template,
+    required DateTime date,
+    required List<String> groupIds,
+  }) async {
+    if (template.blocks.isEmpty || groupIds.isEmpty) return 0;
     final day = DateTime(date.year, date.month, date.day);
     final dateKey = '${day.year.toString().padLeft(4, '0')}-'
         '${day.month.toString().padLeft(2, '0')}-'

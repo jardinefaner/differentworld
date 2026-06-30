@@ -97,6 +97,26 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['morning', 'afternoon'],
       onSelect: (ctx, _) => ctx.push('/run-day'),
     ),
+    // Drafting a day writes the schedule — gated to the day-authoring tier.
+    if (viewer.canManageSchedule)
+      OmniboxEntry(
+        id: 'page.propose-day',
+        label: 'Draft a day',
+        category: OmniboxCategory.page,
+        icon: Icons.auto_awesome_outlined,
+        keywords: const [
+          'draft',
+          'draft a day',
+          'propose',
+          'propose a day',
+          'suggest a day',
+          'plan today',
+          'auto day',
+          'make me a day',
+        ],
+        contextTags: const ['morning', 'afternoon'],
+        onSelect: (ctx, _) => ctx.push('/propose-day'),
+      ),
     // Editing routines is a team-wide write, gated to the day-authoring tier.
     if (viewer.canManageSchedule)
       OmniboxEntry(

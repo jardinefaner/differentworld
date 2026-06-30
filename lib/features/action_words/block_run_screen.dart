@@ -284,12 +284,13 @@ class _BlockDayDeck extends ConsumerWidget {
             icon: Icons.event_busy_outlined,
             title: 'No blocks scheduled today',
             message:
-                '${group.name} has nothing on the schedule yet. Build the day, '
-                'then run it from here.',
+                '${group.name} has nothing on the schedule yet. Let me draft a '
+                'day from this week — you can tweak it, or build your own in the '
+                'schedule.',
             action: FilledButton.icon(
-              onPressed: () => context.push('/schedule'),
-              icon: const Icon(Icons.calendar_month_outlined),
-              label: const Text('Open schedule'),
+              onPressed: () => context.push('/propose-day'),
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: const Text('Draft a day for today'),
             ),
           );
         }

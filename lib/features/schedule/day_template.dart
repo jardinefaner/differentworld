@@ -157,6 +157,59 @@ class DayTemplate {
     );
   }
 
+  /// A CONTEXT-AWARE draft of a day — the "propose the day" move (docs/VISION.md
+  /// "the app walks in already holding a draft of your day"). Shaped from the
+  /// program's hours ([startMinute]..[endMinute] — usually the phase windows'
+  /// arrival→closed) + this week's [worldName]. The four bookends/transitions
+  /// are fixed; the three program blocks (photo rotation / make / outdoor)
+  /// absorb the rest of the window, so the draft fills ANY hours. The photo
+  /// block is named "Photo rotation" so the day-run auto-fills it with today's
+  /// photo class. Pure — the provider supplies the live context.
+  factory DayTemplate.proposed({
+    required int startMinute,
+    required int endMinute,
+    String? worldName,
+  }) {
+    const uuid = Uuid();
+    final span = (endMinute - startMinute).clamp(60, 12 * 60);
+    const fixed = 15 * 4; // arrival + welcome + snack + pickup
+    // Whatever's left after the bookends — never force a floor that would push
+    // the draft past the program's end (overfill) on a short day.
+    final flex = (span - fixed).clamp(0, 11 * 60);
+    final photo = (flex * 0.38).round();
+    final make = (flex * 0.34).round();
+    final outdoor = (flex - photo - make).clamp(0, 11 * 60);
+    final world = (worldName ?? '').trim();
+    DayBlock b(String label, int minutes, DayBlockKind kind) =>
+        DayBlock(id: uuid.v4(), label: label, minutes: minutes, kind: kind);
+    // DETERMINISTIC id (per hours + world) — so re-drafting the same day
+    // REPLACES its saved copy instead of piling up "Ocean day" duplicates when
+    // the host taps "Tweak first" across sessions (restoreTemplate is
+    // idempotent by id). Block ids stay random (they're regenerated each draft).
+    final slug = world.isEmpty
+        ? 'day'
+        : world.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '-');
+    return DayTemplate(
+      id: 'proposed-$startMinute-$endMinute-$slug',
+      name: world.isEmpty ? 'Proposed day' : '$world day',
+      startMinute: startMinute,
+      endMinute: endMinute,
+      blocks: [
+        b('Arrival & check-in', 15, DayBlockKind.arrival),
+        b(
+          world.isEmpty ? 'Welcome / circle' : 'Welcome · $world',
+          15,
+          DayBlockKind.circle,
+        ),
+        b('Snack', 15, DayBlockKind.meal),
+        b('Photo rotation', photo, DayBlockKind.activity),
+        b(world.isEmpty ? 'Make' : 'Make · $world', make, DayBlockKind.activity),
+        b('Outdoor play', outdoor, DayBlockKind.outdoor),
+        b('Pack up & pickup', 15, DayBlockKind.pickup),
+      ],
+    );
+  }
+
   final String id;
   final String name;
 

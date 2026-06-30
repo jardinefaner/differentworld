@@ -133,6 +133,7 @@ import 'package:differentworld/features/schedule/day_template_editor_screen.dart
 import 'package:differentworld/features/schedule/day_templates_screen.dart';
 import 'package:differentworld/features/schedule/location_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_list_screen.dart';
+import 'package:differentworld/features/schedule/propose_day_screen.dart';
 import 'package:differentworld/features/schedule/schedule_screen.dart';
 import 'package:differentworld/features/schedule/trip_detail_screen.dart';
 import 'package:differentworld/features/schedule/weekly_template_screen.dart';
@@ -1482,6 +1483,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, _) => const RouteTitle(
               title: 'Routine scripts',
               child: RoutineScriptEditorScreen(),
+            ),
+          ),
+          // "Propose the day" — the app drafts today from this week's world +
+          // the program hours; the lead accepts or tweaks (docs/VISION.md "the
+          // app walks in already holding a draft of your day").
+          GoRoute(
+            path: '/propose-day',
+            builder: (_, _) => const RouteTitle(
+              title: 'Propose a day',
+              child: ProposeDayScreen(),
             ),
           ),
           // The teleprompter for teaching — ANY activity (typed on /lens, or
