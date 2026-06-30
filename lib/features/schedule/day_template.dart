@@ -52,6 +52,7 @@ class DayBlock {
     required this.label,
     required this.minutes,
     required this.kind,
+    this.energy,
   });
 
   factory DayBlock.fromJson(Map<String, dynamic> j) => DayBlock(
@@ -59,6 +60,7 @@ class DayBlock {
         label: (j['label'] as String?) ?? '',
         minutes: (j['minutes'] as num?)?.toInt() ?? 15,
         kind: DayBlockKind.fromName(j['kind'] as String?),
+        energy: (j['energy'] as num?)?.toDouble(),
       );
 
   final String id;
@@ -66,12 +68,21 @@ class DayBlock {
   final int minutes;
   final DayBlockKind kind;
 
-  DayBlock copyWith({String? label, int? minutes, DayBlockKind? kind}) =>
+  /// Hand-tuned energy 0..1 for the arc; null = derive from [kind].
+  final double? energy;
+
+  DayBlock copyWith({
+    String? label,
+    int? minutes,
+    DayBlockKind? kind,
+    double? energy,
+  }) =>
       DayBlock(
         id: id,
         label: label ?? this.label,
         minutes: minutes ?? this.minutes,
         kind: kind ?? this.kind,
+        energy: energy ?? this.energy,
       );
 
   Map<String, dynamic> toJson() => {
@@ -79,6 +90,7 @@ class DayBlock {
         'label': label,
         'minutes': minutes,
         'kind': kind.name,
+        if (energy != null) 'energy': energy,
       };
 }
 

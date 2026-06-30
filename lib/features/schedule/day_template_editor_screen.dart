@@ -80,7 +80,9 @@ class DayTemplateEditorScreen extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                 child: DayArcStrip(
-                  energies: [for (final b in template.blocks) b.kind.energy],
+                  energies: [
+                    for (final b in template.blocks) b.energy ?? b.kind.energy,
+                  ],
                   accent: Theme.of(context).colorScheme.primary,
                 ),
               ),
@@ -445,6 +447,7 @@ class _BlockSheet extends ConsumerStatefulWidget {
 class _BlockSheetState extends ConsumerState<_BlockSheet> {
   late DayBlockKind _kind;
   late int _minutes;
+  late double _energy;
   late final TextEditingController _label;
 
   @override
@@ -453,6 +456,7 @@ class _BlockSheetState extends ConsumerState<_BlockSheet> {
     final e = widget.existing;
     _kind = e?.kind ?? DayBlockKind.activity;
     _minutes = e?.minutes ?? 30;
+    _energy = e?.energy ?? _kind.energy;
     _label = TextEditingController(text: e?.label ?? '');
   }
 
@@ -534,6 +538,25 @@ class _BlockSheetState extends ConsumerState<_BlockSheet> {
                     ),
                 ],
               ),
+              const SizedBox(height: 16),
+              Text('Energy in the arc', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final e in const [
+                    ('Calm', 0.3),
+                    ('Active', 0.6),
+                    ('Peak', 0.9),
+                  ])
+                    ChoiceChip(
+                      label: Text(e.$1),
+                      selected: (_energy - e.$2).abs() < 0.15,
+                      onSelected: (_) => setState(() => _energy = e.$2),
+                    ),
+                ],
+              ),
               const SizedBox(height: 22),
               FilledButton(
                 onPressed: () async {
@@ -547,6 +570,7 @@ class _BlockSheetState extends ConsumerState<_BlockSheet> {
                       label: _label.text,
                       minutes: _minutes,
                       kind: _kind,
+                      energy: _energy,
                     );
                   } else {
                     await actions.addBlock(

@@ -146,6 +146,7 @@ class DayTemplateActions {
     String? label,
     int? minutes,
     DayBlockKind? kind,
+    double? energy,
   }) =>
       _mutate(
         spaceId,
@@ -156,7 +157,12 @@ class DayTemplateActions {
             blocks: [
               for (final b in t.blocks)
                 if (b.id == blockId)
-                  b.copyWith(label: label, minutes: minutes, kind: kind)
+                  b.copyWith(
+                    label: label,
+                    minutes: minutes,
+                    kind: kind,
+                    energy: energy,
+                  )
                 else
                   b,
             ],

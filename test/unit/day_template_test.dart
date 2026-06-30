@@ -96,6 +96,33 @@ void main() {
       expect(restored[1].name, 'Field trip');
     });
 
+    test('a block energy round-trips; null energy is omitted', () {
+      const t = DayTemplate(
+        id: 'e',
+        name: 'E',
+        startMinute: 900,
+        endMinute: 960,
+        blocks: [
+          DayBlock(
+            id: 'x',
+            label: 'Tuned',
+            minutes: 30,
+            kind: DayBlockKind.activity,
+            energy: 0.9,
+          ),
+          DayBlock(
+            id: 'y',
+            label: 'Default',
+            minutes: 30,
+            kind: DayBlockKind.activity,
+          ),
+        ],
+      );
+      final restored = decodeDayTemplates(encodeDayTemplates([t])).single;
+      expect(restored.blocks[0].energy, 0.9);
+      expect(restored.blocks[1].energy, isNull);
+    });
+
     test('decode is null/garbage safe', () {
       expect(decodeDayTemplates(null), isEmpty);
       expect(decodeDayTemplates(''), isEmpty);
