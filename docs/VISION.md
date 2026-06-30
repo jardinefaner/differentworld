@@ -1375,6 +1375,48 @@ once it has a home.
   lib/features/curricula/ (SessionScript), lib/features/today/ (play-today /
   cockpit), lib/features/live_session/.
 
+- **2026-06-29** — **The interaction model: neither a menu nor a void —
+  "here's what's happening; nudge it."** In the user's words: *"how can we move
+  from standard ui and chatbot 'what do you wanna do?' ui… what's in the middle?"*
+  The two poles fail for opposite reasons, and the failure names the goal. **Standard
+  UI** makes *you* hold the map (every feature is somewhere; you must know where) —
+  predictable but it can't anticipate, same 16 things at drop-off and at pickup.
+  **Chatbot** makes *you* hold the intent (a blank "what do you wanna do?") —
+  infinite, but infinity with no affordances is a cognitive tax: you must already
+  know what to ask, phrase it, and trust an unpredictable answer. **What they share:
+  the user does the knowing.** The middle is the band where *the system* does the
+  knowing and you just **steer** — *intent in, structure out*. The reason a chatbot
+  can't reach it and this app can: a chatbot has *language* but **no model of your
+  day** (domain-blind); standard UI has the model but can't move. The middle =
+  **a live domain model + a context engine + calm, trustworthy affordances + always
+  an escape hatch** — and the rare ingredient (the day, the room, the child, the
+  worlds, the schedule, all already modeled) is the one this app already has. Most
+  "AI" products bolt a chatbot onto a domain-blind shell; the inversion is to put
+  intelligence *on top of a model that already knows what a day is.* The four
+  patterns of the middle, each already seeded here: **command surface** (loose words
+  → known actions — the omnibox), **anticipatory** (context → the obvious next move
+  — the cockpit / the whole-day run-of-show dream above), **generative** (content → a surface composed
+  for *now* — the day-as-deck, beats), **direct + ambient assist** (you act, it
+  suggests/fills/tunes — the energy arc, today's-class auto-fill, suggest-an-arc).
+  The agentic future, done right: **conversation to *author*, structure to *run*** —
+  the way this very chat works (I propose, you confirm, the artifact is a structured
+  deck, not a transcript). Concrete near-term moves: (a) **the app proposes the day**
+  — tomorrow's deck drafts itself from context (yesterday's run, today's world, who's
+  enrolled, the calendar) and you tweak three things, not build seven from blank;
+  (b) **nudge the live run in plain language and *see* the result** — "we're running
+  behind" compresses the back half, "the kids are wired" swaps the calm block
+  forward, shown as a structured change to confirm, never a chat reply; (c) **the
+  omnibox grows from find/do to *compose*** — unmatched intent ("field trip to the
+  pond Friday") becomes a *drafted structure* you edit, not a note; (d) **the app
+  explains its own arc** — "why this next?" → one line, because anticipation only
+  earns trust when it can show its reasoning. **The line:** *never "what do you wanna
+  do?" — always "here's what's happening; nudge it."* The app walks in already holding
+  a draft of your day; your job is to disagree with it, not build it. **Status:** seed
+  (the substrate is live — omnibox, cockpit, run-of-show, the deck/beat model; the
+  agentic propose→confirm loop on top is unbuilt). **Lives in:**
+  lib/features/omnibox/, lib/features/today/ (cockpit), lib/features/action_words/
+  (the day run), lib/features/schedule/.
+
 ---
 
 ## How to keep this alive (for future me)
