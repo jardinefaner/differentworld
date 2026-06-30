@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/block_run.dart';
+import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/block_handoff.dart';
 import 'package:differentworld/features/action_words/widgets/day_arc_strip.dart';
 import 'package:differentworld/features/action_words/widgets/deck_overview.dart';
@@ -164,6 +166,55 @@ class _BlockRunScreenState extends ConsumerState<BlockRunScreen> {
 bool _isRotationBlock(String? title) =>
     (title ?? '').toLowerCase().contains('rotation');
 
+/// World-tied steps for an Icebreaker / Free-play block when a curriculum world
+/// is live — so those blocks reflect THIS week's world (its verb, its
+/// activities) instead of the generic recipe. Null for any other block (it
+/// keeps its generic run-script / session).
+BlockRunScript? worldScriptFor(String title, CurriculumWorld? world) {
+  if (world == null) return null;
+  final t = title.toLowerCase();
+  if (t.contains('icebreaker') ||
+      t.contains('welcome') ||
+      t.contains('circle')) {
+    final verbs = world.featuredVerbs
+        .map(verbById)
+        .whereType<Verb>()
+        .take(3)
+        .map((v) => '${v.emoji} ${v.label}')
+        .join(' · ');
+    return (
+      steps: [
+        "Today's world: ${world.name}",
+        if (verbs.isEmpty) "Claim today's verb" else 'Claim a verb — $verbs',
+        'Wonder together: ${world.question}',
+      ],
+      tools: const [],
+    );
+  }
+  if (t.contains('free play') ||
+      t.contains('free') ||
+      t.contains('outdoor') ||
+      t.contains('outside') ||
+      t.contains('recess') ||
+      t.contains('play')) {
+    final choices = world.activities
+        .take(3)
+        .map((a) => a.split(':').first.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+    return (
+      steps: [
+        'Set out the ${world.name} choices',
+        if (choices.isNotEmpty) 'On offer: ${choices.join(' · ')}',
+        'Step back — let them lead',
+        'Circulate + capture moments',
+      ],
+      tools: const [],
+    );
+  }
+  return null;
+}
+
 /// The selected cohort's day, today — its blocks as the tappable run deck.
 class _BlockDayDeck extends ConsumerWidget {
   const _BlockDayDeck({required this.group, required this.accent});
@@ -182,6 +233,9 @@ class _BlockDayDeck extends ConsumerWidget {
     final todaySlug =
         ref.watch(todayPhotoSessionProvider).value ??
         allSessionScripts.first.slug;
+    // This week's world — its verb + activities fill the Icebreaker / Free-play
+    // blocks (the generic recipe otherwise).
+    final world = ref.watch(currentWorldProvider);
 
     return blocksAsync.when(
       loading: () => const LoadingSlot(),
@@ -207,6 +261,7 @@ class _BlockDayDeck extends ConsumerWidget {
             notes: b.notes,
             sessionSlug: slug,
             sessionTitle: slug == null ? null : scriptForSession(slug)?.title,
+            scriptOverride: worldScriptFor(b.title ?? '', world),
             status: b.status,
           ));
         }
@@ -254,7 +309,11 @@ class _BlockDayDeck extends ConsumerWidget {
             }
             // A routine block drills into its own steps (eyes up → clean up →
             // breathe) as a sub-deck; a plain block presents the day from here.
-            final steps = routineRunBeats(ordered[i].kind, ordered[i].title);
+            final steps = recipeBeats(
+              ordered[i].scriptOverride ??
+                  blockRunScript(ordered[i].kind, ordered[i].title),
+              ordered[i].title,
+            );
             final isRoutine = steps.isNotEmpty;
             unawaited(
               context.push(

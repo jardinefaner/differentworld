@@ -14,6 +14,8 @@ typedef BlockRunInput = ({
   String? notes,
   String? sessionSlug, // curriculum_session_slug, if the block runs a deck
   String? sessionTitle, // resolved lesson title, so the tile isn't generic
+  BlockRunScript?
+  scriptOverride, // world-tied steps that replace the generic recipe
   String? status, // planned | skipped | cancelled (null == planned)
 });
 
@@ -71,8 +73,12 @@ DayBeat _beatForBlock(BlockRunInput b) {
   final sessionTitle = (b.sessionTitle ?? '').trim();
   final notes = (b.notes ?? '').trim();
   // A session block runs the photo deck; otherwise a routine run-script fills
-  // it (the steps + tools to run THIS block), so no slide is just a title.
-  final recipe = hasSession ? null : blockRunScript(b.kind, b.title);
+  // it (the steps + tools to run THIS block), so no slide is just a title. A
+  // world-tied override (e.g. an icebreaker keyed to this week's world) wins
+  // over the generic recipe.
+  final recipe = hasSession
+      ? null
+      : (b.scriptOverride ?? blockRunScript(b.kind, b.title));
   // A 'closed' block is the day's handoff beat; everything else is a do-it.
   final kind = b.kind == 'closed' ? DayBeatKind.close : DayBeatKind.activity;
 
@@ -189,13 +195,10 @@ BlockRunScript? blockRunScript(String kind, String title) {
   return null;
 }
 
-/// A routine block's steps as a runnable sub-deck — one beat per step, so a
-/// routine drills into its own little run-of-show (eyes up → clean up →
-/// breathe), castable like any beat deck. Empty when the block has no recipe
-/// (a session block runs the photo deck instead; a plain block has nothing to
-/// drill into).
-List<DayBeat> routineRunBeats(String kind, String title) {
-  final recipe = blockRunScript(kind, title);
+/// A recipe's steps as a runnable sub-deck — one beat per step, castable like
+/// any beat deck. Pure, so the screen can build it from either the generic
+/// recipe or a world-tied override. Empty when [recipe] is null.
+List<DayBeat> recipeBeats(BlockRunScript? recipe, String title) {
   if (recipe == null) return const [];
   final n = recipe.steps.length;
   return [
@@ -210,6 +213,11 @@ List<DayBeat> routineRunBeats(String kind, String title) {
       ),
   ];
 }
+
+/// A routine block's steps as a runnable sub-deck — eyes up → clean up →
+/// breathe (the generic recipe). Empty when the block has no recipe.
+List<DayBeat> routineRunBeats(String kind, String title) =>
+    recipeBeats(blockRunScript(kind, title), title);
 
 /// A coarse energy level (0..1) for a block, from its kind + a light title
 /// keyword scan — so the day's order draws an arc without anyone hand-tuning it

@@ -12,6 +12,7 @@ BlockRunInput _blk({
   String? notes,
   String? sessionSlug,
   String? sessionTitle,
+  BlockRunScript? scriptOverride,
   String? status,
 }) => (
   blockId: id,
@@ -22,6 +23,7 @@ BlockRunInput _blk({
   notes: notes,
   sessionSlug: sessionSlug,
   sessionTitle: sessionTitle,
+  scriptOverride: scriptOverride,
   status: status,
 );
 
@@ -216,6 +218,23 @@ void main() {
 
       // No recipe → nothing to drill into.
       expect(routineRunBeats('on_site', 'Open studio'), isEmpty);
+    });
+
+    test('a scriptOverride replaces the generic recipe (world-tied block)', () {
+      final overridden = buildBlockRun([
+        _blk(
+          title: 'Free play',
+          scriptOverride: (
+            steps: ['Set out the Makers choices'],
+            tools: const [],
+          ),
+        ),
+      ]).single;
+      expect(overridden.lines, ['Set out the Makers choices']);
+
+      // recipeBeats builds a sub-deck from any recipe (override or generic).
+      final beats = recipeBeats((steps: ['a', 'b'], tools: const []), 'Free');
+      expect(beats.map((x) => x.big).toList(), ['a', 'b']);
     });
   });
 }
