@@ -97,6 +97,25 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
       contextTags: const ['morning', 'afternoon'],
       onSelect: (ctx, _) => ctx.push('/run-day'),
     ),
+    // Editing routines is a team-wide write, gated to the day-authoring tier.
+    if (viewer.canManageSchedule)
+      OmniboxEntry(
+        id: 'page.routines',
+        label: 'Routine scripts',
+        category: OmniboxCategory.page,
+        icon: Icons.checklist_rtl_outlined,
+        keywords: const [
+          'routine',
+          'routines',
+          'routine scripts',
+          'arrival',
+          'pickup',
+          'transition',
+          'edit steps',
+          'how the day runs',
+        ],
+        onSelect: (ctx, _) => ctx.push('/routines'),
+      ),
     OmniboxEntry(
       id: 'page.today',
       label: 'Today',

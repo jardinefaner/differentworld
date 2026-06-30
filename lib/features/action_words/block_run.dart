@@ -108,91 +108,130 @@ DayBeat _beatForBlock(BlockRunInput b) {
 
 /// A run-script for a routine / non-session block — the steps to run it + the
 /// tools to bring, so the slide carries everything to run THAT block instead of
-/// a generic title. Derived from the title (the template's rich `DayBlockKind`
-/// collapses to a coarse schedule kind when applied, so the label is the
-/// signal). Returns null for a block we have no recipe for — it keeps its title
-/// + notes. Rotation / session blocks don't use this; they run the photo deck.
+/// a generic title.
 typedef BlockRunScript = ({List<String> steps, List<String> tools});
 
-BlockRunScript? blockRunScript(String kind, String title) {
+/// The everyday-routine families a non-session block can be — the unit a
+/// director edits in the routine-script editor (features/action_words/
+/// routine_script_editor_screen.dart). A block is matched to one of these by
+/// its title (+ the `closed` schedule kind for pickup); each has a baked-in
+/// default recipe a program can override per space. Declaration order IS the
+/// match precedence (arrival before meal before …).
+enum RoutineKind {
+  arrival('Arrival', ['arrival', 'check-in', 'check in', 'drop-off', 'drop off']),
+  meal('Meals', ['breakfast', 'lunch', 'snack', 'meal']),
+  rest('Rest', ['rest', 'nap', 'quiet time']),
+  pickup('Pickup', ['pickup', 'goodbye', 'dismissal']),
+  transition('Transition', ['transition']),
+  welcome('Welcome / circle', ['icebreaker', 'welcome', 'circle', 'morning meeting']),
+  freePlay('Free play', ['free play', 'free', 'outdoor', 'outside', 'recess', 'play']);
+
+  const RoutineKind(this.label, this.keywords);
+
+  /// Human label for the editor's routine picker.
+  final String label;
+
+  /// Title keywords that match a block to this routine.
+  final List<String> keywords;
+
+  static RoutineKind? fromName(String? name) {
+    for (final r in RoutineKind.values) {
+      if (r.name == name) return r;
+    }
+    return null;
+  }
+}
+
+/// Which routine a block is, from its schedule kind + title — null when no
+/// family matches (the block keeps its title + notes). Rotation / session
+/// blocks don't use this; they run the photo deck. The match order is the
+/// precedence preserved from the original keyword cascade, so behaviour is
+/// unchanged.
+RoutineKind? classifyRoutine(String kind, String title) {
   final t = title.toLowerCase();
   bool has(List<String> words) => words.any(t.contains);
-
-  if (has(['arrival', 'check-in', 'check in', 'drop-off', 'drop off'])) {
-    return (
-      steps: [
-        'Greet each kid by name at the door',
-        'Sign in + mark attendance',
-        'Settle into a quiet choice',
-      ],
-      tools: ['sign-in sheet'],
-    );
-  }
-  if (has(['breakfast', 'lunch', 'snack', 'meal'])) {
-    return (
-      steps: [
-        'Wash hands',
-        'Hand out / serve',
-        'Eat together — table talk',
-        'Clean up together',
-      ],
-      tools: ['the food', 'wipes'],
-    );
-  }
-  if (has(['rest', 'nap', 'quiet time'])) {
-    return (
-      steps: [
-        'Lights low, calm music on',
-        'Mats / quiet spots',
-        'Rest or a quiet activity',
-        'Wake gently',
-      ],
-      tools: ['mats', 'soft music'],
-    );
-  }
-  if (kind == 'closed' || has(['pickup', 'goodbye', 'dismissal'])) {
-    return (
-      steps: [
-        'Pack up belongings',
-        'Goodbye circle — one win each',
-        'Check out each kid to their guardian',
-      ],
-      tools: ['sign-out sheet', "today's reveal"],
-    );
-  }
-  if (has(['transition'])) {
-    return (
-      steps: [
-        'Eyes up',
-        'Clean up the space',
-        'Move calmly / line up',
-        'Breathe together',
-      ],
-      tools: const [],
-    );
-  }
-  if (has(['icebreaker', 'welcome', 'circle', 'morning meeting'])) {
-    return (
-      steps: [
-        'Quick name + energy check',
-        'One thing about your day',
-        "Claim today's verb",
-      ],
-      tools: const [],
-    );
-  }
-  if (has(['free play', 'free', 'outdoor', 'outside', 'recess', 'play'])) {
-    return (
-      steps: [
-        'Set the choices out',
-        'Step back — let them lead',
-        'Circulate + capture moments',
-        '5-minute warning before cleanup',
-      ],
-      tools: const [],
-    );
+  for (final r in RoutineKind.values) {
+    if (r == RoutineKind.pickup) {
+      if (kind == 'closed' || has(r.keywords)) return r;
+    } else if (has(r.keywords)) {
+      return r;
+    }
   }
   return null;
+}
+
+/// The baked-in default recipe for a routine — the steps + tools a program
+/// starts from (and can override in the editor). Exhaustive over [RoutineKind].
+BlockRunScript defaultRoutineScript(RoutineKind r) => switch (r) {
+  RoutineKind.arrival => (
+    steps: [
+      'Greet each kid by name at the door',
+      'Sign in + mark attendance',
+      'Settle into a quiet choice',
+    ],
+    tools: ['sign-in sheet'],
+  ),
+  RoutineKind.meal => (
+    steps: [
+      'Wash hands',
+      'Hand out / serve',
+      'Eat together — table talk',
+      'Clean up together',
+    ],
+    tools: ['the food', 'wipes'],
+  ),
+  RoutineKind.rest => (
+    steps: [
+      'Lights low, calm music on',
+      'Mats / quiet spots',
+      'Rest or a quiet activity',
+      'Wake gently',
+    ],
+    tools: ['mats', 'soft music'],
+  ),
+  RoutineKind.pickup => (
+    steps: [
+      'Pack up belongings',
+      'Goodbye circle — one win each',
+      'Check out each kid to their guardian',
+    ],
+    tools: ['sign-out sheet', "today's reveal"],
+  ),
+  RoutineKind.transition => (
+    steps: [
+      'Eyes up',
+      'Clean up the space',
+      'Move calmly / line up',
+      'Breathe together',
+    ],
+    tools: const [],
+  ),
+  RoutineKind.welcome => (
+    steps: [
+      'Quick name + energy check',
+      'One thing about your day',
+      "Claim today's verb",
+    ],
+    tools: const [],
+  ),
+  RoutineKind.freePlay => (
+    steps: [
+      'Set the choices out',
+      'Step back — let them lead',
+      'Circulate + capture moments',
+      '5-minute warning before cleanup',
+    ],
+    tools: const [],
+  ),
+};
+
+/// The BAKED-IN run-script for a block, or null when no routine matches — it
+/// keeps its title + notes. A program's per-space override is layered on at the
+/// call site (block_run_screen passes it as `scriptOverride`); this stays a
+/// pure function of (kind, title) so the builder + tests don't need a Ref.
+BlockRunScript? blockRunScript(String kind, String title) {
+  final r = classifyRoutine(kind, title);
+  return r == null ? null : defaultRoutineScript(r);
 }
 
 /// A recipe's steps as a runnable sub-deck — one beat per step, castable like

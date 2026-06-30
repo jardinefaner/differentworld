@@ -4,6 +4,7 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/sync/sync_status_indicator.dart';
 import 'package:differentworld/features/action_words/block_run.dart';
 import 'package:differentworld/features/action_words/curriculum.dart';
+import 'package:differentworld/features/action_words/routine_script_providers.dart';
 import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/action_words/widgets/block_handoff.dart';
 import 'package:differentworld/features/action_words/widgets/day_arc_strip.dart';
@@ -236,6 +237,9 @@ class _BlockDayDeck extends ConsumerWidget {
     // This week's world — its verb + activities fill the Icebreaker / Free-play
     // blocks (the generic recipe otherwise).
     final world = ref.watch(currentWorldProvider);
+    // The program's hand-edited routine scripts — the director's explicit edit
+    // wins over the world flavour, which wins over the baked-in default.
+    final customScripts = ref.watch(customRoutineScriptsProvider);
 
     return blocksAsync.when(
       loading: () => const LoadingSlot(),
@@ -252,6 +256,9 @@ class _BlockDayDeck extends ConsumerWidget {
           final slug =
               b.curriculumSessionSlug ??
               (_isRotationBlock(b.title) ? todaySlug : null);
+          // Director's hand-edited routine wins over the world flavour.
+          final routine = classifyRoutine(b.kind, b.title ?? '');
+          final custom = routine == null ? null : customScripts[routine];
           inputs.add((
             blockId: b.id,
             title: b.title ?? '',
@@ -261,7 +268,7 @@ class _BlockDayDeck extends ConsumerWidget {
             notes: b.notes,
             sessionSlug: slug,
             sessionTitle: slug == null ? null : scriptForSession(slug)?.title,
-            scriptOverride: worldScriptFor(b.title ?? '', world),
+            scriptOverride: custom ?? worldScriptFor(b.title ?? '', world),
             status: b.status,
           ));
         }

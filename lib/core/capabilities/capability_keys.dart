@@ -31,6 +31,15 @@ abstract class SpaceCaps {
   /// String cap (JSON); director-authored, read-mostly, no table.
   static const dayTemplates = 'day_templates';
 
+  /// Per-space overrides of the everyday-routine run-scripts (arrival / meal /
+  /// rest / pickup / transition / welcome / free-play). A JSON object keyed by
+  /// `RoutineKind.name` → `{steps:[…], tools:[…]}` (see
+  /// features/action_words/routine_script_providers.dart). A routine absent
+  /// from the map uses its baked-in `defaultRoutineScript`. String cap (JSON);
+  /// director-authored, read-mostly, no table — edited through the serialized
+  /// read-modify-write queue on `RoutineScriptActions`.
+  static const routineScripts = 'routine_scripts';
+
   /// The program's "house" timer presets for the present surface — a
   /// JSON-encoded list of whole minutes (e.g. [1,2,5,10]) the director
   /// sets in program settings. String cap (JSON); director-authored,

@@ -218,6 +218,21 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => context.push('/settings/curricula/photo'),
               ),
               const _SettingsDivider(),
+              // Editing routines is a team-wide write — gated to the
+              // day-authoring tier (directors + lead teachers).
+              if (viewer.canManageSchedule) ...[
+                ListTile(
+                  leading: const Icon(Icons.checklist_rtl_outlined),
+                  title: const Text('Routine scripts'),
+                  subtitle: const Text(
+                    'How arrival, meals, pickup and the rest run — edit the '
+                    'steps your day uses',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/routines'),
+                ),
+                const _SettingsDivider(),
+              ],
               ListTile(
                 leading: const Icon(Icons.grid_view_rounded),
                 title: const Text('Poster'),

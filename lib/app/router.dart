@@ -17,6 +17,7 @@ import 'package:differentworld/features/action_words/growth_arc_screen.dart';
 import 'package:differentworld/features/action_words/journey_tour_screen.dart';
 import 'package:differentworld/features/action_words/kid_job_screen.dart';
 import 'package:differentworld/features/action_words/program_hub_screen.dart';
+import 'package:differentworld/features/action_words/routine_script_editor_screen.dart';
 import 'package:differentworld/features/action_words/send_screen.dart';
 import 'package:differentworld/features/action_words/themed_world_screen.dart';
 import 'package:differentworld/features/action_words/thinking_screen.dart';
@@ -1472,6 +1473,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                 },
               ),
             ],
+          ),
+          // The routine-script editor — edit how the everyday blocks (arrival /
+          // meals / rest / …) run; the overrides feed the day-run's slides
+          // (docs/VISION.md "every block carries its run-script").
+          GoRoute(
+            path: '/routines',
+            builder: (_, _) => const RouteTitle(
+              title: 'Routine scripts',
+              child: RoutineScriptEditorScreen(),
+            ),
           ),
           // The teleprompter for teaching — ANY activity (typed on /lens, or
           // generic) presented through its play → name → bridge → question
