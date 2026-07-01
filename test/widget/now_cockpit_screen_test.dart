@@ -214,11 +214,12 @@ void main() {
       tester,
     ) async {
       await _pump(tester, beat: CockpitBeat.now, lead: _lead);
-      // Collapsed: the destinations aren't in the tree yet.
-      expect(find.text('Schedule'), findsNothing);
+      // Collapsed: the curiosity destinations aren't built yet. Assert on
+      // 'Patterns' — it is UNIQUE to the curiosity bar. ('Schedule' also renders
+      // in the always-present tools section below the beat, so it's ambiguous.)
+      expect(find.text('Patterns'), findsNothing);
       await tester.tap(find.text('More places'));
       await tester.pumpAndSettle();
-      expect(find.text('Schedule'), findsOneWidget);
       expect(find.text('Patterns'), findsOneWidget);
     });
   });
