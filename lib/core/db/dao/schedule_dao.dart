@@ -137,6 +137,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
     required String groupId,
     required List<({String date, DateTime startAt, DateTime endAt})>
         templates,
+    String? title,
     String? activityId,
     String? leadMemberId,
     String? locationOverrideId,
@@ -160,6 +161,7 @@ class ScheduleDao extends DatabaseAccessor<AppDatabase>
             date: t.date,
             startAt: t.startAt.toUtc().toIso8601String(),
             endAt: t.endAt.toUtc().toIso8601String(),
+            title: Value(title),
             activityId: Value(activityId),
             leadMemberId: Value(leadMemberId),
             locationOverrideId: Value(locationOverrideId),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/omnibox/compose_draft_seed.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
@@ -10,8 +11,11 @@ import 'package:differentworld/features/schedule/locations_providers.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/content_header.dart';
+import 'package:differentworld/shared/widgets/destructive_button.dart';
+import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/form_body.dart';
+import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +25,25 @@ import 'package:go_router/go_router.dart';
 /// relevant edit screen inline, then auto-select the new id when
 /// the user returns.
 const String _kSentinelNew = '__new__';
+
+/// Picker-sheet sentinel for the "none / default / unassigned" row.
+const String _kSentinelNone = '__none__';
+
+/// Emoji + label + icon per block kind — shared by the preview hero and the
+/// type chips so both read the same.
+String _kindEmoji(String kind) => switch (kind) {
+  BlockKind.fieldTrip => '🚌',
+  BlockKind.breakBlock => '☕',
+  BlockKind.closed => '🚫',
+  _ => '🎨',
+};
+
+String _kindLabel(String kind) => switch (kind) {
+  BlockKind.fieldTrip => 'Field trip',
+  BlockKind.breakBlock => 'Break',
+  BlockKind.closed => 'Closed',
+  _ => 'Activity',
+};
 
 /// Args passed to the create/edit block route via go_router `extra`.
 ///
@@ -77,8 +100,30 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   String? _activityId;
   String? _leadMemberId;
   String? _locationOverrideId;
+  final _name = TextEditingController();
   final _notes = TextEditingController();
   bool _saving = false;
+
+  /// Snapshot of every field's initial value, captured at the end of
+  /// [initState]. `_isDirty` compares the live state to this so `DismissGuard`
+  /// only prompts when the user has actually changed something.
+  late final String _initialSnapshot;
+
+  String _snapshot() => [
+    _kind,
+    _startAt.toIso8601String(),
+    _endAt.toIso8601String(),
+    _activityId,
+    _leadMemberId,
+    _locationOverrideId,
+    _name.text,
+    _notes.text,
+    _repeatOn,
+    _repeatDays.join(','),
+    _repeatUntil.toIso8601String(),
+  ].join('|');
+
+  bool get _isDirty => _snapshot() != _initialSnapshot;
 
   /// Wave 166.2: when on, the form spawns N blocks (one per matching
   /// weekday between start date and `_repeatUntil`) instead of one.
@@ -122,9 +167,9 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
           ? null
           : findSessionBySlug(_curriculumSlug!);
       if (session != null) {
-        _notes.text =
-            '${session.title} (Session ${session.number} · '
-            'Through My Eyes)';
+        // The clean session title is the block's NAME; the link card above the
+        // form carries the "Session N · Through My Eyes" detail.
+        _name.text = session.title;
         // Photo sessions trend ~30 min total. Keep the start the
         // user picked, bump the end out from the default 60 min.
         _endAt = _startAt.add(const Duration(minutes: 30));
@@ -137,7 +182,7 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       if (seed != null) {
         if (_curriculumSlug == null) {
           _kind = seed.kind;
-          if (seed.title.isNotEmpty) _notes.text = seed.title;
+          if (seed.title.isNotEmpty) _name.text = seed.title;
         }
         // Consume-once, ALWAYS (even the curriculum-coexist edge) so the seed
         // can't poison a later plain create. Deferred through a microtask:
@@ -158,13 +203,19 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       _activityId = e.activityId;
       _leadMemberId = e.leadMemberId;
       _locationOverrideId = e.locationOverrideId;
+      _name.text = e.title ?? '';
       _notes.text = e.notes ?? '';
       _curriculumSlug = e.curriculumSessionSlug;
     }
+    // Baseline for the dismiss guard — taken AFTER all prefill (curriculum /
+    // compose seed / existing) so a freshly-drafted block isn't "dirty" until
+    // the user actually touches it.
+    _initialSnapshot = _snapshot();
   }
 
   @override
   void dispose() {
+    _name.dispose();
     _notes.dispose();
     super.dispose();
   }
@@ -183,9 +234,9 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       }
       final dur = a.defaultDurationMinutes;
       if (dur != null) {
-        final wasDefault = _endAt.difference(_startAt).inMinutes == 60 ||
-            (widget.existing != null &&
-                widget.existing!.activityId == null);
+        final wasDefault =
+            _endAt.difference(_startAt).inMinutes == 60 ||
+            (widget.existing != null && widget.existing!.activityId == null);
         if (wasDefault) {
           _endAt = _startAt.add(Duration(minutes: dur));
         }
@@ -198,7 +249,7 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(_startAt),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     setState(() {
       final newStart = DateTime(
         _startAt.year,
@@ -218,7 +269,7 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(_endAt),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     setState(() {
       _endAt = DateTime(
         _endAt.year,
@@ -240,8 +291,11 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   List<DateTime> _expandRepeatDates() {
     final out = <DateTime>[];
     var cursor = DateTime(_startAt.year, _startAt.month, _startAt.day);
-    final last =
-        DateTime(_repeatUntil.year, _repeatUntil.month, _repeatUntil.day);
+    final last = DateTime(
+      _repeatUntil.year,
+      _repeatUntil.month,
+      _repeatUntil.day,
+    );
     while (!cursor.isAfter(last)) {
       final idx = (cursor.weekday - 1) % 7;
       if (_repeatDays[idx]) out.add(cursor);
@@ -274,6 +328,12 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
       onError: 'Could not save the block.',
       action: () async {
         final notes = _notes.text.trim();
+        final name = _name.text.trim();
+        final title = name.isEmpty ? null : name;
+        final activityId =
+            _kind == BlockKind.onSite || _kind == BlockKind.fieldTrip
+            ? _activityId
+            : null;
         if (widget.existing == null) {
           if (_repeatOn) {
             // Wave 166.2 — spawn one block per matching weekday in
@@ -285,10 +345,8 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
               dates: dates,
               startAt: _startAt,
               endAt: _endAt,
-              activityId: _kind == BlockKind.onSite ||
-                      _kind == BlockKind.fieldTrip
-                  ? _activityId
-                  : null,
+              title: title,
+              activityId: activityId,
               leadMemberId: _leadMemberId,
               locationOverrideId: _locationOverrideId,
               kind: _kind,
@@ -300,10 +358,8 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
               groupId: widget.groupId,
               startAt: _startAt,
               endAt: _endAt,
-              activityId: _kind == BlockKind.onSite ||
-                      _kind == BlockKind.fieldTrip
-                  ? _activityId
-                  : null,
+              title: title,
+              activityId: activityId,
               leadMemberId: _leadMemberId,
               locationOverrideId: _locationOverrideId,
               kind: _kind,
@@ -314,9 +370,10 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
         } else {
           await actions.update_(
             id: widget.existing!.id,
+            title: title,
             startAt: _startAt,
             endAt: _endAt,
-            activityId: _activityId,
+            activityId: activityId,
             leadMemberId: _leadMemberId,
             locationOverrideId: _locationOverrideId,
             kind: _kind,
@@ -333,31 +390,176 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
   Future<void> _delete() async {
     final id = widget.existing?.id;
     if (id == null) return;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete this block?'),
-        content: const Text("It will be removed from this cohort's day."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final ok = await confirmDestructive(
+      context,
+      title: 'Delete this block?',
+      message: "It will be removed from this cohort's day.",
     );
-    if (confirm != true || !mounted) return;
+    if (!ok || !mounted) return;
     final goRouter = GoRouter.of(context);
     await ref.read(scheduleActionsProvider).delete_(id);
     if (!mounted) return;
     if (goRouter.canPop()) goRouter.pop();
+  }
+
+  /// Set the block's length from a quick-duration chip — keep the start, move
+  /// the end.
+  void _setDuration(int minutes) {
+    setState(() => _endAt = _startAt.add(Duration(minutes: minutes)));
+  }
+
+  /// A clean list picker on a glass sheet (replaces the boxy dropdowns). Returns
+  /// the chosen row's value (an id, [_kSentinelNone], or [_kSentinelNew]), or
+  /// null if dismissed.
+  Future<String?> _pickSheet({
+    required String title,
+    required List<({String value, String label, bool selected})> rows,
+  }) {
+    // Dismiss the keyboard explicitly first — if the Name field held focus,
+    // opening the sheet would drop it as a side-effect. Making it intentional
+    // keeps the interaction clean.
+    FocusManager.instance.primaryFocus?.unfocus();
+    return showGlassSheet<String>(
+      context: context,
+      builder: (ctx) {
+        final scheme = Theme.of(ctx).colorScheme;
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                child: Text(
+                  title,
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final r in rows)
+                      ListTile(
+                        title: Text(
+                          r.label,
+                          style: r.value == _kSentinelNew
+                              ? TextStyle(
+                                  color: scheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                )
+                              : null,
+                        ),
+                        trailing: r.selected
+                            ? Icon(Icons.check, color: scheme.primary)
+                            : null,
+                        onTap: () => Navigator.of(ctx).pop(r.value),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickActivity(List<Activity> activities) async {
+    final picked = await _pickSheet(
+      title: 'Activity',
+      rows: [
+        (
+          value: _kSentinelNone,
+          label: 'No activity',
+          selected: _activityId == null,
+        ),
+        for (final a in activities.where(
+          (x) => x.archivedAt == null || x.id == _activityId,
+        ))
+          (
+            value: a.id,
+            label: a.archivedAt == null ? a.name : '${a.name} (archived)',
+            selected: a.id == _activityId,
+          ),
+        (value: _kSentinelNew, label: '+ New activity', selected: false),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    if (picked == _kSentinelNone) {
+      setState(() => _activityId = null);
+      return;
+    }
+    if (picked == _kSentinelNew) {
+      final newId = await Navigator.of(context).push<String?>(
+        MaterialPageRoute(builder: (_) => const ActivityEditScreen()),
+      );
+      if (!mounted || newId == null) return;
+      // Select it immediately (robust: the new row may not have streamed into
+      // allActivitiesProvider yet), then apply its defaults if it has.
+      setState(() => _activityId = newId);
+      final fresh = ref.read(allActivitiesProvider).value ?? const <Activity>[];
+      _applyActivityDefaults(newId, fresh);
+      return;
+    }
+    _applyActivityDefaults(picked, activities);
+  }
+
+  Future<void> _pickLead(List<Member> members) async {
+    final picked = await _pickSheet(
+      title: 'Lead',
+      rows: [
+        (
+          value: _kSentinelNone,
+          label: 'Unassigned',
+          selected: _leadMemberId == null,
+        ),
+        for (final m in members)
+          (
+            value: m.id,
+            label: m.displayName,
+            selected: m.id == _leadMemberId,
+          ),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    setState(
+      () => _leadMemberId = picked == _kSentinelNone ? null : picked,
+    );
+  }
+
+  Future<void> _pickLocation(List<Location> locations) async {
+    final picked = await _pickSheet(
+      title: 'Location',
+      rows: [
+        (
+          value: _kSentinelNone,
+          label: 'Activity default',
+          selected: _locationOverrideId == null,
+        ),
+        for (final l in locations)
+          (
+            value: l.id,
+            label: l.name,
+            selected: l.id == _locationOverrideId,
+          ),
+        (value: _kSentinelNew, label: '+ New location', selected: false),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    if (picked == _kSentinelNew) {
+      final newId = await context.push<String?>('/settings/locations/new');
+      if (!mounted || newId == null) return;
+      setState(() => _locationOverrideId = newId);
+      return;
+    }
+    setState(
+      () => _locationOverrideId = picked == _kSentinelNone ? null : picked,
+    );
   }
 
   @override
@@ -366,261 +568,214 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
     final scheme = theme.colorScheme;
     final activities =
         ref.watch(allActivitiesProvider).value ?? const <Activity>[];
-    final locations =
-        ref.watch(locationsProvider).value ?? const <Location>[];
-    final members =
-        ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+    final locations = ref.watch(locationsProvider).value ?? const <Location>[];
+    final members = ref.watch(membersInSpaceProvider).value ?? const <Member>[];
+    final groupName = ref
+        .watch(groupsProvider)
+        .value
+        ?.where((g) => g.id == widget.groupId)
+        .firstOrNull
+        ?.name;
 
-    return EdgeScaffold(
-      backFallbackRoute: '/schedule',
-      actions: [
-        if (widget.isEdit)
-          IconButton(
-            tooltip: 'Delete',
-            icon: Icon(Icons.delete_outline, color: scheme.error),
-            onPressed: _saving ? null : _delete,
-          ),
-      ],
-      body: FormBody(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        children: [
-          ContentHeader(
-            title: widget.isEdit ? 'Edit block' : 'New block',
-          ),
-          if (_curriculumSlug != null) _CurriculumLinkCard(slug: _curriculumSlug!),
-          if (_curriculumSlug != null) const SizedBox(height: 12),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'on_site', label: Text('Activity')),
-              ButtonSegment(
-                value: 'field_trip',
-                label: Text('Trip'),
-                icon: Icon(Icons.directions_bus_outlined),
-              ),
-              ButtonSegment(value: 'break', label: Text('Break')),
-              ButtonSegment(value: 'closed', label: Text('Closed')),
-            ],
-            selected: {_kind},
-            onSelectionChanged: (s) {
-              if (s.isNotEmpty) setState(() => _kind = s.first);
-            },
-            showSelectedIcon: false,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _TimePill(
-                  label: 'Start',
-                  value: TimeOfDay.fromDateTime(_startAt),
-                  onTap: _pickStart,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _TimePill(
-                  label: 'End',
-                  value: TimeOfDay.fromDateTime(_endAt),
-                  onTap: _pickEnd,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              '${_endAt.difference(_startAt).inMinutes} min',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+    // Resolved labels for the Detail rows.
+    final activity = _activityId == null
+        ? null
+        : activities.where((a) => a.id == _activityId).firstOrNull;
+    final lead = _leadMemberId == null
+        ? null
+        : members.where((m) => m.id == _leadMemberId).firstOrNull;
+    final locOverride = _locationOverrideId == null
+        ? null
+        : locations.where((l) => l.id == _locationOverrideId).firstOrNull;
+    final durationMin = _endAt.difference(_startAt).inMinutes;
+    final showActivity =
+        _kind == BlockKind.onSite || _kind == BlockKind.fieldTrip;
+    final showLeadLoc = _kind != BlockKind.closed;
+
+    return DismissGuard(
+      isDirty: () => _isDirty,
+      child: EdgeScaffold(
+        backFallbackRoute: '/schedule',
+        actions: [
+          if (widget.isEdit)
+            IconButton(
+              tooltip: 'Delete',
+              icon: Icon(Icons.delete_outline, color: scheme.error),
+              onPressed: _saving ? null : _delete,
             ),
-          ),
-          if (_kind == BlockKind.onSite || _kind == BlockKind.fieldTrip) ...[
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String?>(
-              initialValue: _activityId,
-              decoration: const InputDecoration(
-                labelText: 'Activity',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  child: Text('— pick an activity —'),
-                ),
-                for (final a in activities
-                    .where((x) => x.archivedAt == null || x.id == _activityId))
-                  DropdownMenuItem<String?>(
-                    value: a.id,
-                    child: Text(
-                      a.archivedAt == null ? a.name : '${a.name} (archived)',
-                    ),
-                  ),
-                DropdownMenuItem<String?>(
-                  value: _kSentinelNew,
-                  child: Row(
-                    children: [
-                      Icon(Icons.add, size: 16, color: scheme.primary),
-                      const SizedBox(width: 6),
-                      Text(
-                        'New activity…',
-                        style: TextStyle(color: scheme.primary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              onChanged: (v) async {
-                if (v == _kSentinelNew) {
-                  final newId = await Navigator.of(context).push<String?>(
-                    MaterialPageRoute(
-                      builder: (_) => const ActivityEditScreen(),
-                    ),
-                  );
-                  if (!mounted || newId == null) return;
-                  await Future<void>.delayed(
-                    const Duration(milliseconds: 50),
-                  );
-                  if (!mounted) return;
-                  final fresh = ref.read(allActivitiesProvider).value ??
-                      const <Activity>[];
-                  _applyActivityDefaults(newId, fresh);
-                  return;
-                }
-                _applyActivityDefaults(v, activities);
-              },
-            ),
-          ],
-          if (_kind != 'closed') ...[
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String?>(
-              initialValue: _leadMemberId,
-              decoration: const InputDecoration(
-                labelText: 'Lead',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  child: Text('— unassigned —'),
-                ),
-                for (final m in members)
-                  DropdownMenuItem<String?>(
-                    value: m.id,
-                    child: Text(m.displayName),
-                  ),
-              ],
-              onChanged: (v) => setState(() => _leadMemberId = v),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String?>(
-              initialValue: _locationOverrideId,
-              decoration: const InputDecoration(
-                labelText: 'Location',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  child: Text('— activity default —'),
-                ),
-                for (final l in locations)
-                  DropdownMenuItem<String?>(
-                    value: l.id,
-                    child: Text(l.name),
-                  ),
-                DropdownMenuItem<String?>(
-                  value: _kSentinelNew,
-                  child: Row(
-                    children: [
-                      Icon(Icons.add, size: 16, color: scheme.primary),
-                      const SizedBox(width: 6),
-                      Text(
-                        'New location…',
-                        style: TextStyle(color: scheme.primary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              onChanged: (v) async {
-                if (v == _kSentinelNew) {
-                  // "+ New location" → the location edit PAGE; it pops the new
-                  // id back so we can auto-select it (CLAUDE.md "No modal").
-                  final newId = await context.push<String?>(
-                    '/settings/locations/new',
-                  );
-                  if (!mounted || newId == null) return;
-                  setState(() => _locationOverrideId = newId);
-                  return;
-                }
-                setState(() => _locationOverrideId = v);
-              },
-            ),
-          ],
-          const SizedBox(height: 12),
-          TextField(
-            controller: _notes,
-            minLines: 2,
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(
-              labelText: _kind == BlockKind.breakBlock
-                  ? 'Label'
-                  : _kind == BlockKind.closed
-                      ? 'Reason (optional)'
-                      : 'Notes (optional)',
-              hintText: _kind == BlockKind.breakBlock
-                  ? 'Snack · Lunch · Rest'
-                  : _kind == BlockKind.closed
-                      ? 'Holiday · weather · maintenance'
-                      : 'Anything specific staff or parents should see',
-              border: const OutlineInputBorder(),
-            ),
-          ),
-          if (!widget.isEdit) ...[
-            const SizedBox(height: 16),
-            _RepeatSection(
-              startAt: _startAt,
-              endAt: _endAt,
-              repeatOn: _repeatOn,
-              repeatDays: _repeatDays,
-              repeatUntil: _repeatUntil,
-              onToggleRepeat: (v) => setState(() => _repeatOn = v),
-              onToggleDay: (i) =>
-                  setState(() => _repeatDays[i] = !_repeatDays[i]),
-              onPickUntil: _pickRepeatUntil,
-              expand: _expandRepeatDates,
-            ),
-          ],
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check),
-            label: Text(
-              widget.isEdit
-                  ? 'Save changes'
-                  : _repeatOn
-                      ? 'Add ${_expandRepeatDates().length} blocks'
-                      : 'Add block',
-            ),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-          // Wave 155: skip / restore. Only shown when editing an
-          // existing block — adding a brand-new block always starts
-          // as planned. The director's "cancel" with a reason lives
-          // here too: tap Skip → optional reason → snackbar.
-          if (widget.isEdit && widget.existing != null) ...[
-            const SizedBox(height: 12),
-            _SkipRestoreRow(block: widget.existing!),
-          ],
         ],
+        body: FormBody(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            ContentHeader(
+              title: widget.isEdit ? 'Edit block' : 'New block',
+            ),
+            if (_curriculumSlug != null) ...[
+              _CurriculumLinkCard(slug: _curriculumSlug!),
+              const SizedBox(height: 12),
+            ],
+            _BlockPreview(
+              nameCtrl: _name,
+              kind: _kind,
+              start: _startAt,
+              end: _endAt,
+              groupName: groupName,
+            ),
+            const SizedBox(height: 18),
+            const _FieldLabel('Name'),
+            const SizedBox(height: 6),
+            TextField(
+              key: const ValueKey('block-name-field'),
+              controller: _name,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                hintText: switch (_kind) {
+                  BlockKind.fieldTrip => 'The pond · The zoo',
+                  BlockKind.breakBlock => 'Snack · Lunch · Rest',
+                  BlockKind.closed => 'Holiday · Closed',
+                  _ => "What's this block?",
+                },
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const _FieldLabel('Type'),
+            const SizedBox(height: 6),
+            _TypeChips(
+              selected: _kind,
+              onChanged: (k) => setState(() => _kind = k),
+            ),
+            const SizedBox(height: 16),
+            const _FieldLabel('When'),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: _TimePill(
+                    label: 'Start',
+                    value: TimeOfDay.fromDateTime(_startAt),
+                    onTap: _pickStart,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _TimePill(
+                    label: 'End',
+                    value: TimeOfDay.fromDateTime(_endAt),
+                    onTap: _pickEnd,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _DurationChips(durationMin: durationMin, onPick: _setDuration),
+            if (showActivity || showLeadLoc) ...[
+              const SizedBox(height: 16),
+              const _FieldLabel('Details'),
+              const SizedBox(height: 6),
+              _DetailsCard(
+                rows: [
+                  if (showActivity)
+                    _DetailRow(
+                      icon: Icons.palette_outlined,
+                      label: 'Activity',
+                      value: activity?.name ?? 'Pick one',
+                      muted: activity == null,
+                      onTap: () => _pickActivity(activities),
+                    ),
+                  if (showLeadLoc)
+                    _DetailRow(
+                      icon: Icons.person_outline,
+                      label: 'Lead',
+                      value: lead?.displayName ?? 'Unassigned',
+                      muted: lead == null,
+                      onTap: () => _pickLead(members),
+                    ),
+                  if (showLeadLoc)
+                    _DetailRow(
+                      icon: Icons.place_outlined,
+                      label: 'Location',
+                      value: locOverride?.name ?? 'Activity default',
+                      muted: locOverride == null,
+                      onTap: () => _pickLocation(locations),
+                    ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            _FieldLabel(_kind == BlockKind.closed ? 'Reason' : 'Notes'),
+            const SizedBox(height: 6),
+            TextField(
+              key: const ValueKey('block-notes-field'),
+              controller: _notes,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                hintText: _kind == BlockKind.closed
+                    ? 'Holiday · weather · maintenance'
+                    : 'Anything staff or parents should see',
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            if (!widget.isEdit) ...[
+              const SizedBox(height: 16),
+              _RepeatSection(
+                startAt: _startAt,
+                endAt: _endAt,
+                repeatOn: _repeatOn,
+                repeatDays: _repeatDays,
+                repeatUntil: _repeatUntil,
+                onToggleRepeat: (v) => setState(() => _repeatOn = v),
+                onToggleDay: (i) =>
+                    setState(() => _repeatDays[i] = !_repeatDays[i]),
+                onPickUntil: _pickRepeatUntil,
+                expand: _expandRepeatDates,
+              ),
+            ],
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check),
+              label: Text(
+                widget.isEdit
+                    ? 'Save changes'
+                    : _repeatOn
+                    ? 'Add ${_expandRepeatDates().length} blocks'
+                    : 'Add block',
+              ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+            // Wave 155: skip / restore. Only shown when editing an
+            // existing block — adding a brand-new block always starts
+            // as planned. The director's "cancel" with a reason lives
+            // here too: tap Skip → optional reason → snackbar.
+            if (widget.isEdit && widget.existing != null) ...[
+              const SizedBox(height: 12),
+              _SkipRestoreRow(block: widget.existing!),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -636,12 +791,15 @@ class _SkipRestoreRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isSkipped = block.status == BlockStatus.skipped ||
+    final isSkipped =
+        block.status == BlockStatus.skipped ||
         block.status == BlockStatus.cancelled;
     return OutlinedButton.icon(
       onPressed: () async {
         if (isSkipped) {
-          await ref.read(scheduleActionsProvider).setBlockStatus(
+          await ref
+              .read(scheduleActionsProvider)
+              .setBlockStatus(
                 id: block.id,
                 status: BlockStatus.planned,
               );
@@ -678,7 +836,9 @@ class _SkipRestoreRow extends ConsumerWidget {
           },
         );
         if (reason == null) return;
-        await ref.read(scheduleActionsProvider).setBlockStatus(
+        await ref
+            .read(scheduleActionsProvider)
+            .setBlockStatus(
               id: block.id,
               status: BlockStatus.skipped,
               reason: reason.isEmpty ? null : reason,
@@ -690,21 +850,19 @@ class _SkipRestoreRow extends ConsumerWidget {
         color: isSkipped ? theme.colorScheme.primary : theme.colorScheme.error,
       ),
       label: Text(
-        isSkipped
-            ? 'Restore (was: ${block.status})'
-            : 'Skip this block',
+        isSkipped ? 'Restore (was: ${block.status})' : 'Skip this block',
         style: TextStyle(
-          color:
-              isSkipped ? theme.colorScheme.primary : theme.colorScheme.error,
+          color: isSkipped
+              ? theme.colorScheme.primary
+              : theme.colorScheme.error,
         ),
       ),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 12),
         side: BorderSide(
-          color: (isSkipped
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.error)
-              .withValues(alpha: 0.4),
+          color:
+              (isSkipped ? theme.colorScheme.primary : theme.colorScheme.error)
+                  .withValues(alpha: 0.4),
         ),
       ),
     );
@@ -964,8 +1122,10 @@ class _RepeatSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: scheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(10),
@@ -984,9 +1144,7 @@ class _RepeatSection extends StatelessWidget {
                             ? 'No matching days in this range.'
                             : 'Will spawn $count block${count == 1 ? '' : 's'}.',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: count == 0
-                              ? scheme.error
-                              : scheme.onSurface,
+                          color: count == 0 ? scheme.error : scheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -995,6 +1153,361 @@ class _RepeatSection extends StatelessWidget {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A small tracked caps section label above each field group.
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        text.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+}
+
+/// The live "this block" hero at the top of the editor — the block taking
+/// shape as you edit (echoes the omnibox draft card, so the editor reads as the
+/// same system). Rebuilds its name live off the controller.
+class _BlockPreview extends StatelessWidget {
+  const _BlockPreview({
+    required this.nameCtrl,
+    required this.kind,
+    required this.start,
+    required this.end,
+    required this.groupName,
+  });
+
+  final TextEditingController nameCtrl;
+  final String kind;
+  final DateTime start;
+  final DateTime end;
+  final String? groupName;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: nameCtrl,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final scheme = theme.colorScheme;
+        final name = nameCtrl.text.trim();
+        final title = name.isEmpty ? _kindLabel(kind) : name;
+        final timeLabel =
+            '${TimeOfDay.fromDateTime(start).format(context)} – '
+            '${TimeOfDay.fromDateTime(end).format(context)}';
+        final sub = [
+          _kindLabel(kind),
+          timeLabel,
+          ?groupName,
+        ].join(' · ');
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Text(_kindEmoji(kind), style: const TextStyle(fontSize: 30)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      sub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// The block-kind picker as four pill chips (replaces the M3 segmented button).
+class _TypeChips extends StatelessWidget {
+  const _TypeChips({required this.selected, required this.onChanged});
+
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const kinds = [
+      BlockKind.onSite,
+      BlockKind.fieldTrip,
+      BlockKind.breakBlock,
+      BlockKind.closed,
+    ];
+    return Row(
+      children: [
+        for (var i = 0; i < kinds.length; i++) ...[
+          if (i > 0) const SizedBox(width: 7),
+          Expanded(
+            child: _TypeChip(
+              label: switch (kinds[i]) {
+                BlockKind.fieldTrip => 'Trip',
+                BlockKind.breakBlock => 'Break',
+                BlockKind.closed => 'Closed',
+                _ => 'Activity',
+              },
+              selected: kinds[i] == selected,
+              onTap: () => onChanged(kinds[i]),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Material(
+      color: selected ? scheme.primary : scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Center(
+            widthFactor: 1,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The current length plus quick-set duration chips. A [Wrap] (not a Row) so it
+/// can never overflow at large text scales.
+class _DurationChips extends StatelessWidget {
+  const _DurationChips({required this.durationMin, required this.onPick});
+
+  final int durationMin;
+  final ValueChanged<int> onPick;
+
+  static String _fmt(int m) => m <= 0
+      ? '0m'
+      : m % 60 == 0
+      ? '${m ~/ 60}h'
+      : m < 60
+      ? '${m}m'
+      : '${m ~/ 60}h ${m % 60}m';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    const presets = [30, 45, 60, 90];
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, right: 4),
+          child: Text(
+            _fmt(durationMin),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        for (final p in presets)
+          _DurChip(
+            label: _fmt(p),
+            selected: p == durationMin,
+            onTap: () => onPick(p),
+          ),
+      ],
+    );
+  }
+}
+
+class _DurChip extends StatelessWidget {
+  const _DurChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Material(
+      color: selected ? scheme.primary : scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Center(
+            widthFactor: 1,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The Activity / Lead / Location rows in one card (replaces the three stacked
+/// bordered dropdowns). Each row opens a picker sheet.
+class _DetailsCard extends StatelessWidget {
+  const _DetailsCard({required this.rows});
+
+  final List<Widget> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                indent: 44,
+                color: scheme.outlineVariant.withValues(alpha: 0.5),
+              ),
+            rows[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.muted,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool muted;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+            const SizedBox(width: 12),
+            Text(label, style: theme.textTheme.bodyLarge),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: muted ? scheme.onSurfaceVariant : scheme.onSurface,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, size: 18, color: scheme.onSurfaceVariant),
           ],
         ),
       ),
