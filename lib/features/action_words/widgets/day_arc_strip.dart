@@ -38,6 +38,43 @@ class DayArcStrip extends StatelessWidget {
   }
 }
 
+/// A one-line "why this block sits HERE in the day" for each position in the
+/// arc — the middle-UI "explain the arc" (docs/VISION.md "anticipation earns
+/// trust when it can show its reasoning"). Pure, derived from the energy series
+/// alone: the open, the close, local peaks/troughs, and whether energy is
+/// rising / falling / holding. Returns one line per input energy, aligned.
+List<String> dayArcNarrative(List<double> energies) {
+  final n = energies.length;
+  if (n == 0) return const [];
+  if (n == 1) return const ['The whole day.'];
+  final out = <String>[];
+  for (var i = 0; i < n; i++) {
+    final e = energies[i];
+    if (i == 0) {
+      out.add('Opening — gather and settle in.');
+      continue;
+    }
+    if (i == n - 1) {
+      out.add('Closing — wind down for the handoff home.');
+      continue;
+    }
+    final prev = energies[i - 1];
+    final next = energies[i + 1];
+    if (e >= prev && e >= next && e >= 0.7) {
+      out.add("The high point — they've warmed up; spend the energy here.");
+    } else if (e <= prev && e <= next && e <= 0.35) {
+      out.add('A calm dip — a breather between the busier blocks.');
+    } else if (e > prev + 0.02) {
+      out.add('Building energy toward the peak.');
+    } else if (e < prev - 0.02) {
+      out.add('Easing down from the peak.');
+    } else {
+      out.add('Holding a steady middle.');
+    }
+  }
+  return out;
+}
+
 class _ArcPainter extends CustomPainter {
   _ArcPainter({
     required this.energies,

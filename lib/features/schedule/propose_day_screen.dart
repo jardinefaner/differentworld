@@ -210,6 +210,12 @@ class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
         data: (gs) {
           final group = _resolve(gs);
           final slots = proposed.schedule;
+          // "Explain the arc" — one "why it sits here" per block, from the
+          // day's energy shape (docs/VISION.md "show its reasoning").
+          final why = dayArcNarrative([
+            for (final s in slots)
+              (s.block.energy ?? s.block.kind.energy).clamp(0.0, 1.0),
+          ]);
           return SafeArea(
             bottom: false,
             child: Center(
@@ -254,13 +260,14 @@ class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
                           accent: accent,
                         ),
                       ),
-                    for (final s in slots)
+                    for (var i = 0; i < slots.length; i++)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 7),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              s.block.kind.emoji,
+                              slots[i].block.kind.emoji,
                               style: const TextStyle(fontSize: 20),
                             ),
                             const SizedBox(width: 12),
@@ -269,7 +276,7 @@ class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
                             ConstrainedBox(
                               constraints: const BoxConstraints(minWidth: 56),
                               child: Text(
-                                clockLabel(s.startMinute),
+                                clockLabel(slots[i].startMinute),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
@@ -277,15 +284,35 @@ class _ProposeDayScreenState extends ConsumerState<ProposeDayScreen> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text(
-                                s.block.label,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    slots[i].block.label,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (i < why.length)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 1),
+                                      child: Text(
+                                        why[i],
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
-                              durationLabel(s.block.minutes),
+                              durationLabel(slots[i].block.minutes),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
