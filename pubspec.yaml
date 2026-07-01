@@ -54,6 +54,9 @@ dependencies:
   image_picker: ^1.1.2
   image: ^4.5.4
   cached_network_image: ^3.4.1
+  # Direct dep (already transitive via cached_network_image) — the full-screen
+  # PhotoViewer's Share reads the cached image file via DefaultCacheManager.
+  flutter_cache_manager: ^3.4.1
   # Wave 117: drag-and-drop file targets on desktop / web. The
   # image_picker library handles the file PICKER UX; this adds a
   # native drop zone so a teacher can drag a photo straight from
