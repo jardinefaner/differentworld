@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:differentworld/core/db/app_database.dart';
@@ -7,6 +8,7 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A measurable SKILL — the RPG "stats that grow" (docs/VISION.md synthesis).
@@ -21,6 +23,7 @@ class MeasurableSkill {
     required this.label,
     required this.unit,
     required this.hint,
+    this.higherIsBetter = true,
   });
 
   final String id;
@@ -32,6 +35,10 @@ class MeasurableSkill {
 
   /// How to take the measurement (shown in the capture sheet).
   final String hint;
+
+  /// Whether a bigger number is the win — false for the speed skills, so the
+  /// delta arrow points the right way (getting FASTER is ▲, not ▼).
+  final bool higherIsBetter;
 
   String format(num v) {
     final n = v % 1 == 0 ? v.toInt().toString() : v.toString();
@@ -67,6 +74,7 @@ final List<MeasurableSkill> kMeasurableSkills = [
       label: s.name,
       unit: skillUnitFor(s.measure),
       hint: s.how,
+      higherIsBetter: s.higherIsBetter,
     ),
 ];
 
@@ -132,6 +140,50 @@ Map<String, SkillProgress> latestSkillValues(List<Entry> entries) {
   return out;
 }
 
+/// A skill's full arc for one child — every measurement, oldest → newest — so
+/// the progression screen can draw the curve, the delta from day one, and the
+/// count of reps (the "you practiced it N times" story).
+@immutable
+class SkillArc {
+  const SkillArc(this.series);
+
+  /// Oldest → newest.
+  final List<SkillMeasure> series;
+
+  bool get isEmpty => series.isEmpty;
+  int get reps => series.length;
+
+  // The value getters below (first / latest / min / max / *At) require a
+  // NON-EMPTY series — guard with [isEmpty] first, or they throw a StateError.
+  num get first => series.first.value;
+  num get latest => series.last.value;
+  num get min => series.map((m) => m.value).reduce((a, b) => a < b ? a : b);
+  num get max => series.map((m) => m.value).reduce((a, b) => a > b ? a : b);
+  DateTime get firstAt => series.first.at;
+  DateTime get latestAt => series.last.at;
+
+  /// The best value so far, respecting direction — the max for a
+  /// higher-is-better skill, the min for a speed skill.
+  num best({required bool higherIsBetter}) => higherIsBetter ? max : min;
+
+  /// How much they've improved since the first rep — positive = better,
+  /// respecting direction (for a speed skill, getting SMALLER is improving).
+  num improvement({required bool higherIsBetter}) =>
+      higherIsBetter ? latest - first : first - latest;
+}
+
+/// Build one skill's arc from a child's entries (non-skill + other-skill rows
+/// are ignored). Sorted oldest → newest by recorded time.
+SkillArc skillArcFor(List<Entry> entries, String skillId) {
+  final ms = <SkillMeasure>[];
+  for (final e in entries) {
+    final m = SkillMeasure.fromEntry(e);
+    if (m != null && m.skillId == skillId) ms.add(m);
+  }
+  ms.sort((a, b) => a.at.compareTo(b.at));
+  return SkillArc(ms);
+}
+
 /// Open the quick capture sheet to log a measurement for a child.
 Future<void> showSkillMeasureSheet(
   BuildContext context, {
@@ -171,6 +223,18 @@ class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
   final _value = TextEditingController();
   bool _saving = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // showGlassSheet's dialog shape (tablet widths) doesn't auto-raise the IME
+    // for the autofocus field — nudge it up once the route settles.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(SystemChannels.textInput.invokeMethod('TextInput.show'));
+      }
+    });
+  }
 
   @override
   void dispose() {

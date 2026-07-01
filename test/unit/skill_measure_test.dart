@@ -100,4 +100,55 @@ void main() {
     // The emoji rides in from the verb.
     expect(measurableSkillById('carry.lift')!.emoji, '📦');
   });
+
+  group('SkillArc', () {
+    List<Entry> reps(String skill, List<(num, String)> vals) => [
+      for (final (v, at) in vals)
+        _entry(
+          kind: EntryKind.skillMeasure,
+          details: '{"skill":"$skill","value":$v}',
+          at: at,
+        ),
+    ];
+
+    test('builds the arc oldest→newest, ignoring other skills', () {
+      final e = [
+        ...reps('wait.still', [
+          (12, '2026-07-01'),
+          (90, '2026-07-15'),
+          (34, '2026-07-08'),
+        ]),
+        ...reps('listen.count', [(3, '2026-07-02')]),
+      ];
+      final arc = skillArcFor(e, 'wait.still');
+      expect(arc.reps, 3);
+      expect(arc.first, 12);
+      expect(arc.latest, 90);
+      expect(arc.max, 90);
+      expect(arc.min, 12);
+      // Sorted by recorded time, not list order.
+      expect(arc.series.map((m) => m.value).toList(), [12, 34, 90]);
+    });
+
+    test('improvement + best respect direction', () {
+      final higher = skillArcFor(
+        reps('wait.still', [(12, '2026-07-01'), (90, '2026-07-15')]),
+        'wait.still',
+      );
+      expect(higher.improvement(higherIsBetter: true), 78); // grew
+      expect(higher.best(higherIsBetter: true), 90); // the max
+
+      // A speed skill: SMALLER is better → 120 → 30 is +90 improvement.
+      final speed = skillArcFor(
+        reps('spark.start', [(120, '2026-07-01'), (30, '2026-07-15')]),
+        'spark.start',
+      );
+      expect(speed.improvement(higherIsBetter: false), 90);
+      expect(speed.best(higherIsBetter: false), 30); // the min
+    });
+
+    test('empty arc is empty', () {
+      expect(skillArcFor(const [], 'wait.still').isEmpty, isTrue);
+    });
+  });
 }

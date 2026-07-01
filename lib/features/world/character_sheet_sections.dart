@@ -622,7 +622,7 @@ class _Skills extends StatelessWidget {
           else
             for (final skill in kMeasurableSkills)
               if (progress[skill.id] case final p?)
-                _SkillRow(skill: skill, progress: p),
+                _SkillRow(skill: skill, progress: p, subjectId: subjectId),
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
@@ -646,47 +646,66 @@ class _Skills extends StatelessWidget {
 }
 
 class _SkillRow extends StatelessWidget {
-  const _SkillRow({required this.skill, required this.progress});
+  const _SkillRow({
+    required this.skill,
+    required this.progress,
+    required this.subjectId,
+  });
   final MeasurableSkill skill;
   final SkillProgress progress;
+  final String subjectId;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final prev = progress.previous;
-    final delta = prev == null ? null : progress.latest - prev;
-    final up = delta != null && delta > 0;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Text(skill.emoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(skill.label, style: theme.textTheme.bodyMedium),
-          ),
-          Text(
-            skill.format(progress.latest),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+    final raw = prev == null ? null : progress.latest - prev;
+    // Direction-aware: for a speed skill (higherIsBetter == false) a SMALLER
+    // number is the win, so getting faster reads as ▲ (+), not ▼.
+    final improved = raw == null ? null : (skill.higherIsBetter ? raw : -raw);
+    final up = improved != null && improved > 0;
+    // Tap → the skill's full progression (the curve + the "they did that").
+    return InkWell(
+      onTap: () => unawaited(context.push('/skills/$subjectId/${skill.id}')),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          children: [
+            Text(skill.emoji, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(skill.label, style: theme.textTheme.bodyMedium),
             ),
-          ),
-          if (delta != null && delta != 0) ...[
-            const SizedBox(width: 8),
             Text(
-              '${up ? '▲' : '▼'} ${up ? '+' : ''}'
-              '${delta % 1 == 0 ? delta.toInt() : delta}',
-              style: theme.textTheme.labelSmall?.copyWith(
-                // Theme-aware (not a magic green that clashes on warm
-                // surfaces / dark mode); the ▲/▼ already encodes direction.
-                color: up
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
+              skill.format(progress.latest),
+              style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
+            if (improved != null && improved != 0) ...[
+              const SizedBox(width: 8),
+              Text(
+                '${up ? '▲' : '▼'} ${up ? '+' : '−'}'
+                '${improved.abs() % 1 == 0 ? improved.abs().toInt() : improved.abs()}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  // Theme-aware (not a magic green that clashes on warm
+                  // surfaces / dark mode); the ▲/▼ already encodes direction.
+                  color: up
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ],
-        ],
+        ),
       ),
     );
   }

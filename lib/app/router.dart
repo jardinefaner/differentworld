@@ -182,6 +182,7 @@ import 'package:differentworld/features/vehicles/vehicles_providers.dart'
     show VehicleLogKind;
 import 'package:differentworld/features/world/character_sheet_screen.dart';
 import 'package:differentworld/features/world/draw_self_screen.dart';
+import 'package:differentworld/features/world/skill_detail_screen.dart';
 import 'package:differentworld/shared/widgets/app_shell.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/route_title.dart';
@@ -1546,6 +1547,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/growth/:subjectId',
             builder: (_, state) => GrowthArcScreen(
               subjectId: state.pathParameters['subjectId']!,
+            ),
+          ),
+          // One skill's PROGRESSION for a child — the number, the rising curve,
+          // the delta from day one (docs/VISION.md "the number IS the story").
+          GoRoute(
+            path: '/skills/:subjectId/:skillId',
+            builder: (_, state) => SkillDetailScreen(
+              subjectId: state.pathParameters['subjectId']!,
+              skillId: state.pathParameters['skillId']!,
             ),
           ),
           // The SEASON HUB — the whole 10-week program on one screen (where we
