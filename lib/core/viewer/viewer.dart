@@ -305,6 +305,8 @@ class GuardianViewer extends Viewer {
   @override
   bool get canManageSpace => false;
   @override
+  bool get canManageSchedule => false;
+  @override
   bool get canInviteStaff => false;
   @override
   bool get canTakeAttendance => false;

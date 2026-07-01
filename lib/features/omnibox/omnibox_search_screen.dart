@@ -17,6 +17,7 @@ import 'package:differentworld/features/omnibox/omnibox_history.dart';
 import 'package:differentworld/features/omnibox/omnibox_mode.dart';
 import 'package:differentworld/features/omnibox/omnibox_state.dart';
 import 'package:differentworld/features/omnibox/slash_commands.dart';
+import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/features/voice/deepgram_voice_service.dart';
 import 'package:differentworld/shared/error_handling.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
@@ -81,6 +82,13 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
   /// Sticky across queries so a director's pick persists. Only meaningful when
   /// the space has more than one group (the draft card shows a picker then).
   String? _draftGroupId;
+
+  /// One-shot latch for the compose "Add" / "Edit details" actions. The card
+  /// body (InkWell), the button, AND the Return key can all fire in one gesture
+  /// — this hard-guards against creating the block (or pushing the editor)
+  /// twice. Never reset within a State: both actions pop `/search`, and a fresh
+  /// open is a fresh State.
+  bool _adding = false;
 
   /// What the composer's text was BEFORE the user started dictating. We
   /// restore this prefix and append the transcript so a partial existing
@@ -230,6 +238,7 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
     final q = query.trim().toLowerCase();
     final isSlash = mode == OmniboxMode.slash;
     final isCapture = mode == OmniboxMode.capture;
+    final viewer = ref.watch(viewerProvider);
 
     // "Omnibox composes": in capture mode, try to read the free text as a
     // schedule intent ("field trip to the pond Friday"). When it parses AND
@@ -248,10 +257,14 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
         ? null
         : (draftGroups.where((g) => g.id == _draftGroupId).firstOrNull ??
             draftGroups.first);
-    final canDraft = composeIntent != null && draftGroup != null;
+    // Composing INTO the shared schedule is a write — gate it on the same
+    // capability the schedule's "+ Block" uses, so a teacher without schedule
+    // rights just sees the note fallback (never a block they can't actually add).
+    final canManageSchedule = viewer.canManageSchedule || viewer.canManageSpace;
+    final canDraft =
+        composeIntent != null && draftGroup != null && canManageSchedule;
 
     final parsedSlash = isSlash ? parseSlashQuery(query) : null;
-    final viewer = ref.watch(viewerProvider);
     final slashMatches = isSlash
         ? matchSlashCommands(parsedSlash?.name, viewer: viewer)
         : const <SlashCommand>[];
@@ -340,22 +353,80 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
     // then open the block editor at the parsed day/time. Nothing is saved until
     // the user confirms in the editor (the middle-UI promise: structure out,
     // you confirm). Mirrors saveAsCapture's post-pop dispatch discipline.
-    void draftBlock() {
+    // PRIMARY "Add it": the card already showed the parse, so tapping IS the
+    // confirmation — create a complete, named block straight onto the cohort's
+    // day, stay put, and offer Undo. No form in between (the un-intuitive
+    // landing the editor used to be).
+    void addDraftDirect() {
       final intent = composeIntent;
       final group = draftGroup;
       if (intent == null || group == null) return;
-      // In-flight guard: the card's InkWell, its "Draft it" button, AND the
-      // Return key can each call this in the same frame. The first clears the
-      // live query; any second call sees it empty and bails — no double push.
-      if (ref.read(omniboxQueryProvider).trim().isEmpty) return;
+      // Hard one-shot latch — the card body, the button, and Return can all
+      // fire in one gesture; without this, two blocks land on the shared
+      // schedule (only one gets an Undo).
+      if (_adding) return;
+      _adding = true;
+      // The long-lived messenger — this page pops below, so grab the root one.
+      final messenger = ScaffoldMessenger.maybeOf(dispatchCtx);
+      final actions = ref.read(scheduleActionsProvider);
+      final start = intent.start;
+      final end = start.add(const Duration(minutes: 60));
+      final now = DateTime.now();
+      final sameDay = start.year == now.year &&
+          start.month == now.month &&
+          start.day == now.day;
+      final whenLabel = sameDay
+          ? DateFormat.jm().format(start)
+          : DateFormat('EEE h:mm a').format(start);
+      ref.read(omniboxQueryProvider.notifier).clear();
+      close();
+      unawaited(() async {
+        try {
+          final id = await actions.create(
+            groupId: group.id,
+            startAt: start,
+            endAt: end,
+            title: intent.title,
+            kind: intent.kind,
+          );
+          messenger
+            ?..clearSnackBars()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Drafted “${intent.title}” into ${group.name} · $whenLabel',
+                ),
+                action: SnackBarAction(
+                  label: 'Undo',
+                  onPressed: () => unawaited(actions.delete_(id)),
+                ),
+                duration: const Duration(seconds: 5),
+              ),
+            );
+        } on Object catch (e) {
+          if (kDebugMode) debugPrint('[compose-add] $e');
+          messenger?.showSnackBar(
+            const SnackBar(content: Text('Could not add the block. Try again.')),
+          );
+        }
+      }());
+    }
+
+    // SECONDARY "Edit details first": for when the teacher wants to set the
+    // activity / lead / location before it lands — open the full editor
+    // pre-filled via the one-shot seed (consumed once in initState).
+    void editDraftDetails() {
+      final intent = composeIntent;
+      final group = draftGroup;
+      if (intent == null || group == null) return;
+      if (_adding) return;
+      _adding = true;
       final drafts = ref.read(pendingBlockDraftProvider.notifier);
       drafts.draft = BlockDraftSeed(kind: intent.kind, title: intent.title);
       ref.read(omniboxQueryProvider.notifier).clear();
       close();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!dispatchCtx.mounted) {
-          // Navigation aborted — don't leave the seed set to poison the next
-          // organic "new block" create.
           drafts.draft = null;
           return;
         }
@@ -387,10 +458,10 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
     // command, search opens the top-ranked result. Never a dead key.
     void onSubmit(String text) {
       if (isCapture) {
-        // Return runs the PRIMARY action: draft the block when the phrase
+        // Return runs the PRIMARY action: add the drafted block when the phrase
         // parsed as a schedule intent, otherwise save the note.
         if (canDraft) {
-          draftBlock();
+          addDraftDirect();
         } else {
           unawaited(saveAsCapture());
         }
@@ -462,13 +533,16 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               searchField,
-              if (composeIntent != null && draftGroup != null)
+              if (composeIntent != null &&
+                  draftGroup != null &&
+                  canManageSchedule)
                 _ComposeDraftCard(
                   intent: composeIntent,
                   groups: draftGroups,
                   selectedGroup: draftGroup,
                   onPickGroup: (id) => setState(() => _draftGroupId = id),
-                  onDraft: draftBlock,
+                  onAdd: addDraftDirect,
+                  onEditDetails: editDraftDetails,
                 ),
               if (isCapture)
                 _CaptureHeroCard(
@@ -1032,14 +1106,20 @@ class _ComposeDraftCard extends StatelessWidget {
     required this.groups,
     required this.selectedGroup,
     required this.onPickGroup,
-    required this.onDraft,
+    required this.onAdd,
+    required this.onEditDetails,
   });
 
   final ComposeIntent intent;
   final List<Group> groups;
   final Group selectedGroup;
   final ValueChanged<String> onPickGroup;
-  final VoidCallback onDraft;
+
+  /// Primary: add the block to the schedule now (with Undo).
+  final VoidCallback onAdd;
+
+  /// Secondary: open the full editor pre-filled to set activity / lead / etc.
+  final VoidCallback onEditDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -1074,7 +1154,7 @@ class _ComposeDraftCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: onDraft,
+          onTap: onAdd,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(15, 13, 15, 13),
             child: Column(
@@ -1124,26 +1204,28 @@ class _ComposeDraftCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        "Opens the editor — nothing's saved yet.",
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onPrimaryContainer.withValues(
-                            alpha: 0.82,
-                          ),
-                        ),
-                      ),
+                // Primary: add it straight to the day. Full-width so it reads
+                // as the obvious move and can't overflow with a long label.
+                FilledButton.icon(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add to schedule'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(46),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Secondary: for when you want to set activity / lead / location
+                // before it lands.
+                Align(
+                  child: TextButton(
+                    onPressed: onEditDetails,
+                    style: TextButton.styleFrom(
+                      foregroundColor: scheme.onPrimaryContainer,
+                      minimumSize: const Size.fromHeight(40),
                     ),
-                    const SizedBox(width: 10),
-                    FilledButton.icon(
-                      onPressed: onDraft,
-                      icon: const Icon(Icons.arrow_forward, size: 18),
-                      iconAlignment: IconAlignment.end,
-                      label: const Text('Draft it'),
-                    ),
-                  ],
+                    child: const Text('Edit details first'),
+                  ),
                 ),
               ],
             ),
