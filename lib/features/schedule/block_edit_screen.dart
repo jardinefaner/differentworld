@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/db/drift_provider.dart';
 import 'package:differentworld/features/curricula/photo_curriculum.dart';
+import 'package:differentworld/features/omnibox/compose_draft_seed.dart';
 import 'package:differentworld/features/schedule/activities_providers.dart';
 import 'package:differentworld/features/schedule/activity_edit_screen.dart';
 import 'package:differentworld/features/schedule/locations_providers.dart';
@@ -127,6 +128,28 @@ class _BlockEditScreenState extends ConsumerState<BlockEditScreen> {
         // Photo sessions trend ~30 min total. Keep the start the
         // user picked, bump the end out from the default 60 min.
         _endAt = _startAt.add(const Duration(minutes: 30));
+      }
+      // "Omnibox composes": a phrase like "field trip to the pond Friday"
+      // arrives here as a one-shot seed (kind + note) alongside the parsed
+      // start (which rode in via defaultStart). A curriculum CTA wins if both
+      // somehow set — they never do in practice.
+      final seed = ref.read(pendingBlockDraftProvider);
+      if (seed != null) {
+        if (_curriculumSlug == null) {
+          _kind = seed.kind;
+          if (seed.title.isNotEmpty) _notes.text = seed.title;
+        }
+        // Consume-once, ALWAYS (even the curriculum-coexist edge) so the seed
+        // can't poison a later plain create. Deferred through a microtask:
+        // nothing watches this provider today, but the defer keeps the clear
+        // out of the build phase in case a watcher is ever added (CLAUDE.md
+        // "modified provider while the widget tree was building").
+        unawaited(
+          Future.microtask(() {
+            if (!mounted) return;
+            ref.read(pendingBlockDraftProvider.notifier).draft = null;
+          }),
+        );
       }
     } else {
       _kind = e.kind;

@@ -8,6 +8,9 @@ import 'package:differentworld/core/db/app_database.dart';
 import 'package:differentworld/core/vertical/labels.dart';
 import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/captures/captures_providers.dart';
+import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/omnibox/compose_draft_seed.dart';
+import 'package:differentworld/features/omnibox/compose_intent.dart';
 import 'package:differentworld/features/omnibox/omnibox_catalog.dart';
 import 'package:differentworld/features/omnibox/omnibox_entries.dart';
 import 'package:differentworld/features/omnibox/omnibox_history.dart';
@@ -22,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemChannels;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 /// The omnibox search surface — the app's "go anywhere" page at
 /// `/search`.
@@ -72,6 +76,11 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
   /// Mic-button UI state — the "stop" affordance shows while a dictation
   /// session is active.
   bool _voiceActive = false;
+
+  /// Which cohort a composed draft schedules into. Null = the first cohort.
+  /// Sticky across queries so a director's pick persists. Only meaningful when
+  /// the space has more than one group (the draft card shows a picker then).
+  String? _draftGroupId;
 
   /// What the composer's text was BEFORE the user started dictating. We
   /// restore this prefix and append the transcript so a partial existing
@@ -222,6 +231,25 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
     final isSlash = mode == OmniboxMode.slash;
     final isCapture = mode == OmniboxMode.capture;
 
+    // "Omnibox composes": in capture mode, try to read the free text as a
+    // schedule intent ("field trip to the pond Friday"). When it parses AND
+    // there's a cohort to schedule into, we offer a DRAFT above the note —
+    // additive, never replacing the note fallback.
+    final composeIntent = isCapture && q.isNotEmpty
+        ? parseComposeIntent(query, now: DateTime.now())
+        : null;
+    final draftGroups = composeIntent == null
+        ? const <Group>[]
+        : (ref.watch(groupsProvider).value ?? const <Group>[]);
+    // The selected cohort (sticky), falling back to the first. When there's
+    // more than one, the draft card renders a picker so a director isn't
+    // silently bound to whichever cohort happens to sort first.
+    final draftGroup = draftGroups.isEmpty
+        ? null
+        : (draftGroups.where((g) => g.id == _draftGroupId).firstOrNull ??
+            draftGroups.first);
+    final canDraft = composeIntent != null && draftGroup != null;
+
     final parsedSlash = isSlash ? parseSlashQuery(query) : null;
     final viewer = ref.watch(viewerProvider);
     final slashMatches = isSlash
@@ -308,6 +336,43 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
       );
     }
 
+    // Turn the parsed intent into a DRAFT block: stash the kind+note seed,
+    // then open the block editor at the parsed day/time. Nothing is saved until
+    // the user confirms in the editor (the middle-UI promise: structure out,
+    // you confirm). Mirrors saveAsCapture's post-pop dispatch discipline.
+    void draftBlock() {
+      final intent = composeIntent;
+      final group = draftGroup;
+      if (intent == null || group == null) return;
+      // In-flight guard: the card's InkWell, its "Draft it" button, AND the
+      // Return key can each call this in the same frame. The first clears the
+      // live query; any second call sees it empty and bails — no double push.
+      if (ref.read(omniboxQueryProvider).trim().isEmpty) return;
+      final drafts = ref.read(pendingBlockDraftProvider.notifier);
+      drafts.draft = BlockDraftSeed(kind: intent.kind, title: intent.title);
+      ref.read(omniboxQueryProvider.notifier).clear();
+      close();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!dispatchCtx.mounted) {
+          // Navigation aborted — don't leave the seed set to poison the next
+          // organic "new block" create.
+          drafts.draft = null;
+          return;
+        }
+        unawaited(
+          dispatchCtx.push<void>(
+            '/schedule/block',
+            extra: (
+              groupId: group.id,
+              defaultStart: intent.start,
+              existing: null,
+              prefillCurriculumSlug: null,
+            ),
+          ),
+        );
+      });
+    }
+
     void runSlash(SlashCommand cmd) {
       ref.read(omniboxQueryProvider.notifier).clear();
       close();
@@ -322,7 +387,13 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
     // command, search opens the top-ranked result. Never a dead key.
     void onSubmit(String text) {
       if (isCapture) {
-        unawaited(saveAsCapture());
+        // Return runs the PRIMARY action: draft the block when the phrase
+        // parsed as a schedule intent, otherwise save the note.
+        if (canDraft) {
+          draftBlock();
+        } else {
+          unawaited(saveAsCapture());
+        }
         return;
       }
       if (isSlash) {
@@ -391,8 +462,22 @@ class _OmniboxSearchScreenState extends ConsumerState<OmniboxSearchScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               searchField,
+              if (composeIntent != null && draftGroup != null)
+                _ComposeDraftCard(
+                  intent: composeIntent,
+                  groups: draftGroups,
+                  selectedGroup: draftGroup,
+                  onPickGroup: (id) => setState(() => _draftGroupId = id),
+                  onDraft: draftBlock,
+                ),
               if (isCapture)
-                _CaptureHeroCard(text: query, onSave: saveAsCapture),
+                _CaptureHeroCard(
+                  text: query,
+                  onSave: saveAsCapture,
+                  // When a draft is on offer, the note is the fallback — demote
+                  // it so the draft reads as the primary action.
+                  muted: canDraft,
+                ),
               if (recentCaptures.isNotEmpty)
                 _RecentCapturesStrip(
                   captures: recentCaptures,
@@ -833,20 +918,32 @@ class _EntryTile extends StatelessWidget {
 }
 
 class _CaptureHeroCard extends StatelessWidget {
-  const _CaptureHeroCard({required this.text, required this.onSave});
+  const _CaptureHeroCard({
+    required this.text,
+    required this.onSave,
+    this.muted = false,
+  });
 
   final String text;
   final Future<void> Function() onSave;
+
+  /// When a compose draft is on offer above, the note is the fallback — render
+  /// it quieter (neutral surface, outlined button, no "press return" hint,
+  /// since Return now drafts the block).
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final trimmed = text.trim();
+    final bg = muted ? scheme.surfaceContainerHigh : scheme.primaryContainer;
+    final fg = muted ? scheme.onSurface : scheme.onPrimaryContainer;
+    final fgSoft = muted ? scheme.onSurfaceVariant : fg;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      padding: EdgeInsets.fromLTRB(12, muted ? 8 : 12, 12, 4),
       child: Material(
-        color: scheme.primaryContainer,
+        color: bg,
         borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -859,48 +956,192 @@ class _CaptureHeroCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.bolt_outlined,
-                      size: 18,
-                      color: scheme.onPrimaryContainer,
+                      muted ? Icons.sticky_note_2_outlined : Icons.bolt_outlined,
+                      size: muted ? 16 : 18,
+                      color: fgSoft,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'SAVE AS A CAPTURE',
+                      muted ? 'OR SAVE AS A NOTE' : 'SAVE AS A CAPTURE',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.onPrimaryContainer,
+                        color: fgSoft,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  trimmed.isEmpty ? 'Start typing a thought…' : trimmed,
-                  maxLines: 5,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: scheme.onPrimaryContainer,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 10),
+                SizedBox(height: muted ? 4 : 8),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        'Press return — or tap Save',
+                        trimmed.isEmpty ? 'Start typing a thought…' : trimmed,
+                        maxLines: muted ? 2 : 5,
+                        overflow: TextOverflow.ellipsis,
+                        style: (muted
+                                ? theme.textTheme.bodyMedium
+                                : theme.textTheme.bodyLarge)
+                            ?.copyWith(color: fg, height: 1.3),
+                      ),
+                    ),
+                    if (muted) ...[
+                      const SizedBox(width: 10),
+                      OutlinedButton(
+                        onPressed: () => unawaited(onSave()),
+                        child: const Text('Save note'),
+                      ),
+                    ],
+                  ],
+                ),
+                if (!muted) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Press return — or tap Save',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: fg.withValues(alpha: 0.78),
+                          ),
+                        ),
+                      ),
+                      FilledButton.icon(
+                        onPressed: () => unawaited(onSave()),
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('Save'),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "omnibox composes" draft card — shown above the note when a captured
+/// phrase parsed as a schedule intent. Tapping drafts the block in the editor
+/// (nothing saved until the user confirms). See [parseComposeIntent].
+class _ComposeDraftCard extends StatelessWidget {
+  const _ComposeDraftCard({
+    required this.intent,
+    required this.groups,
+    required this.selectedGroup,
+    required this.onPickGroup,
+    required this.onDraft,
+  });
+
+  final ComposeIntent intent;
+  final List<Group> groups;
+  final Group selectedGroup;
+  final ValueChanged<String> onPickGroup;
+  final VoidCallback onDraft;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final title = intent.title == intent.kindLabel
+        ? intent.kindLabel
+        : '${intent.kindLabel} — ${intent.title}';
+    final dayLabel = DateFormat('EEE, MMM d').format(intent.start);
+    final timeLabel = DateFormat.jm().format(intent.start);
+    // One cohort → a static chip. Multiple → a tappable picker so the draft
+    // never silently binds to whichever cohort sorts first.
+    final groupChip = groups.length <= 1
+        ? _DraftChip(icon: Icons.groups_outlined, label: selectedGroup.name)
+        : PopupMenuButton<String>(
+            onSelected: onPickGroup,
+            tooltip: 'Choose the cohort',
+            itemBuilder: (_) => [
+              for (final g in groups)
+                PopupMenuItem<String>(value: g.id, child: Text(g.name)),
+            ],
+            child: _DraftChip(
+              icon: Icons.groups_outlined,
+              label: selectedGroup.name,
+              trailingIcon: Icons.arrow_drop_down,
+            ),
+          );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 2),
+      child: Material(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onDraft,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(15, 13, 15, 13),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_outlined,
+                      size: 16,
+                      color: scheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'DRAFT A BLOCK',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.9,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: scheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w600,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    _DraftChip(emoji: intent.emoji, label: intent.kindLabel),
+                    _DraftChip(icon: Icons.event_outlined, label: dayLabel),
+                    _DraftChip(
+                      icon: Icons.schedule_outlined,
+                      label: timeLabel,
+                    ),
+                    groupChip,
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Opens the editor — nothing's saved yet.",
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onPrimaryContainer.withValues(
-                            alpha: 0.78,
+                            alpha: 0.82,
                           ),
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
                     FilledButton.icon(
-                      onPressed: () => unawaited(onSave()),
-                      icon: const Icon(Icons.check, size: 18),
-                      label: const Text('Save'),
+                      onPressed: onDraft,
+                      icon: const Icon(Icons.arrow_forward, size: 18),
+                      iconAlignment: IconAlignment.end,
+                      label: const Text('Draft it'),
                     ),
                   ],
                 ),
@@ -908,6 +1149,53 @@ class _CaptureHeroCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A small pill inside the draft card — an emoji OR a Material icon + label,
+/// with an optional trailing icon (e.g. a dropdown caret when it's a picker).
+class _DraftChip extends StatelessWidget {
+  const _DraftChip({
+    required this.label,
+    this.icon,
+    this.emoji,
+    this.trailingIcon,
+  });
+
+  final String label;
+  final IconData? icon;
+  final String? emoji;
+  final IconData? trailingIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: EdgeInsets.fromLTRB(9, 5, trailingIcon == null ? 11 : 6, 5),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (emoji != null)
+            Text(emoji!, style: const TextStyle(fontSize: 14))
+          else if (icon != null)
+            Icon(icon, size: 15, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: scheme.onSurface,
+            ),
+          ),
+          if (trailingIcon != null)
+            Icon(trailingIcon, size: 16, color: scheme.onSurfaceVariant),
+        ],
       ),
     );
   }
