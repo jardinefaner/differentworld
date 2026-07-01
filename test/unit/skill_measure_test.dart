@@ -3,9 +3,10 @@ import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/world/skill_measure.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The Skills data layer — the one genuinely-new piece of the RPG synthesis.
-/// Measurements parse, the latest + previous resolve by time (the delta the
-/// character sheet shows), and each skill formats its own unit.
+/// The Skills data layer — the ledger under the 60-skill catalog. Measurements
+/// parse, the latest + previous resolve by time (the delta the character sheet
+/// shows), and each skill formats its own unit. The catalog is now DERIVED from
+/// the canonical `verb_skills.dart` (60 skills), so ids read like 'wait.still'.
 Entry _entry({
   required String kind,
   required String details,
@@ -27,12 +28,12 @@ void main() {
     final m = SkillMeasure.fromEntry(
       _entry(
         kind: EntryKind.skillMeasure,
-        details: '{"skill":"stillness","value":47}',
+        details: '{"skill":"wait.still","value":47}',
         at: '2026-07-01T09:00:00Z',
       ),
     );
     expect(m, isNotNull);
-    expect(m!.skillId, 'stillness');
+    expect(m!.skillId, 'wait.still');
     expect(m.value, 47);
 
     expect(
@@ -56,43 +57,47 @@ void main() {
       final entries = [
         _entry(
           kind: EntryKind.skillMeasure,
-          details: '{"skill":"stillness","value":47}',
+          details: '{"skill":"wait.still","value":47}',
           at: '2026-07-15T09:00:00Z',
         ),
         _entry(
           kind: EntryKind.skillMeasure,
-          details: '{"skill":"stillness","value":12}',
+          details: '{"skill":"wait.still","value":12}',
           at: '2026-07-01T09:00:00Z',
         ),
         _entry(
           kind: EntryKind.skillMeasure,
-          details: '{"skill":"stillness","value":34}',
+          details: '{"skill":"wait.still","value":34}',
           at: '2026-07-08T09:00:00Z',
         ),
         _entry(
           kind: EntryKind.skillMeasure,
-          details: '{"skill":"words","value":3}',
+          details: '{"skill":"listen.count","value":3}',
           at: '2026-07-02T09:00:00Z',
         ),
       ];
       final p = latestSkillValues(entries);
-      expect(p['stillness']!.latest, 47); // newest
-      expect(p['stillness']!.previous, 34); // the one before → delta +13
-      expect(p['words']!.latest, 3);
-      expect(p['words']!.previous, isNull); // only one measure
+      expect(p['wait.still']!.latest, 47); // newest
+      expect(p['wait.still']!.previous, 34); // the one before → delta +13
+      expect(p['listen.count']!.latest, 3);
+      expect(p['listen.count']!.previous, isNull); // only one measure
     },
   );
 
-  test('each skill formats its own unit', () {
-    expect(measurableSkillById('stillness')!.format(47), '47s');
-    expect(measurableSkillById('depth')!.format(4), '4/5');
-    expect(measurableSkillById('words')!.format(8), '8 words');
+  test('each skill formats its own unit (from its measure)', () {
+    expect(measurableSkillById('wait.still')!.format(47), '47s'); // seconds
+    expect(measurableSkillById('carry.steady')!.format(4), '4/5'); // rating
+    expect(measurableSkillById('listen.count')!.format(8), '8'); // count → bare
+    expect(measurableSkillById('carry.deliver')!.format(3), '3/day'); // freq
   });
 
-  test('the five measurable skills exist', () {
+  test('the catalog is the canonical 60, derived from verb_skills', () {
+    expect(kMeasurableSkills.length, 60);
     expect(
       kMeasurableSkills.map((s) => s.id),
-      containsAll(<String>['stillness', 'story', 'words', 'details', 'depth']),
+      containsAll(<String>['wait.still', 'carry.lift', 'shine.stand']),
     );
+    // The emoji rides in from the verb.
+    expect(measurableSkillById('carry.lift')!.emoji, '📦');
   });
 }

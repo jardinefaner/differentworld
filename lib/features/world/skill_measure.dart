@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:differentworld/core/db/app_database.dart';
+import 'package:differentworld/features/action_words/verb_skills.dart';
+import 'package:differentworld/features/action_words/verbs.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/shared/widgets/dismiss_guard.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
@@ -33,56 +35,46 @@ class MeasurableSkill {
 
   String format(num v) {
     final n = v % 1 == 0 ? v.toInt().toString() : v.toString();
-    return unit == 's' ? '${n}s' : (unit == '/5' ? '$n/5' : '$n $unit');
+    return switch (unit) {
+      's' => '${n}s',
+      '/5' => '$n/5',
+      '/day' => '$n/day',
+      '' => n,
+      _ => '$n $unit',
+    };
   }
 }
 
-/// The five things worth measuring (the RPG SKILLS list).
-const kMeasurableSkills = <MeasurableSkill>[
-  MeasurableSkill(
-    id: 'stillness',
-    emoji: '🧘',
-    label: 'Stillness',
-    unit: 's',
-    hint: "How long can they hold still? Time it honestly — don't round up.",
-  ),
-  MeasurableSkill(
-    id: 'story',
-    emoji: '📜',
-    label: 'Story length',
-    unit: 'arm-spans',
-    hint: 'The continuous story river — let the kid measure it in arm-spans.',
-  ),
-  MeasurableSkill(
-    id: 'words',
-    emoji: '✨',
-    label: 'Beautiful words',
-    unit: 'words',
-    hint: "Fancy words used naturally in one sentence. Eavesdrop — don't quiz.",
-  ),
-  MeasurableSkill(
-    id: 'details',
-    emoji: '👀',
-    label: 'Details noticed',
-    unit: 'details',
-    hint: 'Show a picture 30s, cover it — how many details can they name?',
-  ),
-  MeasurableSkill(
-    id: 'depth',
-    emoji: '💭',
-    label: 'Answer depth',
-    unit: '/5',
-    hint:
-        'How deep is a Wall answer? 1 = "a rock", 5 = "the way mom loves me".',
-  ),
+/// The display suffix for a [VerbSkill]'s measure — how the number reads on the
+/// character sheet ('90s', '4/5', '3/day', '12').
+String skillUnitFor(SkillMeasureKind measure) => switch (measure) {
+  SkillMeasureKind.seconds => 's',
+  SkillMeasureKind.rating => '/5',
+  SkillMeasureKind.frequency => '/day',
+  SkillMeasureKind.count => '',
+};
+
+/// The measurable skills — DERIVED from the canonical 60-skill catalog
+/// (`kVerbSkills`), so the character sheet + the log sheet render the same
+/// skills the whole app knows about. `MeasurableSkill` stays the display shape
+/// (emoji from the verb, label = the one-word name, unit from the measure, hint
+/// = the "how"); the source of truth is `verb_skills.dart`.
+final List<MeasurableSkill> kMeasurableSkills = [
+  for (final s in kVerbSkills)
+    MeasurableSkill(
+      id: s.id,
+      emoji: verbById(s.verbId)?.emoji ?? '•',
+      label: s.name,
+      unit: skillUnitFor(s.measure),
+      hint: s.how,
+    ),
 ];
 
-MeasurableSkill? measurableSkillById(String id) {
-  for (final s in kMeasurableSkills) {
-    if (s.id == id) return s;
-  }
-  return null;
-}
+final Map<String, MeasurableSkill> _measurableById = {
+  for (final s in kMeasurableSkills) s.id: s,
+};
+
+MeasurableSkill? measurableSkillById(String id) => _measurableById[id];
 
 /// One recorded measurement.
 @immutable
@@ -174,7 +166,8 @@ class _SkillMeasureSheet extends ConsumerStatefulWidget {
 }
 
 class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
-  String _skillId = kMeasurableSkills.first.id;
+  String _verbId = kVerbs.first.id;
+  String _skillId = kVerbSkills.first.id;
   final _value = TextEditingController();
   bool _saving = false;
   String? _error;
@@ -212,7 +205,7 @@ class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final skill = measurableSkillById(_skillId) ?? kMeasurableSkills.first;
+    final vs = verbSkillById(_skillId) ?? kVerbSkills.first;
     return DismissGuard(
       isDirty: () => _isDirty && !_saving,
       discardMessage: 'Discard this measurement?',
@@ -232,23 +225,57 @@ class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
                 'Measure ${widget.firstName}',
                 style: theme.textTheme.titleMedium,
               ),
+              const SizedBox(height: 4),
+              Text(
+                'The verb, then the skill under it.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
               const SizedBox(height: 12),
+              // The verb (what you do) …
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final s in kMeasurableSkills)
+                  for (final v in kVerbs)
                     ChoiceChip(
-                      label: Text('${s.emoji} ${s.label}'),
+                      label: Text('${v.emoji} ${v.label}'),
+                      selected: v.id == _verbId,
+                      showCheckmark: false,
+                      onSelected: (_) => setState(() {
+                        _verbId = v.id;
+                        _skillId = skillsForVerb(v.id).first.id;
+                      }),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // … then the skill under it (how well).
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final s in skillsForVerb(_verbId))
+                    ChoiceChip(
+                      label: Text(s.name),
                       selected: s.id == _skillId,
+                      showCheckmark: false,
                       onSelected: (_) => setState(() => _skillId = s.id),
                     ),
                 ],
               ),
               const SizedBox(height: 14),
               Text(
-                skill.hint,
+                vs.how,
                 style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'week 1: ${vs.week1}  →  week 10: ${vs.week10}',
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -266,7 +293,12 @@ class _SkillMeasureSheetState extends ConsumerState<_SkillMeasureSheet> {
                 decoration: InputDecoration(
                   labelText: 'Value',
                   errorText: _error,
-                  suffixText: skill.unit == '/5' ? 'out of 5' : skill.unit,
+                  suffixText: switch (vs.measure) {
+                    SkillMeasureKind.rating => 'out of 5',
+                    SkillMeasureKind.seconds => 'seconds',
+                    SkillMeasureKind.frequency => 'per day',
+                    SkillMeasureKind.count => '',
+                  },
                   border: const OutlineInputBorder(),
                 ),
               ),

@@ -76,10 +76,10 @@ void main() {
     });
 
     test('unit labels read right per measure', () {
-      expect(SkillMeasure.seconds.unit, 'sec');
-      expect(SkillMeasure.frequency.unit, '/day');
-      expect(SkillMeasure.rating.unit, '/ 5');
-      expect(SkillMeasure.count.unit, '');
+      expect(SkillMeasureKind.seconds.unit, 'sec');
+      expect(SkillMeasureKind.frequency.unit, '/day');
+      expect(SkillMeasureKind.rating.unit, '/ 5');
+      expect(SkillMeasureKind.count.unit, '');
     });
   });
 }
