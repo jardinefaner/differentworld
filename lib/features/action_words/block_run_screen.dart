@@ -14,6 +14,7 @@ import 'package:differentworld/features/action_words/world_schedule.dart';
 import 'package:differentworld/features/curricula/session_scripts.dart';
 import 'package:differentworld/features/curricula/today_photo_session.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
+import 'package:differentworld/features/schedule/nudge_sheet.dart';
 import 'package:differentworld/features/schedule/schedule_providers.dart';
 import 'package:differentworld/shared/format/date_keys.dart';
 import 'package:differentworld/shared/widgets/async_loading.dart';
@@ -295,7 +296,7 @@ class _BlockDayDeck extends ConsumerWidget {
           );
         }
 
-        return DeckOverview(
+        final deck = DeckOverview(
           beats: beats,
           accent: accent,
           title: 'Run the day',
@@ -353,6 +354,14 @@ class _BlockDayDeck extends ConsumerWidget {
               ),
             );
           },
+        );
+        // The "nudge the day" bar rides above the deck — say what's happening,
+        // the app recomposes the rest, you confirm the diff (docs/VISION.md).
+        return Column(
+          children: [
+            NudgeBar(blocks: blocks),
+            Expanded(child: deck),
+          ],
         );
       },
     );
