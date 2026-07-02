@@ -497,6 +497,11 @@ class PhotoUploadQueue {
         case 'attachment':
           // Attachments use the bucket path as the `url` column.
           await db.attachmentsDao.updateUrl(e.entityId, e.bucketPath);
+        case 'custom_picture':
+          // Staff-authored picture (content_items, kind='picture'). entityId ==
+          // the content_items row id; swap the payload's `image` from the
+          // `pending:` token to the real path.
+          await db.contentBankDao.updatePicturePath(e.entityId, e.bucketPath);
         default:
           // Unknown entity kind — leave the entity row alone; the
           // bytes uploaded but the link is orphaned. Worth a
