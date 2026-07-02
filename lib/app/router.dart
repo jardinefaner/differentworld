@@ -75,6 +75,7 @@ import 'package:differentworld/features/games/games/charades_game.dart';
 import 'package:differentworld/features/games/games/cues_game.dart';
 import 'package:differentworld/features/games/games/fact_or_fib_game.dart';
 import 'package:differentworld/features/games/games/grid_reveal_game.dart';
+import 'package:differentworld/features/games/games/grid_reveal_screen.dart';
 import 'package:differentworld/features/games/games/letter_words_game.dart';
 import 'package:differentworld/features/games/games/math_quiz_game.dart';
 import 'package:differentworld/features/games/games/memory_match_screen.dart';
@@ -1982,7 +1983,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/activity/grid-reveal',
-            builder: (_, _) => const GameRunner(def: GridRevealGame()),
+            builder: (_, _) => const GridRevealScreen(),
           ),
           // Staff-authored picture library for Reveal the Picture (Wave 1b).
           GoRoute(

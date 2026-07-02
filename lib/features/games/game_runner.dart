@@ -17,7 +17,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// The live counterpart (a `LiveGameController` over `LiveSession` for the
 /// `/live/...` routes) is Wave 0c — it slots into the same scaffold.
 class GameRunner<S> extends ConsumerStatefulWidget {
-  const GameRunner({required this.def, this.seed, super.key});
+  const GameRunner({
+    required this.def,
+    this.seed,
+    this.initialValues,
+    super.key,
+  });
 
   final GameDefinition<S> def;
 
@@ -26,6 +31,13 @@ class GameRunner<S> extends ConsumerStatefulWidget {
   /// via a provider in a wrapper and pass the seed here instead of going
   /// through `def.initialState` (which only sees the content bank).
   final Map<String, dynamic>? seed;
+
+  /// Optional overrides for the game's setting values, merged over the
+  /// defaults. Lets a wrapper thread a preference the game reads at seed time
+  /// but that isn't a visible setting (e.g. Reveal-the-Picture's "mix in the
+  /// built-in emoji" toggle, read from SharedPreferences). Reseed ("play
+  /// again") keeps honoring these — they live in `_values`.
+  final Map<String, Object?>? initialValues;
 
   @override
   ConsumerState<GameRunner<S>> createState() => _GameRunnerState<S>();
@@ -47,7 +59,10 @@ class _GameRunnerState<S> extends ConsumerState<GameRunner<S>> {
     // repeat memory (a new round, not the same questions).
     final snapshot = ref.read(bankedContentProvider).value ?? curatedSeeds;
     _engine = ContentEngine(snapshot);
-    _values = defaultSettingValues(widget.def.settings);
+    _values = {
+      ...defaultSettingValues(widget.def.settings),
+      ...?widget.initialValues,
+    };
     _controller = LocalGameController(
       initial: widget.seed ?? widget.def.initialStateFor(_engine, _values),
       reduce: widget.def.reduce,

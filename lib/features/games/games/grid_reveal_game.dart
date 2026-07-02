@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:differentworld/features/activity_runtime/content_bank.dart';
 import 'package:differentworld/features/games/game.dart';
 import 'package:differentworld/features/games/game_settings.dart';
+import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
 import 'package:flutter/material.dart';
 
 /// Reveal the Picture (docs/GAMES.md) — a hidden picture behind a lettered ×
@@ -24,6 +25,7 @@ class GridRevealState {
     required this.rows,
     required this.emoji,
     required this.answer,
+    required this.photo,
     required this.revealed,
     required this.done,
   });
@@ -33,6 +35,7 @@ class GridRevealState {
         rows: (m['rows'] as num?)?.toInt() ?? 4,
         emoji: m['pic'] as String? ?? '',
         answer: m['lbl'] as String? ?? '',
+        photo: m['photo'] == true,
         revealed: [
           for (final v in (m['rev'] as List? ?? const <dynamic>[])) v == true,
         ],
@@ -41,8 +44,15 @@ class GridRevealState {
 
   final int cols;
   final int rows;
+
+  /// The picture: an emoji glyph, OR (when [photo]) a `person-photos` bucket
+  /// path to a staff-uploaded picture.
   final String emoji;
   final String answer;
+
+  /// True when [emoji] is a Storage path to a custom photo (rendered as a
+  /// signed-URL image), false when it's an emoji glyph.
+  final bool photo;
   final List<bool> revealed; // length cols*rows, row-major
   final bool done;
 
@@ -112,25 +122,55 @@ class GridRevealGame extends GameDefinition<GridRevealState> {
 
   @override
   Map<String, dynamic> initialState(ContentSource content) =>
-      _build(_cols, _rows);
+      _build(_cols, _rows, content, mixEmoji: true);
 
   @override
   Map<String, dynamic> initialStateFor(
     ContentSource content,
     Map<String, Object?> values,
   ) =>
-      _build(values.intSetting('cols', _cols), values.intSetting('rows', _rows));
+      _build(
+        values.intSetting('cols', _cols),
+        values.intSetting('rows', _rows),
+        content,
+        // Threaded from the library "Mix with the built-in emoji" toggle via
+        // the runner's initialValues (see GridRevealScreen).
+        mixEmoji: values['mixEmoji'] as bool? ?? true,
+      );
 
-  // The bundled set is a code catalog, not the content bank — pick a random
-  // picture for the round. "Play again" re-runs this (a fresh picture).
-  static Map<String, dynamic> _build(int cols, int rows) {
-    final pick = _pictures[Random().nextInt(_pictures.length)];
+  /// Pick a picture for the round from a pool of the built-in emoji plus the
+  /// space's own uploaded photos (kind `picture`, from the content bank). When
+  /// [mixEmoji] is false and the space HAS custom photos, only those play;
+  /// otherwise the emoji are always included so the game never runs dry. "Play
+  /// again" re-runs this (a fresh pick).
+  static Map<String, dynamic> _build(
+    int cols,
+    int rows,
+    ContentSource content, {
+    required bool mixEmoji,
+  }) {
+    // Custom photos: staff-uploaded, with a real (non-pending) Storage path.
+    final customs = content.take(ContentKind.picture, 64).where((c) {
+      final img = c.payload['image'] as String?;
+      return img != null && img.isNotEmpty && !img.startsWith('pending:');
+    }).toList();
+
+    // Pool entries: (picString, label, isPhoto).
+    final pool = <(String, String, bool)>[
+      if (mixEmoji || customs.isEmpty)
+        for (final e in _pictures) (e.$1, e.$2, false),
+      for (final c in customs)
+        (c.payload['image']! as String, (c.payload['label'] as String?) ?? '',
+            true),
+    ];
+    final pick = pool[Random().nextInt(pool.length)];
     final n = cols * rows;
     return <String, dynamic>{
       'cols': cols,
       'rows': rows,
       'pic': pick.$1,
       'lbl': pick.$2,
+      'photo': pick.$3,
       'rev': List<bool>.filled(n, false),
       'd': false,
       'n': n,
@@ -232,14 +272,25 @@ class _GridRevealStage extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     // The picture, filling the grid box (cover so each cell
-                    // covers a real portion — no empty margins).
-                    ColoredBox(
-                      color: Colors.white,
-                      child: FittedBox(
-                        fit: BoxFit.cover,
-                        child: Text(state.emoji, style: const TextStyle(fontSize: 240)),
+                    // covers a real portion — no empty margins). A staff photo
+                    // renders via a signed URL; an emoji renders as a big glyph.
+                    if (state.photo)
+                      PersonPhotoNetwork(
+                        urlOrPath: state.emoji,
+                        placeholderBuilder: (_) =>
+                            const ColoredBox(color: Colors.white),
+                      )
+                    else
+                      ColoredBox(
+                        color: Colors.white,
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: Text(
+                            state.emoji,
+                            style: const TextStyle(fontSize: 240),
+                          ),
+                        ),
                       ),
-                    ),
                     // The cover grid.
                     Column(
                       children: [
