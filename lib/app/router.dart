@@ -67,6 +67,7 @@ import 'package:differentworld/features/family/family_messages_screen.dart';
 import 'package:differentworld/features/family/family_share_screen.dart';
 import 'package:differentworld/features/family/family_subject_detail_screen.dart';
 import 'package:differentworld/features/family/family_today_screen.dart';
+import 'package:differentworld/features/game_content/picture_library_screen.dart';
 import 'package:differentworld/features/games/game_registry.dart';
 import 'package:differentworld/features/games/game_runner.dart';
 import 'package:differentworld/features/games/games/as_if_game.dart';
@@ -1982,6 +1983,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/activity/grid-reveal',
             builder: (_, _) => const GameRunner(def: GridRevealGame()),
+          ),
+          // Staff-authored picture library for Reveal the Picture (Wave 1b).
+          GoRoute(
+            path: '/games/pictures',
+            builder: (_, _) => const PictureLibraryScreen(),
           ),
           // Mindful Minute — a calm breathing break (the regulation gap).
           GoRoute(

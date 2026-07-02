@@ -137,6 +137,22 @@ final omniboxCatalogProvider = Provider<List<OmniboxEntry>>((ref) {
         onSelect: (ctx, _) => ctx.push('/routines'),
       ),
     OmniboxEntry(
+      id: 'page.game-pictures',
+      label: 'Game pictures',
+      category: OmniboxCategory.page,
+      icon: Icons.image_outlined,
+      keywords: const [
+        'pictures',
+        'photos',
+        'reveal the picture',
+        'grid game',
+        'upload pictures',
+        'custom pictures',
+        'game content',
+      ],
+      onSelect: (ctx, _) => ctx.push('/games/pictures'),
+    ),
+    OmniboxEntry(
       id: 'page.today',
       label: 'Today',
       category: OmniboxCategory.page,

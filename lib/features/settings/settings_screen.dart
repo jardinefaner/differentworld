@@ -234,6 +234,17 @@ class SettingsScreen extends ConsumerWidget {
                 const _SettingsDivider(),
               ],
               ListTile(
+                leading: const Icon(Icons.image_outlined),
+                title: const Text('Game pictures'),
+                subtitle: const Text(
+                  'Your own photos for Reveal the Picture — kids guess as '
+                  'the grid lifts',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/games/pictures'),
+              ),
+              const _SettingsDivider(),
+              ListTile(
                 leading: const Icon(Icons.grid_view_rounded),
                 title: const Text('Poster'),
                 subtitle: const Text(

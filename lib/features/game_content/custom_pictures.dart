@@ -6,6 +6,7 @@ import 'package:differentworld/features/photos/photo_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 /// A staff-authored picture for the "Reveal the Picture" grid game. Stored as a
@@ -66,6 +67,29 @@ Map<String, Object?>? _decode(String raw) {
     return d is Map ? Map<String, Object?>.from(d) : null;
   } on FormatException {
     return null;
+  }
+}
+
+/// Whether "Reveal the Picture" mixes the 28 built-in emoji in with the space's
+/// own pictures. ON by default (the game still has plenty to play before any
+/// custom pictures are added); OFF = only the space's pictures play. Per-device
+/// (SharedPreferences) for v1 — the mix is a play preference, not shared state.
+final gridMixEmojiProvider =
+    AsyncNotifierProvider<GridMixEmojiNotifier, bool>(GridMixEmojiNotifier.new);
+
+class GridMixEmojiNotifier extends AsyncNotifier<bool> {
+  static const _kKey = 'games.grid_reveal.mix_emoji';
+
+  @override
+  Future<bool> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kKey) ?? true;
+  }
+
+  Future<void> set({required bool value}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kKey, value);
+    state = AsyncData(value);
   }
 }
 
