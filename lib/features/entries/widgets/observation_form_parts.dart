@@ -79,7 +79,14 @@ class ObservationSelectedSubjectChip extends ConsumerWidget {
           children: [
             PersonAvatar(name: name, photoUrl: s.photoUrl),
             const SizedBox(width: 8),
-            Text(name, style: theme.textTheme.titleMedium),
+            Expanded(
+              child: Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
           ],
         );
       },

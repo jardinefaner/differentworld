@@ -233,10 +233,14 @@ class _RoleCard extends StatelessWidget {
         leading: Text(role.emoji, style: const TextStyle(fontSize: 26)),
         title: Row(
           children: [
-            Text(
-              role.name,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                role.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             if (isMine) ...[
