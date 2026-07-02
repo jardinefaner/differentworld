@@ -10,6 +10,7 @@ import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
 import 'package:differentworld/shared/widgets/glass_panel.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -30,24 +31,36 @@ class _PictureLibraryScreenState extends ConsumerState<PictureLibraryScreen> {
 
   Future<void> _add() async {
     if (_adding) return;
-    // 1. Camera or gallery.
-    final source = await _pickSource();
-    if (source == null || !mounted) return;
-    final picked = await ref.read(photoServiceProvider).pickPhoto(source);
-    if (picked == null || !mounted) return;
-    // 2. Name it (the game uses this as the answer to guess).
-    final label = await _promptLabel();
-    if (label == null || label.isEmpty || !mounted) return;
-    // 3. Upload + create (offline → queued).
-    setState(() => _adding = true);
+    // Capture the messenger BEFORE any await so feedback survives context churn.
     final messenger = ScaffoldMessenger.maybeOf(context);
     try {
+      // 1. Camera or gallery.
+      final source = await _pickSource();
+      if (source == null || !mounted) return;
+      // 2. Pick the image. image_picker can THROW (permission / camera
+      // PlatformException) — that used to escape unhandled and the whole flow
+      // died silently ("nothing after I pick"). Now it surfaces.
+      final picked = await ref.read(photoServiceProvider).pickPhoto(source);
+      if (kDebugMode) {
+        debugPrint('[pics] source=$source picked=${picked?.path} mounted=$mounted');
+      }
+      if (picked == null) {
+        messenger?.showSnackBar(
+          const SnackBar(content: Text('No photo selected.')),
+        );
+        return;
+      }
+      if (!mounted) return;
+      // 3. Upload + create (offline → queued). Add now; name it on the tile
+      // (matches the mock — the tile shows "Add a name…").
+      setState(() => _adding = true);
       await ref
           .read(customPictureActionsProvider)
-          .add(picked: picked, label: label);
-    } on Object catch (_) {
+          .add(picked: picked, label: '');
+    } on Object catch (e, st) {
+      if (kDebugMode) debugPrint('[pics] add failed: $e\n$st');
       messenger?.showSnackBar(
-        const SnackBar(content: Text('Could not add the picture. Try again.')),
+        SnackBar(content: Text('Could not add the picture: $e')),
       );
     } finally {
       if (mounted) setState(() => _adding = false);
