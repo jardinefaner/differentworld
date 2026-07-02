@@ -462,11 +462,14 @@ class _PickupStatusLine extends ConsumerWidget {
         children: [
           Icon(icon, size: 18, color: tint),
           const SizedBox(width: 8),
-          Text(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: tint,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              text,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: tint,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

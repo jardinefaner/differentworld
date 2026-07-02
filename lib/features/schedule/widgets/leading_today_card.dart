@@ -30,12 +30,18 @@ class _CoveringBadge extends ConsumerWidget {
         children: [
           Icon(Icons.swap_horiz, size: 12, color: color),
           const SizedBox(width: 2),
-          Text(
-            name == null ? 'Covering' : 'Covering for $name',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
+          // Flexible + ellipsis: a long covering-teacher displayName would
+          // otherwise overflow this badge (short test names hid it).
+          Flexible(
+            child: Text(
+              name == null ? 'Covering' : 'Covering for $name',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ],
