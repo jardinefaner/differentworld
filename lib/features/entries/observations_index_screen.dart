@@ -7,7 +7,7 @@ import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/groups/groups_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
-import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/features/photos/widgets/attachment_photo_thumb.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -19,7 +19,6 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
-import 'package:differentworld/shared/widgets/hover_tap.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
 import 'package:flutter/material.dart';
@@ -337,6 +336,50 @@ class _DayHeader extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(_DayHeader old) => old.label != label;
 }
 
+/// Resolved display fields shared by the list row and the grid card.
+typedef _ObservationCellData = ({
+  List<String> photos,
+  Subject? subject,
+  String subjectName,
+  String metaLabel,
+});
+
+/// Watches the providers both observation cells need and resolves their
+/// display fields — attachments, subject identity, classroom + time meta
+/// line. Must be called from `build` so the `ref.watch` subscriptions
+/// stay live.
+_ObservationCellData _resolveObservationCell(WidgetRef ref, Entry entry) {
+  final attachmentsAsync = ref.watch(
+    attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
+  );
+  final photos = attachmentsAsync.value?.urls ?? const <String>[];
+  final when = DateTime.tryParse(entry.recordedAt)?.toLocal();
+  final whenLabel = relativeTimeAgo(when);
+
+  final subjectAsync = entry.subjectId == null
+      ? const AsyncValue<Subject?>.data(null)
+      : ref.watch(subjectByIdProvider(entry.subjectId!));
+  final subject = subjectAsync.value;
+  final subjectName = subject == null
+      ? 'Unknown student'
+      : '${subject.firstName} ${subject.lastName}';
+
+  final groupsAsync = ref.watch(groupsProvider);
+  final groupName = entry.groupId == null
+      ? null
+      : groupsAsync.value
+            ?.where((g) => g.id == entry.groupId)
+            .map((g) => g.name)
+            .firstOrNull;
+
+  return (
+    photos: photos,
+    subject: subject,
+    subjectName: subjectName,
+    metaLabel: groupName == null ? whenLabel : '$groupName · $whenLabel',
+  );
+}
+
 /// Index row — avatar (child) + name + classroom + body + time + photo.
 /// Tap → open the observation form sheet pre-filled to this entry.
 class _ObservationListItem extends ConsumerWidget {
@@ -347,28 +390,8 @@ class _ObservationListItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final attachmentsAsync = ref.watch(
-      attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
-    );
-    final photos = attachmentsAsync.value?.urls ?? const <String>[];
-    final when = DateTime.tryParse(entry.recordedAt)?.toLocal();
-    final whenLabel = relativeTimeAgo(when);
-
-    final subjectAsync = entry.subjectId == null
-        ? const AsyncValue<Subject?>.data(null)
-        : ref.watch(subjectByIdProvider(entry.subjectId!));
-    final subject = subjectAsync.value;
-    final subjectName = subject == null
-        ? 'Unknown student'
-        : '${subject.firstName} ${subject.lastName}';
-
-    final groupsAsync = ref.watch(groupsProvider);
-    final groupName = entry.groupId == null
-        ? null
-        : groupsAsync.value
-              ?.where((g) => g.id == entry.groupId)
-              .map((g) => g.name)
-              .firstOrNull;
+    final (:photos, :subject, :subjectName, :metaLabel) =
+        _resolveObservationCell(ref, entry);
 
     return ListTile(
       leading: PersonAvatar(
@@ -396,7 +419,7 @@ class _ObservationListItem extends ConsumerWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            groupName == null ? whenLabel : '$groupName · $whenLabel',
+            metaLabel,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -405,8 +428,9 @@ class _ObservationListItem extends ConsumerWidget {
       ),
       trailing: photos.isEmpty
           ? null
-          : _IndexPhotoThumb(
+          : AttachmentPhotoThumb(
               photos: photos,
+              size: 56,
               onTap: () => PhotoViewer.open(context, urls: photos),
             ),
       isThreeLine: true,
@@ -433,29 +457,8 @@ class _ObservationGridCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-
-    final attachmentsAsync = ref.watch(
-      attachmentsForEntityProvider((kind: 'entry', id: entry.id)),
-    );
-    final photos = attachmentsAsync.value?.urls ?? const <String>[];
-    final when = DateTime.tryParse(entry.recordedAt)?.toLocal();
-    final whenLabel = relativeTimeAgo(when);
-
-    final subjectAsync = entry.subjectId == null
-        ? const AsyncValue<Subject?>.data(null)
-        : ref.watch(subjectByIdProvider(entry.subjectId!));
-    final subject = subjectAsync.value;
-    final subjectName = subject == null
-        ? 'Unknown student'
-        : '${subject.firstName} ${subject.lastName}';
-
-    final groupsAsync = ref.watch(groupsProvider);
-    final groupName = entry.groupId == null
-        ? null
-        : groupsAsync.value
-              ?.where((g) => g.id == entry.groupId)
-              .map((g) => g.name)
-              .firstOrNull;
+    final (:photos, :subject, :subjectName, :metaLabel) =
+        _resolveObservationCell(ref, entry);
 
     return Material(
       color: scheme.surfaceContainerHighest,
@@ -520,7 +523,7 @@ class _ObservationGridCard extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                groupName == null ? whenLabel : '$groupName · $whenLabel',
+                metaLabel,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -529,65 +532,6 @@ class _ObservationGridCard extends ConsumerWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Small 44dp thumb + "+N" pill on the trailing edge — same shape as
-/// the per-classroom feed. Pulled into the index screen because that
-/// row's `_PhotoThumb` is private.
-class _IndexPhotoThumb extends StatelessWidget {
-  const _IndexPhotoThumb({required this.photos, required this.onTap});
-
-  final List<String> photos;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final extras = photos.length - 1;
-    return HoverTap(
-      onTap: onTap,
-      child: SizedBox(
-        width: 56,
-        height: 56,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: PersonPhotoNetwork(
-                  urlOrPath: photos.first,
-                  errorBuilder: (_) => const Icon(Icons.broken_image_outlined),
-                ),
-              ),
-            ),
-            if (extras > 0)
-              Positioned(
-                bottom: -4,
-                right: -4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '+$extras',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-          ],
         ),
       ),
     );

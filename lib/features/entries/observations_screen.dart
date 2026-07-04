@@ -5,7 +5,7 @@ import 'package:differentworld/core/viewer/viewer.dart';
 import 'package:differentworld/features/entities/linkified_text.dart';
 import 'package:differentworld/features/entries/entries_providers.dart';
 import 'package:differentworld/features/photos/attachments_providers.dart';
-import 'package:differentworld/features/photos/widgets/person_photo_network.dart';
+import 'package:differentworld/features/photos/widgets/attachment_photo_thumb.dart';
 import 'package:differentworld/features/photos/widgets/photo_viewer.dart';
 import 'package:differentworld/features/settings/bento_everywhere_setting.dart';
 import 'package:differentworld/features/subjects/subjects_providers.dart';
@@ -15,7 +15,6 @@ import 'package:differentworld/shared/widgets/content_header.dart';
 import 'package:differentworld/shared/widgets/edge_scaffold.dart';
 import 'package:differentworld/shared/widgets/empty_state.dart';
 import 'package:differentworld/shared/widgets/error_state.dart';
-import 'package:differentworld/shared/widgets/hover_tap.dart';
 import 'package:differentworld/shared/widgets/no_access.dart';
 import 'package:differentworld/shared/widgets/person_avatar.dart';
 import 'package:differentworld/shared/widgets/primary_action_button.dart';
@@ -268,7 +267,7 @@ class _ObservationRow extends ConsumerWidget {
         ),
         trailing: photos.isEmpty
             ? null
-            : _PhotoThumb(
+            : AttachmentPhotoThumb(
                 photos: photos,
                 onTap: () => PhotoViewer.open(context, urls: photos),
               ),
@@ -286,65 +285,6 @@ class _ObservationRow extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: card,
-    );
-  }
-}
-
-/// Trailing photo thumbnail. Renders the first attached photo; if the
-/// entry has more than one photo, a small "+N" pill overlays the
-/// bottom-right so the viewer knows there's more to see.
-class _PhotoThumb extends StatelessWidget {
-  const _PhotoThumb({required this.photos, required this.onTap});
-
-  final List<String> photos;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final extras = photos.length - 1;
-    return HoverTap(
-      onTap: onTap,
-      child: SizedBox(
-        width: 44,
-        height: 44,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: PersonPhotoNetwork(
-                  urlOrPath: photos.first,
-                  errorBuilder: (_) => const Icon(Icons.broken_image_outlined),
-                ),
-              ),
-            ),
-            if (extras > 0)
-              Positioned(
-                bottom: -4,
-                right: -4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '+$extras',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }
